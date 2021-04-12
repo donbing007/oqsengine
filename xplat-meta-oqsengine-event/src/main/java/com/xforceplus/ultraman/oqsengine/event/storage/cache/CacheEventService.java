@@ -1,19 +1,27 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
+
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collection;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * desc :
@@ -54,24 +62,23 @@ public class CacheEventService implements ICacheEventService {
         }
 
         eventBus.watch(EventType.ENTITY_BUILD, x -> {
-            cacheEventHandler.onEventCreate((ActualEvent<BuildPayload>) x);
-        });
-
-        eventBus.watch(EventType.ENTITY_DELETE, x -> {
-            cacheEventHandler.onEventDelete((ActualEvent<DeletePayload>) x);
+            execute(EventType.ENTITY_BUILD, this::build, x);
         });
 
         eventBus.watch(EventType.ENTITY_REPLACE, x -> {
-            cacheEventHandler.onEventUpdate((ActualEvent<ReplacePayload>) x);
+            execute(EventType.ENTITY_REPLACE, this::replace, x);
         });
 
+        eventBus.watch(EventType.ENTITY_DELETE, x -> {
+            execute(EventType.ENTITY_REPLACE, this::delete, x);
+        });
 
         eventBus.watch(EventType.TX_BEGIN, x -> {
-            cacheEventHandler.onEventBegin((ActualEvent<BeginPayload>) x);
+            execute(EventType.TX_BEGIN, cacheEventHandler::onEventBegin, x);
         });
 
         eventBus.watch(EventType.TX_COMMITED, x -> {
-            cacheEventHandler.onEventCommit((ActualEvent<CommitPayload>) x);
+            execute(EventType.TX_COMMITED, cacheEventHandler::onEventCommit, x);
         });
     }
 
@@ -131,6 +138,58 @@ public class CacheEventService implements ICacheEventService {
                 }
             }
         }
+    }
+
+    private void build(Event<BuildPayload> e) {
+        BuildPayload buildPayload = e.payload().get();
+
+        ActualEvent<CachePayload> cachePayload =
+                new ActualEvent<>(e.type(),
+                        new CachePayload(buildPayload.getTxId(), buildPayload.getNumber(),
+                                buildPayload.getEntity().id(), buildPayload.getEntity().version(),
+                                entityValues(buildPayload.getEntity())),
+                        e.time()
+                );
+        cacheEventHandler.onEventCreate(cachePayload);
+    }
+
+    private void replace(Event<ReplacePayload> e) {
+        ReplacePayload replacePayload = e.payload().get();
+
+        ActualEvent<CachePayload> cachePayload =
+                new ActualEvent<>(e.type(),
+                        new CachePayload(replacePayload.getTxId(), replacePayload.getNumber(),
+                                replacePayload.getEntity().id(), replacePayload.getEntity().version(),
+                                entityValues(replacePayload.getEntity())),
+                        e.time()
+                );
+        cacheEventHandler.onEventUpdate(cachePayload);
+    }
+
+    private void delete(Event<DeletePayload> e) {
+        DeletePayload deletePayload = e.payload().get();
+
+        ActualEvent<CachePayload> cachePayload =
+                new ActualEvent<>(e.type(),
+                        new CachePayload(deletePayload.getTxId(), deletePayload.getNumber(),
+                                deletePayload.getEntity().id(), deletePayload.getEntity().version(),
+                                entityValues(deletePayload.getEntity())),
+                        e.time()
+                );
+        cacheEventHandler.onEventDelete(cachePayload);
+    }
+
+    private void execute(EventType eventType, Consumer<Event> consumer, Event e) {
+        if (null != e && (e.payload().isPresent())) {
+            consumer.accept(e);
+        } else {
+            logger.warn("{} triggered, but event is null or payload is null..", eventType.name());
+        }
+    }
+
+    private Map<IEntityField, Object> entityValues(IEntity entity) {
+        Collection<IValue> values = entity.entityValue().values();
+        return values.stream().collect(Collectors.toMap(f1 -> (EntityField) f1.getField(), f1 -> ((IValue) f1.getValue()).getValue(), (f1, f2) -> f1));
     }
 
     private static void waitForClosed(Thread thread, long maxWaitLoops) {

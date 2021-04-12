@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
@@ -100,10 +101,10 @@ public class RedisEventHandler implements ICacheEventHandler {
     }
 
     @Override
-    public boolean onEventCreate(Event<BuildPayload> event) {
+    public boolean onEventCreate(Event<CachePayload> event) {
         if (needStorage(event)) {
-            if (!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
-                    , event.payload().get().getEntity().version(), event)) {
+            if (!storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
+                    , event.payload().get().getVersion(), event)) {
                 worker.submit(new ReCover(this::onEventCreate, event, retryEvents));
             }
         }
@@ -112,10 +113,10 @@ public class RedisEventHandler implements ICacheEventHandler {
     }
 
     @Override
-    public boolean onEventUpdate(Event<ReplacePayload> event) {
+    public boolean onEventUpdate(Event<CachePayload> event) {
         if (needStorage(event)) {
-            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
-                    , event.payload().get().getEntity().version(), event)) {
+            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
+                    , event.payload().get().getVersion(), event)) {
                 worker.submit(new ReCover(this::onEventUpdate, event, retryEvents));
             }
         }
@@ -124,10 +125,10 @@ public class RedisEventHandler implements ICacheEventHandler {
     }
 
     @Override
-    public boolean onEventDelete(Event<DeletePayload> event) {
+    public boolean onEventDelete(Event<CachePayload> event) {
         if (needStorage(event)) {
-            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
-                    , event.payload().get().getEntity().version(), event)) {
+            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
+                    , event.payload().get().getVersion(), event)) {
                 worker.submit(new ReCover(this::onEventDelete, event, retryEvents));
             }
         }
@@ -255,9 +256,7 @@ public class RedisEventHandler implements ICacheEventHandler {
     }
 
     private boolean needStorage(Event<?> event) {
-        return null != event &&
-                event.payload().isPresent() &&
-                (System.currentTimeMillis() - event.time() < expiredDuration);
+        return System.currentTimeMillis() - event.time() < expiredDuration;
     }
 
     private boolean storage(long txId, long id, long version, Event<?> event) {
