@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.ICacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;

@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.event.payload.transaction.RollbackPaylo
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class MultiLocalTransaction implements Transaction {
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
     private CommitIdStatusService commitIdStatusService;
+    private CacheEventService cacheEventService;
     private long maxWaitCommitIdSyncMs;
     private TransactionAccumulator accumulator;
     private String msg;
@@ -64,7 +66,7 @@ public class MultiLocalTransaction implements Transaction {
     private void init() {
         startMs = System.currentTimeMillis();
         transactionResourceHolder = new LinkedList<>();
-        this.accumulator = new DefaultTransactionAccumulator();
+        this.accumulator = new DefaultTransactionAccumulator(id, cacheEventService);
 
         if (eventBus == null) {
             eventBus = DoNothingEventBus.getInstance();
@@ -174,6 +176,8 @@ public class MultiLocalTransaction implements Transaction {
                                 new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
 
             }
+
+            cacheEventService.commit(id, this.getAccumulator().operationNumber());
         } finally {
             doEnd(true);
         }
@@ -206,6 +210,8 @@ public class MultiLocalTransaction implements Transaction {
             eventBus.notify(
                     new ActualEvent(EventType.TX_ROLLBACKED,
                             new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
+
+            cacheEventService.rollback(id);
         } finally {
             doEnd(false);
         }
@@ -409,6 +415,7 @@ public class MultiLocalTransaction implements Transaction {
         private boolean rollback = false;
         private LongIdGenerator longIdGenerator;
         private CommitIdStatusService commitIdStatusService;
+        private CacheEventService cacheEventService;
         private long maxWaitCommitIdSyncMs;
         private String msg;
         private EventBus eventBus = DoNothingEventBus.getInstance();
@@ -460,6 +467,11 @@ public class MultiLocalTransaction implements Transaction {
             return this;
         }
 
+        public Builder withCacheEventService(CacheEventService cacheEventService) {
+            this.cacheEventService = cacheEventService;
+            return this;
+        }
+
         public MultiLocalTransaction build() {
             MultiLocalTransaction multiLocalTransaction = new MultiLocalTransaction();
             multiLocalTransaction.committed = this.committed;
@@ -470,6 +482,7 @@ public class MultiLocalTransaction implements Transaction {
             multiLocalTransaction.commitIdStatusService = this.commitIdStatusService;
             multiLocalTransaction.eventBus = this.eventBus;
             multiLocalTransaction.maxWaitCommitIdSyncMs = this.maxWaitCommitIdSyncMs;
+            multiLocalTransaction.cacheEventService = this.cacheEventService;
             multiLocalTransaction.init();
             return multiLocalTransaction;
         }

@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.alibaba.google.common.collect.Sets;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,39 +30,53 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
     private final Object processIdsLock = new Object();
     private AtomicLong opNumber = new AtomicLong(-1);
 
+    private CacheEventService cacheEventService;
+    private long txId;
+
+    public DefaultTransactionAccumulator(long txId, CacheEventService cacheEventService) {
+        this.txId = txId;
+        this.cacheEventService = cacheEventService;
+    }
+
     @Override
-    public void accumulateBuild(long id) {
+    public boolean accumulateBuild(IEntity entity) {
         buildNumbers.incrementAndGet();
         opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: create number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: create number +1.[{}]", entity.id());
         }
+
+        return cacheEventService.create(txId, opNumber.get(), entity);
     }
 
     @Override
-    public void accumulateReplace(long id) {
+    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity) {
         replaceNumbers.incrementAndGet();
         opNumber.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(id);
+        getProcessIdsIdsSet(true).add(newEntity.id());
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: replace number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: replace number +1.[{}]", newEntity.id());
         }
+
+        return cacheEventService.replace(txId, opNumber.get(), newEntity, oldEntity);
     }
 
     @Override
-    public void accumulateDelete(long id) {
+    public boolean accumulateDelete(IEntity entity) {
         deleteNumbers.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(id);
+        getProcessIdsIdsSet(true).add(entity.id());
 
         opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: delete number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: delete number +1.[{}]", entity.id());
         }
+
+        return cacheEventService.delete(txId, opNumber.get(), entity);
     }
 
     @Override
