@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -966,12 +967,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             long txId = transRequest.getTxId();
             //ver is 0
             long ver = transRequest.getVer();
-            long objId = transRequest.
+            long objId = transRequest.getObjId();
             int transType = transRequest.getTransType();
             String type = transRequest.getType();
-
-
-            iCacheEventHandler.eventsQuery(txId, ver == 0 ? null : ver, );
+            EventType eventType = EventType.valueOf(type);
+            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType.ordinal());
+            return OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
+                    .build();
         });
     }
 
