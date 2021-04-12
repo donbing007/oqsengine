@@ -19,11 +19,15 @@
             <version>1.28.1</version>
         </dependency>
         <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-pojo</artifactId>
             <version>${project.version}</version>
         </dependency>
