@@ -4,6 +4,9 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -17,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,6 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -55,6 +60,17 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(impl, "transactionExecutor", transactionExecutor);
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
+        ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
+            @Override
+            public void watch(EventType type, Consumer<Event> listener) {
+
+            }
+
+            @Override
+            public void notify(Event event) {
+
+            }
+        });
         impl.init();
     }
 
@@ -318,7 +334,23 @@ public class EntityManagementServiceImplTest {
 
         @Override
         public Object execute(ResourceTask storageTask) throws SQLException {
-            return storageTask.run(null, null, new DefaultExecutorHint());
+            return storageTask.run(
+                MultiLocalTransaction.Builder.aMultiLocalTransaction()
+                    .withId(1)
+                    .withEventBus(
+                        new EventBus() {
+                            @Override
+                            public void watch(EventType type, Consumer<Event> listener) {
+                            }
+
+                            @Override
+                            public void notify(Event event) {
+                            }
+                        }
+                    )
+                    .build(),
+                null,
+                new DefaultExecutorHint());
         }
     }
 

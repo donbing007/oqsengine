@@ -39,6 +39,7 @@ public class TransactionManagementServiceImplTest {
 
         TransactionManager tm = mock(TransactionManager.class);
         when(tm.create()).thenReturn(t);
+        when(tm.create(null)).thenReturn(t);
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
