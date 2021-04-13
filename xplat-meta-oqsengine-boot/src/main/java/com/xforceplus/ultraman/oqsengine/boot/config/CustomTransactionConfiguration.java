@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -12,7 +13,9 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.Sphi
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
+import io.lettuce.core.RedisClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +37,7 @@ public class CustomTransactionConfiguration {
             @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
             CommitIdStatusService commitIdStatusService,
             EventBus eventBus,
-            CacheEventService cacheEventService) {
+            CacheEventHandler cacheEventHandler) {
         return DefaultTransactionManager.Builder.aDefaultTransactionManager()
                 .withSurvivalTimeMs(transactionTimeoutMs)
                 .withTxIdGenerator(snowflakeIdGenerator)
@@ -42,7 +45,7 @@ public class CustomTransactionConfiguration {
                 .withCommitIdStatusService(commitIdStatusService)
                 .withWaitCommitSync(true)
                 .withEventBus(eventBus)
-                .withCacheEventService(cacheEventService)
+                .withCacheEventHandler(cacheEventHandler)
                 .build();
     }
 
@@ -95,6 +98,13 @@ public class CustomTransactionConfiguration {
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
+    }
+
+    @Bean
+    public CacheEventHandler cacheEventHandler(RedisClient redisClient,
+                                               ObjectMapper objectMapper,
+                                               @Value("${cache.event.expire:0}") long expire) {
+        return new RedisEventHandler(redisClient, objectMapper, expire);
     }
 
 }

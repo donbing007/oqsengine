@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -15,9 +16,11 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.event.EventType.TX_BEGIN;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
 
 /**
  * desc :
@@ -30,8 +33,6 @@ import static com.xforceplus.ultraman.oqsengine.event.EventType.TX_BEGIN;
 public class RedisEventHandler implements CacheEventHandler {
 
     final Logger logger = LoggerFactory.getLogger(RedisEventHandler.class);
-
-    private String CUD_PAYLOAD_HASH_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.event.payload";
 
     private RedisClient redisClient;
 
@@ -46,11 +47,8 @@ public class RedisEventHandler implements CacheEventHandler {
     private Queue<Long> expired = new LinkedBlockingQueue<>(512);
 
     //  3分钟过期
-    public static final long EXPIRE_BUFFER_SECONDS = 3 * 60;
-    private long expiredDuration = EXPIRE_BUFFER_SECONDS;
+    private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
 
-    private static final long CLOSE_WAIT_MAX_LOOP = 60;
-    private static final long WAIT_DURATION = 1000;
     private static volatile boolean closed;
 
     public RedisEventHandler(RedisClient redisClient, ObjectMapper objectMapper, long expiredDuration) {
@@ -73,10 +71,10 @@ public class RedisEventHandler implements CacheEventHandler {
                     if (!expired.isEmpty()) {
                         Long txId = expired.poll();
                         if (null != txId) {
-                            onEventEnd(txId);
+                            end(txId);
                         }
                     } else {
-                        Thread.sleep(WAIT_DURATION);
+                        Thread.sleep(CacheEventHelper.WAIT_DURATION);
                     }
 
                 } catch (Exception e) {
@@ -107,102 +105,97 @@ public class RedisEventHandler implements CacheEventHandler {
         closed = true;
 
         if (null != worker) {
-            waitForClosed(worker, CLOSE_WAIT_MAX_LOOP);
+            waitForClosed(worker, CacheEventHelper.CLOSE_WAIT_MAX_LOOP);
         }
     }
-
-    @Override
-    public boolean onEventCreate(Event<CachePayload> event) {
-        return storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
-                , event.payload().get().getVersion(), event);
-    }
-
-    @Override
-    public boolean onEventUpdate(Event<CachePayload> event) {
-        return storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
-                , event.payload().get().getVersion(), event);
-    }
-
-    @Override
-    public boolean onEventDelete(Event<CachePayload> event) {
-        return storage(event.payload().get().getTxId(), event.payload().get().getEntityId()
-                , event.payload().get().getVersion(), event);
-    }
-
-    @Override
-    public boolean onEventBegin(long txId) {
-        return true;
-    }
-
-    @Override
-    public boolean onEventCommit(long txId, long maxOpNumber) {
-        onEventEnd(txId);
-        return true;
-    }
-
-    @Override
-    public boolean onEventRollback(long txId) {
-        onEventEnd(txId);
-        return true;
-    }
-
-    private void onEventEnd(long txId) {
-        String txIdStr = eventKeyGenerate(txId);
-        try {
-            if (!syncCommands.expire(txIdStr, expiredDuration)) {
-                throw new RuntimeException(String.format("expired [%s] failed.", txIdStr));
-            }
-        } catch (Exception e) {
-            expired.offer(txId);
-            logger.warn(e.getMessage());
-        }
-    }
-
 
     @Override
     public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType) {
 
         if (null == id || null == version || invalidQueryEventType(eventType)) {
             //  查询对应txId的列表
-            Map<String, String> result = syncCommands.hgetall(eventKeyGenerate(txId));
+            Map<String, String> result = syncCommands.hgetall(CacheEventHelper.eventKeyGenerate(txId));
 
             return null == result || result.isEmpty() ?
                     Collections.emptyList() :
-                        result.entrySet().stream()
-                                .filter(e -> {
-                                    return !e.getKey().equals(TX_BEGIN.name());
-                                })
-                                .map(Map.Entry::getValue)
-                                .collect(Collectors.toList());
+                    result.entrySet().stream()
+                            .filter(e -> {
+                                return !e.getKey().equals(TX_BEGIN.name());
+                            })
+                            .map(Map.Entry::getValue)
+                            .collect(Collectors.toList());
         }
 
         //  精确查询 txId + id + version 确定
-        String rBuild = syncCommands.hget(eventKeyGenerate(txId), eventFieldGenerate(id, version, eventType));
+        String rBuild = syncCommands.hget(CacheEventHelper.eventKeyGenerate(txId), CacheEventHelper.eventFieldGenerate(id, version, eventType));
         return null == rBuild || rBuild.isEmpty() ? Collections.emptyList() : Collections.singletonList(rBuild);
     }
 
-    private boolean storage(long txId, long id, long version, Event<?> event) {
+    @Override
+    public boolean create(long txId, long number, IEntity entity) {
+        return execution(ENTITY_BUILD, this::storage, CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity));
+    }
+
+    @Override
+    public boolean replace(long txId, long number, IEntity entity, IEntity old) {
+        return execution(ENTITY_REPLACE, this::storage, CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity, old));
+    }
+
+    @Override
+    public boolean delete(long txId, long number, IEntity entity) {
+        return execution(ENTITY_DELETE, this::storage, CacheEventHelper.generate(ENTITY_DELETE, txId, number, entity));
+    }
+
+    @Override
+    public boolean begin(long txId) {
+        return true;
+    }
+
+    @Override
+    public boolean commit(long txId, long maxOpNumber) {
+        end(txId);
+        return true;
+    }
+
+    @Override
+    public boolean rollback(long txId) {
+        end(txId);
+        return true;
+    }
+
+    private boolean execution(EventType eventType, Function<Event, Boolean> function, Event e) {
+        if (null != e && (e.payload().isPresent())) {
+            return function.apply(e);
+        } else {
+            logger.warn("{} triggered, but event is null or payload is null..", eventType.name());
+        }
+        return false;
+    }
+
+    private void end(long txId) {
+        String txIdStr = CacheEventHelper.eventKeyGenerate(txId);
         try {
-            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(event).getBytes());
-
-            return syncCommands.hset(eventKeyGenerate(txId), eventFieldGenerate(id, version, event.type().getValue()), encodeJson);
+            syncCommands.expire(txIdStr, expiredDuration);
         } catch (Exception e) {
-            logger.warn("storage error, [txId:{}-type:{}-id:{}-version:{}-message:{}], add to retry... ", txId, event.type(), id, version, e.getMessage());
-
-            return false;
+            expired.offer(txId);
+            logger.warn(e.getMessage());
         }
     }
 
-    private String eventFieldGenerate(long id, long version, int eventType) {
-        return  String.format("%d.%d.%d", id, version, eventType);
-    }
+    private boolean storage(Event<CachePayload> event) {
+        try {
+            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(event).getBytes());
 
-    private String eventKeyGenerate(long txId) {
-        return eventKeyGenerate(Long.toString(txId));
-    }
+            return syncCommands.hset(CacheEventHelper.eventKeyGenerate(event.payload().get().getTxId())
+                    , CacheEventHelper.eventFieldGenerate(event.payload().get().getId(),
+                                        event.payload().get().getVersion(), event.type().getValue())
+                    , encodeJson);
+        } catch (Exception e) {
+            logger.warn("storage error, [txId:{}-type:{}-id:{}-version:{}-message:{}], add to retry... "
+                    , event.payload().get().getTxId(), event.type(), event.payload().get().getId(), event.payload().get().getVersion(), e.getMessage());
 
-    private String eventKeyGenerate(String txIdString) {
-        return String.format("%s.%s", CUD_PAYLOAD_HASH_KEY_PREFIX, txIdString);
+            return false;
+        }
     }
 
     private boolean invalidQueryEventType(Integer eventType) {
@@ -218,7 +211,7 @@ public class RedisEventHandler implements CacheEventHandler {
                 logger.info("wait for loops [{}] and thread closed successful.", i);
                 break;
             }
-            sleep(WAIT_DURATION);
+            sleep(CacheEventHelper.WAIT_DURATION);
         }
         logger.info("reach max wait loops [{}] and thread will be force-closed.", maxWaitLoops);
     }

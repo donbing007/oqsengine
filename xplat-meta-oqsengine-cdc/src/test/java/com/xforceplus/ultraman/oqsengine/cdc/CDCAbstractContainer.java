@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStr
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
@@ -95,6 +96,7 @@ public abstract class CDCAbstractContainer {
                 .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(new DoNothingCacheEventHandler())
                 .build();
         }
 

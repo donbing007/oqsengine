@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
@@ -62,6 +63,7 @@ public class AutoJoinTransactionExecutorTest {
             .withTxIdGenerator(idGenerator)
             .withCommitIdGenerator(commitIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(new DoNothingCacheEventHandler())
             .build();
     }
 

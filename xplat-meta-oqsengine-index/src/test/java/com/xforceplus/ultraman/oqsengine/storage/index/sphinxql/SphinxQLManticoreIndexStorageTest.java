@@ -34,6 +34,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -196,6 +197,7 @@ public class SphinxQLManticoreIndexStorageTest {
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(new DoNothingCacheEventHandler())
             .withWaitCommitSync(false)
             .build();
 

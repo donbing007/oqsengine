@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,7 +19,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     private LongIdGenerator txIdGenerator;
     private LongIdGenerator commitIdGenerator;
     private CommitIdStatusService commitIdStatusService;
-    private CacheEventService cacheEventService;
+    private CacheEventHandler cacheEventHandler;
     private boolean waitCommitSync;
     private EventBus eventBus;
 
@@ -35,7 +35,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             .withId(txId)
             .withCommitIdStatusService(commitIdStatusService)
             .withLongIdGenerator(commitIdGenerator)
-            .withCacheEventService(cacheEventService)
+            .withCacheEventHandler(cacheEventHandler)
             .withEventBus(eventBus)
             .withMsg(msg);
 
@@ -56,7 +56,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
         private LongIdGenerator txIdGenerator;
         private LongIdGenerator commitIdGenerator;
         private CommitIdStatusService commitIdStatusService;
-        private CacheEventService cacheEventService;
+        private CacheEventHandler cacheEventHandler;
         private boolean waitCommitSync = true;
         private EventBus eventBus;
         private int survivalTimeMs = 30000;
@@ -98,8 +98,8 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             return this;
         }
 
-        public Builder withCacheEventService(CacheEventService cacheEventService) {
-            this.cacheEventService = cacheEventService;
+        public Builder withCacheEventHandler(CacheEventHandler cacheEventHandler) {
+            this.cacheEventHandler = cacheEventHandler;
             return this;
         }
 
@@ -110,7 +110,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             defaultTransactionManager.commitIdStatusService = this.commitIdStatusService;
             defaultTransactionManager.txIdGenerator = this.txIdGenerator;
             defaultTransactionManager.commitIdGenerator = this.commitIdGenerator;
-            defaultTransactionManager.cacheEventService = this.cacheEventService;
+            defaultTransactionManager.cacheEventHandler = this.cacheEventHandler;
 
             if (!txIdGenerator.isPartialOrder()) {
                 throw new IllegalArgumentException(
@@ -122,9 +122,9 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
                     "The commit number of the transaction needs to support continuous and partial ID generation implementations.");
             }
 
-            if (null == cacheEventService) {
+            if (null == cacheEventHandler) {
                 throw new IllegalArgumentException(
-                        "cacheEventService could not be null.");
+                        "cacheEventHandler could not be null.");
             }
             return defaultTransactionManager;
         }

@@ -2,7 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
+
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,7 +35,7 @@ public class DefaultTransactionAccumulatorTest {
      */
     @Test
     public void testAccumulate() throws Exception {
-        DefaultTransactionAccumulator accumulator = new DefaultTransactionAccumulator(1, new MockCacheService());
+        DefaultTransactionAccumulator accumulator = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(1).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(2).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(3).build());
@@ -54,7 +55,7 @@ public class DefaultTransactionAccumulatorTest {
      */
     @Test
     public void testRepeat() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new MockCacheService());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(10).build());
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
@@ -66,7 +67,7 @@ public class DefaultTransactionAccumulatorTest {
 
     @Test
     public void testNoBuild() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new MockCacheService());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         acc.accumulateBuild(Entity.Builder.anEntity().withId(100).build());
         Assert.assertEquals(0, acc.getUpdateIds().size());
 
@@ -75,7 +76,7 @@ public class DefaultTransactionAccumulatorTest {
 
     @Test
     public void testReset() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new MockCacheService());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         acc.reset();
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(20).build());
@@ -88,44 +89,6 @@ public class DefaultTransactionAccumulatorTest {
         Arrays.sort(expectedIds);
         Arrays.sort(actualIds);
         Assert.assertArrayEquals(expectedIds, actualIds);
-    }
-
-    private static class MockCacheService implements CacheEventService {
-
-        @Override
-        public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType) {
-            return null;
-        }
-
-        @Override
-        public boolean create(long txId, long number, IEntity entity) {
-            return false;
-        }
-
-        @Override
-        public boolean replace(long txId, long number, IEntity entity, IEntity old) {
-            return false;
-        }
-
-        @Override
-        public boolean delete(long txId, long number, IEntity entity) {
-            return false;
-        }
-
-        @Override
-        public boolean begin(long txId) {
-            return false;
-        }
-
-        @Override
-        public boolean commit(long txId, long maxOpNumber) {
-            return false;
-        }
-
-        @Override
-        public boolean rollback(long txId) {
-            return false;
-        }
     }
 
 } 

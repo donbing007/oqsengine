@@ -28,6 +28,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
@@ -183,6 +184,7 @@ public class SQLMasterStorageQueryTest {
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(new DoNothingCacheEventHandler())
             .withWaitCommitSync(false)
             .build();
 

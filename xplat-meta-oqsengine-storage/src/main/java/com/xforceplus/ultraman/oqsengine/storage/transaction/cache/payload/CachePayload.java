@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -14,60 +14,121 @@ import java.util.Map;
  * @since : 1.8
  */
 public class CachePayload implements Serializable {
+    /**
+     * txId
+     */
+    @JsonProperty(value = "txId")
     private long txId;
+    /**
+     * entity的主键ID
+     */
+    @JsonProperty(value = "id")
+    private long id;
+    /**
+     * entity的当前版本
+     */
+    @JsonProperty(value = "version")
+    private int version;
+
+    /**
+     * entity在当前TX中的操作顺序
+     */
+    @JsonProperty(value = "number")
     private long number;
-    private long entityId;
-    private long version;
-    private Map<IEntityField, Object> entityValues;
 
-    public CachePayload() {
-    }
+    /**
+     * entity中的entityFieldId-value(toString)键值对
+     */
+    @JsonProperty(value = "fieldValueMapping")
+    private Map<Long, String> fieldValueMapping;
 
-    public CachePayload(long txId, long number, long version, long entityId, Map<IEntityField, Object> entityValues) {
-        this.txId = txId;
-        this.number = number;
-        this.entityId = entityId;
-        this.version = version;
-        this.entityValues = entityValues;
-    }
+    /**
+     * entity中的entityFieldId-value(toString)键值对
+     */
+    @JsonProperty(value = "oldFieldValueMapping")
+    private Map<Long, String> oldFieldValueMapping;
 
     public long getTxId() {
         return txId;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public int getVersion() {
+        return version;
     }
 
     public long getNumber() {
         return number;
     }
 
-    public Map<IEntityField, Object>  getEntityValues() {
-        return entityValues;
+    public Map<Long, String> getFieldValueMapping() {
+        return fieldValueMapping;
     }
 
-    public long getEntityId() {
-        return entityId;
+    public Map<Long, String> getOldFieldValueMapping() {
+        return oldFieldValueMapping;
     }
 
-    public void setTxId(long txId) {
-        this.txId = txId;
-    }
+    /**
+     * builder
+     */
+    public static class Builder {
+        private long txId;
+        private long id;
+        private int version;
+        private long number;
+        private Map<Long, String> fieldValueMapping;
+        private Map<Long, String> oldFieldValueMapping;
 
-    public void setNumber(long number) {
-        this.number = number;
-    }
+        private Builder() {
+        }
 
-    public void setEntityId(long entityId) {
-        this.entityId = entityId;
-    }
+        public static CachePayload.Builder anCacheValue() {
+            return new CachePayload.Builder();
+        }
 
-    public void setEntityValues(Map<IEntityField, Object> entityValues) {
-        this.entityValues = entityValues;
-    }
+        public CachePayload.Builder withTxId(long txId) {
+            this.txId = txId;
+            return this;
+        }
 
-    public long getVersion() {
-        return version;
-    }
+        public CachePayload.Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
 
-    public void setVersion(long version) {
-        this.version = version;
+        public CachePayload.Builder withVersion(int version) {
+            this.version = version;
+            return this;
+        }
+
+        public CachePayload.Builder withNumber(long number) {
+            this.number = number;
+            return this;
+        }
+
+        public CachePayload.Builder withFieldValueMapping(Map<Long, String> fieldValueMapping) {
+            this.fieldValueMapping = fieldValueMapping;
+            return this;
+        }
+
+        public CachePayload.Builder withOldFieldValueMapping(Map<Long, String> oldFieldValueMapping) {
+            this.oldFieldValueMapping = oldFieldValueMapping;
+            return this;
+        }
+
+        public CachePayload build() {
+            CachePayload value = new CachePayload();
+            value.txId = this.txId;
+            value.id = this.id;
+            value.version = this.version;
+            value.number = this.number;
+            value.fieldValueMapping = this.fieldValueMapping;
+            value.oldFieldValueMapping = this.oldFieldValueMapping;
+            return value;
+        }
     }
 }

@@ -26,7 +26,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.vavr.Tuple;
 import org.apache.commons.lang3.StringUtils;
