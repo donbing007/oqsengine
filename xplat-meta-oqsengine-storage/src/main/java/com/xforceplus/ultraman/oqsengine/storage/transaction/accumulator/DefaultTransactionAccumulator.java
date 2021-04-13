@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 import com.alibaba.google.common.collect.Sets;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +28,9 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     private volatile Set<Long> processIds = null;
     private final Object processIdsLock = new Object();
+    /**
+     * 当前操作的最大序号,从0开始.
+     */
     private AtomicLong opNumber = new AtomicLong(-1);
 
     private CacheEventHandler cacheEventHandler;
