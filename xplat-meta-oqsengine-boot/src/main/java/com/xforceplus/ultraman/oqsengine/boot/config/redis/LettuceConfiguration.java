@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.boot.config.redis;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import static io.lettuce.core.RedisURI.PARAMETER_NAME_DATABASE;
+
 /**
  * @author dongbin
  * @version 0.1 2020/11/16 14:12
@@ -14,6 +16,9 @@ public class LettuceConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
+
+    private int changeLogDB = 15;
+    private int cacheEventDb = 16;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
@@ -29,5 +34,13 @@ public class LettuceConfiguration {
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public String uriWithChangeLogDB() {
+        return String.format("%s/%d", uri, changeLogDB);
+    }
+
+    public String uriWithCacheEventDb() {
+        return String.format("%s/%d", uri, cacheEventDb);
     }
 }

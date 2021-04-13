@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -141,6 +142,31 @@ public class CommonConfiguration {
         );
         return redisClient;
     }
+
+    @Bean(value = "redisClientChangeLog")
+    public RedisClient redisClientChangeLog(LettuceConfiguration configuration) {
+        RedisClient redisClient = RedisClient.create(configuration.uriWithChangeLogDB());
+
+        redisClient.setOptions(ClientOptions.builder()
+                .autoReconnect(true)
+                .requestQueueSize(configuration.getMaxReqQueue())
+                .build()
+        );
+        return redisClient;
+    }
+
+    @Bean(value = "redisClientCacheEvent")
+    public RedisClient redisClientCacheEvent(LettuceConfiguration configuration) {
+        RedisClient redisClient = RedisClient.create(configuration.uriWithCacheEventDb());
+
+        redisClient.setOptions(ClientOptions.builder()
+                .autoReconnect(true)
+                .requestQueueSize(configuration.getMaxReqQueue())
+                .build()
+        );
+        return redisClient;
+    }
+
 
     @Bean(value = "tokenizerFactory")
     public TokenizerFactory tokenizerFactory(

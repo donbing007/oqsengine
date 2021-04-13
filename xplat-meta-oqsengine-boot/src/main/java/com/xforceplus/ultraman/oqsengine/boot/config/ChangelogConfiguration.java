@@ -96,11 +96,11 @@ public class ChangelogConfiguration {
     @Bean
     public ChangelogHandler changelogHandler(@Value("changelog.queue") String queueName
             , NodeIdGenerator nodeIdGenerator
-            , RedisClient redisClient
+            , RedisClient redisClientChangeLog
             , Gateway gateway
             , ObjectMapper mapper
     ){
-        RedisChangelogHandler redisChangelogHandler = new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClient, gateway, mapper);
+        RedisChangelogHandler redisChangelogHandler = new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClientChangeLog, gateway, mapper);
         redisChangelogHandler.prepareConsumer();
         return redisChangelogHandler;
     }

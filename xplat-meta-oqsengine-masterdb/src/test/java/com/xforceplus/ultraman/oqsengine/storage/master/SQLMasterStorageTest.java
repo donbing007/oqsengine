@@ -358,7 +358,7 @@ public class SQLMasterStorageTest {
 
         // 表示为非可读事务.
         for (IEntity e : expectedEntitys) {
-            tx.getAccumulator().accumulateBuild(e.id());
+            tx.getAccumulator().accumulateBuild(e);
         }
 
         tx.commit();

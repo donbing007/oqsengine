@@ -223,7 +223,7 @@ public class SQLMasterStorageQueryTest {
 
             // 表示为只读事务.
             for (IEntity e : entityes) {
-                tx.getAccumulator().accumulateBuild(e.id());
+                tx.getAccumulator().accumulateBuild(e);
             }
             tx.commit();
         } catch (Exception ex) {

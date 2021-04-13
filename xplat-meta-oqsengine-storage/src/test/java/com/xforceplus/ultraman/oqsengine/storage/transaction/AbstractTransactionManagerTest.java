@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -222,6 +223,7 @@ public class AbstractTransactionManagerTest {
         private LongIdGenerator commitIdGenerator = new IncreasingOrderLongIdGenerator();
         private long waitMs = 0;
         private CommitIdStatusService commitIdStatusService;
+        private DoNothingCacheEventHandler cacheEventHandler;
 
         public MockTransactionManager() {
             this(3000, 0);
@@ -234,6 +236,7 @@ public class AbstractTransactionManagerTest {
         public MockTransactionManager(int survivalTimeMs, long waitMs) {
             super(survivalTimeMs);
             this.waitMs = waitMs;
+            this.cacheEventHandler = new DoNothingCacheEventHandler();
         }
 
         public void setCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
@@ -244,7 +247,7 @@ public class AbstractTransactionManagerTest {
         public Transaction doCreate(String msg) {
 
             long id = idGenerator.next();
-            return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService);
+            return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService, cacheEventHandler);
 
         }
     }
@@ -257,13 +260,14 @@ public class AbstractTransactionManagerTest {
         private int rollbackNumber;
 
         public MockTransaction(
-            long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
+            long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService, DoNothingCacheEventHandler cacheEventHandler) {
             this.waitMs = watiMs;
 
             transaction = MultiLocalTransaction.Builder.aMultiLocalTransaction()
                 .withId(id)
                 .withLongIdGenerator(longIdGenerator)
                 .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(cacheEventHandler)
                 .build();
         }
 

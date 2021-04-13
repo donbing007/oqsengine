@@ -101,10 +101,10 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
-    public CacheEventHandler cacheEventHandler(RedisClient redisClient,
+    public CacheEventHandler cacheEventHandler(RedisClient redisClientCacheEvent,
                                                ObjectMapper objectMapper,
                                                @Value("${cache.event.expire:0}") long expire) {
-        return new RedisEventHandler(redisClient, objectMapper, expire);
+        return new RedisEventHandler(redisClientCacheEvent, objectMapper, expire);
     }
 
 }
