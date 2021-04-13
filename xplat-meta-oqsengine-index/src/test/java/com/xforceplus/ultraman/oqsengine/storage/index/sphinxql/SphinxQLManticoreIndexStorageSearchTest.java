@@ -308,6 +308,32 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
             new Case(
+                "id in (not exist)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            EntityField.ID_ENTITY_FIELD,
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new LongValue(EntityField.ID_ENTITY_FIELD, 10000000L)
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+                    .build(),
+                new long[0],
+                r -> {
+
+                    if (!r.refs.isEmpty()) {
+                        return String.format("No data is expected, but there is %d data.", r.refs.size());
+                    }
+
+                    return null;
+                }
+            )
+            ,
+            new Case(
                 "sort with value",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,

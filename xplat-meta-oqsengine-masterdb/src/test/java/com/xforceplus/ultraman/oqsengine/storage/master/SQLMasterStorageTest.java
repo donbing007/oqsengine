@@ -353,6 +353,12 @@ public class SQLMasterStorageTest {
 
         //将事务正常提交,并从事务管理器中销毁事务.
         Transaction tx = transactionManager.getCurrent().get();
+
+        // 表示为非可读事务.
+        for (IEntity e : expectedEntitys) {
+            tx.getAccumulator().accumulateBuild(e.id());
+        }
+
         tx.commit();
         transactionManager.finish();
 
