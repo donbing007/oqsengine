@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -57,13 +58,14 @@ public class FailOverTest extends CDCAbstractContainer {
     }
 
     private void initDaemonService() throws Exception {
+        ConsumerService consumerService = initAll();
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService();
+        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", consumerService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }

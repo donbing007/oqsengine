@@ -51,7 +51,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         build(preWarms, 1, Long.MAX_VALUE);
         build(entries, 1000, startId);
         cdcMetricsService = new CDCMetricsService();
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService());
+        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService(null));
     }
 
     @AfterClass

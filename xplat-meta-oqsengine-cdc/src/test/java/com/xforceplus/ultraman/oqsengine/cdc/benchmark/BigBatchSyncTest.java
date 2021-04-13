@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -62,11 +63,12 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
+        ConsumerService consumerService = initAll();
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService();
+        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
-        return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
+        return new ConsumerRunner(consumerService, cdcMetricsService, singleCDCConnector);
     }
 
     @Test
