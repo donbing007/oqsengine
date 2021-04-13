@@ -98,6 +98,6 @@ public class RedisEventService implements CacheEventService {
 
     private Map<IEntityField, Object> entityValues(IEntity entity) {
         Collection<IValue> values = entity.entityValue().values();
-        return values.stream().collect(Collectors.toMap(f1 -> (EntityField) f1.getField(), f1 -> ((IValue) f1.getValue()).getValue(), (f1, f2) -> f1));
+        return values.stream().collect(Collectors.toMap(f1 -> (EntityField) f1.getField(), f1 -> f1.getValue(), (f1, f2) -> f1));
     }
 }
