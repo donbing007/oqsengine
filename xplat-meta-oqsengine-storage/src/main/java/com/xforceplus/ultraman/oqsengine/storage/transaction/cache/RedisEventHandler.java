@@ -16,7 +16,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
@@ -61,7 +60,6 @@ public class RedisEventHandler implements CacheEventHandler {
         if (this.redisClient == null) {
             throw new IllegalArgumentException("Invalid RedisClient instance.");
         }
-
 
         if (expiredDuration > 0) {
             this.expiredDuration = expiredDuration;
@@ -135,17 +133,17 @@ public class RedisEventHandler implements CacheEventHandler {
 
     @Override
     public boolean create(long txId, long number, IEntity entity) {
-        return execution(ENTITY_BUILD, this::storage, CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity));
+        return storage(CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity));
     }
 
     @Override
     public boolean replace(long txId, long number, IEntity entity, IEntity old) {
-        return execution(ENTITY_REPLACE, this::storage, CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity, old));
+        return storage(CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity, old));
     }
 
     @Override
     public boolean delete(long txId, long number, IEntity entity) {
-        return execution(ENTITY_DELETE, this::storage, CacheEventHelper.generate(ENTITY_DELETE, txId, number, entity));
+        return storage(CacheEventHelper.generate(ENTITY_DELETE, txId, number, entity));
     }
 
     @Override
@@ -165,14 +163,7 @@ public class RedisEventHandler implements CacheEventHandler {
         return true;
     }
 
-    private boolean execution(EventType eventType, Function<Event, Boolean> function, Event e) {
-        if (null != e && (e.payload().isPresent())) {
-            return function.apply(e);
-        } else {
-            logger.warn("{} triggered, but event is null or payload is null..", eventType.name());
-        }
-        return false;
-    }
+
 
     private void end(long txId) {
         String txIdStr = CacheEventHelper.eventKeyGenerate(txId);
@@ -195,7 +186,7 @@ public class RedisEventHandler implements CacheEventHandler {
                                         event.payload().get().getVersion(), event.type().getValue())
                     , encodeJson);
         } catch (Exception e) {
-            logger.warn("storage error, [txId:{}-type:{}-id:{}-version:{}-message:{}], add to retry... "
+            logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
                     , event.payload().get().getTxId(), event.type(), event.payload().get().getId(), event.payload().get().getVersion(), e.getMessage());
 
             return false;
@@ -209,22 +200,22 @@ public class RedisEventHandler implements CacheEventHandler {
                         eventType != EventType.ENTITY_DELETE.getValue());
     }
 
-    private void waitForClosed(Thread thread, long maxWaitLoops) {
-        for (int i = 0; i < maxWaitLoops; i++) {
-            if (!thread.isAlive()) {
-                logger.info("wait for loops [{}] and thread closed successful.", i);
-                break;
-            }
-            sleep(CacheEventHelper.WAIT_DURATION);
-        }
-        logger.info("reach max wait loops [{}] and thread will be force-closed.", maxWaitLoops);
-    }
-
-    private void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+//    private void waitForClosed(Thread thread, long maxWaitLoops) {
+//        for (int i = 0; i < maxWaitLoops; i++) {
+//            if (!thread.isAlive()) {
+//                logger.info("wait for loops [{}] and thread closed successful.", i);
+//                break;
+//            }
+//            sleep(CacheEventHelper.WAIT_DURATION);
+//        }
+//        logger.info("reach max wait loops [{}] and thread will be force-closed.", maxWaitLoops);
+//    }
+//
+//    private void sleep(long time) {
+//        try {
+//            Thread.sleep(time);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

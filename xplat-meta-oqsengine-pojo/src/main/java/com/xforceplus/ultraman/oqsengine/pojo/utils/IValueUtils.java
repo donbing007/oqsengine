@@ -19,23 +19,24 @@ public class IValueUtils {
 
     /**
      * serialize to String
+     *
      * @param value
      * @return
      */
-    public static String serialize(IValue value){
+    public static String serialize(IValue value) {
 
-        if(value == null || value.getValue() == null){
+        if (value == null || value.getValue() == null) {
             return null;
         }
 
-        if(value instanceof StringValue
+        if (value instanceof StringValue
                 || value instanceof StringsValue
                 || value instanceof DecimalValue
                 || value instanceof EnumValue
                 || value instanceof BooleanValue
-        ){
+        ) {
             return value.valueToString();
-        } else if(value instanceof LongValue
+        } else if (value instanceof LongValue
                 || value instanceof DateTimeValue) {
             return Long.toString(value.valueToLong());
         } else {
@@ -45,14 +46,15 @@ public class IValueUtils {
 
     /**
      * deserialize string to ivalue
+     *
      * @param rawValue
      * @param entityField
      * @return
      */
-    public static IValue deserialize(String rawValue, IEntityField entityField){
+    public static IValue deserialize(String rawValue, IEntityField entityField) {
         IValue retValue = null;
 
-        if(rawValue == null ){
+        if (rawValue == null) {
             return null;
         }
 
