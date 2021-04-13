@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+
 import java.util.Set;
 
 /**
@@ -16,17 +18,17 @@ public interface TransactionAccumulator {
     /**
      * 事务中的创建次数累加1.
      */
-    public void accumulateBuild(long id);
+    public boolean accumulateBuild(IEntity entity);
 
     /**
      * 事务中更新次数累加1.
      */
-    public void accumulateReplace(long id);
+    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity);
 
     /**
      * 事务中删除次数累加1.
      */
-    public void accumulateDelete(long id);
+    public boolean accumulateDelete(IEntity entity);
 
     /**
      * 获取创建次数.

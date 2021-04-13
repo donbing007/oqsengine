@@ -27,7 +27,11 @@ public enum ResultStatus {
     /**
      * 创建失败.
      */
-    UNCREATED(4);
+    UNCREATED(4),
+    /**
+     * 累加器调用失败.
+     */
+    UNACCUMULATE(5);
 
     private int value;
 

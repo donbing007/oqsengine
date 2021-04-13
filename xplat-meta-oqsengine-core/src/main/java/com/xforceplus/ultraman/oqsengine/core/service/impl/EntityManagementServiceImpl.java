@@ -145,7 +145,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -205,7 +205,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
                 }
 
-                tx.getAccumulator().accumulateBuild(entity.id());
+                if (!tx.getAccumulator().accumulateBuild(entity)) {
+                    hint.setRollback(true);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
+                }
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
@@ -244,6 +247,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
+
+                IEntity oldEntity = null;
+                try {
+                    oldEntity = (IEntity) targetEntity.clone();
+                } catch (CloneNotSupportedException e) {
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
+                }
+
                 // 操作时间
                 targetEntity.markTime(entity.time());
                 targetEntity.entityValue().addValues(entity.entityValue().values());
@@ -253,12 +264,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.CONFLICT);
                 }
 
-                tx.getAccumulator().accumulateReplace(entity.id());
-
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
                 targetEntity.resetVersion(targetEntity.version() + INCREMENT_POS);
 
-                noticeEvent(tx, EventType.ENTITY_REPLACE, targetEntity, entity);
+                if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
+                    hint.setRollback(true);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.UNACCUMULATE);
+                }
+
+                noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
                 return new OperationResult(tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
             });
@@ -295,7 +309,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
                 }
 
-                tx.getAccumulator().accumulateDelete(entity.id());
+                if (!tx.getAccumulator().accumulateDelete(targetEntityOp.get())) {
+                    hint.setRollback(true);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.UNACCUMULATE);
+                }
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
@@ -382,7 +399,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 break;
             }
             case ENTITY_REPLACE: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0], entities[1])));
+                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
                 break;
             }
             case ENTITY_DELETE: {

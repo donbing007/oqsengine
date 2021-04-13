@@ -317,7 +317,17 @@ public class ConditionHelper {
             Optional<IEntityField> fieldOp = findFieldById(mainClass, fieldId);
 
             if (!fieldOp.isPresent() && x.getRelationId() > 0) {
-                fieldOp = manager.load(x.getRelationId()).flatMap(related -> findFieldById(related, fieldId));
+                Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
+                        .filter(rel -> rel.getId() == x.getRelationId())
+                        .findFirst();
+
+                if (relationOp.isPresent()) {
+
+                    OqsRelation relation = relationOp.get();
+                    if (relation.getLeftEntityClassId() == mainClass.id()) {
+                        fieldOp = manager.load(relation.getRightEntityClassId()).flatMap(related -> findFieldById(related, fieldId));
+                    }
+                }
             }
 
             return toOneConditions(fieldOp, x, mainClass);

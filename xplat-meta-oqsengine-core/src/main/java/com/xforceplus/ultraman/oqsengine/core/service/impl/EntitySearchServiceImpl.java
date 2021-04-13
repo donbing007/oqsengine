@@ -277,7 +277,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Sort useSort = null;
         if (config.getSort().isPresent()) {
             Sort sort = config.getSort().get();
-            if (!sort.getField().config().isSearchable()) {
+            if (sort.getField() != null  && !sort.getField().config().isSearchable()) {
                 useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
             }
         } else {
