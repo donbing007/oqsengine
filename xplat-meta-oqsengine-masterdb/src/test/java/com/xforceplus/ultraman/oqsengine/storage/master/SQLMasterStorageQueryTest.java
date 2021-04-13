@@ -220,6 +220,11 @@ public class SQLMasterStorageQueryTest {
 
         try {
             initData(storage);
+
+            // 表示为只读事务.
+            for (IEntity e : entityes) {
+                tx.getAccumulator().accumulateBuild(e.id());
+            }
             tx.commit();
         } catch (Exception ex) {
 
@@ -398,6 +403,20 @@ public class SQLMasterStorageQueryTest {
                     long[] expectedIds = {
                         1000, 1002
                     };
+                    assertSelect(expectedIds, result, false);
+                }
+            )
+            ,
+            // id in (not exist)
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        EntityField.ID_ENTITY_FIELD, ConditionOperator.MULTIPLE_EQUALS,
+                        new LongValue(EntityField.ID_ENTITY_FIELD, 10000000)
+                    )),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {};
                     assertSelect(expectedIds, result, false);
                 }
             )

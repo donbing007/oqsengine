@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -195,6 +196,20 @@ public class OqsRelation {
 
     public void setCompanionRelation(long companionRelation) {
         this.companionRelation = companionRelation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OqsRelation that = (OqsRelation) o;
+        return id == that.id &&
+                Objects.equals(code, that.code);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, code);
     }
 
     /**
