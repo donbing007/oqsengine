@@ -154,7 +154,7 @@ public class RedisEventHandler implements CacheEventHandler {
             }
         } catch (Exception e) {
             expired.offer(txId);
-            logger.warn(e.getMessage());
+            //logger.warn(e.getMessage());
         }
     }
 
