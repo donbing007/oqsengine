@@ -42,14 +42,16 @@ public class RedisEventHandler implements CacheEventHandler {
 
     private RedisCommands<String, String> syncCommands;
 
-    private Thread worker;
+//    private Thread worker;
 
-    private Queue<Long> expired = new LinkedBlockingQueue<>(512);
+//    private Queue<Long> expired = new LinkedBlockingQueue<>(512);
+
+//    private static volatile boolean closed;
 
     //  3分钟过期
     private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
 
-    private static volatile boolean closed;
+
 
     public RedisEventHandler(RedisClient redisClient, ObjectMapper objectMapper, long expiredDuration) {
         this.redisClient = redisClient;
@@ -65,24 +67,24 @@ public class RedisEventHandler implements CacheEventHandler {
             this.expiredDuration = expiredDuration;
         }
 
-        worker = new Thread(() -> {
-            while (!closed) {
-                try {
-                    if (!expired.isEmpty()) {
-                        Long txId = expired.poll();
-                        if (null != txId) {
-                            end(txId);
-                        }
-                    } else {
-                        Thread.sleep(CacheEventHelper.WAIT_DURATION);
-                    }
-
-                } catch (Exception e) {
-                    //  ignore
-
-                }
-            }
-        });
+//        worker = new Thread(() -> {
+//            while (!closed) {
+//                try {
+//                    if (!expired.isEmpty()) {
+//                        Long txId = expired.poll();
+//                        if (null != txId) {
+//                            end(txId);
+//                        }
+//                    } else {
+//                        Thread.sleep(CacheEventHelper.WAIT_DURATION);
+//                    }
+//
+//                } catch (Exception e) {
+//                    //  ignore
+//
+//                }
+//            }
+//        });
     }
 
     @PostConstruct
@@ -95,18 +97,18 @@ public class RedisEventHandler implements CacheEventHandler {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.event");
 
-        closed = false;
+//        closed = false;
 
-        worker.start();
+//        worker.start();
     }
 
     @PreDestroy
     public void destroy() {
-        closed = true;
+//        closed = true;
 
-        if (null != worker) {
-            waitForClosed(worker, CacheEventHelper.CLOSE_WAIT_MAX_LOOP);
-        }
+//        if (null != worker) {
+//            waitForClosed(worker, CacheEventHelper.CLOSE_WAIT_MAX_LOOP);
+//        }
     }
 
     @Override
@@ -175,10 +177,12 @@ public class RedisEventHandler implements CacheEventHandler {
     private void end(long txId) {
         String txIdStr = CacheEventHelper.eventKeyGenerate(txId);
         try {
-            syncCommands.expire(txIdStr, expiredDuration);
+            if(!syncCommands.expire(txIdStr, expiredDuration)) {
+                logger.warn("expired txId failed, [{}]", txIdStr);
+            }
         } catch (Exception e) {
-            expired.offer(txId);
-            //logger.warn(e.getMessage());
+            //expired.offer(txId);
+            logger.warn(e.getMessage());
         }
     }
 
