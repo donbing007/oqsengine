@@ -50,8 +50,6 @@ public class RedisEventHandler implements CacheEventHandler {
     //  3分钟过期
     private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
 
-
-
     public RedisEventHandler(RedisClient redisClient, ObjectMapper objectMapper, long expiredDuration) {
         this.redisClient = redisClient;
 
@@ -164,12 +162,11 @@ public class RedisEventHandler implements CacheEventHandler {
     }
 
 
-
     private void end(long txId) {
         String txIdStr = CacheEventHelper.eventKeyGenerate(txId);
         try {
-            if(!syncCommands.expire(txIdStr, expiredDuration)) {
-                logger.warn("expired txId failed, [{}]", txIdStr);
+            if (!syncCommands.expire(txIdStr, expiredDuration)) {
+                logger.warn("expired cache event item failed, txId-[{}]", txIdStr);
             }
         } catch (Exception e) {
             //expired.offer(txId);
@@ -183,7 +180,7 @@ public class RedisEventHandler implements CacheEventHandler {
 
             return syncCommands.hset(CacheEventHelper.eventKeyGenerate(event.payload().get().getTxId())
                     , CacheEventHelper.eventFieldGenerate(event.payload().get().getId(),
-                                        event.payload().get().getVersion(), event.type().getValue())
+                            event.payload().get().getVersion(), event.type().getValue())
                     , encodeJson);
         } catch (Exception e) {
             logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
