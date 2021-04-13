@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -131,17 +130,17 @@ public class RedisEventHandler implements CacheEventHandler {
 
     @Override
     public boolean create(long txId, long number, IEntity entity) {
-        return storage(CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity));
+        return storage(CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, number, entity, null));
     }
 
     @Override
     public boolean replace(long txId, long number, IEntity entity, IEntity old) {
-        return storage(CacheEventHelper.generate(ENTITY_BUILD, txId, number, entity, old));
+        return storage(CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, number, entity, old));
     }
 
     @Override
     public boolean delete(long txId, long number, IEntity entity) {
-        return storage(CacheEventHelper.generate(ENTITY_DELETE, txId, number, entity));
+        return storage(CacheEventHelper.toCachePayload(ENTITY_DELETE, txId, number, entity, null));
     }
 
     @Override
@@ -174,17 +173,17 @@ public class RedisEventHandler implements CacheEventHandler {
         }
     }
 
-    private boolean storage(Event<CachePayload> event) {
+    private boolean storage(CachePayload payload) {
         try {
-            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(event).getBytes());
+            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(payload).getBytes());
 
-            return syncCommands.hset(CacheEventHelper.eventKeyGenerate(event.payload().get().getTxId())
-                    , CacheEventHelper.eventFieldGenerate(event.payload().get().getId(),
-                            event.payload().get().getVersion(), event.type().getValue())
+            return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
+                    , CacheEventHelper.eventFieldGenerate(payload.getId(),
+                            payload.getVersion(), payload.getEventType().getValue())
                     , encodeJson);
         } catch (Exception e) {
             logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
-                    , event.payload().get().getTxId(), event.type(), event.payload().get().getId(), event.payload().get().getVersion(), e.getMessage());
+                    , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
 
             return false;
         }

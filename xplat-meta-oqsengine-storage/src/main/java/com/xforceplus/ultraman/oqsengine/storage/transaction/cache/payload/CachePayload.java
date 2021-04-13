@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -29,6 +30,18 @@ public class CachePayload implements Serializable {
      */
     @JsonProperty(value = "version")
     private int version;
+
+    /**
+     * entity的当前版本
+     */
+    @JsonProperty(value = "eventType")
+    private EventType eventType;
+
+    /**
+     * 事件发布时间
+     */
+    @JsonProperty(value = "time")
+    private long time;
 
     /**
      * entity在当前TX中的操作顺序
@@ -64,6 +77,14 @@ public class CachePayload implements Serializable {
         return number;
     }
 
+    public EventType getEventType() {
+        return eventType;
+    }
+
+    public long getTime() {
+        return time;
+    }
+
     public Map<Long, String> getFieldValueMapping() {
         return fieldValueMapping;
     }
@@ -80,6 +101,8 @@ public class CachePayload implements Serializable {
         private long id;
         private int version;
         private long number;
+        private EventType eventType;
+        private long time;
         private Map<Long, String> fieldValueMapping;
         private Map<Long, String> oldFieldValueMapping;
 
@@ -110,6 +133,16 @@ public class CachePayload implements Serializable {
             return this;
         }
 
+        public CachePayload.Builder withEventType(EventType eventType) {
+            this.eventType = eventType;
+            return this;
+        }
+
+        public CachePayload.Builder withTime(long time) {
+            this.time = time;
+            return this;
+        }
+
         public CachePayload.Builder withFieldValueMapping(Map<Long, String> fieldValueMapping) {
             this.fieldValueMapping = fieldValueMapping;
             return this;
@@ -126,6 +159,8 @@ public class CachePayload implements Serializable {
             value.id = this.id;
             value.version = this.version;
             value.number = this.number;
+            value.eventType = this.eventType;
+            value.time = this.time;
             value.fieldValueMapping = this.fieldValueMapping;
             value.oldFieldValueMapping = this.oldFieldValueMapping;
             return value;

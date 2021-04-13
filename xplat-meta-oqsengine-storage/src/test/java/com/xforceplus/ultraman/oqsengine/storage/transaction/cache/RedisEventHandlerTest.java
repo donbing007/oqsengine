@@ -83,7 +83,7 @@ public class RedisEventHandlerTest extends MiddleWare {
         cacheEventHandler.init();
 
         m = cacheEventHandler.getClass()
-                .getDeclaredMethod("storage", new Class[]{Event.class});
+                .getDeclaredMethod("storage", new Class[]{CachePayload.class});
         m.setAccessible(true);
     }
 
@@ -164,7 +164,8 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     @Test
     public void testSerial() throws JsonProcessingException {
-        Event<CachePayload> res = CacheEventHelper.generate(ENTITY_BUILD, 1, 2, randomEntityBuild(3, 1));
+        CachePayload res =
+                CacheEventHelper.toCachePayload(ENTITY_BUILD, 1, 2, randomEntityBuild(3, 1), null);
 
         String result = objectMapper.writeValueAsString(res);
 
@@ -206,11 +207,11 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private void buildOne(long txId, int current) throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
         IEntity entity = randomEntityBuild(current, current);
-        Event<CachePayload> event = CacheEventHelper.generate(ENTITY_BUILD, txId, current, entity);
+        CachePayload cachePayload = CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, current, entity, null);
 
-        String json = objectMapper.writeValueAsString(event);
+        String json = objectMapper.writeValueAsString(cachePayload);
 
-        boolean result = (boolean) m.invoke(cacheEventHandler, event);
+        boolean result = (boolean) m.invoke(cacheEventHandler, cachePayload);
         Assert.assertTrue(result);
         expectedTxValueMap.computeIfAbsent(txId, t -> new ArrayList<>()).add(new QueryCondition((long) current, current, ENTITY_BUILD.getValue(), Base64.getEncoder().encodeToString(json.getBytes())));
     }
@@ -265,8 +266,8 @@ public class RedisEventHandlerTest extends MiddleWare {
         return false;
     }
 
-    public static Event<CachePayload> cacheEventGenerator(EventType eventType,long txId, int number, long id, int version) {
-        return CacheEventHelper.generate(eventType, txId, number, randomEntityBuild(id, version));
+    public static CachePayload cacheEventGenerator(EventType eventType,long txId, int number, long id, int version) {
+        return CacheEventHelper.toCachePayload(eventType, txId, number, randomEntityBuild(id, version), null);
     }
 
 

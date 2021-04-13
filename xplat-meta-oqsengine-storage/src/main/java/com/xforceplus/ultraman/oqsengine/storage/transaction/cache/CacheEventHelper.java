@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
-import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
-import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -28,19 +26,6 @@ public class CacheEventHelper {
     public static final long WAIT_DURATION = 1000;
     public static String CUD_PAYLOAD_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.event.payload";
 
-    public static Event<CachePayload> generate(EventType eventType, long txId, long number, IEntity entity) {
-        return new ActualEvent<>(eventType,
-                toCachePayload(txId, number, entity, null),
-                System.currentTimeMillis()
-        );
-    }
-
-    public static Event<CachePayload> generate(EventType eventType, long txId, long number, IEntity entity, IEntity old) {
-        return new ActualEvent<>(eventType,
-                toCachePayload(txId, number, entity, old),
-                System.currentTimeMillis()
-        );
-    }
 
     public static String eventFieldGenerate(long id, long version, int eventType) {
         return  String.format("%d.%d.%d", id, version, eventType);
@@ -55,12 +40,14 @@ public class CacheEventHelper {
     }
 
 
-    private static CachePayload toCachePayload(long txId, long number, IEntity entity, IEntity old) {
+    public static CachePayload toCachePayload(EventType eventType, long txId, long number, IEntity entity, IEntity old) {
         CachePayload.Builder builder = CachePayload.Builder.anCacheValue()
                 .withTxId(txId)
                 .withId(entity.id())
                 .withVersion(entity.version())
                 .withNumber(number)
+                .withEventType(eventType)
+                .withTime(System.currentTimeMillis())
                 .withFieldValueMapping(toFieldValueMapping(entity));
         if (null != old) {
             builder.withOldFieldValueMapping(toFieldValueMapping(old));
