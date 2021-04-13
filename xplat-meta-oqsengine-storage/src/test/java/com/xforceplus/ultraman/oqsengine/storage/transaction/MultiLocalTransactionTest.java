@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -37,6 +39,7 @@ public class MultiLocalTransactionTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
+    private RedisEventHandler redisEventHandler;
 
     @Before
     public void before() throws Exception {
@@ -47,6 +50,8 @@ public class MultiLocalTransactionTest {
         commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
+
+        redisEventHandler = new RedisEventHandler(redisClient, new ObjectMapper(), 10);
     }
 
     @After
@@ -63,11 +68,12 @@ public class MultiLocalTransactionTest {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .withMaxWaitCommitIdSyncMs(0)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .withMaxWaitCommitIdSyncMs(0)
+                .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -94,10 +100,11 @@ public class MultiLocalTransactionTest {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -106,7 +113,7 @@ public class MultiLocalTransactionTest {
         }
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1).withVersion(1).build(),
-                                    Entity.Builder.anEntity().withId(1).withVersion(0).build());
+                Entity.Builder.anEntity().withId(1).withVersion(0).build());
         // 没有真实的操作,这里手动填入一个提交号.
         commitIdStatusService.save(1, true);
 
@@ -127,10 +134,11 @@ public class MultiLocalTransactionTest {
     public void testRollback() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -148,11 +156,12 @@ public class MultiLocalTransactionTest {
     public void testCommitEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .withMaxWaitCommitIdSyncMs(0)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .withMaxWaitCommitIdSyncMs(0)
+                .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -190,10 +199,11 @@ public class MultiLocalTransactionTest {
     public void testRollbackEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -226,10 +236,12 @@ public class MultiLocalTransactionTest {
     public void testIsReady() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
-            .withId(1)
-            .withLongIdGenerator(idGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .build();
+                .withId(1)
+                .withLongIdGenerator(idGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(redisEventHandler)
+                .build();
+
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(8).build());
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
