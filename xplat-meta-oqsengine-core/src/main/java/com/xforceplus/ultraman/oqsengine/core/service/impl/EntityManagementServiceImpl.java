@@ -202,20 +202,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.restMaintainId(0);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
                 }
 
                 if (!tx.getAccumulator().accumulateBuild(entity)) {
                     hint.setRollback(true);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
-                return new OperationResult(
-                    tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -318,7 +315,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
-                if (isConflict(masterStorage.delete(targetEntityOp.get(), entityClass))) {
+                if (isConflict(masterStorage.delete(targetEntityOp.orElse(entity), entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);

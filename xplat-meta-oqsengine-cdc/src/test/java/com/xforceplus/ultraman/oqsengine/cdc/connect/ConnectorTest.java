@@ -54,7 +54,7 @@ public class ConnectorTest extends CDCAbstractContainer {
 
     private void initDaemonService() throws Exception {
         cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService();
+        mockRedisCallbackService = new MockRedisCallbackService(null);
 
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 

@@ -57,11 +57,12 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
+        ConsumerService consumerService = initAll();
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService();
+        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
-        return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
+        return new ConsumerRunner(consumerService, cdcMetricsService, singleCDCConnector);
     }
 
     private void startConsumerRunner(long partitionId) throws Exception {
@@ -95,12 +96,12 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
 
             try {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-                initData(entities, false, false);
+                initData(tx, entities, false, false);
 
                 Thread.sleep(1000);
 
                 entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-                initData(entities, true, false);
+                initData(tx, entities, true, false);
 
                 expectedCount += entities.length;
 
@@ -127,11 +128,11 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
 
             try {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-                initData(entities, false, false);
+                initData(tx, entities, false, false);
 
                 Thread.sleep(1000);
 
-                initData(entities, true, true);
+                initData(tx, entities, true, true);
                 expectedCount += entities.length;
             } catch (Exception ex) {
                 tx.rollback();
@@ -160,10 +161,10 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
                 transactionManager.bind(tx.id());
                 try {
                     IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-                    initData(entities, false, false);
+                    initData(tx, entities, false, false);
 
                     entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-                    initData(entities, true, false);
+                    initData(tx, entities, true, false);
                     expectedCount += entities.length;
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -198,7 +199,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
                 IEntity[] entities;
                 for (long i = t; i < t + gap * size; i += gap) {
                     entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                    initData(entities, false, false);
+                    initData(tx, entities, false, false);
                     expectedCount += entities.length;
                 }
 
@@ -230,8 +231,8 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
                 transactionManager.bind(tx.id());
                 try {
                     IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                    initData(entities, false, false);
-                    initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
+                    initData(tx, entities, false, false);
+                    initData(tx, EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
 
                     expectedCount += entities.length;
                     tx.commit();
@@ -249,15 +250,18 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     }
 
 
-    private void initData(IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
+    private void initData(Transaction tx, IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
         for (IEntity entity : datas) {
             if (delete) {
                 masterStorage.delete(entity, getEntityClass(entity.entityClassRef().getId()));
+                tx.getAccumulator().accumulateDelete(entity);
             } else if (replacement) {
                 entity.resetVersion(0);
                 masterStorage.replace(entity, getEntityClass(entity.entityClassRef().getId()));
+                tx.getAccumulator().accumulateReplace(entity, entity);
             } else {
                 masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
+                tx.getAccumulator().accumulateBuild(entity);
             }
         }
     }

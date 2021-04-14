@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private CDCMetrics cdcMetrics;
     private CDCAckMetrics ackMetrics;
+    private CommitIdStatusService commitIdStatusService;
     private long heartBeat;
     private long notReady;
 
@@ -39,14 +41,27 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
         return ackMetrics;
     }
 
+    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
+    }
+
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
         this.ackMetrics = ackMetrics;
 
-        if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED &&
-                this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
-            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
-            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+        if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED) {
+            if (null != commitIdStatusService) {
+                ackMetrics.getCommitList().forEach(
+                        id -> {
+                            commitIdStatusService.obsolete(id);
+                        }
+                );
+            }
+
+            if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
+                executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
+                lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+            }
         }
 //
 //        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));

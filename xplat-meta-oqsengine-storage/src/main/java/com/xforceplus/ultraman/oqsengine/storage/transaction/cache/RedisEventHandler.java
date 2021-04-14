@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
 
 /**
  * desc :
@@ -55,6 +56,7 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
         if (expiredDuration > 0) {
             this.expiredDuration = expiredDuration;
         }
+
     }
 
     @PostConstruct
@@ -138,7 +140,7 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
 
     private boolean storage(CachePayload payload) {
         try {
-            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(payload).getBytes());
+            String encodeJson = ZipUtils.zip(objectMapper.writeValueAsString(payload));
 
             return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
                 , CacheEventHelper.eventFieldGenerate(payload.getId(),

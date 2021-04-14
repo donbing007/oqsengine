@@ -193,7 +193,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 IEntity entity = toEntity(entityClassRef, entityClass, in);
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.build(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult  operationResult = entityManagementService.build(entity);
                 long txId = operationResult.getTxId();
                 long version = operationResult.getVersion();
                 ResultStatus resultStatus = operationResult.getResultStatus();
@@ -276,7 +276,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.replace(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult  operationResult  = entityManagementService.replace(entity);
                 long txId = operationResult.getTxId();
                 int version = operationResult.getVersion();
                 ResultStatus replaceStatus = operationResult.getResultStatus();
@@ -970,8 +970,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             long objId = transRequest.getObjId();
             int transType = transRequest.getTransType();
             String type = transRequest.getType();
-            EventType eventType = EventType.valueOf(type);
-            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType.ordinal());
+            EventType eventType = null;
+            if(!StringUtils.isEmpty(type)) {
+                eventType = EventType.valueOf(type);
+            }
+            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType ==  null ? null: eventType.ordinal());
             return OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
