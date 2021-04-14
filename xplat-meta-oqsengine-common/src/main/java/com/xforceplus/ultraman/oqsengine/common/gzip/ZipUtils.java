@@ -37,7 +37,7 @@ public class ZipUtils {
         BufferedReader bf = new BufferedReader(new InputStreamReader(gzip, "UTF-8"));
         StringBuffer sb = new StringBuffer();
         String line;
-        while ((line=bf.readLine())!=null) {
+        while ((line = bf.readLine()) != null) {
             sb.append(line);
         }
 
