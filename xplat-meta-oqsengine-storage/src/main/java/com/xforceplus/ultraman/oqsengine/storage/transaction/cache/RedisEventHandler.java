@@ -135,7 +135,7 @@ public class RedisEventHandler implements CacheEventHandler {
 
     @Override
     public boolean replace(long txId, long number, IEntity entity, IEntity old) {
-        return storage(CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, number, entity, old));
+        return storage(CacheEventHelper.toCachePayload(ENTITY_REPLACE, txId, number, entity, old));
     }
 
     @Override

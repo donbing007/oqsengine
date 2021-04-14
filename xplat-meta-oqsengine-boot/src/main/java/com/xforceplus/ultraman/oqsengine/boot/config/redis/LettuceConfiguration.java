@@ -17,8 +17,8 @@ public class LettuceConfiguration {
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
 
-    private int changeLogDB = 15;
-    private int cacheEventDb = 16;
+    private int changeLogDB = 14;
+    private int cacheEventDb = 15;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
