@@ -547,7 +547,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .buildPartial();
                     }
                 } else {
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.deleteForce(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();

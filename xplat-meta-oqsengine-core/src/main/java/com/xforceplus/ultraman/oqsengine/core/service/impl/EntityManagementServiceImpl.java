@@ -304,7 +304,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
-                if (isConflict(masterStorage.delete(entity, entityClass))) {
+                if (isConflict(masterStorage.delete(targetEntityOp.orElse(entity), entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
                 }
