@@ -1,13 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
-import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
-import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -26,12 +21,9 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
@@ -54,11 +46,9 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private RedisEventHandler cacheEventHandler;
 
-    private ExecutorService cacheWorker;
-
     private ObjectMapper objectMapper;
 
-    private Map<Long, List<QueryCondition>> expectedTxValueMap = new HashMap<>();
+    private List<CachePayload> expectedCachePayloads = new ArrayList<>();
 
     private Method m;
 
@@ -75,8 +65,6 @@ public class RedisEventHandlerTest extends MiddleWare {
     @Before
     public void before() throws Exception {
 
-        cacheWorker = Executors.newFixedThreadPool(10);
-
         objectMapper = new ObjectMapper();
 
         cacheEventHandler = redisEventHandler(redisClient, objectMapper);
@@ -90,7 +78,7 @@ public class RedisEventHandlerTest extends MiddleWare {
     @After
     public void after() {
         clearRedis();
-        expectedTxValueMap.clear();
+        expectedCachePayloads.clear();
     }
 
     private static final int testSize = 10;
@@ -142,6 +130,16 @@ public class RedisEventHandlerTest extends MiddleWare {
         }
     }
 
+    @Test
+    public void storageTest() throws Exception {
+        testAssertStorage(ENTITY_BUILD, 1, Long.MAX_VALUE - 1, Integer.MAX_VALUE - 1);
+        testAssertStorage(ENTITY_BUILD, 1, Long.MAX_VALUE - 2, Integer.MAX_VALUE - 2);
+        testAssertStorage(ENTITY_REPLACE, 1, Long.MAX_VALUE - 1, Integer.MAX_VALUE - 1);
+        testAssertStorage(ENTITY_REPLACE, 1, Long.MAX_VALUE - 2, Integer.MAX_VALUE - 2);
+        testAssertStorage(ENTITY_DELETE, 1, Long.MAX_VALUE - 1, Integer.MAX_VALUE - 1);
+        testAssertStorage(ENTITY_DELETE, 1, Long.MAX_VALUE - 2, Integer.MAX_VALUE - 2);
+    }
+
     /**
      * 测试onEventCommit
      */
@@ -163,13 +161,17 @@ public class RedisEventHandlerTest extends MiddleWare {
 
 
     @Test
-    public void testSerial() throws JsonProcessingException {
+    public void testSerial() throws Exception {
         CachePayload res =
                 CacheEventHelper.toCachePayload(ENTITY_BUILD, 1, 2, randomEntityBuild(3, 1), null);
 
-        String result = objectMapper.writeValueAsString(res);
+        String result = ZipUtils.zip(objectMapper.writeValueAsString(res));
 
         logger.info(result);
+
+        CachePayload c = objectMapper.readValue(ZipUtils.unzip(result), CachePayload.class);
+
+        assertCachePayload(res, c);
     }
 
     /**
@@ -183,18 +185,65 @@ public class RedisEventHandlerTest extends MiddleWare {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
         }
 
-        for (Map.Entry<Long, List<QueryCondition>> v : expectedTxValueMap.entrySet()) {
+        for (CachePayload v : expectedCachePayloads) {
             //  这里传入2个-1是为了测试判断条件是否进入eventType check
-            Collection<String> ret = cacheEventHandler.eventsQuery(v.getKey(), -1L, -1, null);
+            Collection<String> ret = cacheEventHandler.eventsQuery(v.getTxId(), -1L, -1, null);
             Assert.assertEquals(testSize, ret.size());
 
-            for (QueryCondition q : v.getValue()) {
-                Collection<String> result = cacheEventHandler.eventsQuery(v.getKey(), q.id, q.version, q.eventType);
-                Assert.assertEquals(1, result.size());
+            storageWithQueryAssert(v);
+        }
+    }
 
-                Iterator<String> it = result.iterator();
-                Assert.assertTrue(it.hasNext());
-                Assert.assertEquals(q.expectValue, it.next());
+    private void testAssertStorage(EventType eventType, long txId, long number, int version) throws Exception {
+        CachePayload cachePayload;
+        switch (eventType) {
+            case ENTITY_BUILD:
+            case ENTITY_DELETE:
+                cachePayload = CacheEventHelper.toCachePayload(eventType, txId, number, randomEntityBuild(number, version), null);
+                Assert.assertTrue((boolean) m.invoke(cacheEventHandler, cachePayload));
+                storageWithQueryAssert(cachePayload);
+                break;
+            case ENTITY_REPLACE:
+                cachePayload = CacheEventHelper.toCachePayload(eventType, txId, number, randomEntityBuild(number, version), randomEntityBuild(number, version - 1));
+                Assert.assertTrue((boolean) m.invoke(cacheEventHandler, cachePayload));
+                storageWithQueryAssert(cachePayload);
+                break;
+        }
+    }
+
+    private void storageWithQueryAssert(CachePayload cachePayload) throws Exception {
+        Collection<String> ret = cacheEventHandler.eventsQuery(cachePayload.getTxId(), cachePayload.getNumber(), cachePayload.getVersion(), cachePayload.getEventType().getValue());
+        Assert.assertEquals(1, ret.size());
+
+
+        Iterator<String> it = ret.iterator();
+        Assert.assertTrue(it.hasNext());
+
+        assertCachePayload(cachePayload, objectMapper.readValue(ZipUtils.unzip(it.next()), CachePayload.class));
+    }
+
+    private void assertCachePayload(CachePayload expected, CachePayload actual) {
+        Assert.assertEquals(expected.getId(), actual.getId());
+        Assert.assertEquals(expected.getEventType(), actual.getEventType());
+        Assert.assertEquals(expected.getNumber(), actual.getNumber());
+        Assert.assertEquals(expected.getTime(), actual.getTime());
+        Assert.assertEquals(expected.getVersion(), actual.getVersion());
+        Assert.assertEquals(expected.getTxId(), actual.getTxId());
+        Assert.assertEquals(expected.getFieldValueMapping().size(), actual.getFieldValueMapping().size());
+
+        for (Map.Entry<Long, String> e : expected.getFieldValueMapping().entrySet()) {
+            String v = actual.getFieldValueMapping().remove(e.getKey());
+            Assert.assertEquals(e.getValue(), v);
+        }
+
+        if (null == expected.getOldFieldValueMapping()) {
+            Assert.assertNull(actual.getOldFieldValueMapping());
+        } else {
+            Assert.assertEquals(expected.getOldFieldValueMapping().size(), actual.getOldFieldValueMapping().size());
+
+            for (Map.Entry<Long, String> e : expected.getOldFieldValueMapping().entrySet()) {
+                String v = actual.getOldFieldValueMapping().remove(e.getKey());
+                Assert.assertEquals(e.getValue(), v);
             }
         }
     }
@@ -209,11 +258,9 @@ public class RedisEventHandlerTest extends MiddleWare {
         IEntity entity = randomEntityBuild(current, current);
         CachePayload cachePayload = CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, current, entity, null);
 
-        String json = objectMapper.writeValueAsString(cachePayload);
-
         boolean result = (boolean) m.invoke(cacheEventHandler, cachePayload);
         Assert.assertTrue(result);
-        expectedTxValueMap.computeIfAbsent(txId, t -> new ArrayList<>()).add(new QueryCondition((long) current, current, ENTITY_BUILD.getValue(), ZipUtils.zip(json)));
+        expectedCachePayloads.add(cachePayload);
     }
 
     private Map<Long, AtomicInteger> expectSizeByTxId() {
@@ -242,7 +289,6 @@ public class RedisEventHandlerTest extends MiddleWare {
             }
         }
     }
-
 
     private RedisEventHandler redisEventHandler(RedisClient redisClient, ObjectMapper objectMapper) {
         return new RedisEventHandler(redisClient,  objectMapper, 10);
@@ -294,14 +340,6 @@ public class RedisEventHandlerTest extends MiddleWare {
                                 ).build();
     }
 
-    private Event<BeginPayload> eventBeginGenerator(long txId) {
-        return new ActualEvent(TX_BEGIN, new BeginPayload(txId, TX_BEGIN.name()));
-    }
-
-    private Event<CommitPayload> eventCommitGenerator(long txId, int number) {
-        return new ActualEvent(TX_COMMITED, new CommitPayload(txId, 1, TX_COMMITED.name(), false, number));
-    }
-
     private static class RandomTXEventType {
         private long txId;
         private EventType eventType;
@@ -309,20 +347,6 @@ public class RedisEventHandlerTest extends MiddleWare {
         public RandomTXEventType(long txId, EventType eventType) {
             this.txId = txId;
             this.eventType = eventType;
-        }
-    }
-
-    private static class QueryCondition {
-        Long id;
-        Integer version;
-        Integer eventType;
-        String expectValue;
-
-        public QueryCondition(Long id, Integer version, Integer eventType, String expectValue) {
-            this.id = id;
-            this.version = version;
-            this.eventType = eventType;
-            this.expectValue = expectValue;
         }
     }
 }
