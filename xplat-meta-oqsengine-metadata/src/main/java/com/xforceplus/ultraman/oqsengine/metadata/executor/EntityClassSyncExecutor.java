@@ -40,6 +40,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     @Resource
     private IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity> expireExecutor;
 
+    private volatile boolean closed = false;
+
     private Thread thread;
 
     /**
@@ -47,6 +49,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @PostConstruct
     public void start() {
+        closed = false;
         thread = ThreadUtils.create(() -> {
             delayCleanTask();
             return true;
@@ -60,11 +63,18 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @PreDestroy
     public void stop() {
+        closed = true;
         expireExecutor.stop();
         ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
-
+    /**
+     * 同步appId对应的EntityClass package
+     * @param appId
+     * @param version
+     * @param entityClassSyncRspProto
+     * @return
+     */
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
 
@@ -108,16 +118,26 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         return false;
     }
 
+    /**
+     * 获取当前meta的版本信息
+     * @param appId
+     * @return
+     */
     @Override
     public int version(String appId) {
         return cacheExecutor.version(appId);
     }
 
+    /**
+     * 清理过期任务
+     */
     private void delayCleanTask() {
-        while (true) {
+        while (!closed) {
             ExpireExecutor.DelayCleanEntity task = expireExecutor.take();
             if (null == task || null == task.element()) {
-                TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
+                if (!closed) {
+                    TimeWaitUtils.wakeupAfter(POLL_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+                }
                 continue;
             }
             try {

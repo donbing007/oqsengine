@@ -30,6 +30,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALT
 /**
  * desc :
  * name : EntityClassManagerExecutor
+ * Meta管理类
  *
  * @author : xujia
  * date : 2021/2/9
@@ -52,6 +53,11 @@ public class EntityClassManagerExecutor implements MetaManager {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
+    /**
+     * 使用entityClassId获取对应的EntityClass
+     * @param id 元信息的标识.
+     * @return
+     */
     @Override
     public Optional<IEntityClass> load(long id) {
         try {
@@ -71,6 +77,13 @@ public class EntityClassManagerExecutor implements MetaManager {
         return null;
     }
 
+    /**
+     * 需要关注某个appId
+     * 注意：当前的实现只支持单个appId的单个Env，即appId如果关注了test env，则无法再次关注其他环境
+     * @param appId 应用标识.
+     * @param env
+     * @return
+     */
     @Override
     public int need(String appId, String env) {
         boolean ret = false;
@@ -124,14 +137,23 @@ public class EntityClassManagerExecutor implements MetaManager {
 //            }
             throw e;
         }
-
     }
 
+    /**
+     * 使本地缓存失效
+     */
     @Override
     public void invalidateLocal() {
         cacheExecutor.invalidateLocal();
     }
 
+    /**
+     * 生成IEntityClass
+     * @param id
+     * @param entityClassStorageMaps
+     * @return
+     * @throws SQLException
+     */
     private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
         EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
         if (null == entityClassStorage) {
