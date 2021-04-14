@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
 import io.lettuce.core.RedisClient;
@@ -13,11 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
-import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
 
 /**
  * desc :
@@ -27,7 +28,7 @@ import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
  * date : 2021/4/8
  * @since : 1.8
  */
-public class RedisEventHandler implements CacheEventHandler {
+public class RedisEventHandler implements CacheEventHandler, Lifecycle {
 
     final Logger logger = LoggerFactory.getLogger(RedisEventHandler.class);
 
@@ -58,6 +59,7 @@ public class RedisEventHandler implements CacheEventHandler {
     }
 
     @PostConstruct
+    @Override
     public void init() {
         if (redisClient == null) {
             throw new IllegalStateException("Invalid redisClient.");
@@ -68,7 +70,6 @@ public class RedisEventHandler implements CacheEventHandler {
         syncCommands.clientSetname("oqs.event");
     }
 
-
     @Override
     public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType) {
 
@@ -77,13 +78,13 @@ public class RedisEventHandler implements CacheEventHandler {
             Map<String, String> result = syncCommands.hgetall(CacheEventHelper.eventKeyGenerate(txId));
 
             return null == result || result.isEmpty() ?
-                    Collections.emptyList() :
-                    result.entrySet().stream()
-                            .filter(e -> {
-                                return !e.getKey().equals(TX_BEGIN.name());
-                            })
-                            .map(Map.Entry::getValue)
-                            .collect(Collectors.toList());
+                Collections.emptyList() :
+                result.entrySet().stream()
+                    .filter(e -> {
+                        return !e.getKey().equals(TX_BEGIN.name());
+                    })
+                    .map(Map.Entry::getValue)
+                    .collect(Collectors.toList());
         }
 
         //  精确查询 txId + id + version 确定
@@ -98,7 +99,7 @@ public class RedisEventHandler implements CacheEventHandler {
 
     @Override
     public boolean replace(long txId, long number, IEntity entity, IEntity old) {
-        return storage(CacheEventHelper.toCachePayload(ENTITY_REPLACE, txId, number, entity, old));
+        return storage(CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, number, entity, old));
     }
 
     @Override
@@ -141,12 +142,12 @@ public class RedisEventHandler implements CacheEventHandler {
             String encodeJson = ZipUtils.zip(objectMapper.writeValueAsString(payload));
 
             return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
-                    , CacheEventHelper.eventFieldGenerate(payload.getId(),
-                            payload.getVersion(), payload.getEventType().getValue())
-                    , encodeJson);
+                , CacheEventHelper.eventFieldGenerate(payload.getId(),
+                    payload.getVersion(), payload.getEventType().getValue())
+                , encodeJson);
         } catch (Exception e) {
             logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
-                    , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
+                , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
 
             return false;
         }
@@ -154,8 +155,8 @@ public class RedisEventHandler implements CacheEventHandler {
 
     private boolean invalidQueryEventType(Integer eventType) {
         return null == eventType ||
-                (eventType != EventType.ENTITY_BUILD.getValue() &&
-                        eventType != EventType.ENTITY_REPLACE.getValue() &&
-                        eventType != EventType.ENTITY_DELETE.getValue());
+            (eventType != EventType.ENTITY_BUILD.getValue() &&
+                eventType != EventType.ENTITY_REPLACE.getValue() &&
+                eventType != EventType.ENTITY_DELETE.getValue());
     }
 }

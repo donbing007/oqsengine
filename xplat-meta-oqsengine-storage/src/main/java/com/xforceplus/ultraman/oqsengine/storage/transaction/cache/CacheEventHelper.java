@@ -28,7 +28,7 @@ public class CacheEventHelper {
 
 
     public static String eventFieldGenerate(long id, long version, int eventType) {
-        return  String.format("%d.%d.%d", id, version, eventType);
+        return String.format("%d.%d.%d", id, version, eventType);
     }
 
     public static String eventKeyGenerate(long txId) {
