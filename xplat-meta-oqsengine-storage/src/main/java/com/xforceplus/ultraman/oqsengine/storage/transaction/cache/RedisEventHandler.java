@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -12,14 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
-import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
 
 /**
  * desc :
