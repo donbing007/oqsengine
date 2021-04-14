@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
-import com.xforceplus.ultraman.oqsengine.event.Event;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
 
 import java.util.Collection;
 
@@ -28,15 +26,53 @@ public interface CacheEventHandler {
      */
     public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType);
 
+    /**
+     * 创建一条build event
+     * @param txId
+     * @param number
+     * @param entity
+     * @return
+     */
     public boolean create(long txId, long number, IEntity entity);
 
+    /**
+     * 创建一条replace event
+     * @param txId
+     * @param number
+     * @param entity
+     * @param old
+     * @return
+     */
     public boolean replace(long txId, long number, IEntity entity, IEntity old);
 
+    /**
+     * 创建一条delete event
+     * @param txId
+     * @param number
+     * @param entity
+     * @return
+     */
     public boolean delete(long txId, long number, IEntity entity);
 
+    /**
+     * 开始事务 调用
+     * @param txId
+     * @return
+     */
     public boolean begin(long txId);
 
+    /**
+     * 提交事务 调用
+     * @param txId
+     * @param maxOpNumber
+     * @return
+     */
     public boolean commit(long txId, long maxOpNumber);
 
+    /**
+     * 回滚事务 调用
+     * @param txId
+     * @return
+     */
     public boolean rollback(long txId);
 }

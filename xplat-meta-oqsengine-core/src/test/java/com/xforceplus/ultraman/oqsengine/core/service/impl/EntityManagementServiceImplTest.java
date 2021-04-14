@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -101,7 +102,7 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity));
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -126,7 +127,7 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity));
+        Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -152,7 +153,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
-        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity));
+        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
     }
 
     @Test
@@ -202,7 +203,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity));
+        Assert.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -252,13 +253,13 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity));
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
     public void testDeleteSuccess() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
-        when(masterStorage.exist(1)).thenReturn(true);
+
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
@@ -275,36 +276,37 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
         when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity));
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
     public void testDeleteFail() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
-        when(masterStorage.exist(1)).thenReturn(true);
 
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
-            .withId(1)
-            .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                .withEntityClassRef(new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                .withId(1)
+                .withTime(System.currentTimeMillis())
+                .withEntityValue(EntityValue.build()
+                        .addValue(
+                                new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                        .addValue(
+                                new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                        .addValue(
+                                new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                        )
                 )
-            )
-            .build();
+                .build();
 
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
         when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity));
+        Assert.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
@@ -327,7 +329,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity));
+        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
     }
 
     static class MockTransactionExecutor implements TransactionExecutor {
@@ -337,6 +339,7 @@ public class EntityManagementServiceImplTest {
             return storageTask.run(
                 MultiLocalTransaction.Builder.aMultiLocalTransaction()
                     .withId(1)
+                    .withCacheEventHandler(new DoNothingCacheEventHandler())
                     .withEventBus(
                         new EventBus() {
                             @Override
