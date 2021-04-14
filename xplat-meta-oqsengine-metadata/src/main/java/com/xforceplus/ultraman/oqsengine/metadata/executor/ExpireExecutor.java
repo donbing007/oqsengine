@@ -8,6 +8,8 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.POLL_TIME_OUT_SECONDS;
+
 /**
  * desc :
  * name : ExpireExecutor
@@ -28,7 +30,7 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
     public DelayCleanEntity take() {
         if (isActive) {
             try {
-                return delayTasks.take();
+                return delayTasks.poll(POLL_TIME_OUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("expireExecutor is interrupted, may stop server...");
             }
