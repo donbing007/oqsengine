@@ -15,6 +15,10 @@ import java.util.Map;
  * @since : 1.8
  */
 public class CachePayload implements Serializable {
+
+    @JsonProperty(value = "classId")
+    private long classId;
+
     /**
      * txId
      */
@@ -93,11 +97,20 @@ public class CachePayload implements Serializable {
         return oldFieldValueMapping;
     }
 
+    public long getClassId() {
+        return classId;
+    }
+
+    public void setClassId(long classId) {
+        this.classId = classId;
+    }
+
     /**
      * builder
      */
     public static class Builder {
         private long txId;
+        private long classId;
         private long id;
         private int version;
         private long number;
@@ -120,6 +133,11 @@ public class CachePayload implements Serializable {
 
         public CachePayload.Builder withId(long id) {
             this.id = id;
+            return this;
+        }
+
+        public CachePayload.Builder withClassId(long classId) {
+            this.classId = classId;
             return this;
         }
 
@@ -157,6 +175,7 @@ public class CachePayload implements Serializable {
             CachePayload value = new CachePayload();
             value.txId = this.txId;
             value.id = this.id;
+            value.classId = this.classId;
             value.version = this.version;
             value.number = this.number;
             value.eventType = this.eventType;

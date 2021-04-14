@@ -23,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -546,7 +547,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .buildPartial();
                     }
                 } else {
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.deleteForce(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();
@@ -970,8 +971,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             long objId = transRequest.getObjId();
             int transType = transRequest.getTransType();
             String type = transRequest.getType();
-            EventType eventType = EventType.valueOf(type);
-            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType.ordinal());
+            EventType eventType = null;
+            if(!StringUtils.isEmpty(type)) {
+                eventType = EventType.valueOf(type);
+            }
+            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType ==  null ? null: eventType.ordinal());
             return OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")

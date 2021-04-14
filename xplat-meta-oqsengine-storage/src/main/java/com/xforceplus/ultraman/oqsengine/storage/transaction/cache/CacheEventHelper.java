@@ -44,6 +44,7 @@ public class CacheEventHelper {
         CachePayload.Builder builder = CachePayload.Builder.anCacheValue()
                 .withTxId(txId)
                 .withId(entity.id())
+                .withClassId(entity.entityClassRef().getId())
                 .withVersion(entity.version())
                 .withNumber(number)
                 .withEventType(eventType)
