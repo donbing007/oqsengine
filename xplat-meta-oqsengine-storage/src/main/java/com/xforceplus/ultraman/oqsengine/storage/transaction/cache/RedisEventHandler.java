@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -12,9 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
@@ -40,12 +39,6 @@ public class RedisEventHandler implements CacheEventHandler {
 
     private RedisCommands<String, String> syncCommands;
 
-//    private Thread worker;
-
-//    private Queue<Long> expired = new LinkedBlockingQueue<>(512);
-
-//    private static volatile boolean closed;
-
     //  3分钟过期
     private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
 
@@ -62,24 +55,6 @@ public class RedisEventHandler implements CacheEventHandler {
             this.expiredDuration = expiredDuration;
         }
 
-//        worker = new Thread(() -> {
-//            while (!closed) {
-//                try {
-//                    if (!expired.isEmpty()) {
-//                        Long txId = expired.poll();
-//                        if (null != txId) {
-//                            end(txId);
-//                        }
-//                    } else {
-//                        Thread.sleep(CacheEventHelper.WAIT_DURATION);
-//                    }
-//
-//                } catch (Exception e) {
-//                    //  ignore
-//
-//                }
-//            }
-//        });
     }
 
     @PostConstruct
@@ -91,20 +66,8 @@ public class RedisEventHandler implements CacheEventHandler {
         syncConnect = redisClient.connect();
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.event");
-
-//        closed = false;
-
-//        worker.start();
     }
 
-    @PreDestroy
-    public void destroy() {
-//        closed = true;
-
-//        if (null != worker) {
-//            waitForClosed(worker, CacheEventHelper.CLOSE_WAIT_MAX_LOOP);
-//        }
-    }
 
     @Override
     public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType) {
@@ -175,7 +138,7 @@ public class RedisEventHandler implements CacheEventHandler {
 
     private boolean storage(CachePayload payload) {
         try {
-            String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(payload).getBytes());
+            String encodeJson = ZipUtils.zip(objectMapper.writeValueAsString(payload));
 
             return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
                     , CacheEventHelper.eventFieldGenerate(payload.getId(),
@@ -195,23 +158,4 @@ public class RedisEventHandler implements CacheEventHandler {
                         eventType != EventType.ENTITY_REPLACE.getValue() &&
                         eventType != EventType.ENTITY_DELETE.getValue());
     }
-
-//    private void waitForClosed(Thread thread, long maxWaitLoops) {
-//        for (int i = 0; i < maxWaitLoops; i++) {
-//            if (!thread.isAlive()) {
-//                logger.info("wait for loops [{}] and thread closed successful.", i);
-//                break;
-//            }
-//            sleep(CacheEventHelper.WAIT_DURATION);
-//        }
-//        logger.info("reach max wait loops [{}] and thread will be force-closed.", maxWaitLoops);
-//    }
-//
-//    private void sleep(long time) {
-//        try {
-//            Thread.sleep(time);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

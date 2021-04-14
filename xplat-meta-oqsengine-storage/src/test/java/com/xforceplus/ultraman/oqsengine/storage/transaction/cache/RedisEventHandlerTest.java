@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -26,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -146,7 +146,7 @@ public class RedisEventHandlerTest extends MiddleWare {
      * 测试onEventCommit
      */
     @Test
-    public void onEventCommit() throws JsonProcessingException, InterruptedException, InvocationTargetException, IllegalAccessException {
+    public void onEventCommit() throws Exception {
         //  测试正常写入10条数据然后提交
         long expectTx = 1;
         initBeginWithBuild(expectTx);
@@ -176,7 +176,7 @@ public class RedisEventHandlerTest extends MiddleWare {
      * 测试查询
      */
     @Test
-    public void query() throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
+    public void query() throws Exception {
 
         for (int i = 0; i < testSize; i ++) {
             initBeginWithBuild(i);
@@ -199,13 +199,13 @@ public class RedisEventHandlerTest extends MiddleWare {
         }
     }
 
-    private void initBeginWithBuild(long txId) throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
+    private void initBeginWithBuild(long txId) throws Exception {
         for (int j = 0; j < testSize; j++) {
             buildOne(txId, j);
         }
     }
 
-    private void buildOne(long txId, int current) throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
+    private void buildOne(long txId, int current) throws Exception {
         IEntity entity = randomEntityBuild(current, current);
         CachePayload cachePayload = CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, current, entity, null);
 
@@ -213,7 +213,7 @@ public class RedisEventHandlerTest extends MiddleWare {
 
         boolean result = (boolean) m.invoke(cacheEventHandler, cachePayload);
         Assert.assertTrue(result);
-        expectedTxValueMap.computeIfAbsent(txId, t -> new ArrayList<>()).add(new QueryCondition((long) current, current, ENTITY_BUILD.getValue(), Base64.getEncoder().encodeToString(json.getBytes())));
+        expectedTxValueMap.computeIfAbsent(txId, t -> new ArrayList<>()).add(new QueryCondition((long) current, current, ENTITY_BUILD.getValue(), ZipUtils.zip(json)));
     }
 
     private Map<Long, AtomicInteger> expectSizeByTxId() {
