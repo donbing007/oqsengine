@@ -193,7 +193,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 IEntity entity = toEntity(entityClassRef, entityClass, in);
-                com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult  operationResult = entityManagementService.build(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.build(entity);
                 long txId = operationResult.getTxId();
                 long version = operationResult.getVersion();
                 ResultStatus resultStatus = operationResult.getResultStatus();
@@ -276,7 +276,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult  operationResult  = entityManagementService.replace(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.replace(entity);
                 long txId = operationResult.getTxId();
                 int version = operationResult.getVersion();
                 ResultStatus replaceStatus = operationResult.getResultStatus();
@@ -506,7 +506,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.delete(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus deleteStatus = operationResult.getResultStatus();
@@ -546,7 +546,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .buildPartial();
                     }
                 } else {
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.delete(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();

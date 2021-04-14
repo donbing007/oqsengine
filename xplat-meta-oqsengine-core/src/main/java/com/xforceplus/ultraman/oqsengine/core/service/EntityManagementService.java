@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
-import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import java.sql.SQLException;

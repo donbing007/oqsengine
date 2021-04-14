@@ -28,7 +28,7 @@ public class CacheEventHelper {
 
 
     public static String eventFieldGenerate(long id, long version, int eventType) {
-        return  String.format("%d.%d.%d", id, version, eventType);
+        return String.format("%d.%d.%d", id, version, eventType);
     }
 
     public static String eventKeyGenerate(long txId) {
@@ -42,13 +42,13 @@ public class CacheEventHelper {
 
     public static CachePayload toCachePayload(EventType eventType, long txId, long number, IEntity entity, IEntity old) {
         CachePayload.Builder builder = CachePayload.Builder.anCacheValue()
-                .withTxId(txId)
-                .withId(entity.id())
-                .withVersion(entity.version())
-                .withNumber(number)
-                .withEventType(eventType)
-                .withTime(System.currentTimeMillis())
-                .withFieldValueMapping(toFieldValueMapping(entity));
+            .withTxId(txId)
+            .withId(entity.id())
+            .withVersion(entity.version())
+            .withNumber(number)
+            .withEventType(eventType)
+            .withTime(System.currentTimeMillis())
+            .withFieldValueMapping(toFieldValueMapping(entity));
         if (null != old) {
             builder.withOldFieldValueMapping(toFieldValueMapping(old));
         }

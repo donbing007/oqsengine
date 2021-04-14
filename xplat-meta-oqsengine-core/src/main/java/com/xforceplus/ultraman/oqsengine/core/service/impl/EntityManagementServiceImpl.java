@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -17,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
@@ -202,17 +202,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.restMaintainId(0);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
                 }
 
                 if (!tx.getAccumulator().accumulateBuild(entity)) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
-                return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(
+                    tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -241,18 +244,26 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
+                /**
+                 * 获取当前的原始版本.
+                 */
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
 
+                /**
+                 * 保留修改前的.
+                 */
                 IEntity oldEntity = null;
                 try {
                     oldEntity = (IEntity) targetEntity.clone();
                 } catch (CloneNotSupportedException e) {
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
                 // 操作时间
@@ -261,7 +272,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.CONFLICT);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.CONFLICT);
                 }
 
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
@@ -269,7 +281,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.UNACCUMULATE);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
@@ -301,22 +314,26 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
-                if (isConflict(masterStorage.delete(entity, entityClass))) {
+                if (isConflict(masterStorage.delete(targetEntityOp.get(), entityClass))) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
                 }
 
                 if (!tx.getAccumulator().accumulateDelete(targetEntityOp.get())) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.UNACCUMULATE);
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
-                return new OperationResult(tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(
+                    tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 

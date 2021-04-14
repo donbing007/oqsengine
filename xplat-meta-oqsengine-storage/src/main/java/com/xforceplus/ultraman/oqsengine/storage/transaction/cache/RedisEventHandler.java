@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
 import io.lettuce.core.RedisClient;
@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
-import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
 
 /**
  * desc :
@@ -28,7 +28,7 @@ import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
  * date : 2021/4/8
  * @since : 1.8
  */
-public class RedisEventHandler implements CacheEventHandler {
+public class RedisEventHandler implements CacheEventHandler, Lifecycle {
 
     final Logger logger = LoggerFactory.getLogger(RedisEventHandler.class);
 
@@ -39,12 +39,6 @@ public class RedisEventHandler implements CacheEventHandler {
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
-
-//    private Thread worker;
-
-//    private Queue<Long> expired = new LinkedBlockingQueue<>(512);
-
-//    private static volatile boolean closed;
 
     //  3分钟过期
     private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
@@ -61,28 +55,10 @@ public class RedisEventHandler implements CacheEventHandler {
         if (expiredDuration > 0) {
             this.expiredDuration = expiredDuration;
         }
-
-//        worker = new Thread(() -> {
-//            while (!closed) {
-//                try {
-//                    if (!expired.isEmpty()) {
-//                        Long txId = expired.poll();
-//                        if (null != txId) {
-//                            end(txId);
-//                        }
-//                    } else {
-//                        Thread.sleep(CacheEventHelper.WAIT_DURATION);
-//                    }
-//
-//                } catch (Exception e) {
-//                    //  ignore
-//
-//                }
-//            }
-//        });
     }
 
     @PostConstruct
+    @Override
     public void init() {
         if (redisClient == null) {
             throw new IllegalStateException("Invalid redisClient.");
@@ -91,19 +67,6 @@ public class RedisEventHandler implements CacheEventHandler {
         syncConnect = redisClient.connect();
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.event");
-
-//        closed = false;
-
-//        worker.start();
-    }
-
-    @PreDestroy
-    public void destroy() {
-//        closed = true;
-
-//        if (null != worker) {
-//            waitForClosed(worker, CacheEventHelper.CLOSE_WAIT_MAX_LOOP);
-//        }
     }
 
     @Override
@@ -114,13 +77,13 @@ public class RedisEventHandler implements CacheEventHandler {
             Map<String, String> result = syncCommands.hgetall(CacheEventHelper.eventKeyGenerate(txId));
 
             return null == result || result.isEmpty() ?
-                    Collections.emptyList() :
-                    result.entrySet().stream()
-                            .filter(e -> {
-                                return !e.getKey().equals(TX_BEGIN.name());
-                            })
-                            .map(Map.Entry::getValue)
-                            .collect(Collectors.toList());
+                Collections.emptyList() :
+                result.entrySet().stream()
+                    .filter(e -> {
+                        return !e.getKey().equals(TX_BEGIN.name());
+                    })
+                    .map(Map.Entry::getValue)
+                    .collect(Collectors.toList());
         }
 
         //  精确查询 txId + id + version 确定
@@ -178,12 +141,12 @@ public class RedisEventHandler implements CacheEventHandler {
             String encodeJson = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(payload).getBytes());
 
             return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
-                    , CacheEventHelper.eventFieldGenerate(payload.getId(),
-                            payload.getVersion(), payload.getEventType().getValue())
-                    , encodeJson);
+                , CacheEventHelper.eventFieldGenerate(payload.getId(),
+                    payload.getVersion(), payload.getEventType().getValue())
+                , encodeJson);
         } catch (Exception e) {
             logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
-                    , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
+                , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
 
             return false;
         }
@@ -191,27 +154,8 @@ public class RedisEventHandler implements CacheEventHandler {
 
     private boolean invalidQueryEventType(Integer eventType) {
         return null == eventType ||
-                (eventType != EventType.ENTITY_BUILD.getValue() &&
-                        eventType != EventType.ENTITY_REPLACE.getValue() &&
-                        eventType != EventType.ENTITY_DELETE.getValue());
+            (eventType != EventType.ENTITY_BUILD.getValue() &&
+                eventType != EventType.ENTITY_REPLACE.getValue() &&
+                eventType != EventType.ENTITY_DELETE.getValue());
     }
-
-//    private void waitForClosed(Thread thread, long maxWaitLoops) {
-//        for (int i = 0; i < maxWaitLoops; i++) {
-//            if (!thread.isAlive()) {
-//                logger.info("wait for loops [{}] and thread closed successful.", i);
-//                break;
-//            }
-//            sleep(CacheEventHelper.WAIT_DURATION);
-//        }
-//        logger.info("reach max wait loops [{}] and thread will be force-closed.", maxWaitLoops);
-//    }
-//
-//    private void sleep(long time) {
-//        try {
-//            Thread.sleep(time);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }
