@@ -482,8 +482,8 @@ public class Conditions implements Serializable {
 
                 // 如果是影子结点,即表示已经迭代过了.直接处理.
                 if (linkNode.isShadow()) {
-                    if (predicate.test(linkNode)) {
-                        consumer.accept(linkNode);
+                    if (predicate.test(linkNode.getActual())) {
+                        consumer.accept(linkNode.getActual());
                         if (brake) {
                             break;
                         }

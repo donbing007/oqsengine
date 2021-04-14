@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Conditions Tester.
@@ -68,12 +70,21 @@ public class ConditionsTest {
             true
         );
 
+        AtomicBoolean shadow = new AtomicBoolean(false);
         StringBuilder buff = new StringBuilder();
         conditions.scan(
-            c -> buff.append(" ").append(c.getLink().name()).append(" "),
+            c -> {
+                shadow.set(c.isShadow());
+                buff.append(" ").append(c.getLink().name()).append(" ");
+            },
             c -> buff.append(c.toString()),
             c -> buff.append(c.toString())
         );
+
+        /**
+         * 验证不能将影子结点返回.
+         */
+        Assert.assertFalse(shadow.get());
 
         Assert.assertEquals(
             "updateTime = 100 AND updateTime = 200 AND (createTime != 3000 OR createTime != 5000)", buff.toString());
@@ -260,6 +271,37 @@ public class ConditionsTest {
             Assert.assertEquals(c.expected, c.conditions.toPrefixExpression());
 
         });
+    }
+
+    /**
+     * 测试从一个条件结点构造新的Conditons.
+     */
+    @Test
+    public void testInitFromNode() throws Exception {
+        Conditions expectedConditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1).withEntityClassCode("driver").build(),
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    1L,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 100L)
+                )
+            )
+            .addAnd(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 3)
+                )
+            );
+
+        Conditions newConditions = new Conditions(expectedConditions.collectConditionTree());
+        Assert.assertEquals(newConditions.size(), expectedConditions.size());
+        Assert.assertEquals(newConditions.isEmtpy(), expectedConditions.isEmtpy());
+        Assert.assertEquals(newConditions.haveFuzzyCondition(), expectedConditions.haveFuzzyCondition());
+        Assert.assertEquals(newConditions.haveRangeCondition(), expectedConditions.haveRangeCondition());
+        Assert.assertEquals(newConditions.haveOrLink(), expectedConditions.haveOrLink());
     }
 
     private Collection<Case> buildIteratorCase() {

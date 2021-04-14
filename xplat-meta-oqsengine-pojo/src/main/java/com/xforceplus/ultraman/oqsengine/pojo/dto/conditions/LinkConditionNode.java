@@ -17,6 +17,10 @@ public class LinkConditionNode extends ConditionNode {
      */
     private ConditionLink link;
     private boolean shadow;
+    /**
+     * 只有当shadow为true时,此值才有意义.
+     */
+    private LinkConditionNode actual;
 
     /**
      * 构造方法
@@ -40,8 +44,23 @@ public class LinkConditionNode extends ConditionNode {
         if (!shadow) {
             LinkConditionNode shadowNode = new LinkConditionNode(getLeft(), getRight(), getLink());
             shadowNode.shadow = true;
+            shadowNode.actual = this;
             shadowNode.setRed(this.isRed());
             return shadowNode;
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * 如果是实际类型,那么将返回自己.
+     * 否则返回真实的实体.
+     *
+     * @return 实体.
+     */
+    public LinkConditionNode getActual() {
+        if (isShadow()) {
+            return actual;
         } else {
             return this;
         }
