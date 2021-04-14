@@ -73,6 +73,9 @@ public class OperationResult {
     }
 
 
+    /**
+     * 工厂.
+     */
     public static final class Builder {
         private long txId;
         private long entityId;
