@@ -42,7 +42,6 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     private static Map<String, ResponseWatcher> uidWatchers = new ConcurrentHashMap<>();
 
 
-
     @Override
     public void start() {
         logger.debug("responseWatchExecutor start.");
@@ -192,10 +191,10 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                 watcher.watches().get(watchElement.getAppId());
 
         return null != current && (current.getVersion() < watchElement.getVersion() ||
-                                        current.getStatus().ordinal() < watchElement.getStatus().ordinal());
+                current.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
-    private synchronized boolean addVersionWithLock(String key, int version ) {
+    private synchronized boolean addVersionWithLock(String key, int version) {
         Integer v = appVersions.get(key);
         if (null == v || v < version) {
             appVersions.put(key, version);
@@ -217,10 +216,9 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         v.remove(value);
                     }
 
-                    if(v.isEmpty()) {
+                    if (v.isEmpty()) {
                         appWatchers.remove(key);
                     }
-
                 }
                 break;
         }
