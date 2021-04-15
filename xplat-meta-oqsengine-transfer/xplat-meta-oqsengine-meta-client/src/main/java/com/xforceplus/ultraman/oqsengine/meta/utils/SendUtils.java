@@ -53,10 +53,11 @@ public class SendUtils {
 
     private static void printLog(EntityClassSyncRequest entityClassSyncRequest) {
         try {
+            RequestStatus requestStatus = RequestStatus.getInstance(entityClassSyncRequest.getStatus());
             if (entityClassSyncRequest.getStatus() == RequestStatus.HEARTBEAT.ordinal()) {
                 logger.debug("send request success, request [{}, {}, {}]"
                         , "HEARTBEAT"
-                        , "STATUS:" + entityClassSyncRequest.getStatus()
+                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
                         , "UID:" + entityClassSyncRequest.getUid());
             } else {
                 String appId = entityClassSyncRequest.getAppId();
@@ -64,7 +65,7 @@ public class SendUtils {
                         , "REQ APP_ID:" + appId
                         , "REQ ENV:" + entityClassSyncRequest.getEnv()
                         , "VER:" + entityClassSyncRequest.getVersion()
-                        , "STATUS:" + entityClassSyncRequest.getStatus()
+                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
                         , "UID:" + entityClassSyncRequest.getUid());
             }
 
