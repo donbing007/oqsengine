@@ -29,7 +29,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     /**
      * 记录app + env的version
      */
-    private static Map<String, Integer> appVersions = new ConcurrentHashMap<>();
+    private static Map<String, Integer> appVersions = new HashMap<>();
 
     /**
      * 记录app + env的UIDs
