@@ -31,18 +31,7 @@ public class TestClientRemote {
     @Autowired
     private IRequestHandler requestHandler;
 
-
     boolean ifTest = false;
-
-    @Before
-    public void before() throws InterruptedException {
-        Thread.sleep(1_000);
-    }
-
-    @After
-    public void after() throws InterruptedException {
-        Thread.sleep(3_000);
-    }
 
     @Test
     public void test() throws InterruptedException {

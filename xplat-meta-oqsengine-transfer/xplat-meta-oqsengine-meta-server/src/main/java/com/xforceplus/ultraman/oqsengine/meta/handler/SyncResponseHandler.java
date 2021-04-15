@@ -430,7 +430,8 @@ public class SyncResponseHandler implements IResponseHandler {
          * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
          */
         if (ret && !registerOrHeartBeat) {
-            logger.info("send appPack ok, appId [{}], env [{}], version [{}]", appId, env, version);
+            logger.info("send app-pack ok, response [{}, {}, {}, {}]"
+                    , "RSP APP_ID:" + response.getAppId(), "ENV:" + response.getEnv(), "VER:" + response.getVersion(), "UID:" + response.getUid());
             retryExecutor.offer(
                     new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                             new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
