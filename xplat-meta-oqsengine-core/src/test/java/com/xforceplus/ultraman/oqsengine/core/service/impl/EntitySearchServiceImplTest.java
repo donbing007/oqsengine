@@ -26,6 +26,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
@@ -126,17 +127,30 @@ public class EntitySearchServiceImplTest {
     @Test
     public void testFilter() throws Exception {
         when(masterStorage.select(
-            Conditions.buildEmtpyConditions(),
-            MockMetaManager.l1EntityClass,
-            SelectConfig.Builder.aSelectConfig().withCommitId(1).withSort(
-                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
-            .thenReturn(Arrays.asList(
-                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-                new EntityRef(2, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-                new EntityRef(3, OperationType.DELETE.getValue(), OqsVersion.MAJOR),
-                new EntityRef(4, OperationType.UPDATE.getValue(), OqsVersion.MAJOR)
-            ));
-        when(masterStorage.selectMultiple(new long[]{1, 2, 4}, MockMetaManager.l1EntityClass)).thenReturn(
+            Mockito.argThat(conditions -> {
+                boolean result = conditions.size() == 0;
+                return result;
+            }),
+            Mockito.argThat(entityClass -> {
+                boolean result = entityClass.id() == MockMetaManager.l2EntityClass.id();
+                return result;
+            }),
+            Mockito.argThat(selectConfig -> {
+                boolean result = selectConfig.equals(
+                    SelectConfig.Builder.aSelectConfig()
+                        .withCommitId(1)
+                        .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                        .build());
+                return result;
+            })
+
+        )).thenReturn(Arrays.asList(
+            new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(2, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(3, OperationType.DELETE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(4, OperationType.UPDATE.getValue(), OqsVersion.MAJOR)
+        ));
+        when(masterStorage.selectMultiple(new long[]{1, 2, 4}, MockMetaManager.l2EntityClass)).thenReturn(
             Arrays.asList(
                 Entity.Builder.anEntity().withId(1).build(),
                 Entity.Builder.anEntity().withId(2).build(),
@@ -147,7 +161,7 @@ public class EntitySearchServiceImplTest {
         Page page = Page.newSinglePage(1000);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
-            MockMetaManager.l1EntityClass,
+            MockMetaManager.l2EntityClass,
             SelectConfig.Builder.aSelectConfig()
                 .withCommitId(1)
                 .withPage(page)

@@ -279,6 +279,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Sort sort = config.getSort().get();
             if (sort.getField() != null && !sort.getField().config().isSearchable()) {
                 useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
+            } else {
+                useSort = sort;
             }
         } else {
             useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
@@ -362,7 +364,16 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             Collection<EntityRef> refs = combinedStorage.select(
-                minUnSyncCommitId, useConditions, entityClass, useSort, usePage);
+                useConditions,
+                entityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withCommitId(minUnSyncCommitId)
+                    .withSort(useSort)
+                    .withPage(usePage)
+                    .withDataAccessFitlerCondtitons(
+                        config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions())
+                    .build()
+            );
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
@@ -644,7 +655,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
             Collection<EntityRef> refs = combinedStorage.select(
-                commitId, conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage);
+                conditions,
+                key.getEntityClass(),
+                SelectConfig.Builder.aSelectConfig()
+                    .withCommitId(commitId)
+                    .withSort(Sort.buildOutOfSort())
+                    .withPage(driverPage).build()
+            );
 
             /**
              * 确保驱动表的查询数据总量不超过 maxJoinDriverLineNumber.
@@ -697,16 +714,26 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             sortDefaultValue.put(FieldType.UNKNOWN, "0");
         }
 
-        public Collection<EntityRef> select(
-            long commitId, Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
-
-
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
             Collection<EntityRef> masterRefs = Collections.emptyList();
+
+            long commitId = config.getCommitId();
+            Sort sort = config.getSort();
+            Page page = config.getPage();
+            Conditions filterCondition = config.getDataAccessFilterCondtitions();
 
             if (commitId > 0) {
                 //trigger master search
-                masterRefs = masterStorage.select(conditions, entityClass,
-                    SelectConfig.Builder.aSelectConfig().withSort(sort).withCommitId(commitId).build());
+                masterRefs = masterStorage.select(
+                    conditions,
+                    entityClass,
+                    SelectConfig.Builder.aSelectConfig()
+                        .withSort(sort)
+                        .withCommitId(commitId)
+                        .withDataAccessFitlerCondtitons(filterCondition)
+                        .build()
+                );
 
                 for (EntityRef ref : masterRefs) {
                     if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
@@ -743,12 +770,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             Collection<EntityRef> indexRefs = indexStorage.select(
-                conditions, entityClass,
+                conditions,
+                entityClass,
                 SelectConfig.Builder.aSelectConfig()
                     .withSort(sort)
                     .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
-                    .withCommitId(commitId).build());
+                    .withDataAccessFitlerCondtitons(filterCondition)
+                    .withCommitId(commitId).build()
+            );
             indexRefs = fixNullSortValue(indexRefs, sort);
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().

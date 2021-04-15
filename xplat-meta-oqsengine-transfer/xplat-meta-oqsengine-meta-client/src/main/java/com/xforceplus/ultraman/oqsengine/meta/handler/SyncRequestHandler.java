@@ -24,9 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
@@ -64,6 +62,7 @@ public class SyncRequestHandler implements IRequestHandler {
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
+    private static final int PRINT_CHECK_DURATION = 10;
 
     private AtomicInteger acceptDataHandleErrorCounter =
             Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_HANDLER_ERROR, new AtomicInteger(0));
@@ -100,10 +99,6 @@ public class SyncRequestHandler implements IRequestHandler {
         isShutdown = true;
 
         requestWatchExecutor.stop();
-
-        longRunTasks.forEach(s -> {
-            ThreadUtils.shutdown(s, SHUT_DOWN_WAIT_TIME_OUT);
-        });
     }
 
     @Override
@@ -398,7 +393,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     //  ignore
                     logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
                 }
-                logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParams.getKeepAliveSendDuration());
+                logger.debug("keepAlive ok, print next check after ({})ms...", gRpcParams.getKeepAliveSendDuration());
             }
             TimeWaitUtils.wakeupAfter(gRpcParams.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
         }
@@ -413,8 +408,8 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     private boolean watchElementCheck() {
         logger.debug("start appCheck task ok...");
+        long counter = 0;
         while (!isShutDown()) {
-
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher && requestWatcher.isActive()) {
                 /**
@@ -457,8 +452,10 @@ public class SyncRequestHandler implements IRequestHandler {
                             }
                         }
                 );
-
-                logger.debug("app check ok, next check after duration ({})ms...", gRpcParams.getMonitorSleepDuration());
+                if (counter % PRINT_CHECK_DURATION == 0) {
+                    logger.debug("app check ok, print next check after ({})ms...", gRpcParams.getMonitorSleepDuration() * PRINT_CHECK_DURATION);
+                }
+                counter ++;
             }
             TimeWaitUtils.wakeupAfter(gRpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }

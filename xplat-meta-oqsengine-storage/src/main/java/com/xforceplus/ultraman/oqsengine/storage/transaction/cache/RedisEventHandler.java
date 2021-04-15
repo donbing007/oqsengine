@@ -146,6 +146,7 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
                     payload.getVersion(), payload.getEventType().getValue())
                 , encodeJson);
         } catch (Exception e) {
+            e.printStackTrace();
             logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
                 , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.getMessage());
 

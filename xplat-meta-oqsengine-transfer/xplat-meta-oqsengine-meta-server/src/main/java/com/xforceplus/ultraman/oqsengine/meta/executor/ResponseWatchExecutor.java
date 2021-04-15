@@ -29,18 +29,17 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     /**
      * 记录app + env的version
      */
-    private static Map<String, Integer> appVersions = new ConcurrentHashMap<>();
+    private static Map<String, Integer> appVersions = new HashMap<>();
 
     /**
      * 记录app + env的UIDs
      */
-    private static Map<String, Set<String>> appWatchers = new ConcurrentHashMap<>();
+    private static Map<String, Set<String>> appWatchers = new HashMap<>();
 
     /**
      * 记录UID与Watcher的映射关系
      */
     private static Map<String, ResponseWatcher> uidWatchers = new ConcurrentHashMap<>();
-
 
 
     @Override
@@ -83,17 +82,8 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Override
     public boolean addVersion(String appId, String env, int version) {
-        String key = keyAppWithEnv(appId, env);
-        synchronized (ResponseWatchExecutor.class) {
-            Integer v = appVersions.get(key);
-            if (null == v || v < version) {
-                appVersions.put(key, version);
-                return true;
-            }
-        }
-        return false;
+        return addVersionWithLock(keyAppWithEnv(appId, env), version);
     }
-
 
     /**
      * 当注册时，初始化observer的映射关系
@@ -151,14 +141,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {
-                            Set<String> uidSet = appWatchers.get(keyAppWithEnv(k, v.getEnv()));
-                            if (null != uidSet && uidSet.size() > 0) {
-                                uidSet.remove(uid);
-                                if (uidSet.size() == 0) {
-                                    operationWithLock(k, uid, RELEASE);
-                                }
-                            }
-
+                            operationWithLock(keyAppWithEnv(k, v.getEnv()), uid, RELEASE);
                         }
                 );
                 return true;
@@ -208,20 +191,34 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                 watcher.watches().get(watchElement.getAppId());
 
         return null != current && (current.getVersion() < watchElement.getVersion() ||
-                                        current.getStatus().ordinal() < watchElement.getStatus().ordinal());
+                current.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
+    private synchronized boolean addVersionWithLock(String key, int version) {
+        Integer v = appVersions.get(key);
+        if (null == v || v < version) {
+            appVersions.put(key, version);
+            return true;
+        }
+        return false;
+    }
 
     private synchronized void operationWithLock(String key, String value, Operation operation) {
-        logger.debug("operationWithLock -> key [{}], value [{}], operation [{}]", key, value, operation);
+        logger.debug("appWatcher [{}], key [{}], value [{}]", operation, key, value);
         switch (operation) {
             case NEW:
                 appWatchers.computeIfAbsent(key, k -> new HashSet<>()).add(value);
                 break;
             case RELEASE:
                 Set<String> v = appWatchers.get(key);
-                if (null != v && v.isEmpty()) {
-                    appWatchers.remove(key);
+                if (null != v) {
+                    if (!v.isEmpty()) {
+                        v.remove(value);
+                    }
+
+                    if (v.isEmpty()) {
+                        appWatchers.remove(key);
+                    }
                 }
                 break;
         }

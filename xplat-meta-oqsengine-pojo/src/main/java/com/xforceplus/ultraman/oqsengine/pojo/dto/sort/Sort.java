@@ -109,4 +109,14 @@ public class Sort {
     public int hashCode() {
         return Objects.hash(getField(), isAsc(), isOutOfOrder());
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Sort{");
+        sb.append("field=").append(field);
+        sb.append(", asc=").append(asc);
+        sb.append(", outOfOrder=").append(outOfOrder);
+        sb.append('}');
+        return sb.toString();
+    }
 }
