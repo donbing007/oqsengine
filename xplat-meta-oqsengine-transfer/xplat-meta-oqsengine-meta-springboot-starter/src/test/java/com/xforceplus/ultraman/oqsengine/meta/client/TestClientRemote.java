@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,28 +31,17 @@ public class TestClientRemote {
     @Autowired
     private IRequestHandler requestHandler;
 
-
     boolean ifTest = false;
-
-    @Before
-    public void before() throws InterruptedException {
-        Thread.sleep(1_000);
-    }
-
-    @After
-    public void after() throws InterruptedException {
-        Thread.sleep(3_000);
-    }
 
     @Test
     public void test() throws InterruptedException {
         if (ifTest) {
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
-//
-//            Assert.assertTrue(ret);
 
-            ret = requestHandler.register(new WatchElement("1", "0", -1, Register));
+            Assert.assertTrue(ret);
+//
+//            ret = requestHandler.register(new WatchElement("1", "0", -1, Register));
 
             Thread.sleep(10000_000);
         }

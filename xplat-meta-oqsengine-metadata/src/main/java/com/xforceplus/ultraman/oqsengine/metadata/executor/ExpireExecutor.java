@@ -8,7 +8,7 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.POLL_TIME_OUT_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
 
 /**
  * desc :

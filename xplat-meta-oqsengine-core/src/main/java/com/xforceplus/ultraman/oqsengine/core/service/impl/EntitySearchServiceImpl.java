@@ -345,7 +345,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
 
                 for (ConditionNode safeNode : safeNodes) {
-                    subConditions.add(buildSafeNodeConditions(safeNode, minUnSyncCommitId));
+                    subConditions.add(buildSafeNodeConditions(entityClass, safeNode, minUnSyncCommitId));
                 }
 
                 useConditions = Conditions.buildEmtpyConditions();
@@ -458,7 +458,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(ConditionNode safeNode, long commitId)
+    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, ConditionNode safeNode, long commitId)
         throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
@@ -470,7 +470,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             .collect(toList());
 
         // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
-        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(driverConditionCollection);
+        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(mainEntityClass, driverConditionCollection);
 
         // driver 数据收集 future.
         List<Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>>> futures =
@@ -497,6 +497,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     termination = true;
                     break;
                 }
+
+                //related field should not be identifier
+                driverQueryResult.getKey().mainEntityClassField.config().identifie(false);
 
                 conditions.addAnd(
                     new Condition(
@@ -545,7 +548,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
      * 不能处理非 driver 的 entity 查询条件.
      */
-    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(Collection<Condition> conditionCollection)
+    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(IEntityClass mainEntityClass, Collection<Condition> conditionCollection)
         throws SQLException {
 
 
@@ -565,7 +568,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
-            Optional<OqsRelation> relationOp = driverEntityClass.oqsRelations().stream()
+            Optional<OqsRelation> relationOp = mainEntityClass.oqsRelations().stream()
                 .filter(r -> r.getId() == c.getRelationId()).findFirst();
             if (!relationOp.isPresent()) {
                 throw new SQLException(String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));

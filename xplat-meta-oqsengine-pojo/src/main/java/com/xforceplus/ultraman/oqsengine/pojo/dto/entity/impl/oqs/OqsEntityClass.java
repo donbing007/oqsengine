@@ -90,6 +90,17 @@ public class OqsEntityClass implements IEntityClass {
 
     @Override
     public Collection<OqsRelation> oqsRelations() {
+
+        List<OqsRelation> relations = new ArrayList<>();
+
+        if(this.relations != null){
+            relations.addAll(this.relations);
+        }
+
+        if (null != father) {
+            relations.addAll(father.oqsRelations());
+        }
+
         return relations;
     }
 

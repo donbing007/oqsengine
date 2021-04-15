@@ -23,9 +23,9 @@ public class ThreadUtils {
      * @param thread
      */
     public static void shutdown(Thread thread, long timeout) {
+        TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
         if (null != thread) {
             //  等待timeout秒后结束线程
-            TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
             if (thread.isAlive()) {
                 thread.interrupt();
             }

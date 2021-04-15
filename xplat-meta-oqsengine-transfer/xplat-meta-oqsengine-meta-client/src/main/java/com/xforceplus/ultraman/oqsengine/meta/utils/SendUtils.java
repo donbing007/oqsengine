@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.utils;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
@@ -43,11 +44,33 @@ public class SendUtils {
     public static void sendRequest(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
         try {
             requestWatcher.observer().onNext(entityClassSyncRequest);
-
-            logger.debug("send request success, request [{}]", entityClassSyncRequest.toString());
+            printLog(entityClassSyncRequest);
         } catch (Exception e) {
             throw new MetaSyncClientException(
                     String.format("send request error, message-[%s].", e.getMessage()), true);
+        }
+    }
+
+    private static void printLog(EntityClassSyncRequest entityClassSyncRequest) {
+        try {
+            RequestStatus requestStatus = RequestStatus.getInstance(entityClassSyncRequest.getStatus());
+            if (entityClassSyncRequest.getStatus() == RequestStatus.HEARTBEAT.ordinal()) {
+                logger.debug("send request success, request [{}, {}, {}]"
+                        , "HEARTBEAT"
+                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
+                        , "UID:" + entityClassSyncRequest.getUid());
+            } else {
+                String appId = entityClassSyncRequest.getAppId();
+                logger.info("send request success, request [{}, {}, {}, {}, {}]"
+                        , "REQ APP_ID:" + appId
+                        , "ENV:" + entityClassSyncRequest.getEnv()
+                        , "VER:" + entityClassSyncRequest.getVersion()
+                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
+                        , "UID:" + entityClassSyncRequest.getUid());
+            }
+
+        } catch (Exception e) {
+            //ignore
         }
     }
 }

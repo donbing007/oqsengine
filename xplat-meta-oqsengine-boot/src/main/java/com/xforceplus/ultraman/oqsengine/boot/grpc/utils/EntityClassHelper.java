@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -66,6 +67,7 @@ public class EntityClassHelper {
      * @return
      */
     public static Optional<IEntityField> findFieldById(IEntityClass entityClass, long id) {
+        //find current
         Optional<IEntityField> field = entityClass.field(id);
         if (field.isPresent()) {
             return field;
