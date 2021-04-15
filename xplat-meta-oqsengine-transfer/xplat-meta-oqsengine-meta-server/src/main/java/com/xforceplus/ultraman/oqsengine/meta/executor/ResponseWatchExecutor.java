@@ -144,10 +144,10 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         (k, v) -> {
                             String key = keyAppWithEnv(k, v.getEnv());
                             Set<String> uidSet = appWatchers.get(key);
-                            if (null != uidSet && uidSet.size() > 0) {
-                                uidSet.remove(uid);
-                            }
                             if (null != uidSet) {
+                                if (!uidSet.isEmpty()) {
+                                    uidSet.remove(uid);
+                                }
                                 operationWithLock(key, uid, RELEASE);
                             }
                         }
