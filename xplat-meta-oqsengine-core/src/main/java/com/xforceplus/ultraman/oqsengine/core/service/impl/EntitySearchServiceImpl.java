@@ -470,7 +470,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Collection<Condition> safeCondititons = processConditions.collectCondition();
         // 只包含驱动 entity 条件的集合.
         Collection<Condition> driverConditionCollection = safeCondititons.stream()
-            .filter(c -> c.getEntityClassRef().isPresent())
+                .filter(c -> c.getEntityClassRef().isPresent() && c.getRelationId() > 0)
             .collect(toList());
 
         // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
@@ -566,7 +566,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         DriverEntityKey key;
         Conditions driverConditions;
         for (Condition c : conditionCollection) {
-            if (c.getEntityClassRef().isPresent()) {
+            if (c.getEntityClassRef().isPresent() && c.getRelationId() > 0) {
                 driverEntityClass = EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
                 throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
