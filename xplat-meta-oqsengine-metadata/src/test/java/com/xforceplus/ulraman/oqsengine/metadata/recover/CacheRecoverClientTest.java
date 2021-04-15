@@ -97,7 +97,7 @@ public class CacheRecoverClientTest extends BaseRequest {
 
         //  再次获取则为空
         Optional<IEntityClass> entityClassOp =
-                initBase.entityClassManagerExecutor.load(TEST_ENTITY_CLASS_ID);
+                initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
 
         Assert.assertFalse(entityClassOp.isPresent());
 
@@ -106,12 +106,12 @@ public class CacheRecoverClientTest extends BaseRequest {
     }
 
     private void needAndLoad() {
-        int version = initBase.entityClassManagerExecutor.need(TEST_APP_ID, TEST_ENV);
+        int version = initBase.storageMetaManager.need(TEST_APP_ID, TEST_ENV);
 
         Assert.assertEquals(TEST_START_VERSION, version);
 
         Optional<IEntityClass> entityClassOp =
-                initBase.entityClassManagerExecutor.load(TEST_ENTITY_CLASS_ID);
+                initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
 
         Assert.assertTrue(entityClassOp.isPresent());
     }

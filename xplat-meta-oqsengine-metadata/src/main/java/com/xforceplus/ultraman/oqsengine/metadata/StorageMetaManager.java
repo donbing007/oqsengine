@@ -1,10 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.metadata.executor;
+package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -29,16 +28,16 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALT
 
 /**
  * desc :
- * name : EntityClassManagerExecutor
+ * name : StorageMetaManager
  * Meta管理类
  *
  * @author : xujia
  * date : 2021/2/9
  * @since : 1.8
  */
-public class EntityClassManagerExecutor implements MetaManager {
+public class StorageMetaManager implements MetaManager {
 
-    final Logger logger = LoggerFactory.getLogger(EntityClassManagerExecutor.class);
+    final Logger logger = LoggerFactory.getLogger(StorageMetaManager.class);
 
     @Resource
     private ICacheExecutor cacheExecutor;
@@ -86,9 +85,8 @@ public class EntityClassManagerExecutor implements MetaManager {
      */
     @Override
     public int need(String appId, String env) {
-        boolean ret = false;
         try {
-            ret = cacheExecutor.appEnvSet(appId, env);
+            cacheExecutor.appEnvSet(appId, env);
 
             if (!cacheExecutor.appEnvGet(appId).equals(env)) {
                 throw new RuntimeException("appId has been init with another Id, need failed...");
@@ -132,9 +130,6 @@ public class EntityClassManagerExecutor implements MetaManager {
             }
             return version;
         } catch (Exception e) {
-//            if (ret) {
-//                cacheExecutor.appEnvRemove(appId);
-//            }
             throw e;
         }
     }

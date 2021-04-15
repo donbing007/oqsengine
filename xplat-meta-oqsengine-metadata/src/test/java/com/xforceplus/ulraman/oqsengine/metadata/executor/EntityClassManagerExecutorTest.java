@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -58,7 +58,7 @@ public class EntityClassManagerExecutorTest {
 
     private MockRequestHandler mockRequestHandler;
 
-    private EntityClassManagerExecutor entityClassManagerExecutor;
+    private StorageMetaManager storageMetaManager;
 
     private ExecutorService executorService;
 
@@ -102,10 +102,10 @@ public class EntityClassManagerExecutorTest {
          */
         executorService = new ThreadPoolExecutor(5, 5, 0,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
-        entityClassManagerExecutor = new EntityClassManagerExecutor();
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "requestHandler", mockRequestHandler);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
+        storageMetaManager = new StorageMetaManager();
+        ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
+        ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
+        ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
     }
 
     @After
@@ -126,7 +126,7 @@ public class EntityClassManagerExecutorTest {
         String appId = "testNeed";
         String env = "test";
         int expectedVersion = EXIST_MIN_VERSION + 1;
-        int version = entityClassManagerExecutor.need(appId, env);
+        int version = storageMetaManager.need(appId, env);
         Assert.assertEquals(expectedVersion, version);
     }
 
@@ -138,7 +138,7 @@ public class EntityClassManagerExecutorTest {
         List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = mockSelfFatherAncestorsGenerate(expectedId);
         long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
         try {
-            entityClassManagerExecutor.load(expectedId);
+            storageMetaManager.load(expectedId);
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
@@ -147,7 +147,7 @@ public class EntityClassManagerExecutorTest {
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
-        Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
+        Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
@@ -171,7 +171,7 @@ public class EntityClassManagerExecutorTest {
         /*
             check 自循环
          */
-        entityClassOp = entityClassManagerExecutor.load(expectedAnc);
+        entityClassOp = storageMetaManager.load(expectedAnc);
         Assert.assertTrue(entityClassOp.isPresent());
 
         entityClassInfo =
