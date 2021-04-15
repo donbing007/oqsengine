@@ -241,7 +241,11 @@ public class Conditions implements Serializable {
 
     @Override
     public String toString() {
-        return head.toString();
+        if (size() > 0) {
+            return head.toString();
+        } else {
+            return "Null condition.";
+        }
     }
 
     /**
@@ -327,7 +331,7 @@ public class Conditions implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(size, or, range, head.toString());
+        return Objects.hash(size, or, range, size > 0 ? head.toString() : "");
     }
 
     /**

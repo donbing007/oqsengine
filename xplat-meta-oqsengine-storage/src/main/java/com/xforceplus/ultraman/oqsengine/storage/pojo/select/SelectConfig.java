@@ -56,8 +56,12 @@ public class SelectConfig implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SelectConfig that = (SelectConfig) o;
         return commitId == that.commitId
             && Objects.equals(sort, that.sort)
@@ -71,6 +75,19 @@ public class SelectConfig implements Serializable {
     public int hashCode() {
         return Objects.hash(commitId, sort, page, excludedIds, dataAccessFilterCondtitions, facet);
     }
+
+//    @Override
+//    public String toString() {
+//        final StringBuffer sb = new StringBuffer("SelectConfig{");
+//        sb.append("commitId=").append(commitId);
+//        sb.append(", sort=").append(sort);
+//        sb.append(", page=").append(page);
+//        sb.append(", excludedIds=").append(excludedIds);
+//        sb.append(", dataAccessFilterCondtitions=").append(dataAccessFilterCondtitions);
+//        sb.append(", facet=").append(facet);
+//        sb.append('}');
+//        return sb.toString();
+//    }
 
     /**
      * builder

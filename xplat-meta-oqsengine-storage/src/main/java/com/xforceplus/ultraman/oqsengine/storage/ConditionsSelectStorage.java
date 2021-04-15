@@ -26,9 +26,7 @@ public interface ConditionsSelectStorage {
      * @param entityClass 目标类型.
      * @param config      查询配置.
      * @return 搜索结果列表.
-     * @deprecated 无法处理分面查询, 请使用支持多结果集的查询实现.
      */
-    @Deprecated
     Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException;
 

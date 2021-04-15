@@ -443,15 +443,12 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0"))
             ),
             MockMetaManager.l2EntityClass.ref(),
-            Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l2-string").get()), Page.newSinglePage(100));
+            Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l0-long").get()), Page.newSinglePage(100));
 
         Assert.assertEquals(3, entities.size());
-        Assert.assertEquals(0L,
-            entities.stream().findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
-        Assert.assertEquals(1L,
-            entities.stream().skip(1).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
-        Assert.assertEquals(2L,
-            entities.stream().skip(2).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
+        Assert.assertEquals(e0.id(), entities.stream().findFirst().get().id());
+        Assert.assertEquals(e1.id(), entities.stream().skip(1).findFirst().get().id());
+        Assert.assertEquals(e2.id(), entities.stream().skip(2).findFirst().get().id());
     }
 
     // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
