@@ -263,8 +263,7 @@ public class SyncRequestHandler implements IRequestHandler {
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {
         /**
          * 执行OQS更新EntityClass
-         */
-        EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
+         */EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
         if (entityClassSyncRequestBuilder.getStatus() != SYNC_OK.ordinal()) {
             logger.warn("execute data sync fail, [{}]", entityClassSyncRequestBuilder.build().toString());
             return;
