@@ -31,7 +31,7 @@ public class TestClientRemote {
     @Autowired
     private IRequestHandler requestHandler;
 
-    boolean ifTest = true;
+    boolean ifTest = false;
 
     @Test
     public void test() throws InterruptedException {
