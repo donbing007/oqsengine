@@ -79,8 +79,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
         requestHandler.stop();
 
-        ThreadUtils.shutdown(observerStreamMonitorThread, SHUT_DOWN_WAIT_TIME_OUT);
-
         if (client.opened()) {
             client.stop();
         }

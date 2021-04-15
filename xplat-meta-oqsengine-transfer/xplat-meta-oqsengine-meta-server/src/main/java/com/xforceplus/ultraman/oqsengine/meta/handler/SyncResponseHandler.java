@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
@@ -127,10 +128,8 @@ public class SyncResponseHandler implements IResponseHandler {
          * 关闭responseWatchExecutor
          */
         responseWatchExecutor.stop();
-        /**
-         * 停止当前活动线程
-         */
-        longRunTasks.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
+
+        ThreadUtils.shutdown(null, SHUT_DOWN_WAIT_TIME_OUT);
 
         logger.debug("syncResponseHandler stop.");
     }
@@ -497,7 +496,10 @@ public class SyncResponseHandler implements IResponseHandler {
     private boolean watchElementCheck() {
         while (!isShutdown) {
             RetryExecutor.DelayTask task = retryExecutor.take();
-            if (null == task) {
+            if (null == task || null == task.element()) {
+                if (!isShutdown) {
+                    TimeWaitUtils.wakeupAfter(POLL_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+                }
                 continue;
             }
 

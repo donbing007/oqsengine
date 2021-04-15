@@ -101,10 +101,6 @@ public class SyncRequestHandler implements IRequestHandler {
         isShutdown = true;
 
         requestWatchExecutor.stop();
-
-        longRunTasks.forEach(s -> {
-            ThreadUtils.shutdown(s, SHUT_DOWN_WAIT_TIME_OUT);
-        });
     }
 
     @Override
@@ -400,7 +396,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     //  ignore
                     logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
                 }
-                logger.debug("keepAlive ok, print next check after duration ({})ms...", gRpcParams.getKeepAliveSendDuration());
+                logger.debug("keepAlive ok, print next check after ({})ms...", gRpcParams.getKeepAliveSendDuration());
             }
             TimeWaitUtils.wakeupAfter(gRpcParams.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
         }
@@ -417,7 +413,6 @@ public class SyncRequestHandler implements IRequestHandler {
         logger.debug("start appCheck task ok...");
         long counter = 0;
         while (!isShutDown()) {
-
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher && requestWatcher.isActive()) {
                 /**
