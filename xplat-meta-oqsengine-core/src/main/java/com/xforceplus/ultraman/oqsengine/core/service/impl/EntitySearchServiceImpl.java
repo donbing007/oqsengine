@@ -312,6 +312,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             // join
             Collection<IEntityClass> entityClassCollection = collectEntityClass(conditions, entityClass);
+            collectEntityClass(conditions, entityClass);
+
+
+
 
             final int onlyOneEntityClass = 1;
             if (entityClassCollection.size() > onlyOneEntityClass) {
@@ -426,7 +430,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      */
     private Collection<IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
         Set<IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
-            if (c.getEntityClassRef().isPresent()) {
+            if (c.getEntityClassRef().isPresent() && c.getRelationId() > 0) {
                 return EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
                 return mainEntityClass;

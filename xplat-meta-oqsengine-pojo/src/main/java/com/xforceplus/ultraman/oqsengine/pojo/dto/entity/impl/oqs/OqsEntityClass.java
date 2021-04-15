@@ -171,7 +171,7 @@ public class OqsEntityClass implements IEntityClass {
             return entityFieldOp;
         } else {
             for (OqsRelation relation : relations) {
-                if (relation.getEntityField().id() == id) {
+                if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
                     return Optional.of(relation.getEntityField());
                 }
             }
