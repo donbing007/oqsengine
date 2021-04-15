@@ -142,10 +142,11 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {
-                            Set<String> uidSet = appWatchers.get(keyAppWithEnv(k, v.getEnv()));
+                            String key = keyAppWithEnv(k, v.getEnv());
+                            Set<String> uidSet = appWatchers.get(key);
                             if (null != uidSet && uidSet.size() > 0) {
                                 uidSet.remove(uid);
-                                operationWithLock(k, uid, RELEASE);
+                                operationWithLock(key, uid, RELEASE);
                             }
 
                         }
