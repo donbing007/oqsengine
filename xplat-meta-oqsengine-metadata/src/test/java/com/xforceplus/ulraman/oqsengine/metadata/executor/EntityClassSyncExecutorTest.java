@@ -6,8 +6,8 @@ import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
@@ -50,7 +50,7 @@ public class EntityClassSyncExecutorTest {
 
     private MockRequestHandler mockRequestHandler;
 
-    private EntityClassManagerExecutor entityClassManagerExecutor;
+    private StorageMetaManager storageMetaManager;
 
     private ExecutorService executorService;
 
@@ -94,10 +94,10 @@ public class EntityClassSyncExecutorTest {
          */
         executorService = new ThreadPoolExecutor(5, 5, 0,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
-        entityClassManagerExecutor = new EntityClassManagerExecutor();
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "requestHandler", mockRequestHandler);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
+        storageMetaManager = new StorageMetaManager();
+        ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
+        ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
+        ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
     }
 
     @Test

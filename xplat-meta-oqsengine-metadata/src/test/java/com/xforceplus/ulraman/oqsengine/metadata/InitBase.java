@@ -2,8 +2,8 @@ package com.xforceplus.ulraman.oqsengine.metadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 
@@ -31,7 +31,7 @@ public class InitBase {
 
     public EntityClassSyncExecutor entityClassSyncExecutor;
 
-    public EntityClassManagerExecutor entityClassManagerExecutor;
+    public StorageMetaManager storageMetaManager;
 
     public ExecutorService executorService;
 
@@ -78,10 +78,10 @@ public class InitBase {
         executorService = new ThreadPoolExecutor(5, 5, 0,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
-        entityClassManagerExecutor = new EntityClassManagerExecutor();
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
+        storageMetaManager = new StorageMetaManager();
+        ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
+        ReflectionTestUtils.setField(storageMetaManager, "requestHandler", requestHandler);
+        ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
     }
 
     public void clear() {
