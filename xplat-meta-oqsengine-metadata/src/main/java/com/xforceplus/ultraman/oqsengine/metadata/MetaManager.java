@@ -27,7 +27,7 @@ public interface MetaManager {
      * @param id 元信息的标识.
      * @return 元信息的实例.
      */
-    IEntityClass loadHistory(long id, int version);
+    Optional<IEntityClass> loadHistory(long id, int version);
 
     /**
      * 表示需要关注此appid代表的应用的元信息.

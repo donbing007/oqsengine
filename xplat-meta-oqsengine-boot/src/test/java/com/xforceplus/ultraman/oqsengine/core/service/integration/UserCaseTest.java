@@ -146,7 +146,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -155,7 +155,7 @@ public class UserCaseTest {
         transactionManager.bind(tx.id());
 
         entity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L));
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
@@ -182,7 +182,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -190,7 +190,7 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
@@ -217,12 +217,12 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
         IEntity fatherEntity = entitySearchService.selectOne(entity.id(), MockMetaManager.l0EntityClass.ref()).get();
 
         fatherEntity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 100L));
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
@@ -254,14 +254,14 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 1; i <= TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
             entity.entityValue().addValue(
                 new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
@@ -304,7 +304,7 @@ public class UserCaseTest {
                         new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
             IEntity selectEntity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
 
             Assert.assertNotEquals(0, selectEntity.id());
@@ -330,8 +330,8 @@ public class UserCaseTest {
                         new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
@@ -366,7 +366,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
@@ -415,7 +415,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -425,7 +425,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -435,7 +435,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -465,7 +465,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -475,7 +475,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -484,7 +484,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -522,14 +522,14 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
             entity.entityValue().addValue(
                 new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), i)
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
@@ -561,7 +561,7 @@ public class UserCaseTest {
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity.resetId(0);
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
             entityManagementService.deleteForce(entity);
 

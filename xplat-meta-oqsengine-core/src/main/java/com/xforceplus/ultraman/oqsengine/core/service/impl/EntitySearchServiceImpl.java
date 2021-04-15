@@ -204,7 +204,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
-        return selectByConditions(conditions, entityClassRef, Sort.buildOutOfSort(), page);
+        return selectByConditions(conditions, entityClassRef, SearchConfig.Builder.aSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
@@ -277,7 +277,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Sort useSort = null;
         if (config.getSort().isPresent()) {
             Sort sort = config.getSort().get();
-            if (sort.getField() != null  && !sort.getField().config().isSearchable()) {
+            if (sort.getField() != null && !sort.getField().config().isSearchable()) {
                 useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
             }
         } else {
@@ -452,8 +452,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         Conditions processConditions = new Conditions(safeNode);
 
+        Collection<Condition> safeCondititons = processConditions.collectCondition();
         // 只包含驱动 entity 条件的集合.
-        Collection<Condition> driverConditionCollection = processConditions.collectCondition().stream()
+        Collection<Condition> driverConditionCollection = safeCondititons.stream()
             .filter(c -> c.getEntityClassRef().isPresent())
             .collect(toList());
 

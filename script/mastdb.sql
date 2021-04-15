@@ -21,8 +21,7 @@ create table oqsbigentity
     KEY commitid_entity_index (entityclassl0, entityclassl1, entityclassl2, entityclassl3, entityclassl4, commitid),
     KEY tx_index (tx),
     KEY update_time_index (updatetime)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 /**
   如果需要 mysql 进行分区,推荐以下配置.

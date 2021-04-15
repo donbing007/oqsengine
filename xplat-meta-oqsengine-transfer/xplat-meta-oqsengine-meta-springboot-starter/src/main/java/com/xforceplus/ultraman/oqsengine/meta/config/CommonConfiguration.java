@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,6 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * @since : 1.8
  */
 @Configuration
+@ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
 public class CommonConfiguration {
     @Bean
     public GRpcParams gRpcParamsConfig(

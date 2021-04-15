@@ -139,3 +139,7 @@ cdc:
     batchSize: 2048
   consumer:
     checkCommitReady: true
+
+meta:
+  grpc:
+    type: mock

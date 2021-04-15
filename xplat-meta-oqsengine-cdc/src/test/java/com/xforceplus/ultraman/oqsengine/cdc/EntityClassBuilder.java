@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
@@ -77,8 +80,8 @@ public class EntityClassBuilder implements MetaManager {
     }
 
     @Override
-    public IEntityClass loadHistory(long id, int version) {
-        return null;
+    public Optional<IEntityClass> loadHistory(long id, int version) {
+        return Optional.empty();
     }
 
     @Override

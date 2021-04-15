@@ -14,7 +14,7 @@ create table devopstasks
      checkpoint varchar(512) default null comment '任务坐标信息',
      constraint devopstasks_pk0 primary key (maintainid),
      key devopstasks_k0 (entity)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 create table cdcerrors
 (
@@ -28,5 +28,4 @@ create table cdcerrors
     constraint cdcerror_pk primary key (seqno),
     key cdcerrors_k0 (id),
     key cdcerrors_k1 (commitid)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
