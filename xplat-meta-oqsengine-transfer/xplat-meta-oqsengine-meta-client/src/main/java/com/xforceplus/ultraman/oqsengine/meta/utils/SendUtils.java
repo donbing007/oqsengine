@@ -60,8 +60,9 @@ public class SendUtils {
                         , "UID:" + entityClassSyncRequest.getUid());
             } else {
                 String appId = entityClassSyncRequest.getAppId();
-                logger.info("send request success, request [{}, {}, {}, {}]"
+                logger.info("send request success, request [{}, {}, {}, {}, {}]"
                         , "REQ APP_ID:" + appId
+                        , "REQ ENV:" + entityClassSyncRequest.getEnv()
                         , "VER:" + entityClassSyncRequest.getVersion()
                         , "STATUS:" + entityClassSyncRequest.getStatus()
                         , "UID:" + entityClassSyncRequest.getUid());
