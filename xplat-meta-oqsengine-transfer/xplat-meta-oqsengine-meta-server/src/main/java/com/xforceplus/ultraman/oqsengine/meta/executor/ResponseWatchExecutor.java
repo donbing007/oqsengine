@@ -142,14 +142,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {
-                            String key = keyAppWithEnv(k, v.getEnv());
-                            Set<String> uidSet = appWatchers.get(key);
-                            if (null != uidSet) {
-                                if (!uidSet.isEmpty()) {
-                                    uidSet.remove(uid);
-                                }
-                                operationWithLock(key, uid, RELEASE);
-                            }
+                            operationWithLock(keyAppWithEnv(k, v.getEnv()), uid, RELEASE);
                         }
                 );
                 return true;
@@ -219,8 +212,15 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                 break;
             case RELEASE:
                 Set<String> v = appWatchers.get(key);
-                if (null != v && v.isEmpty()) {
-                    appWatchers.remove(key);
+                if (null != v) {
+                    if (!v.isEmpty()) {
+                        v.remove(value);
+                    }
+
+                    if(v.isEmpty()) {
+                        appWatchers.remove(key);
+                    }
+
                 }
                 break;
         }
