@@ -1,6 +1,6 @@
 use oqsengine;
 
-CREATE TABLE changeversion (
+create TABLE changeversion (
   vid BIGINT(20) NOT NULL AUTO_INCREMENT,
   id BIGINT(20) DEFAULT NULL,
   user VARCHAR(255) DEFAULT NULL,
@@ -10,12 +10,9 @@ CREATE TABLE changeversion (
   count BIGINT(20) DEFAULT NULL,
   source BIGINT(20) DEFAULT NULL,
   PRIMARY KEY (vid)
-)
-ENGINE = INNODB,
-CHARACTER SET utf8,
-COLLATE utf8_general_ci;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE changesnapshot (
+create TABLE changesnapshot (
   sid BIGINT(20) NOT NULL AUTO_INCREMENT,
   id BIGINT(20) DEFAULT NULL,
   entity BIGINT(20) DEFAULT NULL,
@@ -24,13 +21,10 @@ CREATE TABLE changesnapshot (
   version BIGINT(20) DEFAULT NULL,
   create_time VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (sid)
-)
-ENGINE = INNODB,
-CHARACTER SET utf8,
-COLLATE utf8_general_ci;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 
-CREATE TABLE changelog (
+create TABLE changelog (
   cid BIGINT(20) NOT NULL AUTO_INCREMENT,
   id BIGINT(20) DEFAULT NULL,
   entity BIGINT(20) DEFAULT NULL,
@@ -40,7 +34,4 @@ CREATE TABLE changelog (
   create_time VARCHAR(255) DEFAULT NULL,
   comment VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (cid)
-)
-ENGINE = INNODB,
-CHARACTER SET utf8,
-COLLATE utf8_general_ci;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

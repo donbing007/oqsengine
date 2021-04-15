@@ -1,6 +1,5 @@
 use oqsengine;
-create table oqsbigentity
-(
+create table oqsbigentity (
     id             bigint                not null comment '数据主键',
     entityclassl0  bigint  default 0     not null comment '数据家族中在0层的entityclass标识',
     entityclassl1  bigint  default 0     not null comment '数据家族中在1层的entityclass标识',
@@ -21,8 +20,7 @@ create table oqsbigentity
     KEY commitid_entity_index (entityclassl0, entityclassl1, entityclassl2, entityclassl3, entityclassl4, commitid),
     KEY tx_index (tx),
     KEY update_time_index (updatetime)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 create table cdcerrors
 (
@@ -34,5 +32,40 @@ create table cdcerrors
     executetime bigint           not null comment '出错时间戳',
     fixedtime   bigint           not null comment '修复时间.',
     constraint cdcerror_pk primary key (seqno)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+create TABLE changeversion (
+  vid BIGINT(20) NOT NULL AUTO_INCREMENT,
+  id BIGINT(20) DEFAULT NULL,
+  user VARCHAR(255) DEFAULT NULL,
+  comment VARCHAR(255) DEFAULT NULL,
+  timestamp BIGINT(20) DEFAULT NULL,
+  version BIGINT(20) DEFAULT NULL,
+  count BIGINT(20) DEFAULT NULL,
+  source BIGINT(20) DEFAULT NULL,
+  PRIMARY KEY (vid)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+create TABLE changesnapshot (
+  sid BIGINT(20) NOT NULL AUTO_INCREMENT,
+  id BIGINT(20) DEFAULT NULL,
+  entity BIGINT(20) DEFAULT NULL,
+  changes JSON DEFAULT NULL,
+  reference JSON DEFAULT NULL,
+  version BIGINT(20) DEFAULT NULL,
+  create_time VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY (sid)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+create TABLE changelog (
+  cid BIGINT(20) NOT NULL AUTO_INCREMENT,
+  id BIGINT(20) DEFAULT NULL,
+  entity BIGINT(20) DEFAULT NULL,
+  changes JSON DEFAULT NULL,
+  reference JSON DEFAULT NULL,
+  version BIGINT(20) DEFAULT NULL,
+  create_time VARCHAR(255) DEFAULT NULL,
+  comment VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY (cid)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

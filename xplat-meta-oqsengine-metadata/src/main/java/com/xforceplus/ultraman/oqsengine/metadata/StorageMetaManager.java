@@ -72,8 +72,8 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public IEntityClass loadHistory(long id, int version) {
-        return null;
+    public Optional<IEntityClass> loadHistory(long id, int version) {
+        return Optional.empty();
     }
 
     /**
