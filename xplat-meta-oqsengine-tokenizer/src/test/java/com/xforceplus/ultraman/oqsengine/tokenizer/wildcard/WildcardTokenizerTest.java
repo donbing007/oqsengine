@@ -25,50 +25,6 @@ public class WildcardTokenizerTest {
     }
 
     @Test
-    public void test() {
-        WildcardTokenizer tokenizer3 = new WildcardTokenizer(3);
-        WildcardTokenizer tokenizer4 = new WildcardTokenizer(4);
-        WildcardTokenizer tokenizer5 = new WildcardTokenizer(5);
-        WildcardTokenizer tokenizer6 = new WildcardTokenizer(6);
-        WildcardTokenizer tokenizer7 = new WildcardTokenizer(7);
-
-        String str = "abcd";
-
-        System.out.println(str);
-        int size = 0;
-        Iterator<String> iter = tokenizer3.tokenize(str);
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
-            size++;
-        }
-
-        iter = tokenizer4.tokenize(str);
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
-            size++;
-        }
-
-        iter = tokenizer5.tokenize(str);
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
-            size++;
-        }
-
-        iter = tokenizer6.tokenize(str);
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
-            size++;
-        }
-
-        iter = tokenizer7.tokenize(str);
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
-            size++;
-        }
-        System.out.println(size);
-    }
-
-    @Test
     public void testTokeniz() throws Exception {
         WildcardTokenizer tokenizer = new WildcardTokenizer(3);
         buildCases().stream().forEach(c -> {
