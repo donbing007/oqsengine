@@ -34,16 +34,18 @@ public class MockSyncExecutor implements SyncExecutor {
 
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-
         Assert.assertNotNull(entityClassSyncRspProto);
-
         try {
             if (status.equals(RequestStatus.DATA_ERROR)) {
                 throw new MetaSyncClientException("data error.", false);
             } else if (status.equals(RequestStatus.SYNC_OK)) {
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
+                Assert.assertNotNull(entityClassStorageList);
+                RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
+                if (null != requestStatusVersion) {
+                    Assert.assertTrue(version > requestStatusVersion.getVersion());
+                }
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
-
                 logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto.toString());
             }
             return status.equals(RequestStatus.SYNC_OK);
@@ -57,7 +59,8 @@ public class MockSyncExecutor implements SyncExecutor {
 
     @Override
     public int version(String appId) {
-        return 0;
+        RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
+        return requestStatusVersion != null ? requestStatusVersion.getVersion() : 0;
     }
 
 

@@ -88,7 +88,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
     }
 
 
-
     /**
      * observerStream监控
      */
@@ -97,66 +96,64 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
          * 当发生断流时，将会重新进行stream的创建.
          */
         while (!requestHandler.isShutDown()) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+
+            StreamObserver<EntityClassSyncRequest> streamObserver = null;
+            String uid = UUID.randomUUID().toString();
             try {
-                CountDownLatch countDownLatch = new CountDownLatch(1);
+                /**
+                 * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
+                 */
+                streamObserver = responseEvent(countDownLatch);
+            } catch (Exception e) {
+                logger.warn("observer init error, message : {}, retry after ({})ms"
+                        , e.getMessage(), gRpcParamsConfig.getReconnectDuration());
+                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
+                continue;
+            }
 
-                StreamObserver<EntityClassSyncRequest> streamObserver = null;
-                String uid = UUID.randomUUID().toString();
-                try {
-                    /**
-                     * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
-                     */
-                    streamObserver = responseEvent(countDownLatch);
-                } catch (Exception e) {
-                    logger.warn("observer init error, message : {}, retry after ({})ms"
-                            , e.getMessage(), gRpcParamsConfig.getReconnectDuration());
-                    TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
-                    continue;
-                }
+            /**
+             * 判断是服务重启还是断流
+             */
+            requestHandler.watchExecutor().create(uid, streamObserver);
+
+            /**
+             * 重新注册所有watchList到服务端
+             * 当注册失败时，将直接标记该observer不可用
+             * 注册成功则直接进入wait状态，直到observer上发生错误为止
+             */
+            if (requestHandler.reRegister()) {
+                /**
+                 * 设置服务可用
+                 */
+                requestHandler.watchExecutor().active();
+                /**
+                 * wait直到countDownLatch = 0;
+                 */
+                Uninterruptibles.awaitUninterruptibly(countDownLatch);
+            }
+
+            /**
+             * 设置服务不可用
+             */
+            requestHandler.watchExecutor().inActive();
+
+            /**
+             * 如果是服务关闭，则直接跳出while循环
+             */
+            if (requestHandler.isShutDown()) {
+                logger.warn("stream has broken due to client has been shutdown...");
+            } else {
+                logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."
+                        , uid, gRpcParamsConfig.getReconnectDuration());
 
                 /**
-                 * 判断是服务重启还是断流
+                 * 这里先设置睡眠再进行资源清理
                  */
-                requestHandler.watchExecutor().create(uid, streamObserver);
+                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
-                /**
-                 * 重新注册所有watchList到服务端
-                 * 当注册失败时，将直接标记该observer不可用
-                 * 注册成功则直接进入wait状态，直到observer上发生错误为止
-                 */
-                if (requestHandler.reRegister()) {
-                    /**
-                     * 设置服务可用
-                     */
-                    requestHandler.watchExecutor().active();
-                    /**
-                     * wait直到countDownLatch = 0;
-                     */
-                    Uninterruptibles.awaitUninterruptibly(countDownLatch);
-                }
+                requestHandler.watchExecutor().release(uid);
 
-                /**
-                 * 设置服务不可用
-                 */
-                requestHandler.watchExecutor().inActive();
-
-                /**
-                 * 如果是服务关闭，则直接跳出while循环
-                 */
-                if (requestHandler.isShutDown()) {
-                    logger.warn("stream has broken due to client has been shutdown...");
-                } else {
-                    logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."
-                            , uid, gRpcParamsConfig.getReconnectDuration());
-
-                    /**
-                     * 这里先设置睡眠再进行资源清理
-                     */
-                    TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
-
-                    requestHandler.watchExecutor().release(uid);
-                }
-            } finally {
                 clientRebuildStreamCounter.incrementAndGet();
             }
         }
