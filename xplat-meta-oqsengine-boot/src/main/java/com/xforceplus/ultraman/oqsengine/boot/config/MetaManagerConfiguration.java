@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 /**
  * meta manager
@@ -26,21 +25,18 @@ public class MetaManagerConfiguration {
     }
 
     @Bean
-    @Profile("product")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
     public ICacheExecutor cacheExecutor() {
         return new CacheExecutor();
     }
 
     @Bean
-    @Profile("product")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
     public SyncExecutor grpcSyncExecutor() {
         return new EntityClassSyncExecutor();
     }
 
     @Bean
-    @Profile("product")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
     public IDelayTaskExecutor iDelayTaskExecutor() {
         return new ExpireExecutor();
