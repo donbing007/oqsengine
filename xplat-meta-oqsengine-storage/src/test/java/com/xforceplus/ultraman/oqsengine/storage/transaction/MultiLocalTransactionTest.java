@@ -53,6 +53,7 @@ public class MultiLocalTransactionTest {
         commitIdStatusService.init();
 
         redisEventHandler = new RedisEventHandler(redisClient, new ObjectMapper(), 10);
+        redisEventHandler.init();
     }
 
     @After
@@ -249,17 +250,19 @@ public class MultiLocalTransactionTest {
 
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(8)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(8L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(9)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(9L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(10)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build(),
-                Entity.Builder.anEntity().withId(10)
+                                            Entity.Builder.anEntity().withId(10)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build());
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
@@ -268,14 +271,19 @@ public class MultiLocalTransactionTest {
                         .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build(),
                 Entity.Builder.anEntity().withId(1)
                         .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build());
+
         tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(2)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(2L).build()).build());
+
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(3)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
+
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(4)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(4L).build()).build());
+
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(5)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(5L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
