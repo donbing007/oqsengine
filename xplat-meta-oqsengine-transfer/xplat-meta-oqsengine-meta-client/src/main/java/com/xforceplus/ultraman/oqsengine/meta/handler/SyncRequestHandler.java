@@ -223,7 +223,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     entityClassSyncResponse.getVersion(), Confirmed));
 
             if (ret) {
-                logger.debug("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                logger.info("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
                         entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
                         entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
             }
