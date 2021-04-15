@@ -56,12 +56,15 @@ public class SendUtils {
             if (entityClassSyncRequest.getStatus() == RequestStatus.HEARTBEAT.ordinal()) {
                 logger.debug("send request success, request [{}, {}, {}]"
                         , "HEARTBEAT"
-                        , "STATUS " + entityClassSyncRequest.getStatus(), "UID " + entityClassSyncRequest.getUid());
+                        , "STATUS:" + entityClassSyncRequest.getStatus()
+                        , "UID:" + entityClassSyncRequest.getUid());
             } else {
                 String appId = entityClassSyncRequest.getAppId();
-                logger.info("send request success, request [{}, {}, {}]"
-                        , "REQ APP_ID_" + appId
-                        , "STATUS " + entityClassSyncRequest.getStatus(), "UID " + entityClassSyncRequest.getUid());
+                logger.info("send request success, request [{}, {}, {}, {}]"
+                        , "REQ APP_ID:" + appId
+                        , "VER:" + entityClassSyncRequest.getVersion()
+                        , "STATUS:" + entityClassSyncRequest.getStatus()
+                        , "UID:" + entityClassSyncRequest.getUid());
             }
 
         } catch (Exception e) {
