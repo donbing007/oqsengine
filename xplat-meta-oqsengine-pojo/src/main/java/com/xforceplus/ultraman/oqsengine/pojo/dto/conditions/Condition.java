@@ -17,6 +17,8 @@ import java.util.Optional;
  */
 public class Condition implements Serializable {
 
+    public static final long NO_RELATION = 0;
+
     /**
      * 条件字段属于的 entityClass.
      */
@@ -29,7 +31,7 @@ public class Condition implements Serializable {
     /**
      * 标识出和主对象的关系标识.
      */
-    private long relationId;
+    private long relationId = NO_RELATION;
 
     /**
      * 条件值集合

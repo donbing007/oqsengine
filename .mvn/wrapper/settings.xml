@@ -28,7 +28,7 @@
         <repository>
           <id>nexus</id>
           <name>Nexus Public Repository</name>
-          <url>http://120.27.140.65:8081/nexus/content/groups/public/</url>
+          <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>
