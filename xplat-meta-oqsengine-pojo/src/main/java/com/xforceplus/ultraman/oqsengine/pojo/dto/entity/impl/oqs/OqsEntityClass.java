@@ -93,7 +93,7 @@ public class OqsEntityClass implements IEntityClass {
 
         List<OqsRelation> relations = new ArrayList<>();
 
-        if(this.relations != null){
+        if (this.relations != null) {
             relations.addAll(this.relations);
         }
 
@@ -133,11 +133,11 @@ public class OqsEntityClass implements IEntityClass {
         List<IEntityField> entityFields = new ArrayList<>(fields);
         if (null != relations) {
             relations.forEach(
-                    r -> {
-                        if (r.isSelfRelation(id)) {
-                            entityFields.add(r.getEntityField());
-                        }
+                r -> {
+                    if (r.isSelfRelation(id)) {
+                        entityFields.add(r.getEntityField());
                     }
+                }
             );
         }
 
