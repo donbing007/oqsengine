@@ -8,11 +8,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
+import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +41,8 @@ public class ConditionHelper {
 
     //TODO error handler
     private static Conditions toOneConditions(
-            Optional<IEntityField> fieldOp
-            , FieldConditionUp fieldCondition
-            , IEntityClass mainClass) {
+            Optional<Tuple2<IEntityClass, IEntityField>> fieldOp
+            , FieldConditionUp fieldCondition ) {
 
         Conditions conditions = null;
 
@@ -49,7 +52,9 @@ public class ConditionHelper {
         if (fieldOp.isPresent()) {
             FieldConditionUp.Op op = fieldCondition.getOperation();
 
-            IEntityField originField = fieldOp.get();
+            Tuple2<IEntityClass, IEntityField> tuple = fieldOp.get();
+            IEntityField originField = tuple._2();
+            IEntityClass mainClass = tuple._1();
 
             //in order
             List<String> nonNullValueList = fieldCondition
@@ -65,25 +70,7 @@ public class ConditionHelper {
 
             //EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, long relationId, IValue... values
 
-            EntityClassRef classRef = null;
-
-            if (relationId > 0) {
-                //if is belong to another
-                Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
-                        .filter(x -> x.getId() == relationId)
-                        .findFirst();
-
-                if (relationOp.isPresent()) {
-
-                    OqsRelation relation = relationOp.get();
-
-                    if (relation.getLeftEntityClassId() == mainClass.id()) {
-                        classRef = EntityClassRef.Builder.anEntityClassRef()
-                                .withEntityClassId(relation.getRightEntityClassId())
-                                .build();
-                    }
-                }
-            }
+            EntityClassRef classRef = fieldOp.get()._1.ref();
 
             switch (op) {
                 case eq:
@@ -101,7 +88,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.NOT_EQUALS
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(
@@ -109,7 +96,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.GREATER_THAN_EQUALS
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case gt:
                     conditions = new Conditions(new Condition(
@@ -117,7 +104,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.GREATER_THAN
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge_le:
                     if (nonNullValueList.size() > 1) {
@@ -126,14 +113,14 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
                                 classRef
                                 , originField
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(1)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(1)).toArray(new IValue[]{}));
 
                         conditions = new Conditions(left).addAnd(right);
 
@@ -144,7 +131,7 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case gt_le:
@@ -154,14 +141,14 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
                                 classRef
                                 , originField
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(1)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(1)).toArray(new IValue[]{}));
 
                         conditions = new Conditions(left).addAnd(right);
 
@@ -172,7 +159,7 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case ge_lt:
@@ -182,14 +169,14 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
                                 classRef
                                 , originField
                                 , ConditionOperator.LESS_THAN
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(1)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(1)).toArray(new IValue[]{}));
 
                         conditions = new Conditions(left).addAnd(right);
 
@@ -200,7 +187,7 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case gt_lt:
@@ -210,14 +197,14 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
                                 classRef
                                 , originField
                                 , ConditionOperator.LESS_THAN
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(1)).toArray(new IValue[]{}));
+                                , toTypedValue(originField, nonNullValueList.get(1)).toArray(new IValue[]{}));
                         conditions = new Conditions(left).addAnd(right);
 
                     } else {
@@ -227,7 +214,7 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case le:
@@ -236,7 +223,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.LESS_THAN_EQUALS
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(
@@ -244,7 +231,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.LESS_THAN
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case in:
                     conditions = new Conditions(
@@ -253,9 +240,10 @@ public class ConditionHelper {
                                     , originField
                                     , ConditionOperator.MULTIPLE_EQUALS
                                     , relationId
-                                    , nonNullValueList.stream().flatMap(x -> toTypedValue(fieldOp.get(), x).stream()).toArray(IValue[]::new)
+                                    , nonNullValueList.stream().flatMap(x -> toTypedValue(originField, x).stream()).toArray(IValue[]::new)
                             )
                     );
+
                     break;
                 case ni:
                     if (nonNullValueList.size() == 1) {
@@ -264,14 +252,14 @@ public class ConditionHelper {
                                 , originField
                                 , ConditionOperator.NOT_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     } else {
                         conditions = new Conditions(new Condition(
                                 classRef
                                 , originField
                                 , ConditionOperator.NOT_EQUALS
                                 , relationId
-                                , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                                , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
 
                         Conditions finalConditions = conditions;
                         EntityClassRef finalClassRef = classRef;
@@ -281,7 +269,7 @@ public class ConditionHelper {
                                     , originField
                                     , ConditionOperator.NOT_EQUALS
                                     , relationId
-                                    , toTypedValue(fieldOp.get(), x).toArray(new IValue[]{}))), false);
+                                    , toTypedValue(originField, x).toArray(new IValue[]{}))), false);
                         });
 
                         conditions = finalConditions;
@@ -293,7 +281,7 @@ public class ConditionHelper {
                             , originField
                             , ConditionOperator.LIKE
                             , relationId
-                            , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            , toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 default:
 
@@ -307,30 +295,93 @@ public class ConditionHelper {
         return conditions;
     }
 
+    /**
+     * relation can be inherited
+     * @param mainClass
+     * @return
+     */
+    private static Optional<OqsRelation> findRelation(IEntityClass mainClass, long relationId){
+        Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
+                .filter(rel -> rel.getId() == relationId)
+                .findFirst();
+        if(!relationOp.isPresent()){
+            if(mainClass.father().isPresent()) {
+                return findRelation(mainClass.father().get(), relationId);
+            } else{
+                return Optional.empty();
+            }
+        } else {
+            return relationOp;
+        }
+    }
+
+    /**
+     * find field within entityField
+     * @return
+     */
+    private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldWithInEntityClass(IEntityClass mainClass, FieldUp field, MetaManager manager){
+
+        IEntityClass targetEntityClass = mainClass;
+        long fieldId = field.getId();
+        long originEntityClassId = field.getOwnerClassId();
+        if(originEntityClassId > 0 && originEntityClassId != mainClass.id()){
+            Optional<IEntityClass> targetOp = manager.load(originEntityClassId);
+            if(targetOp.isPresent()){
+                targetEntityClass = targetOp.get();
+            } else {
+                logger.error("Field's owner {} is missing", originEntityClassId);
+            }
+        } else {
+            if(originEntityClassId <= 0 ) {
+                logger.warn("Field {} not contains ownerId", field);
+            }
+        }
+
+        Optional<IEntityField> fieldOp = findFieldById(targetEntityClass, fieldId);
+        IEntityClass finalClass = targetEntityClass;
+        return fieldOp.map( x -> Tuple.of(finalClass, x));
+    }
+
+    /**
+     * if a condition has relation id than we should find in related class or in main class
+     * should consider following cases:
+     *  1 search field in main's sub / parent
+     *  2 search related 'sub / parent
+     * @param mainClass
+     * @param conditionsUp
+     * @param ids
+     * @param manager
+     * @return
+     */
     public static Optional<Conditions> toConditions(IEntityClass mainClass, ConditionsUp conditionsUp, List<Long> ids, MetaManager manager) {
 
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
-            /**
-             * turn alias field to column field
-             */
-            long fieldId = x.getField().getId();
-            Optional<IEntityField> fieldOp = findFieldById(mainClass, fieldId);
 
-            if (!fieldOp.isPresent() && x.getRelationId() > 0) {
-                Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
-                        .filter(rel -> rel.getId() == x.getRelationId())
-                        .findFirst();
+            FieldUp field = x.getField();
+            Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
+
+            //TODO relation is inherited
+            if(x.getRelationId() > 0){
+                //find in related
+                Optional<OqsRelation> relationOp = findRelation(mainClass, x.getRelationId());
 
                 if (relationOp.isPresent()) {
-
                     OqsRelation relation = relationOp.get();
                     if (relation.getLeftEntityClassId() == mainClass.id()) {
-                        fieldOp = manager.load(relation.getRightEntityClassId()).flatMap(related -> findFieldById(related, fieldId));
+                        Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
+                        if(relatedEntityClassOp.isPresent()){
+                            fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
+                        } else {
+                            logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
+                        }
                     }
                 }
+            } else {
+                //find in main
+                fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
             }
 
-            return toOneConditions(fieldOp, x, mainClass);
+            return toOneConditions(fieldOp, x);
         }).reduce((a, b) -> a.addAnd(b, true));
 
         //remove special behavior for ids
