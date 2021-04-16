@@ -122,7 +122,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
             return attributesToList(attrStr);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new SQLException(String.format("[cdc-sync-executor] id [%d], attrStr JsonToObject error.", id));
+            throw new SQLException(String.format("[cdc-sync-executor] id [%d], attrStr [%s] JsonToObject error.", id, attrStr));
         }
     }
 
