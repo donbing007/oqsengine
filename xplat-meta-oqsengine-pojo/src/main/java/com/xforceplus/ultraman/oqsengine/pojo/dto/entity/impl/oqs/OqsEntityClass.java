@@ -93,7 +93,7 @@ public class OqsEntityClass implements IEntityClass {
 
         List<OqsRelation> relations = new ArrayList<>();
 
-        if(this.relations != null){
+        if (this.relations != null) {
             relations.addAll(this.relations);
         }
 
@@ -151,7 +151,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(String name) {
         Optional<IEntityField> entityFieldOp =
-            fields.stream().filter(f -> name.equals(f.name())).findFirst();
+                fields.stream().filter(f -> name.equals(f.name())).findFirst();
 
         //  找到
         if (entityFieldOp.isPresent()) {
@@ -177,7 +177,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(long id) {
         Optional<IEntityField> entityFieldOp =
-            fields.stream().filter(f -> id == f.id()).findFirst();
+                fields.stream().filter(f -> id == f.id()).findFirst();
 
         //  找到
         if (entityFieldOp.isPresent()) {
@@ -210,13 +210,13 @@ public class OqsEntityClass implements IEntityClass {
         }
         OqsEntityClass that = (OqsEntityClass) o;
         return id == that.id &&
-            version == that.version &&
-            level == that.level &&
-            Objects.equals(name, that.name) &&
-            Objects.equals(code, that.code) &&
-            Objects.equals(father, that.father) &&
-            Objects.equals(relations, that.relations) &&
-            Objects.equals(fields, that.fields);
+                version == that.version &&
+                level == that.level &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(code, that.code) &&
+                Objects.equals(father, that.father) &&
+                Objects.equals(relations, that.relations) &&
+                Objects.equals(fields, that.fields);
     }
 
     @Override
