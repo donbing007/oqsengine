@@ -134,7 +134,7 @@ public class OqsEntityClass implements IEntityClass {
         if (null != relations) {
             relations.forEach(
                     r -> {
-                        if (r.isSelfRelation(id)) {
+                        if (null != r && r.isSelfRelation(id)) {
                             entityFields.add(r.getEntityField());
                         }
                     }
@@ -153,12 +153,25 @@ public class OqsEntityClass implements IEntityClass {
         Optional<IEntityField> entityFieldOp =
             fields.stream().filter(f -> name.equals(f.name())).findFirst();
 
-        //  找到或者没有父类
-        if (entityFieldOp.isPresent() || null == father) {
+        //  找到
+        if (entityFieldOp.isPresent()) {
             return entityFieldOp;
+        } else {
+            //  从关系中找
+            for (OqsRelation relation : relations) {
+                if (null != relation &&
+                        relation.isSelfRelation(this.id) &&
+                        relation.getEntityField().name().equals(name)) {
+                    return Optional.of(relation.getEntityField());
+                }
+            }
         }
+
         //  从父类找
-        return father.field(name);
+        if (null != father) {
+            return father.field(name);
+        }
+        return entityFieldOp;
     }
 
     @Override
@@ -166,22 +179,24 @@ public class OqsEntityClass implements IEntityClass {
         Optional<IEntityField> entityFieldOp =
             fields.stream().filter(f -> id == f.id()).findFirst();
 
-        //  找到或者没有父类
+        //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
         } else {
+            //  从关系中找
             for (OqsRelation relation : relations) {
-                if (relation.getEntityField().id() == id) {
+                if (null != relation &&
+                        relation.isSelfRelation(this.id) &&
+                        relation.getEntityField().id() == id) {
                     return Optional.of(relation.getEntityField());
                 }
             }
         }
 
-        //  从父类寻找
+        //  从父类找
         if (null != father) {
             return father.field(id);
         }
-
         return entityFieldOp;
     }
 
