@@ -133,11 +133,11 @@ public class OqsEntityClass implements IEntityClass {
         List<IEntityField> entityFields = new ArrayList<>(fields);
         if (null != relations) {
             relations.forEach(
-                r -> {
-                    if (r.isSelfRelation(id)) {
-                        entityFields.add(r.getEntityField());
+                    r -> {
+                        if (null != r && r.isSelfRelation(id)) {
+                            entityFields.add(r.getEntityField());
+                        }
                     }
-                }
             );
         }
 
@@ -151,37 +151,52 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(String name) {
         Optional<IEntityField> entityFieldOp =
-            fields.stream().filter(f -> name.equals(f.name())).findFirst();
+                fields.stream().filter(f -> name.equals(f.name())).findFirst();
 
-        //  找到或者没有父类
-        if (entityFieldOp.isPresent() || null == father) {
-            return entityFieldOp;
-        }
-        //  从父类找
-        return father.field(name);
-    }
-
-    @Override
-    public Optional<IEntityField> field(long id) {
-        Optional<IEntityField> entityFieldOp =
-            fields.stream().filter(f -> id == f.id()).findFirst();
-
-        //  找到或者没有父类
+        //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
         } else {
+            //  从关系中找
             for (OqsRelation relation : relations) {
-                if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
+                if (null != relation &&
+                        relation.isSelfRelation(this.id) &&
+                        relation.getEntityField().name().equals(name)) {
                     return Optional.of(relation.getEntityField());
                 }
             }
         }
 
-        //  从父类寻找
+        //  从父类找
+        if (null != father) {
+            return father.field(name);
+        }
+        return entityFieldOp;
+    }
+
+    @Override
+    public Optional<IEntityField> field(long id) {
+        Optional<IEntityField> entityFieldOp =
+                fields.stream().filter(f -> id == f.id()).findFirst();
+
+        //  找到
+        if (entityFieldOp.isPresent()) {
+            return entityFieldOp;
+        } else {
+            //  从关系中找
+            for (OqsRelation relation : relations) {
+                if (null != relation &&
+                        relation.isSelfRelation(this.id) &&
+                        relation.getEntityField().id() == id) {
+                    return Optional.of(relation.getEntityField());
+                }
+            }
+        }
+
+        //  从父类找
         if (null != father) {
             return father.field(id);
         }
-
         return entityFieldOp;
     }
 
@@ -195,13 +210,13 @@ public class OqsEntityClass implements IEntityClass {
         }
         OqsEntityClass that = (OqsEntityClass) o;
         return id == that.id &&
-            version == that.version &&
-            level == that.level &&
-            Objects.equals(name, that.name) &&
-            Objects.equals(code, that.code) &&
-            Objects.equals(father, that.father) &&
-            Objects.equals(relations, that.relations) &&
-            Objects.equals(fields, that.fields);
+                version == that.version &&
+                level == that.level &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(code, that.code) &&
+                Objects.equals(father, that.father) &&
+                Objects.equals(relations, that.relations) &&
+                Objects.equals(fields, that.fields);
     }
 
     @Override

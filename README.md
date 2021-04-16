@@ -138,3 +138,33 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_cdc_sync_delay_latency | | CDC 同步的延时 |
 | oqs_mode | | 当前工作模式(1 正常, 2 只读) |
 | oqs_now_commitid | | 当前最大提交号 |
+
+# META同步工具(Meta/Client/Server)
+## Meta逻辑
+Redis作为1级缓存存储EntityClass的原始信息,提供Client端SyncExecutor的实现类EntityClassSyncExecutor,进行同步新版本操作。
+Redis存储逻辑:
+1.prepare-锁定该AppId一分钟，如果锁定失败，则表示当前本AppId有更新操作正在执行，本次操作将被拒绝，并直接返回更新失败。否则将会获取当前AppId的版本作为将过期版本。
+2.将protobuf转为EntityClassStorage列表。
+3.保存当前内容
+    3.1 保存基础信息
+    3.2 保存Field/relation信息
+    3.3 重置当前活动版本
+4.将过期版本加入过期队列，一分钟后清除。   
+ 
+
+## Client逻辑
+client向外部提供register接口，通过register将AppId+Env注册到Server端，并在首次注册时告知server端当前活动版本，注册过的AppId将被加入client端的watchList中，
+当客户端发生断开链接或断流时，client端将自动重新注册WatchList中的所有关注元素到server端(通过IRequestHandler的reRegister自动注册)。
+client接受数据后调用Meta提供的SyncExecutor中的sync方法进行数据同步，并将同步结果回推到server端。
+client端启动后会发送HEARTBEAT请求到server端，发送频率默认为5秒每次，当30秒内未收到server端的确认时，将进行自动断流重连.
+
+
+## Server逻辑
+server端需要外部提供pull接口(server主动拉取外部服务meta信息, 并实现了push接口，提供了通过EventListener的方式由外部主动推送版本发布更新信息)
+server端维护以下3个内存数据结构:
+map -> appVersions, key: 'app_env' value: version，每次外部主动推送一个版本，会触发该map的更新(map中的版本小于推送版本则代表可以推送),将触发推送下发的逻辑.
+map -> appWatchers, key: 'app_env' value: Set<String>(uids),维护了关注列表，及关注该key的所有client uids的合集.每次client调用register事件时，将触发在该set中新增自己的uid的操作.
+map -> uidWatchers, key: 'uid' value: responseWatcher，每个uid的关注列表，以及当前版本信息, responseWatcher中持有当前uid所对应的client的responseStreamObserver，关注列表中记录当前client
+的所有AppId的状态，当前版本，环境(server端需要同时支持同个AppId的多套环境)，最后心跳时间戳等。
+每次推送给client数据更新包后，将会将当前推送信息加入到delayTask队列中，如果client端在指定时间内未响应同步成功信息后，将触发服务端的重新发送任务。
+
