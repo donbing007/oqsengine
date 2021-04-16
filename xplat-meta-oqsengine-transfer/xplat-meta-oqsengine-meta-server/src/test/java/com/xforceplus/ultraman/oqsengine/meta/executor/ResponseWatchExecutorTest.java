@@ -122,6 +122,10 @@ public class ResponseWatchExecutorTest {
         for(String s : ret) {
             Assert.assertEquals(uid2, s);
         }
+        responseWatchExecutor.release(uid2);
+
+        watcher = responseWatchExecutor.watcher(uid2);
+        Assert.assertNull(watcher);
     }
 
     @Test
