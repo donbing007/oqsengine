@@ -19,6 +19,11 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
         super(uid, observer);
     }
 
+    /**
+     * 重置RequestWatcher
+     * @param uid
+     * @param streamObserver
+     */
     public void reset(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
         super.uid = uid;
         super.streamObserver = streamObserver;
@@ -26,6 +31,11 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
         watches().values().forEach(WatchElement::reset);
     }
 
+    /**
+     * param中的watchElement是否被关注?
+     * @param watchElement
+     * @return
+     */
     @Override
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
@@ -40,6 +50,11 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
                 (v.getVersion() == watchElement.getVersion() && v.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
+    /**
+     * 当前requestWatcher是否处于活动状态
+     * @param uid
+     * @return
+     */
     @Override
     public boolean isAlive(String uid) {
         /**
@@ -58,6 +73,9 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
         return false;
     }
 
+    /**
+     * 释放
+     */
     @Override
     public void release() {
         uid = null;

@@ -16,17 +16,46 @@ import io.grpc.stub.StreamObserver;
  */
 public interface IRequestWatchExecutor extends IWatchExecutor {
 
+    /**
+     * 创建一个新的RequestWatcher
+     * @param uid
+     * @param observer
+     */
     void create(String uid, StreamObserver<EntityClassSyncRequest> observer);
 
+    /**
+     * 增加WatchElement
+     * @param watchElement
+     */
     void add(WatchElement watchElement);
 
+    /**
+     * 更新WatchElement
+     * @param watchElement
+     * @return
+     */
     boolean update(WatchElement watchElement);
 
+    /**
+     * 当前RequestWatcher是否处于活动状态
+     * @param uid
+     * @return
+     */
     boolean isAlive(String uid);
 
+    /**
+     * 返回当前RequestWatcher实例
+     * @return
+     */
     RequestWatcher watcher();
 
+    /**
+     * 激活RequestWatcher
+     */
     void active();
 
+    /**
+     * 禁用RequestWatcher
+     */
     void inActive();
 }

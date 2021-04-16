@@ -18,13 +18,18 @@ import io.grpc.stub.StreamObserver;
  */
 public interface IResponseHandler extends IObserverHandler<EntityClassSyncRequest, StreamObserver<EntityClassSyncResponse>> {
     /**
-     *
+     * 拉取
      * @param uid
      * @param watchElement
      * @param requestStatus
      */
     void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus);
 
+    /**
+     * 推送
+     * @param event
+     * @return
+     */
     boolean push(AppUpdateEvent event);
 }
 

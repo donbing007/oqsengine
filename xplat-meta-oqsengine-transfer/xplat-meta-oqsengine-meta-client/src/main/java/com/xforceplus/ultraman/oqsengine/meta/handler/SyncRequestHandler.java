@@ -141,6 +141,13 @@ public class SyncRequestHandler implements IRequestHandler {
         return ret.get();
     }
 
+    /**
+     * 发送register
+     * @param uid
+     * @param force
+     * @param v
+     * @return
+     */
     private boolean sendRegister(String uid, boolean force, WatchElement v) {
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
@@ -207,6 +214,11 @@ public class SyncRequestHandler implements IRequestHandler {
         return isOperationOK;
     }
 
+    /**
+     * 执行处理response
+     * @param entityClassSyncResponse
+     * @param nil
+     */
     @Override
     public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
 
