@@ -198,7 +198,7 @@ public class SyncResponseHandler implements IResponseHandler {
 
                 boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
                 if (ret) {
-                    logger.debug("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                    logger.info("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
                             entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                             entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
                 }
