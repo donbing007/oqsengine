@@ -133,6 +133,10 @@ public class SelectConfig implements Serializable {
         }
 
         public Builder withExcludedIds(Set<Long> excludedIds) {
+            if (excludedIds == null) {
+                return this;
+            }
+            
             if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet(excludedIds);
             } else {

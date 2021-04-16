@@ -469,6 +469,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         Collection<Condition> safeCondititons = processConditions.collectCondition();
         // 只包含驱动 entity 条件的集合.
+        /**
+         * condition中的entityClassRef存在只是表示字段的本身来源 e.g.  A(f1,f2) <-- A'(f3) 那么 f1的condition上就会存在EntityClassRef[A] f3的condition暂时没有
+         * 所以判断是否是另一个驱动表查询的条件需要同时考虑到是否有relationId存在 relationId表示EntityClassRef和当前查询EntityClassRef的路径(关系) 即如何从 A -findEntityBy(relationId)-> B
+         * 所以存在relationId时 即告知当前condition来源于另一个对象，并且当前对象A通过 relationId所指 relation可以找到该对象。
+         */
         Collection<Condition> driverConditionCollection = safeCondititons.stream()
                 .filter(c -> c.getEntityClassRef().isPresent() && c.getRelationId() > 0)
             .collect(toList());
@@ -538,7 +543,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         } else {
             // 之前过滤掉了非 driver 的条件,这里需要加入.
-            processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
+            processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0).forEach(c -> {
                     conditions.addAnd(c);
                 }
             );
@@ -864,20 +869,26 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     /**
      * 判断是否为单条件标识查询.
+     *
      */
     private boolean isOneIdQuery(Conditions conditions) {
         // 只有一个条件.
         final int onlyOne = 1;
 
+        /**
+         * related
+         */
+        final int notRelated = 0;
+
         boolean result = false;
         if (conditions.size() == onlyOne) {
             for (Condition condition : conditions.collectCondition()) {
                 result = condition.getField().config().isIdentifie();
+                result = result && condition.getRelationId() <= notRelated && condition.getOperator() == ConditionOperator.EQUALS;
                 break;
             }
         }
 
         return result;
     }
-
 }
