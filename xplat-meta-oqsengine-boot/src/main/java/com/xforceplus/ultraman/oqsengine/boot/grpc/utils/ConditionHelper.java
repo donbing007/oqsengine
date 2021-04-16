@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -42,7 +41,7 @@ public class ConditionHelper {
     //TODO error handler
     private static Conditions toOneConditions(
             Optional<Tuple2<IEntityClass, IEntityField>> fieldOp
-            , FieldConditionUp fieldCondition ) {
+            , FieldConditionUp fieldCondition) {
 
         Conditions conditions = null;
 
@@ -297,17 +296,18 @@ public class ConditionHelper {
 
     /**
      * relation can be inherited
+     *
      * @param mainClass
      * @return
      */
-    private static Optional<OqsRelation> findRelation(IEntityClass mainClass, long relationId){
+    private static Optional<OqsRelation> findRelation(IEntityClass mainClass, long relationId) {
         Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
                 .filter(rel -> rel.getId() == relationId)
                 .findFirst();
-        if(!relationOp.isPresent()){
-            if(mainClass.father().isPresent()) {
+        if (!relationOp.isPresent()) {
+            if (mainClass.father().isPresent()) {
                 return findRelation(mainClass.father().get(), relationId);
-            } else{
+            } else {
                 return Optional.empty();
             }
         } else {
@@ -317,36 +317,38 @@ public class ConditionHelper {
 
     /**
      * find field within entityField
+     *
      * @return
      */
-    private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldWithInEntityClass(IEntityClass mainClass, FieldUp field, MetaManager manager){
+    private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldWithInEntityClass(IEntityClass mainClass, FieldUp field, MetaManager manager) {
 
         IEntityClass targetEntityClass = mainClass;
         long fieldId = field.getId();
         long originEntityClassId = field.getOwnerClassId();
-        if(originEntityClassId > 0 && originEntityClassId != mainClass.id()){
+        if (originEntityClassId > 0 && originEntityClassId != mainClass.id()) {
             Optional<IEntityClass> targetOp = manager.load(originEntityClassId);
-            if(targetOp.isPresent()){
+            if (targetOp.isPresent()) {
                 targetEntityClass = targetOp.get();
             } else {
                 logger.error("Field's owner {} is missing", originEntityClassId);
             }
         } else {
-            if(originEntityClassId <= 0 ) {
+            if (originEntityClassId <= 0) {
                 logger.warn("Field {} not contains ownerId", field);
             }
         }
 
         Optional<IEntityField> fieldOp = findFieldById(targetEntityClass, fieldId);
         IEntityClass finalClass = targetEntityClass;
-        return fieldOp.map( x -> Tuple.of(finalClass, x));
+        return fieldOp.map(x -> Tuple.of(finalClass, x));
     }
 
     /**
      * if a condition has relation id than we should find in related class or in main class
      * should consider following cases:
-     *  1 search field in main's sub / parent
-     *  2 search related 'sub / parent
+     * 1 search field in main's sub / parent
+     * 2 search related 'sub / parent
+     *
      * @param mainClass
      * @param conditionsUp
      * @param ids
@@ -361,7 +363,7 @@ public class ConditionHelper {
             Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
 
             //TODO relation is inherited
-            if(x.getRelationId() > 0){
+            if (x.getRelationId() > 0) {
                 //find in related
                 Optional<OqsRelation> relationOp = findRelation(mainClass, x.getRelationId());
 
@@ -369,7 +371,7 @@ public class ConditionHelper {
                     OqsRelation relation = relationOp.get();
                     if (relation.getLeftEntityClassId() == mainClass.id()) {
                         Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
-                        if(relatedEntityClassOp.isPresent()){
+                        if (relatedEntityClassOp.isPresent()) {
                             fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
                         } else {
                             logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
