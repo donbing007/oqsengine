@@ -91,30 +91,29 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
     }
 
-    private IEntityClass getEntityClass(List<CanalEntry.Column> columns) throws SQLException {
+    private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
         for (int o = ENTITYCLASSL4.ordinal(); o >= ENTITYCLASSL0.ordinal(); o--) {
             Optional<OqsBigEntityColumns> op = getByOrdinal(o);
             if (op.isPresent()) {
-                long id = getLongFromColumn(columns, op.get());
+                long entityId = getLongFromColumn(columns, op.get());
                 /**
                  * 从大到小找到的第一个entityClass > 0的id即为selfEntityClassId
                  */
-                if (id > ZERO) {
-                    Optional<IEntityClass> entityClassOptional = metaManager.load(id);
+                if (entityId > ZERO) {
+                    Optional<IEntityClass> entityClassOptional = metaManager.load(entityId);
                     if (entityClassOptional.isPresent()) {
                         return entityClassOptional.get();
                     }
-                    logger.warn("entityId [{}] has no entityClass in meta.", id);
+                    logger.warn("[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
                     break;
                 }
             }
         }
-
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    private Collection<Object> attrCollection(List<CanalEntry.Column> columns) throws SQLException {
+    private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
             return new ArrayList<>();
@@ -122,20 +121,21 @@ public class SphinxSyncExecutor implements SyncExecutor {
         try {
             return attributesToList(attrStr);
         } catch (Exception e) {
-            throw new SQLException("attrStr Json to object error");
+            e.printStackTrace();
+            throw new SQLException(String.format("[cdc-sync-executor] id [%d], attrStr JsonToObject error.", id));
         }
     }
 
     private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
         //  通过解析binlog获取
 
-        IEntityClass entityClass = getEntityClass(columns);
+        IEntityClass entityClass = getEntityClass(id, columns);
         if (null == entityClass) {
-            throw new SQLException(String.format("id [%d], commitId [%d] has no entityClass...", id, commitId));
+            throw new SQLException(String.format("[cdc-sync-executor] id [%d], commitId [%d] has no entityClass...", id, commitId));
         }
-        Collection<Object> attributes = attrCollection(columns);
+        Collection<Object> attributes = attrCollection(id, columns);
         if (attributes.isEmpty()) {
-            throw new SQLException(String.format("id [%d], commitId [%d] has no attributes...", id, commitId));
+            throw new SQLException(String.format("[cdc-sync-executor] id [%d], commitId [%d] has no attributes...", id, commitId));
         }
 
         boolean isDelete = getBooleanFromColumn(columns, DELETED);
