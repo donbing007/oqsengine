@@ -117,11 +117,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
                 if (resource.getTransaction().isPresent()) {
                     Set<Long> updateIds = tx.getAccumulator().getUpdateIds();
-                    if (updateIds.size() > 0) {
-                        useFilterIds = new HashSet();
-                        useFilterIds.addAll(updateIds);
-                        useFilterIds.addAll(config.getExcludedIds());
-                    }
+                    useFilterIds = new HashSet();
+                    useFilterIds.addAll(updateIds);
+                    useFilterIds.addAll(config.getExcludedIds());
                 } else {
                     useFilterIds = config.getExcludedIds();
                 }
