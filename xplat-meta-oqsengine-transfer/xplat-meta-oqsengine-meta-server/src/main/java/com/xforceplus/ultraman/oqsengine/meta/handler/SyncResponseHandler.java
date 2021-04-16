@@ -112,7 +112,7 @@ public class SyncResponseHandler implements IResponseHandler {
 
 
     /**
-     * 销毁delayTask的线程
+     * 关闭
      */
     @Override
     public void stop() {
@@ -134,6 +134,11 @@ public class SyncResponseHandler implements IResponseHandler {
         logger.debug("syncResponseHandler stop.");
     }
 
+    /**
+     * 执行对于request的处理
+     * @param entityClassSyncRequest
+     * @param responseStreamObserver
+     */
     @Override
     public void invoke(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
