@@ -80,7 +80,7 @@ public class HealthCheckEntityClass implements IEntityClass {
 
     @Override
     public Collection<IEntityClass> family() {
-        return Collections.emptyList();
+        return Collections.singletonList(this);
     }
 
     @Override
