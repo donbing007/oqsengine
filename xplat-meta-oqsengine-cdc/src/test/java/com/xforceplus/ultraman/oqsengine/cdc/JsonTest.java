@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,9 +35,11 @@ public class JsonTest {
             "\t\"F1295238513526161410S\": \"CQP\"\n" +
             "}";
 
+    String str2 = "{\"tenant_id\":\"456758158894358\n5293\",\"create_user_id\":\"4612820548148789257\",\"dict_desc\":\"小组角色关系\",\"create_user_name\":\"柳红彬\",\"create_time\":\"1598350807168\",\"update_user_name\":\"柳红彬\",\"is_default\":\"1\",\"dict_code\":\"team_relation\",\"update_time\":\"1598350807168\",\"update_user_id\":\"4612820548148789257\",\"enable\":\"1\",\"dict_value\":\"[\\n  {\\n    \\\"itemCode\\\": \\\"checkScan\\\",\\n    \\\"itemValue\\\": {\\n      \\\"4418255883950761701\\\": \\\"4418255815205528906\\\",\\n      \\\"4418255815205528921\\\": \\\"4418255815205528921\\\"\\n    }\\n  },\\n  {\\n    \\\"itemCode\\\": \\\"leaderScan\\\",\\n    \\\"itemValue\\\": {\\n      \\\"4418255815205528921\\\": \\\"4418255883950761701,4418255815205528906\\\"\\n    }\\n  }\\n]\",\"id\":\"1298203494372605953\",\"delete_flag\":\"1\",\"tenant\":null,\"tenant_code\":\"CQP\"}  ";
+
     @Test
     public void test() throws JsonProcessingException {
-        List<Object> objects = attributesToList(str);
+        List<Object> objects = OriginalEntityUtils.attributesToList(str2);
         Assert.assertNotNull(objects);
     }
 }
