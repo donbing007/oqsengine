@@ -18,8 +18,7 @@ import java.util.Map;
  */
 public class OriginalEntityUtils {
 
-    private static final ObjectMapper jsonMapper = new ObjectMapper()
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+    private static final ObjectMapper jsonMapper = new ObjectMapper();
 
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
