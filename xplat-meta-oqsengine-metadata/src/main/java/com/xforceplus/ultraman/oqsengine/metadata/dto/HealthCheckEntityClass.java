@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_CODE;
@@ -59,17 +60,17 @@ public class HealthCheckEntityClass implements IEntityClass {
 
     @Override
     public Collection<Relation> relations() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public Collection<OqsRelation> oqsRelations() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public Collection<IEntityClass> relationsEntityClasss() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
@@ -79,12 +80,12 @@ public class HealthCheckEntityClass implements IEntityClass {
 
     @Override
     public Collection<IEntityClass> family() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public Collection<IEntityField> fields() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
