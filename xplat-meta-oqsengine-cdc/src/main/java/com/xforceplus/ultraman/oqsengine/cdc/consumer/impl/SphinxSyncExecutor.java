@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.common.cdc.SkipRow;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -55,13 +56,27 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
 
     //  执行同步到Sphinx操作
-    public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+    public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics, Map<String, String> skips) throws SQLException {
         int synced = 0;
         List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         for (RawEntry rawEntry : rawEntries) {
             try {
-                storageEntityList.add(prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
+                OriginalEntity entity =
+                        prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
+                String ret =
+                        skips.get(SkipRow.toSkipRow(entity.getCommitid(), entity.getId(), entity.getVersion(), entity.getOp()));
+                if (null != ret && !ret.isEmpty()) {
+                    boolean errRec = ret.equals(SkipRow.Status.ERROR_RECORD.getStatus());
+                    if (errRec) {
+                        errorRecord(cdcMetrics.getBatchId(), rawEntry.getId(), rawEntry.getCommitId(), "手动跳过");
+                    }
+                    logger.warn("[cdc-sync-executor] 设置手动跳过记录, id : {}, commitId : {}, version : {}, op : {}, errorRecord : {}"
+                                                , rawEntry.getId(), rawEntry.getCommitId(), entity.getVersion(), entity.getOp(), errRec);
+                    continue;
+                }
+
+                storageEntityList.add(entity);
             } catch (Exception e) {
                 //  组装数据失败，记录错误日志
                 e.printStackTrace();
@@ -70,8 +85,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
 
         if (!storageEntityList.isEmpty()) {
-            sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
+            try {
+                sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
+            } catch (Exception e) {
 
+            }
             synced += storageEntityList.size();
             syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - startTime));
         }

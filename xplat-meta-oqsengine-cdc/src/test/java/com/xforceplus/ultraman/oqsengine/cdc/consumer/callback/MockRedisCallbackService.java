@@ -4,9 +4,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,6 +28,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     private CDCMetrics cdcMetrics;
     private CDCAckMetrics ackMetrics;
     private CommitIdStatusService commitIdStatusService;
+    private CDCStatusServiceImpl cdcStatusService;
     private long heartBeat;
     private long notReady;
 
@@ -43,6 +46,11 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     public MockRedisCallbackService(CommitIdStatusService commitIdStatusService) {
         this.commitIdStatusService = commitIdStatusService;
+    }
+
+    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService, CDCStatusServiceImpl cdcStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
+        this.cdcStatusService = cdcStatusService;
     }
 
     @Override
@@ -92,6 +100,16 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     @Override
     public boolean isReadyCommit(long commitId) {
         return true;
+    }
+
+    @Override
+    public Map<String, String> querySkipRows() {
+        return cdcStatusService.querySkipRows();
+    }
+
+    @Override
+    public void expiredSkipRows(String[] skips) {
+        cdcStatusService.expiredSkipRows(skips);
     }
 
     public AtomicInteger getExecuted() {

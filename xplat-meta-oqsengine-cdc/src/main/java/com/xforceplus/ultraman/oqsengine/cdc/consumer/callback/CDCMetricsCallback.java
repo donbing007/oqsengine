@@ -3,6 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * desc :
  * name : CDCMetricsCallback
@@ -53,6 +56,10 @@ public interface CDCMetricsCallback {
      * @param commitId
      */
     boolean isReadyCommit(long commitId);
+
+    Map<String, String> querySkipRows();
+
+    void expiredSkipRows(String[] skips);
 }
 
 
