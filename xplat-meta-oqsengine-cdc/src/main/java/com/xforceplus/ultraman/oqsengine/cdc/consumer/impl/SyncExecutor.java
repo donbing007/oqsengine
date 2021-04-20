@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * desc :
@@ -15,7 +16,7 @@ import java.util.Collection;
  * @since : 1.8
  */
 public interface SyncExecutor {
-    int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException;
+    int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics, Map<String, String> skips) throws SQLException;
 
     void errorRecord(long batchId, long id, long commitId, String message) throws SQLException;
 }

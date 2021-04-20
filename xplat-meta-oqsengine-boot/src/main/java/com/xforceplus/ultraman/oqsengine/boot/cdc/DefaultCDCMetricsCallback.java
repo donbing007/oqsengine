@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -70,5 +71,15 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public boolean isReadyCommit(long commitId) {
         return commitIdStatusService.isReady(commitId);
+    }
+
+    @Override
+    public Map<String, String> querySkipRows() {
+        return cdcStatusService.querySkipRows();
+    }
+
+    @Override
+    public void expiredSkipRows(String[] skips) {
+        cdcStatusService.expiredSkipRows(skips);
     }
 }

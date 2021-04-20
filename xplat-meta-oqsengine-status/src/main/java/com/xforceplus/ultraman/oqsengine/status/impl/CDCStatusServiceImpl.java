@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.cdc.SkipRow;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,6 +36,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     private static final String DEFAULT_HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.heartBeat";
     private static final String DEFAULT_NOT_READY_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.notReady";
     private static final String DEFAULT_CDC_ACK_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.ack";
+
+    private static final String DEFAULT_CDC_SKIPS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.skips";
 
     final Logger logger = LoggerFactory.getLogger(CDCStatusServiceImpl.class);
 
@@ -51,6 +56,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private String notReadyKey;
 
+    private String cdcSkips;
+
     private long lastHeartBeatValue = -1;
     private long lastNotReadyValue = -1;
     private AtomicLong cdcSyncTime = new AtomicLong(0);
@@ -59,10 +66,10 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     private AtomicLong cdcNotReadyCommitIdGauge;
 
     public CDCStatusServiceImpl() {
-        this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY, DEFAULT_NOT_READY_KEY);
+        this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY, DEFAULT_NOT_READY_KEY, DEFAULT_CDC_SKIPS_KEY);
     }
 
-    public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat, String notReady) {
+    public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat, String notReady, String cdcSkips) {
         this.metricsKey = metricsKey;
         if (this.metricsKey == null || this.metricsKey.isEmpty()) {
             throw new IllegalArgumentException("The cdc status metrics is invalid.");
@@ -81,6 +88,11 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         this.notReadyKey = notReady;
         if (this.notReadyKey == null || this.notReadyKey.isEmpty()) {
             throw new IllegalArgumentException("The notReadyKey is invalid.");
+        }
+
+        this.cdcSkips = cdcSkips;
+        if (this.cdcSkips == null || this.cdcSkips.isEmpty()) {
+            throw new IllegalArgumentException("The cdcSkips is invalid.");
         }
     }
 
@@ -181,6 +193,27 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     @Override
     public Optional<CDCAckMetrics> getAck() {
         return get(ackKey, CDCAckMetrics.class);
+    }
+
+    @Override
+    public Map<String, String> querySkipRows() {
+        RedisCommands<String, String> commands = connect.sync();
+        return commands.hgetall(cdcSkips);
+    }
+
+    @Override
+    public void expiredSkipRows(String[] skips) {
+        RedisCommands<String, String> commands = connect.sync();
+        commands.hdel(cdcSkips, skips);
+    }
+
+    @Override
+    public boolean addSkipRow(long commitId, long id, int version, int op, boolean errorRecord) {
+        String s = SkipRow.toSkipRow(commitId, id, version, op);
+
+        RedisCommands<String, String> commands = connect.sync();
+        return commands.hset(cdcSkips, s, errorRecord ?
+                SkipRow.Status.ERROR_RECORD.getStatus() : SkipRow.Status.NOT_RECORD.getStatus());
     }
 
     private boolean save(Object obj, String key) {
