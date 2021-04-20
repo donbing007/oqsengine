@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -43,10 +45,7 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
@@ -61,7 +60,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     final Logger logger = LoggerFactory.getLogger(SphinxQLManticoreIndexStorage.class);
 
-    final ObjectMapper jsonMapper = new ObjectMapper();
+    final ObjectMapper jsonMapper;
 
     @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
@@ -107,6 +106,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
+    public SphinxQLManticoreIndexStorage() {
+        jsonMapper = JsonMapper.builder()
+            .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+            .build();
+    }
+
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
         long startMs = System.currentTimeMillis();
@@ -144,19 +149,19 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             return refs;
         } finally {
             Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "condition")
-                    .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
+                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
     }
 
     @Override
     public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
         CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
-                .withEntityClass(entityClass)
-                .withStart(start)
-                .withEnd(end)
-                .withIndexNames(indexWriteIndexNameSelector.selects())
-                .withDs(writerDataSourceSelector.selects())
-                .build();
+            .withEntityClass(entityClass)
+            .withStart(start)
+            .withEnd(end)
+            .withIndexNames(indexWriteIndexNameSelector.selects())
+            .withDs(writerDataSourceSelector.selects())
+            .build();
 
         return executor.execute(maintainId);
     }
@@ -177,14 +182,27 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         final long retryDurationMs = 3000;
 
         CountDownLatch latch = new CountDownLatch(sections.size());
+        List<Future<Boolean>> futures = new ArrayList<>(sections.size());
         for (OriginalEntitySection section : sections) {
-            threadPool.submit(new HandlerTask(section, latch, retryDurationMs, false));
+            futures.add(threadPool.submit(new HandlerTask(section, latch, retryDurationMs, true)));
         }
 
         try {
             latch.await();
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
+        }
+
+        for (Future<Boolean> f : futures) {
+            try {
+                if (!f.get()) {
+                    throw new SQLException("Failed to save for unknown reason.");
+                }
+            } catch (InterruptedException e) {
+                throw new SQLException(e.getCause());
+            } catch (ExecutionException e) {
+                throw new SQLException(e.getCause());
+            }
         }
     }
 
@@ -217,6 +235,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         public Boolean call() throws Exception {
             boolean exit = false;
             boolean error = false;
+            Exception exception = null;
             try {
                 while (!exit) {
                     try {
@@ -228,6 +247,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         logger.error("Batch write error, wait {} milliseconds to try again.", retryDurationMs);
                         if (stopWhenFail) {
                             exit = true;
+                            exception = ex;
                         } else {
                             exit = false;
                         }
@@ -240,7 +260,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 latch.countDown();
             }
 
-            return error;
+            if (exception != null) {
+                throw exception;
+            } else {
+                return !error ? true : false;
+            }
         }
 
         private int doSave() throws SQLException {
@@ -268,7 +292,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         // 保存更新和创建的分区.
         private int doSaveOpSection(OperationType op, String indexName, String shardKey, Collection<OriginalEntity> originalEntities)
-                throws SQLException {
+            throws SQLException {
 
             Collection<SphinxQLStorageEntity> manticoreStorageEntities = new ArrayList<>(originalEntities.size());
             for (OriginalEntity oe : originalEntities) {
@@ -280,10 +304,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
                     if (OperationType.CREATE == op) {
                         return SaveIndexExecutor.buildCreate(indexName, resource)
-                                .execute(manticoreStorageEntities);
+                            .execute(manticoreStorageEntities);
                     } else if (OperationType.UPDATE == op) {
                         return SaveIndexExecutor.buildReplace(indexName, resource)
-                                .execute(manticoreStorageEntities);
+                            .execute(manticoreStorageEntities);
                     } else {
                         throw new SQLException("An operation that cannot be handled.");
                     }
@@ -298,7 +322,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         // 操作删除的分区.
         private int doDeleteOpSection(String indexName, String shardKey, Collection<OriginalEntity> originalEntities)
-                throws SQLException {
+            throws SQLException {
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
                 public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -315,16 +339,16 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     private SphinxQLStorageEntity toStorageEntityFromOriginal(OriginalEntity originalEntity) throws SQLException {
         SphinxQLStorageEntity.Builder builder = SphinxQLStorageEntity.Builder.aManticoreStorageEntity()
-                .withId(originalEntity.getId())
-                .withCommitId(originalEntity.getCommitid())
-                .withTx(originalEntity.getTx())
-                .withCreateTime(originalEntity.getCreateTime())
-                .withUpdateTime(originalEntity.getUpdateTime())
-                .withMaintainId(originalEntity.getMaintainid())
-                .withOqsmajor(originalEntity.getOqsMajor())
-                .withAttributeF(toAttributesF(originalEntity))
-                .withEntityClassF(toEntityClassF(originalEntity))
-                .withAttribute(toAttribute(originalEntity));
+            .withId(originalEntity.getId())
+            .withCommitId(originalEntity.getCommitid())
+            .withTx(originalEntity.getTx())
+            .withCreateTime(originalEntity.getCreateTime())
+            .withUpdateTime(originalEntity.getUpdateTime())
+            .withMaintainId(originalEntity.getMaintainid())
+            .withOqsmajor(originalEntity.getOqsMajor())
+            .withAttributeF(toAttributesF(originalEntity))
+            .withEntityClassF(toEntityClassF(originalEntity))
+            .withAttribute(toAttribute(originalEntity));
         return builder.build();
     }
 
@@ -355,7 +379,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             if (StorageType.STRING == anyStorageValue.type()) {
 
                 attributeMap.put(shortStorageName.toString(),
-                        SphinxQLHelper.encodeJsonCharset(attr.getValue().toString()));
+                    SphinxQLHelper.encodeJsonCharset(attr.getValue().toString()));
 
             } else {
 
@@ -383,13 +407,13 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             if (StorageType.UNKNOWN == anyStorageValue.type()) {
                 if (fieldOp.isPresent()) {
                     throw new SQLException(
-                            String.format("Unknown physical storage type.[id=%s, name=%s]",
-                                    anyStorageValue.logicName(),
-                                    fieldOp.get().name()));
+                        String.format("Unknown physical storage type.[id=%s, name=%s]",
+                            anyStorageValue.logicName(),
+                            fieldOp.get().name()));
                 } else {
                     throw new SQLException(
-                            String.format("Unknown physical storage type.[id=%s]",
-                                    anyStorageValue.logicName()));
+                        String.format("Unknown physical storage type.[id=%s]",
+                            anyStorageValue.logicName()));
                 }
             }
 
@@ -398,12 +422,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             }
 
             buff.append(
-                    wrapperAttribute(
-                            anyStorageValue.shortStorageName(),
-                            attr.getValue(),
-                            anyStorageValue.type(),
-                            fieldOp.get()))
-                    .append(' ');
+                wrapperAttribute(
+                    anyStorageValue.shortStorageName(),
+                    attr.getValue(),
+                    anyStorageValue.type(),
+                    fieldOp.get()))
+                .append(' ');
         }
         return buff.toString();
     }
@@ -411,7 +435,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     // 全文元信息
     private String toEntityClassF(OriginalEntity originalEntity) {
         return originalEntity.getEntityClass().family()
-                .stream().map(e -> Long.toString(e.id())).collect(Collectors.joining(" "));
+            .stream().map(e -> Long.toString(e.id())).collect(Collectors.joining(" "));
     }
 
     /**
@@ -422,7 +446,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * aZl8N0123y58M7S
      */
     private String wrapperAttribute(
-            ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
+        ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
 
         StringBuilder buff = new StringBuilder();
 
@@ -434,7 +458,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             String strValue = SphinxQLHelper.filterSymbols(value.toString());
 
             if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
-                    || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
+                || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
                 /**
                  * 硬编码字符串长度超过30的将只分词前30个字符.
                  */
@@ -450,8 +474,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         buff.append(' ');
                     }
                     buff.append(shortStorageName.getPrefix())
-                            .append(words.next())
-                            .append(shortStorageName.getSuffix());
+                        .append(words.next())
+                        .append(shortStorageName.getSuffix());
                 }
                 if (buff.length() > 0) {
                     buff.append(' ');
@@ -460,12 +484,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
             // 原始字符.
             buff.append(shortStorageName.getPrefix())
-                    .append(strValue)
-                    .append(shortStorageName.getSuffix());
+                .append(strValue)
+                .append(shortStorageName.getSuffix());
         } else {
             buff.append(shortStorageName.getPrefix())
-                    .append(value.toString())
-                    .append(shortStorageName.getSuffix());
+                .append(value.toString())
+                .append(shortStorageName.getSuffix());
         }
 
         return buff.toString();
@@ -482,7 +506,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         int tSize = indexWriteIndexNameSelector.selects().size();
 
         Map<DataSource, Map<String, OriginalEntitySection>> dsSectionMap =
-                new HashMap(MapUtils.calculateInitSize(dsSize, 0.75F));
+            new HashMap(MapUtils.calculateInitSize(dsSize, 0.75F));
 
         Map<String, OriginalEntitySection> nameSectionMap;
 
@@ -568,7 +592,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             OperationType op = OperationType.getInstance(oe.getOp());
             if (OperationType.UNKNOWN == op) {
                 throw new IllegalArgumentException(
-                        String.format("Unrecognized operation type.[id=%d, type=%d]", oe.getId(), oe.getOp()));
+                    String.format("Unrecognized operation type.[id=%d, type=%d]", oe.getId(), oe.getOp()));
             } else {
                 return op;
             }
@@ -592,7 +616,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             if (logger.isDebugEnabled()) {
                 if (!result) {
                     logger.debug("Field {} is filtered out because it is not searchable or does not exist.",
-                            fieldOp.get().name());
+                        fieldOp.get().name());
                 }
             }
 

@@ -25,6 +25,10 @@ import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -88,6 +92,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource
     private MetaManager metaManager;
+
+    @Resource
+    private TransactionManager transactionManager;
 
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
@@ -315,8 +322,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             collectEntityClass(conditions, entityClass);
 
 
-
-
             final int onlyOneEntityClass = 1;
             if (entityClassCollection.size() > onlyOneEntityClass) {
 
@@ -371,7 +376,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 useConditions,
                 entityClass,
                 SelectConfig.Builder.aSelectConfig()
-                    .withCommitId(minUnSyncCommitId)
+                    .withCommitId(reviseCommitId(minUnSyncCommitId))
                     .withSort(useSort)
                     .withPage(usePage)
                     .withDataAccessFitlerCondtitons(
@@ -404,6 +409,32 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } finally {
             searchReadCountTotal.increment();
         }
+    }
+
+    /**
+     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
+     * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值.
+     * 这里需要修正以下情况的查询.
+     * 1. 在事务中并且未提交.
+     * 2. 之前有过写入动作.
+     */
+    private long reviseCommitId(long minUnSyncCommitId) {
+        if (transactionManager != null && minUnSyncCommitId == 0) {
+            Optional<Transaction> currentTransaction = transactionManager.getCurrent();
+            if (currentTransaction.isPresent()) {
+                Transaction transaction = currentTransaction.get();
+                TransactionAccumulator accumulator = transaction.getAccumulator();
+                // 没有写和的操作序号值.
+                final int noWriteOpSize = 0;
+                if (accumulator.getBuildNumbers()
+                    + accumulator.getReplaceNumbers()
+                    + accumulator.getDeleteNumbers() > noWriteOpSize) {
+                    return CommitHelper.getUncommitId();
+                }
+            }
+        }
+
+        return minUnSyncCommitId;
     }
 
     /**

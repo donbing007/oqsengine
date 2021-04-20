@@ -11,6 +11,8 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -256,6 +258,92 @@ public class SphinxQLManticoreIndexStorageTest {
         redisClient.shutdown();
 
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    /**
+     * 测试值中有特殊符号,单引号,双引号等.
+     */
+    @Test
+    public void testSymbolValue() throws Exception {
+        // 单引号
+        StorageStrategy l0StorageStrategy = storageStrategyFactory.getStrategy(
+            l2EntityClass.field("l0-string").get().type());
+        StorageValue l0StorageValue = l0StorageStrategy.toStorageValue(
+            new StringValue(
+                l2EntityClass.field("l0-string").get(),
+                "1d'f"));
+
+        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 300)
+            .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "1d'f")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.aSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(target.getId(), refs.stream().findFirst().get().getId());
+
+        target.setOp(OperationType.DELETE.getValue());
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        // 双引号
+        l0StorageStrategy = storageStrategyFactory.getStrategy(
+            l2EntityClass.field("l0-string").get().type());
+        l0StorageValue = l0StorageStrategy.toStorageValue(
+            new StringValue(
+                l2EntityClass.field("l0-string").get(),
+                "1d\"f"));
+
+        target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 400)
+            .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "1d\"f")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.aSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(target.getId(), refs.stream().findFirst().get().getId());
+
     }
 
     @Test

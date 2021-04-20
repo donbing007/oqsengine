@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
+import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -21,7 +22,7 @@ public class SphinxQLHelper {
      * 半角空格不可过滤,只有全角空格需要过滤.
      */
     protected static final int[] IGNORE_SYMBOLS = {
-        '\'', '\\', '\"', '\n', '\r', '\0', '+', '-', '#', '%', '.', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
+        '\'', '\\', '\"', '+', '-', '#', '%', '.', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
         '<', '>', '≮', '≯', '≤', '≥', '‰', '∞', '∝', '√', '∵', '∴', '∷', '∠', '⌒', '⊙', '○', 'π', '△', '⊥', '∪', '∩',
         '∫', '∑', '°', '′', '″', '℃', '{', '}', '(', ')', '[', ']', '|', '‖', '*', '/', ':', ';', '?', '!', '&', '～',
         '§', '→', '^', '$', '@', '`', '❤', '❥', '︼', '﹄', '﹂', 'ˉ', '︾', '︺', '﹀', '︸', '︶', '︻', '﹃', '﹁',
@@ -41,6 +42,7 @@ public class SphinxQLHelper {
      * @return 结果.
      */
     public static String filterSymbols(String value) {
+        value = StringUtils.filterCanSeeChar(value);
         if (value == null || value.isEmpty()) {
             return value;
         }
@@ -61,15 +63,26 @@ public class SphinxQLHelper {
      * @return 处理结果.
      */
     public static String encodeJsonCharset(String value) {
+        value = StringUtils.filterCanSeeChar(value);
         if (value == null || value.isEmpty()) {
             return value;
         }
         StringBuilder buff = new StringBuilder();
         for (char c : value.toCharArray()) {
-            if ('\'' == c) {
-                buff.append('\\');
+            switch (c) {
+                case '\'': {
+                    buff.append('`');
+                    break;
+                }
+                case '"': {
+                    buff.append("``");
+                    break;
+                }
+                default: {
+                    buff.append(c);
+                }
             }
-            buff.append(c);
+
         }
 
         return buff.toString();
@@ -141,5 +154,4 @@ public class SphinxQLHelper {
     public static String buildWirdcardQuery(StorageValue value) {
         return buildPreciseQuery(value, false);
     }
-
 }
