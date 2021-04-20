@@ -12,8 +12,10 @@ public class CommitHelper {
 
     /**
      * 校验提交号是否可用合法.
+     * 是否可以用事务提交的提交号.
+     *
      * @param commitId 提交号.
-     * @return true合法,false不合法.
+     * @return true合法, false不合法.
      */
     public static boolean isLegal(long commitId) {
         if (UNCOMMIT_ID == commitId) {

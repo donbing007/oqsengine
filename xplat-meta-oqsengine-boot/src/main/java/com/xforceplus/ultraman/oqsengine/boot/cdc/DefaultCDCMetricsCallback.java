@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -10,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,9 +21,6 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
 
     @Resource
     private CDCStatusService cdcStatusService;
-
-    @Resource
-    private ObjectMapper objectMapper;
 
     @Resource
     private CommitIdStatusService commitIdStatusService;

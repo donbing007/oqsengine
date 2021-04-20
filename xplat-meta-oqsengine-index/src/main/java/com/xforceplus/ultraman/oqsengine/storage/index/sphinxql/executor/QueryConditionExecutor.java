@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhe
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -286,7 +287,7 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
             }
         }
 
-        if (commitId > 0) {
+        if (commitId > 0 && commitId < CommitHelper.getUncommitId()) {
             where.setCommitId(commitId);
         }
 
