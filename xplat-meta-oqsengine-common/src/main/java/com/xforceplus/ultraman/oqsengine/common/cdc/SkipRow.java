@@ -9,6 +9,9 @@ public class SkipRow {
         return String.format("%d.%d.%d.%d", commitId, id, version, op);
     }
 
+    /**
+     * enum
+     */
     public enum Status {
         ERROR_RECORD("1"),
         NOT_RECORD("0");
