@@ -255,13 +255,15 @@ public class EntityClassManagerExecutorTest {
         //  relations
         if (null != expected.getRelationsList()) {
             Assert.assertNotNull(actual.oqsRelations());
-            List<OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations());
+            Map<Long, OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
+                                                .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
 
-            Assert.assertEquals(expected.getRelationsList().size(), actualRelations.size());
+//            Assert.assertEquals(expected.getRelationsList().size(), actualRelations.size());
             for (int i = 0; i < expected.getRelationsList().size(); i++) {
+
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
-                OqsRelation actualRelation = actualRelations.get(i);
-                Assert.assertEquals(expectedRelation.getId(), (long) actualRelation.getId());
+                OqsRelation actualRelation = actualRelations.get(expectedRelation.getId());
+                Assert.assertNotNull(actualRelation);
                 Assert.assertEquals(expectedRelation.getCode(), actualRelation.getCode());
                 Assert.assertEquals(expectedRelation.getRightEntityClassId(), actualRelation.getRightEntityClassId());
                 Assert.assertEquals(expectedRelation.getLeftEntityClassId(), actualRelation.getLeftEntityClassId());
