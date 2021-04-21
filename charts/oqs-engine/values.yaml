@@ -92,7 +92,8 @@ meta:
       monitorDuration: 1
       # 重连间隔
       reconnectDuration: 5
-
+changelog:
+  enabled: false
 storage:
   tokenizer:
     segmentation:
