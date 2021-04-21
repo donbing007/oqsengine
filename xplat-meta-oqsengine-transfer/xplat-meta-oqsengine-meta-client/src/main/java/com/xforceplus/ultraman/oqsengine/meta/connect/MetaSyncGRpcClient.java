@@ -59,7 +59,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     @Override
     public void stop() {
         try {
-            channel.shutdown().awaitTermination(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            channel.shutdown().awaitTermination(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.SECONDS);
 
             logger.info("gRpc-client destroy!");
         } catch (InterruptedException e) {

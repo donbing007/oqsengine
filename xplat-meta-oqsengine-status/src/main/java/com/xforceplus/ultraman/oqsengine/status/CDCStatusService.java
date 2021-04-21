@@ -4,6 +4,8 @@ package com.xforceplus.ultraman.oqsengine.status;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -61,4 +63,21 @@ public interface CDCStatusService {
      * @return 响应快照.
      */
     Optional<CDCAckMetrics> getAck();
+
+    /**
+     * 查询需要跳过CDC-skipRows
+     * @return
+     */
+    Map<String, String> querySkipRows();
+
+    /**
+     * 使跳过CDC-skipRows过期
+     */
+    void expiredSkipRows(String[] skips);
+
+    /**
+     * 查询需要跳过CDC-skipRows
+     * @return
+     */
+    boolean addSkipRow(long commitId, long id, int version, int op, boolean errorRecord);
 }

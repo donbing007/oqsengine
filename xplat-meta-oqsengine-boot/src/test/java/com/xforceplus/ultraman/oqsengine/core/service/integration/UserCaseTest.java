@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -134,6 +135,42 @@ public class UserCaseTest {
             }
         }
 
+    }
+
+    @Test
+    public void testUncommitSearch() throws Exception {
+        Transaction tx = transactionManager.create(5000);
+        transactionManager.bind(tx.id());
+
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
+                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                ))
+            ).build();
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        transactionManager.bind(tx.id());
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L)
+                    )
+                ),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.aSearchConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(99L,
+            entities.stream().findFirst().get().entityValue().getValue("l0-long").get().getValue());
+
+        tx.commit();
+        transactionManager.finish();
     }
 
     @Test

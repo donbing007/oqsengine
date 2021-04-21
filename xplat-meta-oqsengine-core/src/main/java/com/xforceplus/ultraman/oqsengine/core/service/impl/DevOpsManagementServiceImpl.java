@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.TaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,9 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Resource
     private CommitIdRepairExecutor commitIdRepairExecutor;
+
+    @Resource
+    private CDCStatusService cdcStatusService;
 
     @Override
     public Optional<IDevOpsTaskInfo> rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception {
@@ -120,5 +125,10 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public void initNewCommitId(Optional<Long> commitId) throws SQLException {
         commitIdRepairExecutor.repair(commitId);
+    }
+
+    @Override
+    public boolean skipRow(long commitId, long id, int version, int op, boolean record) {
+        return cdcStatusService.addSkipRow(commitId, id, version, op, record);
     }
 }

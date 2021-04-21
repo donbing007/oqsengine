@@ -95,7 +95,7 @@ public class SelectConfig implements Serializable {
     public static final class Builder {
         private long commitId = 0;
         private Sort sort = Sort.buildOutOfSort();
-        private Page page = Page.emptyPage();
+        private Page page = Page.newSinglePage(10);
         private Set<Long> excludedIds = Collections.emptySet();
         private Facet facet = Facet.build();
         private Conditions dataAccessFilterConditions = Conditions.buildEmtpyConditions();

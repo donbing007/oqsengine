@@ -47,6 +47,8 @@ public class SphinxConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
+
+
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService) throws SQLException {
         //  初始化指标记录器
@@ -84,10 +86,18 @@ public class SphinxConsumerService implements ConsumerService {
             }
         }
 
-        //  最后一个unCommitId的数据也需要同步一次
+        //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
+            Map<String, String> skips = cdcMetricsService.querySkips();
+            if (null == skips) {
+                skips = new HashMap<>();
+            }
             //  通过执行器执行Sphinx同步
-            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
+            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics, skips);
+
+            if (!skips.isEmpty()) {
+                cdcMetricsService.expireSkips(skips.keySet().toArray(new String[skips.size()]));
+            }
         }
 
         batchLogged(cdcMetrics);

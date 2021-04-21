@@ -52,9 +52,12 @@ public class SphinxQLHelperTest {
         buff.delete(0, buff.length());
         Arrays.stream(SphinxQLHelper.IGNORE_SYMBOLS).forEach(c -> {
             if ('\'' == c) {
-                buff.append('\\');
+                buff.append('`');
+            } else if ('"' == c) {
+                buff.append("``");
+            } else {
+                buff.append((char) c);
             }
-            buff.append((char) c);
         });
         String expected = buff.toString();
 
