@@ -32,6 +32,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
+import io.vavr.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -322,16 +324,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
         try {
             // join
-            Collection<IEntityClass> entityClassCollection = collectEntityClass(conditions, entityClass);
+            Map<Long, IEntityClass> entityClassCollectionMapping = collectEntityClass(conditions, entityClass);
             collectEntityClass(conditions, entityClass);
 
 
-            final int onlyOneEntityClass = 1;
-            if (entityClassCollection.size() > onlyOneEntityClass) {
+            final long onlyOneEntityClass = 1;
+            long externalSize = entityClassCollectionMapping.keySet().stream().filter(x -> x > 0).count();
 
-                if (entityClassCollection.size() > maxJoinEntityNumber) {
+            long size = externalSize + 1;
+
+            if (size > onlyOneEntityClass) {
+
+                if (size > maxJoinEntityNumber) {
                     throw new SQLException(
-                        String.format("Join queries can be associated with at most %d entities.", maxJoinEntityNumber));
+                            String.format("Join queries can be associated with at most %d entities.", maxJoinEntityNumber));
                 }
 
                 /**
@@ -463,17 +469,22 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     /**
      * 收集条件中的 entityClass
      */
-    private Collection<IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
-        Set<IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
+    private Map<Long, IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
+        Map<Long, IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
             if (c.getEntityClassRef().isPresent() && c.getRelationId() > 0) {
-                return EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
+                if (c.getEntityClassRef().get().getId() == mainEntityClass.id()) {
+                    //self reference
+                    return Tuple.of(c.getRelationId(), mainEntityClass);
+                } else {
+                    return Tuple.of(c.getRelationId(), EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get()));
+                }
             } else {
-                return mainEntityClass;
+                return Tuple.of(0L, mainEntityClass);
             }
-        }).collect(toSet());
+        }).collect(Collectors.toMap(x -> x._1(), x -> x._2(), (a, b) -> a));
 
         // 防止条件中没有出现非驱动 entity 的字段条件.
-        entityClasses.add(mainEntityClass);
+        //entityClasses.add(mainEntityClass);
 
         return entityClasses;
     }
@@ -904,7 +915,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     /**
      * 判断是否为单条件标识查询.
-     *
      */
     private boolean isOneIdQuery(Conditions conditions) {
         // 只有一个条件.
@@ -919,7 +929,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (conditions.size() == onlyOne) {
             for (Condition condition : conditions.collectCondition()) {
                 result = condition.getField().config().isIdentifie();
-                result = result && condition.getRelationId() <= notRelated && condition.getOperator() == ConditionOperator.EQUALS;
+                result = result && condition.getRelationId() <= notRelated && (condition.getOperator() == ConditionOperator.EQUALS);
                 break;
             }
         }

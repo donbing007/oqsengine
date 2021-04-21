@@ -101,7 +101,8 @@ query:
     maxJoinEntityNumber: 1000
     # join查询时的主表+驱动表的数量最大上限.
     maxJoinDriverLineNumber: 2
-
+changelog:
+  enabled: false
 storage:
   tokenizer:
     segmentation:

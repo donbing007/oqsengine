@@ -29,12 +29,14 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import io.lettuce.core.RedisClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * changelog configuration
  */
+@ConditionalOnProperty("changelog.enabled")
 @Configuration
 public class ChangelogConfiguration {
 
