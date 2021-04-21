@@ -13,13 +13,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
 /**
@@ -228,14 +226,6 @@ public class CommitIdStatusServiceImplTest {
 
         Assert.assertEquals(10L, impl.getMin().get().longValue());
         Assert.assertEquals(99L, impl.getMax().get().longValue());
-
-        // 因为同步指标是异步的,所以等待成功.
-        TimeUnit.MILLISECONDS.sleep(600);
-
-        Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
-        unSyncCommitIdSizeField.setAccessible(true);
-        AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
-        Assert.assertEquals(89L, unSyncCommitIdSize.longValue());
     }
 
     @Test
