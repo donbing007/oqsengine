@@ -95,6 +95,12 @@ public interface DevOpsManagementService {
 
     /**
      * 设置CDC忽略某条记录
+     * @param commitId
+     * @param id
+     * @param version
+     * @param op
+     * @param record 是否将跳过的记录记录到ERROR表中
+     * @return
      */
     boolean skipRow(long commitId, long id, int version, int op, boolean record);
 }
