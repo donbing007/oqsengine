@@ -46,13 +46,13 @@ public class SphinxConsumerToolsTest {
 
     private void initGetEntityClass() throws NoSuchMethodException {
         testGetEntityClass = sphinxSyncExecutor.getClass()
-                .getDeclaredMethod("getEntityClass", new Class[]{List.class});
+                .getDeclaredMethod("getEntityClass", new Class[]{long.class, List.class});
         testGetEntityClass.setAccessible(true);
     }
 
     private void initAttrCollection() throws NoSuchMethodException {
         testAttrCollection = sphinxSyncExecutor.getClass()
-                .getDeclaredMethod("attrCollection", new Class[]{List.class});
+                .getDeclaredMethod("attrCollection", new Class[]{long.class, List.class});
         testAttrCollection.setAccessible(true);
     }
 
@@ -73,7 +73,7 @@ public class SphinxConsumerToolsTest {
     }
 
     @Test
-    public void rawEntryTest() throws IOException, InvocationTargetException, IllegalAccessException, SQLException, NoSuchMethodException {
+    public void rawEntryTest() throws Exception {
         init();
         for (int i = 0; i < entityClassMap.size(); i++) {
             long id = i + 1;
@@ -174,14 +174,14 @@ public class SphinxConsumerToolsTest {
         }
     }
 
-    private void assertGetEntityClass(List<CanalEntry.Column> columns) throws InvocationTargetException, IllegalAccessException {
-        IEntityClass entityClass = (IEntityClass) testGetEntityClass.invoke(sphinxSyncExecutor, columns);
+    private void assertGetEntityClass(List<CanalEntry.Column> columns) throws Exception {
+        IEntityClass entityClass = (IEntityClass) testGetEntityClass.invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
         Assert.assertNotNull(entityClass);
     }
 
     @SuppressWarnings("unchecked")
-    private void assertAttributes(List<CanalEntry.Column> columns, int index) throws InvocationTargetException, IllegalAccessException, IOException {
-        List<Object> objects = (List<Object>) testAttrCollection.invoke(sphinxSyncExecutor, columns);
+    private void assertAttributes(List<CanalEntry.Column> columns, int index) throws Exception {
+        List<Object> objects = (List<Object>) testAttrCollection.invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
         Assert.assertTrue(null != objects && !objects.isEmpty() && objects.size() % 2 == 0);
 
         ObjectMapper objectMapper = new ObjectMapper();
