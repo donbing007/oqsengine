@@ -94,6 +94,7 @@ public interface DevOpsManagementService {
 
 
     /**
-     * CDC_ERRORS
+     * 设置CDC忽略某条记录
      */
+    boolean skipRow(long commitId, long id, int version, int op, boolean record);
 }
