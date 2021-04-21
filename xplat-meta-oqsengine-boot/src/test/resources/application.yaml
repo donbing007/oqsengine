@@ -38,11 +38,19 @@ threadPool:
     worker: 3
     queue: 1000
 
-maxVisibleNumber: 10000
-
 sync:
+  ignoreCDCStatusCheck: false
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
+
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
 
 storage:
   tokenizer:

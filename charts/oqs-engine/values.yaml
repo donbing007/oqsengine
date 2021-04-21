@@ -93,6 +93,15 @@ meta:
       # 重连间隔
       reconnectDuration: 5
 
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
+
 storage:
   tokenizer:
     segmentation:
@@ -165,6 +174,7 @@ redis:
   maxReqQueue: 2147483647
 
 sync:
+  ignoreCDCStatusCheck: false
   # The heartbeat delay of data synchronization. Milliseconds.
   allowMaxLiveTimeMs: 3000
   # Acceptable number of unsynchronized commit Numbers.

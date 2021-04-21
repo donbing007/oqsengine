@@ -66,7 +66,6 @@ data:
           event:
             worker: {{ .Values.storage.threadPool.event.worker | default "0" }}
             queue: {{ .Values.storage.threadPool.event.queue | default "1000" }}
-        maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         meta:
           grpc:
             type: client
@@ -78,6 +77,11 @@ data:
               keepAliveDuration: {{ .Values.meta.grpc.seconds.keepAliveDuration | default "5"}}
               monitorDuration: {{ .Values.meta.grpc.seconds.monitorDuration | default "1"}}
               reconnectDuration: {{ .Values.meta.grpc.seconds.reconnectDuration | default "5"}}
+        query:
+          maxVisibleTotalCount: {{ .Values.query.maxVisibleTotalCount | default "10000" }}
+          join:
+            maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
+            maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
         storage:
           tokenizer:
             segmentation:
@@ -124,6 +128,7 @@ data:
           uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
           maxReqQueue: {{ .Values.redis.maxReqQueue | default "2147483647" }}
         sync:
+          ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
           allowMaxUnSyncCommitIdSize: {{ .Values.sync.allowMaxUnSyncCommitIdSize | default "30" }}
         cdc:
