@@ -98,7 +98,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
-    private int maxJoinDriverLineNumber;
+    private long maxJoinDriverLineNumber;
     private boolean showResult = false;
     private CombinedStorage combinedStorage;
 
@@ -117,6 +117,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             maxVisibleTotalCount = DEFAULT_MAX_VISIBLE_TOTAL_COUNT;
         }
 
+        if (maxJoinDriverLineNumber > maxVisibleTotalCount) {
+            maxJoinDriverLineNumber = maxVisibleTotalCount;
+        }
+
         combinedStorage = new CombinedStorage(masterStorage, indexStorage);
 
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
@@ -133,11 +137,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxJoinEntityNumber = maxJoinEntityNumber;
     }
 
-    public int getMaxJoinDriverLineNumber() {
+    public long getMaxJoinDriverLineNumber() {
         return maxJoinDriverLineNumber;
     }
 
-    public void setMaxJoinDriverLineNumber(int maxJoinDriverLineNumber) {
+    public void setMaxJoinDriverLineNumber(long maxJoinDriverLineNumber) {
         this.maxJoinDriverLineNumber = maxJoinDriverLineNumber;
     }
 

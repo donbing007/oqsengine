@@ -1,9 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.core.service.*;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.EntitySearchServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.TransactionManagementServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,12 +24,14 @@ public class ServiceConfiguration {
 
     @Bean
     public EntitySearchService entitySearchService(
-        @Value("${maxVisibleNumber:10000}") long maxVisibelNumber,
-        @Value("${storage.debug.showsql:false}") boolean showSql) {
+        @Value("${query.maxVisibleTotalCount:10000}") long maxVisibleTotalCount,
+        @Value("${query.join.maxJoinEntityNumber:2}") int maxJoinEntityNumber,
+        @Value("${query.join.maxJoinDriverLineNumber:1000}") long maxJoinDriverLineNumber,
+        @Value("${debug.showsql:false}") boolean showSql) {
         EntitySearchServiceImpl impl = new EntitySearchServiceImpl();
-        impl.setMaxJoinEntityNumber(2);
-        impl.setMaxJoinDriverLineNumber(1000);
-        impl.setMaxVisibleTotalCount(maxVisibelNumber);
+        impl.setMaxJoinEntityNumber(maxJoinEntityNumber);
+        impl.setMaxJoinDriverLineNumber(maxJoinDriverLineNumber);
+        impl.setMaxVisibleTotalCount(maxVisibleTotalCount);
         impl.setShowResult(showSql);
 
         return impl;
@@ -33,7 +39,7 @@ public class ServiceConfiguration {
 
     @Bean
     public EntityManagementService entityManagementService(
-        @Value("${ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
+        @Value("${sync.ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
         @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs,
         @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize
     ) {
