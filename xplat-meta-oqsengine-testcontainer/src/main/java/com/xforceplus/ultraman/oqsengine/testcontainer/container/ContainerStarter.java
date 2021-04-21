@@ -6,10 +6,12 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * desc :
@@ -68,6 +70,9 @@ public final class ContainerStarter {
                 .withExposedPorts(6379)
                 .waitingFor(Wait.forListeningPort());
             redis.start();
+            redis.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
             System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
@@ -103,6 +108,9 @@ public final class ContainerStarter {
                 .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(Wait.forListeningPort());
             mysql.start();
+            mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
             System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
@@ -140,6 +148,9 @@ public final class ContainerStarter {
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .waitingFor(Wait.forListeningPort());
             manticore0.start();
+            manticore0.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MANTICORE0_HOST", manticore0.getContainerIpAddress());
             System.setProperty("MANTICORE0_PORT", manticore0.getFirstMappedPort().toString());
@@ -161,6 +172,9 @@ public final class ContainerStarter {
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .waitingFor(Wait.forListeningPort());
             manticore1.start();
+            manticore1.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MANTICORE1_HOST", manticore1.getContainerIpAddress());
             System.setProperty("MANTICORE1_PORT", manticore1.getFirstMappedPort().toString());
@@ -183,6 +197,9 @@ public final class ContainerStarter {
                 .dependsOn(manticore0, manticore1)
                 .waitingFor(Wait.forListeningPort());
             searchManticore.start();
+            searchManticore.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("SEARCH_MANTICORE_HOST", searchManticore.getContainerIpAddress());
             System.setProperty("SEARCH_MANTICORE_PORT", searchManticore.getFirstMappedPort().toString());
@@ -251,6 +268,9 @@ public final class ContainerStarter {
                 .dependsOn(mysql)
                 .waitingFor(Wait.forListeningPort());
             cannal.start();
+            cannal.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                logger.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("CANAL_HOST", cannal.getContainerIpAddress());
             System.setProperty("CANAL_PORT", cannal.getFirstMappedPort().toString());
