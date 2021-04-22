@@ -76,10 +76,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Resource(name = "callChangelogThreadPool")
     private ExecutorService asyncChangelogDispatcher;
 
-    @Resource
+    @Autowired(required = false)
     private QueryStorage queryStorage;
 
-    @Resource
+    @Autowired(required = false)
     private ReplayService replayService;
 
     @Autowired

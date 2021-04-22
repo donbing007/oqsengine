@@ -23,7 +23,9 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,69 +35,75 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+
 @Configuration
 public class ChangelogConfiguration {
 
     @Bean
-    public RedisClient redisClient(){
-        RedisClient redisClient = RedisClient.create("redis://localhost:6379");
+    public RedisClient redisClient() {
+
+        ContainerStarter.startRedis();
+        RedisClient redisClient = null;
+        String redisIp = System.getProperty("REDIS_HOST");
+        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
+        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
         return redisClient;
     }
 
     @Bean
-    public SnapshotEventHandler snapshotEventHandler(){
+    public SnapshotEventHandler snapshotEventHandler() {
         return new SnapshotEventHandler();
     }
 
     @Bean
-    public SnapshotService snapshotService(){
+    public SnapshotService snapshotService() {
         return new DefaultSnapshotServiceImpl();
     }
 
     @Bean
-    public Gateway gateway(){
+    public Gateway gateway() {
         return new DefaultChangelogGateway();
     }
 
     @Bean
-    public ChangelogCommandHandler changelogCommandHandler(){
+    public ChangelogCommandHandler changelogCommandHandler() {
         return new DefaultChangelogCommandHandler();
     }
 
     @Bean
-    public PersistentEventHandler persistentEventHandler(){
+    public PersistentEventHandler persistentEventHandler() {
         return new PersistentEventHandler();
     }
 
     @Bean
-    public PropagationEventHandler propagationEventHandler(){
+    public PropagationEventHandler propagationEventHandler() {
         return new PropagationEventHandler();
     }
 
     @Bean
-    public ChangelogExample example(IdGenerator<Long> versionIdGenerator){
+    public ChangelogExample example(IdGenerator<Long> versionIdGenerator) {
         return new ChangelogExample(versionIdGenerator);
     }
 
     @Bean
-    public ChangelogService changelogService(){
+    public ChangelogService changelogService() {
         ChangelogService changelogService = new DefaultChangelogImpl();
         return changelogService;
     }
 
     @Bean
-    public ReplayService replayService(){
+    public ReplayService replayService() {
         ReplayService replayService = new ReplayServiceImpl();
         return replayService;
     }
 
     @Bean
-    public RelationAwareChangelog manyToOne(){
+    public RelationAwareChangelog manyToOne() {
         return new ManyToOneRelationChangelog();
     }
 
     @Bean
-    public LongIdGenerator snowflakeIdGenerator(){
+    public LongIdGenerator snowflakeIdGenerator() {
 
         AtomicLong atomicLong = new AtomicLong(0);
         return new LongIdGenerator() {
@@ -117,7 +125,7 @@ public class ChangelogConfiguration {
     }
 
     @Bean
-    public LongIdGenerator versionIdGenerator(){
+    public LongIdGenerator versionIdGenerator() {
 
         AtomicLong atomicLong = new AtomicLong(10000);
         return new LongIdGenerator() {
@@ -139,7 +147,7 @@ public class ChangelogConfiguration {
     }
 
     @Bean
-    public SnapshotStorage snapshotStorage(){
+    public SnapshotStorage snapshotStorage() {
         return new SnapshotStorage() {
             @Override
             public Either<SQLException, Integer> saveSnapshot(ChangeSnapshot changeSnapshot) {
@@ -155,7 +163,7 @@ public class ChangelogConfiguration {
 
     //mock Changelog storage
     @Bean
-    public ChangelogStorage changelogStorage(ChangelogExample example){
+    public ChangelogStorage changelogStorage(ChangelogExample example) {
         return new ChangelogStorage() {
             @Override
             public Either<SQLException, Integer> saveBatch(List<Changelog> changeLogs) {
@@ -170,7 +178,7 @@ public class ChangelogConfiguration {
     }
 
     @Bean
-    public MetaManager metaManager(ChangelogExample example){
+    public MetaManager metaManager(ChangelogExample example) {
         return new MetaManager() {
             @Override
             public Optional<IEntityClass> load(long id) {
