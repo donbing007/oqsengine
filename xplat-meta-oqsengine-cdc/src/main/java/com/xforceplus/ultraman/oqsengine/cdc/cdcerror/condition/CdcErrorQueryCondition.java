@@ -12,14 +12,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
  */
 public class CdcErrorQueryCondition {
     private Long seqNo;
+    private Long batchId;
     private Long id;
     private Long commitId;
     private Integer status;
+    private Boolean isEqualStatus;
+    private Integer type;
     private Long rangeLEExecuteTime;
     private Long rangeGeExecuteTime;
     private Long rangeLEFixedTime;
     private Long rangeGeFixedTime;
-
 
     public String conditionToQuerySql() {
         boolean hasEnd = false;
@@ -28,6 +30,15 @@ public class CdcErrorQueryCondition {
         //  add seqNo
         if (null != seqNo) {
             stringBuilder.append(ErrorFieldDefine.SEQ_NO).append("=").append("?");
+            hasEnd = true;
+        }
+
+        //  add batchId
+        if (null != batchId) {
+            if (hasEnd) {
+                stringBuilder.append(" AND ");
+            }
+            stringBuilder.append(ErrorFieldDefine.BATCH_ID).append("=").append("?");
             hasEnd = true;
         }
 
@@ -49,12 +60,26 @@ public class CdcErrorQueryCondition {
             hasEnd = true;
         }
 
+        //  add type
+        if (null != type) {
+            if (hasEnd) {
+                stringBuilder.append(" AND ");
+            }
+            stringBuilder.append(ErrorFieldDefine.TYPE).append("=").append("?");
+            hasEnd = true;
+        }
+
         //  add status
         if (null != status) {
             if (hasEnd) {
                 stringBuilder.append(" AND ");
             }
-            stringBuilder.append(ErrorFieldDefine.STATUS).append("=").append("?");
+            stringBuilder.append(ErrorFieldDefine.STATUS);
+            if (null != isEqualStatus && !isEqualStatus) {
+                stringBuilder.append("!");
+
+            }
+            stringBuilder.append("=").append("?");
             hasEnd = true;
         }
 
@@ -128,35 +153,70 @@ public class CdcErrorQueryCondition {
         return rangeGeFixedTime;
     }
 
-    public void setSeqNo(Long seqNo) {
+    public Long getBatchId() {
+        return batchId;
+    }
+
+    public Integer getType() {
+        return type;
+    }
+
+    public CdcErrorQueryCondition setSeqNo(Long seqNo) {
         this.seqNo = seqNo;
+        return this;
     }
 
-    public void setId(Long id) {
+    public CdcErrorQueryCondition setId(Long id) {
         this.id = id;
+        return this;
     }
 
-    public void setCommitId(Long commitId) {
+    public CdcErrorQueryCondition setCommitId(Long commitId) {
         this.commitId = commitId;
+        return this;
     }
 
-    public void setRangeLEExecuteTime(Long rangeLEExecuteTime) {
+    public CdcErrorQueryCondition setRangeLEExecuteTime(Long rangeLEExecuteTime) {
         this.rangeLEExecuteTime = rangeLEExecuteTime;
+        return this;
     }
 
-    public void setRangeGeExecuteTime(Long rangeGeExecuteTime) {
+    public CdcErrorQueryCondition setRangeGeExecuteTime(Long rangeGeExecuteTime) {
         this.rangeGeExecuteTime = rangeGeExecuteTime;
+        return this;
     }
 
-    public void setRangeLEFixedTime(Long rangeLEFixedTime) {
+    public CdcErrorQueryCondition setRangeLEFixedTime(Long rangeLEFixedTime) {
         this.rangeLEFixedTime = rangeLEFixedTime;
+        return this;
     }
 
-    public void setRangeGeFixedTime(Long rangeGeFixedTime) {
+    public CdcErrorQueryCondition setRangeGeFixedTime(Long rangeGeFixedTime) {
         this.rangeGeFixedTime = rangeGeFixedTime;
+        return this;
     }
 
-    public void setStatus(Integer status) {
+    public CdcErrorQueryCondition setStatus(Integer status) {
         this.status = status;
+        return this;
     }
+
+    public CdcErrorQueryCondition setBatchId(Long batchId) {
+        this.batchId = batchId;
+        return this;
+    }
+
+    public CdcErrorQueryCondition setType(Integer type) {
+        this.type = type;
+        return this;
+    }
+
+    public Boolean getEqualStatus() {
+        return isEqualStatus;
+    }
+
+    public void setEqualStatus(Boolean equalStatus) {
+        isEqualStatus = equalStatus;
+    }
+
 }

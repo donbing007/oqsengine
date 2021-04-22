@@ -28,9 +28,12 @@ create table oqsbigentity
 create table cdcerrors
 (
     seqno           bigint                      not null comment '数据主键',
-    id              bigint                      not null comment '业务主键ID',
-    commitid        bigint          default 0   not null comment '提交号',
-    status          tinyint                     not null comment '处理状态，0(未处理),1(已处理),2(处理失败)',
+    batchid         bigint                      not null comment '批次ID',
+    id              bigint                               comment '业务主键ID',
+    commitid        bigint                               comment '提交号',
+    type            tinyint                     not null comment '错误类型,1-单条数据格式错误,2-批次数据插入失败',
+    status          tinyint                     not null comment '处理状态,0(未处理),1(已提交处理),2(处理成功),3(处理失败)',
+    operationobject json                                 comment '当前操作的对象(已序列化)',
     message         varchar(1024)                        comment '出错信息',
     executetime     bigint                      not null comment '出错时间戳',
     fixedtime       bigint                      not null comment '修复时间.',

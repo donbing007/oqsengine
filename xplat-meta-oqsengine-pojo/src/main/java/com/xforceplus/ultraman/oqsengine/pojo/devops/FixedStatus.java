@@ -10,6 +10,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.devops;
  */
 public enum  FixedStatus {
     NOT_FIXED,
+    SUBMIT_FIX_REQ,
     FIXED,
     FIX_ERROR
 }

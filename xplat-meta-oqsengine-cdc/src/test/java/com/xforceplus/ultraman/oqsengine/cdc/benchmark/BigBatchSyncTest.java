@@ -63,7 +63,7 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
-        ConsumerService consumerService = initAll();
+        ConsumerService consumerService = initAll(false);
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);

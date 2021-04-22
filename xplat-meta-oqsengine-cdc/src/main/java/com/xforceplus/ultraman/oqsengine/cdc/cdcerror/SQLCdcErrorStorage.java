@@ -1,17 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerror;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorRecoverExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * desc :
@@ -29,6 +33,8 @@ public class SQLCdcErrorStorage implements CdcErrorStorage {
     private String cdcErrorRecordTable;
 
     private long queryTimeout;
+
+
 
     public void setCdcErrorRecordTable(String cdcErrorRecordTable) {
         this.cdcErrorRecordTable = cdcErrorRecordTable;
@@ -56,6 +62,13 @@ public class SQLCdcErrorStorage implements CdcErrorStorage {
     public int updateCdcError(long seqNo, FixedStatus fixedStatus) throws SQLException {
         return CdcErrorUpdateExecutor
                 .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout, fixedStatus)
+                .execute(seqNo);
+    }
+
+    @Override
+    public int submitRecover(long seqNo, FixedStatus fixedStatus, String operationObjectString) throws SQLException {
+        return CdcErrorRecoverExecutor
+                .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout, fixedStatus, operationObjectString)
                 .execute(seqNo);
     }
 

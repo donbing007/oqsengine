@@ -15,7 +15,10 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -29,6 +32,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
@@ -41,6 +46,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -78,7 +84,7 @@ public abstract class CDCAbstractContainer {
     protected SingleCDCConnector singleCDCConnector;
     protected ExecutorService executorService;
 
-    protected ConsumerService initAll() throws Exception {
+    protected ConsumerService initAll(boolean isMockIndex) throws Exception {
         singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
             System.getProperty("CANAL_DESTINATION"), "root", "root");
@@ -101,7 +107,11 @@ public abstract class CDCAbstractContainer {
         }
 
         initMaster();
-        initIndex();
+        if (!isMockIndex) {
+            initIndex();
+        } else {
+            indexStorage = new MockIndexStorage();
+        }
         initDevOps();
 
         return initConsumerService();
@@ -250,6 +260,30 @@ public abstract class CDCAbstractContainer {
             st.executeUpdate("truncate table oqsindex1");
             st.close();
             conn.close();
+        }
+    }
+
+    protected class MockIndexStorage implements IndexStorage {
+
+        public int error = 0;
+
+        @Override
+        public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
+            error ++;
+
+            if (error < 3) {
+                throw new SQLException("mock error");
+            }
+        }
+
+        @Override
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
+            return null;
         }
     }
 }

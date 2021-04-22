@@ -144,16 +144,16 @@ public class CanalEntryTools {
             return replacement;
         }
     }
-    public static CanalEntry.Entry buildRow(Case caseEntry) {
+    public static CanalEntry.Entry buildRow(Case caseEntry, boolean buildError) {
         CanalEntry.Entry.Builder builder = getEntryBuildByEntryType(CanalEntry.EntryType.ROWDATA);
-        builder.setStoreValue(buildRowChange(caseEntry).toByteString());
+        builder.setStoreValue(buildRowChange(caseEntry, buildError).toByteString());
         return builder.build();
     }
 
     public static CanalEntry.Entry buildRow(long id, int levelOrdinal, long entityId, boolean replacement, long tx, long commit, String isDeleted,
-                                                        int attrIndex, int oqsmajor, int version) {
+                                                        int attrIndex, int oqsmajor, int version, boolean buildError) {
         CanalEntry.Entry.Builder builder = getEntryBuildByEntryType(CanalEntry.EntryType.ROWDATA);
-        builder.setStoreValue(buildRowChange(id, levelOrdinal, entityId, replacement, tx, commit, isDeleted, attrIndex, oqsmajor, version).toByteString());
+        builder.setStoreValue(buildRowChange(id, levelOrdinal, entityId, replacement, tx, commit, isDeleted, attrIndex, oqsmajor, version, buildError).toByteString());
         return builder.build();
     }
 
@@ -173,9 +173,8 @@ public class CanalEntryTools {
         return builder;
     }
 
-
     public static CanalEntry.RowChange buildRowChange(long id, int levelOrdinal, long entityId, boolean replacement, long tx, long commit,
-                                                String isDeleted, int attrIndex, int oqsmajor, int version) {
+                                                String isDeleted, int attrIndex, int oqsmajor, int version, boolean buildError) {
         CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
 
         CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
@@ -189,30 +188,30 @@ public class CanalEntryTools {
                 op = OperationType.CREATE.ordinal();
             }
         }
-        builder.addRowDatas(buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version));
+        builder.addRowDatas(buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version, buildError));
 
         return builder.build();
     }
 
-    public static CanalEntry.RowChange buildRowChange(Case caseEntry) {
+    public static CanalEntry.RowChange buildRowChange(Case caseEntry, boolean buildError) {
         CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
 
         CanalEntry.EventType eventType = caseEntry.isReplacement() ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
         builder.setEventType(eventType);
 
 
-        builder.addRowDatas(buildRowData(caseEntry));
+        builder.addRowDatas(buildRowData(caseEntry, buildError));
 
         return builder.build();
     }
 
-    private static CanalEntry.RowData buildRowData(Case caseEntry) {
+    private static CanalEntry.RowData buildRowData(Case caseEntry, boolean buildError) {
         CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
         for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
             CanalEntry.Column column = buildColumn(caseEntry.getId(), v, caseEntry.getLevelOrdinal(),
                     caseEntry.getEntityId(), caseEntry.getTx(), caseEntry.getOp(), caseEntry.getCommitId(), caseEntry.isDeleted() ? "1" : "0",
                     caseEntry.getAttr(), caseEntry.getOqsmajor(),
-                    caseEntry.getCreate(), caseEntry.getUpdate(), caseEntry.getVersion());
+                    caseEntry.getCreate(), caseEntry.getUpdate(), caseEntry.getVersion(), buildError);
             if (null != column) {
                 builder.addAfterColumns(column);
             }
@@ -222,12 +221,12 @@ public class CanalEntryTools {
     }
 
     private static CanalEntry.RowData buildRowData(long id, int levelOrdinal, long entityId, long tx, int op, long commit,
-                                            String isDeleted, int attrIndex, int oqsmajor, int version) {
+                                            String isDeleted, int attrIndex, int oqsmajor, int version, boolean buildError) {
 
         CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
         for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
             CanalEntry.Column column = buildColumn(id, v, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor,
-                                                        System.currentTimeMillis(), System.currentTimeMillis(), version);
+                                                        System.currentTimeMillis(), System.currentTimeMillis(), version, buildError);
             if (null != column) {
                 builder.addAfterColumns(column);
             }
@@ -237,7 +236,7 @@ public class CanalEntryTools {
     }
 
     public static CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, int levelOrdinal, long entityId, long tx, int op,
-                                          long commit, String isDeleted, int attrIndex, int oqsmajor, long create, long update, int version) {
+                                          long commit, String isDeleted, int attrIndex, int oqsmajor, long create, long update, int version, boolean buildError) {
         switch (v) {
             case ID:
                 return buildId(id, v);
@@ -260,7 +259,10 @@ public class CanalEntryTools {
             case DELETED:
                 return buildDeleted(v, isDeleted);
             case ATTRIBUTE:
-                return buildAttribute(v, attrIndex);
+                if (!buildError) {
+                    return buildAttribute(v, attrIndex);
+                }
+                return buildErrorAttribute(v, attrIndex);
             case CREATETIME:
                 return buildTime(v, create);
             case UPDATETIME:
@@ -342,11 +344,23 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    private static CanalEntry.Column buildErrorAttribute(OqsBigEntityColumns v, int attrIndex) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(Prepared.attrErrors[attrIndex]);
+        return builder.build();
+    }
+
     public static class Prepared {
         public static String[] attrs = {
                 "{\"1L\":73550,\"2S\":\"1\",\"3L\":\"0\"}",
                 "{\"1L\":55304234,\"2S\":\"2222\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\"}",
                 "{\"1L\":55304234,\"2S\":\"2222\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\", \"6S\":\"ENUM\", \"7S0\":\"1\",\"7S1\":\"2\",\"7S2\":\"3\", \"7S3\":\"500002\",\"7S4\":\"测试\"}"
+        };
+
+        public static String[] attrErrors = {
+                "{\"1L\":73550,\"2S\":\"1'\",\"3L\":\"0\"}",
+                "{\"1L\":55304234,\"2S\":\"22'22\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\"}",
+                "{\"1L\":55304234,\"2S\":\"2222\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\", \"6S\":\"ENU'M\", \"7S0\":\"1\",\"7S1\":\"2\",\"7S2\":\"3\", \"7S3\":\"500002\",\"7S4\":\"测试\"}"
         };
     }
 }

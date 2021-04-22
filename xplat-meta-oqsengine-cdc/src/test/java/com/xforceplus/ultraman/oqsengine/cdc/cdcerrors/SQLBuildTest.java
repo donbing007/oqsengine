@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorRecoverExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import org.junit.Assert;
@@ -22,11 +24,15 @@ import java.lang.reflect.Method;
 public class SQLBuildTest {
     private String tableName = "cdcerrors";
 
-    private String expectedBuild = "INSERT INTO cdcerrors (seqno,id,commitid,status,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?)";
+    private String expectedBuild = "INSERT INTO cdcerrors (seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?)";
     private String expectedUpdate = "UPDATE cdcerrors SET status=?, fixedtime=? WHERE seqno=?";
-    private String expectedFullSelect = "SELECT seqno,id,commitid,status,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND id=? AND commitid=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=?";
-    private String expectedEmptySelect = "SELECT seqno,id,commitid,status,message,executetime,fixedtime FROM cdcerrors";
-    private String expectedIdSelect = "SELECT seqno,id,commitid,status,message,executetime,fixedtime FROM cdcerrors WHERE id=?";
+    private String expectedRecover = "UPDATE cdcerrors SET status=?, operationobject=? WHERE seqno=?";
+    private String expectedFullSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=?";
+    private String expectedFullNotEqualStatusSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=?";
+
+    private String expectedEmptySelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors";
+    private String expectedIdSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=?";
+
     @Test
     public void buildSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CdcErrorBuildExecutor cdcErrorBuildExecutor = new CdcErrorBuildExecutor(tableName, null, 0);
@@ -54,22 +60,26 @@ public class SQLBuildTest {
     }
 
     @Test
-    public void FullQuerySqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-
-        CdcErrorQueryCondition expectErrorQueryCondition = init();
-
-        CdcErrorQueryExecutor cdcErrorQueryExecutor = new CdcErrorQueryExecutor(tableName, null, 0);
-        Method m = cdcErrorQueryExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{StringBuilder.class, CdcErrorQueryCondition.class});
+    public void recoverSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CdcErrorRecoverExecutor cdcErrorRecoverExecutor = new CdcErrorRecoverExecutor(tableName, null, 0, FixedStatus.SUBMIT_FIX_REQ, "1");
+        Method m = cdcErrorRecoverExecutor.getClass()
+                .getDeclaredMethod("buildSQL", new Class[]{});
         m.setAccessible(true);
 
-        StringBuilder stringBuilder = new StringBuilder();
-        Boolean result = (Boolean) m.invoke(cdcErrorQueryExecutor, stringBuilder, expectErrorQueryCondition);
+        String result = (String) m.invoke(cdcErrorRecoverExecutor, null);
 
         Assert.assertNotNull(result);
-        Assert.assertTrue(result);
+        Assert.assertEquals(expectedRecover, result);
+    }
 
-        Assert.assertEquals(expectedFullSelect, stringBuilder.toString());
+    @Test
+    public void fullQuerySqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        checkByCondition(true, expectedFullSelect);
+    }
+
+    @Test
+    public void expectedFullNotEqualStatusSelectSqlTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        checkByCondition(false, expectedFullNotEqualStatusSelect);
     }
 
     @Test
@@ -111,16 +121,38 @@ public class SQLBuildTest {
         Assert.assertEquals(expectedEmptySelect, stringBuilder.toString());
     }
 
-    private CdcErrorQueryCondition init() {
+    private void checkByCondition(boolean isEquals, String expectString) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CdcErrorQueryCondition expectErrorQueryCondition = init(isEquals);
+
+        CdcErrorQueryExecutor cdcErrorQueryExecutor = new CdcErrorQueryExecutor(tableName, null, 0);
+        Method m = cdcErrorQueryExecutor.getClass()
+                .getDeclaredMethod("buildSQL", new Class[]{StringBuilder.class, CdcErrorQueryCondition.class});
+        m.setAccessible(true);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        Boolean result = (Boolean) m.invoke(cdcErrorQueryExecutor, stringBuilder, expectErrorQueryCondition);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result);
+
+        Assert.assertEquals(expectString, stringBuilder.toString());
+    }
+
+    private CdcErrorQueryCondition init(boolean isEquals) {
         CdcErrorQueryCondition expectErrorQueryCondition = new CdcErrorQueryCondition();
         expectErrorQueryCondition.setSeqNo(1L);
+        expectErrorQueryCondition.setBatchId(1L);
         expectErrorQueryCondition.setId(Long.MAX_VALUE);
         expectErrorQueryCondition.setCommitId(2L);
         expectErrorQueryCondition.setRangeLEExecuteTime(99L);
         expectErrorQueryCondition.setRangeGeExecuteTime(1L);
         expectErrorQueryCondition.setRangeLEFixedTime(200L);
         expectErrorQueryCondition.setRangeGeFixedTime(100L);
+        expectErrorQueryCondition.setType(ErrorType.DATA_FORMAT_ERROR.ordinal());
         expectErrorQueryCondition.setStatus(FixedStatus.FIXED.ordinal());
+        if (!isEquals) {
+            expectErrorQueryCondition.setEqualStatus(false);
+        }
 
         return expectErrorQueryCondition;
     }

@@ -63,7 +63,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
 
     @Before
     public void before() throws Exception {
-        sphinxConsumerService = initAll();
+        sphinxConsumerService = initAll(false);
     }
 
     @After
@@ -108,7 +108,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
             CanalEntry.Entry fRanDom_1 =
-                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1);
+                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1, false);
 
             entries.add(fRanDom_1);
         }

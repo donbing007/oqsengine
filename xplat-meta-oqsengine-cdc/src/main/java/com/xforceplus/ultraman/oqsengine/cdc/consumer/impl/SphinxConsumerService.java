@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
@@ -46,8 +47,6 @@ public class SphinxConsumerService implements ConsumerService {
     public void setCheckCommitReady(boolean checkCommitReady) {
         this.checkCommitReady = checkCommitReady;
     }
-
-
 
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService) throws SQLException {
@@ -170,9 +169,11 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-                    sphinxSyncExecutor.errorRecord(cdcMetrics.getBatchId(), id, commitId,
-                            String.format("batch : %d, parse id, commitid from columns failed, message : %s"
-                                                                    , cdcMetrics.getBatchId(), e.getMessage()));
+                    sphinxSyncExecutor.doErrRecordOrRecover(cdcMetrics.getBatchId(), id, commitId,
+                            ErrorType.DATA_FORMAT_ERROR,
+                            String.format("batch : %d, parse id, commitId from columns failed, message : %s"
+                                    , cdcMetrics.getBatchId(), e.getMessage()),
+                            null);
                     continue;
                 }
 

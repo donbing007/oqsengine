@@ -47,6 +47,11 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                     st.setLong(parameterIndex++, res.getSeqNo());
                 }
 
+                //  add batch
+                if (null != res.getBatchId()) {
+                    st.setLong(parameterIndex++, res.getBatchId());
+                }
+
                 //  add id
                 if (null != res.getId()) {
                     st.setLong(parameterIndex++, res.getId());
@@ -55,6 +60,11 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 //  add commitId
                 if (null != res.getCommitId()) {
                     st.setLong(parameterIndex++, res.getCommitId());
+                }
+
+                //  add type
+                if (null != res.getType()) {
+                    st.setInt(parameterIndex++, res.getType());
                 }
 
                 //  add status
@@ -98,9 +108,12 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 while (rs.next()) {
                     cdcErrorTask = new CdcErrorTask();
                     cdcErrorTask.setSeqNo(rs.getLong(ErrorFieldDefine.SEQ_NO));
+                    cdcErrorTask.setBatchId(rs.getLong(ErrorFieldDefine.BATCH_ID));
                     cdcErrorTask.setId(rs.getLong(ErrorFieldDefine.ID));
                     cdcErrorTask.setCommitId(rs.getLong(ErrorFieldDefine.COMMIT_ID));
+                    cdcErrorTask.setErrorType(rs.getInt(ErrorFieldDefine.TYPE));
                     cdcErrorTask.setStatus(rs.getInt(ErrorFieldDefine.STATUS));
+                    cdcErrorTask.setOperationObject(rs.getString(ErrorFieldDefine.OPERATION_OBJECT));
                     cdcErrorTask.setMessage(rs.getString(ErrorFieldDefine.MESSAGE));
                     cdcErrorTask.setExecuteTime(rs.getLong(ErrorFieldDefine.EXECUTE_TIME));
                     cdcErrorTask.setFixedTime(rs.getLong(ErrorFieldDefine.FIXED_TIME));
@@ -121,9 +134,12 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         buff.append("SELECT ")
                 .append(String.join(",",
                         ErrorFieldDefine.SEQ_NO,
+                        ErrorFieldDefine.BATCH_ID,
                         ErrorFieldDefine.ID,
                         ErrorFieldDefine.COMMIT_ID,
+                        ErrorFieldDefine.TYPE,
                         ErrorFieldDefine.STATUS,
+                        ErrorFieldDefine.OPERATION_OBJECT,
                         ErrorFieldDefine.MESSAGE,
                         ErrorFieldDefine.EXECUTE_TIME,
                         ErrorFieldDefine.FIXED_TIME)

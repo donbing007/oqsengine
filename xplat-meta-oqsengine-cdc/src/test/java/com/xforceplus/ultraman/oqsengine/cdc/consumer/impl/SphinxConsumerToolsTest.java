@@ -90,7 +90,7 @@ public class SphinxConsumerToolsTest {
                     .withCreate(System.currentTimeMillis())
                     .withUpdate(System.currentTimeMillis());
 
-            CanalEntry.Entry entry = buildRow(cas);
+            CanalEntry.Entry entry = buildRow(cas, false);
 
             CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
 
@@ -249,7 +249,7 @@ public class SphinxConsumerToolsTest {
 
             builder.setHeader(buildHeader());
 
-            builder.setStoreValue(buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1).toByteString());
+            builder.setStoreValue(buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false).toByteString());
 
             entries.add(builder.build());
 

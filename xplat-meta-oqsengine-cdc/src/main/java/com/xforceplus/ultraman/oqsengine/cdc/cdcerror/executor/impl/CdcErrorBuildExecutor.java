@@ -33,13 +33,18 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
         String sql = buildSQL();
         try (Connection connection = getDataSource().getConnection();
                         PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setLong(1, res.getSeqNo());
-            st.setLong(2, res.getId());
-            st.setLong(3, res.getCommitId());
-            st.setInt(4, res.getStatus());
-            st.setString(5, res.getMessage());
-            st.setLong(6, res.getExecuteTime());
-            st.setLong(7, res.getFixedTime());
+
+            int pos = 1;
+            st.setLong(pos++, res.getSeqNo());
+            st.setLong(pos++, res.getBatchId());
+            st.setLong(pos++, res.getId());
+            st.setLong(pos++, res.getCommitId());
+            st.setInt(pos++, res.getErrorType());
+            st.setInt(pos++, res.getStatus());
+            st.setString(pos++, res.getOperationObject());
+            st.setString(pos++, res.getMessage());
+            st.setLong(pos++, res.getExecuteTime());
+            st.setLong(pos, res.getFixedTime());
 
             checkTimeout(st);
 
@@ -53,20 +58,22 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
 
     private String buildSQL() {
         StringBuilder buff = new StringBuilder();
-        // insert into ${table} (seqno, id, commitid, status, message, executetime, fixedtime) values(?,?,?,?,?,?,?)
         buff.append("INSERT INTO ").append(getTableName())
                 .append(' ')
                 .append("(")
                 .append(String.join(",",
                             ErrorFieldDefine.SEQ_NO,
+                            ErrorFieldDefine.BATCH_ID,
                             ErrorFieldDefine.ID,
                             ErrorFieldDefine.COMMIT_ID,
+                            ErrorFieldDefine.TYPE,
                             ErrorFieldDefine.STATUS,
+                            ErrorFieldDefine.OPERATION_OBJECT,
                             ErrorFieldDefine.MESSAGE,
                             ErrorFieldDefine.EXECUTE_TIME,
                             ErrorFieldDefine.FIXED_TIME)
                 ).append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(7, "?")))
+                .append(String.join(",", Collections.nCopies(10, "?")))
                 .append(")");
         return buff.toString();
     }

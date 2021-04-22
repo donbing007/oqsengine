@@ -47,7 +47,7 @@ public class CDCDaemonServiceTest extends CDCAbstractContainer {
     }
 
     private void initDaemonService() throws Exception {
-        ConsumerService consumerService = initAll();
+        ConsumerService consumerService = initAll(false);
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         testCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);

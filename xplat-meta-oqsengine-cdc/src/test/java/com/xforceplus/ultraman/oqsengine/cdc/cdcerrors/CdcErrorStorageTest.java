@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 
 import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
@@ -29,13 +30,15 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
+    private static long expectedBatchId = 1L;
     private static long expectedSeqNo = 1L;
     private static long expectedId = 2L;
     private static long expectedCommitId = 3L;
     private static String expectedMessage = "cdc sync error";
 
     private static CdcErrorTask expectedCdcErrorTask =
-                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
+                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedBatchId, expectedId, expectedCommitId, ErrorType.DATA_FORMAT_ERROR.ordinal(), "1", expectedMessage);
+
 
     @BeforeClass
     public static void beforeClass() {
@@ -53,7 +56,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     @Before
     public void before() throws Exception {
-        initAll();
+        initAll(false);
     }
 
     @After
@@ -65,9 +68,13 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         return dataSourcePackage.getDevOps();
     }
 
+
     @Test
     public void cdcCRU() throws Exception {
         int count = cdcErrorStorage.buildCdcError(expectedCdcErrorTask);
+        Assert.assertEquals(1, count);
+
+        count = cdcErrorStorage.submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, "2");
         Assert.assertEquals(1, count);
 
         count = cdcErrorStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
@@ -75,6 +82,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
         count = cdcErrorStorage.updateCdcError(unExpectedSeqNo, FixedStatus.FIXED);
         Assert.assertEquals(0, count);
+
 
         //  使用expectedSeqNo查询
         CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
@@ -100,6 +108,17 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         //  使用expectedCommitId查询
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setCommitId(expectedCommitId);
+        queryWithOneExpected(cdcErrorQueryCondition);
+
+        //使用batchId和NOT_FIXED 且 isEquals = false
+        cdcErrorQueryCondition = new CdcErrorQueryCondition();
+        cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null).setType(ErrorType.DATA_FORMAT_ERROR.ordinal()).setStatus(FixedStatus.NOT_FIXED.ordinal()).setEqualStatus(false);
+        queryWithOneExpected(cdcErrorQueryCondition);
+
+        //使用所有条件查询
+        cdcErrorQueryCondition = new CdcErrorQueryCondition();
+        cdcErrorQueryCondition.setBatchId(expectedBatchId)
+                .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.ordinal()).setStatus(FixedStatus.NOT_FIXED.ordinal()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
     }
 

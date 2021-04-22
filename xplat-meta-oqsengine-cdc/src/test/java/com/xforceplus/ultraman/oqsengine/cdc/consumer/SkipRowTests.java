@@ -54,7 +54,7 @@ public class SkipRowTests extends CDCAbstractContainer {
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
-        ConsumerService consumerService = initAll();
+        ConsumerService consumerService = initAll(false);
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
 
         cdcStatusService = new CDCStatusServiceImpl();
