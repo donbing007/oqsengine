@@ -22,7 +22,7 @@ public class CdcErrorTask {
     private String message;
 
 
-    public static CdcErrorTask buildErrorTask(long seqNo,long batchId, long id, long commitId, int errorType, String operationObject, String message) {
+    public static CdcErrorTask buildErrorTask(long seqNo, long batchId, long id, long commitId, int errorType, String operationObject, String message) {
         CdcErrorTask cdcErrorTask = new CdcErrorTask();
         cdcErrorTask.setSeqNo(seqNo);
         cdcErrorTask.setBatchId(batchId);
