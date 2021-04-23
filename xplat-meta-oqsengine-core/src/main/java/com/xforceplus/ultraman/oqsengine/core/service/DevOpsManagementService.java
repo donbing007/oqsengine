@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
 
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
@@ -103,4 +105,19 @@ public interface DevOpsManagementService {
      * @return
      */
     boolean skipRow(long commitId, long id, int version, int op, boolean record);
+
+    /**
+     * 执行修复CDC批次
+     * @param seqNo
+     * @param recoverStr
+     * @return
+     */
+    boolean cdcErrorRecover(long seqNo, String recoverStr) throws SQLException;
+
+    /**
+     * 查询CDC错误
+     * @param cdcErrorQueryCondition
+     * @return
+     */
+    Collection<CdcErrorTask> queryCdcError(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException;
 }

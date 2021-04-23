@@ -27,11 +27,11 @@ public class SQLBuildTest {
     private String expectedBuild = "INSERT INTO cdcerrors (seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?)";
     private String expectedUpdate = "UPDATE cdcerrors SET status=?, fixedtime=? WHERE seqno=?";
     private String expectedRecover = "UPDATE cdcerrors SET status=?, operationobject=? WHERE seqno=?";
-    private String expectedFullSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=?";
-    private String expectedFullNotEqualStatusSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=?";
+    private String expectedFullSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
+    private String expectedFullNotEqualStatusSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
 
-    private String expectedEmptySelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors";
-    private String expectedIdSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=?";
+    private String expectedEmptySelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors order by executetime desc";
+    private String expectedIdSelect = "SELECT seqno,batchid,id,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=? order by executetime desc";
 
     @Test
     public void buildSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {

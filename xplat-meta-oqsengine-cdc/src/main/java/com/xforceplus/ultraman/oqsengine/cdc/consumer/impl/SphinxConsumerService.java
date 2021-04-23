@@ -87,12 +87,10 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
-            Map<String, String> skips = cdcMetricsService.querySkips();
-            if (null == skips) {
-                skips = new HashMap<>();
-            }
+            Map<String, String> skips = new HashMap<>();
+
             //  通过执行器执行Sphinx同步
-            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics, skips);
+            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics, getSkips(cdcMetricsService));
 
             if (!skips.isEmpty()) {
                 cdcMetricsService.expireSkips(skips.keySet().toArray(new String[skips.size()]));
@@ -101,6 +99,17 @@ public class SphinxConsumerService implements ConsumerService {
 
         batchLogged(cdcMetrics);
         return syncCount;
+    }
+
+    private Map<String, String> getSkips(CDCMetricsService cdcMetricsService) {
+        Map<String, String> skips = null;
+        //  此处注释代表不从redis内取当前跳过列表
+        //  skips = cdcMetricsService.querySkips();
+        if (null == skips) {
+            skips = new HashMap<>();
+        }
+
+        return skips;
     }
 
     private void batchLogged(CDCMetrics cdcMetrics) {
