@@ -148,11 +148,16 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 .append(getTableName());
 
         String conditionString = res.conditionToQuerySql();
+
+        boolean haveCondition = false;
         if (!conditionString.isEmpty()) {
             buff.append(" WHERE ")
                     .append(conditionString);
-            return true;
+            haveCondition = true;
         }
-        return false;
+
+        buff.append(" order by ").append(ErrorFieldDefine.EXECUTE_TIME).append(" desc");
+
+        return haveCondition;
     }
 }

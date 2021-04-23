@@ -1,11 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.TaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
@@ -50,6 +54,14 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Resource
     private CDCStatusService cdcStatusService;
+
+    @Resource
+    private CdcErrorStorage cdcErrorStorage;
+
+    /**
+     * 默认查询为7天内的CDC ERROR记录
+     */
+    private static final long DEFAULT_CDC_QUERY_PAST_DURATION = 7 * 86400 * 1000;
 
     @Override
     public Optional<IDevOpsTaskInfo> rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception {
@@ -130,5 +142,21 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public boolean skipRow(long commitId, long id, int version, int op, boolean record) {
         return cdcStatusService.addSkipRow(commitId, id, version, op, record);
+    }
+
+    @Override
+    public boolean cdcErrorRecover(long seqNo, String recoverStr) throws SQLException {
+        return cdcErrorStorage.submitRecover(seqNo, FixedStatus.SUBMIT_FIX_REQ, recoverStr) == 1;
+    }
+
+    @Override
+    public Collection<CdcErrorTask> queryCdcError(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
+        //  如果cdcErrorQueryCondition为空
+        if (null == cdcErrorQueryCondition) {
+            cdcErrorQueryCondition = new CdcErrorQueryCondition();
+            cdcErrorQueryCondition.setRangeGeExecuteTime(System.currentTimeMillis() - DEFAULT_CDC_QUERY_PAST_DURATION);
+        }
+
+        return cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
     }
 }
