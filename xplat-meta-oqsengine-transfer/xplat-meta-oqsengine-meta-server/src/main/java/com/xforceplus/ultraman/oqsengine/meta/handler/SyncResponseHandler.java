@@ -148,7 +148,7 @@ public class SyncResponseHandler implements IResponseHandler {
              */
             String uid = entityClassSyncRequest.getUid();
             if (null != uid) {
-                confirmHeartBeat(uid);
+                confirmHeartBeat(uid, responseStreamObserver);
             }
         } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
             /**
@@ -354,12 +354,20 @@ public class SyncResponseHandler implements IResponseHandler {
      *
      * @param uid
      */
-    private void confirmHeartBeat(String uid) {
+    private void confirmHeartBeat(String uid, StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
         ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
-        if (null != responseWatcher && responseWatcher.isActive()) {
-            responseWatchExecutor.resetHeartBeat(uid);
+        if (null != responseWatcher) {
+            if (responseWatcher.isActive()) {
+                responseWatchExecutor.resetHeartBeat(uid);
 
-            confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+                confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+            }
+        } else {
+            //  还没有注册, 只是心跳的检查
+            responseStreamObserver.onNext(
+                    EntityClassSyncResponse.newBuilder()
+                            .setUid(uid)
+                            .setStatus(HEARTBEAT.ordinal()).build());
         }
     }
 

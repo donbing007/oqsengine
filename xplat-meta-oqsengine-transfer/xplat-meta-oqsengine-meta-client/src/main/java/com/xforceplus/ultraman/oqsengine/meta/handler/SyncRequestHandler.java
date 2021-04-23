@@ -64,6 +64,8 @@ public class SyncRequestHandler implements IRequestHandler {
     private volatile boolean isShutdown = false;
     private static final int PRINT_CHECK_DURATION = 10;
 
+    private volatile boolean checkKeepAlive = false;
+
     private AtomicInteger acceptDataHandleErrorCounter =
             Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_HANDLER_ERROR, new AtomicInteger(0));
 
@@ -221,6 +223,11 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     @Override
     public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
+
+        if (!checkKeepAlive &&
+                entityClassSyncResponse.getUid().equals(requestWatchExecutor.watcher().uid())) {
+            checkKeepAlive = true;
+        }
 
         /**
          * reset heartbeat
@@ -387,7 +394,7 @@ public class SyncRequestHandler implements IRequestHandler {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher) {
                 try {
-                    if (requestWatcher.isActive()) {
+                    if (checkKeepAlive && requestWatcher.isActive()) {
                         if (System.currentTimeMillis() - requestWatcher.heartBeat() >
                                 gRpcParams.getDefaultHeartbeatTimeout()) {
                             requestWatcher.observer().onCompleted();
