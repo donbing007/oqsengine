@@ -29,8 +29,6 @@ import javax.annotation.PostConstruct;
 @ConditionalOnProperty(name = "meta.grpc.type", havingValue = "client")
 public class ClientConfiguration {
 
-    private EntityClassSyncClient entityClassSyncClient;
-
     @Bean
     public GRpcClient gRpcClient(
             @Value("${meta.grpc.host}") String host,
@@ -51,7 +49,7 @@ public class ClientConfiguration {
 
     @Bean
     public EntityClassSyncClient entityClassSyncClient() {
-        entityClassSyncClient = new EntityClassSyncClient();
+        EntityClassSyncClient entityClassSyncClient = new EntityClassSyncClient();
 
         return entityClassSyncClient;
     }

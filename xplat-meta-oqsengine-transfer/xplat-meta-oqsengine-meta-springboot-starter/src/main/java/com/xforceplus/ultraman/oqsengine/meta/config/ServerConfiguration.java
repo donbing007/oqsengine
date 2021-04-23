@@ -47,15 +47,11 @@ public class ServerConfiguration implements ApplicationContextAware {
     @Autowired
     private ApplicationContext applicationContext;
 
-    private GRpcServer gRpcServer;
-
     @Bean
     public GRpcServer gRpcServer(
             @Value("${meta.grpc.port}") Integer port
     ) {
-        gRpcServer = new GRpcServer(port);
-
-        return gRpcServer;
+        return new GRpcServer(port);
     }
 
     @Bean
