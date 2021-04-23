@@ -9,4 +9,4 @@ create table oqsindex
     maintainid   bigint,
     oqsmajor     int,
     attr         json
-) min_infix_len='3' charset_table='non_cjk' ngram_chars='cjk' ngram_len='1' rt_mem_limit='1024m';
+) charset_table='non_cjk,cjk' rt_mem_limit='1024m';

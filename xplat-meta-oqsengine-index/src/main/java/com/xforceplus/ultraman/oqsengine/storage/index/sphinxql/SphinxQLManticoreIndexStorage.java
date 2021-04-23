@@ -155,54 +155,59 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     @Override
     public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
-        CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
-            .withEntityClass(entityClass)
-            .withStart(start)
-            .withEnd(end)
-            .withIndexNames(indexWriteIndexNameSelector.selects())
-            .withDs(writerDataSourceSelector.selects())
-            .build();
+        long startMs = System.currentTimeMillis();
+        try {
+            CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
+                .withEntityClass(entityClass)
+                .withStart(start)
+                .withEnd(end)
+                .withIndexNames(indexWriteIndexNameSelector.selects())
+                .withDs(writerDataSourceSelector.selects())
+                .build();
 
-        return executor.execute(maintainId);
+            return executor.execute(maintainId);
+        } finally {
+            Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "clean")
+                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
     public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
-        if (originalEntities.isEmpty()) {
-            return;
-        }
-
-        verifyOriginalEntites(originalEntities);
-
-        Collection<OriginalEntitySection> sections = split(originalEntities);
-
-        /**
-         * 失败重试间隔毫秒.
-         */
-        final long retryDurationMs = 3000;
-
-        CountDownLatch latch = new CountDownLatch(sections.size());
-        List<Future<Boolean>> futures = new ArrayList<>(sections.size());
-        for (OriginalEntitySection section : sections) {
-            futures.add(threadPool.submit(new HandlerTask(section, latch, retryDurationMs, true)));
-        }
-
+        long startMs = System.currentTimeMillis();
         try {
-            latch.await();
-        } catch (InterruptedException e) {
-            logger.warn(e.getMessage(), e);
-        }
-
-        for (Future<Boolean> f : futures) {
-            try {
-                if (!f.get()) {
-                    throw new SQLException("Failed to save for unknown reason.");
-                }
-            } catch (InterruptedException e) {
-                throw new SQLException(e.getCause());
-            } catch (ExecutionException e) {
-                throw new SQLException(e.getCause());
+            if (originalEntities.isEmpty()) {
+                return;
             }
+
+            verifyOriginalEntites(originalEntities);
+
+            Collection<OriginalEntitySection> sections = split(originalEntities);
+
+            /**
+             * 失败重试间隔毫秒.
+             */
+            final long retryDurationMs = 3000;
+
+            List<Future<Boolean>> futures = new ArrayList<>(sections.size());
+            for (OriginalEntitySection section : sections) {
+                futures.add(threadPool.submit(new HandlerTask(section, retryDurationMs, true)));
+            }
+
+            for (Future<Boolean> f : futures) {
+                try {
+                    if (!f.get()) {
+                        throw new SQLException("Failed to save for unknown reason.");
+                    }
+                } catch (InterruptedException e) {
+                    throw new SQLException(e.getCause());
+                } catch (ExecutionException e) {
+                    throw new SQLException(e.getCause());
+                }
+            }
+        } finally {
+            Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "save")
+                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -220,13 +225,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     private class HandlerTask implements Callable<Boolean> {
 
         private OriginalEntitySection section;
-        private CountDownLatch latch;
         private long retryDurationMs;
         private boolean stopWhenFail;
 
-        public HandlerTask(OriginalEntitySection section, CountDownLatch latch, long retryDurationMs, boolean stopWhenFail) {
+        public HandlerTask(OriginalEntitySection section, long retryDurationMs, boolean stopWhenFail) {
             this.section = section;
-            this.latch = latch;
             this.retryDurationMs = retryDurationMs;
             this.stopWhenFail = stopWhenFail;
         }
@@ -257,7 +260,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     }
                 }
             } finally {
-                latch.countDown();
+
             }
 
             if (exception != null) {
