@@ -44,7 +44,7 @@ public class MetricsDefine {
 
     /**
      * 操作延时.
-     * 标签 action(build|replace|delete|one|multiple|condition).
+     * 标签 action(build|replace|delete|one|multiple|condition|save|clean|load|need).
      */
     public static final String PROCESS_DELAY_LATENCY_SECONDS = PREFIX + ".process.delay.latency";
 
