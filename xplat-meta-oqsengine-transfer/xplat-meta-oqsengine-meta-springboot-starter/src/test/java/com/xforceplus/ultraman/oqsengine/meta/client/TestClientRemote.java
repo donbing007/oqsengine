@@ -16,8 +16,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
 /**
- * desc :
- * name : TestClientRemote
+ * 为了检查连接正确性的手动测试,ifTest 默认为false.
+ * 在正常的测试流程中不会运行.
  *
  * @author : xujia
  * date : 2021/3/5

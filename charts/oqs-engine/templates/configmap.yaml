@@ -132,7 +132,7 @@ data:
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
           allowMaxUnSyncCommitIdSize: {{ .Values.sync.allowMaxUnSyncCommitIdSize | default "30" }}
         changelog:
-          enabled: {{ .Values.changelog.enabled | default "false" }}}
+          enabled: {{ .Values.changelog.enabled | default "false" }}
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type }}
