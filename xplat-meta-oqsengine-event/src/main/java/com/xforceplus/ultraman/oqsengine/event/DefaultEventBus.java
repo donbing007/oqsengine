@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 
 import javax.annotation.PostConstruct;
@@ -17,7 +18,7 @@ import java.util.function.Consumer;
  * @version 0.1 2021/3/24 11:13
  * @since 1.8
  */
-public class DefaultEventBus implements EventBus {
+public class DefaultEventBus implements EventBus, Lifecycle {
 
     private ConcurrentMap<EventType, Queue<Consumer<Event>>> listeners;
     private EventStorage eventStorage;
@@ -39,17 +40,23 @@ public class DefaultEventBus implements EventBus {
     }
 
     @PostConstruct
+    @Override
     public void init() {
-        closed = false;
+        if (!closed) {
+            closed = false;
 
-        worker.submit(new Distributor());
+            worker.submit(new Distributor());
+        }
     }
 
     @PreDestroy
+    @Override
     public void destroy() {
-        closed = true;
+        if (!closed) {
+            closed = true;
 
-        listeners.clear();
+            listeners.clear();
+        }
     }
 
     @Override

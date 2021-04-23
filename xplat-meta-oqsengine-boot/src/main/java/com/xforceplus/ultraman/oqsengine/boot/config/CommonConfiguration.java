@@ -35,100 +35,45 @@ public class CommonConfiguration {
     @Bean("callChangelogThreadPool")
     public ExecutorService callChangelogThreadPool(
             @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call-changelog", false);
+        return buildThreadPool(worker, queue, "oqsengine-call-changelog", false);
     }
 
 
     @Bean("callReadThreadPool")
     public ExecutorService callReadThreadPool(
         @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call-read", false);
+        return buildThreadPool(worker, queue, "oqsengine-call-read", false);
     }
 
     @Bean("callWriteThreadPool")
     public ExecutorService callWriteThreadPool(
         @Value("${threadPool.call.write.worker:0}") int worker, @Value("${threadPool.call.write.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call-write", false);
+        return buildThreadPool(worker, queue, "oqsengine-call-write", false);
     }
 
     @Bean("callRebuildThreadPool")
     public ExecutorService callRebuildThreadPool(
         @Value("${threadPool.call.rebuild.worker:0}") int worker, @Value("${threadPool.call.rebuild.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call-rebuild", false);
+        return buildThreadPool(worker, queue, "oqsengine-call-rebuild", false);
     }
 
     @Bean("eventWorker")
     public ExecutorService eventWorker(
         @Value("${threadPool.event.worker:0}") int worker,
         @Value("${threadPool.event.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker <= 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-event", false);
+        return buildThreadPool(worker, queue, "oqsengine-event", false);
     }
 
-    @Bean("eventCacheRetry")
-    public ExecutorService eventCacheRetry(
-            @Value("${threadPool.event.worker:0}") int worker,
-            @Value("${threadPool.event.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker <= 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
+    @Bean("waitVersionExecutor")
+    public ExecutorService waitVersionExecutor(
+        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
 
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-cache-retry", false);
+        return buildThreadPool(worker, queue, "oqsengine-meta-version", false);
     }
 
     @Bean(value = "redisClient")
@@ -178,15 +123,7 @@ public class CommonConfiguration {
         }
     }
 
-    /**
-     * TODO
-     * @param worker
-     * @param queue
-     * @return
-     */
-    @Bean("waitVersionExecutor")
-    public ExecutorService waitVersionExecutor(
-            @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
+    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -196,15 +133,9 @@ public class CommonConfiguration {
         if (useQueue < 500) {
             useQueue = 500;
         }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-meta-version", false);
-    }
-
-
-    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
-        return new ThreadPoolExecutor(worker, worker,
+        return new ThreadPoolExecutor(useWorker, useWorker,
             0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(queue),
+            new ArrayBlockingQueue<>(useQueue),
             ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
             new ThreadPoolExecutor.AbortPolicy()
         );

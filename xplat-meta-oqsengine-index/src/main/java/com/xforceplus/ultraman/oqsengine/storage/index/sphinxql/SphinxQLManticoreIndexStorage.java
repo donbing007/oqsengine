@@ -36,7 +36,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
-import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,102 +112,86 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             .build();
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "condition"})
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
-        long startMs = System.currentTimeMillis();
+        Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+            Set<Long> useFilterIds = null;
 
-        try {
-            Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
-                Set<Long> useFilterIds = null;
+            if (resource.getTransaction().isPresent()) {
+                Set<Long> updateIds = tx.getAccumulator().getUpdateIds();
+                useFilterIds = new HashSet();
+                useFilterIds.addAll(updateIds);
+                useFilterIds.addAll(config.getExcludedIds());
+            } else {
+                useFilterIds = config.getExcludedIds();
+            }
 
-                if (resource.getTransaction().isPresent()) {
-                    Set<Long> updateIds = tx.getAccumulator().getUpdateIds();
-                    useFilterIds = new HashSet();
-                    useFilterIds.addAll(updateIds);
-                    useFilterIds.addAll(config.getExcludedIds());
-                } else {
-                    useFilterIds = config.getExcludedIds();
-                }
+            SelectConfig useConfig = SelectConfig.Builder.aSelectConfig()
+                .withCommitId(config.getCommitId())
+                .withSort(config.getSort())
+                .withPage(config.getPage())
+                .withExcludedIds(useFilterIds)
+                .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
+                .withFacet(config.getFacet()).build();
 
-                SelectConfig useConfig = SelectConfig.Builder.aSelectConfig()
-                    .withCommitId(config.getCommitId())
-                    .withSort(config.getSort())
-                    .withPage(config.getPage())
-                    .withExcludedIds(useFilterIds)
-                    .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
-                    .withFacet(config.getFacet()).build();
+            return QueryConditionExecutor.build(
+                getSearchIndexName(),
+                resource,
+                sphinxQLConditionsBuilderFactory,
+                storageStrategyFactory,
+                getMaxSearchTimeoutMs()).execute(
+                Tuple.of(entityClass, conditions, useConfig));
+        });
 
-                return QueryConditionExecutor.build(
-                    getSearchIndexName(),
-                    resource,
-                    sphinxQLConditionsBuilderFactory,
-                    storageStrategyFactory,
-                    getMaxSearchTimeoutMs()).execute(
-                    Tuple.of(entityClass, conditions, useConfig));
-            });
-
-            return refs;
-        } finally {
-            Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "condition")
-                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
-        }
+        return refs;
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
     @Override
     public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
-        long startMs = System.currentTimeMillis();
-        try {
-            CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
-                .withEntityClass(entityClass)
-                .withStart(start)
-                .withEnd(end)
-                .withIndexNames(indexWriteIndexNameSelector.selects())
-                .withDs(writerDataSourceSelector.selects())
-                .build();
+        CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
+            .withEntityClass(entityClass)
+            .withStart(start)
+            .withEnd(end)
+            .withIndexNames(indexWriteIndexNameSelector.selects())
+            .withDs(writerDataSourceSelector.selects())
+            .build();
 
-            return executor.execute(maintainId);
-        } finally {
-            Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "clean")
-                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
-        }
+        return executor.execute(maintainId);
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "save"})
     @Override
     public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
-        long startMs = System.currentTimeMillis();
-        try {
-            if (originalEntities.isEmpty()) {
-                return;
-            }
+        if (originalEntities.isEmpty()) {
+            return;
+        }
 
-            verifyOriginalEntites(originalEntities);
+        verifyOriginalEntites(originalEntities);
 
-            Collection<OriginalEntitySection> sections = split(originalEntities);
+        Collection<OriginalEntitySection> sections = split(originalEntities);
 
-            /**
-             * 失败重试间隔毫秒.
-             */
-            final long retryDurationMs = 3000;
+        /**
+         * 失败重试间隔毫秒.
+         */
+        final long retryDurationMs = 3000;
 
-            List<Future<Boolean>> futures = new ArrayList<>(sections.size());
-            for (OriginalEntitySection section : sections) {
-                futures.add(threadPool.submit(new HandlerTask(section, retryDurationMs, true)));
-            }
+        List<Future<Boolean>> futures = new ArrayList<>(sections.size());
+        for (OriginalEntitySection section : sections) {
+            futures.add(threadPool.submit(new HandlerTask(section, retryDurationMs, true)));
+        }
 
-            for (Future<Boolean> f : futures) {
-                try {
-                    if (!f.get()) {
-                        throw new SQLException("Failed to save for unknown reason.");
-                    }
-                } catch (InterruptedException e) {
-                    throw new SQLException(e.getCause());
-                } catch (ExecutionException e) {
-                    throw new SQLException(e.getCause());
+        for (Future<Boolean> f : futures) {
+            try {
+                if (!f.get()) {
+                    throw new SQLException("Failed to save for unknown reason.");
                 }
+            } catch (InterruptedException e) {
+                throw new SQLException(e.getCause());
+            } catch (ExecutionException e) {
+                throw new SQLException(e.getCause());
             }
-        } finally {
-            Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "save")
-                .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
     }
 
