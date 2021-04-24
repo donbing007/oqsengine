@@ -36,6 +36,7 @@ public class TestClientRemote {
     @Test
     public void test() throws InterruptedException {
         if (ifTest) {
+            Thread.sleep(100_000);
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
 

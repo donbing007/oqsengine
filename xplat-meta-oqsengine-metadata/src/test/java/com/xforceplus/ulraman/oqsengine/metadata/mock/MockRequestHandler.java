@@ -5,9 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import io.grpc.stub.StreamObserver;
 
 import javax.annotation.Resource;
-import java.util.*;
+
 
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
@@ -53,8 +54,23 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
+    public void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
+
+    }
+
+    @Override
     public IRequestWatchExecutor watchExecutor() {
         return null;
+    }
+
+    @Override
+    public void notReady() {
+
+    }
+
+    @Override
+    public void ready() {
+
     }
 
 
