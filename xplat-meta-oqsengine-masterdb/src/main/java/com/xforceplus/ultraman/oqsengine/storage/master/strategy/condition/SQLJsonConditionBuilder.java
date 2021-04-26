@@ -79,13 +79,23 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
             return sql.toString();
         }
 
+        /**
+         * 为了突破JSON中长整形的上限,这里查询时需要转换成有符号数.
+         */
+        if (storageStrategy.storageType() == StorageType.LONG) {
+            sql.append("CAST(");
+        }
+        // attr->>'$.attribute_name'
         sql.append(FieldDefine.ATTRIBUTE)
             .append("->>'$.")
-            .append(AnyStorageValue.ATTRIBUTE_PREFIX).append(
-            storageStrategy.toStorageNames(field).stream().findFirst().get())
-            .append("\' ")
-            .append(condition.getOperator().getSymbol())
-            .append(' ');
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX).append(storageStrategy.toStorageNames(field).stream().findFirst().get())
+            .append("\'");
+        if (storageStrategy.storageType() == StorageType.LONG) {
+            sql.append(" AS SIGNED)");
+        }
+        sql.append(' ');
+
+        sql.append(condition.getOperator().getSymbol()).append(' ');
 
         StorageValue storageValue = null;
         if (MULTIPLE_EQUALS == condition.getOperator()) {

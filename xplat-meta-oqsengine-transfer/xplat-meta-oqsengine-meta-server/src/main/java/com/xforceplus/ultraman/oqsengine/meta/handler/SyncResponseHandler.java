@@ -148,7 +148,7 @@ public class SyncResponseHandler implements IResponseHandler {
              */
             String uid = entityClassSyncRequest.getUid();
             if (null != uid) {
-                confirmHeartBeat(uid);
+                confirmHeartBeat(uid, responseStreamObserver);
             }
         } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
             /**
@@ -354,13 +354,21 @@ public class SyncResponseHandler implements IResponseHandler {
      *
      * @param uid
      */
-    private void confirmHeartBeat(String uid) {
-        ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
-        if (null != responseWatcher && responseWatcher.isActive()) {
-            responseWatchExecutor.resetHeartBeat(uid);
+    private void confirmHeartBeat(String uid, StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
 
-            confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+
+        ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
+        if (null != responseWatcher) {
+            if (responseWatcher.isActive()) {
+                responseWatchExecutor.resetHeartBeat(uid);
+            }
         }
+
+        //  直接返回心跳
+        responseStreamObserver.onNext(
+                EntityClassSyncResponse.newBuilder()
+                        .setUid(uid)
+                        .setStatus(HEARTBEAT.ordinal()).build());
     }
 
 

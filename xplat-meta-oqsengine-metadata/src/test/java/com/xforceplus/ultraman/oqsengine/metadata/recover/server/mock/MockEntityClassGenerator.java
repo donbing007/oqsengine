@@ -1,4 +1,4 @@
-package com.xforceplus.ulraman.oqsengine.metadata.recover.server.mock;
+package com.xforceplus.ultraman.oqsengine.metadata.recover.server.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;

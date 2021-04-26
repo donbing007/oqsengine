@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +93,8 @@ public class SyncRequestHandler implements IRequestHandler {
 
         logger.info("requestWatchExecutor start.");
     }
+
+
 
     @Override
     public void stop() {
@@ -177,6 +180,7 @@ public class SyncRequestHandler implements IRequestHandler {
     /**
      * 当发生断线时，需要重新连接，每次重新连接后，需要将当前OQS的WatchList重新注册到元数据中
      */
+    @Override
     public boolean reRegister() {
         /**
          * 当开启reRegister操作时，所有的register操作将被中断
@@ -212,6 +216,11 @@ public class SyncRequestHandler implements IRequestHandler {
             }
         }
         return isOperationOK;
+    }
+
+    @Override
+    public void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
+        requestWatchExecutor.create(uid, streamObserver);
     }
 
     /**
@@ -265,6 +274,38 @@ public class SyncRequestHandler implements IRequestHandler {
     @Override
     public IRequestWatchExecutor watchExecutor() {
         return requestWatchExecutor;
+    }
+
+    @Override
+    public void notReady() {
+        requestWatchExecutor.inActive();
+
+        /**
+         * 如果是服务关闭，则直接跳出while循环
+         */
+        if (isShutdown) {
+            logger.warn("stream has broken due to client has been shutdown...");
+        } else {
+            String uid = (null != requestWatchExecutor.watcher()) ? requestWatchExecutor.watcher().uid() : "unKnow-stream";
+            logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."
+                    , uid
+                    , gRpcParams.getReconnectDuration());
+
+            /**
+             * 设置睡眠
+             */
+            TimeWaitUtils.wakeupAfter(gRpcParams.getReconnectDuration(), TimeUnit.MILLISECONDS);
+
+            /**
+             * 进行资源清理
+             */
+            requestWatchExecutor.release(uid);
+        }
+    }
+
+    @Override
+    public void ready() {
+        requestWatchExecutor.active();
     }
 
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {

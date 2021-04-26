@@ -68,11 +68,11 @@ public class SphinxQLHelperTest {
     public void testBuildPreciseQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
         Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assert.assertEquals("1y2p0ijtest32e8e7S*", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true));
 
         storageValue = new LongStorageValue("9223372036854775807", 100, true);
         Assert.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assert.assertEquals("1y2p0ij10032e8e7L*", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assert.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true));
     }
 
     @Test

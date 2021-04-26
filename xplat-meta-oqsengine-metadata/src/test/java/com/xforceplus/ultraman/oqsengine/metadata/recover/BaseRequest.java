@@ -1,4 +1,4 @@
-package com.xforceplus.ulraman.oqsengine.metadata.recover;
+package com.xforceplus.ultraman.oqsengine.metadata.recover;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
@@ -17,7 +17,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ulraman.oqsengine.metadata.recover.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 /**
@@ -41,7 +40,7 @@ public class BaseRequest {
     protected EntityClassSyncClient entityClassSyncClient;
 
     protected void baseInit() {
-        gRpcParams = gRpcParamsConfig();
+        gRpcParams = Constant.gRpcParamsConfig();
 
         requestWatchExecutor = requestWatchExecutor();
 
@@ -52,7 +51,7 @@ public class BaseRequest {
 
     protected EntityClassSyncClient entityClassSyncClient() {
 
-        MetaSyncGRpcClient metaSyncGRpcClient = new MetaSyncGRpcClient(HOST, PORT);
+        MetaSyncGRpcClient metaSyncGRpcClient = new MetaSyncGRpcClient(Constant.HOST, Constant.PORT);
         ReflectionTestUtils.setField(metaSyncGRpcClient, "gRpcParams", gRpcParams);
 
         EntityClassSyncClient entityClassSyncClient = new EntityClassSyncClient();

@@ -93,7 +93,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
             StreamObserver<EntityClassSyncRequest> streamObserver = null;
-            String uid = UUID.randomUUID().toString();
             try {
                 /**
                  * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
@@ -109,7 +108,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 创建uid->streamObserver
              */
-            requestHandler.watchExecutor().create(uid, streamObserver);
+            requestHandler.initWatcher(UUID.randomUUID().toString(), streamObserver);
 
             /**
              * 重新注册所有watchList到服务端
@@ -120,7 +119,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestHandler.watchExecutor().active();
+                requestHandler.ready();
                 /**
                  * wait直到countDownLatch = 0;
                  * 由于onNext方法调用reRegister只是将数据写入缓冲区，并不能确认发送是否成功，
@@ -132,26 +131,9 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 设置服务不可用
              */
-            requestHandler.watchExecutor().inActive();
+            requestHandler.notReady();
 
-            /**
-             * 如果是服务关闭，则直接跳出while循环
-             */
-            if (requestHandler.isShutDown()) {
-                logger.warn("stream has broken due to client has been shutdown...");
-            } else {
-                logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."
-                        , uid, gRpcParamsConfig.getReconnectDuration());
-
-                /**
-                 * 设置睡眠
-                 */
-                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
-
-                /**
-                 * 进行资源清理
-                 */
-                requestHandler.watchExecutor().release(uid);
+            if (!requestHandler.isShutDown()) {
 
                 /**
                  * 断线统计 metrics + 1

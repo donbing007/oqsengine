@@ -1,15 +1,16 @@
-package com.xforceplus.ulraman.oqsengine.metadata.mock;
+package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import io.grpc.stub.StreamObserver;
 
 import javax.annotation.Resource;
-import java.util.*;
 
-import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
+
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 /**
@@ -42,8 +43,8 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        invoke(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
-                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
+        invoke(EntityClassStorageBuilder.entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+                                                        EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }
 
@@ -53,8 +54,23 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
+    public void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
+
+    }
+
+    @Override
     public IRequestWatchExecutor watchExecutor() {
         return null;
+    }
+
+    @Override
+    public void notReady() {
+
+    }
+
+    @Override
+    public void ready() {
+
     }
 
 

@@ -204,6 +204,17 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         String uid = requestWatchExecutor.watcher().uid();
         StreamObserver observer = requestWatchExecutor.watcher().observer();
+
+        MockServer.isTestOk = true;
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        MockServer.isTestOk = false;
+
         /**
          * 模拟超时重连
          */

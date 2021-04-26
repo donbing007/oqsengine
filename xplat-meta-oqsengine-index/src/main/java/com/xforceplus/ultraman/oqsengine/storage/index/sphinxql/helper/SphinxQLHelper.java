@@ -100,8 +100,11 @@ public class SphinxQLHelper {
 
         buff.append(shortStorageName.getPrefix())
             .append(filterSymbols(value.value().toString()));
+        /**
+         * 如果使用组名的话,忽略尾部定位序号.
+         */
         if (useGroupName) {
-            buff.append(shortStorageName.getNoLocationSuffix()).append("*");
+            buff.append(shortStorageName.getNoLocationSuffix());
         } else {
             buff.append(shortStorageName.getSuffix());
         }

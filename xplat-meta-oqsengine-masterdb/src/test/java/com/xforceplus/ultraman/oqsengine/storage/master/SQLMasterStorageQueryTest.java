@@ -153,12 +153,18 @@ public class SQLMasterStorageQueryTest {
         .withFieldType(FieldType.STRING)
         .withName("l2-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2bigintField = EntityField.Builder.anEntityField()
+        .withId(3002)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-bigint")
+        .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(3)
         .withLevel(2)
         .withCode("l2")
         .withField(l2LongField)
         .withField(l2StringField)
+        .withField(l2bigintField)
         .withFather(l1EntityClass)
         .build();
 
@@ -772,6 +778,25 @@ public class SQLMasterStorageQueryTest {
                     assertSelect(expectedIds, result, false);
                 },
                 Sort.buildOutOfSort())
+            ,
+            // bigint eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-bigint").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L)
+                    )
+                ),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {
+                        1004
+                    };
+                    assertSelect(expectedIds, result, false);
+                }
+            )
         );
     }
 
@@ -869,7 +894,8 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l1-long").get(), 87011006),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Emely_Dickson1490@jiman.org"),
                     new LongValue(l2EntityClass.field("l2-long").get(), -2037817147),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Belize")
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Belize"),
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524950L)
                 )
             )).build());
 
@@ -894,7 +920,8 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l1-long").get(), 443531115),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Manuel_Vincent2662@naiker.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), -251454086),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Montenegro")
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Montenegro"),
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524949L)
                 )
             )).build());
 
@@ -919,7 +946,8 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l1-long").get(), 208747364),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Maxwell_Richardson4862@twace.org"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 1457704562),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Lithuania")
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Lithuania"),
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524948L)
                 )
             )).build());
 
@@ -944,7 +972,8 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l1-long").get(), 647147145),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Sebastian_Smith3123@sveldo.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 2032249908),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Trinidad")
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Trinidad"),
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524947L)
                 )
             )).build());
 
@@ -969,7 +998,8 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l1-long").get(), 441034626),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Alexia_Dillon5194@bauros.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 622028442),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Mozambique")
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Mozambique"),
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L)
                 )
             )).build());
     }

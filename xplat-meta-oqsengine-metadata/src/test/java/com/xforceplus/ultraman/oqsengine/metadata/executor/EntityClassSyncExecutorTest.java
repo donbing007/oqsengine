@@ -1,15 +1,13 @@
-package com.xforceplus.ulraman.oqsengine.metadata.executor;
+package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -28,8 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
 
 /**
  * desc :
@@ -106,10 +102,10 @@ public class EntityClassSyncExecutorTest {
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
 
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = mockSelfFatherAncestorsGenerate(expectedId);
+        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
 
         EntityClassSyncRspProto entityClassSyncRspProto =
-                entityClassSyncRspProtoGenerator(expectedEntityStorageList);
+                EntityClassStorageBuilder.entityClassSyncRspProtoGenerator(expectedEntityStorageList);
 
         boolean ret =
                 entityClassSyncExecutor.sync(expectedAppId, expectedVersion, entityClassSyncRspProto);

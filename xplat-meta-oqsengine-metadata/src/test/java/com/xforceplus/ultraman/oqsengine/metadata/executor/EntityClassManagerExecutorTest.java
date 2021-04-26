@@ -1,16 +1,14 @@
-package com.xforceplus.ulraman.oqsengine.metadata.executor;
+package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -34,8 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
-import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 
 /**
@@ -135,7 +132,7 @@ public class EntityClassManagerExecutorTest {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = mockSelfFatherAncestorsGenerate(expectedId);
+        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
         long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
         try {
             storageMetaManager.load(expectedId);
@@ -144,7 +141,7 @@ public class EntityClassManagerExecutorTest {
         }
 
         EntityClassSyncResponse entityClassSyncResponse =
-                entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
+                EntityClassStorageBuilder.entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId);

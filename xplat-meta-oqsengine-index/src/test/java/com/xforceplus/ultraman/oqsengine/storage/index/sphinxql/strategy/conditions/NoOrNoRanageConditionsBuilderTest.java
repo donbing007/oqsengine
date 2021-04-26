@@ -125,7 +125,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.EQUALS,
                         new StringsValue(new EntityField(9223372036854775807L, "c1", FieldType.STRINGS), "v1")
                     )),
-                String.format("MATCH('((@%s 1y2p0ijv132e8e7S*))')", FieldDefine.ATTRIBUTEF)
+                String.format("MATCH('((@%s 1y2p0ijv132e8e7S))')", FieldDefine.ATTRIBUTEF)
             )
             ,
             new Case(
@@ -135,7 +135,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.NOT_EQUALS,
                         new StringsValue(new EntityField(9223372036854775807L, "c1", FieldType.STRINGS), "v1")
                     )),
-                String.format("MATCH('((@%s -1y2p0ijv132e8e7S*))')"
+                String.format("MATCH('((@%s -1y2p0ijv132e8e7S))')"
                     , FieldDefine.ATTRIBUTEF)
             )
         );

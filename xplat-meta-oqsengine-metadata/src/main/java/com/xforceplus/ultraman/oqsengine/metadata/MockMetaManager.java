@@ -1,6 +1,5 @@
-package com.xforceplus.ultraman.oqsengine.metadata.mock;
+package com.xforceplus.ultraman.oqsengine.metadata;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 import java.util.Map;
