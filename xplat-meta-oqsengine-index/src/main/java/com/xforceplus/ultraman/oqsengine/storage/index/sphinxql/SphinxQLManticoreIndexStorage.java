@@ -469,11 +469,17 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            // 原始字符.
+            /**
+             * 如果是多值,这里会忽略掉字段定位序号.
+             * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
+             * 最终在储存时将会去除尾部的定位序号,变成如下.
+             * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
+             */
             buff.append(shortStorageName.getPrefix())
                 .append(strValue)
-                .append(shortStorageName.getSuffix());
+                .append(shortStorageName.getNoLocationSuffix());
         } else {
+
             buff.append(shortStorageName.getPrefix())
                 .append(value.toString())
                 .append(shortStorageName.getSuffix());
