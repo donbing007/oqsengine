@@ -1,6 +1,6 @@
-package com.xforceplus.ulraman.oqsengine.metadata.recover.server;
+package com.xforceplus.ultraman.oqsengine.metadata.recover.server;
 
-import com.xforceplus.ulraman.oqsengine.metadata.recover.server.mock.MockEntityClassGenerator;
+import com.xforceplus.ultraman.oqsengine.metadata.recover.server.mock.MockEntityClassGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
@@ -19,7 +19,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ulraman.oqsengine.metadata.recover.Constant.gRpcParamsConfig;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.gRpcParamsConfig;
 
 /**
  * desc :

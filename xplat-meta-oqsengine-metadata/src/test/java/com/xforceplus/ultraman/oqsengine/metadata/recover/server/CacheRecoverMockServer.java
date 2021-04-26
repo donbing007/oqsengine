@@ -1,7 +1,7 @@
-package com.xforceplus.ulraman.oqsengine.metadata.recover.server;
+package com.xforceplus.ultraman.oqsengine.metadata.recover.server;
 
 
-import static com.xforceplus.ulraman.oqsengine.metadata.recover.Constant.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.*;
 
 /**
  * desc :

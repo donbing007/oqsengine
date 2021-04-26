@@ -1,4 +1,4 @@
-package com.xforceplus.ulraman.oqsengine.metadata.recover;
+package com.xforceplus.ultraman.oqsengine.metadata.recover;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 

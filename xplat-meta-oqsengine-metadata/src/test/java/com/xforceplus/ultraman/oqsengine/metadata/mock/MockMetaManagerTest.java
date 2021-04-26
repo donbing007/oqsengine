@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
+import com.xforceplus.ultraman.oqsengine.metadata.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import org.junit.Assert;
