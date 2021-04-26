@@ -98,9 +98,9 @@ query:
   maxVisibleTotalCount: 10000
   join:
     # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
-    maxJoinEntityNumber: 1000
+    maxJoinEntityNumber: 2
     # join查询时的主表+驱动表的数量最大上限.
-    maxJoinDriverLineNumber: 2
+    maxJoinDriverLineNumber: 1000
 changelog:
   enabled: false
 storage:

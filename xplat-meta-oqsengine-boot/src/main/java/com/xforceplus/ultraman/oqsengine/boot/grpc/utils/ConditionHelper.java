@@ -11,9 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
-import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
-import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
+import com.xforceplus.ultraman.oqsengine.sdk.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
@@ -33,6 +31,7 @@ import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelpe
 public class ConditionHelper {
 
     private static Logger logger = LoggerFactory.getLogger(ConditionHelper.class);
+
 
     private static List<IValue> toTypedValue(IEntityField entityField, String value) {
         return entityField.type().toTypedValue(entityField, value).map(Collections::singletonList).orElseGet(Collections::emptyList);
@@ -343,6 +342,124 @@ public class ConditionHelper {
         return fieldOp.map(x -> Tuple.of(finalClass, x));
     }
 
+
+    public static Optional<Conditions> toConditions(IEntityClass mainClass, Filters filters, MetaManager manager) {
+        if (!filters.isInitialized()) {
+            return Optional.empty();
+        } else {
+            //and clause
+            List<FilterNode> filterList = filters.getNodesList();
+            return filterList.stream()
+                    .map(x -> {
+                        return toConditions(mainClass, x, manager);
+                    }).filter(Objects::nonNull)
+                    .reduce((a, b) -> a.addAnd(b, true));
+        }
+    }
+
+    private static Conditions toConditions(IEntityClass mainClass, FilterNode node, MetaManager manager) {
+        if (node.getNodeType() == 0) {
+            //condition
+            List<FilterNode> nodesList = node.getNodesList();
+
+            if (FilterNode.Operator.or == node.getOperator()) {
+                //or
+                return nodesList.stream()
+                        .filter(x -> x.getNodeType() == 0)
+                        .map(x -> ConditionHelper.toConditions(mainClass, x, manager))
+                        .reduce((a, b) -> a.addOr(b, true)).orElseThrow(() -> new RuntimeException("no conditions in OR"));
+            } else if (FilterNode.Operator.and == node.getOperator()) {
+                //and
+                return nodesList.stream()
+                        .filter(x -> x.getNodeType() == 0)
+                        .map(x -> ConditionHelper.toConditions(mainClass, x, manager))
+                        .reduce((a, b) -> a.addAnd(b, true)).orElseThrow(() -> new RuntimeException("no conditions in AND"));
+            } else {
+
+                //field node
+                Optional<FilterNode> filterNode = extractFieldNode(node);
+                List<FilterNode> values = extractValueNode(node);
+
+                Conditions conditions = null;
+                if (filterNode.isPresent()) {
+                    FilterNode fieldNode = filterNode.get();
+                    /**
+                     * field related
+                     */
+                    long relationId = fieldNode.getRelationId();
+                    FieldUp fieldUp = fieldNode.getFieldUp();
+                    Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = findFieldOp(relationId, fieldUp, mainClass, manager);
+                    /**
+                     * build field condition
+                     */
+                    FieldConditionUp fieldCondition = FieldConditionUp.newBuilder()
+                            .setRelationId(relationId)
+                            .setOperation(FieldConditionUp.Op.forNumber(node.getOperator().getNumber()))
+                            .setField(fieldUp)
+                            .addAllValues(values.stream().map(x -> x.getPayload()).collect(Collectors.toList()))
+                            .build();
+
+                    /**
+                     * TODO  Optional<Tuple2<IEntityClass, IEntityField>> fieldOp
+                     *             , FieldConditionUp fieldCondition
+                     */
+                    conditions = toOneConditions(fieldOp, fieldCondition);
+                }
+
+                if (conditions == null) {
+                    throw new RuntimeException("Condition is invalid with field " + filterNode + " " + node.getOperator() + " values:" + values);
+                }
+
+                return conditions;
+            }
+        }
+
+        return null;
+    }
+
+    private static Optional<FilterNode> extractFieldNode(FilterNode node) {
+        return node.getNodesList()
+                .stream()
+                .filter(x -> x.getNodeType() == 1)
+                .findFirst();
+    }
+
+    private static List<FilterNode> extractValueNode(FilterNode node) {
+        return node.getNodesList()
+                .stream()
+                .filter(x -> x.getNodeType() == 2)
+                .collect(Collectors.toList());
+    }
+
+
+    private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldOp(long relationId, FieldUp field, IEntityClass mainClass, MetaManager manager) {
+
+        Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
+
+        //TODO relation is inherited
+        if (relationId > 0) {
+            //find in related
+            Optional<OqsRelation> relationOp = findRelation(mainClass, relationId);
+
+            if (relationOp.isPresent()) {
+                OqsRelation relation = relationOp.get();
+                if (relation.getLeftEntityClassId() == mainClass.id()) {
+                    Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
+                    if (relatedEntityClassOp.isPresent()) {
+                        fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
+                    } else {
+                        logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
+                    }
+                }
+            }
+        } else {
+            //find in main
+            fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
+        }
+
+        return fieldOp;
+    }
+
     /**
      * if a condition has relation id than we should find in related class or in main class
      * should consider following cases:
@@ -362,26 +479,7 @@ public class ConditionHelper {
             FieldUp field = x.getField();
             Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
 
-            //TODO relation is inherited
-            if (x.getRelationId() > 0) {
-                //find in related
-                Optional<OqsRelation> relationOp = findRelation(mainClass, x.getRelationId());
-
-                if (relationOp.isPresent()) {
-                    OqsRelation relation = relationOp.get();
-                    if (relation.getLeftEntityClassId() == mainClass.id()) {
-                        Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
-                        if (relatedEntityClassOp.isPresent()) {
-                            fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
-                        } else {
-                            logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
-                        }
-                    }
-                }
-            } else {
-                //find in main
-                fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
-            }
+            fieldOp = findFieldOp(x.getRelationId(), field, mainClass, manager);
 
             return toOneConditions(fieldOp, x);
         }).reduce((a, b) -> a.addAnd(b, true));
