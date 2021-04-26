@@ -102,7 +102,7 @@ public class SQLJsonConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new LongValue(longField, 200L)
                 ),
-                "attribute->>'$.F1L' = 200"
+                "CAST(attribute->>'$.F1L' AS SIGNED) = 200"
             )
             ,
             new Case(
@@ -112,7 +112,7 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(longField, 200L),
                     new LongValue(longField, 300L)
                 ),
-                "attribute->>'$.F1L' IN (200,300)"
+                "CAST(attribute->>'$.F1L' AS SIGNED) IN (200,300)"
             )
             ,
             new Case(
@@ -131,7 +131,7 @@ public class SQLJsonConditionBuilderTest {
                     ConditionOperator.LESS_THAN_EQUALS,
                     new LongValue(longField, 200L)
                 ),
-                "attribute->>'$.F1L' <= 200"
+                "CAST(attribute->>'$.F1L' AS SIGNED) <= 200"
             )
             ,
             new Case(
@@ -140,7 +140,7 @@ public class SQLJsonConditionBuilderTest {
                     ConditionOperator.GREATER_THAN_EQUALS,
                     new LongValue(longField, 200L)
                 ),
-                "attribute->>'$.F1L' >= 200"
+                "CAST(attribute->>'$.F1L' AS SIGNED) >= 200"
             )
             ,
             new Case(
