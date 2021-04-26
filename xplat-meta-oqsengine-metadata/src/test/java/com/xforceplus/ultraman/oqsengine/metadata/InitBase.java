@@ -1,4 +1,4 @@
-package com.xforceplus.ulraman.oqsengine.metadata;
+package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;

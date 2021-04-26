@@ -1,4 +1,4 @@
-package com.xforceplus.ulraman.oqsengine.metadata.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
