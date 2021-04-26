@@ -103,7 +103,7 @@ public class MeqMatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assert.assertEquals("(1y2p0ijone32e8e7S* | 1y2p0ijtwo32e8e7S*)", r);
+                    Assert.assertEquals("(1y2p0ijone32e8e7S | 1y2p0ijtwo32e8e7S)", r);
                 }
             )
         );

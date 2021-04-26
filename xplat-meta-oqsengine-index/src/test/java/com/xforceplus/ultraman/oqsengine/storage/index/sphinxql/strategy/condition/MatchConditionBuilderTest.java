@@ -172,7 +172,7 @@ public class MatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assert.assertEquals("1y2p0ijv132e8e7S*", r);
+                    Assert.assertEquals("1y2p0ijv132e8e7S", r);
                 }
             )
         );
