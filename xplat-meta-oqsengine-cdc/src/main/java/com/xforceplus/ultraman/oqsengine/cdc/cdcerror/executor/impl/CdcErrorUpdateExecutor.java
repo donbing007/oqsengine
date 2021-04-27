@@ -36,7 +36,7 @@ public class CdcErrorUpdateExecutor extends AbstractDevOpsExecutor<Long, Integer
 
         try (Connection connection = getDataSource().getConnection();
              PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, fixedStatus.ordinal());
+            st.setInt(1, fixedStatus.getStatus());
             st.setLong(2, System.currentTimeMillis());
             st.setLong(3, res);
 

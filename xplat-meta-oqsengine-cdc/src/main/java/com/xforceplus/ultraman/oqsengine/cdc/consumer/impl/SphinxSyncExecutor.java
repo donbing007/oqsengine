@@ -139,14 +139,14 @@ public class SphinxSyncExecutor implements SyncExecutor {
         CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
 
         cdcErrorQueryCondition.setBatchId(batchId)
-                .setId(id).setCommitId(commitId).setType(errorType.ordinal()).setStatus(FixedStatus.FIXED.ordinal()).setEqualStatus(false);
+                .setId(id).setCommitId(commitId).setType(errorType.getType()).setStatus(FixedStatus.FIXED.getStatus()).setEqualStatus(false);
 
         try {
             Collection<CdcErrorTask> errorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
             if (null == errorTasks || errorTasks.isEmpty()) {
                 cdcErrorStorage.buildCdcError(
                         CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, entity, version, op, commitId,
-                                errorType.ordinal(), (null == entities) ? "{}" :  OriginalEntityUtils.toOriginalEntityStr(entities)
+                                errorType.getType(), (null == entities) ? "{}" :  OriginalEntityUtils.toOriginalEntityStr(entities)
                                 , null == message ? errorType.name() : message)
                 );
                 return false;
@@ -157,7 +157,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 CdcErrorTask cdcErrorTask = errorTasks.iterator().next();
 
                 //  状态为SUBMIT_FIX_REQ, 说明才能触发修复已被人工修复attribute
-                if (cdcErrorTask.getStatus() == FixedStatus.SUBMIT_FIX_REQ.ordinal()) {
+                if (cdcErrorTask.getStatus() == FixedStatus.SUBMIT_FIX_REQ.getStatus()) {
 
                     try {
                         //  将数据反序列为originalEntities
@@ -257,7 +257,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
         return OriginalEntity.Builder.anOriginalEntity()
                 .withId(id)
                 .withDeleted(isDelete)
-                .withOp(isDelete ? OperationType.DELETE.ordinal() : OperationType.UPDATE.ordinal())
+                .withOp(isDelete ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue())
                 .withVersion(getIntegerFromColumn(columns, VERSION))
                 .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
                 .withCreateTime(getLongFromColumn(columns, CREATETIME))

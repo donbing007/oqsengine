@@ -4,8 +4,6 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 
-import java.util.Random;
-
 /**
  * desc :
  * name : CanalEntryTools
@@ -93,12 +91,12 @@ public class CanalEntryTools {
         }
 
         public int getOp() {
-            int op = OperationType.DELETE.ordinal();
+            int op = OperationType.DELETE.getValue();
             if (!isDeleted()) {
                 if (isReplacement()) {
-                    op = OperationType.UPDATE.ordinal();
+                    op = OperationType.UPDATE.getValue();
                 } else {
-                    op = OperationType.CREATE.ordinal();
+                    op = OperationType.CREATE.getValue();
                 }
             }
             return op;
@@ -180,12 +178,12 @@ public class CanalEntryTools {
         CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
         builder.setEventType(eventType);
 
-        int op = OperationType.DELETE.ordinal();
+        int op = OperationType.DELETE.getValue();
         if (isDeleted.equals("0")) {
             if (replacement) {
-                op = OperationType.UPDATE.ordinal();
+                op = OperationType.UPDATE.getValue();
             } else {
-                op = OperationType.CREATE.ordinal();
+                op = OperationType.CREATE.getValue();
             }
         }
         builder.addRowDatas(buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version, buildError));

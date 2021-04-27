@@ -96,7 +96,7 @@ public class SphinxConsumerServiceTest extends CDCAbstractContainer {
         Assert.assertEquals("mock error", e.getMessage());
 
         CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.ordinal()).setStatus(FixedStatus.NOT_FIXED.ordinal());
+        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus());
         Collection<CdcErrorTask> cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
         Assert.assertEquals(1, cdcErrorTasks.size());
 
@@ -131,7 +131,7 @@ public class SphinxConsumerServiceTest extends CDCAbstractContainer {
         Assert.assertEquals(2, cdcMetrics.getCdcAckMetrics().getExecuteRows());
 
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.ordinal()).setStatus(FixedStatus.FIXED.ordinal());
+        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType()).setStatus(FixedStatus.FIXED.getStatus());
         cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
         Assert.assertEquals(1, cdcErrorTasks.size());
         cdcErrorTask = cdcErrorTasks.iterator().next();

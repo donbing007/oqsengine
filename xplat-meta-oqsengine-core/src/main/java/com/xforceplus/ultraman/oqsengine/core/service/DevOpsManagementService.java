@@ -4,6 +4,7 @@ package com.xforceplus.ultraman.oqsengine.core.service;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
@@ -116,7 +117,7 @@ public interface DevOpsManagementService {
      * @param seqNo
      * @return
      */
-    boolean cdcRecoverOk(long seqNo) throws SQLException;
+    boolean cdcUpdateStatus(long seqNo, FixedStatus fixedStatus) throws SQLException;
 
     /**
      * 查询CDC错误
@@ -126,6 +127,13 @@ public interface DevOpsManagementService {
      */
     Collection<CdcErrorTask> queryCdcError(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException;
 
+    /**
+     * 主键查询CDC错误
+     *
+     * @param seqNo
+     * @return
+     */
+    Optional<CdcErrorTask> queryOne(long seqNo) throws SQLException;
 
     /**
      * 获取当前commitId的范围

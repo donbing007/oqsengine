@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_FORMAT_ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.INIT_ID;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.PENDING;
@@ -145,19 +144,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
-    public boolean cdcRecoverOk(long seqNo) throws SQLException {
-        CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setSeqNo(seqNo);
-        Collection<CdcErrorTask> cdcErrorTasks = queryCdcError(cdcErrorQueryCondition);
-
-        if (cdcErrorTasks.size() == 1) {
-            CdcErrorTask task = cdcErrorTasks.iterator().next();
-            //  只能修复DATA_FORMAT_ERROR类型的数据
-            if (task.getErrorType() == DATA_FORMAT_ERROR.ordinal()) {
-                return cdcErrorStorage.updateCdcError(seqNo, FixedStatus.FIXED) == 1;
-            }
-        }
-        return false;
+    public boolean cdcUpdateStatus(long seqNo, FixedStatus fixedStatus) throws SQLException {
+        return cdcErrorStorage.updateCdcError(seqNo, fixedStatus) == 1;
     }
 
     @Override
@@ -169,6 +157,18 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         }
 
         return cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
+    }
+
+    @Override
+    public Optional<CdcErrorTask> queryOne(long seqNo) throws SQLException {
+        CdcErrorQueryCondition condition = new CdcErrorQueryCondition();
+        condition.setSeqNo(seqNo);
+
+        Collection<CdcErrorTask> tasks = cdcErrorStorage.queryCdcErrors(condition);
+        if (!tasks.isEmpty()) {
+            return Optional.of(tasks.iterator().next());
+        }
+        return Optional.empty();
     }
 
     @Override

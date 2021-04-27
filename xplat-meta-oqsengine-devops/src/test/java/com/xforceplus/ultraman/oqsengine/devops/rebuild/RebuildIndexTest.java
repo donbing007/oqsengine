@@ -184,7 +184,7 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
                                             .withCreateTime(v.time())
                                             .withUpdateTime(v.time())
                                             .withTx(txId)
-                                            .withOp(OperationType.UPDATE.ordinal())
+                                            .withOp(OperationType.UPDATE.getValue())
                                             .withOqsMajor(v.major())
                                             .withEntityClass(entityClass)
                                             .withAttributes(toIndexAttrs(v.entityValue()))

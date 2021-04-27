@@ -40,7 +40,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
     private static long expectedId = 5L;
     private static long expectedCommitId = 6L;
     private static String expectedMessage = "cdc sync error";
-    private static int expectedErrorType = ErrorType.DATA_FORMAT_ERROR.ordinal();
+    private static int expectedErrorType = ErrorType.DATA_FORMAT_ERROR.getType();
 
     private static String expectedObjectStr = "111";
 
@@ -111,7 +111,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
         //  使用FixedStatus查询
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setStatus(FixedStatus.FIXED.ordinal());
+        cdcErrorQueryCondition.setStatus(FixedStatus.FIXED.getStatus());
         queryWithOneExpected(cdcErrorQueryCondition);
 
         //  使用expectedCommitId查询
@@ -121,13 +121,13 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
         //使用batchId和NOT_FIXED 且 isEquals = false
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null).setType(ErrorType.DATA_FORMAT_ERROR.ordinal()).setStatus(FixedStatus.NOT_FIXED.ordinal()).setEqualStatus(false);
+        cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
 
         //使用所有条件查询
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setBatchId(expectedBatchId)
-                .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.ordinal()).setStatus(FixedStatus.NOT_FIXED.ordinal()).setEqualStatus(false);
+                .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
     }
 
@@ -153,7 +153,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         Assert.assertEquals(expectedErrorType, cdcErrorTask.getErrorType());
         Assert.assertEquals(expectedMessage, cdcErrorTask.getMessage());
         Assert.assertEquals(expectedObjectStr, cdcErrorTask.getOperationObject());
-        Assert.assertEquals(FixedStatus.FIXED.ordinal(), cdcErrorTask.getStatus());
+        Assert.assertEquals(FixedStatus.FIXED.getStatus(), cdcErrorTask.getStatus());
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);
     }

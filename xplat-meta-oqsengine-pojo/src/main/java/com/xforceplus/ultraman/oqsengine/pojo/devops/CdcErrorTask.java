@@ -37,7 +37,7 @@ public class CdcErrorTask {
         cdcErrorTask.setCommitId(commitId);
         cdcErrorTask.setErrorType(errorType);
         cdcErrorTask.setOperationObject(operationObject);
-        cdcErrorTask.setStatus(FixedStatus.NOT_FIXED.ordinal());
+        cdcErrorTask.setStatus(FixedStatus.NOT_FIXED.getStatus());
         cdcErrorTask.setExecuteTime(System.currentTimeMillis());
         cdcErrorTask.setFixedTime(DevOpsConstant.NOT_INIT_TIMESTAMP);
         cdcErrorTask.setMessage(message.length() > DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH ?
