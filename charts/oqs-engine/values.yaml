@@ -97,9 +97,9 @@ query:
   # 查询的最大匹配数量.
   maxVisibleTotalCount: 10000
   join:
-    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    # join查询时的驱动表匹配上限.
     maxJoinEntityNumber: 2
-    # join查询时的主表+驱动表的数量最大上限.
+    # join查询时的驱动表的数量最大上限,此值不能大于 maxVisibleTotalCount.
     maxJoinDriverLineNumber: 1000
 changelog:
   enabled: false
