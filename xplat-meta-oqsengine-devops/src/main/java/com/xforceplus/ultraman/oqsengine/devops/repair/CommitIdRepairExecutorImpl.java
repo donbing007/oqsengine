@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
@@ -41,6 +42,24 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
             commitIdStatusService.obsolete(arrayIds);
         }
     }
+
+    @Override
+    public long[] rangeOfCommitId() {
+        long[] range = new long[2];
+        range[0] = commitIdStatusService.getMin().orElse(INVALID_COMMITID);
+        range[1] = commitIdStatusService.getMax().orElse(INVALID_COMMITID);
+        return range;
+    }
+
+    @Override
+    public void cleanLessThan(long id) {
+        long[] result = Arrays.stream(commitIdStatusService.getAll())
+                        .filter(s -> {return s > id;})
+                        .toArray();
+
+        commitIdStatusService.obsolete(result);
+    }
+
 
     @Deprecated
     @Override

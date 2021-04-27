@@ -14,6 +14,7 @@ public class CdcErrorQueryCondition {
     private Long seqNo;
     private Long batchId;
     private Long id;
+    private Long entity;
     private Long commitId;
     private Integer status;
     private Boolean isEqualStatus;
@@ -49,6 +50,14 @@ public class CdcErrorQueryCondition {
             }
             stringBuilder.append(ErrorFieldDefine.ID).append("=").append("?");
             hasEnd = true;
+        }
+
+        //  add entity
+        if (null != entity) {
+            if (hasEnd) {
+                stringBuilder.append(" AND ");
+            }
+            stringBuilder.append(ErrorFieldDefine.ENTITY).append("=").append("?");
         }
 
         //  add commitId
@@ -161,6 +170,14 @@ public class CdcErrorQueryCondition {
         return type;
     }
 
+    public Long getEntity() {
+        return entity;
+    }
+
+    public Boolean getEqualStatus() {
+        return isEqualStatus;
+    }
+
     public CdcErrorQueryCondition setSeqNo(Long seqNo) {
         this.seqNo = seqNo;
         return this;
@@ -211,12 +228,13 @@ public class CdcErrorQueryCondition {
         return this;
     }
 
-    public Boolean getEqualStatus() {
-        return isEqualStatus;
-    }
-
-    public void setEqualStatus(Boolean equalStatus) {
+    public CdcErrorQueryCondition setEqualStatus(Boolean equalStatus) {
         isEqualStatus = equalStatus;
+        return this;
     }
 
+    public CdcErrorQueryCondition setEntity(Long entity) {
+        this.entity = entity;
+        return this;
+    }
 }

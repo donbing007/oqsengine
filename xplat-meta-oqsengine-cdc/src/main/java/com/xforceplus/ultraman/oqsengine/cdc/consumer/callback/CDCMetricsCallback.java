@@ -57,9 +57,6 @@ public interface CDCMetricsCallback {
      */
     boolean isReadyCommit(long commitId);
 
-    Map<String, String> querySkipRows();
-
-    void expiredSkipRows(String[] skips);
 }
 
 

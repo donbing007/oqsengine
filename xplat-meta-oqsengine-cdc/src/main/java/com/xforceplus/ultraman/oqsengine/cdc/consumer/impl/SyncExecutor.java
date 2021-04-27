@@ -1,14 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * desc :
@@ -19,7 +17,8 @@ import java.util.Map;
  * @since : 1.8
  */
 public interface SyncExecutor {
-    int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics, Map<String, String> skips) throws SQLException;
+    int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException;
 
-    boolean doErrRecordOrRecover(Long batchId, Long id, Long commitId, ErrorType errorType, String message, List<OriginalEntity> entities) throws SQLException;
+    boolean errorHandle(List<CanalEntry.Column> columns, Long batchId, String message) throws SQLException;
+
 }

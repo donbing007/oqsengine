@@ -12,6 +12,9 @@ public class ErrorFieldDefine {
     public static final String SEQ_NO = "seqno";
     public static final String BATCH_ID = "batchid";
     public static final String ID = "id";
+    public static final String ENTITY = "entity";
+    public static final String VERSION = "version";
+    public static final String OP = "op";
     public static final String COMMIT_ID = "commitid";
     public static final String TYPE = "type";
     public static final String STATUS = "status";

@@ -20,6 +20,8 @@ public class CDCConstant {
     public static final int OLD_MAJOR = 0;
     public static final int NO_TRANSACTION_COMMIT_ID = 0;
     public static final long UN_KNOW_ID = -1;
+    public static final int UN_KNOW_VERSION = -1;
+    public static final int UN_KNOW_OP = -1;
 
     public static final int MULTI_CONSUMER_OPEN_MIN_BATCHES = 5;
 

@@ -13,6 +13,9 @@ public class CdcErrorTask {
     private long seqNo;
     private long batchId;
     private long id;
+    private long entity;
+    private int version;
+    private int op;
     private long commitId;
     private int errorType;
     private int status;
@@ -22,11 +25,15 @@ public class CdcErrorTask {
     private String message;
 
 
-    public static CdcErrorTask buildErrorTask(long seqNo, long batchId, long id, long commitId, int errorType, String operationObject, String message) {
+    public static CdcErrorTask buildErrorTask(long seqNo, long batchId, long id, long entity, int version
+                                , int op, long commitId, int errorType, String operationObject, String message) {
         CdcErrorTask cdcErrorTask = new CdcErrorTask();
         cdcErrorTask.setSeqNo(seqNo);
         cdcErrorTask.setBatchId(batchId);
         cdcErrorTask.setId(id);
+        cdcErrorTask.setEntity(entity);
+        cdcErrorTask.setVersion(version);
+        cdcErrorTask.setOp(op);
         cdcErrorTask.setCommitId(commitId);
         cdcErrorTask.setErrorType(errorType);
         cdcErrorTask.setOperationObject(operationObject);
@@ -117,5 +124,29 @@ public class CdcErrorTask {
 
     public void setErrorType(int errorType) {
         this.errorType = errorType;
+    }
+
+    public long getEntity() {
+        return entity;
+    }
+
+    public void setEntity(long entity) {
+        this.entity = entity;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public int getOp() {
+        return op;
+    }
+
+    public void setOp(int op) {
+        this.op = op;
     }
 }

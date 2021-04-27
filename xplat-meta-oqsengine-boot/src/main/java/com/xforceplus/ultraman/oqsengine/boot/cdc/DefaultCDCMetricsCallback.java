@@ -66,14 +66,4 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     public boolean isReadyCommit(long commitId) {
         return commitIdStatusService.isReady(commitId);
     }
-
-    @Override
-    public Map<String, String> querySkipRows() {
-        return cdcStatusService.querySkipRows();
-    }
-
-    @Override
-    public void expiredSkipRows(String[] skips) {
-        cdcStatusService.expiredSkipRows(skips);
-    }
 }

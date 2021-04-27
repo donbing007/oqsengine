@@ -57,6 +57,11 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                     st.setLong(parameterIndex++, res.getId());
                 }
 
+                //  add entity
+                if (null != res.getEntity()) {
+                    st.setLong(parameterIndex++, res.getEntity());
+                }
+
                 //  add commitId
                 if (null != res.getCommitId()) {
                     st.setLong(parameterIndex++, res.getCommitId());
@@ -110,6 +115,9 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                     cdcErrorTask.setSeqNo(rs.getLong(ErrorFieldDefine.SEQ_NO));
                     cdcErrorTask.setBatchId(rs.getLong(ErrorFieldDefine.BATCH_ID));
                     cdcErrorTask.setId(rs.getLong(ErrorFieldDefine.ID));
+                    cdcErrorTask.setEntity(rs.getLong(ErrorFieldDefine.ENTITY));
+                    cdcErrorTask.setVersion(rs.getInt(ErrorFieldDefine.VERSION));
+                    cdcErrorTask.setOp(rs.getInt(ErrorFieldDefine.OP));
                     cdcErrorTask.setCommitId(rs.getLong(ErrorFieldDefine.COMMIT_ID));
                     cdcErrorTask.setErrorType(rs.getInt(ErrorFieldDefine.TYPE));
                     cdcErrorTask.setStatus(rs.getInt(ErrorFieldDefine.STATUS));
@@ -136,6 +144,9 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                         ErrorFieldDefine.SEQ_NO,
                         ErrorFieldDefine.BATCH_ID,
                         ErrorFieldDefine.ID,
+                        ErrorFieldDefine.ENTITY,
+                        ErrorFieldDefine.VERSION,
+                        ErrorFieldDefine.OP,
                         ErrorFieldDefine.COMMIT_ID,
                         ErrorFieldDefine.TYPE,
                         ErrorFieldDefine.STATUS,

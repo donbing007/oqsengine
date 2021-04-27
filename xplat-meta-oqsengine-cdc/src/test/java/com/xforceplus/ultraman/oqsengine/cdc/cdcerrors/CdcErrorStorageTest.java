@@ -16,6 +16,8 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
+
 /**
  * desc :
  * name : SQLDevOpsStorageTest
@@ -31,13 +33,20 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
     private static long expectedBatchId = 1L;
-    private static long expectedSeqNo = 1L;
-    private static long expectedId = 2L;
-    private static long expectedCommitId = 3L;
+    private static long expectedEntityId = 2L;
+    private static int expectedOp = UN_KNOW_OP;
+    private static int expectedVersion = 3;
+    private static long expectedSeqNo = 4L;
+    private static long expectedId = 5L;
+    private static long expectedCommitId = 6L;
     private static String expectedMessage = "cdc sync error";
+    private static int expectedErrorType = ErrorType.DATA_FORMAT_ERROR.ordinal();
+
+    private static String expectedObjectStr = "111";
 
     private static CdcErrorTask expectedCdcErrorTask =
-                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedBatchId, expectedId, expectedCommitId, ErrorType.DATA_FORMAT_ERROR.ordinal(), "1", expectedMessage);
+                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedBatchId, expectedId, expectedEntityId
+                        , expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
 
 
     @BeforeClass
@@ -74,7 +83,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         int count = cdcErrorStorage.buildCdcError(expectedCdcErrorTask);
         Assert.assertEquals(1, count);
 
-        count = cdcErrorStorage.submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, "2");
+        count = cdcErrorStorage.submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, expectedObjectStr);
         Assert.assertEquals(1, count);
 
         count = cdcErrorStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
@@ -135,9 +144,15 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     private void isExpectedCdcErrorTask(CdcErrorTask cdcErrorTask) {
         Assert.assertEquals(expectedSeqNo, cdcErrorTask.getSeqNo());
+        Assert.assertEquals(expectedBatchId, cdcErrorTask.getBatchId());
         Assert.assertEquals(expectedId, cdcErrorTask.getId());
+        Assert.assertEquals(expectedEntityId, cdcErrorTask.getEntity());
+        Assert.assertEquals(expectedVersion, cdcErrorTask.getVersion());
+        Assert.assertEquals(expectedOp, cdcErrorTask.getOp());
         Assert.assertEquals(expectedCommitId, cdcErrorTask.getCommitId());
+        Assert.assertEquals(expectedErrorType, cdcErrorTask.getErrorType());
         Assert.assertEquals(expectedMessage, cdcErrorTask.getMessage());
+        Assert.assertEquals(expectedObjectStr, cdcErrorTask.getOperationObject());
         Assert.assertEquals(FixedStatus.FIXED.ordinal(), cdcErrorTask.getStatus());
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);

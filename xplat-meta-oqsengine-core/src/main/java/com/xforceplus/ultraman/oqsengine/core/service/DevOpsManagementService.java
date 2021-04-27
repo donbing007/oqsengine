@@ -94,25 +94,20 @@ public interface DevOpsManagementService {
      */
     void initNewCommitId(Optional<Long> commitId) throws SQLException;
 
-
-    /**
-     * 设置CDC忽略某条记录
-     * @param commitId
-     * @param id
-     * @param version
-     * @param op
-     * @param record 是否将跳过的记录记录到ERROR表中
-     * @return
-     */
-    boolean skipRow(long commitId, long id, int version, int op, boolean record);
-
     /**
      * 执行修复CDC批次
      * @param seqNo
      * @param recoverStr
      * @return
      */
-    boolean cdcErrorRecover(long seqNo, String recoverStr) throws SQLException;
+    boolean cdcSendErrorRecover(long seqNo, String recoverStr) throws SQLException;
+
+    /**
+     * 更新某条状态为修复完毕
+     * @param seqNo
+     * @return
+     */
+    boolean cdcRecoverOk(long seqNo) throws SQLException;
 
     /**
      * 查询CDC错误
@@ -120,4 +115,17 @@ public interface DevOpsManagementService {
      * @return
      */
     Collection<CdcErrorTask> queryCdcError(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException;
+
+
+    /**
+     * 获取当前commitId的范围
+     * @return
+     */
+    long[] rangeOfCommitId();
+
+    /**
+     * 删除比传入commitId小的所有commitId
+     * @param id
+     */
+    void cleanLessThan(long id);
 }

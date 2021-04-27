@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
-import com.xforceplus.ultraman.oqsengine.common.cdc.SkipRow;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -63,48 +62,23 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
 
     //  执行同步到Sphinx操作
-    public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics, Map<String, String> skips) throws SQLException {
+    @Override
+    public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
         int synced = 0;
         List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         for (RawEntry rawEntry : rawEntries) {
-            OriginalEntity entity = null;
-            String ret = null;
-
             try {
                 //  获取记录
-                entity = prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
-                //  是否跳过
-                ret = skips.get(SkipRow.toSkipRow(entity.getCommitid(), entity.getId(), entity.getVersion(), entity.getOp()));
+                OriginalEntity entity = prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
+
+                //  加入更新列表
+                storageEntityList.add(entity);
             } catch (Exception e) {
                 //  组装数据失败，记录错误日志
                 e.printStackTrace();
-                doErrRecordOrRecover(cdcMetrics.getBatchId(), rawEntry.getId(), rawEntry.getCommitId(), DATA_FORMAT_ERROR, e.getMessage(), null);
-                continue;
+                errorHandle(rawEntry.getColumns(), cdcMetrics.getBatchId(), e.getMessage());
             }
-
-
-            //  检查是否需要跳过该记录
-            if (null != ret && !ret.isEmpty()) {
-                try {
-                    boolean errRec = ret.equals(SkipRow.Status.ERROR_RECORD.getStatus());
-
-                    if (errRec) {
-                        //  将跳过的Row记录到错误日志
-                        doErrRecordOrRecover(cdcMetrics.getBatchId(), rawEntry.getId()
-                                , rawEntry.getCommitId(), DATA_FORMAT_ERROR, "手动跳过", null);
-                    }
-
-                    logger.warn("[cdc-sync-executor] 设置手动跳过记录, id : {}, commitId : {}, version : {}, op : {}, errorRecord : {}"
-                            , rawEntry.getId(), rawEntry.getCommitId(), entity.getVersion(), entity.getOp(), errRec);
-                } catch (Exception e) {
-                    //  ignore
-                }
-                continue;
-            }
-
-            //  加入更新列表
-            storageEntityList.add(entity);
         }
 
         if (!storageEntityList.isEmpty()) {
@@ -113,7 +87,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
             } catch (Exception e) {
                 //  是否修复
-                if (!doErrRecordOrRecover(cdcMetrics.getBatchId(), UN_KNOW_ID, UN_KNOW_ID, DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
+                if (!recordOrRecover(cdcMetrics.getBatchId(), UN_KNOW_ID, UN_KNOW_ID, UN_KNOW_VERSION, UN_KNOW_OP, UN_KNOW_ID
+                                                    , DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
                     throw e;
                 }
             }
@@ -122,6 +97,26 @@ public class SphinxSyncExecutor implements SyncExecutor {
             syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - startTime));
         }
         return synced;
+    }
+
+    @Override
+    public boolean errorHandle(List<CanalEntry.Column> columns, Long batchId, String message) throws SQLException {
+        Long id = getLongFromColumn(columns, ID, UN_KNOW_ID);
+        Long commitId = getLongFromColumn(columns, COMMITID);
+
+        Integer version = getIntegerFromColumn(columns, VERSION, UN_KNOW_VERSION);
+        Integer op = getIntegerFromColumn(columns, OP, UN_KNOW_OP);
+
+        Long entity = UN_KNOW_ID;
+        try {
+            entity = getEntity(columns);
+        } catch (Exception e) {
+            //  ignore
+
+        }
+        recordOrRecover(batchId, id, entity, version, op, commitId, DATA_FORMAT_ERROR, message, new ArrayList<>());
+
+        return true;
     }
 
     /**
@@ -136,7 +131,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
      * 单条格式错误不支持修复，即不支持(ErrorType = DATA_FORMAT_ERROR)
      * @throws SQLException
      */
-    public boolean doErrRecordOrRecover(Long batchId, Long id, Long commitId, ErrorType errorType, String message, List<OriginalEntity> entities) throws SQLException {
+    private boolean recordOrRecover(long batchId, long id, long entity, int version, int op, long commitId
+                            , ErrorType errorType, String message, List<OriginalEntity> entities) throws SQLException {
         logger.warn("[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}"
                 , batchId, id, commitId, null == message ? "unKnow" : message);
 
@@ -147,52 +143,48 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         try {
             Collection<CdcErrorTask> errorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-
-            switch (errorType) {
-                case DATA_FORMAT_ERROR:
-                    if (null == errorTasks || errorTasks.isEmpty()) {
-                        cdcErrorStorage.buildCdcError(
-                                CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, commitId,
-                                        DATA_FORMAT_ERROR.ordinal(), "{}", null == message ? "dataFormatError" : message)
-                        );
-                    }
-                    return false;
-                case DATA_INSERT_ERROR:
-                    if (null == errorTasks || errorTasks.isEmpty()) {
-                        cdcErrorStorage.buildCdcError(
-                                CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, commitId,
-                                        DATA_INSERT_ERROR.ordinal(), OriginalEntityUtils.toOriginalEntityStr(entities), null == message ? "dataInsertError" : message)
-                        );
-                        return false;
-                    } else {
-                        CdcErrorTask cdcErrorTask = errorTasks.iterator().next();
-
-                        //  状态被设置为SUBMIT_FIX_REQ, 才能触发修复
-                        if (cdcErrorTask.getStatus() == FixedStatus.SUBMIT_FIX_REQ.ordinal()) {
-
-                            List<OriginalEntity> originalEntities = OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
-                            try {
-                                //  触发修复, 写index
-                                sphinxQLIndexStorage.saveOrDeleteOriginalEntities(originalEntities);
-                            } catch (Exception e) {
-                                logger.warn("[cdc-sync-executor] fixed error, seqNo : [{}], batchId : [{}], message : [{}]"
-                                        , cdcErrorTask.getSeqNo(), cdcErrorTask.getBatchId(), e.getMessage());
-                                //  失败需要将状态置为失败
-                                cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.FIX_ERROR, OriginalEntityUtils.toOriginalEntityStr(entities));
-                                return false;
-                            }
-
-                            //  将error表中状态修改为Fixed,此时CDC数据已经写入，即使这里设置状态失败也忽略
-                            try {
-                                cdcErrorStorage.updateCdcError(cdcErrorTask.getSeqNo(), FixedStatus.FIXED);
-                            } catch (Exception e) {
-                                //  ignore
-                            }
-                            return true;
-                        }
-                    }
+            if (null == errorTasks || errorTasks.isEmpty()) {
+                cdcErrorStorage.buildCdcError(
+                        CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, entity, version, op, commitId,
+                                errorType.ordinal(), (null == entities) ? "{}" :  OriginalEntityUtils.toOriginalEntityStr(entities)
+                                , null == message ? errorType.name() : message)
+                );
+                return false;
             }
-            return true;
+
+            //  处理批量写入卡住
+            if (errorType.equals(DATA_INSERT_ERROR)) {
+                CdcErrorTask cdcErrorTask = errorTasks.iterator().next();
+
+                //  状态为SUBMIT_FIX_REQ, 说明才能触发修复已被人工修复attribute
+                if (cdcErrorTask.getStatus() == FixedStatus.SUBMIT_FIX_REQ.ordinal()) {
+
+                    try {
+                        //  将数据反序列为originalEntities
+                        List<OriginalEntity> originalEntities = OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
+
+                        //  触发修复, 写index
+                        sphinxQLIndexStorage.saveOrDeleteOriginalEntities(originalEntities);
+                    } catch (Exception e) {
+                        logger.warn("[cdc-sync-executor] fixed error, seqNo : [{}], batchId : [{}], message : [{}]"
+                                , cdcErrorTask.getSeqNo(), cdcErrorTask.getBatchId(), e.getMessage());
+                        //  失败需要将状态置为失败
+                        cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.FIX_ERROR, OriginalEntityUtils.toOriginalEntityStr(entities));
+                        return false;
+                    }
+
+                    //  将error表中状态修改为Fixed,此时CDC数据已经写入，即使这里设置状态失败也忽略
+                    try {
+                        cdcErrorStorage.updateCdcError(cdcErrorTask.getSeqNo(), FixedStatus.FIXED);
+                    } catch (Exception e) {
+                        //  ignore
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         } catch (Exception e) {
             throw new SQLException(e.getMessage());
         }
@@ -206,24 +198,31 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
     }
 
-    private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
+    private long getEntity(List<CanalEntry.Column> columns) throws SQLException {
         for (int o = ENTITYCLASSL4.ordinal(); o >= ENTITYCLASSL0.ordinal(); o--) {
             Optional<OqsBigEntityColumns> op = getByOrdinal(o);
             if (op.isPresent()) {
-                long entityId = getLongFromColumn(columns, op.get());
-                /**
-                 * 从大到小找到的第一个entityClass > 0的id即为selfEntityClassId
-                 */
-                if (entityId > ZERO) {
-                    Optional<IEntityClass> entityClassOptional = metaManager.load(entityId);
-                    if (entityClassOptional.isPresent()) {
-                        return entityClassOptional.get();
-                    }
-                    logger.warn("[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
-                    break;
+                long entity = getLongFromColumn(columns, op.get());
+
+                if (entity > ZERO) {
+                    return entity;
                 }
             }
         }
+        return UN_KNOW_ID;
+    }
+
+    private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
+        long entityId = getEntity(columns);
+
+        if (entityId > ZERO) {
+            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId);
+            if (entityClassOptional.isPresent()) {
+                return entityClassOptional.get();
+            }
+            logger.warn("[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+        }
+
         return null;
     }
 

@@ -38,6 +38,9 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
             st.setLong(pos++, res.getSeqNo());
             st.setLong(pos++, res.getBatchId());
             st.setLong(pos++, res.getId());
+            st.setLong(pos++, res.getEntity());
+            st.setInt(pos++, res.getVersion());
+            st.setInt(pos++, res.getOp());
             st.setLong(pos++, res.getCommitId());
             st.setInt(pos++, res.getErrorType());
             st.setInt(pos++, res.getStatus());
@@ -65,6 +68,9 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
                             ErrorFieldDefine.SEQ_NO,
                             ErrorFieldDefine.BATCH_ID,
                             ErrorFieldDefine.ID,
+                            ErrorFieldDefine.ENTITY,
+                            ErrorFieldDefine.VERSION,
+                            ErrorFieldDefine.OP,
                             ErrorFieldDefine.COMMIT_ID,
                             ErrorFieldDefine.TYPE,
                             ErrorFieldDefine.STATUS,
@@ -73,7 +79,7 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
                             ErrorFieldDefine.EXECUTE_TIME,
                             ErrorFieldDefine.FIXED_TIME)
                 ).append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(10, "?")))
+                .append(String.join(",", Collections.nCopies(13, "?")))
                 .append(")");
         return buff.toString();
     }

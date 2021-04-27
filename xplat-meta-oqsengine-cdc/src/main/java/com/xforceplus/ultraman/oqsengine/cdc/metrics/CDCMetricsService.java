@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.Map;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_INTERVAL;
@@ -191,28 +190,6 @@ public class CDCMetricsService {
             } catch (Exception ee) {
                 //  ignore
             }
-        }
-    }
-
-    public Map<String, String> querySkips() {
-        try {
-            return cdcMetricsCallback.querySkipRows();
-        } catch (Exception e) {
-            logger.warn("[cdc-metrics] query skips failed, message : {}", e.getMessage());
-
-            //ignore
-        }
-
-        return null;
-    }
-
-    public void expireSkips(String[] strings) {
-        try {
-            cdcMetricsCallback.expiredSkipRows(strings);
-        } catch (Exception e) {
-            logger.warn("[cdc-metrics] delete skips failed, message : {}", e.getMessage());
-
-            //ignore
         }
     }
 }

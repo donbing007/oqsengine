@@ -17,6 +17,21 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
  * @since : 1.8
  */
 public class BinLogParseUtils {
+    public static long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns, Long defaultValue) {
+        try {
+            return getLongFromColumn(columns, oqsBigEntityColumns);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static int getIntegerFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns, Integer defaultValue) {
+        try {
+            return getIntegerFromColumn(columns, oqsBigEntityColumns);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
 
 
     public static long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {

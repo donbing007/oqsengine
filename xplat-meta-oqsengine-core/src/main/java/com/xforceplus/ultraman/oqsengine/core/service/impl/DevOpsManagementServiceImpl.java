@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +24,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_FORMAT_ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.INIT_ID;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.PENDING;
@@ -80,13 +80,13 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
             return new ArrayList<>();
         }
         return collections.stream().map(TaskHandler::devOpsTaskInfo)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Override
     public Optional<IDevOpsTaskInfo> getActiveTask(IEntityClass entityClass) throws SQLException {
         return devOpsRebuildIndexExecutor.getActiveTask(entityClass)
-            .map(TaskHandler::devOpsTaskInfo);
+                .map(TaskHandler::devOpsTaskInfo);
     }
 
     @Override
@@ -96,7 +96,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
             return new ArrayList<>();
         }
         return collections.stream().map(TaskHandler::devOpsTaskInfo)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -114,7 +114,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         Optional<IDevOpsTaskInfo> devOpsTaskInfo = sqlTaskStorage.selectUnique(Long.parseLong(taskId));
         if (devOpsTaskInfo.isPresent()) {
             if (devOpsTaskInfo.get().getStatus() == RUNNING.getCode() ||
-                devOpsTaskInfo.get().getStatus() == PENDING.getCode()) {
+                    devOpsTaskInfo.get().getStatus() == PENDING.getCode()) {
                 if (NULL_UPDATE != sqlTaskStorage.cancel(devOpsTaskInfo.get().getMaintainid())) {
                     logger.info("task {} be canceled.", devOpsTaskInfo.get().getMaintainid());
                     return;
@@ -140,13 +140,24 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
-    public boolean skipRow(long commitId, long id, int version, int op, boolean record) {
-        return cdcStatusService.addSkipRow(commitId, id, version, op, record);
+    public boolean cdcSendErrorRecover(long seqNo, String recoverStr) throws SQLException {
+        return cdcErrorStorage.submitRecover(seqNo, FixedStatus.SUBMIT_FIX_REQ, recoverStr) == 1;
     }
 
     @Override
-    public boolean cdcErrorRecover(long seqNo, String recoverStr) throws SQLException {
-        return cdcErrorStorage.submitRecover(seqNo, FixedStatus.SUBMIT_FIX_REQ, recoverStr) == 1;
+    public boolean cdcRecoverOk(long seqNo) throws SQLException {
+        CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
+        cdcErrorQueryCondition.setSeqNo(seqNo);
+        Collection<CdcErrorTask> cdcErrorTasks = queryCdcError(cdcErrorQueryCondition);
+
+        if (cdcErrorTasks.size() == 1) {
+            CdcErrorTask task = cdcErrorTasks.iterator().next();
+            //  只能修复DATA_FORMAT_ERROR类型的数据
+            if (task.getErrorType() == DATA_FORMAT_ERROR.ordinal()) {
+                return cdcErrorStorage.updateCdcError(seqNo, FixedStatus.FIXED) == 1;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -158,5 +169,15 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         }
 
         return cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
+    }
+
+    @Override
+    public long[] rangeOfCommitId() {
+        return commitIdRepairExecutor.rangeOfCommitId();
+    }
+
+    @Override
+    public void cleanLessThan(long id) {
+        commitIdRepairExecutor.cleanLessThan(id);
     }
 }

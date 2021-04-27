@@ -63,21 +63,4 @@ public interface CDCStatusService {
      * @return 响应快照.
      */
     Optional<CDCAckMetrics> getAck();
-
-    /**
-     * 查询需要跳过CDC-skipRows
-     * @return
-     */
-    Map<String, String> querySkipRows();
-
-    /**
-     * 使跳过CDC-skipRows过期
-     */
-    void expiredSkipRows(String[] skips);
-
-    /**
-     * 查询需要跳过CDC-skipRows
-     * @return
-     */
-    boolean addSkipRow(long commitId, long id, int version, int op, boolean errorRecord);
 }

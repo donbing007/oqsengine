@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -100,16 +99,6 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     @Override
     public boolean isReadyCommit(long commitId) {
         return true;
-    }
-
-    @Override
-    public Map<String, String> querySkipRows() {
-        return cdcStatusService.querySkipRows();
-    }
-
-    @Override
-    public void expiredSkipRows(String[] skips) {
-        cdcStatusService.expiredSkipRows(skips);
     }
 
     public AtomicInteger getExecuted() {

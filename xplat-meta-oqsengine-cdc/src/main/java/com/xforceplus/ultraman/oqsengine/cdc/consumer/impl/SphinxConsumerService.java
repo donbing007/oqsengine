@@ -6,9 +6,11 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,29 +89,12 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
-            Map<String, String> skips = new HashMap<>();
-
             //  通过执行器执行Sphinx同步
-            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics, getSkips(cdcMetricsService));
-
-            if (!skips.isEmpty()) {
-                cdcMetricsService.expireSkips(skips.keySet().toArray(new String[skips.size()]));
-            }
+            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
         }
 
         batchLogged(cdcMetrics);
         return syncCount;
-    }
-
-    private Map<String, String> getSkips(CDCMetricsService cdcMetricsService) {
-        Map<String, String> skips = null;
-        //  此处注释代表不从redis内取当前跳过列表
-        //  skips = cdcMetricsService.querySkips();
-        if (null == skips) {
-            skips = new HashMap<>();
-        }
-
-        return skips;
     }
 
     private void batchLogged(CDCMetrics cdcMetrics) {
@@ -178,11 +163,10 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-                    sphinxSyncExecutor.doErrRecordOrRecover(cdcMetrics.getBatchId(), id, commitId,
-                            ErrorType.DATA_FORMAT_ERROR,
+
+                    sphinxSyncExecutor.errorHandle(columns, cdcMetrics.getBatchId(),
                             String.format("batch : %d, parse id, commitId from columns failed, message : %s"
-                                    , cdcMetrics.getBatchId(), e.getMessage()),
-                            null);
+                                    , cdcMetrics.getBatchId(), e.getMessage()));
                     continue;
                 }
 
