@@ -33,7 +33,7 @@ public interface TransactionManagementService {
     /**
      * 开始一个新的事务,并指定事务超时时间和事务消息.
      *
-     * @param timeoutMs 超时毫秒数,不可为负数.0表示无限制.
+     * @param timeoutMs 超时毫秒数,不可为负数.0表示使用默认值.
      * @param msg       事务消息.
      * @return 事务id.
      * @throws SQLException 创建事务失败.

@@ -129,7 +129,7 @@ public class JoinSelectTest {
                     MockMetaManager.driverEntityClass.ref(),
                     MockMetaManager.driverEntityClass.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    1L,
+                    3L,
                     new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), Long.MAX_VALUE)
                 )
             )
@@ -156,7 +156,7 @@ public class JoinSelectTest {
                     MockMetaManager.driverEntityClass.ref(),
                     MockMetaManager.driverEntityClass.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    1L,
+                    3L,
                     new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 1L)
                 )
             )
@@ -180,7 +180,7 @@ public class JoinSelectTest {
                     MockMetaManager.driverEntityClass.ref(),
                     MockMetaManager.driverEntityClass.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    1L,
+                    3L,
                     new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 2L)
                 )
             )
@@ -212,7 +212,7 @@ public class JoinSelectTest {
                     MockMetaManager.driverEntityClass.ref(),
                     MockMetaManager.driverEntityClass.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    1L,
+                    3L,
                     new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 100L)
                 )
             )
@@ -229,6 +229,8 @@ public class JoinSelectTest {
     }
 
     private void initData() throws SQLException {
+
+        long txid = transactionManagementService.begin(300000);
         /**
          * 总共会有1003个驱动实例.
          * 除了最开始的2个,剩余的1001个会被一起命中.
@@ -267,7 +269,7 @@ public class JoinSelectTest {
             );
         }
 
-        buildEntities(driverEntities);
+        buildEntities(driverEntities, txid);
 
         /**
          * 两个实例,分别和驱动实例中的第一个和第二个关联.
@@ -327,8 +329,9 @@ public class JoinSelectTest {
                 ).build()
         );
 
-        buildEntities(entities);
-
+        buildEntities(entities, txid);
+        transactionManagementService.restore(txid);
+        transactionManagementService.commit();
     }
 
     private void clear() throws Exception {
@@ -355,13 +358,10 @@ public class JoinSelectTest {
         }
     }
 
-    private void buildEntities(List<IEntity> entities) throws SQLException {
-        long txId = transactionManagementService.begin();
+    private void buildEntities(List<IEntity> entities, long txId) throws SQLException {
         for (IEntity e : entities) {
             transactionManagementService.restore(txId);
             managementService.build(e);
         }
-        transactionManagementService.restore(txId);
-        transactionManagementService.commit();
     }
 }
