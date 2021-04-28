@@ -30,6 +30,11 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
+    public int size() {
+        return values == null ? 0 : values.size();
+    }
+
+    @Override
     public Optional<IValue> getValue(String fieldName) {
         if (values == null) {
             return Optional.empty();
@@ -77,7 +82,6 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         lazyInit();
         values.stream().forEach(v -> {
             this.values.put(v.getField().id(), v);
-
         });
         return this;
     }

@@ -14,6 +14,12 @@ import java.util.function.Predicate;
 public interface IEntityValue extends Cloneable{
 
     /**
+     * 当前字段数量.
+     * @return 字段数量.
+     */
+    public int size();
+
+    /**
      * 获得该对象指定属性的数据
      * @param fieldName
      * @return 值.

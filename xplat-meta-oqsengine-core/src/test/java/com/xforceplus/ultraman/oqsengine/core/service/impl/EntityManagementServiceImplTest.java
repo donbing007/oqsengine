@@ -81,6 +81,51 @@ public class EntityManagementServiceImplTest {
     }
 
     @Test
+    public void testVerify() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()).build();
+
+        try {
+            impl.build(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch(SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
+        }
+
+        try {
+            impl.replace(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch(SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
+        }
+
+        targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis()).build();
+        try {
+            impl.build(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch(SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
+        }
+        try {
+            impl.replace(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch(SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
+        }
+
+    }
+
+    @Test
     public void testBuildSuccess() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
