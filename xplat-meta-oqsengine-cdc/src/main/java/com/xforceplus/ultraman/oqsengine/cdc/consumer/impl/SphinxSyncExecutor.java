@@ -76,7 +76,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 storageEntityList.add(entity);
             } catch (Exception e) {
                 //  组装数据失败，记录错误日志
-                e.printStackTrace();
+                logger.warn("add to storageEntityList error, message : {}", e.toString());
                 errorHandle(rawEntry.getColumns(), cdcMetrics.getBatchId(), e.getMessage());
             }
         }
@@ -235,7 +235,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
         try {
             return attributesToList(attrStr);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn("{}", e.toString());
             throw new SQLException(String.format("[cdc-sync-executor] id [%d], attrStr [%s] JsonToObject error.", id, attrStr));
         }
     }

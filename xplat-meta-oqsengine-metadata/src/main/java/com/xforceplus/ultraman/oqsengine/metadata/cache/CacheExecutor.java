@@ -596,7 +596,7 @@ public class CacheExecutor implements ICacheExecutor {
                 //  删除 appId + version 映射的 entityIds列表
                 syncCommands.hdel(appEntityCollectionsKey, fieldName);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.warn("{}", e.toString());
             }
         }
 
@@ -668,7 +668,7 @@ public class CacheExecutor implements ICacheExecutor {
 
             return entityClassStorageMap;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            logger.warn("{}", e.toString());
             throw new RuntimeException(e.getMessage());
         }
     }

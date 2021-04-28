@@ -154,8 +154,7 @@ public class ConsumerRunner extends Thread {
             } catch (Exception e) {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
-                e.printStackTrace();
-                String error = String.format("get message from canal server error, %s", e);
+                String error = String.format("get message from canal server error, %s", e.toString());
                 logger.error("[cdc-runner] {}", error);
                 throw new SQLException(error);
             }
@@ -195,8 +194,7 @@ public class ConsumerRunner extends Thread {
                 } else {
                     error = "sync finish status error";
                 }
-                e.printStackTrace();
-                logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.getMessage());
+                logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
         }
