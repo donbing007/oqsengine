@@ -110,6 +110,8 @@ storage:
         # 字典URL
         url: "-"
   debug:
+    remote:
+      enabled: false
     showsql: false
   # Maximum amount of visible data.
   maxVisibleNumber: 10000
