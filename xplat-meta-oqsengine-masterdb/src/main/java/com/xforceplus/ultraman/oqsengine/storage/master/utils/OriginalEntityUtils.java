@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -19,7 +21,13 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-    private static final ObjectMapper jsonMapper = new ObjectMapper();
+    private static final ObjectMapper jsonMapper = new ObjectMapper()
+            .configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+            .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
+            .configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true)
+            .configure(JsonParser.Feature.ALLOW_MISSING_VALUES, true)
+            .configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true)
+            .configure(JsonParser.Feature.ALLOW_YAML_COMMENTS,true);
 
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
