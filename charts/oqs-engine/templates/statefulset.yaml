@@ -42,8 +42,7 @@ spec:
         command: ["java"]
         args:
           {{- if .Values.storage.debug.remote.enabled }}
-        - -Xdebug
-        - -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5050
+        - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050
           {{- end }}
         - -jar
           {{- range .Values.jvm }}
