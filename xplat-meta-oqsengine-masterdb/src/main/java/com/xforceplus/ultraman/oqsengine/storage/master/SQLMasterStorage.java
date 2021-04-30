@@ -53,7 +53,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     private final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
-    private static final ObjectMapper objectMapper = JsonMapper.builder()
+    private final ObjectMapper objectMapper = JsonMapper.builder()
         .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
         .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
         .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)

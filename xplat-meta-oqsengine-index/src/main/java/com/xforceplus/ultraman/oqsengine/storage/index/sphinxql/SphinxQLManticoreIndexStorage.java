@@ -60,7 +60,18 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     final Logger logger = LoggerFactory.getLogger(SphinxQLManticoreIndexStorage.class);
 
-    final ObjectMapper jsonMapper;
+    private final ObjectMapper objectMapper = JsonMapper.builder()
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
+        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
     @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
@@ -104,12 +115,6 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     public void setMaxSearchTimeoutMs(long maxSearchTimeoutMs) {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
-    }
-
-    public SphinxQLManticoreIndexStorage() {
-        jsonMapper = JsonMapper.builder()
-            .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-            .build();
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "condition"})
@@ -376,7 +381,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
 
         try {
-            return jsonMapper.writeValueAsString(attributeMap);
+            return objectMapper.writeValueAsString(attributeMap);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
         }
