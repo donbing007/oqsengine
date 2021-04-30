@@ -37,3 +37,25 @@ spec:
   selector:
     app: {{ template "oqsengine.name" . }}
     release: {{ .Release.Name }}
+{{- if .Values.storage.debug.remote.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "oqsengine.fullname" . }}-debug
+  labels:
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 5050
+      targetPort: debug
+      protocol: TCP
+      name: debug
+  selector:
+    app: {{ template "oqsengine.name" . }}
+    release: {{ .Release.Name }}
+{{- end}}

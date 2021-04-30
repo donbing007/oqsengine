@@ -24,7 +24,7 @@ public class StorageStrategyFactory {
         put(FieldType.STRINGS, new StringsStorageStrategy());
     }};
 
-    private StorageStrategy DEFAULT_STRATEGY = new UnsupportStorageStrategy();
+    private final StorageStrategy DEFAULT_STRATEGY = new UnsupportStorageStrategy();
     private Map<FieldType, StorageStrategy> strategies;
 
     /**

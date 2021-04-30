@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,10 +25,10 @@ public class OriginalEntityUtils {
         List<Object> attributes = new ArrayList<>();
         Map<String, Object> keyValues = jsonMapper.readValue(attrStr, Map.class);
         keyValues.forEach(
-                (k, v) -> {
-                    attributes.add(k);
-                    attributes.add(v);
-                }
+            (k, v) -> {
+                attributes.add(k);
+                attributes.add(v);
+            }
         );
         return attributes;
     }
@@ -38,7 +36,7 @@ public class OriginalEntityUtils {
     public static List<OriginalEntity> toOriginalEntity(MetaManager metaManager, String orgStr) throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                    jsonMapper.readValue(orgStr, jsonMapper.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                jsonMapper.readValue(orgStr, jsonMapper.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);
@@ -51,9 +49,9 @@ public class OriginalEntityUtils {
     public static String toOriginalEntityStr(List<OriginalEntity> originalEntities) throws JsonProcessingException {
         try {
             return jsonMapper.writeValueAsString(
-                    originalEntities.stream()
-                            .map(RawOriginalEntity::toRawOriginalEntity)
-                            .collect(Collectors.toList())
+                originalEntities.stream()
+                    .map(RawOriginalEntity::toRawOriginalEntity)
+                    .collect(Collectors.toList())
             );
         } catch (Exception e) {
             throw e;
@@ -77,21 +75,21 @@ public class OriginalEntityUtils {
         public static OriginalEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
             Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId());
             return entityClassOp.map(entityClass -> OriginalEntity.Builder
-                    .anOriginalEntity()
-                    .withDeleted(rawOriginalEntity.isDeleted())
-                    .withOp(rawOriginalEntity.getOp())
-                    .withVersion(rawOriginalEntity.getVersion())
-                    .withOqsMajor(rawOriginalEntity.getOqsMajor())
-                    .withId(rawOriginalEntity.getId())
-                    .withCreateTime(rawOriginalEntity.getCreateTime())
-                    .withUpdateTime(rawOriginalEntity.getUpdateTime())
-                    .withTx(rawOriginalEntity.getTx())
-                    .withCommitid(rawOriginalEntity.getCommitid())
-                    .withEntityClass(entityClass)
-                    .withAttributes(Arrays.asList(rawOriginalEntity.getAttributes()))
-                    .withMaintainid(rawOriginalEntity.getMaintainid())
-                    .build())
-                    .orElse(null);
+                .anOriginalEntity()
+                .withDeleted(rawOriginalEntity.isDeleted())
+                .withOp(rawOriginalEntity.getOp())
+                .withVersion(rawOriginalEntity.getVersion())
+                .withOqsMajor(rawOriginalEntity.getOqsMajor())
+                .withId(rawOriginalEntity.getId())
+                .withCreateTime(rawOriginalEntity.getCreateTime())
+                .withUpdateTime(rawOriginalEntity.getUpdateTime())
+                .withTx(rawOriginalEntity.getTx())
+                .withCommitid(rawOriginalEntity.getCommitid())
+                .withEntityClass(entityClass)
+                .withAttributes(Arrays.asList(rawOriginalEntity.getAttributes()))
+                .withMaintainid(rawOriginalEntity.getMaintainid())
+                .build())
+                .orElse(null);
         }
 
         public static RawOriginalEntity toRawOriginalEntity(OriginalEntity originalEntity) {

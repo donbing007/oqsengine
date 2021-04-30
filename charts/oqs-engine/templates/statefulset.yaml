@@ -41,6 +41,10 @@ spec:
         {{- end}}
         command: ["java"]
         args:
+          {{- if .Values.storage.debug.remote.enabled }}
+        - -Xdebug
+        - -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5050
+          {{- end }}
         - -jar
           {{- range .Values.jvm }}
         - {{ . }}
@@ -57,6 +61,11 @@ spec:
         - /xplat/xplat-meta-oqsengine.jar
         - --spring.config.location=/xplat/application.yml
         ports:
+        {{- if .Values.storage.debug.remote.enabled }}
+        - name: debug
+          containerPort: 5050
+          protocol: TCP
+        {{- end}}
         - name: http-metrics
           containerPort: 8086
           protocol: TCP
