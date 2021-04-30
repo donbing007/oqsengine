@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.ConditionHelper.toConditions;
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.*;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.*;
 import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
 
 /**
@@ -299,14 +300,23 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setMessage(ResultStatus.CONFLICT.name())
                                 .buildPartial();
                         break;
+                    case NOT_FOUND:
+                        //send to sdk
+                        result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setMessage(NOT_FOUND("No record found."))
+                                .buildPartial();
+                        break;
+
                     default:
                         //unreachable code
                         result = OperationResult.newBuilder()
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
                                 .setMessage(
-                                        String.format("Unknown response status %s.",
-                                                replaceStatus != null ? replaceStatus.name() : "NULL"))
+                                        OTHER(String.format("Unknown response status %s.",
+                                                replaceStatus != null ? replaceStatus.name() : "NULL")))
                                 .buildPartial();
                 }
 
@@ -315,7 +325,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
                         .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
@@ -442,7 +452,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 } else {
                     result = OperationResult.newBuilder()
                             .setCode(OperationResult.Code.OK)
-                            .setMessage("No records have been updated.")
+                            .setMessage(OK("No records have been updated."))
                             .setAffectedRow(0)
                             .buildPartial();
                 }
@@ -450,7 +460,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
                         .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
@@ -544,8 +554,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.FAILED)
                                     .setMessage(
-                                            String.format("Unknown response status %s.",
-                                                    deleteStatus != null ? deleteStatus.name() : "NULL"))
+                                            OTHER(String.format("Unknown response status %s.",
+                                                    deleteStatus != null ? deleteStatus.name() : "NULL")))
                                     .buildPartial();
                     }
                 } else {
@@ -575,8 +585,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.FAILED)
                                     .setMessage(
-                                            String.format("Unknown response status %s.",
-                                                    resultStatus != null ? resultStatus.name() : "NULL"))
+                                            OTHER(String.format("Unknown response status %s.",
+                                                    resultStatus != null ? resultStatus.name() : "NULL")))
                                     .buildPartial();
                     }
                 }
@@ -585,7 +595,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
                         .buildPartial();
             } finally {
 
