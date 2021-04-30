@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -49,7 +51,20 @@ import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEnt
  */
 public class SQLMasterStorage implements MasterStorage {
 
-    final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
+    private final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
+
+    private static final ObjectMapper objectMapper = JsonMapper.builder()
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
+        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
@@ -163,18 +178,23 @@ public class SQLMasterStorage implements MasterStorage {
 
                 long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
                 long updateTIme = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
-                    .withId(entity.id())
-                    /**
-                     * optimize: 创建时间和更新时间保证和系统字段同步.
-                     */
-                    .withCreateTime(createTime > 0 ? createTime : entity.time())
-                    .withUpdateTime(updateTIme > 0 ? updateTIme : entity.time())
-                    .withDeleted(false)
-                    .withEntityClassVersion(entityClass.version())
-                    .withVersion(0)
-                    .withAttribute(toJson(entity.entityValue()).toJSONString())
-                    .withOp(OperationType.CREATE.getValue());
+                MasterStorageEntity.Builder storageEntityBuilder;
+                try {
+                    storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                        .withId(entity.id())
+                        /**
+                         * optimize: 创建时间和更新时间保证和系统字段同步.
+                         */
+                        .withCreateTime(createTime > 0 ? createTime : entity.time())
+                        .withUpdateTime(updateTIme > 0 ? updateTIme : entity.time())
+                        .withDeleted(false)
+                        .withEntityClassVersion(entityClass.version())
+                        .withVersion(0)
+                        .withAttribute(toJson(entity.entityValue()))
+                        .withOp(OperationType.CREATE.getValue());
+                } catch (Exception ex) {
+                    throw new SQLException(ex.getMessage(), ex);
+                }
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
 
@@ -206,16 +226,21 @@ public class SQLMasterStorage implements MasterStorage {
                 if (updateTime == entity.time()) {
                     updateTime = 0;
                 }
-                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
-                    .withId(entity.id())
-                    /**
-                     * optimize: 更新时间保证和系统字段同步.
-                     */
-                    .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
-                    .withVersion(entity.version())
-                    .withEntityClassVersion(entityClass.version())
-                    .withAttribute(toJson(entity.entityValue()).toJSONString())
-                    .withOp(OperationType.UPDATE.getValue());
+                MasterStorageEntity.Builder storageEntityBuilder;
+                try {
+                    storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                        .withId(entity.id())
+                        /**
+                         * optimize: 更新时间保证和系统字段同步.
+                         */
+                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
+                        .withVersion(entity.version())
+                        .withEntityClassVersion(entityClass.version())
+                        .withAttribute(toJson(entity.entityValue()))
+                        .withOp(OperationType.UPDATE.getValue());
+                } catch (Exception ex) {
+                    throw new SQLException(ex.getMessage(), ex);
+                }
 
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
@@ -258,9 +283,14 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 储存字段转换为逻辑字段.
-    private IEntityValue toEntityValue(MasterStorageEntity masterStorageEntity, IEntityClass entityClass) throws
-        SQLException {
-        JSONObject object = JSON.parseObject(masterStorageEntity.getAttribute());
+    private IEntityValue toEntityValue(MasterStorageEntity masterStorageEntity, IEntityClass entityClass)
+        throws SQLException {
+        Map<String, Object> object;
+        try {
+            object = objectMapper.readValue(masterStorageEntity.getAttribute(), Map.class);
+        } catch (JsonProcessingException e) {
+            throw new SQLException(e.getMessage(), e);
+        }
 
         long fieldId;
         IEntityField field = null;
@@ -326,9 +356,10 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 属性名称使用的是属性 F + {id}.
-    private JSONObject toJson(IEntityValue value) {
+    private String toJson(IEntityValue value) throws JsonProcessingException {
 
-        JSONObject object = new JSONObject();
+        Map<String, Object> values = new HashMap<>(MapUtils.calculateInitSize(value.size()));
+
         StorageStrategy storageStrategy;
         StorageValue storageValue;
         for (IValue logicValue : value.values()) {
@@ -340,12 +371,12 @@ public class SQLMasterStorage implements MasterStorage {
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
             while (storageValue != null) {
-                object.put(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
+                values.put(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
                 storageValue = storageValue.next();
             }
         }
-        return object;
 
+        return objectMapper.writeValueAsString(values);
     }
 
     private Optional<IEntity> buildEntityFromStorageEntity(MasterStorageEntity se, IEntityClass entityClass) throws

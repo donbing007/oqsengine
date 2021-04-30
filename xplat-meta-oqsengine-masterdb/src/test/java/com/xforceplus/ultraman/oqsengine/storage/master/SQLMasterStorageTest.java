@@ -300,6 +300,21 @@ public class SQLMasterStorageTest {
     }
 
     @Test
+    public void testJson() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(1);
+        targetEntity.entityValue().addValue(
+            new StringValue(l2EntityClass.field("l2-string").get(),
+            "[{\n   \"c1\":\"c1-value\", \"c2\": 123},]"
+            ));
+        int size = storage.replace(targetEntity, l2EntityClass);
+        Assert.assertEquals(1, size);
+
+        targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
+        Assert.assertEquals("[{\n   \"c1\":\"c1-value\", \"c2\": 123},]",
+            targetEntity.entityValue().getValue("l2-string").get().valueToString());
+    }
+
+    @Test
     public void testDelete() throws Exception {
         IEntity targetEntity = expectedEntitys.get(1);
         storage.replace(targetEntity, l2EntityClass);

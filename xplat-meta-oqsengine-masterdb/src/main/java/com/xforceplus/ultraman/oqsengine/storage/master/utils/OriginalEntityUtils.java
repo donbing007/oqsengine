@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -21,13 +21,18 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-    private static final ObjectMapper jsonMapper = new ObjectMapper()
-            .configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-            .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
-            .configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true)
-            .configure(JsonParser.Feature.ALLOW_MISSING_VALUES, true)
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true)
-            .configure(JsonParser.Feature.ALLOW_YAML_COMMENTS,true);
+    private static final ObjectMapper jsonMapper = JsonMapper.builder()
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
+        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
