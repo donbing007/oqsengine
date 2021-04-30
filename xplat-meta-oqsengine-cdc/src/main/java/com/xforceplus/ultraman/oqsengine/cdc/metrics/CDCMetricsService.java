@@ -124,7 +124,7 @@ public class CDCMetricsService {
                 try {
                     Thread.sleep(COMMIT_ID_READY_CHECK_INTERVAL);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //  ignore
                 }
 
                 loops++;

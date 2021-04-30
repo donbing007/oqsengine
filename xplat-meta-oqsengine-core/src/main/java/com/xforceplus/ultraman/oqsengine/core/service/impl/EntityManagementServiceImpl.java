@@ -187,6 +187,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
+        verify(entity);
+
         markTime(entity);
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
@@ -233,6 +235,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
+
+        verify(entity);
 
         markTime(entity);
 
@@ -423,6 +427,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             default: {
                 logger.warn("Cannot handle event type, cannot publish event.[{}]", type.name());
             }
+        }
+    }
+
+    // 校验
+    private void verify(IEntity entity) throws SQLException {
+        if (entity == null) {
+            throw new SQLException("Invalid object entity.");
+        }
+
+        if (entity.entityClassRef() == null || entity.entityClassRef().getId() <= 0 || entity.entityClassRef().getCode() == null) {
+            throw new SQLException(String.format("Incomplete entity(%d) type information.", entity.id()));
+        }
+
+        if (entity.entityValue() == null || entity.entityValue().size() == 0) {
+            throw new SQLException(String.format("Entity(%d-%s) does not have any attributes.",
+                entity.id(), entity.entityClassRef().getCode()));
         }
     }
 

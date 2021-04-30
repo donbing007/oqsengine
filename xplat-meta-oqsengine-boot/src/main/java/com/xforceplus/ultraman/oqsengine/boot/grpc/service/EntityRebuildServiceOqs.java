@@ -3,11 +3,23 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +35,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toEntityClass;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 
 /**
  * rebuild oqs
@@ -35,6 +49,12 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
 
     @Autowired
     private DevOpsManagementService devOpsManagementService;
+
+    @Autowired
+    private EntityManagementService entityManagementService;
+
+    @Autowired
+    private EntitySearchService entitySearchService;
 
     @Resource(name = "callRebuildThreadPool")
     private ExecutorService asyncDispatcher;
@@ -227,6 +247,89 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         });
     }
 
+    @Override
+    public CompletionStage<OperationResult> cdcSendErrorRecover(CdcRecoverSubmit cdcRecoverSubmit, Metadata metadata) {
+        return async(() -> {
+            try {
+                devOpsManagementService.cdcSendErrorRecover(cdcRecoverSubmit.getSeqNo(), cdcRecoverSubmit.getRecoverObjectString());
+                return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+            } catch (SQLException ex) {
+                return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage()).build();
+            }
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> cdcRecoverOk(CdcRecover cdcRecover, Metadata metadata) {
+        return async(() -> {
+            try {
+                Optional<CdcErrorTask> cdcErrorTaskOp = devOpsManagementService.queryOne(cdcRecover.getSeqNo());
+                FixedStatus fixedStatus = FixedStatus.FIX_ERROR;
+                if (cdcErrorTaskOp.isPresent()) {
+                    CdcErrorTask task = cdcErrorTaskOp.get();
+                    if (task.getErrorType() == ErrorType.DATA_FORMAT_ERROR.getType() &&
+                            task.getOp() > OperationType.UNKNOWN.getValue() &&
+                            task.getEntity() > UN_KNOW_ID &&
+                            task.getId() > UN_KNOW_ID) {
+
+                        Optional<IEntity> entityOp =
+                                entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
+
+                        com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = null;
+                        if (entityOp.isPresent()) {
+                            IEntity entity = entityOp.get();
+                            operationResult = entityManagementService.replace(entity);
+                        } else {
+                            operationResult =
+                                    entityManagementService.delete(Entity.Builder.anEntity()
+                                            .withId(task.getId())
+                                            .withVersion(task.getVersion())
+                                            .build());
+                        }
+
+                        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
+                            fixedStatus = FixedStatus.FIXED;
+                        }
+                    }
+                }
+
+                devOpsManagementService.cdcUpdateStatus(cdcRecover.getSeqNo(), fixedStatus);
+
+                return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+            } catch (SQLException ex) {
+                return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage()).build();
+            }
+        });
+    }
+
+    @Override
+    public Source<CdcErrorTaskInfo, NotUsed> queryCdcError(CdcErrorCond cdcErrorCond, Metadata metadata) {
+        try {
+            return Source.from(devOpsManagementService.queryCdcError(toCdcErrorQueryCondition(cdcErrorCond))
+                    .stream().map(this::toCdcErrorTaskInfo).collect(Collectors.toList()));
+        } catch (SQLException e) {
+            logger.error("{}", e);
+            return Source.single(CdcErrorTaskInfo.newBuilder().setMessage(e.getMessage()).buildPartial());
+        }
+
+    }
+
+    @Override
+    public CompletionStage<CommitIdMaxMin> rangeOfCommits(CommitIdUp commitIdUp, Metadata metadata) {
+        return async(() -> {
+            long[] ids = devOpsManagementService.rangeOfCommitId();
+            return CommitIdMaxMin.newBuilder().setMax(ids[0]).setMin(ids[1]).build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> cleanLessThan(CommitIdUp commitIdUp, Metadata metadata) {
+        return async(() -> {
+            devOpsManagementService.cleanLessThan(commitIdUp.getCommitId());
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+        });
+    }
+
     RebuildTaskInfo toTaskInfo(IDevOpsTaskInfo taskInfo) {
         return RebuildTaskInfo.newBuilder()
                 .setTid(Long.parseLong(taskInfo.id()))
@@ -240,5 +343,69 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
                 .setStarts(taskInfo.getStarts())
                 .setEnds(taskInfo.getEnds())
                 .build();
+    }
+
+    private CdcErrorTaskInfo toCdcErrorTaskInfo(CdcErrorTask cdcErrorTask) {
+        return CdcErrorTaskInfo.newBuilder()
+                .setSeqNo(cdcErrorTask.getSeqNo())
+                .setBatchId(cdcErrorTask.getBatchId())
+                .setId(cdcErrorTask.getId())
+                .setEntity(cdcErrorTask.getEntity())
+                .setVersion(cdcErrorTask.getVersion())
+                .setOp(cdcErrorTask.getOp())
+                .setCommitId(cdcErrorTask.getCommitId())
+                .setErrorType(cdcErrorTask.getErrorType())
+                .setStatus(cdcErrorTask.getStatus())
+                .setOperationObject(cdcErrorTask.getOperationObject())
+                .setExecuteTime(cdcErrorTask.getExecuteTime())
+                .setFixedTime(cdcErrorTask.getFixedTime())
+                .setMessage(cdcErrorTask.getMessage())
+                .build();
+    }
+
+    private CdcErrorQueryCondition toCdcErrorQueryCondition(CdcErrorCond cond) {
+        CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
+        if (cond.getSeqNo() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setSeqNo(cond.getSeqNo());
+        }
+
+        if (cond.getBatchId() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setBatchId(cond.getBatchId());
+        }
+
+        if (cond.getId() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setId(cond.getId());
+        }
+
+        if (cond.getEntity() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setEntity(cond.getEntity());
+        }
+
+        if (cond.getType() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setType(cond.getType());
+        }
+
+        if (cond.getStatus() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setStatus(cond.getStatus());
+            cdcErrorQueryCondition.setEqualStatus(cond.getEqualStatus());
+        }
+
+        if (cond.getRangeLEExecuteTime() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setRangeLEExecuteTime(cond.getRangeLEExecuteTime());
+        }
+
+        if (cond.getRangeGeExecuteTime() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setRangeGeExecuteTime(cond.getRangeGeExecuteTime());
+        }
+
+        if (cond.getRangeLEFixedTime() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setRangeLEFixedTime(cond.getRangeLEFixedTime());
+        }
+
+        if (cond.getRangeGeFixedTime() > CDCConstant.ZERO) {
+            cdcErrorQueryCondition.setRangeGeFixedTime(cond.getRangeGeFixedTime());
+        }
+
+        return cdcErrorQueryCondition;
     }
 }

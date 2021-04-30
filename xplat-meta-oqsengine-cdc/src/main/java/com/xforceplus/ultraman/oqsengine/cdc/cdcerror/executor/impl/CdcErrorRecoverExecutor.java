@@ -35,7 +35,7 @@ public class CdcErrorRecoverExecutor extends AbstractDevOpsExecutor<Long, Intege
 
             try (Connection connection = getDataSource().getConnection();
                  PreparedStatement st = connection.prepareStatement(sql)) {
-                st.setInt(1, fixedStatus.ordinal());
+                st.setInt(1, fixedStatus.getStatus());
                 st.setString(2, operationObjectStr);
                 st.setLong(3, res);
 

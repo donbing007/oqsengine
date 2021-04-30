@@ -481,7 +481,7 @@ public class SQLMasterStorage implements MasterStorage {
                             .withId(entity.getId())
                             .withCreateTime(entity.getCreateTime())
                             .withUpdateTime(entity.getUpdateTime())
-                            .withOp(OperationType.UPDATE.ordinal())
+                            .withOp(OperationType.UPDATE.getValue())
                             .withTx(entity.getTx())
                             .withDeleted(entity.isDeleted())
                             .withCommitid(entity.getCommitid())

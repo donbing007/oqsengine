@@ -148,8 +148,8 @@ public class SQLBuildTest {
         expectErrorQueryCondition.setRangeGeExecuteTime(1L);
         expectErrorQueryCondition.setRangeLEFixedTime(200L);
         expectErrorQueryCondition.setRangeGeFixedTime(100L);
-        expectErrorQueryCondition.setType(ErrorType.DATA_FORMAT_ERROR.ordinal());
-        expectErrorQueryCondition.setStatus(FixedStatus.FIXED.ordinal());
+        expectErrorQueryCondition.setType(ErrorType.DATA_FORMAT_ERROR.getType());
+        expectErrorQueryCondition.setStatus(FixedStatus.FIXED.getStatus());
         if (!isEquals) {
             expectErrorQueryCondition.setEqualStatus(false);
         }
