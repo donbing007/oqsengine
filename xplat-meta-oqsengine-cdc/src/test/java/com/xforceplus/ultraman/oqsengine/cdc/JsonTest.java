@@ -18,1139 +18,1120 @@ import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEnt
  * @since : 1.8
  */
 public class JsonTest {
-//    String str = "{" +
-//            "\t\"F1295238501979242498S\": \"ticket_compare_config\"," +
-//            "\t\"F1295238502528696321S\": \"单证字段比较配置\"," +
-//            "\t\"F1295238503136870402S\": \"[{\\\t\\\"entityCode\\\": \\\"ticketInvoice\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_type\\\", \\\"invoice_sheet\\\", \\\"invoice_code\\\", \\\"invoice_no\\\", \\\"invoice_date\\\", \\\"purchaser_name\\\", \\\"purchaser_tax_no\\\", \\\"seller_name\\\", \\\"seller_tax_no\\\", \\\"amount_without_tax\\\", \\\"tax_amount\\\", \\\"amount_with_tax\\\", \\\"check_code\\\", \\\"machine_code\\\", \\\"cipher_text\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketQuota\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"amount_with_tax\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketMachine\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"invoice_sheet\\\", \\\"invoice_date\\\", \\\"amount_with_tax\\\", \\\"tax_amount\\\", \\\"amount_without_tax\\\", \\\"purchaser_name\\\", \\\"purchaser_tax_no\\\", \\\"seller_name\\\", \\\"seller_tax_no\\\", \\\"check_code\\\", \\\"machine_code\\\", \\\"cipher_text\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketPlane\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"name_of_passenger\\\", \\\"id_no\\\", \\\"e_ticket_no\\\", \\\"check_code\\\", \\\"issued_by\\\", \\\"date_of_issue\\\", \\\"insurance\\\", \\\"fare\\\", \\\"caac_development_fund\\\", \\\"fuel_surcharge\\\", \\\"total\\\", \\\"tax\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketTrain\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"name\\\", \\\"trains\\\", \\\"start_station\\\", \\\"end_station\\\", \\\"start_date\\\", \\\"start_time\\\", \\\"seat\\\", \\\"seat_type\\\", \\\"certificate_no\\\", \\\"qrcode\\\", \\\"amount_with_tax\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketTaxi\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"start_date\\\", \\\"get_on_time\\\", \\\"mileage\\\", \\\"get_off_time\\\", \\\"name\\\", \\\"amount_with_tax\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketUsedCar\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"invoice_date\\\", \\\"amount_with_tax\\\", \\\"registration_no\\\", \\\"vehicle_no\\\", \\\"vehicle_brand\\\", \\\"seller_name\\\", \\\"seller_tax_no\\\", \\\"purchaser_name\\\", \\\"purchaser_tax_no\\\", \\\"auctioneers_name\\\", \\\"auctioneers_address\\\", \\\"auctioneers_tax_no\\\", \\\"auctioneers_bank_info\\\", \\\"auctioneers_tel\\\", \\\"used_car_market_name\\\", \\\"used_car_market_address\\\", \\\"used_car_market_tax_no\\\", \\\"used_car_market_bank_info\\\", \\\"used_car_market_tel\\\", \\\"car_number\\\", \\\"dq_code\\\", \\\"dp_name\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketBus\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"trains\\\", \\\"start_station\\\", \\\"end_station\\\", \\\"start_date\\\", \\\"start_time\\\", \\\"seat\\\", \\\"carrier\\\", \\\"name\\\", \\\"amount_with_tax\\\", \\\"purchaser_name\\\", \\\"purchaser_tax_no\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketToll\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"invoice_no\\\", \\\"invoice_code\\\", \\\"exit_place\\\", \\\"entrance_place\\\", \\\"start_date\\\", \\\"payment\\\", \\\"vehicles_type\\\", \\\"vehicles_weight\\\", \\\"toll_limit\\\", \\\"amount_with_tax\\\"]\}, {\\\t\\\"entityCode\\\": \\\"ticketVehicle\\\",\\\t\\\"checkType\\\": \\\"1\\\",\\\t\\\"items\\\": [\\\"vehicle_sheet\\\", \\\"invoice_no\\\", \\\"invoice_code\\\", \\\"invoice_date\\\", \\\"seller_name\\\", \\\"seller_tax_no\\\", \\\"amount_without_tax\\\", \\\"tax_amount\\\", \\\"amount_with_tax\\\", \\\"vehicle_type\\\", \\\"vehicle_brand\\\", \\\"production_area\\\", \\\"engine_no\\\", \\\"commodity_inspection_no\\\", \\\"certification_no\\\", \\\"vehicle_no\\\", \\\"import_certificate_no\\\", \\\"charge_tax_authority_code\\\", \\\"charge_tax_authority_name\\\", \\\"tax_paid_proof\\\", \\\"tonnage\\\", \\\"max_capacity\\\", \\\"dq_code\\\", \\\"dq_name\\\"]\}]\"," +
-//            "\t\"F1295238504688762882S\": \"1\"," +
-//            "\t\"F1295238505305325570S\": \"1\"," +
-//            "\t\"F1295238506429399042L\": 4464073942242932093," +
-//            "\t\"F1295238507134042114L\": 1618573382435," +
-//            "\t\"F1295238508010651649L\": 1618573382435," +
-//            "\t\"F1295238509587709953L\": 4603688623062720515," +
-//            "\t\"F1295238510393016321L\": 4603688623062720515," +
-//            "\t\"F1295238511240265729S\": \"柳红彬\"," +
-//            "\t\"F1295238512058155010S\": \"柳红彬\"," +
-//            "\t\"F1295238512855072769S\": \"1\"," +
-//            "\t\"F1295238513526161410S\": \"CQP\"" +
-//            "}";
-//
-//    String str2 = "{\"tenant_id\":\"4567581588943585293\",\"create_user_id\":\"4612820548148789257\",\"dict_desc\":\"小组角色关系\",\"create_user_name\":\"柳红彬\",\"create_time\":\"1598350807168\",\"update_user_name\":\"柳红彬\",\"is_default\":\"1\",\"dict_code\":\"team_relation\",\"update_time\":\"1598350807168\",\"update_user_id\":\"4612820548148789257\",\"enable\":\"1\",\"dict_value\":\"[\  {\    \\\"itemCode\\\": \\\"checkScan\\\",\    \\\"itemValue\\\": {\      \\\"4418255883950761701\\\": \\\"4418255815205528906\\\",\      \\\"4418255815205528921\\\": \\\"4418255815205528921\\\"\    }\  },\  {\    \\\"itemCode\\\": \\\"leaderScan\\\",\    \\\"itemValue\\\": {\      \\\"4418255815205528921\\\": \\\"4418255883950761701,4418255815205528906\\\"\    }\  }\]\",\"id\":\"1298203494372605953\",\"delete_flag\":\"1\",\"tenant\":null,\"tenant_code\":\"CQP\"}  ";
-
-    String str3 = "{\"F1295238501979242498S\": \"discern_mapping_config\", \"F1295238502528696321S\": \"识别映射配置\", \"F1295238503136870402S\": \"[" +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketInvoice\\\"," +
-            "    \\\"mappingName\\\": \\\"增值税发票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"10001001,10001002,10001003,20001001,20001002,30001001,30001002,30001003,40001001,50001017,50001018\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"paper_drew_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"checkCode\\\"," +
-            "        \\\"entityField\\\": \\\"check_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sheetIndex\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_sheet\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"cipherList\\\"," +
-            "        \\\"entityField\\\": \\\"cipher_text\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserName\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserAddr\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTel\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserBank\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalTax\\\"," +
-            "        \\\"entityField\\\": \\\"tax_amount\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_without_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"machineCode\\\"," +
-            "        \\\"entityField\\\": \\\"machine_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerName\\\"," +
-            "        \\\"entityField\\\": \\\"seller_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerAddr\\\"," +
-            "        \\\"entityField\\\": \\\"seller_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTel\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBank\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"payee\\\"," +
-            "        \\\"entityField\\\": \\\"payee\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"recheck\\\"," +
-            "        \\\"entityField\\\": \\\"recheck\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"drawer\\\"," +
-            "        \\\"entityField\\\": \\\"drawer\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"remark\\\"," +
-            "        \\\"entityField\\\": \\\"remark\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"is_sales_list\\\"," +
-            "        \\\"entityField\\\": \\\"is_sales_list\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceDetails') != null && #obj.getString('invoiceDetails').contains('销货清单') ?'1':'0'\\\"," +
-            "        \\\"defaultValue\\\": \\\"0\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"stamper\\\"," +
-            "        \\\"entityField\\\": \\\"is_stamper\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('stamper') != null && #obj.getString('stamper') != '' ?'1':'0'\\\"," +
-            "        \\\"defaultValue\\\": \\\"0\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"qrcode\\\"," +
-            "        \\\"entityField\\\": \\\"qrcode\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCodeP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNoP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceDetails\\\"," +
-            "        \\\"entityField\\\": \\\"items\\\"," +
-            "        \\\"mappingEntityCode\\\": \\\"ticketInvoiceDetail\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketInvoiceDetail\\\"," +
-            "    \\\"mappingName\\\": \\\"增值税发票明细\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"name\\\"," +
-            "        \\\"entityField\\\": \\\"cargo_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"specification\\\"," +
-            "        \\\"entityField\\\": \\\"item_spec\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"unit\\\"," +
-            "        \\\"entityField\\\": \\\"quantity_unit\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"quantity\\\"," +
-            "        \\\"entityField\\\": \\\"quantity\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"price\\\"," +
-            "        \\\"entityField\\\": \\\"unit_price\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"total\\\"," +
-            "        \\\"entityField\\\": \\\"amount_without_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"taxRate\\\"," +
-            "        \\\"entityField\\\": \\\"tax_rate\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"tax\\\"," +
-            "        \\\"entityField\\\": \\\"tax_amount\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketMachine\\\"," +
-            "    \\\"mappingName\\\": \\\"通用机打发票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001002\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"paper_drew_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"checkCode\\\"," +
-            "        \\\"entityField\\\": \\\"check_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sheetIndex\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_sheet\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"cipherList\\\"," +
-            "        \\\"entityField\\\": \\\"cipher_text\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserName\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserAddr\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTel\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserBank\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalTax\\\"," +
-            "        \\\"entityField\\\": \\\"tax_amount\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_without_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"machineCode\\\"," +
-            "        \\\"entityField\\\": \\\"machine_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerName\\\"," +
-            "        \\\"entityField\\\": \\\"seller_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerAddr\\\"," +
-            "        \\\"entityField\\\": \\\"seller_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTel\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBank\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"payee\\\"," +
-            "        \\\"entityField\\\": \\\"payee\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"recheck\\\"," +
-            "        \\\"entityField\\\": \\\"recheck\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"drawer\\\"," +
-            "        \\\"entityField\\\": \\\"drawer\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"remark\\\"," +
-            "        \\\"entityField\\\": \\\"remark\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"is_sales_list\\\"," +
-            "        \\\"entityField\\\": \\\"is_sales_list\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceDetails') != null && #obj.getString('invoiceDetails').contains('销货清单') ?'1':'0'\\\"," +
-            "        \\\"defaultValue\\\": \\\"0\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceDetails\\\"," +
-            "        \\\"entityField\\\": \\\"items\\\"," +
-            "        \\\"mappingEntityCode\\\": \\\"ticketMachineDetail\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketMachineDetail\\\"," +
-            "    \\\"mappingName\\\": \\\"通用机打发票明细\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"name\\\"," +
-            "        \\\"entityField\\\": \\\"cargo_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"specification\\\"," +
-            "        \\\"entityField\\\": \\\"item_spec\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"unit\\\"," +
-            "        \\\"entityField\\\": \\\"quantity_unit\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"quantity\\\"," +
-            "        \\\"entityField\\\": \\\"quantity\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"price\\\"," +
-            "        \\\"entityField\\\": \\\"unit_price\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"total\\\"," +
-            "        \\\"entityField\\\": \\\"amount_without_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"taxRate\\\"," +
-            "        \\\"entityField\\\": \\\"tax_rate\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"tax\\\"," +
-            "        \\\"entityField\\\": \\\"tax_amount\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketPlane\\\"," +
-            "    \\\"mappingName\\\": \\\"飞机票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001009\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"nameOfPassenger\\\"," +
-            "        \\\"entityField\\\": \\\"name_of_passenger\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"IDNo\\\"," +
-            "        \\\"entityField\\\": \\\"id_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"endorsements\\\"," +
-            "        \\\"entityField\\\": \\\"endorsements\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"serialNo\\\"," +
-            "        \\\"entityField\\\": \\\"serial_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"eTicketNo\\\"," +
-            "        \\\"entityField\\\": \\\"e_ticket_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"checkCode\\\"," +
-            "        \\\"entityField\\\": \\\"check_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"information\\\"," +
-            "        \\\"entityField\\\": \\\"information\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"agentCode\\\"," +
-            "        \\\"entityField\\\": \\\"agent_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"issuedBy\\\"," +
-            "        \\\"entityField\\\": \\\"issued_by\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"dateOfIssue\\\"," +
-            "        \\\"entityField\\\": \\\"date_of_issue\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"insurance\\\"," +
-            "        \\\"entityField\\\": \\\"insurance\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"fare\\\"," +
-            "        \\\"entityField\\\": \\\"fare\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"caacDevelopmentFund\\\"," +
-            "        \\\"entityField\\\": \\\"caac_development_fund\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"fuelSurcharge\\\"," +
-            "        \\\"entityField\\\": \\\"fuel_surcharge\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"tax\\\"," +
-            "        \\\"entityField\\\": \\\"tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"total\\\"," +
-            "        \\\"entityField\\\": \\\"total\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"flights\\\"," +
-            "        \\\"entityField\\\": \\\"items\\\"," +
-            "        \\\"mappingEntityCode\\\": \\\"ticketPlaneDetail\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"p\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketPlaneDetail\\\"," +
-            "    \\\"mappingName\\\": \\\"飞机票明细\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"summary\\\"," +
-            "        \\\"entityField\\\": \\\"summary\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"carrier\\\"," +
-            "        \\\"entityField\\\": \\\"carrier\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"from\\\"," +
-            "        \\\"entityField\\\": \\\"plane_from\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"to\\\"," +
-            "        \\\"entityField\\\": \\\"plane_to\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"flight\\\"," +
-            "        \\\"entityField\\\": \\\"flight\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"date\\\"," +
-            "        \\\"entityField\\\": \\\"plane_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"time\\\"," +
-            "        \\\"entityField\\\": \\\"plane_time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"class\\\"," +
-            "        \\\"entityField\\\": \\\"seat_class\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"fareBasis\\\"," +
-            "        \\\"entityField\\\": \\\"fare_basis\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"notValidBefore\\\"," +
-            "        \\\"entityField\\\": \\\"not_valid_before\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"notValidAfter\\\"," +
-            "        \\\"entityField\\\": \\\"not_valid_after\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"allow\\\"," +
-            "        \\\"entityField\\\": \\\"allow\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"extra\\\"," +
-            "        \\\"entityField\\\": \\\"extra\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketTrain\\\"," +
-            "    \\\"mappingName\\\": \\\"火车票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001010\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"trains\\\"," +
-            "        \\\"entityField\\\": \\\"trains\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"startStation\\\"," +
-            "        \\\"entityField\\\": \\\"start_station\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"endStation\\\"," +
-            "        \\\"entityField\\\": \\\"end_station\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"date\\\"," +
-            "        \\\"entityField\\\": \\\"start_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"time\\\"," +
-            "        \\\"entityField\\\": \\\"start_time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"seat\\\"," +
-            "        \\\"entityField\\\": \\\"seat\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"seatType\\\"," +
-            "        \\\"entityField\\\": \\\"seat_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"price\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"certificateNo\\\"," +
-            "        \\\"entityField\\\": \\\"certificate_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"name\\\"," +
-            "        \\\"entityField\\\": \\\"name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"no\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"qrcode\\\"," +
-            "        \\\"entityField\\\": \\\"qrcode\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"t\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketTaxi\\\"," +
-            "    \\\"mappingName\\\": \\\"出租车票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001011\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"date\\\"," +
-            "        \\\"entityField\\\": \\\"start_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"getOnTime\\\"," +
-            "        \\\"entityField\\\": \\\"get_on_time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"mileage\\\"," +
-            "        \\\"entityField\\\": \\\"mileage\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"getOffTime\\\"," +
-            "        \\\"entityField\\\": \\\"get_off_time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"place\\\"," +
-            "        \\\"entityField\\\": \\\"place\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"taxi\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketQuota\\\"," +
-            "    \\\"mappingName\\\": \\\"定额发票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001013\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"quota\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketToll\\\"," +
-            "    \\\"mappingName\\\": \\\"过路费\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001014\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"date\\\"," +
-            "        \\\"entityField\\\": \\\"start_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"time\\\"," +
-            "        \\\"entityField\\\": \\\"time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"entrance\\\"," +
-            "        \\\"entityField\\\": \\\"entrance_place\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"exit\\\"," +
-            "        \\\"entityField\\\": \\\"exit_place\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"payment\\\"," +
-            "        \\\"entityField\\\": \\\"payment\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"vehiclesType\\\"," +
-            "        \\\"entityField\\\": \\\"vehicles_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"vehiclesWeight\\\"," +
-            "        \\\"entityField\\\": \\\"vehicles_weight\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"limit\\\"," +
-            "        \\\"entityField\\\": \\\"toll_limit\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"toll\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketBus\\\"," +
-            "    \\\"mappingName\\\": \\\"公交车票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001016\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyName\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"purhcaser_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"trains\\\"," +
-            "        \\\"entityField\\\": \\\"trains\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"startStation\\\"," +
-            "        \\\"entityField\\\": \\\"start_station\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"endStation\\\"," +
-            "        \\\"entityField\\\": \\\"end_station\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"date\\\"," +
-            "        \\\"entityField\\\": \\\"start_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"time\\\"," +
-            "        \\\"entityField\\\": \\\"start_time\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"seat\\\"," +
-            "        \\\"entityField\\\": \\\"seat\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"name\\\"," +
-            "        \\\"entityField\\\": \\\"name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"bus\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketUsedCar\\\"," +
-            "    \\\"mappingName\\\": \\\"二手车销售统一发票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001015\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"paper_drew_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCodeP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNoP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"qrcode\\\"," +
-            "        \\\"entityField\\\": \\\"qrcode\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sheetIndex\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_sheet\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"cipherList\\\"," +
-            "        \\\"entityField\\\": \\\"cipher_text\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserName\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserIDCode\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserAddr\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTel\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerName\\\"," +
-            "        \\\"entityField\\\": \\\"seller_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerIDCode\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerAddr\\\"," +
-            "        \\\"entityField\\\": \\\"seller_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBank\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTel\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"licensePlateNo\\\"," +
-            "        \\\"entityField\\\": \\\"car_number\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"registerNo\\\"," +
-            "        \\\"entityField\\\": \\\"registration_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"vehiclesType\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sku\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_brand\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"identificationNumber\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"vehicleManagementOffice\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_place_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyName\\\"," +
-            "        \\\"entityField\\\": \\\"auctioneers_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyAddr\\\"," +
-            "        \\\"entityField\\\": \\\"auctioneers_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"auctioneers_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyBank\\\"," +
-            "        \\\"entityField\\\": \\\"auctioneers_bank\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"companyBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"auctioneers_bank_info\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"marketName\\\"," +
-            "        \\\"entityField\\\": \\\"used_car_market_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"marketTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"used_car_market_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"marketBank\\\"," +
-            "        \\\"entityField\\\": \\\"used_car_market_bank\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"marketBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"used_car_market_bank_info\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"drawer\\\"," +
-            "        \\\"entityField\\\": \\\"drawer\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"remark\\\"," +
-            "        \\\"entityField\\\": \\\"remark\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"," +
-            "        \\\"defaultValue\\\": \\\"vs\\\"" +
-            "      }" +
-            "    ]" +
-            "  }," +
-            "  {" +
-            "    \\\"entityCode\\\": \\\"ticketVehicle\\\"," +
-            "    \\\"mappingName\\\": \\\"机动车销售统一发票\\\"," +
-            "    \\\"imageType\\\": \\\"2\\\"," +
-            "    \\\"documentType\\\": \\\"50001001\\\"," +
-            "    \\\"items\\\": [" +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCode\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNo\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceType\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceCodeP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_code_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceNoP\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_no_p\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sheetIndex\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_sheet\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"paper_drew_date\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"machineCode\\\"," +
-            "        \\\"entityField\\\": \\\"machine_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"checkCode\\\"," +
-            "        \\\"entityField\\\": \\\"check_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"cipherList\\\"," +
-            "        \\\"entityField\\\": \\\"cipher_text\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserName\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\"," +
-            "        \\\"entityField\\\": \\\"amount_with_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalTax\\\"," +
-            "        \\\"entityField\\\": \\\"tax_amount\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"totalAmount\\\"," +
-            "        \\\"entityField\\\": \\\"amount_without_tax\\\"," +
-            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerName\\\"," +
-            "        \\\"entityField\\\": \\\"seller_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTaxNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tax_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerAddr\\\"," +
-            "        \\\"entityField\\\": \\\"seller_address\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerTel\\\"," +
-            "        \\\"entityField\\\": \\\"seller_tel\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBank\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sellerBankNo\\\"," +
-            "        \\\"entityField\\\": \\\"seller_bank_account\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"drawer\\\"," +
-            "        \\\"entityField\\\": \\\"drawer\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"remark\\\"," +
-            "        \\\"entityField\\\": \\\"remark\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"invoiceTime\\\"," +
-            "        \\\"entityField\\\": \\\"invoice_date\\\"," +
-            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"purchaserIDCode\\\"," +
-            "        \\\"entityField\\\": \\\"purchaser_id_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"vehiclesType\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_type\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"sku\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_brand\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"identificationNumber\\\"," +
-            "        \\\"entityField\\\": \\\"vehicle_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"origin\\\"," +
-            "        \\\"entityField\\\": \\\"production_area\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"qualifiedNumber\\\"," +
-            "        \\\"entityField\\\": \\\"certification_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"bookNo\\\"," +
-            "        \\\"entityField\\\": \\\"import_certificate_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"checkNo\\\"," +
-            "        \\\"entityField\\\": \\\"commodity_inspection_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"engineNumber\\\"," +
-            "        \\\"entityField\\\": \\\"engine_no\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"codeOfTheCompetentTaxAuthority\\\"," +
-            "        \\\"entityField\\\": \\\"charge_tax_authority_code\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"nameOfTheCompetentTaxAuthority\\\"," +
-            "        \\\"entityField\\\": \\\"charge_tax_authority_name\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"taxPaidProof\\\"," +
-            "        \\\"entityField\\\": \\\"tax_paid_proof\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"tonnage\\\"," +
-            "        \\\"entityField\\\": \\\"tonnage\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"max_capacity\\\"," +
-            "        \\\"entityField\\\": \\\"max_capacity\\\"" +
-            "      }," +
-            "      {" +
-            "        \\\"srcField\\\": \\\"qrcode\\\"," +
-            "        \\\"entityField\\\": \\\"qrcode\\\"" +
-            "      }" +
-            "    ]" +
-            "  }" +
+    String str = "{\"F1295238501979242498S\": \"discern_mapping_config\", \"F1295238502528696321S\": \"识别映射配置\", \"F1295238503136870402S\": \"[\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketInvoice\\\",\n" +
+            "    \\\"mappingName\\\": \\\"增值税发票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"10001001,10001002,10001003,20001001,20001002,30001001,30001002,30001003,40001001,50001017,50001018\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"paper_drew_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"checkCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"check_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sheetIndex\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_sheet\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"cipherList\\\",\n" +
+            "        \\\"entityField\\\": \\\"cipher_text\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserName\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalTax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_amount\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_without_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"machineCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"machine_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerName\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"payee\\\",\n" +
+            "        \\\"entityField\\\": \\\"payee\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"recheck\\\",\n" +
+            "        \\\"entityField\\\": \\\"recheck\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"drawer\\\",\n" +
+            "        \\\"entityField\\\": \\\"drawer\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"remark\\\",\n" +
+            "        \\\"entityField\\\": \\\"remark\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"is_sales_list\\\",\n" +
+            "        \\\"entityField\\\": \\\"is_sales_list\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceDetails') != null && #obj.getString('invoiceDetails').contains('销货清单') ?'1':'0'\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"0\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"stamper\\\",\n" +
+            "        \\\"entityField\\\": \\\"is_stamper\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('stamper') != null && #obj.getString('stamper') != '' ?'1':'0'\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"0\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"qrcode\\\",\n" +
+            "        \\\"entityField\\\": \\\"qrcode\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCodeP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNoP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceDetails\\\",\n" +
+            "        \\\"entityField\\\": \\\"items\\\",\n" +
+            "        \\\"mappingEntityCode\\\": \\\"ticketInvoiceDetail\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketInvoiceDetail\\\",\n" +
+            "    \\\"mappingName\\\": \\\"增值税发票明细\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"name\\\",\n" +
+            "        \\\"entityField\\\": \\\"cargo_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"specification\\\",\n" +
+            "        \\\"entityField\\\": \\\"item_spec\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"unit\\\",\n" +
+            "        \\\"entityField\\\": \\\"quantity_unit\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"quantity\\\",\n" +
+            "        \\\"entityField\\\": \\\"quantity\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"price\\\",\n" +
+            "        \\\"entityField\\\": \\\"unit_price\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"total\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_without_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"taxRate\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_rate\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"tax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_amount\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketMachine\\\",\n" +
+            "    \\\"mappingName\\\": \\\"通用机打发票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001002\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"paper_drew_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"checkCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"check_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sheetIndex\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_sheet\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"cipherList\\\",\n" +
+            "        \\\"entityField\\\": \\\"cipher_text\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserName\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalTax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_amount\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_without_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"machineCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"machine_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerName\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"payee\\\",\n" +
+            "        \\\"entityField\\\": \\\"payee\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"recheck\\\",\n" +
+            "        \\\"entityField\\\": \\\"recheck\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"drawer\\\",\n" +
+            "        \\\"entityField\\\": \\\"drawer\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"remark\\\",\n" +
+            "        \\\"entityField\\\": \\\"remark\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"is_sales_list\\\",\n" +
+            "        \\\"entityField\\\": \\\"is_sales_list\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceDetails') != null && #obj.getString('invoiceDetails').contains('销货清单') ?'1':'0'\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"0\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceDetails\\\",\n" +
+            "        \\\"entityField\\\": \\\"items\\\",\n" +
+            "        \\\"mappingEntityCode\\\": \\\"ticketMachineDetail\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketMachineDetail\\\",\n" +
+            "    \\\"mappingName\\\": \\\"通用机打发票明细\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"name\\\",\n" +
+            "        \\\"entityField\\\": \\\"cargo_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"specification\\\",\n" +
+            "        \\\"entityField\\\": \\\"item_spec\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"unit\\\",\n" +
+            "        \\\"entityField\\\": \\\"quantity_unit\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"quantity\\\",\n" +
+            "        \\\"entityField\\\": \\\"quantity\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"price\\\",\n" +
+            "        \\\"entityField\\\": \\\"unit_price\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,27}(\\\\\\\\.\\\\\\\\d{0,15})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"total\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_without_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"taxRate\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_rate\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"tax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_amount\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketPlane\\\",\n" +
+            "    \\\"mappingName\\\": \\\"飞机票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001009\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"nameOfPassenger\\\",\n" +
+            "        \\\"entityField\\\": \\\"name_of_passenger\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"IDNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"id_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"endorsements\\\",\n" +
+            "        \\\"entityField\\\": \\\"endorsements\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"serialNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"serial_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"eTicketNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"e_ticket_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"checkCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"check_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"information\\\",\n" +
+            "        \\\"entityField\\\": \\\"information\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"agentCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"agent_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"issuedBy\\\",\n" +
+            "        \\\"entityField\\\": \\\"issued_by\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"dateOfIssue\\\",\n" +
+            "        \\\"entityField\\\": \\\"date_of_issue\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"insurance\\\",\n" +
+            "        \\\"entityField\\\": \\\"insurance\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"fare\\\",\n" +
+            "        \\\"entityField\\\": \\\"fare\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"caacDevelopmentFund\\\",\n" +
+            "        \\\"entityField\\\": \\\"caac_development_fund\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"fuelSurcharge\\\",\n" +
+            "        \\\"entityField\\\": \\\"fuel_surcharge\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"tax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"total\\\",\n" +
+            "        \\\"entityField\\\": \\\"total\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"flights\\\",\n" +
+            "        \\\"entityField\\\": \\\"items\\\",\n" +
+            "        \\\"mappingEntityCode\\\": \\\"ticketPlaneDetail\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"p\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketPlaneDetail\\\",\n" +
+            "    \\\"mappingName\\\": \\\"飞机票明细\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"summary\\\",\n" +
+            "        \\\"entityField\\\": \\\"summary\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"carrier\\\",\n" +
+            "        \\\"entityField\\\": \\\"carrier\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"from\\\",\n" +
+            "        \\\"entityField\\\": \\\"plane_from\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"to\\\",\n" +
+            "        \\\"entityField\\\": \\\"plane_to\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"flight\\\",\n" +
+            "        \\\"entityField\\\": \\\"flight\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"date\\\",\n" +
+            "        \\\"entityField\\\": \\\"plane_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"time\\\",\n" +
+            "        \\\"entityField\\\": \\\"plane_time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"class\\\",\n" +
+            "        \\\"entityField\\\": \\\"seat_class\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"fareBasis\\\",\n" +
+            "        \\\"entityField\\\": \\\"fare_basis\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"notValidBefore\\\",\n" +
+            "        \\\"entityField\\\": \\\"not_valid_before\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"notValidAfter\\\",\n" +
+            "        \\\"entityField\\\": \\\"not_valid_after\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"allow\\\",\n" +
+            "        \\\"entityField\\\": \\\"allow\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"extra\\\",\n" +
+            "        \\\"entityField\\\": \\\"extra\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketTrain\\\",\n" +
+            "    \\\"mappingName\\\": \\\"火车票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001010\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"trains\\\",\n" +
+            "        \\\"entityField\\\": \\\"trains\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"startStation\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_station\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"endStation\\\",\n" +
+            "        \\\"entityField\\\": \\\"end_station\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"date\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"time\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"seat\\\",\n" +
+            "        \\\"entityField\\\": \\\"seat\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"seatType\\\",\n" +
+            "        \\\"entityField\\\": \\\"seat_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"price\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"certificateNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"certificate_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"name\\\",\n" +
+            "        \\\"entityField\\\": \\\"name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"no\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"qrcode\\\",\n" +
+            "        \\\"entityField\\\": \\\"qrcode\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"t\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketTaxi\\\",\n" +
+            "    \\\"mappingName\\\": \\\"出租车票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001011\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"date\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"getOnTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"get_on_time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"mileage\\\",\n" +
+            "        \\\"entityField\\\": \\\"mileage\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"getOffTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"get_off_time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"place\\\",\n" +
+            "        \\\"entityField\\\": \\\"place\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"taxi\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketQuota\\\",\n" +
+            "    \\\"mappingName\\\": \\\"定额发票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001013\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"quota\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketToll\\\",\n" +
+            "    \\\"mappingName\\\": \\\"过路费\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001014\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"date\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('date') != null && #obj.getString('date').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('date')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"time\\\",\n" +
+            "        \\\"entityField\\\": \\\"time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"entrance\\\",\n" +
+            "        \\\"entityField\\\": \\\"entrance_place\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"exit\\\",\n" +
+            "        \\\"entityField\\\": \\\"exit_place\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"payment\\\",\n" +
+            "        \\\"entityField\\\": \\\"payment\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"vehiclesType\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicles_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"vehiclesWeight\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicles_weight\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"limit\\\",\n" +
+            "        \\\"entityField\\\": \\\"toll_limit\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"toll\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketBus\\\",\n" +
+            "    \\\"mappingName\\\": \\\"公交车票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001016\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyName\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purhcaser_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"trains\\\",\n" +
+            "        \\\"entityField\\\": \\\"trains\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"startStation\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_station\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"endStation\\\",\n" +
+            "        \\\"entityField\\\": \\\"end_station\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"date\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"time\\\",\n" +
+            "        \\\"entityField\\\": \\\"start_time\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"seat\\\",\n" +
+            "        \\\"entityField\\\": \\\"seat\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"name\\\",\n" +
+            "        \\\"entityField\\\": \\\"name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"bus\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketUsedCar\\\",\n" +
+            "    \\\"mappingName\\\": \\\"二手车销售统一发票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001015\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"paper_drew_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCodeP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNoP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"qrcode\\\",\n" +
+            "        \\\"entityField\\\": \\\"qrcode\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sheetIndex\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_sheet\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"cipherList\\\",\n" +
+            "        \\\"entityField\\\": \\\"cipher_text\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserName\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserIDCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerName\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerIDCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"licensePlateNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"car_number\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"registerNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"registration_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"vehiclesType\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sku\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_brand\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"identificationNumber\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"vehicleManagementOffice\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_place_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyName\\\",\n" +
+            "        \\\"entityField\\\": \\\"auctioneers_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"auctioneers_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"auctioneers_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"auctioneers_bank\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"companyBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"auctioneers_bank_info\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"marketName\\\",\n" +
+            "        \\\"entityField\\\": \\\"used_car_market_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"marketTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"used_car_market_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"marketBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"used_car_market_bank\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"marketBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"used_car_market_bank_info\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"drawer\\\",\n" +
+            "        \\\"entityField\\\": \\\"drawer\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"remark\\\",\n" +
+            "        \\\"entityField\\\": \\\"remark\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\",\n" +
+            "        \\\"defaultValue\\\": \\\"vs\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \\\"entityCode\\\": \\\"ticketVehicle\\\",\n" +
+            "    \\\"mappingName\\\": \\\"机动车销售统一发票\\\",\n" +
+            "    \\\"imageType\\\": \\\"2\\\",\n" +
+            "    \\\"documentType\\\": \\\"50001001\\\",\n" +
+            "    \\\"items\\\": [\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceType\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceCodeP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_code_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceNoP\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_no_p\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sheetIndex\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_sheet\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"paper_drew_date\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"machineCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"machine_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"checkCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"check_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"cipherList\\\",\n" +
+            "        \\\"entityField\\\": \\\"cipher_text\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getArray('cipherList') != null?T(org.apache.commons.lang3.StringUtils).join(#obj.getArray('cipherList')):null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserName\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmountTaxNum\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_with_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalTax\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_amount\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"totalAmount\\\",\n" +
+            "        \\\"entityField\\\": \\\"amount_without_tax\\\",\n" +
+            "        \\\"expression\\\": \\\"#value != null && #value.matches('^-?\\\\\\\\d{1,18}(\\\\\\\\.\\\\\\\\d{0,6})?$') ? #value : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerName\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTaxNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tax_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerAddr\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_address\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerTel\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_tel\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBank\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sellerBankNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"seller_bank_account\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"drawer\\\",\n" +
+            "        \\\"entityField\\\": \\\"drawer\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"remark\\\",\n" +
+            "        \\\"entityField\\\": \\\"remark\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"invoiceTime\\\",\n" +
+            "        \\\"entityField\\\": \\\"invoice_date\\\",\n" +
+            "        \\\"expression\\\": \\\"#obj.getString('invoiceTime') != null && #obj.getString('invoiceTime').matches('^\\\\\\\\d{8}$') ? new java.text.SimpleDateFormat('yyyyMMdd').parse(#obj.getString('invoiceTime')).getTime() : null\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"purchaserIDCode\\\",\n" +
+            "        \\\"entityField\\\": \\\"purchaser_id_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"vehiclesType\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_type\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"sku\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_brand\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"identificationNumber\\\",\n" +
+            "        \\\"entityField\\\": \\\"vehicle_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"origin\\\",\n" +
+            "        \\\"entityField\\\": \\\"production_area\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"qualifiedNumber\\\",\n" +
+            "        \\\"entityField\\\": \\\"certification_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"bookNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"import_certificate_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"checkNo\\\",\n" +
+            "        \\\"entityField\\\": \\\"commodity_inspection_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"engineNumber\\\",\n" +
+            "        \\\"entityField\\\": \\\"engine_no\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"codeOfTheCompetentTaxAuthority\\\",\n" +
+            "        \\\"entityField\\\": \\\"charge_tax_authority_code\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"nameOfTheCompetentTaxAuthority\\\",\n" +
+            "        \\\"entityField\\\": \\\"charge_tax_authority_name\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"taxPaidProof\\\",\n" +
+            "        \\\"entityField\\\": \\\"tax_paid_proof\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"tonnage\\\",\n" +
+            "        \\\"entityField\\\": \\\"tonnage\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"max_capacity\\\",\n" +
+            "        \\\"entityField\\\": \\\"max_capacity\\\"\n" +
+            "      },\n" +
+            "      {\n" +
+            "        \\\"srcField\\\": \\\"qrcode\\\",\n" +
+            "        \\\"entityField\\\": \\\"qrcode\\\"\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  }\n" +
             "]\", \"F1295238504688762882S\": \"1\", \"F1295238505305325570S\": \"1\", \"F1295238506429399042L\": 4464073942242932093, \"F1295238507134042114L\": 1618579280792, \"F1295238508010651649L\": 1619769521531, \"F1295238509587709953L\": 4603688623062720515, \"F1295238510393016321L\": 4603688623062720515, \"F1295238511240265729S\": \"柳红彬\", \"F1295238512058155010S\": \"柳红彬\", \"F1295238512855072769S\": \"1\", \"F1295238513526161410S\": \"CQP\"}";
     @Test
     public void test() throws JsonProcessingException {
-        List<Object> objects = OriginalEntityUtils.attributesToList(str3);
+        List<Object> objects = OriginalEntityUtils.attributesToList(str);
         Assert.assertNotNull(objects);
     }
 }
