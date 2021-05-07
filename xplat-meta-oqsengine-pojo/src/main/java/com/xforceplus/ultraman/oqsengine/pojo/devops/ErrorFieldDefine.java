@@ -10,6 +10,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.devops;
  */
 public class ErrorFieldDefine {
     public static final String SEQ_NO = "seqno";
+    public static final String UNI_KEY = "unikey";
     public static final String BATCH_ID = "batchid";
     public static final String ID = "id";
     public static final String ENTITY = "entity";

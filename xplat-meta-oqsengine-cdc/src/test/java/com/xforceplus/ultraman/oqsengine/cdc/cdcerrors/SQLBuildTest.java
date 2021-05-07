@@ -24,14 +24,14 @@ import java.lang.reflect.Method;
 public class SQLBuildTest {
     private String tableName = "cdcerrors";
 
-    private String expectedBuild = "INSERT INTO cdcerrors (seqno,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private String expectedBuild = "INSERT INTO cdcerrors (seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private String expectedUpdate = "UPDATE cdcerrors SET status=?, fixedtime=? WHERE seqno=?";
     private String expectedRecover = "UPDATE cdcerrors SET status=?, operationobject=? WHERE seqno=?";
-    private String expectedFullSelect = "SELECT seqno,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
-    private String expectedFullNotEqualStatusSelect = "SELECT seqno,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
+    private String expectedFullSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
+    private String expectedFullNotEqualStatusSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
 
-    private String expectedEmptySelect = "SELECT seqno,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors order by executetime desc";
-    private String expectedIdSelect = "SELECT seqno,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=? order by executetime desc";
+    private String expectedEmptySelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors order by executetime desc";
+    private String expectedIdSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=? order by executetime desc";
 
     @Test
     public void buildSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -141,6 +141,7 @@ public class SQLBuildTest {
     private CdcErrorQueryCondition init(boolean isEquals) {
         CdcErrorQueryCondition expectErrorQueryCondition = new CdcErrorQueryCondition();
         expectErrorQueryCondition.setSeqNo(1L);
+        expectErrorQueryCondition.setUniKey("aaaa");
         expectErrorQueryCondition.setBatchId(1L);
         expectErrorQueryCondition.setId(Long.MAX_VALUE);
         expectErrorQueryCondition.setCommitId(2L);

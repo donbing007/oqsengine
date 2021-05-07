@@ -74,8 +74,13 @@ public class SphinxConsumerService implements ConsumerService {
     private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService) throws SQLException {
         int syncCount = ZERO;
         //  需要同步的列表
-        Map<Long, RawEntry> rawEntries = new HashMap<>();
+        Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
+        String uniKeyPrefix = null;
         for (CanalEntry.Entry entry : entries) {
+            if (null == uniKeyPrefix) {
+                uniKeyPrefix = entry.getHeader().getLogfileName() + entry.getHeader().getLogfileOffset();
+            }
+
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
                 case TRANSACTIONEND:
@@ -130,9 +135,13 @@ public class SphinxConsumerService implements ConsumerService {
     }
 
 
-    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
-                                  Map<Long, RawEntry> rawEntries) throws SQLException {
+    private void internalDataSync(CanalEntry.Entry entry,
+                                    CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
+                                    Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
+
+        String uniKeyPrefixOffset = entry.getHeader().getLogfileName() + entry.getHeader().getLogfileOffset();
+
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
 
@@ -144,6 +153,7 @@ public class SphinxConsumerService implements ConsumerService {
         CanalEntry.EventType eventType = rowChange.getEventType();
         if (supportEventType(eventType)) {
             //  遍历RowData
+            int pos = 1;
             for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
                 //  获取一条完整的Row，只关心变化后的数据
                 List<CanalEntry.Column> columns = rowData.getAfterColumnsList();
@@ -163,8 +173,7 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-
-                    sphinxSyncExecutor.errorHandle(columns, cdcMetrics.getBatchId(),
+                    sphinxSyncExecutor.formatErrorHandle(columns, uniKeyPrefixOffset, pos, cdcMetrics.getBatchId(),
                             String.format("batch : %d, parse id, commitId from columns failed, message : %s"
                                     , cdcMetrics.getBatchId(), e.getMessage()));
                     continue;
@@ -187,13 +196,15 @@ public class SphinxConsumerService implements ConsumerService {
 
                         //  更新
                         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
-                        rawEntries.put(id, new RawEntry(id, commitId,
+                        rawEntries.put(id, new RawEntry(uniKeyPrefixOffset, pos, id, commitId,
                                 entry.getHeader().getExecuteTime(), rowData.getAfterColumnsList()));
                     } else {
                         logger.warn("[cdc-consumer] batch : {}, ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}"
                                 , cdcMetrics.getBatchId(), id, commitId, skipCommitId);
                     }
                 }
+
+                pos ++;
             }
         }
     }

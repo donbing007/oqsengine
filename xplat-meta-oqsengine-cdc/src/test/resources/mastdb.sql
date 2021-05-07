@@ -24,10 +24,10 @@ create table oqsbigentity
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
-
 create table cdcerrors
 (
     seqno           bigint                      not null comment '数据主键',
+    unikey          varchar(512)                not null comment '唯一约束',
     batchid         bigint                      not null comment '批次ID',
     id              bigint                               comment '业务主键ID',
     entity          bigint                               comment 'entity 的类型 id.',
@@ -40,6 +40,8 @@ create table cdcerrors
     message         varchar(1024)                        comment '出错信息',
     executetime     bigint                      not null comment '出错时间戳',
     fixedtime       bigint                      not null comment '修复时间.',
-    constraint cdcerror_pk primary key (seqno)
+    constraint cdcerror_pk primary key (seqno),
+    unique key unikey_upk (unikey),
+    key cdcerrors_k0 (batchid)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
