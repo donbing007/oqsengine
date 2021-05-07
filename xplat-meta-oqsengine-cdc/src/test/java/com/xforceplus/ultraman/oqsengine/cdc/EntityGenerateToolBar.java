@@ -21,6 +21,42 @@ import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.*;
  */
 public class EntityGenerateToolBar {
 
+    public static IEntity[] generateWithBadEntities(long id, int version) {
+        IEntity[] entityes = new IEntity[11];
+
+        IEntityValue values = EntityValue.build().addValues(
+                Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1><^^A\n\\0x00\4'$231....\n\\xEF\\xBB\\xBF."))
+        );
+        IEntity bad = Entity.Builder.anEntity()
+                .withId(id * 10)
+                .withEntityClassRef(
+                        EntityClassRef
+                                .Builder
+                                .anEntityClassRef()
+                                .withEntityClassId(entityClass0.id())
+                                .withEntityClassCode(entityClass0.code())
+                                .build()
+                )
+                .withMajor(OqsVersion.MAJOR)
+                .withVersion(version)
+                .withEntityValue(values)
+                .build();
+
+        IEntity[] good = generateFixedEntities(id, version);
+        for (int i = 0; i < good.length; i++) {
+            if (i < 5) {
+                entityes[i] = good[i];
+            } else {
+                if (i == 5) {
+                    entityes[i] = bad;
+                }
+                entityes[i+1] = good[i];
+            }
+        }
+
+        return entityes;
+    }
+
     public static IEntity[] generateFixedEntities(long startId, int version) {
 
         IEntity[] entityes = new IEntity[10];

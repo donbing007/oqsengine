@@ -9,6 +9,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 public class CdcErrorUtils {
 
     public static String uniKeyGenerate(String uniKeyPrefix, int pos, ErrorType errorType) {
-        return uniKeyPrefix + "." + pos +  "." + errorType.getType();
+        return uniKeyPrefix + "-" + pos +  "-" + errorType.getType();
     }
 }

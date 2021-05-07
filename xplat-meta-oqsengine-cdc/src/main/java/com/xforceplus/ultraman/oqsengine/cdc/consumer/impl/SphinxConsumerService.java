@@ -75,11 +75,7 @@ public class SphinxConsumerService implements ConsumerService {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
-        String uniKeyPrefix = null;
         for (CanalEntry.Entry entry : entries) {
-            if (null == uniKeyPrefix) {
-                uniKeyPrefix = entry.getHeader().getLogfileName() + entry.getHeader().getLogfileOffset();
-            }
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
@@ -140,7 +136,7 @@ public class SphinxConsumerService implements ConsumerService {
                                     Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
 
-        String uniKeyPrefixOffset = entry.getHeader().getLogfileName() + entry.getHeader().getLogfileOffset();
+        String uniKeyPrefixOffset = entry.getHeader().getLogfileName() + "-" + entry.getHeader().getLogfileOffset();
 
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());

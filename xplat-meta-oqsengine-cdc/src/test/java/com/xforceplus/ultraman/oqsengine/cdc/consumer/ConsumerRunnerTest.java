@@ -86,6 +86,8 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
+
+
     @Test
     public void syncTest() throws Exception {
 
@@ -213,6 +215,11 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
         } finally {
             stopConsumerRunner("loopTransactionOverBatches");
         }
+    }
+
+    @Test
+    public void syncError() {
+
     }
 
 
