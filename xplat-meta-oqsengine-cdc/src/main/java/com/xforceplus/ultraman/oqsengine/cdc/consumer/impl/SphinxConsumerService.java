@@ -204,7 +204,7 @@ public class SphinxConsumerService implements ConsumerService {
                     }
                 }
 
-                pos ++;
+                pos++;
             }
         }
     }
