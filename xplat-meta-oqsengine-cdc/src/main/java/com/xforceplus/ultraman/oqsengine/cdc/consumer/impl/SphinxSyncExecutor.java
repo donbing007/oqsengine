@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_FORMAT_ERROR;
 import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_INSERT_ERROR;
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getBooleanFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
@@ -30,7 +31,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
@@ -91,14 +91,16 @@ public class SphinxSyncExecutor implements SyncExecutor {
             }
             try {
                 //  获取记录
-                OriginalEntity entity = prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
+                OriginalEntity entity =
+                    prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
 
                 //  加入更新列表
                 storageEntityList.add(entity);
             } catch (Exception e) {
                 //  组装数据失败，记录错误日志
                 logger.warn("add to storageEntityList error, message : {}", e.toString());
-                formatErrorHandle(rawEntry.getColumns(), rawEntry.getUniKeyPrefix(), rawEntry.getPos(), cdcMetrics.getBatchId(), e.getMessage());
+                formatErrorHandle(rawEntry.getColumns(), rawEntry.getUniKeyPrefix(), rawEntry.getPos(),
+                    cdcMetrics.getBatchId(), e.getMessage());
             }
         }
 
@@ -111,8 +113,10 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
                 String uniKey = uniKeyGenerate(start.getUniKeyPrefix(), start.getPos(), DATA_INSERT_ERROR);
                 //  是否修复
-                if (!recordOrRecover(cdcMetrics.getBatchId(), uniKey, originalEntity.getId(), originalEntity.getEntityClass().id(),
-                        originalEntity.getVersion(), originalEntity.getOp(), originalEntity.getCommitid(), DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
+                if (!recordOrRecover(cdcMetrics.getBatchId(), uniKey, originalEntity.getId(),
+                    originalEntity.getEntityClass().id(),
+                    originalEntity.getVersion(), originalEntity.getOp(), originalEntity.getCommitid(),
+                    DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
                     throw e;
                 }
             }
@@ -124,7 +128,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     @Override
-    public boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId, String message) throws SQLException {
+    public boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId,
+                                     String message) throws SQLException {
         Long id = getLongFromColumn(columns, ID, UN_KNOW_ID);
         Long commitId = getLongFromColumn(columns, COMMITID);
 
@@ -139,8 +144,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         }
 
-        recordOrRecover(batchId, uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR)
-                            , id, entity, version, op, commitId, DATA_FORMAT_ERROR, message, new ArrayList<>());
+        recordOrRecover(batchId, uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR),
+            id, entity, version, op, commitId, DATA_FORMAT_ERROR, message, new ArrayList<>());
 
         return true;
     }
@@ -150,10 +155,20 @@ public class SphinxSyncExecutor implements SyncExecutor {
      * 此时则cdc继续往下执行目前修复仅支持批量写index时的报错由运维工具修改OriginalEntity
      * 列表后重新提交(ErrorType = DATA_INSERT_ERROR)，单条格式错误不支持修复，即不支持(ErrorType = DATA_FORMAT_ERROR).d
      */
-    private boolean recordOrRecover(long batchId, String uniKey, long id, long entity, int version, int op, long commitId
-                            , ErrorType errorType, String message, List<OriginalEntity> entities) throws SQLException {
-        logger.warn("[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}"
-                , batchId, id, commitId, null == message ? "unKnow" : message);
+    private boolean recordOrRecover(
+        long batchId,
+        String uniKey,
+        long id,
+        long entity,
+        int version,
+        int op,
+        long commitId,
+        ErrorType errorType,
+        String message,
+        List<OriginalEntity> entities) throws SQLException {
+        logger.warn(
+            "[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}",
+            batchId, id, commitId, null == message ? "unKnow" : message);
 
         try {
             CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
@@ -163,9 +178,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
             Collection<CdcErrorTask> errorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
             if (null == errorTasks || errorTasks.isEmpty()) {
                 cdcErrorStorage.buildCdcError(
-                        CdcErrorTask.buildErrorTask(seqNoGenerator.next(), uniKey, batchId, id, entity, version, op, commitId,
-                                errorType.getType(), (null == entities) ? "{}" :  OriginalEntityUtils.toOriginalEntityStr(entities)
-                                , null == message ? errorType.name() : message)
+                    CdcErrorTask
+                        .buildErrorTask(seqNoGenerator.next(), uniKey, batchId, id, entity, version, op, commitId,
+                            errorType.getType(),
+                            (null == entities) ? "{}" : OriginalEntityUtils.toOriginalEntityStr(entities),
+                            null == message ? errorType.name() : message)
                 );
                 return false;
             }
