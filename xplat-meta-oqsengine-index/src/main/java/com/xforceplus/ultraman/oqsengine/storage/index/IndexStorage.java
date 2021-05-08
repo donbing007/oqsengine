@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -32,8 +31,6 @@ public interface IndexStorage extends ConditionsSelectStorage, Lifecycle {
      * 保存原始实体.来源可能是其他的storage实现中的数据.
      *
      * @param originalEntities 原始实体列表.
-     * @return 保存成功的数量.
-     * @throws SQLException
      */
     void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException;
 

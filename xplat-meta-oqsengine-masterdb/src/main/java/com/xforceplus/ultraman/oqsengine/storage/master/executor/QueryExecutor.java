@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,10 +26,10 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
     /**
      * 查询所有信息.
      *
-     * @param tableName
-     * @param resource
-     * @param timeoutMs
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param timeoutMs 超时毫秒.
+     * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildHaveAllDetail(
         String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
@@ -38,11 +37,11 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
     }
 
     /**
-     * 查询包含详细信息
+     * 查询包含详细信息.
      *
-     * @param tableName
-     * @param resource
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
@@ -52,19 +51,29 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
     /**
      * 查询不包含详细信息.只有版本和事务信息.
      *
-     * @param tableName
-     * @param resource
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildNoDetail(
         String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
         return new QueryExecutor(tableName, resource, entityClass, true, timeoutMs);
     }
 
-    public QueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, boolean noDetail) {
+    public QueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
+                         boolean noDetail) {
         this(tableName, resource, entityClass, noDetail, 0);
     }
 
+    /**
+     * 构造实例.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param entityClass 元信息.
+     * @param noDetail true不需要详细信息, false需要详细信息.
+     * @param timeoutMs 超时毫秒.
+     */
     public QueryExecutor(
         String tableName,
         TransactionResource<Connection> resource,
@@ -93,7 +102,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
                         .withId(id)
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))

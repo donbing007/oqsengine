@@ -47,8 +47,7 @@ public class EntityClassRef implements Serializable {
             return false;
         }
         EntityClassRef that = (EntityClassRef) o;
-        return getId() == that.getId() &&
-            Objects.equals(getCode(), that.getCode());
+        return getId() == that.getId() && Objects.equals(getCode(), that.getCode());
     }
 
     @Override
@@ -57,7 +56,7 @@ public class EntityClassRef implements Serializable {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private long entityClassId;

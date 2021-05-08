@@ -24,7 +24,19 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import org.junit.*;
+import java.sql.Connection;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -33,16 +45,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
 /**
+ * 用户用例测试.
+ *
  * @author dongbin
  * @version 0.1 2020/11/29 17:37
  * @since 1.8
@@ -163,7 +168,7 @@ public class UserCaseTest {
                     )
                 ),
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.aSearchConfig().withPage(Page.newSinglePage(100)).build()
+            SearchConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
         );
         Assert.assertEquals(1, entities.size());
         Assert.assertEquals(99L,
@@ -278,8 +283,6 @@ public class UserCaseTest {
 
     /**
      * 更新后查询不等值总数匹配.
-     *
-     * @throws Exception
      */
     @Test
     public void testUpdateAfterNotEqCount() throws Exception {
@@ -342,7 +345,8 @@ public class UserCaseTest {
                     ))
                 ).build();
             Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-            IEntity selectEntity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+            IEntity selectEntity =
+                entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
 
             Assert.assertNotEquals(0, selectEntity.id());
 
@@ -390,8 +394,6 @@ public class UserCaseTest {
 
     /**
      * 测试不断的更新已有数据,并立即查询后的结果.
-     *
-     * @throws Exception
      */
     @Test
     public void testUpdateAfterRead() throws Exception {
@@ -439,8 +441,6 @@ public class UserCaseTest {
 
     /**
      * 测试排序.
-     *
-     * @throws Exception
      */
     @Test
     public void testSort() throws Exception {
@@ -543,8 +543,6 @@ public class UserCaseTest {
 
     /**
      * 测试更新后统计数量.
-     *
-     * @throws Exception
      */
     @Test
     public void testUpdateAfterCount() throws Exception {

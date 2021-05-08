@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strin
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strings.NotEqJsonStringsConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +27,11 @@ public class SQLConditionQueryBuilderFactory {
     private StorageStrategyFactory storageStrategyFactory;
     private Map<String, ConditionBuilder> builders;
 
+    /**
+     * 实例化.
+     *
+     * @param storageStrategyFactory 逻辑物理字段转换工厂实例.
+     */
     public SQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
 
@@ -71,6 +75,12 @@ public class SQLConditionQueryBuilderFactory {
 
     }
 
+    /**
+     * 根据条件定义得到条件的查询构造器.
+     *
+     * @param condition 查询条件.
+     * @return 条件查询构造器.
+     */
     public ConditionBuilder getQueryBuilder(Condition condition) {
         final String key = buildKey(condition.getField().type(), condition.getOperator());
 

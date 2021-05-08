@@ -3,8 +3,15 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * 关联对象的定义是由 relations 和 entityClass 共同承担的.
@@ -17,44 +24,44 @@ import java.util.*;
  */
 public class EntityClass implements IEntityClass {
 
-    /**
+    /*
      * 元数据boId
      */
     private long id;
 
-    /**
+    /*
      * 对象名称
      */
     private String name;
 
-    /**
+    /*
      * 对象code
      */
     private String code;
-    /**
+    /*
      * 元数据版本.
      */
     private int version;
 
-    /**
+    /*
      * 元信息处于的继承层级
      */
     private int level;
 
-    /**
+    /*
      * 关系信息
      */
     private List<Relation> relations;
-    /**
+    /*
      * 子对象结构信息
      */
     private Set<IEntityClass> relationsEntityClasses;
 
-    /**
+    /*
      * 继承的对象类型.
      */
     private IEntityClass father;
-    /**
+    /*
      * 对象属性信息
      */
     private Collection<IEntityField> fields = Collections.emptyList();
@@ -63,6 +70,8 @@ public class EntityClass implements IEntityClass {
     }
 
     /**
+     * 已经废弃.
+     *
      * @deprecated 优先使用build模式生成.
      */
     @Deprecated
@@ -71,6 +80,8 @@ public class EntityClass implements IEntityClass {
     }
 
     /**
+     * 已经废弃.
+     *
      * @deprecated 优先使用build模式生成.
      */
     @Deprecated
@@ -79,6 +90,8 @@ public class EntityClass implements IEntityClass {
     }
 
     /**
+     * 已经废弃.
+     *
      * @deprecated 优先使用build模式生成.
      */
     @Deprecated
@@ -226,15 +239,15 @@ public class EntityClass implements IEntityClass {
             return false;
         }
         EntityClass that = (EntityClass) o;
-        return id == that.id &&
-            version == that.version &&
-            level == that.level &&
-            Objects.equals(name, that.name) &&
-            Objects.equals(code, that.code) &&
-            Objects.equals(relations, that.relations) &&
-            Objects.equals(relationsEntityClasses, that.relationsEntityClasses) &&
-            Objects.equals(father, that.father) &&
-            Objects.equals(fields, that.fields);
+        return id == that.id
+            && version == that.version
+            && level == that.level
+            && Objects.equals(name, that.name)
+            && Objects.equals(code, that.code)
+            && Objects.equals(relations, that.relations)
+            && Objects.equals(relationsEntityClasses, that.relationsEntityClasses)
+            && Objects.equals(father, that.father)
+            && Objects.equals(fields, that.fields);
     }
 
     @Override
@@ -259,7 +272,7 @@ public class EntityClass implements IEntityClass {
     }
 
     /**
-     * Builder
+     * Builder.
      */
     public static final class Builder {
         private long id;
@@ -324,6 +337,12 @@ public class EntityClass implements IEntityClass {
             return this;
         }
 
+        /**
+         * 增加一个字段.
+         *
+         * @param field 字段.
+         * @return 当前构造器.
+         */
         public Builder withField(IEntityField field) {
             if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
                 this.fields = new ArrayList<>();
@@ -332,6 +351,11 @@ public class EntityClass implements IEntityClass {
             return this;
         }
 
+        /**
+         * 构造一下 EntityClass 实例.
+         *
+         * @return 实例.
+         */
         public EntityClass build() {
             EntityClass entityClass = new EntityClass();
             entityClass.id = id;

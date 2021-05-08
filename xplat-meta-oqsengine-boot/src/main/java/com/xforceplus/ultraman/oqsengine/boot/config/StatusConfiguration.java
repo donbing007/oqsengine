@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * 状态服务配置.
+ *
  * @author dongbin
  * @version 0.1 2020/11/16 16:05
  * @since 1.8

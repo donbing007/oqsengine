@@ -4,9 +4,16 @@ import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 表示一个数据的原始形态.
@@ -35,6 +42,9 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     private Object[] attributes;
     private long maintainid;
 
+    /**
+     * 实例.
+     */
     public OriginalEntity() {
         deleted = false;
         op = OperationType.UNKNOWN.getValue();
@@ -146,6 +156,11 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         return maintainid;
     }
 
+    /**
+     * 列出所有属性.
+     *
+     * @return 属性集合.
+     */
     public Collection<Map.Entry<String, Object>> listAttributes() {
         final int space = 2;
         List<Map.Entry<String, Object>> attributeList = new ArrayList<>(attributes.length / space);
@@ -164,17 +179,17 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             return false;
         }
         OriginalEntity that = (OriginalEntity) o;
-        return isDeleted() == that.isDeleted() &&
-            getOp() == that.getOp() &&
-            getVersion() == that.getVersion() &&
-            getOqsMajor() == that.getOqsMajor() &&
-            getId() == that.getId() &&
-            getCreateTime() == that.getCreateTime() &&
-            getUpdateTime() == that.getUpdateTime() &&
-            getTx() == that.getTx() &&
-            getCommitid() == that.getCommitid() &&
-            Objects.equals(getEntityClass(), that.getEntityClass()) &&
-            Arrays.equals(getAttributes(), that.getAttributes());
+        return isDeleted() == that.isDeleted()
+            && getOp() == that.getOp()
+            && getVersion() == that.getVersion()
+            && getOqsMajor() == that.getOqsMajor()
+            && getId() == that.getId()
+            && getCreateTime() == that.getCreateTime()
+            && getUpdateTime() == that.getUpdateTime()
+            && getTx() == that.getTx()
+            && getCommitid() == that.getCommitid()
+            && Objects.equals(getEntityClass(), that.getEntityClass())
+            && Arrays.equals(getAttributes(), that.getAttributes());
     }
 
     @Override
@@ -319,18 +334,27 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             return this;
         }
 
+        /**
+         * 属性集合.
+         */
         public Builder withAttributes(Collection<Object> attributes) {
             this.attributes.clear();
             this.attributes.addAll(attributes);
             return this;
         }
 
+        /**
+         * 属性.
+         */
         public Builder withAttribute(String key, Object value) {
             this.attributes.add(key);
             this.attributes.add(value);
             return this;
         }
 
+        /**
+         * 构造实例.
+         */
         public OriginalEntity build() {
             OriginalEntity originalEntity = new OriginalEntity();
             originalEntity.oqsMajor = this.oqsMajor;
@@ -349,7 +373,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             final int space = 2;
             // 必须是偶数.
             if (this.attributes.size() % space != 0) {
-                throw new IllegalArgumentException(String.format("Incomplete attributes.[%d].", originalEntity.getId()));
+                throw new IllegalArgumentException(
+                    String.format("Incomplete attributes.[%d].", originalEntity.getId()));
             }
 
             return originalEntity;

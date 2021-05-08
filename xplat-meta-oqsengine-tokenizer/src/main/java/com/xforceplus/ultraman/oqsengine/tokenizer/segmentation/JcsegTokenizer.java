@@ -3,6 +3,12 @@ package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.tokenizer.EmptyWorkdsIterator;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.Iterator;
 import org.lionsoul.jcseg.ISegment;
 import org.lionsoul.jcseg.IWord;
 import org.lionsoul.jcseg.dic.ADictionary;
@@ -11,13 +17,6 @@ import org.lionsoul.jcseg.segmenter.SegmenterConfig;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.net.URL;
-import java.util.Iterator;
 
 /**
  * 基于jcseg的分词器实现.
@@ -40,6 +39,12 @@ public class JcsegTokenizer implements Tokenizer {
         dic.loadDirectory(lexDir.getAbsolutePath());
     }
 
+    /**
+     * 实例化.
+     *
+     * @param url 外部字典地址.
+     * @throws IOException 加载异常.
+     */
     public JcsegTokenizer(URL url) throws IOException {
         init();
         try (InputStream in = url.openStream()) {
@@ -51,7 +56,7 @@ public class JcsegTokenizer implements Tokenizer {
         config = new SegmenterConfig(true);
         dic = DictionaryFactory.createDefaultDictionary(config, false);
 
-        /**
+        /*
          * 没有使用自带的
          * dic.loadClassPath()
          * 原因是其没法正确处理jar路径中的字典文件.

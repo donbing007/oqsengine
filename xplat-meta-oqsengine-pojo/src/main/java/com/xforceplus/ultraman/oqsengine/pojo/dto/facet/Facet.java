@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.facet;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -79,8 +78,8 @@ public class Facet {
 
     @Override
     public String toString() {
-        return "Facet{" +
-                "fields=" + fields +
-                '}';
+        return "Facet{"
+            + "fields=" + fields
+            + '}';
     }
 }

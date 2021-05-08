@@ -2,13 +2,16 @@ package com.xforceplus.ultraman.oqsengine.event;
 
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * DefaultEventBus Tester.
@@ -49,8 +52,6 @@ public class DefaultEventBusTest {
 
     /**
      * 测试是否正确通知.
-     *
-     * @throws Exception
      */
     @Test
     public void testNotice() throws Exception {

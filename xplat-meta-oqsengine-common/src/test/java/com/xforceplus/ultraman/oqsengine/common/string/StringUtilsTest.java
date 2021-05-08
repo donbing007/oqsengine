@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ * 字符串工具测试.
+ *
  * @author dongbin
  * @version 0.1 2021/04/20 16:09
  * @since 1.8

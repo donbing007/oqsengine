@@ -3,7 +3,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.page;
 import java.io.Serializable;
 
 /**
- * 记录分页的起始行和结束行序号。
+ * 记录分页的起始行和结束行序号.
+ *
  * @author donbing
  * @since 1.0
  * @version 1.00, 08/3/15

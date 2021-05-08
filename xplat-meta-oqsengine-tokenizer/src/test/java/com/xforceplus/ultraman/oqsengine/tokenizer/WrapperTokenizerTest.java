@@ -2,19 +2,18 @@ package com.xforceplus.ultraman.oqsengine.tokenizer;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.tokenizer.wildcard.WildcardTokenizer;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * WrapperTokenizer Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/17/2021
  * @since <pre>Mar 17, 2021</pre>
  */

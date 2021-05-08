@@ -15,6 +15,7 @@ public interface TransactionManager {
 
     /**
      * 创建新的事务.
+     *
      * @return 新事务.
      */
     Transaction create();
@@ -47,12 +48,14 @@ public interface TransactionManager {
 
     /**
      * 获取当前上下文绑定的事务.
+     *
      * @return 事务.
      */
     Optional<Transaction> getCurrent();
 
     /**
      * 绑定一个非受管事务.
+     *
      * @param id 事务id.
      */
     void bind(long id);
@@ -64,6 +67,7 @@ public interface TransactionManager {
 
     /**
      * 结束某个事务.
+     *
      * @param tx 目标事务.
      */
     void finish(Transaction tx) throws SQLException;

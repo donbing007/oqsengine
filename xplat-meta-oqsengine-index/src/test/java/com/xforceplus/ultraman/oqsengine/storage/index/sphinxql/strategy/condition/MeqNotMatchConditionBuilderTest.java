@@ -46,7 +46,7 @@ public class MeqNotMatchConditionBuilderTest {
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            MeqNotMatchConditionBuilder builder = new MeqNotMatchConditionBuilder(
+            MeqNotMatchConditionBuilderAbstract builder = new MeqNotMatchConditionBuilderAbstract(
                 storageStrategyFactory, c.condition.getField().type());
 
             Assert.assertEquals(c.expected, builder.build(c.condition));

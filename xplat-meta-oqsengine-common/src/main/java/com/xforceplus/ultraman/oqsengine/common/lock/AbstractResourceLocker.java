@@ -6,15 +6,13 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 一个为了子类实现方便的抽象类。
- * 此抽象类定义了锁定的重试时间和为标识每一个线程的方式。
+ * 一个为了子类实现方便的抽象类.
+ * 此抽象类定义了锁定的重试时间和为标识每一个线程的方式.
  * 每一个线程在第一次加锁时都会利用ThreadLocal来记录一个UUID表示本加锁者的标识，
  * 此实现并不是个严格的锁实现，如果当前线程A没有拿到锁并进入等待，在等待时（默认为50ms)
  * 锁解除这时有新的一个线程B试图加锁，那么B线程有可能加锁成功A线程继续等待。
  * 可以设定重试的等待时间来减少这个问题，不过资源操作需要严格的顺序时此实现可能不适用。
- * <p>
- * 子类只需要实现
- * doLock,doUnLock,isLocked三个方法即可。
+ * 子类只需要实现doLock,doUnLock,isLocked三个方法即可.
  *
  * @author dongbin
  * @version 0.1 2020/11/26 11:10
@@ -22,21 +20,21 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractResourceLocker implements ResourceLocker {
 
-    /**
+    /*
      * 重试的默认间隔,{@value}毫秒.
      */
     private static final long RETRY_DELAY = 50;
-    /**
+    /*
      * 为每个操作的线程记录一个唯一ID号
      */
-    private final ThreadLocal<Map<String, String>> THREAD_INFO = new ThreadLocal();
-    /**
+    private final ThreadLocal<Map<String, String>> threadInfo = new ThreadLocal();
+    /*
      * 等待的重试时间
      */
     private long retryDelay = 0;
 
     /**
-     * 获取当前的重试等待时间(毫秒)。
+     * 获取当前的重试等待时间(毫秒).
      *
      * @return 重试等待时间(毫秒)。
      */
@@ -45,7 +43,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
     }
 
     /**
-     * 设置当前的重试等待时间(毫秒)。
+     * 设置当前的重试等待时间(毫秒).
      *
      * @param retryDelay 重试等待时间(毫秒)。
      */
@@ -218,10 +216,10 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
     }
 
     private String makeThreadId(String key) {
-        Map<String, String> idMap = THREAD_INFO.get();
+        Map<String, String> idMap = threadInfo.get();
         if (idMap == null) {
             idMap = new HashMap();
-            THREAD_INFO.set(idMap);
+            threadInfo.set(idMap);
         }
 
         String id = idMap.get(key);
@@ -239,7 +237,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      * @return 当前线程的标识.
      */
     private String getThreadId(String key) {
-        Map<String, String> idMap = THREAD_INFO.get();
+        Map<String, String> idMap = threadInfo.get();
         if (idMap == null) {
             //如果没有找到锁定线程id容器,返回一个新的,这会造成无法解锁
             return UUID.randomUUID().toString();
@@ -249,10 +247,10 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
     }
 
     private void removeThreadId(String key) {
-        Map<String, String> idMap = THREAD_INFO.get();
+        Map<String, String> idMap = threadInfo.get();
         idMap.remove(key);
         if (idMap.isEmpty()) {
-            THREAD_INFO.remove();
+            threadInfo.remove();
         }
     }
 
@@ -262,11 +260,11 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      * @return 线程本地变量.
      */
     protected ThreadLocal getThreadLocal() {
-        return THREAD_INFO;
+        return threadInfo;
     }
 
     /**
-     * 子类需要实现的锁定方法。
+     * 子类需要实现的锁定方法.
      *
      * @param key       资源的key.
      * @param lockingId 锁定者的标识。
@@ -275,7 +273,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
     protected abstract boolean doLock(String key, String lockingId);
 
     /**
-     * 子类需要实现的解锁方法。
+     * 子类需要实现的解锁方法.
      *
      * @param key 资源的key.
      * @return true解锁成功，false解锁失败。

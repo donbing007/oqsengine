@@ -6,13 +6,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import org.junit.Ignore;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import org.junit.Ignore;
 
 /**
+ * metamanager mock.
+ *
  * @author dongbin
  * @version 0.1 2021/3/18 15:12
  * @since 1.8
@@ -57,7 +58,7 @@ public class MockMetaManager implements MetaManager {
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-            .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())

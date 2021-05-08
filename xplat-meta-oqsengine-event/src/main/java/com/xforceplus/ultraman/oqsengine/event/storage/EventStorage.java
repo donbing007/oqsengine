@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.event.storage;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
-
 import java.util.Optional;
 
 /**
  * 事件储存.
- * <p>
  * 实现必须保证事件不能弹出,已弹出的事件不可再次弹出.
  * 由于使用场景,必须保证并发安全.
  *

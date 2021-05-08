@@ -4,20 +4,22 @@ import java.util.Objects;
 
 /**
  * 表示实际条件结点.
+ *
  * @author dongbin
  * @version 0.1 2020/2/20 16:08
  * @since 1.8
  */
-public class ValueConditionNode extends ConditionNode {
+public class ValueConditionNode extends AbstractConditionNode {
 
-    /**
+    /*
      * 条件设置
      */
     private Condition condition;
 
     /**
-     * 构造方法
-     * @param condition
+     * 构造方法.
+     *
+     * @param condition 条件.
      */
     public ValueConditionNode(Condition condition) {
         super(null, null);
@@ -25,17 +27,14 @@ public class ValueConditionNode extends ConditionNode {
     }
 
     /**
-     * 获取条件信息
-     * @return
+     * 获取条件信息.
+     *
+     * @return 条件.
      */
     public Condition getCondition() {
         return condition;
     }
 
-    /**
-     * toString方法
-     * @return
-     */
     @Override
     public String toString() {
         if (isClosed()) {

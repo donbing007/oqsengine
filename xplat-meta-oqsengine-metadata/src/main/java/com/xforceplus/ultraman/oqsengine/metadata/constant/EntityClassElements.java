@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.constant;
 
 /**
- * desc :
- * name : EntityClassElements
+ * 元信息属性定义.
  *
- * @author : xujia
- * date : 2021/2/16
+ * @author : xujia 2021/2/16
  * @since : 1.8
  */
 public class EntityClassElements {

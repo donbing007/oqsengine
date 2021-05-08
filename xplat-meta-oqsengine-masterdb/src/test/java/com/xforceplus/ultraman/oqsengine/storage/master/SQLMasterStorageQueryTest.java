@@ -83,7 +83,7 @@ public class SQLMasterStorageQueryTest {
         .withId(1001)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-        .withConfig(FieldConfig.Builder.aFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -129,7 +129,7 @@ public class SQLMasterStorageQueryTest {
         .withId(2001)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.Builder.aFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -186,7 +186,7 @@ public class SQLMasterStorageQueryTest {
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
-        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -324,7 +324,7 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l0-long").get(), 138293))
             ),
             l0EntityClass,
-            SelectConfig.Builder.aSelectConfig().withSort(Sort.buildOutOfSort()).withCommitId(0).build());
+            SelectConfig.Builder.anSelectConfig().withSort(Sort.buildOutOfSort()).withCommitId(0).build());
         transactionManager.getCurrent().get().rollback();
         transactionManager.finish();
 
@@ -349,7 +349,7 @@ public class SQLMasterStorageQueryTest {
             Collection<EntityRef> refs = null;
             try {
                 refs = storage.select(c.conditions, c.entityClass,
-                    SelectConfig.Builder.aSelectConfig()
+                    SelectConfig.Builder.anSelectConfig()
                         .withDataAccessFitlerCondtitons(c.filterConditions).withCommitId(0).withSort(c.sort).build());
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);

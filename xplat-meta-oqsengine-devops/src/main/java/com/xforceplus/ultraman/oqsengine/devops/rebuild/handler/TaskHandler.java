@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
-
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import java.util.Optional;
 
 /**
@@ -51,5 +50,5 @@ public interface TaskHandler {
      */
     int getProgressPercentage();
 
-    IDevOpsTaskInfo devOpsTaskInfo();
+    DevOpsTaskInfo devOpsTaskInfo();
 }

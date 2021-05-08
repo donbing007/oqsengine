@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.commit;
 
 /**
  * 提交号的帮助工具.
+ *
  * @author dongbin
  * @version 0.1 2020/11/11 17:31
  * @since 1.8
@@ -31,6 +32,7 @@ public class CommitHelper {
 
     /**
      * 给出表示未提交的临时提交号.
+     *
      * @return 临时提交号.
      */
     public static long getUncommitId() {

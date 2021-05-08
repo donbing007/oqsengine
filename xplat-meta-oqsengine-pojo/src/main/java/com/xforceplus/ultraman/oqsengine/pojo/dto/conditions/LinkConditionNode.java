@@ -10,10 +10,10 @@ import java.util.Objects;
  * @version 0.1 2020/2/20 15:58
  * @since 1.8
  */
-public class LinkConditionNode extends ConditionNode {
+public class LinkConditionNode extends AbstractConditionNode {
 
-    /**
-     * 条件连接方式
+    /*
+     * 条件连接方式.
      */
     private ConditionLink link;
     private boolean shadow;
@@ -23,13 +23,9 @@ public class LinkConditionNode extends ConditionNode {
     private LinkConditionNode actual;
 
     /**
-     * 构造方法
-     *
-     * @param l
-     * @param r
-     * @param link
+     * 构造方法.
      */
-    public LinkConditionNode(ConditionNode l, ConditionNode r, ConditionLink link) {
+    public LinkConditionNode(AbstractConditionNode l, AbstractConditionNode r, ConditionLink link) {
         super(l, r);
         this.link = link;
         this.shadow = false;
@@ -76,19 +72,14 @@ public class LinkConditionNode extends ConditionNode {
     }
 
     /**
-     * 获取连接方式
+     * 获取连接方式.
      *
-     * @return
+     * @return 连接符号.
      */
     public ConditionLink getLink() {
         return link;
     }
-
-    /**
-     * toString方法
-     *
-     * @return
-     */
+    
     @Override
     public String toString() {
         StringBuilder buff = new StringBuilder();
@@ -144,8 +135,8 @@ public class LinkConditionNode extends ConditionNode {
             return false;
         }
 
-        ConditionNode left = getLeft();
-        ConditionNode otherLeft = other.getLeft();
+        AbstractConditionNode left = getLeft();
+        AbstractConditionNode otherLeft = other.getLeft();
         if ((left == null && otherLeft != null) || (left != null && otherLeft == null)) {
             return false;
         }
@@ -153,8 +144,8 @@ public class LinkConditionNode extends ConditionNode {
         if (!left.equals(otherLeft)) {
             return false;
         }
-        ConditionNode right = getRight();
-        ConditionNode othetRight = other.getRight();
+        AbstractConditionNode right = getRight();
+        AbstractConditionNode othetRight = other.getRight();
         if ((right == null && othetRight != null) || (right != null && othetRight == null)) {
             return false;
         }

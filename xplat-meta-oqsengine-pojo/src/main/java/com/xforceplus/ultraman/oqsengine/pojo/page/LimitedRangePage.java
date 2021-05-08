@@ -22,11 +22,11 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
     /**
      * 左边行号限制.
      */
-    private long _rangeL;
+    private long rangeL;
     /**
      * 右边行号限制.
      */
-    private long _rangeR;
+    private long rangeR;
 
     /**
      * 以默认参数构造一个限定行号的分页对象.
@@ -34,8 +34,8 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
      */
     public LimitedRangePage() {
         super();
-        _rangeL = 1;
-        _rangeR = 10;
+        rangeL = 1;
+        rangeR = 10;
     }
 
     /**
@@ -59,8 +59,8 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
                     "Range of data errors, the left can not be equal to the "
                             + "right of the line number line number.");
         }
-        _rangeL = rangeL;
-        _rangeR = rangeR;
+        this.rangeL = rangeL;
+        this.rangeR = rangeR;
     }
 
     /**
@@ -100,15 +100,15 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
      */
     private PageScope limitRange(PageScope scope) {
         long oldStart = scope.startLine;
-        long oldEnd = scope.endLine;
 
-        scope.startLine = oldStart + _rangeL - 1;
-        scope.endLine = oldStart + _rangeR - 1;
+        scope.startLine = oldStart + rangeL - 1;
+        scope.endLine = oldStart + rangeR - 1;
 
         if (scope.startLine < oldStart) {
             scope.startLine = oldStart;
         }
 
+        long oldEnd = scope.endLine;
         if (scope.endLine > oldEnd) {
             scope.endLine = oldEnd;
         }
@@ -127,8 +127,8 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
     public void readExternal(ObjectInput in)
             throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        _rangeL = in.readLong();
-        _rangeR = in.readLong();
+        rangeL = in.readLong();
+        rangeR = in.readLong();
     }
 
     /**
@@ -140,8 +140,8 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        out.writeLong(_rangeL);
-        out.writeLong(_rangeR);
+        out.writeLong(rangeL);
+        out.writeLong(rangeR);
     }
 
     /**
@@ -155,10 +155,10 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
         boolean superEquals = super.equals(obj);
         if (superEquals) {
             final LimitedRangePage other = (LimitedRangePage) obj;
-            if (this._rangeL != other._rangeL) {
+            if (this.rangeL != other.rangeL) {
                 return false;
             }
-            if (this._rangeR != other._rangeR) {
+            if (this.rangeR != other.rangeR) {
                 return false;
             }
         }
@@ -173,8 +173,8 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
     @Override
     public int hashCode() {
         int hash = super.hashCode();
-        hash = 89 * hash + (int) (this._rangeL ^ (this._rangeL >>> 32));
-        hash = 89 * hash + (int) (this._rangeR ^ (this._rangeR >>> 32));
+        hash = 89 * hash + (int) (this.rangeL ^ (this.rangeL >>> 32));
+        hash = 89 * hash + (int) (this.rangeR ^ (this.rangeR >>> 32));
         return hash;
     }
 }

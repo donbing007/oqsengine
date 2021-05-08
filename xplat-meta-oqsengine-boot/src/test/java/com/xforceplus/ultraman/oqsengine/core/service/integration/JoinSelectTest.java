@@ -20,7 +20,22 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import org.junit.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -28,14 +43,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 关联查询集成测试.
@@ -118,8 +125,6 @@ public class JoinSelectTest {
     /**
      * 驱动实体为空,主实体有一条记录.
      * 应该返回空记录.
-     *
-     * @throws Exception
      */
     @Test
     public void testDriverEmpty() throws Exception {
@@ -201,8 +206,6 @@ public class JoinSelectTest {
 
     /**
      * 测试驱动实例超出设定上限.
-     *
-     * @throws Exception
      */
     @Test(expected = SQLException.class)
     public void testDriverInstanceLimitExceeded() throws Exception {
@@ -231,7 +234,7 @@ public class JoinSelectTest {
     private void initData() throws SQLException {
 
         long txid = transactionManagementService.begin(300000);
-        /**
+        /*
          * 总共会有1003个驱动实例.
          * 除了最开始的2个,剩余的1001个会被一起命中.
          */
@@ -243,8 +246,7 @@ public class JoinSelectTest {
                     Arrays.asList(
                         new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 1L)
                     )
-                )).build()
-            ,
+                )).build(),
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockMetaManager.driverEntityClass.ref())
                 .withMajor(OqsVersion.MAJOR)
@@ -271,7 +273,7 @@ public class JoinSelectTest {
 
         buildEntities(driverEntities, txid);
 
-        /**
+        /*
          * 两个实例,分别和驱动实例中的第一个和第二个关联.
          */
         entities = new ArrayList<>(Arrays.asList(
@@ -287,10 +289,10 @@ public class JoinSelectTest {
                             new LongValue(MockMetaManager.l2EntityClass.field("l1-long").get(), 1000L)
                         )
                         .addValue(
-                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(), driverEntities.get(0).id())
+                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(),
+                                driverEntities.get(0).id())
                         )
-                ).build()
-            ,
+                ).build(),
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
                 .withMajor(OqsVersion.MAJOR)
@@ -303,12 +305,13 @@ public class JoinSelectTest {
                             new LongValue(MockMetaManager.l2EntityClass.field("l1-long").get(), 2000L)
                         )
                         .addValue(
-                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(), driverEntities.get(1).id())
+                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(),
+                                driverEntities.get(1).id())
                         )
                 ).build()
         ));
 
-        /**
+        /*
          * 除第0个和第1个以外的所有驱动实例关联.
          */
         entities.add(
@@ -324,7 +327,8 @@ public class JoinSelectTest {
                             new LongValue(MockMetaManager.l2EntityClass.field("l1-long").get(), 3000L)
                         )
                         .addValue(
-                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(), driverEntities.get(3).id())
+                            new LongValue(MockMetaManager.l2EntityClass.field("l2-driver.id").get(),
+                                driverEntities.get(3).id())
                         )
                 ).build()
         );

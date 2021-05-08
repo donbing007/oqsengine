@@ -13,18 +13,20 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
-
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple multi-local transaction implementation ensures atomicity before the commit,
@@ -106,10 +108,10 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                        new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
-                                new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
+                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                        new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
 
-                /**
+                /*
                  * 主库事务为主事务,成功与否决定了OQS事务是否成功.
                  * 索引事务不会影响OQS事务的成功与否,如果索引事务发生错误最终由CDC来最终达成一致.
                  */
@@ -136,7 +138,7 @@ public class MultiLocalTransaction implements Transaction {
 
                     commitIdStatusService.save(commitId, true);
 
-                    /**
+                    /*
                      * 事务中存在更新操作,需要等待提交号同步.
                      */
                     if (accumulator.getReplaceNumbers() > 0 || accumulator.getDeleteNumbers() > 0) {
@@ -145,16 +147,14 @@ public class MultiLocalTransaction implements Transaction {
 
                         if (logger.isDebugEnabled()) {
                             logger.debug(
-                                "The transaction {} contains an update operation, the wait commit number {} " +
-                                    "synchronizes successfully. Wait {} milliseconds.",
+                                "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
                                 id, commitId, waitMs);
                         }
                     } else {
 
                         if (logger.isDebugEnabled()) {
                             logger.debug(
-                                "Transaction {} has no update operation, no need to wait for " +
-                                    "the commit number {} to synchronize successfully.",
+                                "Transaction {} has no update operation, no need to wait for the commit number {} to synchronize successfully.",
                                 id, commitId
                             );
                         }
@@ -164,8 +164,8 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                        new ActualEvent(EventType.TX_COMMITED,
-                                new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
+                    new ActualEvent(EventType.TX_COMMITED,
+                        new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
             } else {
 
                 if (logger.isDebugEnabled()) {
@@ -173,8 +173,8 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                        new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
-                                new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
+                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                        new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
 
             }
 
@@ -193,8 +193,8 @@ public class MultiLocalTransaction implements Transaction {
         check();
 
         eventBus.notify(
-                new ActualEvent(EventType.TX_PREPAREDNESS_ROLLBACK,
-                        new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
+            new ActualEvent(EventType.TX_PREPAREDNESS_ROLLBACK,
+                new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
 
         try {
             List<SQLException> exHolder = new ArrayList<>(transactionResourceHolder.size());
@@ -209,8 +209,8 @@ public class MultiLocalTransaction implements Transaction {
             throwSQLExceptionIfNecessary(exHolder);
 
             eventBus.notify(
-                    new ActualEvent(EventType.TX_ROLLBACKED,
-                            new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
+                new ActualEvent(EventType.TX_ROLLBACKED,
+                    new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
 
             cacheEventHandler.rollback(id);
         } finally {
@@ -317,12 +317,15 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public String toString() {
-        return "MultiLocalTransaction{" +
-            "id=" + id +
-            ", attachment=" + attachment +
-            ", committed=" + committed +
-            ", rollback=" + rollback +
-            '}';
+        final StringBuffer sb = new StringBuffer("MultiLocalTransaction{");
+        sb.append("id=").append(id);
+        sb.append(", attachment=").append(attachment);
+        sb.append(", committed=").append(committed);
+        sb.append(", rollback=").append(rollback);
+        sb.append(", msg='").append(msg).append('\'');
+        sb.append(", startMs=").append(startMs);
+        sb.append('}');
+        return sb.toString();
     }
 
     private void check() throws SQLException {
@@ -408,7 +411,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private long id;
@@ -424,7 +427,7 @@ public class MultiLocalTransaction implements Transaction {
         private Builder() {
         }
 
-        public static Builder aMultiLocalTransaction() {
+        public static Builder anMultiLocalTransaction() {
             return new Builder();
         }
 
@@ -473,6 +476,11 @@ public class MultiLocalTransaction implements Transaction {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public MultiLocalTransaction build() {
             MultiLocalTransaction multiLocalTransaction = new MultiLocalTransaction();
             multiLocalTransaction.committed = this.committed;

@@ -144,9 +144,9 @@ public class SQLBuildTest {
         expectErrorQueryCondition.setBatchId(1L);
         expectErrorQueryCondition.setId(Long.MAX_VALUE);
         expectErrorQueryCondition.setCommitId(2L);
-        expectErrorQueryCondition.setRangeLEExecuteTime(99L);
+        expectErrorQueryCondition.setRangeLeExecuteTime(99L);
         expectErrorQueryCondition.setRangeGeExecuteTime(1L);
-        expectErrorQueryCondition.setRangeLEFixedTime(200L);
+        expectErrorQueryCondition.setRangeLeFixedTime(200L);
         expectErrorQueryCondition.setRangeGeFixedTime(100L);
         expectErrorQueryCondition.setType(ErrorType.DATA_FORMAT_ERROR.getType());
         expectErrorQueryCondition.setStatus(FixedStatus.FIXED.getStatus());

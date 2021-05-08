@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.sql.SQLException;
 
 /**
@@ -16,6 +15,7 @@ public interface Storage {
 
     /**
      * Create a new Entity.
+     *
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
@@ -25,6 +25,7 @@ public interface Storage {
 
     /**
      * Replace the information of the target Entity.
+     *
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
@@ -34,6 +35,7 @@ public interface Storage {
 
     /**
      * Deletes an existing entity.
+     *
      * @param entity target entity.
      * @throws SQLException Storage error.
      */

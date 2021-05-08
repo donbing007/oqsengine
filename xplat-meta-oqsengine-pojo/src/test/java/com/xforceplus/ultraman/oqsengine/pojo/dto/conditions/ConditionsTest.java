@@ -6,16 +6,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Conditions Tester.
@@ -60,13 +59,14 @@ public class ConditionsTest {
                         ConditionOperator.NOT_EQUALS,
                         new LongValue(EntityField.CREATE_TIME_FILED, 3000L)
                     )
-                ).addOr(
-                new Condition(
-                    EntityField.CREATE_TIME_FILED,
-                    ConditionOperator.NOT_EQUALS,
-                    new LongValue(EntityField.CREATE_TIME_FILED, 5000L)
                 )
-            ),
+                .addOr(
+                    new Condition(
+                        EntityField.CREATE_TIME_FILED,
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(EntityField.CREATE_TIME_FILED, 5000L)
+                    )
+                ),
             true
         );
 
@@ -81,7 +81,7 @@ public class ConditionsTest {
             c -> buff.append(c.toString())
         );
 
-        /**
+        /*
          * 验证不能将影子结点返回.
          */
         Assert.assertFalse(shadow.get());
@@ -167,6 +167,7 @@ public class ConditionsTest {
             new Conditions(wrongCondition);
             Assert.fail("Attempt to add error condition, but no error.");
         } catch (IllegalArgumentException ex) {
+            ex.printStackTrace();
         }
 
         Condition correctCondition = new Condition(
@@ -181,6 +182,7 @@ public class ConditionsTest {
             conditions.addAnd(wrongCondition);
             Assert.fail("Attempt to add error condition, but no error.");
         } catch (IllegalArgumentException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -207,9 +209,9 @@ public class ConditionsTest {
                 )
             );
 
-        List<ConditionNode> nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
+        List<AbstractConditionNode> nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
         Assert.assertEquals(2, nodes.size());
-        String[] expectedStrings = new String[]{
+        String[] expectedStrings = new String[] {
             "c1 = 100",
             "c2 = 100 AND c3 = 100"
         };
@@ -223,7 +225,8 @@ public class ConditionsTest {
             ConditionOperator.EQUALS,
             new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L));
         Assert.assertEquals(expectedCondtiton,
-            ((ValueConditionNode) nodes.stream().filter(c -> Conditions.isValueNode(c)).findFirst().get()).getCondition());
+            ((ValueConditionNode) nodes.stream().filter(c -> Conditions.isValueNode(c)).findFirst().get())
+                .getCondition());
         Assert.assertEquals(ConditionLink.AND,
             ((LinkConditionNode) nodes.stream().filter(c -> Conditions.isLinkNode(c)).findFirst().get()).getLink());
 
@@ -253,7 +256,7 @@ public class ConditionsTest {
 
         nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
         Assert.assertEquals(3, nodes.size());
-        expectedStrings = new String[]{
+        expectedStrings = new String[] {
             "c1 = 100",
             "c2 = 100",
             "c3 = 100 AND c4 = 100"
@@ -281,7 +284,8 @@ public class ConditionsTest {
         Conditions expectedConditions = Conditions.buildEmtpyConditions()
             .addAnd(
                 new Condition(
-                    EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1).withEntityClassCode("driver").build(),
+                    EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1).withEntityClassCode("driver")
+                        .build(),
                     EntityField.CREATE_TIME_FILED,
                     ConditionOperator.EQUALS,
                     1L,
@@ -313,8 +317,7 @@ public class ConditionsTest {
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L))),
                 "c1 = 100"
-            )
-            ,
+            ),
             new Case(
                 new Conditions(
                     new Condition(
@@ -326,8 +329,7 @@ public class ConditionsTest {
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(1, "c2", FieldType.LONG), 100L))),
                 "AND c1 = 100 c2 = 100"
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
@@ -336,12 +338,10 @@ public class ConditionsTest {
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                         )
-                    )
-                    , false
+                    ), false
                 ),
                 "c1 = 100"
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -357,12 +357,10 @@ public class ConditionsTest {
                                 ConditionOperator.EQUALS,
                                 new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
-                        )
-                        , false
+                        ), false
                     ),
                 "AND c2 = 100 c1 = 100"
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -378,8 +376,7 @@ public class ConditionsTest {
                                 ConditionOperator.EQUALS,
                                 new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
-                        )
-                        , false
+                        ), false
                     ).addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
@@ -387,12 +384,10 @@ public class ConditionsTest {
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
                         )
-                    )
-                    , false
+                    ), false
                 ),
                 "OR(r) c2 = 100 AND c1 = 100 c3 = 100"
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -408,8 +403,7 @@ public class ConditionsTest {
                                 ConditionOperator.EQUALS,
                                 new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
-                        )
-                        , false
+                        ), false
                     ).addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
@@ -422,12 +416,10 @@ public class ConditionsTest {
                             new EntityField(3, "c3", FieldType.LONG),
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
-                    )
-                    , true
+                    ), true
                 ),
                 "OR(r) c2 = 100 AND c1 = 100 (AND c3 = 100 c3 = 200)"
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -443,8 +435,7 @@ public class ConditionsTest {
                                 ConditionOperator.EQUALS,
                                 new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
-                        )
-                        , false
+                        ), false
                     ).close().addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
@@ -457,8 +448,7 @@ public class ConditionsTest {
                             new EntityField(3, "c3", FieldType.LONG),
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
-                    )
-                    , true
+                    ), true
                 ),
                 "AND(r) (OR(r) c2 = 100 c1 = 100) (AND c3 = 100 c3 = 200)"
             )

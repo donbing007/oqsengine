@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,7 +12,6 @@ import java.util.Collections;
 
 /**
  * 创建数据执行器.
- * <p>
  * 目标字段列表如下.
  * id             bigint                not null comment '数据主键',
  * entityclassl0  bigint  default 0     not null comment '数据家族中在0层的entityclass标识',
@@ -75,7 +73,8 @@ public class BuildExecutor extends AbstractMasterExecutor<MasterStorageEntity, I
         }
     }
 
-    private int fullEntityClass(int startPos, PreparedStatement st, MasterStorageEntity masterStorageEntity) throws SQLException {
+    private int fullEntityClass(int startPos, PreparedStatement st, MasterStorageEntity masterStorageEntity)
+        throws SQLException {
         int pos = startPos;
         for (int i = 0; i < masterStorageEntity.getEntityClasses().length; i++) {
             st.setLong(pos++, masterStorageEntity.getEntityClasses()[i]);

@@ -1,5 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.ConditionHelper.toConditions;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.toEntity;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.toEntityField;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.toEntityUp;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.toOperationResult;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.err;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.notFound;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.ok;
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.other;
+import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
+
 import akka.grpc.javadsl.Metadata;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
@@ -15,24 +26,45 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountResponse;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountSingle;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponse;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponseList;
+import com.xforceplus.ultraman.oqsengine.sdk.CompatibleRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
+import com.xforceplus.ultraman.oqsengine.sdk.Filters;
+import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
+import com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectByTree;
+import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
@@ -40,14 +72,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.ConditionHelper.toConditions;
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.*;
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.*;
-import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
- * grpc server
+ * grpc server.
  */
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
@@ -62,7 +95,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private TransactionManagementService transactionManagementService;
 
     @Autowired
-    private CacheEventHandler iCacheEventHandler;
+    private CacheEventHandler cacheEventHandler;
 
     private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
 
@@ -126,23 +159,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setTransactionResult(String.valueOf(transId)).buildPartial());
+                .setCode(OperationResult.Code.OK)
+                .setTransactionResult(String.valueOf(transId)).buildPartial());
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return CompletableFuture.completedFuture(
-                    OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial());
+                OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial());
         }
     }
 
     /**
-     * TODO checkout the entityClassRef
-     *
-     * @param entityClassRef
-     * @return
+     * checkout the entityClassRef.
      */
     private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
         Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId());
@@ -158,17 +188,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         logger.error(throwable.getMessage(), throwable);
         //fast fail
         return OperationResult.newBuilder()
-                .setCode(OperationResult.Code.EXCEPTION)
-                .setMessage(Optional.ofNullable(throwable.getMessage()).orElseGet(throwable::toString))
-                .buildPartial();
+            .setCode(OperationResult.Code.EXCEPTION)
+            .setMessage(Optional.ofNullable(throwable.getMessage()).orElseGet(throwable::toString))
+            .buildPartial();
     }
 
     /**
-     * create
-     *
-     * @param in
-     * @param metadata
-     * @return
+     * create.
      */
     @Override
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
@@ -196,15 +222,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 IEntity entity = toEntity(entityClassRef, entityClass, in);
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.build(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                    entityManagementService.build(entity);
                 long txId = operationResult.getTxId();
                 long version = operationResult.getVersion();
                 ResultStatus resultStatus = operationResult.getResultStatus();
                 if (resultStatus == ResultStatus.SUCCESS) {
                     OperationResult.Builder builder = OperationResult.newBuilder()
-                            .addIds(entity.id())
-                            .addIds(txId)
-                            .addIds(version);
+                        .addIds(entity.id())
+                        .addIds(txId)
+                        .addIds(version);
 
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
                 } else {
@@ -213,9 +240,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -226,10 +253,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     * fill all empty field to empty
-     *
-     * @param entity
-     * @param entityClass
+     * fill all empty field to empty.
      */
     private void replaceEntity(IEntity entity, IEntityClass entityClass) {
         Collection<IEntityField> fields = entityClass.fields();
@@ -263,9 +287,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -279,54 +303,55 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.replace(entity);
+                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                    entityManagementService.replace(entity);
                 long txId = operationResult.getTxId();
                 int version = operationResult.getVersion();
                 ResultStatus replaceStatus = operationResult.getResultStatus();
                 switch (replaceStatus) {
                     case SUCCESS:
                         result = OperationResult.newBuilder()
-                                .setAffectedRow(1)
-                                .setCode(OperationResult.Code.OK)
-                                .addIds(txId)
-                                .addIds(version)
-                                .buildPartial();
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OK)
+                            .addIds(txId)
+                            .addIds(version)
+                            .buildPartial();
                         break;
                     case CONFLICT:
                         //send to sdk
                         result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.OTHER)
-                                .setMessage(ResultStatus.CONFLICT.name())
-                                .buildPartial();
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.OTHER)
+                            .setMessage(ResultStatus.CONFLICT.name())
+                            .buildPartial();
                         break;
                     case NOT_FOUND:
                         //send to sdk
                         result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.FAILED)
-                                .setMessage(NOT_FOUND("No record found."))
-                                .buildPartial();
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setMessage(notFound("No record found."))
+                            .buildPartial();
                         break;
 
                     default:
                         //unreachable code
                         result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.FAILED)
-                                .setMessage(
-                                        OTHER(String.format("Unknown response status %s.",
-                                                replaceStatus != null ? replaceStatus.name() : "NULL")))
-                                .buildPartial();
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setMessage(
+                                other(String.format("Unknown response status %s.",
+                                    replaceStatus != null ? replaceStatus.name() : "NULL")))
+                            .buildPartial();
                 }
 
 
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(err(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -338,11 +363,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     * TODO need to return affected ids
-     *
-     * @param in
-     * @param metadata
-     * @return
+     * need to return affected ids.
      */
     @Override
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
@@ -365,9 +386,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -402,7 +423,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, page);
                     } else {
                         entities = entitySearchService.selectByConditions(
-                                Conditions.buildEmtpyConditions(), entityClassRef, page);
+                            Conditions.buildEmtpyConditions(), entityClassRef, page);
                     }
                 } else {
                     FieldSortUp sortUp = sort.get(0);
@@ -415,10 +436,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, sortParam, page);
+                        entities =
+                            entitySearchService.selectByConditions(consOp.get(), entityClassRef, sortParam, page);
                     } else {
                         entities = entitySearchService.selectByConditions(
-                                Conditions.buildEmtpyConditions(), entityClassRef, page);
+                            Conditions.buildEmtpyConditions(), entityClassRef, page);
                     }
                 }
 
@@ -446,22 +468,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     });
 
                     result = OperationResult.newBuilder()
-                            .setAffectedRow(affected.intValue())
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                        .setAffectedRow(affected.intValue())
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
                 } else {
                     result = OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.OK)
-                            .setMessage(OK("No records have been updated."))
-                            .setAffectedRow(0)
-                            .buildPartial();
+                        .setCode(OperationResult.Code.OK)
+                        .setMessage(ok("No records have been updated."))
+                        .setAffectedRow(0)
+                        .buildPartial();
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(err(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -494,9 +516,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -505,8 +527,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 force = metadata.getText("force").orElse("false");
                 String finalForce = force;
                 logInfo(metadata, (displayname, username) ->
-                        String.format("Attempt to delete %s:%s by %s:%s with %s",
-                                in.getId(), in.getObjId(), displayname, username, finalForce));
+                    String.format("Attempt to delete %s:%s by %s:%s with %s",
+                        in.getId(), in.getObjId(), displayname, username, finalForce));
 
             } catch (Exception ex) {
                 logger.error("{}", ex);
@@ -516,10 +538,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
+                Entity targetEntity =
+                    Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                        entityManagementService.delete(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus deleteStatus = operationResult.getResultStatus();
@@ -527,76 +551,77 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     switch (deleteStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(1)
-                                    .setCode(OperationResult.Code.OK)
-                                    .addIds(txId)
-                                    .addIds(version)
-                                    .buildPartial();
+                                .setAffectedRow(1)
+                                .setCode(OperationResult.Code.OK)
+                                .addIds(txId)
+                                .addIds(version)
+                                .buildPartial();
                             break;
                         case CONFLICT:
                             //send to sdk
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OTHER)
-                                    .setMessage(ResultStatus.CONFLICT.name())
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.OTHER)
+                                .setMessage(ResultStatus.CONFLICT.name())
+                                .buildPartial();
                             break;
                         case NOT_FOUND:
                             //send to sdk
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OK)
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.OK)
+                                .buildPartial();
                             break;
                         default:
                             //unreachable code
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.FAILED)
-                                    .setMessage(
-                                            OTHER(String.format("Unknown response status %s.",
-                                                    deleteStatus != null ? deleteStatus.name() : "NULL")))
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setMessage(
+                                    other(String.format("Unknown response status %s.",
+                                        deleteStatus != null ? deleteStatus.name() : "NULL")))
+                                .buildPartial();
                     }
                 } else {
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                        entityManagementService.delete(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();
                     switch (resultStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(1)
-                                    .setCode(OperationResult.Code.OK)
-                                    .addIds(txId)
-                                    .addIds(version)
-                                    .buildPartial();
+                                .setAffectedRow(1)
+                                .setCode(OperationResult.Code.OK)
+                                .addIds(txId)
+                                .addIds(version)
+                                .buildPartial();
                             break;
                         case NOT_FOUND:
                             //send to sdk
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OK)
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.OK)
+                                .buildPartial();
                             break;
                         default:
                             //unreachable code
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.FAILED)
-                                    .setMessage(
-                                            OTHER(String.format("Unknown response status %s.",
-                                                    resultStatus != null ? resultStatus.name() : "NULL")))
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setMessage(
+                                    other(String.format("Unknown response status %s.",
+                                        resultStatus != null ? resultStatus.name() : "NULL")))
+                                .buildPartial();
                     }
                 }
 
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(ERR(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(err(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -630,9 +655,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -643,21 +668,21 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClassRef);
 
                 result = ds.map(entity -> OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .addQueryResult(toEntityUp(entity))
-                        .setTotalRow(1)
-                        .buildPartial()).orElseGet(() -> OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .setTotalRow(0)
-                        .buildPartial());
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .addQueryResult(toEntityUp(entity))
+                    .setTotalRow(1)
+                    .buildPartial()).orElseGet(() -> OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setTotalRow(0)
+                    .buildPartial());
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -670,11 +695,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     * TODO modify to use IEntityReader
-     *
-     * @param in
-     * @param metadata
-     * @return
+     * modify to use IEntityReader.
      */
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
@@ -698,9 +719,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -713,7 +734,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 List<FieldSortUp> sort = in.getSortList();
 
-                ConditionsUp conditions = in.getConditions();
 
                 int pageNo = in.getPageNo();
                 int pageSize = in.getPageSize();
@@ -730,7 +750,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 Optional<Conditions> extraCondition = Optional.empty();
-                if (in.hasField(SelectByCondition.getDescriptor().findFieldByNumber(SelectByCondition.TREE_FIELD_NUMBER))) {
+                if (in.hasField(
+                    SelectByCondition.getDescriptor().findFieldByNumber(SelectByCondition.TREE_FIELD_NUMBER))) {
                     SelectByTree tree = in.getTree();
                     Filters filters = tree.getFilters();
                     extraCondition = toConditions(entityClass, filters, metaManager);
@@ -748,38 +769,39 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 SearchConfig searchConfig = SearchConfig
-                        .Builder.aSearchConfig()
-                        .withSort(sortParam)
-                        .withPage(page)
-                        .withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions))
-                        .build();
+                    .Builder.anSearchConfig()
+                    .withSort(sortParam)
+                    .withPage(page)
+                    .withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions))
+                    .build();
 
+                Optional<Conditions> consOp = toConditions(
+                    entityClass, in.getConditions(), in.getIdsList(), metaManager);
 
-                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                 if (consOp.isPresent()) {
 
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, searchConfig);
                 } else {
                     entities = entitySearchService.selectByConditions(
-                            Conditions.buildEmtpyConditions(), entityClassRef, searchConfig);
+                        Conditions.buildEmtpyConditions(), entityClassRef, searchConfig);
                 }
 
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
-                                .stream().filter(Objects::nonNull)
-                                .map(EntityClassHelper::toEntityUp).collect(Collectors.toList()))
-                        .setTotalRow(page == null || !page.isReady() ?
-                                Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
-                                Long.valueOf(page.getTotalCount()).intValue())
-                        .buildPartial();
+                    .setCode(OperationResult.Code.OK)
+                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                        .stream().filter(Objects::nonNull)
+                        .map(EntityClassHelper::toEntityUp).collect(Collectors.toList()))
+                    .setTotalRow(page == null || !page.isReady()
+                        ? Optional.ofNullable(entities).orElseGet(Collections::emptyList).size()
+                        : Long.valueOf(page.getTotalCount()).intValue())
+                    .buildPartial();
 
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -800,15 +822,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.restore(id);
             transactionManagementService.commit();
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("Transaction committed successfully.")
-                    .buildPartial();
+                .setCode(OperationResult.Code.OK)
+                .setMessage("Transaction committed successfully.")
+                .buildPartial();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
+                .setCode(OperationResult.Code.EXCEPTION)
+                .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
     }
@@ -823,41 +845,35 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.restore(id);
             transactionManagementService.rollback();
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("Transaction rollback successful.")
-                    .buildPartial();
+                .setCode(OperationResult.Code.OK)
+                .setMessage("Transaction rollback successful.")
+                .buildPartial();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
+                .setCode(OperationResult.Code.EXCEPTION)
+                .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
     }
 
     /**
-     * TODO
-     *
-     * @param selectByTree
-     * @param metadata
-     * @return
+     * 未实现.
      */
     @Override
     public CompletionStage<OperationResult> selectByTreeFilter(SelectByTree selectByTree, Metadata metadata) {
         return asyncRead(() -> {
             return OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.UNRECOGNIZED)
-                    .setMessage("Not Implemented")
-                    .build();
+                .newBuilder()
+                .setCode(OperationResult.Code.UNRECOGNIZED)
+                .setMessage("Not Implemented")
+                .build();
         });
     }
 
     /**
-     * @param entityUp
-     * @param metadata
-     * @return
+     * SDK连接应该第一个调用的准备动作.
      */
     @Override
     public CompletionStage<OperationResult> prepare(EntityUp entityUp, Metadata metadata) {
@@ -868,16 +884,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             if (appId.isPresent() && env.isPresent()) {
                 int need = metaManager.need(appId.get(), env.get());
                 return OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .setMessage("OK:" + need)
-                        .build();
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setMessage("OK:" + need)
+                    .build();
             } else {
                 return OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.FAILED)
-                        .setMessage("FAILED: not registered")
-                        .build();
+                    .newBuilder()
+                    .setCode(OperationResult.Code.FAILED)
+                    .setMessage("FAILED: not registered")
+                    .build();
             }
         });
     }
@@ -886,10 +902,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectBySql(SelectBySql in, Metadata metadata) {
         return asyncRead(() -> {
             return OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.UNRECOGNIZED)
-                    .setMessage("Not Implemented")
-                    .build();
+                .newBuilder()
+                .setCode(OperationResult.Code.UNRECOGNIZED)
+                .setMessage("Not Implemented")
+                .build();
         });
     }
 
@@ -898,10 +914,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> compatible(CompatibleRequest compatibleRequest, Metadata metadata) {
         return asyncRead(() -> {
             return OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.UNRECOGNIZED)
-                    .setMessage("Not Implemented")
-                    .build();
+                .newBuilder()
+                .setCode(OperationResult.Code.UNRECOGNIZED)
+                .setMessage("Not Implemented")
+                .build();
         });
     }
 
@@ -916,15 +932,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             try {
                 List<ChangeVersion> changeVersions = queryStorage.queryChangelog(objId, isSelf, pageNo, pageSize);
                 return ChangelogResponseList.newBuilder().addAllResponse(changeVersions.stream().map(x ->
-                        ChangelogResponse
-                                .newBuilder()
-                                .setComment(Optional.ofNullable(x.getComment()).orElse(""))
-                                .setId(x.getId())
-                                .setSource(x.getSource())
-                                .setUsername(Optional.ofNullable(x.getUsername()).orElse(""))
-                                .setVersion(x.getVersion())
-                                .setTimestamp(x.getTimestamp())
-                                .build()).collect(Collectors.toList())).build();
+                    ChangelogResponse
+                        .newBuilder()
+                        .setComment(Optional.ofNullable(x.getComment()).orElse(""))
+                        .setId(x.getId())
+                        .setSource(x.getSource())
+                        .setUsername(Optional.ofNullable(x.getUsername()).orElse(""))
+                        .setVersion(x.getVersion())
+                        .setTimestamp(x.getTimestamp())
+                        .build()).collect(Collectors.toList())).build();
             } catch (SQLException e) {
                 logger.error("{}");
             }
@@ -951,7 +967,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     @Override
-    public CompletionStage<ChangelogCountResponse> changelogCount(ChangelogCountRequest changelogCountRequest, Metadata metadata) {
+    public CompletionStage<ChangelogCountResponse> changelogCount(ChangelogCountRequest changelogCountRequest,
+                                                                  Metadata metadata) {
         return asyncChangelog(() -> {
             List<Long> objIdList = changelogCountRequest.getObjIdList();
             boolean isSelf = changelogCountRequest.getIsSelf();
@@ -960,24 +977,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 List<ChangelogCountSingle> singleList = mapping.entrySet().stream().map(entry -> {
                     ChangelogCountSingle changelogCountSingle = ChangelogCountSingle
-                            .newBuilder()
-                            .setCount(entry.getValue())
-                            .setObjId(entry.getKey())
-                            .build();
+                        .newBuilder()
+                        .setCount(entry.getValue())
+                        .setObjId(entry.getKey())
+                        .build();
                     return changelogCountSingle;
                 }).collect(Collectors.toList());
 
                 ChangelogCountResponse changelogCountResponse = ChangelogCountResponse
-                        .newBuilder()
-                        .addAllCount(singleList)
-                        .build();
+                    .newBuilder()
+                    .addAllCount(singleList)
+                    .build();
                 return changelogCountResponse;
             } catch (SQLException ex) {
                 logger.error("{}", ex);
                 return ChangelogCountResponse
-                        .newBuilder()
-                        .addAllCount(Collections.emptyList())
-                        .build();
+                    .newBuilder()
+                    .addAllCount(Collections.emptyList())
+                    .build();
             }
         });
     }
@@ -995,11 +1012,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             if (!StringUtils.isEmpty(type)) {
                 eventType = EventType.valueOf(type);
             }
-            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType == null ? null : eventType.ordinal());
+            Collection<String> payloads = cacheEventHandler
+                .eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(),
+                    eventType == null ? null : eventType.ordinal());
             return OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
-                    .build();
+                .setCode(OperationResult.Code.OK)
+                .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
+                .build();
         });
     }
 
@@ -1008,9 +1027,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return transactionId.map(Long::valueOf);
     }
 
-    /**
-     * @param metadata
-     */
     private void logInfo(Metadata metadata, BiFunction<String, String, String> template) {
         String displayName = metadata.getText("display-name").orElse("noname");
         String userName = metadata.getText("username").orElse("noname");

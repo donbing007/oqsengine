@@ -8,24 +8,29 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
  * @version 0.1 2021/04/07 14:11
  * @since 1.8
  */
-public class ParentheseConditionNode extends ConditionNode {
+public class ParentheseConditionNode extends AbstractConditionNode {
 
-    private static ConditionNode LEFT = new ParentheseConditionNode(true);
-    private static ConditionNode RIGHT = new ParentheseConditionNode(false);
+    private static AbstractConditionNode LEFT = new ParentheseConditionNode(true);
+    private static AbstractConditionNode RIGHT = new ParentheseConditionNode(false);
 
     /**
      * true 表示左括号, false表示右括号.
      */
     private boolean left;
 
-    public static ConditionNode buildLeft() {
+    public static AbstractConditionNode buildLeft() {
         return LEFT;
     }
 
-    public static ConditionNode buildRight() {
+    public static AbstractConditionNode buildRight() {
         return RIGHT;
     }
 
+    /**
+     * 实例化.
+     *
+     * @param left true左手号,false右括号.
+     */
     public ParentheseConditionNode(boolean left) {
         super(null, null);
         this.left = left;

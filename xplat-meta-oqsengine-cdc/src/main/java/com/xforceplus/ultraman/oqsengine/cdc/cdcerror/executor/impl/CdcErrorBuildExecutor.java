@@ -3,19 +3,16 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
+import javax.sql.DataSource;
 
 /**
- * desc :
- * name : CdcErrorBuildExecutor
+ * cdc 错误信息创建执行器.
  *
- * @author : xujia
- * date : 2020/11/21
+ * @author xujia 2020/11/21
  * @since : 1.8
  */
 public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, Integer> {
@@ -32,7 +29,7 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
     public Integer execute(CdcErrorTask res) throws SQLException {
         String sql = buildSQL();
         try (Connection connection = getDataSource().getConnection();
-                        PreparedStatement st = connection.prepareStatement(sql)) {
+             PreparedStatement st = connection.prepareStatement(sql)) {
 
             int pos = 1;
             st.setLong(pos++, res.getSeqNo());
@@ -62,25 +59,25 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
     private String buildSQL() {
         StringBuilder buff = new StringBuilder();
         buff.append("INSERT INTO ").append(getTableName())
-                .append(' ')
-                .append("(")
-                .append(String.join(",",
-                            ErrorFieldDefine.SEQ_NO,
-                            ErrorFieldDefine.BATCH_ID,
-                            ErrorFieldDefine.ID,
-                            ErrorFieldDefine.ENTITY,
-                            ErrorFieldDefine.VERSION,
-                            ErrorFieldDefine.OP,
-                            ErrorFieldDefine.COMMIT_ID,
-                            ErrorFieldDefine.TYPE,
-                            ErrorFieldDefine.STATUS,
-                            ErrorFieldDefine.OPERATION_OBJECT,
-                            ErrorFieldDefine.MESSAGE,
-                            ErrorFieldDefine.EXECUTE_TIME,
-                            ErrorFieldDefine.FIXED_TIME)
-                ).append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(13, "?")))
-                .append(")");
+            .append(' ')
+            .append("(")
+            .append(String.join(",",
+                ErrorFieldDefine.SEQ_NO,
+                ErrorFieldDefine.BATCH_ID,
+                ErrorFieldDefine.ID,
+                ErrorFieldDefine.ENTITY,
+                ErrorFieldDefine.VERSION,
+                ErrorFieldDefine.OP,
+                ErrorFieldDefine.COMMIT_ID,
+                ErrorFieldDefine.TYPE,
+                ErrorFieldDefine.STATUS,
+                ErrorFieldDefine.OPERATION_OBJECT,
+                ErrorFieldDefine.MESSAGE,
+                ErrorFieldDefine.EXECUTE_TIME,
+                ErrorFieldDefine.FIXED_TIME)
+            ).append(") VALUES (")
+            .append(String.join(",", Collections.nCopies(13, "?")))
+            .append(")");
         return buff.toString();
     }
 }

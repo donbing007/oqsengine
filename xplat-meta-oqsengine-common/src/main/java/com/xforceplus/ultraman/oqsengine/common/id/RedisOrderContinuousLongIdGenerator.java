@@ -5,12 +5,11 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import io.micrometer.core.instrument.Metrics;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 /**
  * Continuous partial ID generator based on redis.
@@ -39,6 +38,13 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         this(redisClient, DEFAULT_KEY, supplier);
     }
 
+    /**
+     * 构造实例.
+     *
+     * @param redisClient redis 客户端实例.
+     * @param key         操作的key.
+     * @param supplier    初始化动作.
+     */
     public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String key, Supplier<Long> supplier) {
 
         this.key = key;

@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -43,6 +42,12 @@ public class FieldConfig implements Serializable {
             return symbol;
         }
 
+        /**
+         * 获得得实例.
+         *
+         * @param symbol 字面量.
+         * @return 实例.
+         */
         public static FieldSense getInstance(int symbol) {
             for (FieldSense sense : FieldSense.values()) {
                 if (sense.getSymbol() == symbol) {
@@ -61,15 +66,15 @@ public class FieldConfig implements Serializable {
     public enum FuzzyType {
         UNKNOWN(0),
         /**
-         * 不作处理
+         * 不作处理.
          */
         NOT(1),
         /**
-         * 通配符
+         * 通配符.
          */
         WILDCARD(2),
         /**
-         * 分词
+         * 分词.
          */
         SEGMENTATION(3);
 
@@ -83,6 +88,12 @@ public class FieldConfig implements Serializable {
             return symbol;
         }
 
+        /**
+         * 获得得实例.
+         *
+         * @param symbol 字面量.
+         * @return 实例.
+         */
         public static FuzzyType getInstance(int symbol) {
             for (FuzzyType type : FuzzyType.values()) {
                 if (type.getSymbol() == symbol) {
@@ -117,7 +128,7 @@ public class FieldConfig implements Serializable {
     private long min = Long.MIN_VALUE;
 
     /**
-     * 字段精度
+     * 字段精度.
      */
     @JsonProperty(value = "precision")
     private int precision = 0;
@@ -184,6 +195,15 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 精度.
+     *
+     * @return 精度.
+     */
+    public int precision() {
+        return precision;
+    }
+
+    /**
      * 设置是否可搜索,默认不搜索.
      *
      * @param searchable true 可搜索, false 不可搜索.
@@ -228,8 +248,8 @@ public class FieldConfig implements Serializable {
     /**
      * 模糊类型.
      *
-     * @param type
-     * @return
+     * @param type 模糊类型.
+     * @return 当前配置.
      */
     public FieldConfig fuzzyType(FuzzyType type) {
         this.fuzzyType = type;
@@ -266,14 +286,10 @@ public class FieldConfig implements Serializable {
     /**
      * 获取最小值.
      *
-     * @return
+     * @return 最小值.
      */
     public long getMin() {
         return min;
-    }
-
-    public int precision() {
-        return precision;
     }
 
     public String getDisplayType() {
@@ -316,6 +332,12 @@ public class FieldConfig implements Serializable {
         return splittable;
     }
 
+    /**
+     * 可剥离.
+     *
+     * @param splittable 可剥离.
+     * @return 当前配置.
+     */
     public FieldConfig splittable(boolean splittable) {
 
         this.splittable = splittable;
@@ -360,20 +382,20 @@ public class FieldConfig implements Serializable {
             return false;
         }
         FieldConfig that = (FieldConfig) o;
-        return isSearchable() == that.isSearchable() &&
-            getMax() == that.getMax() &&
-            getMin() == that.getMin() &&
-            precision() == that.precision() &&
-            isIdentifie() == that.isIdentifie() &&
-            isRequired() == that.isRequired() &&
-            isSplittable() == that.isSplittable() &&
-            getWildcardMinWidth() == that.getWildcardMinWidth() &&
-            getWildcardMaxWidth() == that.getWildcardMaxWidth() &&
-            getFieldSense() == that.getFieldSense() &&
-            Objects.equals(getValidateRegexString(), that.getValidateRegexString()) &&
-            Objects.equals(getDelimiter(), that.getDelimiter()) &&
-            Objects.equals(getDisplayType(), that.getDisplayType()) &&
-            getFuzzyType() == that.getFuzzyType();
+        return isSearchable() == that.isSearchable()
+            && getMax() == that.getMax()
+            && getMin() == that.getMin()
+            && precision() == that.precision()
+            && isIdentifie() == that.isIdentifie()
+            && isRequired() == that.isRequired()
+            && isSplittable() == that.isSplittable()
+            && getWildcardMinWidth() == that.getWildcardMinWidth()
+            && getWildcardMaxWidth() == that.getWildcardMaxWidth()
+            && getFieldSense() == that.getFieldSense()
+            && Objects.equals(getValidateRegexString(), that.getValidateRegexString())
+            && Objects.equals(getDelimiter(), that.getDelimiter())
+            && Objects.equals(getDisplayType(), that.getDisplayType())
+            && getFuzzyType() == that.getFuzzyType();
     }
 
     @Override
@@ -411,7 +433,7 @@ public class FieldConfig implements Serializable {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private boolean searchable = false;
@@ -433,7 +455,7 @@ public class FieldConfig implements Serializable {
         private Builder() {
         }
 
-        public static Builder aFieldConfig() {
+        public static Builder anFieldConfig() {
             return new Builder();
         }
 
@@ -512,6 +534,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
             fieldConfig.validateRegexString = this.validateRegexString;

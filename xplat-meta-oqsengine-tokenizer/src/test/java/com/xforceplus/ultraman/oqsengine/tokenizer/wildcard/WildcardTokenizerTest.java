@@ -1,16 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer.wildcard;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-
 /**
  * WildcardTokenizer Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/15/2021
  * @since <pre>Mar 15, 2021</pre>
  */
@@ -36,7 +39,8 @@ public class WildcardTokenizerTest {
             }
 
             Assert.assertEquals(
-                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(), c.expectedWords.size());
+                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(),
+                c.expectedWords.size());
 
             for (String word : wordList) {
                 Assert.assertTrue("", c.expectedWords.contains(word));
@@ -49,18 +53,15 @@ public class WildcardTokenizerTest {
             new Case(
                 "ab",
                 Arrays.asList()
-            )
-            ,
+            ),
             new Case(
                 "abc",
                 Arrays.asList()
-            )
-            ,
+            ),
             new Case(
                 "abcd",
                 Arrays.asList("abc", "bcd")
-            )
-            ,
+            ),
             new Case(
                 "中英文hello world混合",
                 Arrays.asList(

@@ -1,170 +1,85 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.model;
 
-
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 /**
- * desc :
- * name : TaskInfo
+ * 任务描述.
  *
- * @author : xujia
- * date : 2020/8/24
- * @since : 1.8
+ * @author xujia 2020/9/9
+ * @since 1.8
  */
-public class DevOpsTaskInfo implements IDevOpsTaskInfo {
-    private long maintainid;
-    private long entity;
-    private long starts;
-    private long ends;
-    private int batchSize;
-    private volatile int finishSize;
-    private volatile int status;
-    private long createTime;
-    private long updateTime;
-    private String message = "";
-    private long startId;
-    private IEntityClass entityClass;
+public interface DevOpsTaskInfo {
+    /**
+     * 任务唯一编号.
+     *
+     * @return 任务唯一编号.
+     */
+    String id();
 
-    private int failedRecovers;
+    /**
+     * 任务是否完成了.
+     *
+     * @return true 完成.false没有完成.
+     */
+    boolean isDone();
 
-    public DevOpsTaskInfo() {
-    }
+    /**
+     * 任务是否已经取消.
+     *
+     * @return true 取消.false没有取消.
+     */
+    boolean isCancel();
 
-    public DevOpsTaskInfo(long maintainid, IEntityClass entity, long starts, long ends) {
-        this(maintainid, entity.id(), starts, ends, 0, 0,
-                BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
-        this.entityClass = entity;
-    }
+    /**
+     * 任务状态.
+     *
+     * @return true 取消.false没有取消.
+     */
+    BatchStatus status();
 
-    public DevOpsTaskInfo(long maintainid, long entity, long starts, long ends, int batchSize, int finishSize,
-                          int status, long createTime, long updateTime) {
-        this.maintainid = maintainid;
-        this.entity = entity;
-        this.starts = starts;
-        this.ends = ends;
-        this.batchSize = batchSize;
-        this.finishSize = finishSize;
-        this.status = status;
-        this.createTime = createTime;
-        this.updateTime = updateTime;
-    }
+    /**
+     * 返回任务进度百分比.
+     *
+     * @return 百分比0-100.
+     */
+    int getProgressPercentage();
 
-    public long getMaintainid() {
-        return maintainid;
-    }
+    long getMaintainid();
 
-    public long getEntity() {
-        return entity;
-    }
+    long getEntity();
 
-    public long getStarts() {
-        return starts;
-    }
+    long getStarts();
 
-    public long getEnds() {
-        return ends;
-    }
+    long getEnds();
 
-    public int getStatus() {
-        return status;
-    }
+    int getStatus();
 
-    public void setStatus(int status) {
-        this.status = status;
-    }
+    IEntityClass getEntityClass();
 
-    public IEntityClass getEntityClass() {
-        return entityClass;
-    }
+    int getBatchSize();
 
-    public int getBatchSize() {
-        return batchSize;
-    }
+    int getFinishSize();
 
-    public int getFinishSize() {
-        return finishSize;
-    }
+    String message();
 
-    @Override
-    public String message() {
-        return message;
-    }
+    void resetMessage(String message);
 
-    @Override
-    public void resetMessage(String message) {
-        if (null != message) {
-            if (message.length() > 500) {
-                this.message = message.substring(0, 500);
-            } else {
-                this.message = message;
-            }
-        }
-    }
+    void resetStatus(int status);
 
-    public void resetStatus(int status) {
-        this.status = status;
-    }
+    void resetEntityClass(IEntityClass entityClass);
 
-    @Override
-    public void resetEntityClass(IEntityClass entityClass) {
-        this.entity = entityClass.id();
-        this.entityClass = entityClass;
-    }
+    void resetStartId(long startId);
 
-    @Override
-    public void resetStartId(long startId) {
-        this.startId = startId;
-    }
+    long startId();
 
-    @Override
-    public long startId() {
-        return startId;
-    }
+    void setBatchSize(int size);
 
-    public synchronized void setFinishSize(int finishSize) {
-        this.finishSize = finishSize;
-    }
+    int failedRecovers();
 
-    public synchronized void addFinishSize(int addSize) {
-        finishSize += addSize;
-    }
+    void resetFailedRecovers(int recovers);
 
-    @Override
-    public String id() {
-        return Long.toString(maintainid);
-    }
+    void setFinishSize(int size);
 
-    @Override
-    public boolean isDone() {
-        return status == BatchStatus.DONE.getCode();
-    }
-
-    @Override
-    public boolean isCancel() {
-        return status == BatchStatus.CANCEL.getCode();
-    }
-
-    @Override
-    public BatchStatus status() {
-        return BatchStatus.toBatchStatus(status);
-    }
-
-    @Override
-    public int getProgressPercentage() {
-        return 0 < batchSize ? (getFinishSize() * 100) / batchSize : 0;
-    }
-
-    @Override
-    public void setBatchSize(int size) {
-        this.batchSize = size;
-    }
-
-    public int failedRecovers() {
-        return failedRecovers;
-    }
-
-    public void resetFailedRecovers(int recovers) {
-        this.failedRecovers = recovers;
-    }
+    void addFinishSize(int addSize);
 }

@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExis
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.AnyDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.*;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.*;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLICATE_KEY_ERROR;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.Error.DUPLICATE_KEY_ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.EitherUtils.eitherRight;
 
 /**
@@ -116,9 +116,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     public TaskHandler resumeIndex(IEntityClass entityClass, String taskId, int currentRecovers) throws Exception {
 
         //  entityClass有其他的任务正在执行
-        Optional<IDevOpsTaskInfo> devOpsTaskInfoOp = sqlTaskStorage.selectUnique(Long.parseLong(taskId));
+        Optional<DevOpsTaskInfo> devOpsTaskInfoOp = sqlTaskStorage.selectUnique(Long.parseLong(taskId));
         if (devOpsTaskInfoOp.isPresent()) {
-            IDevOpsTaskInfo devOpsTaskInfo = devOpsTaskInfoOp.get();
+            DevOpsTaskInfo devOpsTaskInfo = devOpsTaskInfoOp.get();
             if (canResumeIndex(devOpsTaskInfo.getStatus())) {
 
                 devOpsTaskInfo.resetStatus(PENDING.getCode());
@@ -210,7 +210,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     @Override
     public Collection<TaskHandler> listActiveTasks(Page page) throws SQLException {
-        Collection<IDevOpsTaskInfo> taskInfoList = sqlTaskStorage.listActives(page);
+        Collection<DevOpsTaskInfo> taskInfoList = sqlTaskStorage.listActives(page);
 
         return (null != taskInfoList && EMPTY_COLLECTION_SIZE < taskInfoList.size()) ?
                 taskInfoList.stream().map(this::newTaskHandler).collect(Collectors.toList()) : new ArrayList<>();
@@ -218,7 +218,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     @Override
     public Optional<TaskHandler> getActiveTask(IEntityClass entityClass) throws SQLException {
-        Collection<IDevOpsTaskInfo> taskInfoCollection = sqlTaskStorage.selectActive(entityClass.id());
+        Collection<DevOpsTaskInfo> taskInfoCollection = sqlTaskStorage.selectActive(entityClass.id());
         if (MAX_ALLOW_ACTIVE < taskInfoCollection.size()) {
             throw new SQLException("more than 1 active task error.");
         }
@@ -230,7 +230,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     @Override
     public Collection<TaskHandler> listAllTasks(Page page) throws SQLException {
-        Collection<IDevOpsTaskInfo> taskInfoList = sqlTaskStorage.listAll(page);
+        Collection<DevOpsTaskInfo> taskInfoList = sqlTaskStorage.listAll(page);
 
         return (null != taskInfoList && EMPTY_COLLECTION_SIZE < taskInfoList.size()) ?
                 taskInfoList.stream().map(this::newTaskHandler).collect(Collectors.toList()) : new ArrayList<>();
@@ -241,7 +241,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return sqlTaskStorage.selectUnique(Long.parseLong(taskId)).map(this::newTaskHandler);
     }
 
-    private DataIterator<OriginalEntity> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild) throws Exception {
+    private DataIterator<OriginalEntity> initDataQueryIterator(DefaultDevOpsTaskInfo taskInfo, boolean isBuild) throws Exception {
 
         /**
          * 获得迭代器
@@ -253,7 +253,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             throw new DevopsTaskExistException("has no iterator to rebuild, current task will be error end!");
         }
 
-        Function<DevOpsTaskInfo, Either<SQLException, Integer>> func = null;
+        Function<DefaultDevOpsTaskInfo, Either<SQLException, Integer>> func = null;
         taskInfo.setBatchSize(dataQueryIterator.size());
         taskInfo.setStatus(RUNNING.getCode());
         if (isBuild) {
@@ -273,17 +273,17 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return dataQueryIterator;
     }
 
-    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> buildTask() {
+    private Function<DefaultDevOpsTaskInfo, Either<SQLException, Integer>> buildTask() {
         return sqlTaskStorage::build;
     }
 
-    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> resumeTask() {
+    private Function<DefaultDevOpsTaskInfo, Either<SQLException, Integer>> resumeTask() {
         return sqlTaskStorage::resumeTask;
     }
 
     private TaskHandler pending(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) {
         TaskHandler taskHandler = new DefaultDevOpsTaskHandler(sqlTaskStorage,
-                new DevOpsTaskInfo(
+                new DefaultDevOpsTaskInfo(
                         idGenerator.next(),
                         entityClass,
                         start.toInstant(zoneOffset).toEpochMilli(),
@@ -292,7 +292,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return taskHandler;
     }
 
-    private TaskHandler initResume(IEntityClass entityClass, IDevOpsTaskInfo devOpsTaskInfo) throws Exception {
+    private TaskHandler initResume(IEntityClass entityClass, DevOpsTaskInfo devOpsTaskInfo) throws Exception {
         if (devOpsTaskInfo.getEntity() != entityClass.id()) {
             throw new SQLException(String.format("task entity-id not match..., origin maintainId %d", devOpsTaskInfo.getEntity()));
         }
@@ -303,7 +303,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     private boolean execute(TaskHandler taskHandler, boolean isBuild) throws Exception {
         try {
             //  初始化迭代器
-            DevOpsTaskInfo devOpsTaskInfo = (DevOpsTaskInfo) taskHandler.devOpsTaskInfo();
+            DefaultDevOpsTaskInfo devOpsTaskInfo = (DefaultDevOpsTaskInfo) taskHandler.devOpsTaskInfo();
             DataIterator<OriginalEntity> iterator = initDataQueryIterator(devOpsTaskInfo, isBuild);
             if (null == iterator) {
                 return false;
@@ -374,7 +374,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         if (isDone) {
             logger.info("task done, maintainId {}, finish batchSize {}"
                     , taskHandler.devOpsTaskInfo().getMaintainid(), taskHandler.devOpsTaskInfo().getFinishSize());
-            ((DevOpsTaskInfo) taskHandler.devOpsTaskInfo()).setStatus(DONE.getCode());
+            ((DefaultDevOpsTaskInfo) taskHandler.devOpsTaskInfo()).setStatus(DONE.getCode());
         } else {
             logger.warn("task done error, task update finish status error, maintainId {}"
                     , taskHandler.devOpsTaskInfo().getMaintainid());
@@ -384,7 +384,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     private void error(TaskHandler taskHandler, String message) throws SQLException {
         BatchStatus batchStatus = ERROR;
-        DevOpsTaskInfo devOpsTaskInfo = (DevOpsTaskInfo) taskHandler.devOpsTaskInfo();
+        DefaultDevOpsTaskInfo devOpsTaskInfo = (DefaultDevOpsTaskInfo) taskHandler.devOpsTaskInfo();
 
         if (devOpsTaskInfo.isCancel()) {
             batchStatus = CANCEL;
@@ -395,11 +395,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         sqlTaskStorage.error(devOpsTaskInfo);
     }
 
-    private TaskHandler newTaskHandler(IDevOpsTaskInfo taskInfo) {
+    private TaskHandler newTaskHandler(DevOpsTaskInfo taskInfo) {
         return new DefaultDevOpsTaskHandler(sqlTaskStorage, taskInfo);
     }
 
-    private void consumer(DevOpsTaskInfo taskInfo, List<OriginalEntity> entityList) throws SQLException {
+    private void consumer(DefaultDevOpsTaskInfo taskInfo, List<OriginalEntity> entityList) throws SQLException {
 
         if (EMPTY_COLLECTION_SIZE < entityList.size()) {
             long startId = entityList.get(entityList.size() - 1).getId();

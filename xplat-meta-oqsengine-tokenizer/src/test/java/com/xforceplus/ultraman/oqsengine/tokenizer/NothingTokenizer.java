@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import java.util.Iterator;
 
 /**
+ * 什么都不做的分词.主要占位之用.
+ *
  * @author dongbin
  * @version 0.1 2021/3/16 11:58
  * @since 1.8

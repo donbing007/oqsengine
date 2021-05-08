@@ -4,14 +4,13 @@ import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
-
-
+import java.util.concurrent.ExecutorService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.concurrent.ExecutorService;
-
 /**
+ * 事件配置.
+ *
  * @author dongbin
  * @version 0.1 2021/3/24 15:54
  * @since 1.8

@@ -50,7 +50,7 @@ public class ValueWrapper {
                 long timestamp = Long.parseLong(value);
                 LocalDateTime time =
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
-                                DateTimeValue.zoneId);
+                                DateTimeValue.ZONE_ID);
                 return new DateTimeValue(null, time);
             case BOOLEAN:
                 boolean b = Boolean.parseBoolean(value);

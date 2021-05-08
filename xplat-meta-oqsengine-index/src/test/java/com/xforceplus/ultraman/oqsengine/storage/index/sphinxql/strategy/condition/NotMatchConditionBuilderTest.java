@@ -48,7 +48,7 @@ public class NotMatchConditionBuilderTest {
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            NotMatchConditionBuilder builder = new NotMatchConditionBuilder(
+            NotMatchConditionBuilderAbstract builder = new NotMatchConditionBuilderAbstract(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator());
 
             Assert.assertEquals(c.expected, builder.build(c.condition));

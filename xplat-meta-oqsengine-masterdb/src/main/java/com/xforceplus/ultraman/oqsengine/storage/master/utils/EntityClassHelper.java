@@ -20,7 +20,12 @@ public class EntityClassHelper {
         FieldDefine.ENTITYCLASS_LEVEL_4,
     };
 
-    // (entity0 = ? and entity1 = ? ....)
+    /**
+     * 构造类系统查询SQL.
+     *
+     * @param entityClass 目标entityClass.
+     * @return 查询SQL.
+     */
     public static String buildEntityClassQuerySql(IEntityClass entityClass) {
         StringBuilder buff = new StringBuilder();
         buff.append("(");

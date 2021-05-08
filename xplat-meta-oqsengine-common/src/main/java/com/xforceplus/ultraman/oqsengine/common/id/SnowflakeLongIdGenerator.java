@@ -25,6 +25,11 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
 
     private int node;
 
+    /**
+     * 实例化.
+     *
+     * @param nodeIdGenerator 结点ID生成器实例.
+     */
     public SnowflakeLongIdGenerator(NodeIdGenerator nodeIdGenerator) {
         int nodeId = nodeIdGenerator.next();
         if (nodeId < 0 || nodeId > MAX_NODE) {
@@ -73,10 +78,10 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             referenceTime = currentTime;
         }
 
-        return (currentTime - twepoch ) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+        return (currentTime - twepoch) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
     }
 
-    private Long timeGen(){
+    private Long timeGen() {
         return System.currentTimeMillis();
     }
 

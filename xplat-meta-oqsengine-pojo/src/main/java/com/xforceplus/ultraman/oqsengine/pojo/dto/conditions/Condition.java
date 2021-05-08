@@ -3,14 +3,13 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 查询条件配置对象
+ * 查询条件配置对象.
  *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
@@ -19,31 +18,31 @@ public class Condition implements Serializable {
 
     public static final long NO_RELATION = 0;
 
-    /**
+    /*
      * 条件字段属于的 entityClass.
      */
     private EntityClassRef entityClassRef;
-    /**
+    /*
      * 字段信息
      */
     private IEntityField field;
 
-    /**
+    /*
      * 标识出和主对象的关系标识.
      */
     private long relationId = NO_RELATION;
 
-    /**
+    /*
      * 条件值集合
      */
     private IValue[] values;
 
-    /**
-     * 操作符
+    /*
+     * 操作符.
      */
     private ConditionOperator operator;
 
-    /**
+    /*
      * 是否范围查询
      */
     private boolean range;
@@ -63,11 +62,12 @@ public class Condition implements Serializable {
      * 构造一个新的查询条件.
      *
      * @param entityClassRef 字段所属于的 entity 类型信息.
-     * @param field       字段.
-     * @param operator    比较符号.
-     * @param values      条件比较值列表.
+     * @param field          字段.
+     * @param operator       比较符号.
+     * @param values         条件比较值列表.
      */
-    public Condition(EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, long relationId, IValue... values) {
+    public Condition(EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, long relationId,
+                     IValue... values) {
         this.entityClassRef = entityClassRef;
         this.field = field;
         this.operator = operator;
@@ -152,11 +152,11 @@ public class Condition implements Serializable {
             return false;
         }
         Condition condition = (Condition) o;
-        return isRange() == condition.isRange() &&
-            Objects.equals(getEntityClassRef(), condition.getEntityClassRef()) &&
-            Objects.equals(getField(), condition.getField()) &&
-            Arrays.equals(getValues(), condition.getValues()) &&
-            getOperator() == condition.getOperator();
+        return isRange() == condition.isRange()
+            && Objects.equals(getEntityClassRef(), condition.getEntityClassRef())
+            && Objects.equals(getField(), condition.getField())
+            && Arrays.equals(getValues(), condition.getValues())
+            && getOperator() == condition.getOperator();
     }
 
     @Override

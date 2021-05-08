@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 
 /**
  * 含有OR同时含有范围查询.
@@ -39,14 +39,15 @@ public class HaveOrHaveRanageConditionsBuilder extends AbstractConditionsBuilder
 
                 Condition condition = valueNode.getCondition();
 
-                /**
+                /*
                  * 为了和 HaveOrNoRange 保持一致,所有含有OR的查询不能使用ID.
                  */
                 if (condition.getField().config().isIdentifie()) {
                     throw new IllegalArgumentException("Cannot use primary key queries in queries containing OR.");
                 }
 
-                SphinxQLConditionBuilder builder = getConditionQueryBuilderFactory().getQueryBuilder(condition, false);
+                AbstractSphinxQLConditionBuilder
+                    builder = getConditionQueryBuilderFactory().getQueryBuilder(condition, false);
                 where.addAttrFilter(builder.build(condition));
 
             },

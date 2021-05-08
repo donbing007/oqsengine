@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.metadata.recover.server.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
-
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,101 +12,117 @@ import java.util.List;
 
 
 /**
- * desc :
+ * desc :.
  * name : MockEntityClassSyncRspProtoBuilder
  *
- * @author : xujia
- * date : 2021/3/1
+ * @author : xujia 2021/3/1
  * @since : 1.8
  */
 public class MockEntityClassSyncRspProtoBuilder {
 
 
+    /**
+     * 生成同步响应.
+     */
     public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(long expectedId) {
 
         List<ExpectedEntityStorage> storages = mockSelfFatherAncestorsGenerate(expectedId);
         List<EntityClassInfo> entityClassInfos = new ArrayList<>();
         storages.forEach(
-                e -> {
-                    entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
-                            null != e.getAncestors() ? e.getAncestors().size() : 0));
-                }
+            e -> {
+                entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
+                    null != e.getAncestors() ? e.getAncestors().size() : 0));
+            }
         );
 
         return EntityClassSyncRspProto.newBuilder()
-                .addAllEntityClasses(entityClassInfos)
-                .build();
+            .addAllEntityClasses(entityClassInfos)
+            .build();
     }
 
+    /**
+     * 生成.
+     */
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
         entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
         entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
-//        relationInfos.add(relationInfo(id, id + 2, id, 0, id));
-//        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, 0, id + 1));
 
         return EntityClassInfo.newBuilder()
-                .setId(id)
-                .setVersion(1)
-                .setCode(id + "_level" + level + "_code")
-                .setName(id + "_level" + level + "_name")
-                .setFather(father)
-                .setLevel(level)
-                .addAllEntityFields(entityFieldInfos)
-                .addAllRelations(relationInfos)
-                .build();
+            .setId(id)
+            .setVersion(1)
+            .setCode(id + "_level" + level + "_code")
+            .setName(id + "_level" + level + "_name")
+            .setFather(father)
+            .setLevel(level)
+            .addAllEntityFields(entityFieldInfos)
+            .addAllRelations(relationInfos)
+            .build();
     }
 
+    /**
+     * 生成.
+     */
     public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
         return EntityFieldInfo.newBuilder()
-                .setId(id)
-                .setName(id + "_name")
-                .setCname(id + "_cname")
-                .setFieldType(fieldType)
-                .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, FieldConfig.MetaFieldSense.NORMAL))
-                .build();
+            .setId(id)
+            .setName(id + "_name")
+            .setCname(id + "_cname")
+            .setFieldType(fieldType)
+            .setDictId(id + "_dictId")
+            .setFieldConfig(fieldConfig(true, FieldConfig.MetaFieldSense.NORMAL))
+            .build();
     }
 
+    /**
+     * 生成.
+     */
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
-                .setId(id)
-                .setCode(id + "_name")
-                .setRightEntityClassId(entityId)
-                .setLeftEntityClassId(ownerId)
-                .setRelationType(relationType)
-                .setStrong(true)
-                .setEntityField(EntityFieldInfo.newBuilder()
-                        .setId(fieldId)
-                        .setFieldType(EntityFieldInfo.FieldType.LONG)
-                        .setName(fieldId + "_name")
-                        .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
-                        .build())
-                .setBelongToOwner(id % 2 == 0)
-                .build();
+            .setId(id)
+            .setCode(id + "_name")
+            .setRightEntityClassId(entityId)
+            .setLeftEntityClassId(ownerId)
+            .setRelationType(relationType)
+            .setStrong(true)
+            .setEntityField(EntityFieldInfo.newBuilder()
+                .setId(fieldId)
+                .setFieldType(EntityFieldInfo.FieldType.LONG)
+                .setName(fieldId + "_name")
+                .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
+                .build())
+            .setBelongToOwner(id % 2 == 0)
+            .build();
 
     }
 
-    public static FieldConfig
-    fieldConfig(boolean searchable, FieldConfig.MetaFieldSense systemFieldType) {
+    /**
+     * 生成.
+     */
+    public static FieldConfig fieldConfig(boolean searchable, FieldConfig.MetaFieldSense systemFieldType) {
         return FieldConfig.newBuilder()
-                .setSearchable(searchable)
-                .setIsRequired(true)
-                .setMetaFieldSense(systemFieldType)
-                .build();
+            .setSearchable(searchable)
+            .setIsRequired(true)
+            .setMetaFieldSense(systemFieldType)
+            .build();
 
     }
 
+    /**
+     * 生成.
+     */
     public static List<ExpectedEntityStorage> mockSelfFatherAncestorsGenerate(long id) {
         List<MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage> expectedEntityStorages = new ArrayList<>();
 
         long father = getFather(id);
         long anc = getAnc(id);
 
-        expectedEntityStorages.add(new MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage(id, father, Arrays.asList(father, anc)));
-        expectedEntityStorages.add(new MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage(father, anc, Collections.singletonList(anc)));
+        expectedEntityStorages
+            .add(new MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage(id, father, Arrays.asList(father, anc)));
+        expectedEntityStorages.add(
+            new MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage(father, anc, Collections.singletonList(anc)));
         expectedEntityStorages.add(new MockEntityClassSyncRspProtoBuilder.ExpectedEntityStorage(anc, 0L, null));
 
         return expectedEntityStorages;
@@ -119,6 +138,9 @@ public class MockEntityClassSyncRspProtoBuilder {
     }
 
 
+    /**
+     * 储存表示.
+     */
     public static class ExpectedEntityStorage {
         private List<Long> ancestors;
         private Long self;

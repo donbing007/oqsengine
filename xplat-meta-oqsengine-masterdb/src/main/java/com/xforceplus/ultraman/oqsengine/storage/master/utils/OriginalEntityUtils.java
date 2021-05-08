@@ -7,21 +7,22 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * desc :
- * name : OriginalEntityUtils
+ * 帮助类.
  *
- * @author : xujia
- * date : 2021/3/15
- * @since : 1.8
+ * @author xujia 2021/3/15
+ * @since 1.8
  */
 public class OriginalEntityUtils {
 
-    private static final ObjectMapper jsonMapper = JsonMapper.builder()
+    private static final ObjectMapper JSON_MAPPER = JsonMapper.builder()
         .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
         .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
         .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
@@ -34,9 +35,16 @@ public class OriginalEntityUtils {
         .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
         .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
+    /**
+     * 属性字符串表示解析为实际对象列表.
+     *
+     * @param attrStr 属性的字符串表示.
+     * @return 解析结果.
+     * @throws JsonProcessingException JSON解析失败.
+     */
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
-        Map<String, Object> keyValues = jsonMapper.readValue(attrStr, Map.class);
+        Map<String, Object> keyValues = JSON_MAPPER.readValue(attrStr, Map.class);
         keyValues.forEach(
             (k, v) -> {
                 attributes.add(k);
@@ -46,10 +54,20 @@ public class OriginalEntityUtils {
         return attributes;
     }
 
-    public static List<OriginalEntity> toOriginalEntity(MetaManager metaManager, String orgStr) throws JsonProcessingException {
+    /**
+     * 构造 OriginalEntity 实例列表.
+     *
+     * @param metaManager 元信息管理器.
+     * @param orgStr 原始JSON对象数据.
+     * @return 解析结果列表.
+     * @throws JsonProcessingException JSON错误.
+     */
+    public static List<OriginalEntity> toOriginalEntity(MetaManager metaManager, String orgStr)
+        throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                jsonMapper.readValue(orgStr, jsonMapper.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                JSON_MAPPER.readValue(orgStr,
+                    JSON_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);
@@ -59,9 +77,16 @@ public class OriginalEntityUtils {
         }
     }
 
+    /**
+     * 将 OriginalEntity 列表转换为JSON表示字符串.
+     *
+     * @param originalEntities 原始对象列表.
+     * @return JSON字符串表示.
+     * @throws JsonProcessingException JSON解析异常.
+     */
     public static String toOriginalEntityStr(List<OriginalEntity> originalEntities) throws JsonProcessingException {
         try {
-            return jsonMapper.writeValueAsString(
+            return JSON_MAPPER.writeValueAsString(
                 originalEntities.stream()
                     .map(RawOriginalEntity::toRawOriginalEntity)
                     .collect(Collectors.toList())

@@ -25,22 +25,26 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
     }
 
     public EntityRef(long id, int major, String orderValue) {
-        this.id = id;
-        this.major = major;
-        this.orderValue = orderValue;
+        this(id, 0, major, orderValue);
     }
 
+    public EntityRef(long id, int op, int major) {
+        this(id, op, major, null);
+    }
+
+    /**
+     * 实例化.
+     *
+     * @param id 实体标识.
+     * @param op 操作类型.
+     * @param major 大版本号.
+     * @param orderValue 排序值.
+     */
     public EntityRef(long id, int op, int major, String orderValue) {
         this.id = id;
         this.op = op;
         this.major = major;
         this.orderValue = orderValue;
-    }
-
-    public EntityRef(long id, int op, int major) {
-        this.id = id;
-        this.op = op;
-        this.major = major;
     }
 
     public long getId() {
@@ -84,10 +88,10 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
             return false;
         }
         EntityRef entityRef = (EntityRef) o;
-        return getId() == entityRef.getId() &&
-            getOp() == entityRef.getOp() &&
-            getMajor() == entityRef.getMajor() &&
-            Objects.equals(getOrderValue(), entityRef.getOrderValue());
+        return getId() == entityRef.getId()
+            && getOp() == entityRef.getOp()
+            && getMajor() == entityRef.getMajor()
+            && Objects.equals(getOrderValue(), entityRef.getOrderValue());
     }
 
     @Override

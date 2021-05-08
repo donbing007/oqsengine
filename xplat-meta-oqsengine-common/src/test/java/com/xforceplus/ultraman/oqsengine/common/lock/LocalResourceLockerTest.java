@@ -1,5 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.common.lock;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -7,16 +12,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * LocalResourceLocker Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/26/2020
  * @since <pre>Nov 26, 2020</pre>
  */

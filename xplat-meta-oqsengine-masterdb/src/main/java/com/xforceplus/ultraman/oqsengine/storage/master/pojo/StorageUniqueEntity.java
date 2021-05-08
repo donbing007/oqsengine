@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.pojo;
 import java.io.Serializable;
 
 /**
- * 版权：    上海云砺信息科技有限公司
+ * 版权：    上海云砺信息科技有限公司.
  * 创建者:   leo
  * 创建时间: 4/17/2020 10:20 AM
  * 功能描述:
@@ -17,7 +17,13 @@ public class StorageUniqueEntity implements Serializable {
     private long[] entityClasses;
     private String key;
 
-
+    /**
+     * 构造实例.
+     *
+     * @param id     目标id.
+     * @param entity 实体标识列表.
+     * @param key    资源key.
+     */
     public StorageUniqueEntity(long id, long[] entity, String key) {
         this.id = id;
         this.entityClasses = entity;
@@ -65,7 +71,7 @@ public class StorageUniqueEntity implements Serializable {
     }
 
     /**
-     *
+     * builder.
      */
     public static class StorageUniqueEntityBuilder {
         private long id;

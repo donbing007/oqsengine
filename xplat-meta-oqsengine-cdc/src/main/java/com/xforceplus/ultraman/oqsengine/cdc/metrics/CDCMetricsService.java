@@ -1,26 +1,27 @@
 package com.xforceplus.ultraman.oqsengine.cdc.metrics;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.COMMIT_ID_LOG_MAX_LOOPS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.COMMIT_ID_READY_CHECK_INTERVAL;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.READY_WARM_MAX_INTERVAL;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_INTERVAL;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_LOG_INTERVAL;
+
 import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import java.sql.SQLException;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_INTERVAL;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_LOG_INTERVAL;
-
 
 /**
- * desc :
+ * desc :.
  * name : CDCMetricsService
  *
- * @author : xujia
- * date : 2020/11/7
+ * @author : xujia 2020/11/7
  * @since : 1.8
  */
 public class CDCMetricsService {
@@ -38,6 +39,10 @@ public class CDCMetricsService {
         cdcMetrics = new CDCMetrics();
         shutdown = false;
     }
+
+    /**
+     * 开始记录.
+     */
     public void startMetrics() {
         logger.info("[cdc-metrics] start, it will start hearBeat thread");
         Thread heartBeat = new Thread(this::heartBeat);
@@ -46,6 +51,9 @@ public class CDCMetricsService {
         logger.info("[cdc-metrics] hearBeat thread start ok...");
     }
 
+    /**
+     * 心跳.
+     */
     public void heartBeat() {
         shutdown = false;
         long lastHeartBeatTime = 0;
@@ -77,6 +85,9 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
+    /**
+     * 回调通知成功.
+     */
     public void callBackSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
 
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
@@ -85,21 +96,30 @@ public class CDCMetricsService {
         logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp), originBatchId);
     }
 
+    /**
+     * 回调通知发生错误.
+     */
     public void callBackError(CDCStatus cdcStatus) {
         logger.warn("error, cdcStatus : {}", cdcStatus);
         cdcMetrics.getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
         callback();
     }
 
+    /**
+     * 备份.
+     */
     public void backup(CDCMetrics cdcMetrics) {
         try {
             cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
-            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batch : {}, unCommitMetrics : {}"
-                    , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics));
+            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batch : {}, unCommitMetrics : {}",
+                cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics));
         }
     }
 
+    /**
+     * 查询.
+     */
     public CDCMetrics query() throws SQLException {
         try {
             return cdcMetricsCallback.queryLastUnCommit();
@@ -108,6 +128,12 @@ public class CDCMetricsService {
         }
     }
 
+    /**
+     * 判断提交号是否已经准备完成.
+     * 没有准备将进行等待.
+     *
+     * @param commitId 提交号.
+     */
     public void isReadyCommit(long commitId) {
         long start = System.currentTimeMillis();
         int loops = 0;
@@ -133,8 +159,8 @@ public class CDCMetricsService {
                     recoverMonitor = true;
                     loops = 0;
                     logger.warn(
-                            "[cdc-metrics] loops for wait ready commit missed current check point (10s), commitId : {}"
-                            , commitId);
+                        "[cdc-metrics] loops for wait ready commit missed current check point (10s), commitId : {}",
+                        commitId);
 
                     //  输出NotReady指标
                     notReady(commitId);
@@ -146,8 +172,8 @@ public class CDCMetricsService {
                 logger.debug("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
             }
             if (duration > READY_WARM_MAX_INTERVAL) {
-                logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
-                        , commitId, duration);
+                logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms",
+                    commitId, duration);
             }
             if (recoverMonitor) {
                 //  恢复isReady指标
@@ -186,7 +212,7 @@ public class CDCMetricsService {
         } catch (Exception e) {
             try {
                 logger.error("[cdc-metrics] callback error, metrics : {}, message : {}",
-                                JSON.toJSON(cdcMetrics.getCdcAckMetrics()), e.getMessage());
+                    JSON.toJSON(cdcMetrics.getCdcAckMetrics()), e.getMessage());
             } catch (Exception ee) {
                 //  ignore
             }

@@ -3,13 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * 对象存在与否判断器.
+ *
  * @author dongbin
  * @version 0.1 2021/2/20 14:50
  * @since 1.8

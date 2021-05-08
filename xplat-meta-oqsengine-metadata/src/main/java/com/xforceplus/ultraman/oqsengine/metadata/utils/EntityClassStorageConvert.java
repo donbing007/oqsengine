@@ -1,37 +1,38 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ID;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_LEVEL;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
-
 /**
- * desc :
- * name : EntityClassStorageConvert
+ * 元信息序列化为储存JSON格式.
  *
- * @author : xujia
- * date : 2021/2/9
- * @since : 1.8
+ * @author xujia 2021/2/9
+ * @since 1.8
  */
 public class EntityClassStorageConvert {
 
     /**
-     * 将redis存储结构转为EntityClassStorage
-     * @param objectMapper
-     * @param keyValues
-     * @return
-     * @throws JsonProcessingException
+     * 将redis存储结构转为EntityClassStorage.
      */
-    public static EntityClassStorage redisValuesToLocalStorage(ObjectMapper objectMapper, Map<String, String> keyValues) throws JsonProcessingException {
+    public static EntityClassStorage redisValuesToLocalStorage(ObjectMapper objectMapper, Map<String, String> keyValues)
+        throws JsonProcessingException {
 
         if (0 == keyValues.size()) {
             throw new RuntimeException("entityClassStorage is null, may be delete.");
@@ -84,7 +85,7 @@ public class EntityClassStorageConvert {
         String ancestors = keyValues.remove(ELEMENT_ANCESTORS);
         if (null != ancestors && !ancestors.isEmpty()) {
             entityClassStorage.setAncestors(objectMapper.readValue(ancestors,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
+                objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
         } else {
             entityClassStorage.setAncestors(new ArrayList<>());
         }
@@ -93,7 +94,7 @@ public class EntityClassStorageConvert {
         String relations = keyValues.remove(ELEMENT_RELATIONS);
         if (null != relations && !relations.isEmpty()) {
             List<RelationStorage> relationStorageList = objectMapper.readValue(relations,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
+                objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
             entityClassStorage.setRelations(relationStorageList);
         } else {
             entityClassStorage.setRelations(new ArrayList<>());

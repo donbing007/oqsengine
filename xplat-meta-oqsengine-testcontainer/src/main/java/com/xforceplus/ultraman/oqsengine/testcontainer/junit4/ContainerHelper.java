@@ -4,12 +4,20 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarte
 import org.junit.runners.model.TestClass;
 
 /**
+ * 启动容器帮助类.
+ *
  * @author dongbin
  * @version 0.1 2020/12/25 18:32
  * @since 1.8
  */
 public class ContainerHelper {
 
+    /**
+     * 解析测试类需要容器类型.
+     *
+     * @param testClass 测试目标类.
+     * @return 容器类型列表.
+     */
     public static ContainerType[] parseContainers(TestClass testClass) {
         DependentContainers dc = testClass.getAnnotation(DependentContainers.class);
         if (dc == null) {
@@ -19,6 +27,12 @@ public class ContainerHelper {
         }
     }
 
+    /**
+     * 启动/关闭目标容器.
+     *
+     * @param type 容器类型.
+     * @param start true启动,false关闭.
+     */
     public static void processContainer(ContainerType type, boolean start) {
         switch (type) {
             case REDIS: {

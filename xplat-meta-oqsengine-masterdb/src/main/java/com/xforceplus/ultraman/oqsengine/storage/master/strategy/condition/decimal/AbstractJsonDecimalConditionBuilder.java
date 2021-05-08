@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * 浮点数条件查询构造器抽像.
+ *
  * @author dongbin
  * @version 0.1 2020/11/4 17:28
  * @since 1.8

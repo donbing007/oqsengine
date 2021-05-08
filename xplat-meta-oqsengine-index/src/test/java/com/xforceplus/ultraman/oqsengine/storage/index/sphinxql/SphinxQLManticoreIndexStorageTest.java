@@ -135,7 +135,7 @@ public class SphinxQLManticoreIndexStorageTest {
         .withId(Long.MAX_VALUE - 4)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.Builder.aFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -195,7 +195,7 @@ public class SphinxQLManticoreIndexStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -298,7 +298,7 @@ public class SphinxQLManticoreIndexStorageTest {
                     )
                 ),
             l2EntityClass,
-            SelectConfig.Builder.aSelectConfig().withPage(Page.newSinglePage(100)).build()
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
         );
         Assert.assertEquals(1, refs.size());
         Assert.assertEquals(target.getId(), refs.stream().findFirst().get().getId());
@@ -339,7 +339,7 @@ public class SphinxQLManticoreIndexStorageTest {
                     )
                 ),
             l2EntityClass,
-            SelectConfig.Builder.aSelectConfig().withPage(Page.newSinglePage(100)).build()
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
         );
         Assert.assertEquals(1, refs.size());
         Assert.assertEquals(target.getId(), refs.stream().findFirst().get().getId());
@@ -432,7 +432,7 @@ public class SphinxQLManticoreIndexStorageTest {
         // 查询id降序
         Page page = Page.newSinglePage(1000);
         Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.aSelectConfig()
+            SelectConfig.Builder.anSelectConfig()
                 .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
         Assert.assertEquals(initDatas.size(), refs.size());
         Assert.assertEquals(initDatas.size(), page.getTotalCount());
@@ -503,7 +503,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         page = Page.newSinglePage(1000);
         refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.aSelectConfig()
+            SelectConfig.Builder.anSelectConfig()
                 .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
         Assert.assertEquals(10 + 2 - 3, refs.size());
         Assert.assertEquals(10 + 2 - 3, page.getTotalCount());
@@ -519,7 +519,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         Page page = Page.newSinglePage(1000);
         Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.aSelectConfig().withPage(page).withCommitId(0).build());
+            SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
         Assert.assertEquals(0, refs.size());
         Assert.assertEquals(0, page.getTotalCount());
 
@@ -531,7 +531,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         page = Page.newSinglePage(1000);
         refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.aSelectConfig().withPage(page).withCommitId(0).build());
+            SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
         Assert.assertEquals(initDatas.size(), refs.size());
         Assert.assertEquals(initDatas.size(), page.getTotalCount());
     }

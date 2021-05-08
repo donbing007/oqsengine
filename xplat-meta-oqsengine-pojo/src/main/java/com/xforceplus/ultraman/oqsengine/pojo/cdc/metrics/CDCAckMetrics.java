@@ -3,16 +3,14 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * desc :
+ * desc :.
  * name : CDCMetrics
  *
- * @author : xujia
- * date : 2020/11/3
+ * @author : xujia 2020/11/3
  * @since : 1.8
  */
 public class CDCAckMetrics {

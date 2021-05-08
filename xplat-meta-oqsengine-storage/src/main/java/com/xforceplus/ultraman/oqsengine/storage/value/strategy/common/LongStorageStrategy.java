@@ -9,8 +9,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
-import java.util.Collection;
-
 /**
  * 长整形逻辑字段的储存通用策略.
  *

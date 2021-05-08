@@ -1,15 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-
 import java.util.Objects;
 
 /**
  * 表示操作结果.
  *
- * @author : xujia
- * date : 2021/4/8
- * @since : 1.8
+ * @author xujia 2021/4/8
+ * @since 1.8
  */
 public class OperationResult {
     private long txId;
@@ -18,6 +16,9 @@ public class OperationResult {
     private int eventType;
     private ResultStatus resultStatus;
 
+    /**
+     * 实例化.
+     */
     public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus) {
         this.txId = txId;
         this.version = version;
@@ -60,8 +61,12 @@ public class OperationResult {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         OperationResult that = (OperationResult) o;
         return txId == that.txId && entityId == that.entityId && version == that.version
             && eventType == that.eventType && resultStatus == that.resultStatus;

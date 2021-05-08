@@ -2,11 +2,10 @@ package com.xforceplus.ultraman.oqsengine.pojo.devops;
 
 
 /**
- * desc :
+ * desc :.
  * name : CdcErrorTask
  *
- * @author : xujia
- * date : 2020/11/21
+ * @author : xujia 2020/11/21
  * @since : 1.8
  */
 public class CdcErrorTask {
@@ -25,8 +24,12 @@ public class CdcErrorTask {
     private String message;
 
 
-    public static CdcErrorTask buildErrorTask(long seqNo, long batchId, long id, long entity, int version
-                                , int op, long commitId, int errorType, String operationObject, String message) {
+    /**
+     * 创建记录CDC错误任务.
+     */
+    public static CdcErrorTask buildErrorTask(
+        long seqNo, long batchId, long id, long entity, int version, int op, long commitId, int errorType,
+        String operationObject, String message) {
         CdcErrorTask cdcErrorTask = new CdcErrorTask();
         cdcErrorTask.setSeqNo(seqNo);
         cdcErrorTask.setBatchId(batchId);
@@ -40,8 +43,8 @@ public class CdcErrorTask {
         cdcErrorTask.setStatus(FixedStatus.NOT_FIXED.getStatus());
         cdcErrorTask.setExecuteTime(System.currentTimeMillis());
         cdcErrorTask.setFixedTime(DevOpsConstant.NOT_INIT_TIMESTAMP);
-        cdcErrorTask.setMessage(message.length() > DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH ?
-                message.substring(DevOpsConstant.DEFAULT_START_POS, DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH) : message);
+        cdcErrorTask.setMessage(message.length() > DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH
+            ? message.substring(DevOpsConstant.DEFAULT_START_POS, DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH) : message);
         return cdcErrorTask;
     }
 

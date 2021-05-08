@@ -1,27 +1,29 @@
 package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
-
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**
- * desc :
+ * desc :.
  * name : IValueUtils
  *
- * @author : xujia
- * date : 2021/4/13
+ * @author : xujia 2021/4/13
  * @since : 1.8
  */
 public class IValueUtils {
 
     /**
-     * serialize to String
-     *
-     * @param value
-     * @return
+     * serialize to String.
      */
     public static String serialize(IValue value) {
 
@@ -30,14 +32,14 @@ public class IValueUtils {
         }
 
         if (value instanceof StringValue
-                || value instanceof StringsValue
-                || value instanceof DecimalValue
-                || value instanceof EnumValue
-                || value instanceof BooleanValue
+            || value instanceof StringsValue
+            || value instanceof DecimalValue
+            || value instanceof EnumValue
+            || value instanceof BooleanValue
         ) {
             return value.valueToString();
         } else if (value instanceof LongValue
-                || value instanceof DateTimeValue) {
+            || value instanceof DateTimeValue) {
             return Long.toString(value.valueToLong());
         } else {
             return value.valueToString();
@@ -45,11 +47,7 @@ public class IValueUtils {
     }
 
     /**
-     * deserialize string to ivalue
-     *
-     * @param rawValue
-     * @param entityField
-     * @return
+     * deserialize string to ivalue.
      */
     public static IValue deserialize(String rawValue, IEntityField entityField) {
         IValue retValue = null;
@@ -71,8 +69,8 @@ public class IValueUtils {
             case DATETIME:
                 long timestamp = Long.parseLong(rawValue);
                 LocalDateTime time =
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
-                                DateTimeValue.zoneId);
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
+                        DateTimeValue.ZONE_ID);
                 retValue = new DateTimeValue(entityField, time);
                 break;
             case ENUM:

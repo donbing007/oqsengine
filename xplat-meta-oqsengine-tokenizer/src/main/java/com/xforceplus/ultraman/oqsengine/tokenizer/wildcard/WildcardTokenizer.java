@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.tokenizer.wildcard;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.tokenizer.EmptyWorkdsIterator;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
-
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -26,6 +25,11 @@ public class WildcardTokenizer implements Tokenizer {
         this(DEFAULT_WIDTH);
     }
 
+    /**
+     * 实例化.
+     *
+     * @param width 字符宽度.
+     */
     public WildcardTokenizer(int width) {
         this.width = width;
 
@@ -53,8 +57,12 @@ public class WildcardTokenizer implements Tokenizer {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof WildcardTokenizer)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof WildcardTokenizer)) {
+            return false;
+        }
         WildcardTokenizer that = (WildcardTokenizer) o;
         return width == that.width;
     }

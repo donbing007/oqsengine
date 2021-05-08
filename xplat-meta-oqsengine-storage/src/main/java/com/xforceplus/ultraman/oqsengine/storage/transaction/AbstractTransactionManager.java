@@ -5,9 +5,6 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
 import io.micrometer.core.instrument.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,14 +12,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 事务管理器抽像实现.
- * <p>
  * 事务分为创建,绑定,反绑定和提交几步.
  * 其中绑定和反绑定一定要重复出来.
- * <p>
- * TransactionManager tm = ...
+ *
+ * <p>TransactionManager tm = ...
  * Transaction tx = tm.create();
  * tm.bind(tx.id());
  * tru {
@@ -30,8 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * } finally {
  * tm.unbind();
  * }
- * <p>
- * rebind 在持主事务 id 的时候可以还原之前其他线程创建的事务现场.
+ *
+ * <p>rebind 在持主事务 id 的时候可以还原之前其他线程创建的事务现场.
  *
  * @author dongbin
  * @version 0.2 2020/7/2 13:58 现在事务在创建后不会直接绑定.
@@ -84,6 +82,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         this(3000);
     }
 
+    /**
+     * 实例化.
+     *
+     * @param survivalTimeMs 生存时间.
+     */
     public AbstractTransactionManager(int survivalTimeMs) {
 
         checkTimeout(survivalTimeMs);
@@ -130,13 +133,14 @@ public abstract class AbstractTransactionManager implements TransactionManager {
             transactionNumber.incrementAndGet();
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(), timeoutMs);
+                logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(),
+                    timeoutMs);
             }
 
 
         } catch (Exception ex) {
 
-            /**
+            /*
              * 在创建事务时发生意外错误时进行清理.
              */
             if (transaction != null) {
@@ -270,13 +274,13 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
         @Override
         public long notice(Transaction transaction) {
-            /**
+            /*
              * 进入这里表示事务已经超时,不能再被bind.所以直接从生存列表中移除.
              * 阻止 bind 成功,但是不影响已经 bind 的事务.
              */
             survival.remove(transaction.id());
 
-            /**
+            /*
              * 当出现在 using 中,那么表示事务正在被使用.
              * 等待处于非使用中的时候进行过期,但是此事务不能再进行bind了.
              */

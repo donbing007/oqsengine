@@ -5,18 +5,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * desc :
+ * desc :.
  * name : CacheEventHelper
  *
- * @author : xujia
- * date : 2021/4/13
+ * @author : xujia 2021/4/13
  * @since : 1.8
  */
 public class CacheEventHelper {
@@ -39,17 +37,20 @@ public class CacheEventHelper {
         return String.format("%s.%s", CUD_PAYLOAD_KEY_PREFIX, txIdString);
     }
 
-
-    public static CachePayload toCachePayload(EventType eventType, long txId, long number, IEntity entity, IEntity old) {
+    /**
+     * 转换成 cache 负载.
+     */
+    public static CachePayload toCachePayload(EventType eventType, long txId, long number, IEntity entity,
+                                              IEntity old) {
         CachePayload.Builder builder = CachePayload.Builder.anCacheValue()
-                .withTxId(txId)
-                .withId(entity.id())
-                .withClassId(entity.entityClassRef().getId())
-                .withVersion(entity.version())
-                .withNumber(number)
-                .withEventType(eventType)
-                .withTime(System.currentTimeMillis())
-                .withFieldValueMapping(toFieldValueMapping(entity));
+            .withTxId(txId)
+            .withId(entity.id())
+            .withClassId(entity.entityClassRef().getId())
+            .withVersion(entity.version())
+            .withNumber(number)
+            .withEventType(eventType)
+            .withTime(System.currentTimeMillis())
+            .withFieldValueMapping(toFieldValueMapping(entity));
         if (null != old) {
             builder.withOldFieldValueMapping(toFieldValueMapping(old));
         }
@@ -62,7 +63,8 @@ public class CacheEventHelper {
         if (null != entity.entityValue()) {
             Collection<IValue> values = entity.entityValue().values();
             if (null != values) {
-                return values.stream().collect(Collectors.toMap(f1 -> f1.getField().id(), IValueUtils::serialize, (f1, f2) -> f1));
+                return values.stream()
+                    .collect(Collectors.toMap(f1 -> f1.getField().id(), IValueUtils::serialize, (f1, f2) -> f1));
             }
         }
         return new HashMap<>();

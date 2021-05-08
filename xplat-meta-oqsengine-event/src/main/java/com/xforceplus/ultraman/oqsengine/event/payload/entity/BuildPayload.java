@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.payload.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -18,6 +17,13 @@ public class BuildPayload implements Serializable {
     private long number;
     private IEntity entity;
 
+    /**
+     * 实例化.
+     *
+     * @param txId 事务id.
+     * @param number 创建的数量.
+     * @param entity 创建的目标实体.
+     */
     public BuildPayload(long txId, long number, IEntity entity) {
         this.txId = txId;
         this.entity = entity;
@@ -38,8 +44,12 @@ public class BuildPayload implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         BuildPayload that = (BuildPayload) o;
         return txId == that.txId && number == that.number && Objects.equals(entity, that.entity);
     }
@@ -51,10 +61,10 @@ public class BuildPayload implements Serializable {
 
     @Override
     public String toString() {
-        return "BuildPayload{" +
-                "txId=" + txId +
-                ", number=" + number +
-                ", entity=" + entity +
-                '}';
+        return "BuildPayload{"
+            + "txId=" + txId
+            + ", number=" + number
+            + ", entity=" + entity
+            + '}';
     }
 }

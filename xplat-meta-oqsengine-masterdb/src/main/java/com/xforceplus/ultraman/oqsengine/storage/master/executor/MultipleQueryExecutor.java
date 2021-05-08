@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,7 +34,8 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
         super(tableName, resource);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, long timeout) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
+                                 long timeout) {
         super(tableName, resource, timeout);
         this.entityClass = entityClass;
     }
@@ -56,7 +56,7 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
             List<MasterStorageEntity> entities = new ArrayList<>(ids.length);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    MasterStorageEntity.Builder builder = MasterStorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder builder = MasterStorageEntity.Builder.anStorageEntity()
                         .withId(rs.getLong(FieldDefine.ID))
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withOp(rs.getInt(FieldDefine.OP))

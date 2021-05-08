@@ -7,11 +7,10 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 /**
  * 自动事务处理的执行器实现.
@@ -58,13 +57,13 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
         if (tx.isPresent()) {
             Optional<TransactionResource> currentRes = tx.get().query(dbKey);
             if (currentRes.isPresent()) {
-                /**
+                /*
                  * 已经存在资源,重用.
                  */
                 resource = currentRes.get();
             } else {
 
-                /**
+                /*
                  * 资源不存在,重新创建.
                  */
                 resource = buildResource(targetDataSource, dbKey, false);

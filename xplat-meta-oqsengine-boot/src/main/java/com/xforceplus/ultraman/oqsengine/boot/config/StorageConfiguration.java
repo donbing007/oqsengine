@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * 储存配置.
+ *
  * @author dongbin
  * @version 0.1 2020/2/24 17:02
  * @since 1.8
@@ -27,6 +29,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StorageConfiguration {
 
+    /**
+     * 主库存储存.
+     */
     @Bean
     public MasterStorage masterStorage(
         @Value("${storage.master.name:oqsbigentity}") String tableName,
@@ -37,6 +42,9 @@ public class StorageConfiguration {
         return storage;
     }
 
+    /**
+     * 索引存储存.
+     */
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
@@ -48,6 +56,9 @@ public class StorageConfiguration {
         return storage;
     }
 
+    /**
+     * 主库存储存策略工厂.
+     */
     @Bean
     public StorageStrategyFactory masterStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -56,6 +67,9 @@ public class StorageConfiguration {
         return storageStrategyFactory;
     }
 
+    /**
+     * 索引储存策略工厂.
+     */
     @Bean
     public StorageStrategyFactory indexStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

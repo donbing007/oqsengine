@@ -1,16 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * desc :
+ * desc :.
  * name : DoNothingCacheEventHandler
  *
- * @author : xujia
- * date : 2021/4/13
+ * @author : xujia 2021/4/13
  * @since : 1.8
  */
 public class DoNothingCacheEventHandler implements CacheEventHandler {

@@ -5,19 +5,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * desc :
- * name : BatchQueryCountExecutor
+ * 批量数量查询执行器.
  *
- * @author : xujia
- * date : 2020/11/18
- * @since : 1.8
+ * @author xujia 2020/11/18
+ * @since 1.8
  */
 public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Integer> {
 
@@ -25,6 +22,16 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Intege
     private long startTime;
     private long endTime;
 
+    /**
+     * 实例化.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param timeout 超时毫秒.
+     * @param entityClass 元信息.
+     * @param startTime 开始时间.
+     * @param endTime 结束时间.
+     */
     public BatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
                                    IEntityClass entityClass, long startTime, long endTime) {
         super(tableName, resource, timeout);
@@ -40,7 +47,7 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Intege
     }
 
     @Override
-    public Integer execute(Long aLong) throws SQLException {
+    public Integer execute(Long nothing) throws SQLException {
         String sql = buildCountSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);

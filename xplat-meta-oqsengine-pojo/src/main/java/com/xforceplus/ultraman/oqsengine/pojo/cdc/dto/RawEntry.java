@@ -1,16 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.dto;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * desc :
+ * desc :.
  * name : RawEntry
  *
- * @author : xujia
- * date : 2020/11/3
+ * @author : xujia 2020/11/3
  * @since : 1.8
  */
 public class RawEntry implements Serializable {
@@ -20,6 +18,9 @@ public class RawEntry implements Serializable {
     private long commitId;
     private List<CanalEntry.Column> columns;
 
+    /**
+     * 实例化.
+     */
     public RawEntry(long id, long commitId, long executeTime, List<CanalEntry.Column> columns) {
         this.id = id;
         this.commitId = commitId;

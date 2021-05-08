@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -107,9 +106,9 @@ public class SphinxQLWhere {
     /**
      * 增加附加的条件,只会处理条件过滤和全文匹配.
      *
-     * @param where
-     * @param and
-     * @return
+     * @param where 条件.
+     * @param and true 以 AND 连接, false 以 OR 连接.
+     * @return 当前实例.
      */
     public SphinxQLWhere addWhere(SphinxQLWhere where, boolean and) {
         boolean attrClose = false;
@@ -234,7 +233,8 @@ public class SphinxQLWhere {
                 if (buff.length() > 0) {
                     buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
                 }
-                buff.append("MATCH('@").append(FieldDefine.ENTITYCLASSF).append(" =").append(entityClass.id()).append("')");
+                buff.append("MATCH('@").append(FieldDefine.ENTITYCLASSF).append(" =").append(entityClass.id())
+                    .append("')");
             }
 
         }

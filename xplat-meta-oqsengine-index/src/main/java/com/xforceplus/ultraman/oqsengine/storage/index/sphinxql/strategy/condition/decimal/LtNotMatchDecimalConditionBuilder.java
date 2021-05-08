@@ -4,11 +4,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * 小于.
+ *
  * @author dongbin
  * @version 0.1 2020/3/26 14:20
  * @since 1.8
  */
-public class LtNotMatchDecimalConditionBuilder extends NotMatchDecimalConditionBuilder {
+public class LtNotMatchDecimalConditionBuilder extends AbstractNotMatchDecimalConditionBuilder {
 
     public LtNotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
         super(storageStrategyFactory, ConditionOperator.LESS_THAN);

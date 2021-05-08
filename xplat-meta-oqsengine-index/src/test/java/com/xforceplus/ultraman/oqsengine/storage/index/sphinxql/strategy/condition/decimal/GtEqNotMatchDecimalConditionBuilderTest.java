@@ -43,7 +43,8 @@ public class GtEqNotMatchDecimalConditionBuilderTest {
 
 	@Test
 	public void testBuild() throws Exception {
-		GtEqNotMatchDecimalConditionBuilder builder = new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory);
+		GtEqNotMatchDecimalConditionBuilder
+            builder = new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory);
 		IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
 		String conditionSql = builder.build(new Condition(field, ConditionOperator.GREATER_THAN_EQUALS,
 				new DecimalValue(field, new BigDecimal("123.456"))));

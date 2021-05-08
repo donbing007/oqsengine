@@ -3,17 +3,20 @@ package com.xforceplus.ultraman.oqsengine.tokenizer;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-
 /**
  * DefaultTokenizerFactory Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/16/2021
  * @since <pre>Mar 16, 2021</pre>
  */
@@ -33,7 +36,7 @@ public class DefaultTokenizerFactoryTest {
 
         IEntityField field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.aFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(7).build()).build();
@@ -47,7 +50,7 @@ public class DefaultTokenizerFactoryTest {
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.aFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();
@@ -67,7 +70,7 @@ public class DefaultTokenizerFactoryTest {
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.aFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();

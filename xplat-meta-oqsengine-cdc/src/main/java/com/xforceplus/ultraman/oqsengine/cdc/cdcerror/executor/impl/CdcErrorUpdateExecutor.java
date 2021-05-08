@@ -3,18 +3,15 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 /**
- * desc :
- * name : CdcErrorUpdateExecutor
+ * CDC error 更新执行器.
  *
- * @author : xujia
- * date : 2020/11/22
+ * @author xujia 2020/11/22
  * @since : 1.8
  */
 public class CdcErrorUpdateExecutor extends AbstractDevOpsExecutor<Long, Integer> {
@@ -25,8 +22,8 @@ public class CdcErrorUpdateExecutor extends AbstractDevOpsExecutor<Long, Integer
         this.fixedStatus = fixedStatus;
     }
 
-    public static CdcErrorExecutor<Long, Integer>
-                                build(String tableName, DataSource dataSource, long timeout, FixedStatus fixedStatus) {
+    public static CdcErrorExecutor<Long, Integer> build(
+        String tableName, DataSource dataSource, long timeout, FixedStatus fixedStatus) {
         return new CdcErrorUpdateExecutor(tableName, dataSource, timeout, fixedStatus);
     }
 
@@ -53,8 +50,8 @@ public class CdcErrorUpdateExecutor extends AbstractDevOpsExecutor<Long, Integer
     private String buildSQL() {
         StringBuilder buff = new StringBuilder();
         buff.append("UPDATE ")
-                .append(getTableName())
-                .append(" SET ").append(ErrorFieldDefine.STATUS).append("=").append("?");
+            .append(getTableName())
+            .append(" SET ").append(ErrorFieldDefine.STATUS).append("=").append("?");
 
         buff.append(", ").append(ErrorFieldDefine.FIXED_TIME).append("=").append("?");
 

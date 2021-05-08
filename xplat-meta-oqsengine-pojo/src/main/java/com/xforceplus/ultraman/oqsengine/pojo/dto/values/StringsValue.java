@@ -1,11 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
+ * 多值字符串逻辑值.
+ *
  * @author dongbin
  * @version 0.1 2020/3/27 18:24
  * @since 1.8
@@ -78,9 +79,6 @@ public class StringsValue extends AbstractValue<String[]> {
 
     @Override
     public String toString() {
-        return "StringValue{" +
-                "field=" + getField() +
-                ", value=" + Arrays.toString(this.getValue()) +
-                '}';
+        return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
     }
 }

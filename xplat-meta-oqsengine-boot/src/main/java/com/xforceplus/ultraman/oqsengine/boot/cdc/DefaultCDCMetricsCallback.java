@@ -5,15 +5,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import java.util.Optional;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.util.Map;
-import java.util.Optional;
-
 /**
- * cdc metrics callback
+ * cdc metrics callback.
  */
 public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
 

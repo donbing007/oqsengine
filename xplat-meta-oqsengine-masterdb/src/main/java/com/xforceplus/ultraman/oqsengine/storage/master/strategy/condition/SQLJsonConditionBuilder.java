@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator.MULTIPLE_EQUALS;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -14,8 +16,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator.MULTIPLE_EQUALS;
-
 /**
  * json的条件查询语句构造器.
  *
@@ -27,11 +27,18 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
 
     private FieldType fieldType;
     private ConditionOperator operator;
-    /**
+    /*
      * 物理逻辑转换策略工厂.
      */
     private StorageStrategyFactory storageStrategyFactory;
 
+    /**
+     * 构造基于JSON的条件查询构造器实例.
+     *
+     * @param fieldType 字段逻辑类型.
+     * @param operator 操作符.
+     * @param storageStrategyFactory 逻辑物理字段转换策略工厂实例.
+     */
     public SQLJsonConditionBuilder(
         FieldType fieldType, ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
         this.fieldType = fieldType;
@@ -79,7 +86,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
             return sql.toString();
         }
 
-        /**
+        /*
          * 为了突破JSON中长整形的上限,这里查询时需要转换成有符号数.
          */
         if (storageStrategy.storageType() == StorageType.LONG) {
@@ -88,7 +95,8 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
         // attr->>'$.attribute_name'
         sql.append(FieldDefine.ATTRIBUTE)
             .append("->>'$.")
-            .append(AnyStorageValue.ATTRIBUTE_PREFIX).append(storageStrategy.toStorageNames(field).stream().findFirst().get())
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX)
+            .append(storageStrategy.toStorageNames(field).stream().findFirst().get())
             .append("\'");
         if (storageStrategy.storageType() == StorageType.LONG) {
             sql.append(" AS SIGNED)");
@@ -161,9 +169,6 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
 
     /**
      * 处理sql中的需要转义字符.
-     *
-     * @param value
-     * @return
      */
     private String encode(String value) {
         StringBuilder buff = new StringBuilder();

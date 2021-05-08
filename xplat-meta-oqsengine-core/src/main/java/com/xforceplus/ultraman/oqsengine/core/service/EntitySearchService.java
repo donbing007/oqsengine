@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -35,7 +34,6 @@ public interface EntitySearchService {
      * @param ids            目标 id 列表.
      * @param entityClassRef 目标 entity 类型.
      * @return 实体列表.
-     * @throws SQLException
      */
     Collection<IEntity> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException;
 

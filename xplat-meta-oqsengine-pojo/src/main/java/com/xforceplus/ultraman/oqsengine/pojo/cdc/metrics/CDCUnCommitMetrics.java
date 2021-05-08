@@ -5,11 +5,10 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 import java.util.LinkedHashSet;
 
 /**
- * desc :
+ * desc :.
  * name : CDCUnCommitMetrics
  *
- * @author : xujia
- * date : 2020/11/7
+ * @author : xujia 2020/11/7
  * @since : 1.8
  */
 public class CDCUnCommitMetrics {

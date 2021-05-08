@@ -30,7 +30,6 @@ public class NoSelector<V> implements Selector<V> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<V> selects() {
         return null == fixed ? null : Collections.singletonList(fixed);
     }

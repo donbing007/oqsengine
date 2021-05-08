@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * meta manager
+ * meta manager.
  */
 @Configuration
 public class MetaManagerConfiguration {
@@ -26,8 +26,8 @@ public class MetaManagerConfiguration {
 
     @Bean
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
-    public ICacheExecutor cacheExecutor() {
-        return new CacheExecutor();
+    public CacheExecutor cacheExecutor() {
+        return new DefaultCacheExecutor();
     }
 
     @Bean
@@ -38,7 +38,7 @@ public class MetaManagerConfiguration {
 
     @Bean
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
-    public IDelayTaskExecutor iDelayTaskExecutor() {
+    public IDelayTaskExecutor delayTaskExecutor() {
         return new ExpireExecutor();
     }
 

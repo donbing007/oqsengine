@@ -3,12 +3,11 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * 清理执行器,这是特别的实现.会忽略所有事务.
@@ -26,14 +25,14 @@ public class CleanExecutor implements Executor<Long, Long> {
     static {
         StringBuilder buff = new StringBuilder();
         buff.append("DELETE FROM %s")
-                .append(" WHERE ")
-                .append(FieldDefine.MAINTAIN_ID).append(" != ?")
-                .append(" AND ")
-                .append(FieldDefine.UPDATE_TIME).append(" >= ?")
-                .append(" AND ")
-                .append(FieldDefine.UPDATE_TIME).append(" <= ?")
-                .append(" AND ")
-                .append("MATCH('(@").append(FieldDefine.ENTITYCLASSF).append(" =").append("\"%d\")')");
+            .append(" WHERE ")
+            .append(FieldDefine.MAINTAIN_ID).append(" != ?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" >= ?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" <= ?")
+            .append(" AND ")
+            .append("MATCH('(@").append(FieldDefine.ENTITYCLASSF).append(" =").append("\"%d\")')");
         sql = buff.toString();
     }
 
@@ -69,7 +68,7 @@ public class CleanExecutor implements Executor<Long, Long> {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private IEntityClass entityClass;
@@ -81,7 +80,7 @@ public class CleanExecutor implements Executor<Long, Long> {
         private Builder() {
         }
 
-        public static Builder aCleanExecutor() {
+        public static Builder anCleanExecutor() {
             return new Builder();
         }
 
@@ -110,6 +109,11 @@ public class CleanExecutor implements Executor<Long, Long> {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public CleanExecutor build() {
             CleanExecutor cleanExecutor = new CleanExecutor();
             cleanExecutor.end = this.end;

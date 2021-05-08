@@ -24,9 +24,9 @@ public interface IEntityField extends Comparable<IEntityField> {
     String name();
 
     /**
-     * 字段的中文名
+     * 字段的中文名.
      *
-     * @return
+     * @return 中文名称.
      */
     String cnName();
 
@@ -45,14 +45,14 @@ public interface IEntityField extends Comparable<IEntityField> {
     FieldConfig config();
 
     /**
-     * 获取枚举类型的字典id
+     * 获取枚举类型的字典id.
      *
      * @return 配置
      */
     String dictId();
 
     /**
-     * 获取默认值信息
+     * 获取默认值信息.
      *
      * @return 配置
      */

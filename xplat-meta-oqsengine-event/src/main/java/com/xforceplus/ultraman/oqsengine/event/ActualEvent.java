@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
 import java.util.Optional;
 
@@ -23,6 +22,13 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
     @JsonProperty(value = "time")
     private long time;
 
+    /**
+     * 实例化.
+     *
+     * @param type 事件类型.
+     * @param payload 负载.
+     * @param time 事件时间.
+     */
     public ActualEvent(EventType type, T payload, long time) {
         this.type = type;
         this.payload = payload;
@@ -30,9 +36,7 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
     }
 
     public ActualEvent(EventType type, T payload) {
-        this.type = type;
-        this.payload = payload;
-        this.time = System.currentTimeMillis();
+        this(type, payload, System.currentTimeMillis());
     }
 
     @Override
@@ -53,9 +57,9 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
     @Override
     public String toString() {
         return "ActualEvent{" +
-                "type=" + type +
-                ", payload=" + payload +
-                ", time=" + time +
-                '}';
+            "type=" + type +
+            ", payload=" + payload +
+            ", time=" + time +
+            '}';
     }
 }

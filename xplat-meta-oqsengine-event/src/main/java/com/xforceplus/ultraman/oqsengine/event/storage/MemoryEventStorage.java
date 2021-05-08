@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.storage;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
-
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Queue;

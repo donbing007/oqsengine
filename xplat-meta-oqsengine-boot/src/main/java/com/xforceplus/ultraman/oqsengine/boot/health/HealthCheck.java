@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import java.sql.SQLException;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
@@ -13,10 +15,9 @@ import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.sql.SQLException;
-
 /**
+ * 健康检查.
+ *
  * @author dongbin
  * @version 0.1 2020/4/1 15:17
  * @since 1.8
@@ -33,7 +34,7 @@ public class HealthCheck implements HealthIndicator {
     private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
 
     private Conditions conditions = Conditions.buildEmtpyConditions();
-    private SearchConfig config = SearchConfig.Builder.aSearchConfig().withPage(Page.emptyPage()).build();
+    private SearchConfig config = SearchConfig.Builder.anSearchConfig().withPage(Page.emptyPage()).build();
 
     @Override
     public Health health() {

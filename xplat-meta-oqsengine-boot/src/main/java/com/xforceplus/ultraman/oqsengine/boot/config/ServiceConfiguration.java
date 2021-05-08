@@ -22,6 +22,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ServiceConfiguration {
 
+    /**
+     * 实体搜索服务.
+     */
     @Bean
     public EntitySearchService entitySearchService(
         @Value("${query.maxVisibleTotalCount:10000}") long maxVisibleTotalCount,
@@ -37,6 +40,9 @@ public class ServiceConfiguration {
         return impl;
     }
 
+    /**
+     * 实体管理服务.
+     */
     @Bean
     public EntityManagementService entityManagementService(
         @Value("${sync.ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,

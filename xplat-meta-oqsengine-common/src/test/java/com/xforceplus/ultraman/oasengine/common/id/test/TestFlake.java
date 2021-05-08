@@ -1,17 +1,16 @@
 package com.xforceplus.ultraman.oasengine.common.id.test;
 
+import static org.junit.Assert.assertTrue;
+
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
  * snowflake 测试.
@@ -27,19 +26,19 @@ public class TestFlake {
         CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<>();
 
         IntStream.range(0, 500)
-                .mapToObj(i -> new Thread(() -> {
-                    Long id = generator.next();
-                    list.add(id);
-                    latch.countDown();
-                }))
-                .forEach(Thread::start);
+            .mapToObj(i -> new Thread(() -> {
+                Long id = generator.next();
+                list.add(id);
+                latch.countDown();
+            }))
+            .forEach(Thread::start);
 
-       latch.await();
+        latch.await();
 
         assertTrue("there is no duplicated id",
-                list.stream()
-                        .distinct()
-                    .collect(Collectors.toList()).size() == 500);
+            list.stream()
+                .distinct()
+                .collect(Collectors.toList()).size() == 500);
     }
 
 
@@ -50,15 +49,15 @@ public class TestFlake {
         List<Long> list = new ArrayList<>();
 
         IntStream.range(0, 2000)
-                .forEach(i -> {
-                    Long id = generator.next();
-                    list.add(id);
+            .forEach(i -> {
+                Long id = generator.next();
+                list.add(id);
 
-                });
+            });
 
         int size = list.stream()
-                .distinct()
-                .collect(Collectors.toList()).size();
+            .distinct()
+            .collect(Collectors.toList()).size();
 
 
         assertTrue(size == 2000);

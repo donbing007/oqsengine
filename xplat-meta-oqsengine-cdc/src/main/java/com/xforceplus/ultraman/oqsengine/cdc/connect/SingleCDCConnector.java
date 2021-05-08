@@ -1,18 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.alibaba.otter.canal.client.CanalConnectors;
-
 import java.net.InetSocketAddress;
 
 /**
- * desc :
- * name : SingleCDCConnector
+ * 非集群模式连接器.
  *
- * @author : xujia
- * date : 2020/11/5
+ * @author xujia 2020/11/5
  * @since : 1.8
  */
-public class SingleCDCConnector extends CDCConnector {
+public class SingleCDCConnector extends AbstractCDCConnector {
 
     public void init(String connectString, int port, String destination, String userName, String password) {
         canalConnector = CanalConnectors.newSingleConnector(new InetSocketAddress(connectString,

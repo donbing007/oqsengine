@@ -2,14 +2,13 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Entity结构对象
+ * Entity结构对象.
  *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
@@ -17,23 +16,19 @@ import java.util.stream.Collectors;
 public interface IEntityClass {
 
     /**
-     * 获得对象的id
+     * 获得对象的id.
      *
      * @return id
      */
     long id();
 
     /**
-     * 对象code
-     *
-     * @return
+     * 对象code.
      */
     String code();
 
     /**
      * 元信息名称.
-     *
-     * @return
      */
     String name();
 
@@ -52,21 +47,21 @@ public interface IEntityClass {
     int level();
 
     /**
-     * 关系信息的集合
+     * 关系信息的集合.
      *
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
     Collection<Relation> relations();
 
     /**
-     * 关系信息的集合(oqs内部使用)
+     * 关系信息的集合(oqs内部使用).
      *
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
     Collection<OqsRelation> oqsRelations();
 
     /**
-     * 获得本对象的关联对象
+     * 获得本对象的关联对象.
      *
      * @return 关联子对象, 最多一层.
      */
@@ -87,7 +82,7 @@ public interface IEntityClass {
     Collection<IEntityClass> family();
 
     /**
-     * 本对象的属性信息
+     * 本对象的属性信息.
      *
      * @return 字段列表.
      */
@@ -141,9 +136,7 @@ public interface IEntityClass {
     }
 
     /**
-     * 是否是一个动态的类型 默认是
-     *
-     * @return
+     * 是否是一个动态的类型 默认是.
      */
     default boolean isDynamic() {
         return true;

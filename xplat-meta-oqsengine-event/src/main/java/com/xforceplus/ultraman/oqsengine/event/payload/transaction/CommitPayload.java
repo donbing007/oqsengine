@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 事务事件的负载.
+ * 事务提交事件的负载.
  *
  * @author dongbin
  * @version 0.1 2021/3/24 15:03
@@ -65,12 +65,13 @@ public class CommitPayload implements Serializable {
 
     @Override
     public String toString() {
-        return "CommitPayload{" +
-                "txId=" + txId +
-                ", commitId=" + commitId +
-                ", msg='" + msg + '\'' +
-                ", readonly=" + readonly +
-                ", maxOpNumber=" + maxOpNumber +
-                '}';
+        final StringBuffer sb = new StringBuffer("CommitPayload{");
+        sb.append("txId=").append(txId);
+        sb.append(", commitId=").append(commitId);
+        sb.append(", msg='").append(msg).append('\'');
+        sb.append(", readonly=").append(readonly);
+        sb.append(", maxOpNumber=").append(maxOpNumber);
+        sb.append('}');
+        return sb.toString();
     }
 }

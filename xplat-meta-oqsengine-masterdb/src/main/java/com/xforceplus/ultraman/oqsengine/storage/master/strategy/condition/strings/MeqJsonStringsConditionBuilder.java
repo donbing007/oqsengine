@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * in 查询的构造器.
+ *
  * @author dongbin
  * @version 0.1 2020/11/10 11:30
  * @since 1.8

@@ -3,15 +3,12 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor;
 import java.sql.SQLException;
 
 /**
- * desc :
- * name : DevOpsExecutor
+ * cdc 错误信息执行处理器.
  *
- * @author : xujia
- * date : 2020/11/21
+ * @param <T> 请求.
+ * @param <R> 响应.
+ * @author xujia 2020/11/21
  * @since : 1.8
- * @param <R>
- * @param <T>
- *
  */
 public interface CdcErrorExecutor<T, R> {
 

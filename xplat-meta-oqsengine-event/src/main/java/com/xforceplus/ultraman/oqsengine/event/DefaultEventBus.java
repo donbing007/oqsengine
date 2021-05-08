@@ -2,14 +2,17 @@ package com.xforceplus.ultraman.oqsengine.event;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 /**
  * 默认的事件总线实现.
@@ -82,7 +85,7 @@ public class DefaultEventBus implements EventBus, Lifecycle {
     }
 
     /**
-     * 事件分配者
+     * 事件分配者.
      */
     private class Distributor implements Runnable {
 

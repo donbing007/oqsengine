@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
 /**
+ * 事件的优先级.
+ *
  * @author dongbin
  * @version 0.1 2021/3/24 10:52
  * @since 1.8

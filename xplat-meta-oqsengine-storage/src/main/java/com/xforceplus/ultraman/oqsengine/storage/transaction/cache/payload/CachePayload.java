@@ -2,16 +2,14 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-
 import java.io.Serializable;
 import java.util.Map;
 
 /**
- * desc :
+ * desc :.
  * name : CachePayload
  *
- * @author : xujia
- * date : 2021/4/12
+ * @author : xujia 2021/4/12
  * @since : 1.8
  */
 public class CachePayload implements Serializable {
@@ -20,47 +18,47 @@ public class CachePayload implements Serializable {
     private long classId;
 
     /**
-     * txId
+     * txId.
      */
     @JsonProperty(value = "txId")
     private long txId;
     /**
-     * entity的主键ID
+     * entity的主键ID.
      */
     @JsonProperty(value = "id")
     private long id;
     /**
-     * entity的当前版本
+     * entity的当前版本.
      */
     @JsonProperty(value = "version")
     private int version;
 
     /**
-     * entity的当前版本
+     * entity的当前版本.
      */
     @JsonProperty(value = "eventType")
     private EventType eventType;
 
     /**
-     * 事件发布时间
+     * 事件发布时间.
      */
     @JsonProperty(value = "time")
     private long time;
 
     /**
-     * entity在当前TX中的操作顺序
+     * entity在当前TX中的操作顺序.
      */
     @JsonProperty(value = "number")
     private long number;
 
     /**
-     * entity中的entityFieldId-value(toString)键值对
+     * entity中的entityFieldId-value(toString)键值对.
      */
     @JsonProperty(value = "fieldValueMapping")
     private Map<Long, String> fieldValueMapping;
 
     /**
-     * entity中的entityFieldId-value(toString)键值对
+     * entity中的entityFieldId-value(toString)键值对.
      */
     @JsonProperty(value = "oldFieldValueMapping")
     private Map<Long, String> oldFieldValueMapping;
@@ -106,7 +104,7 @@ public class CachePayload implements Serializable {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static class Builder {
         private long txId;
@@ -171,6 +169,9 @@ public class CachePayload implements Serializable {
             return this;
         }
 
+        /**
+         * 构造实例.
+         */
         public CachePayload build() {
             CachePayload value = new CachePayload();
             value.txId = this.txId;

@@ -23,6 +23,12 @@ public enum OperationType {
         return type;
     }
 
+    /**
+     * 获取实例.
+     *
+     * @param type 字面量.
+     * @return 实例.
+     */
     public static OperationType getInstance(int type) {
         switch (type) {
             case 1:

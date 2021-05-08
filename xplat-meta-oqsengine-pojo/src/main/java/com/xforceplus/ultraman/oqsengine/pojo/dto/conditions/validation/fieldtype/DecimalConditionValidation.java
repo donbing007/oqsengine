@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldty
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 
 /**
+ * 大浮点数校验.
+ *
  * @author dongbin
  * @version 0.1 2020/3/6 11:25
  * @since 1.8

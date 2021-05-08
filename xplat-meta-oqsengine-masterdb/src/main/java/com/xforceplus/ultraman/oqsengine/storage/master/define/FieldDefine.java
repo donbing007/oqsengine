@@ -82,7 +82,7 @@ public class FieldDefine {
     public static final String CREATE_TIME = "createtime";
 
     /**
-     * 修改时间
+     * 修改时间.
      */
     public static final String UPDATE_TIME = "updatetime";
 
@@ -101,7 +101,7 @@ public class FieldDefine {
     public static final String OQS_MAJOR = "oqsmajor";
 
     /**
-     * 业务主键字段
+     * 业务主键字段.
      */
     public static final String UNIQUE_KEY = "key";
 }

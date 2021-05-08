@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 
-import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.devops.AbstractDevOpsContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
@@ -21,8 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -40,7 +38,7 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
-public class RebuildIndexTest extends DevOpsAbstractContainer {
+public class RebuildIndexTest extends AbstractDevOpsContainer {
 
     private int totalSize = 1024;
     private int testResumeCount = 20000;
@@ -92,13 +90,13 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     @Test
     public void rebuildIndexSimple() throws Exception {
         //  初始化数据
-        boolean initOk = initData(prepareLongStringEntity(totalSize), longStringEntityClass);
+        boolean initOk = initData(prepareLongStringEntity(totalSize), LONG_STRING_ENTITY_CLASS);
 
         Assert.assertTrue(initOk);
         Thread.sleep(1_000);
         long expectSeconds = totalSize - 5;
 
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(longStringEntityClass,
+        TaskHandler taskHandler = taskExecutor.rebuildIndex(LONG_STRING_ENTITY_CLASS,
                 EntityGenerateTooBar.now,
                 EntityGenerateTooBar.now.plusSeconds(expectSeconds));
 
@@ -114,13 +112,13 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     @Test
     public void rebuildIndexDeleteSurPlus() throws Exception {
         int skip = 20;
-        boolean initOk = initData(prepareSurPlusNeedDeleteEntity(totalSize), surPlusEntityClass, skip);
+        boolean initOk = initData(prepareSurPlusNeedDeleteEntity(totalSize), SUR_PLUS_ENTITY_CLASS, skip);
 
         Assert.assertTrue(initOk);
 
         long expectedTasks = totalSize - skip;
 
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(surPlusEntityClass,
+        TaskHandler taskHandler = taskExecutor.rebuildIndex(SUR_PLUS_ENTITY_CLASS,
                 now,
                 now.plusSeconds(totalSize));
 
@@ -137,11 +135,11 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     public void resumeTest() throws Exception {
 
         //  初始化数据
-        boolean initOk = initData(preparePauseResumeEntity(testResumeCount), preparePauseResumeEntityClass, false);
+        boolean initOk = initData(preparePauseResumeEntity(testResumeCount), PREPARE_PAUSE_RESUME_ENTITY_CLASS, false);
 
         Assert.assertTrue(initOk);
 
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(preparePauseResumeEntityClass,
+        TaskHandler taskHandler = taskExecutor.rebuildIndex(PREPARE_PAUSE_RESUME_ENTITY_CLASS,
                 now, now.plusSeconds(testResumeCount));
 
         /*
@@ -168,7 +166,7 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
             taskHandler.cancel();
             Thread.sleep(2 * 1000);
 
-            taskHandler = taskExecutor.resumeIndex(preparePauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
+            taskHandler = taskExecutor.resumeIndex(PREPARE_PAUSE_RESUME_ENTITY_CLASS, taskHandler.devOpsTaskInfo().id(), 0);
 
             if (taskHandler instanceof DefaultDevOpsTaskHandler) {
                 Assert.assertNotNull(taskHandler.devOpsTaskInfo());

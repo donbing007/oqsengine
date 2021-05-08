@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
 /**
- * message decorator
+ * message decorator.
  */
 public class MessageDecorator {
 
@@ -13,19 +13,19 @@ public class MessageDecorator {
 
     public static final String OTHER = "666:";
 
-    public static String ERR(String message) {
+    public static String err(String message) {
         return ERROR.concat(message);
     }
 
-    public static String NOT_FOUND(String message) {
+    public static String notFound(String message) {
         return NOT_FOUND.concat(message);
     }
 
-    public static String OK(String message) {
+    public static String ok(String message) {
         return OK.concat(message);
     }
 
-    public static String OTHER(String message) {
+    public static String other(String message) {
         return OTHER.concat(message);
     }
 }

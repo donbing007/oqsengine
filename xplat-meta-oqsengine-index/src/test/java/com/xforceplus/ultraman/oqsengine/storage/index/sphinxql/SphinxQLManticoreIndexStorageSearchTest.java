@@ -126,7 +126,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 4)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.Builder.aFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -186,7 +186,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -267,7 +267,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         storage.select(
             Conditions.buildEmtpyConditions(),
             l2EntityClass,
-            SelectConfig.Builder.aSelectConfig()
+            SelectConfig.Builder.anSelectConfig()
                 .withPage(page)
                 .withCommitId(0)
                 .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
@@ -317,7 +317,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         )
                     ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
                     .build(),
@@ -336,7 +336,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "sort with value",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
                     .build(),
@@ -355,7 +355,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "empty",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.emptyPage())
                     .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -378,7 +378,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "order by id asc",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -390,7 +390,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "order by id desc",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -402,7 +402,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "first page",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(new Page(1, 5))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -415,7 +415,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "last page",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(new Page(2, 5))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -431,7 +431,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -449,7 +449,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -469,7 +469,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -488,7 +488,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -506,7 +506,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -526,7 +526,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -545,7 +545,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -563,7 +563,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -581,7 +581,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -601,7 +601,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l0-string").get(), "熊鹤轩")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -619,7 +619,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "301")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -637,7 +637,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "3012")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -655,7 +655,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "30125")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -673,7 +673,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "301250")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -691,7 +691,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringValue(l2EntityClass.field("l1-string").get(), "9301250")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -709,7 +709,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -727,7 +727,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -747,7 +747,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -771,7 +771,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("61894.0"))
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -790,7 +790,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -809,7 +809,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                         new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
                     )),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -822,7 +822,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 "update time desc",
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.UPDATE_TIME_FILED))
                     .build(),
@@ -850,7 +850,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     )
                 ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -876,7 +876,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     )
                 ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -904,7 +904,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     )
                 ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
@@ -931,7 +931,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     )
                 ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .withDataAccessFitlerCondtitons(
@@ -968,7 +968,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     )
                 ),
                 l2EntityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .withDataAccessFitlerCondtitons(

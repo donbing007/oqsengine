@@ -1,20 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.EmptyValue;
 
 /**
- * empty value will never use in real process
+ * 空值表示.
  */
 public class EmptyTypedValue extends AbstractValue {
 
+    private static final String NULL_VALUE = "NULL";
+
     public EmptyTypedValue(IEntityField field) {
-        super(field, EmptyValue.emptyValue);
+        super(field, NULL_VALUE);
     }
 
     @Override
     Object fromString(String value) {
-        return EmptyValue.emptyValue;
+        return NULL_VALUE;
     }
 
     @Override

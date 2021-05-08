@@ -7,13 +7,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-import org.junit.Ignore;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import org.junit.Ignore;
 
 /**
+ * MetaManager的Mock实现,为了单元测试准备.
+ *
  * @author dongbin
  * @version 0.1 2021/3/18 15:12
  * @since 1.8
@@ -58,7 +59,7 @@ public class MockMetaManager implements MetaManager {
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-            .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
@@ -104,7 +105,7 @@ public class MockMetaManager implements MetaManager {
                 .withId(Long.MAX_VALUE - 9)
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
-                .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build())
+                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                 .build())
             .withRelations(
                 Arrays.asList(
@@ -121,7 +122,7 @@ public class MockMetaManager implements MetaManager {
                                 .withId(Long.MAX_VALUE - 9)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
-                                .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build())
+                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
                         .withRightEntityClassId(l2EntityClassId)
@@ -140,7 +141,7 @@ public class MockMetaManager implements MetaManager {
                                 .withId(Long.MAX_VALUE - 9)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
-                                .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build())
+                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
                         .withRightEntityClassId(driverEntityClassId)
@@ -161,7 +162,7 @@ public class MockMetaManager implements MetaManager {
                     .withFieldType(FieldType.LONG)
                     .withName("driver-long")
                     .withConfig(
-                        FieldConfig.Builder.aFieldConfig()
+                        FieldConfig.Builder.anFieldConfig()
                             .withSearchable(true)
                             .build()
                     ).build()
@@ -200,6 +201,9 @@ public class MockMetaManager implements MetaManager {
 
     private Collection<IEntityClass> entities;
 
+    /**
+     * 构造实例.
+     */
     public MockMetaManager() {
         entities = Arrays.asList(
             l0EntityClass, l1EntityClass, l2EntityClass, driverEntityClass

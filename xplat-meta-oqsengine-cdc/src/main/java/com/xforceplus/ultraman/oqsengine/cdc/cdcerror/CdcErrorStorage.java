@@ -1,21 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerror;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 
 /**
- * desc :
- * name : CdcErrorStorage
+ * cdc 错误信息储存.
  *
- * @author : xujia
- * date : 2020/11/21
+ * @author xujia 2020/11/21
  * @since : 1.8
  */
 public interface CdcErrorStorage {

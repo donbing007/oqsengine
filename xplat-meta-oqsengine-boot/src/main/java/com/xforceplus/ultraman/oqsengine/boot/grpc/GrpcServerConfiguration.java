@@ -13,17 +13,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * server
+ * server.
  */
 @EnableConfigurationProperties(GrpcServerProperties.class)
 @Configuration
 public class GrpcServerConfiguration {
 
-    private Logger logger = LoggerFactory.getLogger(GrpcServerConfiguration.class);
+    private final Logger logger = LoggerFactory.getLogger(GrpcServerConfiguration.class);
 
     @Autowired
     private GrpcServerProperties properties;
 
+    /**
+     * grcp 服务端实例.
+     */
     @Bean(destroyMethod = "terminate")
     public GrpcServer grpcServer(EntityServiceOqs oqs) {
 
@@ -36,9 +39,8 @@ public class GrpcServerConfiguration {
         grpcServer.run(
             properties.getHost(),
             properties.getPort(),
-            EntityServicePowerApiHandlerFactory.create(oqs, actorSystem)).thenAccept(x -> {
-            logger.info("EntityService is on {}", x.localAddress());
-        });
+            EntityServicePowerApiHandlerFactory.create(oqs, actorSystem)).thenAccept(x ->
+            logger.info("EntityService is on {}", x.localAddress()));
         return grpcServer;
     }
 }

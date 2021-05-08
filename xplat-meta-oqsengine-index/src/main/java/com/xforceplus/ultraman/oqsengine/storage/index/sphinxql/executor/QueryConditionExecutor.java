@@ -24,17 +24,27 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.vavr.Tuple3;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * Query condition Executor
+ * Query condition Executor.
  */
-public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
+public class QueryConditionExecutor
+    extends AbstractIndexExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
@@ -42,26 +52,46 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
 
     private SphinxQLConditionsBuilderFactory conditionsBuilderFactory;
 
+    /**
+     * 实例化.
+     *
+     * @param indexTableName 索引名称.
+     * @param resource 事务资源.
+     * @param conditionsBuilderFactory 条件构造器工厂.
+     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs 最大查询超时毫秒.
+     */
     public QueryConditionExecutor(
-        String indexTableName
-        , TransactionResource<Connection> resource
-        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-        , StorageStrategyFactory storageStrategyFactory
-        , Long maxQueryTimeMs
-    ) {
+        String indexTableName,
+        TransactionResource<Connection> resource,
+        SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
+        StorageStrategyFactory storageStrategyFactory,
+        Long maxQueryTimeMs) {
+
         super(indexTableName, resource, maxQueryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
+    /**
+     * 构造方法.
+     *
+     * @param indexTableName 索引名称.
+     * @param resource 事务资源.
+     * @param conditionsBuilderFactory 条件构造器工厂.
+     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs 最大查询超时毫秒.
+     * @return 实例.
+     */
     public static Executor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> build(
-        String indexTableName
-        , TransactionResource<Connection> resource
-        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-        , StorageStrategyFactory storageStrategyFactory
-        , Long maxQueryTimeMs
-    ) {
-        return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
+        String indexTableName,
+        TransactionResource<Connection> resource,
+        SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
+        StorageStrategyFactory storageStrategyFactory,
+        Long maxQueryTimeMs) {
+
+        return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory,
+            maxQueryTimeMs);
     }
 
 
@@ -159,7 +189,7 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
         List<SortField> sortFields;
         if (!sort.isOutOfOrder()) {
 
-            /**
+            /*
              * optimize: 这里进行一个可能的优化,尝试将排序字段优化成原生字段.
              *           如果可以使用原生字段字段,即非 NORMAL 类型的字段.
              */
@@ -221,6 +251,9 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
                         String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
                 break;
             }
+            default: {
+                // do nothing
+            }
         }
         return sortFields;
     }
@@ -249,7 +282,6 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
             try {
                 statement.close();
             } catch (Exception e) {
-                statement = null;
                 logger.error("Close rs error:", e);
             }
         }
@@ -261,14 +293,12 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
 
         Conditions conditions = queryCondition._2();
         IEntityClass entityClass = queryCondition._1();
-        Page page = queryCondition._3().getPage();
-        Sort sort = queryCondition._3().getSort();
         Set<Long> filterIds = queryCondition._3().getExcludedIds();
         long commitId = queryCondition._3().getCommitId();
         Conditions filterConditions = queryCondition._3().getDataAccessFilterCondtitions();
 
         SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
-        /**
+        /*
          * 如果有数据过滤条件,那么将默认以OR=true,range=true的方式找到条件构造器.
          * 目的是防止进入全文字段.
          */
@@ -293,12 +323,13 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
 
         where.setEntityClass(entityClass);
 
+        Page page = queryCondition._3().getPage();
         if (!page.isSinglePage()) {
             page.setTotalCount(Long.MAX_VALUE);
         }
         PageScope scope = page.getNextPage();
 
-        /**
+        /*
          * 当没有下一页,并且不是空页要求时直接空返回.
          * 当是空页要求时,会继续计算但不会返回任何数据只是会填充数据总量.
          */
@@ -306,6 +337,7 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
             return Collections.emptyList();
         }
 
+        Sort sort = queryCondition._3().getSort();
         Sort useSort = sort;
         StorageStrategy storageStrategy = null;
         String orderBySqlSegment = "";
@@ -315,7 +347,7 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
             useSort = Sort.buildOutOfSort();
         }
 
-        /**
+        /*
          * 空页要求时不需要进行排序.
          */
         if (!page.isEmptyPage()) {
@@ -404,15 +436,15 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
 
                             if (reduce.isPresent()) {
 
-                                IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
+                                IValue logicValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
 
-                                if (iValue.getValue() == null) {
+                                if (logicValue.getValue() == null) {
                                     entityRef.setOrderValue(null);
                                 } else {
-                                    if (iValue.compareByString()) {
-                                        entityRef.setOrderValue(iValue.valueToString());
+                                    if (logicValue.compareByString()) {
+                                        entityRef.setOrderValue(logicValue.valueToString());
                                     } else {
-                                        entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                        entityRef.setOrderValue(Long.toString(logicValue.valueToLong()));
                                     }
                                 }
                             }

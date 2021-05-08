@@ -1,22 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.CdcErrorExecutor;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 /**
- * desc :
- * name : AbstractDevOpsExecutor
+ * devops执行器抽像实现.
  *
- * @author : xujia
- * date : 2020/11/21
+ * @param <T> 请求.
+ * @param <R> 响应.
+ * @author : xujia 2020/11/21
  * @since : 1.8
- * @param <T>
- * @param <R>
  */
 public abstract class AbstractDevOpsExecutor<T, R> implements CdcErrorExecutor<T, R> {
 
@@ -29,6 +26,9 @@ public abstract class AbstractDevOpsExecutor<T, R> implements CdcErrorExecutor<T
         this(tableName, dataSource, 0);
     }
 
+    /**
+     * 构造器.
+     */
     public AbstractDevOpsExecutor(String tableName, DataSource dataSource, long timeoutMs) {
         this.tableName = tableName;
         this.dataSource = dataSource;

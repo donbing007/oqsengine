@@ -78,18 +78,18 @@ public class MasterStorageEntity implements Serializable {
             return false;
         }
         MasterStorageEntity that = (MasterStorageEntity) o;
-        return getId() == that.getId() &&
-            getEntityClassVersion() == that.getEntityClassVersion() &&
-            getTx() == that.getTx() &&
-            getCommitid() == that.getCommitid() &&
-            getVersion() == that.getVersion() &&
-            getOp() == that.getOp() &&
-            isDeleted() == that.isDeleted() &&
-            getCreateTime() == that.getCreateTime() &&
-            getUpdateTime() == that.getUpdateTime() &&
-            getOqsMajor() == that.getOqsMajor() &&
-            Arrays.equals(getEntityClasses(), that.getEntityClasses()) &&
-            getAttribute().equals(that.getAttribute());
+        return getId() == that.getId()
+            && getEntityClassVersion() == that.getEntityClassVersion()
+            && getTx() == that.getTx()
+            && getCommitid() == that.getCommitid()
+            && getVersion() == that.getVersion()
+            && getOp() == that.getOp()
+            && isDeleted() == that.isDeleted()
+            && getCreateTime() == that.getCreateTime()
+            && getUpdateTime() == that.getUpdateTime()
+            && getOqsMajor() == that.getOqsMajor()
+            && Arrays.equals(getEntityClasses(), that.getEntityClasses())
+            && getAttribute().equals(that.getAttribute());
     }
 
     @Override
@@ -111,7 +111,7 @@ public class MasterStorageEntity implements Serializable {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private long id;
@@ -130,7 +130,7 @@ public class MasterStorageEntity implements Serializable {
         private Builder() {
         }
 
-        public static Builder aStorageEntity() {
+        public static Builder anStorageEntity() {
             return new Builder();
         }
 
@@ -194,6 +194,9 @@ public class MasterStorageEntity implements Serializable {
             return this;
         }
 
+        /**
+         * 构造MasterStorageEntity实例.
+         */
         public MasterStorageEntity build() {
             MasterStorageEntity masterStorageEntity = new MasterStorageEntity();
             masterStorageEntity.updateTime = this.updateTime;

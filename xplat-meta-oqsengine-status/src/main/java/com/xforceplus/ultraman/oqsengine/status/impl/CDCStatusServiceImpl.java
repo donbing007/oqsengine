@@ -12,17 +12,18 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.TimeGauge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
+ * CDC状态管理实现.
+ *
  * @author dongbin
  * @version 0.1 2020/11/16 15:45
  * @since 1.8
@@ -64,6 +65,14 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY, DEFAULT_NOT_READY_KEY);
     }
 
+    /**
+     * 实例化.
+     *
+     * @param metricsKey 指标key.
+     * @param ack        ack key.
+     * @param heartBeat  心跳key.
+     * @param notReady   未准备完成key.
+     */
     public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat, String notReady) {
         this.metricsKey = metricsKey;
         if (this.metricsKey == null || this.metricsKey.isEmpty()) {
@@ -102,7 +111,7 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         cdcSyncTimeGauge.register(Metrics.globalRegistry);
 
         cdcNotReadyCommitIdGauge =
-                Metrics.gauge(MetricsDefine.CDC_NOT_READY_COMMIT, new AtomicLong(lastNotReadyValue));
+            Metrics.gauge(MetricsDefine.CDC_NOT_READY_COMMIT, new AtomicLong(lastNotReadyValue));
     }
 
     @PreDestroy
@@ -141,7 +150,7 @@ public class CDCStatusServiceImpl implements CDCStatusService {
             return true;
         }
         long now = Long.parseLong(value);
-        /**
+        /*
          * 如果当前值和最后值不同,那么表示CDC仍然存活.
          * lastHeartBeatValue 默认等于-1,心跳从0开始.
          */

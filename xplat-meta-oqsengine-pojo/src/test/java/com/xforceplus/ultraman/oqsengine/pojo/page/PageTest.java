@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * 分页对象的测试.
@@ -135,11 +140,13 @@ public class PageTest {
             page.getNextPage();
             Assert.fail("Not ready, but did not throw an exception.");
         } catch (IllegalStateException ex) {
+            ex.printStackTrace();
         }
         try {
             page.getAppointPage(1);
             Assert.fail("Not ready, but did not throw an exception.");
         } catch (IllegalStateException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -165,7 +172,7 @@ public class PageTest {
             page.setVisibleTotalCount(-200);
             Assert.fail("An exception was expected to be thrown, but it didn't.");
         } catch (Exception ex) {
-
+            ex.printStackTrace();
         }
 
         page = new Page(4, 199);

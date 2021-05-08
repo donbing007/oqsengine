@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ * .
+ *
  * @author dongbin
  * @version 0.1 2021/04/14 16:09
  * @since 1.8
@@ -17,21 +19,21 @@ public class MockMetaManagerTest {
     public void testMultiVersion() throws Exception {
         MockMetaManager metaManager = new MockMetaManager();
 
-        metaManager.addIEntityClass(
+        metaManager.addEntityClass(
             EntityClass.Builder.anEntityClass()
                 .withId(1)
                 .withVersion(0)
                 .build()
         );
 
-        metaManager.addIEntityClass(
+        metaManager.addEntityClass(
             EntityClass.Builder.anEntityClass()
                 .withId(1)
                 .withVersion(1)
                 .build()
         );
 
-        metaManager.addIEntityClass(
+        metaManager.addEntityClass(
             EntityClass.Builder.anEntityClass()
                 .withId(1)
                 .withVersion(6)
@@ -62,7 +64,7 @@ public class MockMetaManagerTest {
             .withFather(l1)
             .build();
 
-        metaManager.addIEntityClass(l2);
+        metaManager.addEntityClass(l2);
 
         Assert.assertTrue(metaManager.load(1).isPresent());
         Assert.assertTrue(metaManager.load(2).isPresent());

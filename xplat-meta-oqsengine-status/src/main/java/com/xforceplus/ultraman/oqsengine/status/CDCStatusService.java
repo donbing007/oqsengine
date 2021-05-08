@@ -3,9 +3,6 @@ package com.xforceplus.ultraman.oqsengine.status;
 
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -23,8 +20,7 @@ public interface CDCStatusService {
     boolean heartBeat();
 
     /**
-     * 当前commitId处于卡住状态
-     *
+     * 当前commitId处于卡住状态.
      */
     void notReady(long commitId);
 

@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto;
 
 /**
- * desc :
- * name : ErrorType
+ * 错误类型.
  *
- * @author : xujia
- * date : 2021/04/22
+ * @author xujia 2021/04/22
  * @since : 1.8
  */
 public enum ErrorType {

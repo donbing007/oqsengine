@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -51,7 +50,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<MasterStorageEntity, 
             }
         } else {
 
-            String sql = buildSQl(masterStorageEntity);
+            String sql = buildSQL(masterStorageEntity);
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
                 st.setBoolean(1, true);
                 st.setLong(2, masterStorageEntity.getUpdateTime());
@@ -85,7 +84,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<MasterStorageEntity, 
         return sql.toString();
     }
 
-    private String buildSQl(MasterStorageEntity masterStorageEntity) {
+    private String buildSQL(MasterStorageEntity masterStorageEntity) {
         //"update %s set version = version + 1, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ? and version = ?";
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())

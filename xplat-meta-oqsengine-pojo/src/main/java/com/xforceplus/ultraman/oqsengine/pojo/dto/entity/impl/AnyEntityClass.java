@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +22,7 @@ public class AnyEntityClass implements IEntityClass {
 
     /**
      * 获取实例.
+     *
      * @return 实例.
      */
     public static IEntityClass getInstance() {

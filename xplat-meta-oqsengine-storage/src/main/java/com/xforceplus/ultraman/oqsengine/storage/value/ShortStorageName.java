@@ -28,6 +28,12 @@ public final class ShortStorageName implements Serializable {
         return suffix;
     }
 
+    /**
+     * 获得无位置信息的后辍.
+     * 只有物理储存是多个字段的时候才有效,否则和getSuffix行为一致.
+     *
+     * @return 无定位信息的字段后辍.
+     */
     public String getNoLocationSuffix() {
         int noNumberIndex = 0;
         for (int i = suffix.length() - 1; i >= 0; i--) {
@@ -54,8 +60,7 @@ public final class ShortStorageName implements Serializable {
             return false;
         }
         ShortStorageName that = (ShortStorageName) o;
-        return Objects.equals(getPrefix(), that.getPrefix()) &&
-            Objects.equals(getSuffix(), that.getSuffix());
+        return Objects.equals(getPrefix(), that.getPrefix()) && Objects.equals(getSuffix(), that.getSuffix());
     }
 
     @Override

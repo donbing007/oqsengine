@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +18,7 @@ import java.util.Collection;
  * 小数部份会自动补0到18位.如下.
  * 123.123会被转换成  123 和 123000000000000000
  * 123.0123会被转换成 123 和 12300000000000000   由于小数从左开始有一个连续的0,所以在最后补0需要扣除.
+ *
  * @author dongbin
  * @author luye
  * @version 0.1 2020/3/5 17:33
@@ -67,7 +67,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     private int bitLength(String longStr) {
         int bitLength = longStr.length();
 
-        /**
+        /*
          * omit all tail zeros
          */
         for (int i = longStr.length() - 1; i > 0; i--) {
@@ -120,7 +120,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
             isNeg = true;
         }
 
-        /**
+        /*
          * 14.0303503943
          * 0303503943
          * 030450303400000
@@ -148,8 +148,8 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String logicName = Long.toString(field.id());
 
         return Arrays.asList(
-                logicName + storageType().getType() + "0",
-                logicName + storageType().getType() + "1"
+            logicName + storageType().getType() + "0",
+            logicName + storageType().getType() + "1"
         );
     }
 

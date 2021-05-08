@@ -1,31 +1,27 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.storage;
 
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.EMPTY_COLLECTION_SIZE;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
+
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import io.vavr.control.Either;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
-
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.EMPTY_COLLECTION_SIZE;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLICATE_KEY_ERROR;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
- * desc :
- * name : BatchSqlMaster
+ * 任务储存.
  *
- * @author : xujia
- * date : 2020/8/24
- * @since : 1.8
+ * @author xujia 2020/8/24
+ * @since 1.8
  */
 public class SQLTaskStorage implements TaskStorage {
 
@@ -45,9 +41,9 @@ public class SQLTaskStorage implements TaskStorage {
     }
 
     @Override
-    public Either<SQLException, Integer> build(IDevOpsTaskInfo taskInfo) {
+    public Either<SQLException, Integer> build(DevOpsTaskInfo taskInfo) {
         try {
-            Collection<IDevOpsTaskInfo> collection = selectActive(((DevOpsTaskInfo)taskInfo).getEntity());
+            Collection<DevOpsTaskInfo> collection = selectActive(((DefaultDevOpsTaskInfo) taskInfo).getEntity());
             if (EMPTY_COLLECTION_SIZE == collection.size()) {
                 int result = new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
                 return Either.right(result);
@@ -60,8 +56,8 @@ public class SQLTaskStorage implements TaskStorage {
     }
 
     @Override
-    public int update(IDevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
-        return new TaskStorageCommand(table).update(devOpsDataSource, ((DevOpsTaskInfo)taskInfo), status);
+    public int update(DevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
+        return new TaskStorageCommand(table).update(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo), status);
     }
 
     @Override
@@ -75,19 +71,20 @@ public class SQLTaskStorage implements TaskStorage {
     }
 
     @Override
-    public int error(IDevOpsTaskInfo taskInfo) throws SQLException {
-        return new TaskStorageCommand(table).error(devOpsDataSource, ((DevOpsTaskInfo)taskInfo));
+    public int error(DevOpsTaskInfo taskInfo) throws SQLException {
+        return new TaskStorageCommand(table).error(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo));
     }
 
     @Override
-    public Either<SQLException, Integer> resumeTask(IDevOpsTaskInfo devOpsTaskInfo) {
+    public Either<SQLException, Integer> resumeTask(DevOpsTaskInfo devOpsTaskInfo) {
         try {
-            Optional<IDevOpsTaskInfo> unique = selectUnique(devOpsTaskInfo.getMaintainid());
+            Optional<DevOpsTaskInfo> unique = selectUnique(devOpsTaskInfo.getMaintainid());
             if (unique.isPresent()) {
                 int task = new TaskStorageCommand(table).resumeTask(devOpsDataSource, devOpsTaskInfo.getMaintainid());
                 return Either.right(task);
             }
-            return Either.left(new SQLException(String.format("resume Task failed, no match task found, %d", devOpsTaskInfo.getMaintainid())));
+            return Either.left(new SQLException(
+                String.format("resume Task failed, no match task found, %d", devOpsTaskInfo.getMaintainid())));
         } catch (SQLException e) {
             return Either.left(e);
         }
@@ -95,25 +92,25 @@ public class SQLTaskStorage implements TaskStorage {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<IDevOpsTaskInfo> selectActive(long entityClassId) throws SQLException {
+    public Collection<DevOpsTaskInfo> selectActive(long entityClassId) throws SQLException {
         return new TaskStorageCommand(table).selectActive(devOpsDataSource, entityClassId);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Optional<IDevOpsTaskInfo> selectUnique(long taskId) throws SQLException {
+    public Optional<DevOpsTaskInfo> selectUnique(long taskId) throws SQLException {
         return new TaskStorageCommand(table).selectByUnique(devOpsDataSource, taskId);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<IDevOpsTaskInfo> listActives(Page page) throws SQLException {
+    public Collection<DevOpsTaskInfo> listActives(Page page) throws SQLException {
         return new TaskStorageCommand(table).listActives(devOpsDataSource, page);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<IDevOpsTaskInfo> listAll(Page page) throws SQLException {
+    public Collection<DevOpsTaskInfo> listAll(Page page) throws SQLException {
         return new TaskStorageCommand(table).listAll(devOpsDataSource, page);
     }
 }

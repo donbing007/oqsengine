@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.contract;
 
 /**
  * 响应状态.
+ *
  * @author dongbin
  * @version 0.1 2020/6/23 14:25
  * @since 1.8

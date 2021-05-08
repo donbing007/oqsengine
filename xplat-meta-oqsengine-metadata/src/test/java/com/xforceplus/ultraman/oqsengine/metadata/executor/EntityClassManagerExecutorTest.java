@@ -1,14 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -18,6 +21,17 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,23 +39,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
-
 /**
- * desc :
- * name : EntityClassManagerExecutorTest
+ * 测试.
  *
- * @author : xujia
- * date : 2021/2/20
- * @since : 1.8
+ * @author xujia 2021/2/20
+ * @since 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS})
@@ -49,7 +51,7 @@ public class EntityClassManagerExecutorTest {
 
     private RedisClient redisClient;
 
-    private CacheExecutor cacheExecutor;
+    private DefaultCacheExecutor cacheExecutor;
 
     private EntityClassSyncExecutor entityClassSyncExecutor;
 
@@ -62,24 +64,24 @@ public class EntityClassManagerExecutorTest {
 
     @Before
     public void before() throws Exception {
-        /**
+        /*
          * init RedisClient
          */
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
-        /**
+        /*
          * init cacheExecutor
          */
-        cacheExecutor = new CacheExecutor();
+        cacheExecutor = new DefaultCacheExecutor();
         ObjectMapper objectMapper = new ObjectMapper();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
         ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
         cacheExecutor.init();
 
-        /**
+        /*
          * init entityClassExecutor
          */
         entityClassSyncExecutor = new EntityClassSyncExecutor();
@@ -88,17 +90,17 @@ public class EntityClassManagerExecutorTest {
 
         entityClassSyncExecutor.start();
 
-        /**
+        /*
          * init mockRequestHandler
          */
         mockRequestHandler = new MockRequestHandler();
         ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);
 
-        /**
+        /*
          * init entityClassManagerExecutor
          */
         executorService = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
         storageMetaManager = new StorageMetaManager();
         ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
@@ -132,23 +134,26 @@ public class EntityClassManagerExecutorTest {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
-        long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
+        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+
         try {
             storageMetaManager.load(expectedId);
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            Assert.assertTrue(
+                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
 
         EntityClassSyncResponse entityClassSyncResponse =
-                EntityClassStorageBuilder.entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
+            EntityClassStorageBuilder
+                .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
-                entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
+            entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
 
         Assert.assertNotNull(entityClassInfo);
 
@@ -157,46 +162,47 @@ public class EntityClassManagerExecutorTest {
         Collection<OqsRelation> re = entityClassOp.get().oqsRelations();
         if (null != re) {
             re.forEach(
-                    s -> {
-                        IEntityClass e = s.getRightEntityClass();
-                        Assert.assertNotNull(e);
-                        Assert.assertEquals(s.getRightEntityClassId(), e.id());
-                    }
+                s -> {
+                    IEntityClass e = s.getRightEntityClass();
+                    Assert.assertNotNull(e);
+                    Assert.assertEquals(s.getRightEntityClassId(), e.id());
+                }
             );
         }
 
         /*
             check 自循环
          */
+        long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
         entityClassOp = storageMetaManager.load(expectedAnc);
         Assert.assertTrue(entityClassOp.isPresent());
 
         entityClassInfo =
-                entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
+            entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
 
         Assert.assertNotNull(entityClassInfo);
 
         re = entityClassOp.get().oqsRelations();
         if (null != re) {
             re.forEach(
-                    s -> {
-                        IEntityClass e = s.getRightEntityClass();
-                        Assert.assertNotNull(e);
-                        Assert.assertEquals(s.getRightEntityClassId(), e.id());
-                    }
+                s -> {
+                    IEntityClass e = s.getRightEntityClass();
+                    Assert.assertNotNull(e);
+                    Assert.assertEquals(s.getRightEntityClassId(), e.id());
+                }
 
             );
         }
     }
 
     /**
-     * test & check
+     * test & check.
      */
     private void check(int expectedVersion, IEntityClass entityClass, List<EntityClassInfo> entityClassInfos) {
 
         Assert.assertTrue(entityClassInfos.size() > 0);
         Map<Long, EntityClassInfo> fullCheckMaps =
-                entityClassInfos.stream().collect(Collectors.toMap(EntityClassInfo::getId, f1 -> f1, (f1, f2) -> f1));
+            entityClassInfos.stream().collect(Collectors.toMap(EntityClassInfo::getId, f1 -> f1, (f1, f2) -> f1));
 
         //  check current appId version
         Assert.assertEquals(expectedVersion, cacheExecutor.version(entityClass.id()));
@@ -236,7 +242,8 @@ public class EntityClassManagerExecutorTest {
         return null;
     }
 
-    private void checkEntity(EntityClassInfo expected, IEntityClass actual, Map<Long, List<EntityFieldInfo>> fieldMaps) {
+    private void checkEntity(EntityClassInfo expected, IEntityClass actual,
+                             Map<Long, List<EntityFieldInfo>> fieldMaps) {
         Assert.assertNotNull(actual);
         //  basic
         Assert.assertEquals(expected.getId(), actual.id());
@@ -253,9 +260,8 @@ public class EntityClassManagerExecutorTest {
         if (null != expected.getRelationsList()) {
             Assert.assertNotNull(actual.oqsRelations());
             Map<Long, OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
-                                                .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
+                .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
 
-//            Assert.assertEquals(expected.getRelationsList().size(), actualRelations.size());
             for (int i = 0; i < expected.getRelationsList().size(); i++) {
 
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
@@ -275,12 +281,10 @@ public class EntityClassManagerExecutorTest {
 
         //  entityFields
         List<EntityFieldInfo> expectedList = fieldMaps.get(expected.getId());
-        Collection<IEntityField> actualList = actual.fields();
         if (null != expectedList) {
-//            Assert.assertEquals(expectedList.size(), actualList.size());
 
             Map<Long, IEntityField> entityFieldMap =
-                    actual.fields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
+                actual.fields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
 
             for (int i = 0; i < expectedList.size(); i++) {
                 EntityFieldInfo exp = expectedList.get(i);
@@ -289,8 +293,6 @@ public class EntityClassManagerExecutorTest {
 
                 assertEntityField(exp, act);
             }
-
-//            Assert.assertEquals(0, entityFieldMap.size());
         }
     }
 

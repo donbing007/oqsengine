@@ -1,24 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto;
 
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_CODE;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_CODE;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
-
 /**
- * desc :
- * name : HealthCheckEntityClass
+ * 健康检查使用的固定元信息.
  *
- * @author : xujia
- * date : 2021/3/26
- * @since : 1.8
+ * @author xujia 2021/3/26
+ * @since 1.8
  */
 public class HealthCheckEntityClass implements IEntityClass {
 

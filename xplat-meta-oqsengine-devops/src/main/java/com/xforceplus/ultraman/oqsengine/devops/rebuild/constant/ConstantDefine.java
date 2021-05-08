@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.constant;
 
 /**
- * desc :
- * name : ConstantDefine
+ * 定义.
  *
- * @author : xujia
- * date : 2020/9/1
+ * @author : xujia 2020/9/1
  * @since : 1.8
  */
 public class ConstantDefine {

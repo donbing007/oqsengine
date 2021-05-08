@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -13,9 +12,8 @@ import java.util.function.Function;
  * 这里有两个对象,分别定义为"左"对象和"右对象.
  * 这里左边是关系的持有者(owner),右边是被关联对象.
  *
- * @author : xujia
- * date : 2021/2/18
- * @since : 1.8
+ * @author xujia 2021/2/18
+ * @since 1.8
  */
 public class OqsRelation {
 
@@ -40,6 +38,12 @@ public class OqsRelation {
             return value;
         }
 
+        /**
+         * 获得实例.
+         *
+         * @param value 字面量.
+         * @return 实例.
+         */
         public static RelationType getInstance(int value) {
             for (RelationType t : RelationType.values()) {
                 if (t.getValue() == value) {
@@ -52,66 +56,66 @@ public class OqsRelation {
 
     }
 
-    /**
+    /*
      * 关系唯一标识.
      */
     private long id;
 
-    /**
+    /*
      * 关系名称 - 目前采用关系ID来填入
      */
     private String code;
 
-    /**
+    /*
      * 关联中"左"对象的元信息标识.
      */
     private long leftEntityClassId;
 
-    /**
+    /*
      * 关系中"左"对象的元信息名称.
      */
     private String leftEntityClassCode;
 
-    /**
+    /*
      * 关系中"右"对象的元信息名称.
      */
     private long rightEntityClassId;
 
-    /**
+    /*
      * 关系类型 - 使用关系的code填入
      */
     private RelationType relationType;
 
-    /**
+    /*
      * 是PrimaryKey还是UniqueKey
      */
     private boolean identity;
 
-    /**
+    /*
      * 根据belongToOwner的值决定关系字段表示.
      * belongToOwner = true 此字段表示在当前EntityClass中的某个字段.
      * false 表示记录在关联的对象上.
      */
     private IEntityField entityField;
 
-    /**
+    /*
      * true 表示实际关系字段属于"左"对象.
      * false 表示实际关系字段属于"右"对象.
      */
     private boolean belongToOwner;
 
-    /**
+    /*
      * true 表示为强关系.
      * false 表示为弱关系.
      */
     private boolean strong;
 
-    /**
+    /*
      * "右"对象元信息定义的延迟加载方法.
      */
     private Function<Long, Optional<IEntityClass>> rightEntityClassLoader;
 
-    /**
+    /*
      * 是否是伴生关系
      */
     private boolean isCompanion;
@@ -121,6 +125,7 @@ public class OqsRelation {
     public OqsRelation() {
 
     }
+
     /**
      * 获取到关系中相关联的entityClass实例.即关系"右"对象的元信息定义实例.
      *
@@ -175,9 +180,6 @@ public class OqsRelation {
         return strong;
     }
 
-    /**
-     * builder
-     */
     public void setBelongToOwner(boolean belongToOwner) {
         this.belongToOwner = belongToOwner;
     }
@@ -200,11 +202,15 @@ public class OqsRelation {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         OqsRelation that = (OqsRelation) o;
-        return id == that.id &&
-                Objects.equals(code, that.code);
+        return id == that.id
+            && Objects.equals(code, that.code);
     }
 
     @Override
@@ -213,7 +219,7 @@ public class OqsRelation {
     }
 
     /**
-     * Builder
+     * Builder.
      */
     public static final class Builder {
         private Long id;
@@ -283,12 +289,12 @@ public class OqsRelation {
             return this;
         }
 
-        public OqsRelation.Builder withCompanion(boolean isCompanion){
+        public OqsRelation.Builder withCompanion(boolean isCompanion) {
             this.isCompanion = isCompanion;
             return this;
         }
 
-        public OqsRelation.Builder withCompanionRelation(long relationId){
+        public OqsRelation.Builder withCompanionRelation(long relationId) {
             this.companionRelation = relationId;
             return this;
         }
@@ -304,6 +310,11 @@ public class OqsRelation {
             return this;
         }
 
+        /**
+         * 构造 OqsRelation 实例.
+         *
+         * @return 实例.
+         */
         public OqsRelation build() {
             OqsRelation oqsRelation = new OqsRelation();
             oqsRelation.belongToOwner = this.belongToOwner;

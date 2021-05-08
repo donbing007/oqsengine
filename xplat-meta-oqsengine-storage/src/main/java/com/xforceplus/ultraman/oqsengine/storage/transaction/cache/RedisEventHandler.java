@@ -1,5 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.cache;
 
+import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_BUILD;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_DELETE;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.ENTITY_REPLACE;
+import static com.xforceplus.ultraman.oqsengine.event.EventType.TX_BEGIN;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.gzip.ZipUtils;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
@@ -9,23 +14,19 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.Cache
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * desc :
+ * desc :.
  * name : RedisEventHandler
  *
- * @author : xujia
- * date : 2021/4/8
+ * @author : xujia 2021/4/8
  * @since : 1.8
  */
 public class RedisEventHandler implements CacheEventHandler, Lifecycle {
@@ -43,6 +44,9 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
     //  3分钟过期
     private long expiredDuration = CacheEventHelper.EXPIRE_BUFFER_SECONDS;
 
+    /**
+     * 实例化.
+     */
     public RedisEventHandler(RedisClient redisClient, ObjectMapper objectMapper, long expiredDuration) {
         this.redisClient = redisClient;
 
@@ -77,19 +81,16 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
             //  查询对应txId的列表
             Map<String, String> result = syncCommands.hgetall(CacheEventHelper.eventKeyGenerate(txId));
 
-            return null == result || result.isEmpty() ?
-                Collections.emptyList() :
-                result.entrySet().stream()
-                    .filter(e -> {
-                        return !e.getKey().equals(TX_BEGIN.name());
-                    })
-                    .map(Map.Entry::getValue)
-                    .collect(Collectors.toList());
+            return null == result || result.isEmpty()
+                ? Collections.emptyList() : result.entrySet().stream()
+                .filter(e -> !e.getKey().equals(TX_BEGIN.name())).map(Map.Entry::getValue).collect(Collectors.toList());
         }
 
         //  精确查询 txId + id + version 确定
-        String rBuild = syncCommands.hget(CacheEventHelper.eventKeyGenerate(txId), CacheEventHelper.eventFieldGenerate(id, version, eventType));
-        return null == rBuild || rBuild.isEmpty() ? Collections.emptyList() : Collections.singletonList(rBuild);
+        String rightBuild = syncCommands
+            .hget(CacheEventHelper.eventKeyGenerate(txId), CacheEventHelper.eventFieldGenerate(id, version, eventType));
+        return null == rightBuild || rightBuild.isEmpty() ? Collections.emptyList() :
+            Collections.singletonList(rightBuild);
     }
 
     @Override
@@ -141,22 +142,21 @@ public class RedisEventHandler implements CacheEventHandler, Lifecycle {
         try {
             String encodeJson = ZipUtils.zip(objectMapper.writeValueAsString(payload));
 
-            return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId())
-                , CacheEventHelper.eventFieldGenerate(payload.getId(),
-                    payload.getVersion(), payload.getEventType().getValue())
-                , encodeJson);
+            return syncCommands.hset(CacheEventHelper.eventKeyGenerate(payload.getTxId()),
+                CacheEventHelper.eventFieldGenerate(payload.getId(), payload.getVersion(), payload.getEventType().getValue()),
+                encodeJson);
         } catch (Exception e) {
-            logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... "
-                , payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.toString());
+            logger.warn("storage cache-event error, [txId:{}-type:{}-id:{}-version:{}-message:{}]... ",
+                payload.getTxId(), payload.getEventType(), payload.getId(), payload.getVersion(), e.toString());
 
             return false;
         }
     }
 
     private boolean invalidQueryEventType(Integer eventType) {
-        return null == eventType ||
-            (eventType != EventType.ENTITY_BUILD.getValue() &&
-                eventType != EventType.ENTITY_REPLACE.getValue() &&
-                eventType != EventType.ENTITY_DELETE.getValue());
+        return null == eventType
+            || (eventType != EventType.ENTITY_BUILD.getValue()
+            && eventType != EventType.ENTITY_REPLACE.getValue()
+            && eventType != EventType.ENTITY_DELETE.getValue());
     }
 }

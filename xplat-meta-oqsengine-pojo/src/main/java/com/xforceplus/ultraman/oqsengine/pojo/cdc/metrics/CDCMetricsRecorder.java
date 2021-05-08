@@ -5,11 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * desc :
+ * desc :.
  * name : CDCMetricsRecorder
  *
- * @author : xujia
- * date : 2020/11/13
+ * @author : xujia 2020/11/13
  * @since : 1.8
  */
 public class CDCMetricsRecorder {
@@ -20,6 +19,9 @@ public class CDCMetricsRecorder {
     private long start;
 
 
+    /**
+     * 开始记录.
+     */
     public CDCMetricsRecorder startRecord(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
         start = System.currentTimeMillis();
         //  将上一次的剩余信息设置回来
@@ -29,19 +31,24 @@ public class CDCMetricsRecorder {
         logger.debug("[cdc-metrics-record] start consume batch, batchId : {}", batchId);
         if (null != cdcUnCommitMetrics) {
             cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
-            logger.debug("[cdc-metrics-record] current batch : {} have last batch un-commit ids : {}"
-                    , batchId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.debug("[cdc-metrics-record] current batch : {} have last batch un-commit ids : {}",
+                batchId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
         }
 
         return this;
     }
 
+    /**
+     * 结束记录.
+     */
     public CDCMetricsRecorder finishRecord(int syncCount) {
         cdcMetrics.getCdcAckMetrics().setExecuteRows(syncCount);
         cdcMetrics.getCdcAckMetrics().setTotalUseTime(System.currentTimeMillis() - start);
 
-        logger.info("[cdc-metrics-record] finish consume batch, batchId : {}, success sync rows : {}, totalUseTime : {}",
-                cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(), cdcMetrics.getCdcAckMetrics().getTotalUseTime());
+        logger
+            .info("[cdc-metrics-record] finish consume batch, batchId : {}, success sync rows : {}, totalUseTime : {}",
+                cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(),
+                cdcMetrics.getCdcAckMetrics().getTotalUseTime());
 
         return this;
     }

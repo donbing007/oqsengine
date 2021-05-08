@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
+ * 事务开始的事件负载.
+ *
  * @author dongbin
  * @version 0.1 2021/3/24 15:31
  * @since 1.8
@@ -34,8 +36,7 @@ public class BeginPayload implements Serializable {
             return false;
         }
         BeginPayload that = (BeginPayload) o;
-        return getTxId() == that.getTxId() &&
-            Objects.equals(getMsg(), that.getMsg());
+        return getTxId() == that.getTxId() && Objects.equals(getMsg(), that.getMsg());
     }
 
     @Override

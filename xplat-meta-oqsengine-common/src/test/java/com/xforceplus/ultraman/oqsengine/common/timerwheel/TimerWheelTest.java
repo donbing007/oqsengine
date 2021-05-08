@@ -1,15 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
-import org.junit.*;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * TimerWheel Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/10/2020
  * @since <pre>Mar 10, 2020</pre>
  */
@@ -73,7 +77,8 @@ public class TimerWheelTest {
                     long expireTime = System.currentTimeMillis();
 
                     long space = expireTime - addTime;
-                    if (space <= 6000) {//6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    if (space <= 6000) {
                         result.incrementAndGet();
                     }
 
@@ -105,7 +110,8 @@ public class TimerWheelTest {
                     long expireTime = System.currentTimeMillis();
 
                     long space = expireTime - addTime;
-                    if (result.get() == 0 && space <= 6000) {//6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    if (result.get() == 0 && space <= 6000) {
                         result.incrementAndGet();
                     } else if (result.get() == 1 && space <= 12000) {
                         result.incrementAndGet();
@@ -133,8 +139,6 @@ public class TimerWheelTest {
 
     /**
      * 不淘汰,主动删除.
-     *
-     * @throws Exception
      */
     @Test
     public void testRemoveValue() throws Exception {

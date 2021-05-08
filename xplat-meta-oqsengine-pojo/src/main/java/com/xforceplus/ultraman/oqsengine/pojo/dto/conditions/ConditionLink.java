@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 /**
- * 枚举操作符号
+ * 枚举操作符号.
  *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
@@ -21,6 +21,12 @@ public enum ConditionLink {
         return value;
     }
 
+    /**
+     * 获取实例.
+     *
+     * @param value 字面量.
+     * @return 实例.
+     */
     public static ConditionLink getInstance(int value) {
         for (ConditionLink link : ConditionLink.values()) {
             if (link.getValue() == value) {

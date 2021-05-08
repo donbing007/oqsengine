@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.recover;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -8,30 +10,26 @@ import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * desc :
+ * desc :.
  * name : BaseRequest
  *
- * @author : xujia
- * date : 2021/4/7
+ * @author : xujia 2021/4/7
  * @since : 1.8
  */
 public class BaseRequest {
 
     protected IRequestHandler requestHandler;
 
-    protected GRpcParams gRpcParams;
+    protected GRpcParams grpcParams;
 
     protected RequestWatchExecutor requestWatchExecutor;
 
@@ -40,7 +38,7 @@ public class BaseRequest {
     protected EntityClassSyncClient entityClassSyncClient;
 
     protected void baseInit() {
-        gRpcParams = Constant.gRpcParamsConfig();
+        grpcParams = Constant.grpcParamsConfig();
 
         requestWatchExecutor = requestWatchExecutor();
 
@@ -51,14 +49,14 @@ public class BaseRequest {
 
     protected EntityClassSyncClient entityClassSyncClient() {
 
-        MetaSyncGRpcClient metaSyncGRpcClient = new MetaSyncGRpcClient(Constant.HOST, Constant.PORT);
-        ReflectionTestUtils.setField(metaSyncGRpcClient, "gRpcParams", gRpcParams);
+        MetaSyncGRpcClient metaSyncGrpcClient = new MetaSyncGRpcClient(Constant.HOST, Constant.PORT);
+        ReflectionTestUtils.setField(metaSyncGrpcClient, "gRpcParams", grpcParams);
 
         EntityClassSyncClient entityClassSyncClient = new EntityClassSyncClient();
 
-        ReflectionTestUtils.setField(entityClassSyncClient, "client", metaSyncGRpcClient);
+        ReflectionTestUtils.setField(entityClassSyncClient, "client", metaSyncGrpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParams);
+        ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", grpcParams);
 
         return entityClassSyncClient;
     }
@@ -91,11 +89,11 @@ public class BaseRequest {
         };
 
         executorService = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-        ReflectionTestUtils.setField(requestHandler, "gRpcParams", gRpcParams);
+        ReflectionTestUtils.setField(requestHandler, "gRpcParams", grpcParams);
         ReflectionTestUtils.setField(requestHandler, "executorService", executorService);
 
         return requestHandler;

@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.datasource;
 
 import com.zaxxer.hikari.HikariDataSource;
-
-import javax.sql.DataSource;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * 数据源包装.
@@ -20,7 +19,21 @@ public class DataSourcePackage {
     private DataSource devOps;
     private DataSource changelog;
 
-    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch, DataSource devOps, DataSource changelog) {
+    /**
+     * 数据源包装实例.
+     *
+     * @param master 主库存数据源列表.
+     * @param indexWriter 索引写数据源列表.
+     * @param indexSearch 索引搜索数据源列表.
+     * @param devOps devops数据源.
+     * @param changelog changelog数据源.
+     */
+    public DataSourcePackage(
+        List<DataSource> master,
+        List<DataSource> indexWriter,
+        List<DataSource> indexSearch,
+        DataSource devOps,
+        DataSource changelog) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
@@ -48,6 +61,9 @@ public class DataSourcePackage {
         return changelog;
     }
 
+    /**
+     * 关闭所有数据源.
+     */
     public void close() {
         if (master != null) {
             doClose(master);

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,14 +12,26 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.EmptyValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -31,16 +45,20 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.micrometer.core.annotation.Timed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 主要储存实现.
@@ -100,11 +118,13 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart) throws SQLException {
-        return new IEntityIterator(entityClass, lastStart, startTime, endTime);
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart)
+        throws SQLException {
+        return new EntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "condition"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action",
+        "condition"})
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
@@ -131,17 +151,20 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
-            Optional<MasterStorageEntity> seOP =
+            Optional<MasterStorageEntity> masterStorageEntityOptional =
                 QueryExecutor.buildHaveDetail(tableName, resource, entityClass, queryTimeout).execute(id);
-            if (seOP.isPresent()) {
-                return buildEntityFromStorageEntity(seOP.get(), entityClass);
+            if (masterStorageEntityOptional.isPresent()) {
+                return buildEntityFromStorageEntity(masterStorageEntityOptional.get(), entityClass);
             } else {
                 return Optional.empty();
             }
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "multiple"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "multiple"}
+    )
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
 
@@ -153,7 +176,7 @@ public class SQLMasterStorage implements MasterStorage {
         );
 
 
-        Map<Long, IEntity> entityMap = storageEntities.parallelStream().map(se -> {
+        Map<Long, IEntity> entityMap = storageEntities.stream().map(se -> {
             Optional<IEntity> op;
             try {
                 op = buildEntityFromStorageEntity(se, entityClass);
@@ -177,16 +200,16 @@ public class SQLMasterStorage implements MasterStorage {
             (tx, resource, hint) -> {
 
                 long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
-                long updateTIme = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+                long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
                 MasterStorageEntity.Builder storageEntityBuilder;
                 try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
                         .withId(entity.id())
-                        /**
+                        /*
                          * optimize: 创建时间和更新时间保证和系统字段同步.
                          */
                         .withCreateTime(createTime > 0 ? createTime : entity.time())
-                        .withUpdateTime(updateTIme > 0 ? updateTIme : entity.time())
+                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
                         .withDeleted(false)
                         .withEntityClassVersion(entityClass.version())
                         .withVersion(0)
@@ -205,13 +228,16 @@ public class SQLMasterStorage implements MasterStorage {
 
     private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
         OptionalLong op = entity.entityValue().values().parallelStream()
-            .filter(iValue -> sense == iValue.getField().config().getFieldSense())
-            .mapToLong(iValue -> iValue.valueToLong()).findFirst();
+            .filter(v -> sense == v.getField().config().getFieldSense())
+            .mapToLong(v -> v.valueToLong()).findFirst();
 
         return op.orElse(0);
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "replace"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "replace"}
+    )
     @Override
     public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
@@ -220,7 +246,7 @@ public class SQLMasterStorage implements MasterStorage {
             (tx, resource, hint) -> {
 
                 long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                /**
+                /*
                  * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
                  */
                 if (updateTime == entity.time()) {
@@ -228,9 +254,9 @@ public class SQLMasterStorage implements MasterStorage {
                 }
                 MasterStorageEntity.Builder storageEntityBuilder;
                 try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
                         .withId(entity.id())
-                        /**
+                        /*
                          * optimize: 更新时间保证和系统字段同步.
                          */
                         .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
@@ -258,10 +284,10 @@ public class SQLMasterStorage implements MasterStorage {
 
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
-                /**
+                /*
                  * 删除数据时不再关心字段信息.
                  */
-                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
+                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
                     .withId(entity.id())
                     .withOp(OperationType.DELETE.getValue())
                     .withUpdateTime(entity.time())
@@ -364,7 +390,7 @@ public class SQLMasterStorage implements MasterStorage {
         StorageValue storageValue;
         for (IValue logicValue : value.values()) {
 
-            if (logicValue != null && logicValue.getValue() == EmptyValue.emptyValue) {
+            if (logicValue != null && EmptyTypedValue.class.isInstance(logicValue)) {
                 continue;
             }
 
@@ -384,7 +410,7 @@ public class SQLMasterStorage implements MasterStorage {
         if (se == null) {
             return Optional.empty();
         }
-        /**
+        /*
          * 校验当前数据是否和预期类型匹配.
          */
         long[] dataEntityClassIds = se.getEntityClasses();
@@ -393,11 +419,11 @@ public class SQLMasterStorage implements MasterStorage {
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
                 String.format(
-                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
-                    , entityClass.id(), dataEntityClassId));
+                    "The incorrect Entity type is expected to be %d, but the actual data type is %d.",
+                    entityClass.id(), dataEntityClassId));
         }
 
-        /**
+        /*
          * 实际的类型
          */
         long actualEntityClassId = 0;
@@ -428,9 +454,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     // 填充事务信息.
     private void fullTransactionInformation(MasterStorageEntity.Builder entityBuilder, TransactionResource resource) {
-        Optional<Transaction> tOp = resource.getTransaction();
-        if (tOp.isPresent()) {
-            entityBuilder.withTx(tOp.get().id())
+        Optional<Transaction> transactionOptional = resource.getTransaction();
+        if (transactionOptional.isPresent()) {
+            entityBuilder.withTx(transactionOptional.get().id())
                 .withCommitid(CommitHelper.getUncommitId());
         } else {
             logger.warn("With no transaction, unable to get the transaction ID.");
@@ -451,7 +477,7 @@ public class SQLMasterStorage implements MasterStorage {
     /**
      * 数据迭代器,用以迭代出某个entity的实例列表.
      */
-    private class IEntityIterator implements DataIterator<OriginalEntity> {
+    private class EntityIterator implements DataIterator<OriginalEntity> {
         private static final int DEFAULT_PAGE_SIZE = 100;
 
         private IEntityClass entityClass;
@@ -461,11 +487,11 @@ public class SQLMasterStorage implements MasterStorage {
         private int pageSize;
         private List<OriginalEntity> buffer;
 
-        public IEntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
         }
 
-        public IEntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
             this.entityClass = entityClass;
             this.startId = startId;
             this.startTime = startTime;
@@ -501,7 +527,8 @@ public class SQLMasterStorage implements MasterStorage {
         private void load() throws SQLException {
             transactionExecutor.execute((tx, resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
-                    BatchQueryExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
+                    BatchQueryExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                         .execute(startId);
 
                 Collection<OriginalEntity> originalEntities = new ArrayList<>();
@@ -523,7 +550,8 @@ public class SQLMasterStorage implements MasterStorage {
 
                         originalEntities.add(originalEntity);
                     } catch (JsonProcessingException e) {
-                        throw new SQLException(String.format("to originalEntity failed. message : [%s]", e.getMessage()));
+                        throw new SQLException(
+                            String.format("to originalEntity failed. message : [%s]", e.getMessage()));
                     }
                 }
 
@@ -537,7 +565,8 @@ public class SQLMasterStorage implements MasterStorage {
         public int size() {
             try {
                 return (int) transactionExecutor.execute((tx, resource, hint) -> {
-                    return BatchQueryCountExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
+                    return BatchQueryCountExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
                         .execute(0L);
                 });
             } catch (SQLException e) {

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.common.metrics;
 
 /**
  * 指标定义.
+ *
  * @author dongbin
  * @version 0.1 2020/4/22 15:21
  * @since 1.8
@@ -9,18 +10,18 @@ package com.xforceplus.ultraman.oqsengine.common.metrics;
 public class MetricsDefine {
 
     /**
-     * 所有指标前辍
+     * 所有指标前辍.
      */
     public static final String PREFIX = "oqs";
 
     /**
-     * 读线程池
+     * 读线程池.
      */
     public static final String READ_THREAD_POOL = ".read-call";
 
 
     /**
-     * 写线程池
+     * 写线程池.
      */
     public static final String WRITE_THREAD_POOL = ".write-call";
 
@@ -32,7 +33,7 @@ public class MetricsDefine {
     public static final String WRITE_COUNT_TOTAL = PREFIX + ".write.count.total";
 
     /**
-     * 读取的总数
+     * 读取的总数.
      * 标签 action(one|multiple|search)
      */
     public static final String READ_COUNT_TOTAL = PREFIX + ".read.count.total";
@@ -49,7 +50,7 @@ public class MetricsDefine {
     public static final String PROCESS_DELAY_LATENCY_SECONDS = PREFIX + ".process.delay.latency";
 
     /**
-     * 当前事务量
+     * 当前事务量.
      */
     public static final String TRANSACTION_COUNT = PREFIX + ".transaction.count";
 
@@ -79,12 +80,12 @@ public class MetricsDefine {
     public static final String CDC_SYNC_DELAY_LATENCY_SECONDS = PREFIX + ".cdc.sync.delay.latency";
 
     /**
-     * CDC同步每次的同步数量
+     * CDC同步每次的同步数量.
      */
     public static final String CDC_SYNC_EXECUTED_COUNT = PREFIX + ".cdc.sync.executed.count";
 
     /**
-     * CDC-NOT-READY-COMMIT-ID 当前未获取到Ready状态的ID
+     * CDC-NOT-READY-COMMIT-ID 当前未获取到Ready状态的ID.
      */
     public static final String CDC_NOT_READY_COMMIT = PREFIX + ".cdc.not.ready.commit";
     /**
@@ -98,28 +99,28 @@ public class MetricsDefine {
     public static final String MODE = PREFIX + ".mode";
 
     /**
-     * 当前未进入消费流的
+     * 当前未进入消费流的.
      */
     public static final String CHANGELOG_IN_QUEUE = PREFIX + ".changelog.in-queue";
 
     /**
-     * 当前未进入消费流的
+     * 当前未进入消费流的.
      */
     public static final String CHANGELOG_IN_STREAM = PREFIX + ".changelog.in-stream";
 
     /**
-     * 当前处理的TX
+     * 当前处理的TX.
      */
     public static final String CHANGELOG_CONCURRENT_TX = PREFIX + ".changelog.in-progress-tx";
 
 
     /**
-     * 当前cache-event-handler中的活动数量
+     * 当前cache-event-handler中的活动数量.
      */
     public static final String CACHE_EVENT_CURRENT_ACTIVE = PREFIX + ".event.cache.active-events";
 
     /**
-     * 当前cache-event-handler本地线程队列中的等待重试数量
+     * 当前cache-event-handler本地线程队列中的等待重试数量.
      */
     public static final String CACHE_EVENT_CURRENT_RETRY_WAIT = PREFIX + ".event.cache.retry-wait-events";
 }

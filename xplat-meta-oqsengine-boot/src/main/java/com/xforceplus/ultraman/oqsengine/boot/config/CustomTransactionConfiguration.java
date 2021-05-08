@@ -16,13 +16,14 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
 import io.lettuce.core.RedisClient;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
-
 /**
+ * 自定义事务配置.
+ *
  * @author dongbin
  * @version 0.1 2020/2/24 17:08
  * @since 1.8
@@ -30,23 +31,26 @@ import javax.sql.DataSource;
 @Configuration
 public class CustomTransactionConfiguration {
 
+    /**
+     * 事务管理器.
+     */
     @Bean
     public TransactionManager transactionManager(
-            LongIdGenerator snowflakeIdGenerator,
-            LongIdGenerator redisIdGenerator,
-            @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
-            CommitIdStatusService commitIdStatusService,
-            EventBus eventBus,
-            CacheEventHandler cacheEventHandler) {
-        return DefaultTransactionManager.Builder.aDefaultTransactionManager()
-                .withSurvivalTimeMs(transactionTimeoutMs)
-                .withTxIdGenerator(snowflakeIdGenerator)
-                .withCommitIdGenerator(redisIdGenerator)
-                .withCommitIdStatusService(commitIdStatusService)
-                .withWaitCommitSync(true)
-                .withEventBus(eventBus)
-                .withCacheEventHandler(cacheEventHandler)
-                .build();
+        LongIdGenerator snowflakeIdGenerator,
+        LongIdGenerator redisIdGenerator,
+        @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
+        CommitIdStatusService commitIdStatusService,
+        EventBus eventBus,
+        CacheEventHandler cacheEventHandler) {
+        return DefaultTransactionManager.Builder.anDefaultTransactionManager()
+            .withSurvivalTimeMs(transactionTimeoutMs)
+            .withTxIdGenerator(snowflakeIdGenerator)
+            .withCommitIdGenerator(redisIdGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(true)
+            .withEventBus(eventBus)
+            .withCacheEventHandler(cacheEventHandler)
+            .build();
     }
 
     @Bean
@@ -54,32 +58,35 @@ public class CustomTransactionConfiguration {
         return new SphinxQLTransactionResourceFactory();
     }
 
+    /**
+     * 索引搜索执行器.
+     */
     @Bean
     public TransactionExecutor sphinxQLSearchTransactionExecutor(
-            SphinxQLTransactionResourceFactory factory,
-            TransactionManager tm,
-            DataSource indexSearchDataSource,
-            @Value("${storage.index.search.name:oqsindex}") String searchTableName) {
+        SphinxQLTransactionResourceFactory factory,
+        TransactionManager tm,
+        DataSource indexSearchDataSource,
+        @Value("${storage.index.search.name:oqsindex}") String searchTableName) {
         return new AutoJoinTransactionExecutor(
-                tm,
-                factory,
-                new NoSelector(indexSearchDataSource),
-                new NoSelector(searchTableName)
+            tm,
+            factory,
+            new NoSelector(indexSearchDataSource),
+            new NoSelector(searchTableName)
         );
     }
 
     @Bean
     public TransactionExecutor sphinxQLWriteTransactionExecutor(
-            SphinxQLTransactionResourceFactory factory,
-            TransactionManager tm,
-            Selector<DataSource> indexWriteDataSourceSelector,
-            Selector<String> indexWriteIndexNameSelector) {
+        SphinxQLTransactionResourceFactory factory,
+        TransactionManager tm,
+        Selector<DataSource> indexWriteDataSourceSelector,
+        Selector<String> indexWriteIndexNameSelector) {
         return new AutoJoinTransactionExecutor(tm, factory, indexWriteDataSourceSelector, indexWriteIndexNameSelector);
     }
 
     @Bean
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-            @Value("${storage.master.name:oqsbigentity}") String tableName) {
+        @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
@@ -88,11 +95,12 @@ public class CustomTransactionConfiguration {
      */
     @Bean
     public TransactionExecutor storageJDBCTransactionExecutor(
-            SqlConnectionTransactionResourceFactory factory,
-            TransactionManager tm,
-            DataSource masterDataSource,
-            @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
+        SqlConnectionTransactionResourceFactory factory,
+        TransactionManager tm,
+        DataSource masterDataSource,
+        @Value("${storage.master.name:oqsbigentity}") String tableName) {
+        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource),
+            new NoSelector(tableName));
     }
 
     @Bean

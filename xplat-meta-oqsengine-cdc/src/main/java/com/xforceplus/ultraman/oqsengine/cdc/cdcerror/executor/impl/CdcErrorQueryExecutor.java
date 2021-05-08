@@ -4,8 +4,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCon
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,13 +11,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
- * desc :
+ * desc :.
  * name : CdcErrorQueryExecutor
  *
- * @author : xujia
- * date : 2020/11/22
+ * @author : xujia 2020/11/22
  * @since : 1.8
  */
 public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryCondition, Collection<CdcErrorTask>> {
@@ -28,8 +26,8 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         super(tableName, dataSource, timeoutMs);
     }
 
-    public static CdcErrorExecutor<CdcErrorQueryCondition, Collection<CdcErrorTask>>
-                                        build(String tableName, DataSource dataSource, long timeout) {
+    public static CdcErrorExecutor<CdcErrorQueryCondition, Collection<CdcErrorTask>> build(
+        String tableName, DataSource dataSource, long timeout) {
         return new CdcErrorQueryExecutor(tableName, dataSource, timeout);
     }
 
@@ -78,8 +76,8 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 }
 
                 //  add rangeLEExecuteTime
-                if (null != res.getRangeLEExecuteTime()) {
-                    st.setLong(parameterIndex++, res.getRangeLEExecuteTime());
+                if (null != res.getRangeLeExecuteTime()) {
+                    st.setLong(parameterIndex++, res.getRangeLeExecuteTime());
                 }
 
                 //  add rangeGeExecuteTime
@@ -88,8 +86,8 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 }
 
                 //  add rangeLEFixedTime
-                if (null != res.getRangeLEFixedTime()) {
-                    st.setLong(parameterIndex++, res.getRangeLEFixedTime());
+                if (null != res.getRangeLeFixedTime()) {
+                    st.setLong(parameterIndex++, res.getRangeLeFixedTime());
                 }
 
                 //  add rangeLEFixedTime
@@ -138,32 +136,32 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         }
     }
 
-    public boolean buildSQL(StringBuilder buff, CdcErrorQueryCondition res) {
+    private boolean buildSQL(StringBuilder buff, CdcErrorQueryCondition res) {
         buff.append("SELECT ")
-                .append(String.join(",",
-                        ErrorFieldDefine.SEQ_NO,
-                        ErrorFieldDefine.BATCH_ID,
-                        ErrorFieldDefine.ID,
-                        ErrorFieldDefine.ENTITY,
-                        ErrorFieldDefine.VERSION,
-                        ErrorFieldDefine.OP,
-                        ErrorFieldDefine.COMMIT_ID,
-                        ErrorFieldDefine.TYPE,
-                        ErrorFieldDefine.STATUS,
-                        ErrorFieldDefine.OPERATION_OBJECT,
-                        ErrorFieldDefine.MESSAGE,
-                        ErrorFieldDefine.EXECUTE_TIME,
-                        ErrorFieldDefine.FIXED_TIME)
-                )
-                .append(" FROM ")
-                .append(getTableName());
+            .append(String.join(",",
+                ErrorFieldDefine.SEQ_NO,
+                ErrorFieldDefine.BATCH_ID,
+                ErrorFieldDefine.ID,
+                ErrorFieldDefine.ENTITY,
+                ErrorFieldDefine.VERSION,
+                ErrorFieldDefine.OP,
+                ErrorFieldDefine.COMMIT_ID,
+                ErrorFieldDefine.TYPE,
+                ErrorFieldDefine.STATUS,
+                ErrorFieldDefine.OPERATION_OBJECT,
+                ErrorFieldDefine.MESSAGE,
+                ErrorFieldDefine.EXECUTE_TIME,
+                ErrorFieldDefine.FIXED_TIME)
+            )
+            .append(" FROM ")
+            .append(getTableName());
 
         String conditionString = res.conditionToQuerySql();
 
         boolean haveCondition = false;
         if (!conditionString.isEmpty()) {
             buff.append(" WHERE ")
-                    .append(conditionString);
+                .append(conditionString);
             haveCondition = true;
         }
 

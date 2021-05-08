@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-
 import java.util.Objects;
 
 /**
@@ -169,8 +168,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
             return false;
         }
         AbstractStorageValue<?> that = (AbstractStorageValue<?>) o;
-        return Objects.equals(logicName, that.logicName) &&
-            Objects.equals(value, that.value);
+        return Objects.equals(logicName, that.logicName) && Objects.equals(value, that.value);
     }
 
     @Override
@@ -180,11 +178,14 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
     @Override
     public String toString() {
-        return "AbstractStorageValue{" +
-            "next=" + next +
-            ", name='" + logicName + '\'' +
-            ", value=" + value +
-            '}';
+        final StringBuffer sb = new StringBuffer("AbstractStorageValue{");
+        sb.append("next=").append(next);
+        sb.append(", logicName='").append(logicName).append('\'');
+        sb.append(", location=").append(location);
+        sb.append(", type=").append(type);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
     }
 
     @Override

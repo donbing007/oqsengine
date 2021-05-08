@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -23,59 +22,59 @@ public class EntityField implements IEntityField, Serializable {
      */
     public static final IEntityField ID_ENTITY_FIELD =
         new EntityField(Long.MAX_VALUE, "id", FieldType.LONG,
-            FieldConfig.Builder.aFieldConfig().withIdentifie(true).build());
+            FieldConfig.Builder.anFieldConfig().withIdentifie(true).build());
 
     /**
      * 表示创建时间字段.
      */
     public static final IEntityField CREATE_TIME_FILED =
         new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
-            FieldConfig.Builder.aFieldConfig().withFieldSense(FieldConfig.FieldSense.CREATE_TIME).build());
+            FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.CREATE_TIME).build());
 
     /**
      * 表示最后更新时间字段.
      */
     public static final IEntityField UPDATE_TIME_FILED =
         new EntityField(Long.MAX_VALUE - 2, "updateTime", FieldType.LONG,
-            FieldConfig.Builder.aFieldConfig().withFieldSense(FieldConfig.FieldSense.UPDATE_TIME).build());
+            FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.UPDATE_TIME).build());
 
-    /**
+    /*
      * 字段的标识.
      */
     @JsonProperty(value = "id")
     private long id;
 
-    /**
+    /*
      * 字段名称
      */
     @JsonProperty(value = "name")
     private String name;
 
-    /**
+    /*
      * 字典中文名
      */
     @JsonProperty(value = "cnName")
     private String cnName;
 
-    /**
+    /*
      * 字段类型
      */
     @JsonProperty(value = "type")
     private FieldType fieldType;
 
-    /**
+    /*
      * 默认字典项
      */
     @JsonProperty(value = "dictId")
     private String dictId;
 
-    /**
+    /*
      * 默认值 - 如果是字典，默认值位字典项的id信息
      */
     @JsonProperty(value = "defaultValue")
     private String defaultValue;
 
-    /**
+    /*
      * 字段配置.
      */
     @JsonProperty(value = "config")
@@ -86,8 +85,9 @@ public class EntityField implements IEntityField, Serializable {
 
     /**
      * 构造一个使用默认配置的字段.
-     * @param id 字段标识.
-     * @param name 字段名称.
+     *
+     * @param id        字段标识.
+     * @param name      字段名称.
      * @param fieldType 字段类型.
      * @deprecated 使用builder构造.
      */
@@ -98,13 +98,15 @@ public class EntityField implements IEntityField, Serializable {
 
     /**
      * 构造一个使用默认配置的字段.
-     * @param id 字段标识.
-     * @param name 字段名称.
+     *
+     * @param id        字段标识.
+     * @param name      字段名称.
      * @param fieldType 字段类型.
      * @deprecated 使用builder构造.
      */
     @Deprecated
-    public EntityField(long id, String name, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
+    public EntityField(long id, String name, FieldType fieldType, FieldConfig config, String dictId,
+                       String defaultValue) {
         this(id, name, fieldType, config);
         this.dictId = dictId;
         this.defaultValue = defaultValue;
@@ -112,13 +114,15 @@ public class EntityField implements IEntityField, Serializable {
 
     /**
      * 构造一个使用默认配置的字段.
-     * @param id 字段标识.
-     * @param name 字段名称.
+     *
+     * @param id        字段标识.
+     * @param name      字段名称.
      * @param fieldType 字段类型.
      * @deprecated 使用builder构造.
      */
     @Deprecated
-    public EntityField(long id, String name, String cnName, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
+    public EntityField(long id, String name, String cnName, FieldType fieldType, FieldConfig config, String dictId,
+                       String defaultValue) {
         this(id, name, fieldType, config);
         this.cnName = cnName;
         this.dictId = dictId;
@@ -127,10 +131,11 @@ public class EntityField implements IEntityField, Serializable {
 
     /**
      * 构造一个独特配置的字段.
-     * @param id 字段标识.
-     * @param name 字段名称.
+     *
+     * @param id        字段标识.
+     * @param name      字段名称.
      * @param fieldType 字段类型.
-     * @param config 字段配置.
+     * @param config    字段配置.
      * @deprecated 使用builder构造.
      */
     @Deprecated
@@ -157,7 +162,9 @@ public class EntityField implements IEntityField, Serializable {
     }
 
     @Override
-    public String cnName() { return this.cnName; }
+    public String cnName() {
+        return this.cnName;
+    }
 
     @Override
     public FieldType type() {
@@ -195,9 +202,13 @@ public class EntityField implements IEntityField, Serializable {
         this.defaultValue = defaultValue;
     }
 
-    public String getCnName() { return cnName; }
+    public String getCnName() {
+        return cnName;
+    }
 
-    public void setCnName(String cnName) { this.cnName = cnName; }
+    public void setCnName(String cnName) {
+        this.cnName = cnName;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -208,12 +219,12 @@ public class EntityField implements IEntityField, Serializable {
             return false;
         }
         EntityField entityField = (EntityField) o;
-        return id == entityField.id &&
-            Objects.equals(name, entityField.name) &&
-            fieldType == entityField.fieldType &&
-            Objects.equals(dictId, entityField.dictId) &&
-            Objects.equals(defaultValue, entityField.defaultValue) &&
-            Objects.equals(config, entityField.config);
+        return id == entityField.id
+            && Objects.equals(name, entityField.name)
+            && fieldType == entityField.fieldType
+            && Objects.equals(dictId, entityField.dictId)
+            && Objects.equals(defaultValue, entityField.defaultValue)
+            && Objects.equals(config, entityField.config);
     }
 
     @Override
@@ -223,18 +234,20 @@ public class EntityField implements IEntityField, Serializable {
 
     @Override
     public String toString() {
-        return "Field{" +
-            "id=" + id +
-            ", name='" + name + '\'' +
-            ", fieldType=" + fieldType +
-            ", dictId='" + dictId + '\'' +
-            ", defaultValue='" + defaultValue + '\'' +
-            ", config=" + config +
-            '}';
+        final StringBuffer sb = new StringBuffer("EntityField{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", cnName='").append(cnName).append('\'');
+        sb.append(", fieldType=").append(fieldType);
+        sb.append(", dictId='").append(dictId).append('\'');
+        sb.append(", defaultValue='").append(defaultValue).append('\'');
+        sb.append(", config=").append(config);
+        sb.append('}');
+        return sb.toString();
     }
 
     /**
-     * Builder
+     * Builder.
      */
     public static final class Builder {
         private long id;
@@ -287,6 +300,11 @@ public class EntityField implements IEntityField, Serializable {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public EntityField build() {
             EntityField entityField = new EntityField();
             entityField.id = this.id;

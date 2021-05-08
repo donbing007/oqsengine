@@ -3,25 +3,21 @@ package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import io.lettuce.core.RedisClient;
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 这是为了优雅关闭存在的,目标为第一个创建第一个销毁.
@@ -104,7 +100,7 @@ public class Shutdown {
             ((DefaultEventBus) eventBus).destroy();
         }
 
-            // wait shutdown
+        // wait shutdown
         logger.info("Start closing the eventWorker worker thread...");
         ExecutorHelper.shutdownAndAwaitTermination(eventWorker, 3600);
         logger.info("Succeed closing the eventWorker worker thread...ok!");

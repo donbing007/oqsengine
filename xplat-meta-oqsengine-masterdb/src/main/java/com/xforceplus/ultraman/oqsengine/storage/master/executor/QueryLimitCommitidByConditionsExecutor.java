@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,6 +37,18 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
     private StorageStrategyFactory storageStrategyFactory;
 
+    /**
+     * 构造实例.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param entityClass 元信息.
+     * @param config 查询配置.
+     * @param timeoutMs 超时毫秒.
+     * @param conditionsBuilderFactory 条件查询构造器工厂.
+     * @param storageStrategyFactory 逻辑物理转换策略工厂.
+     * @return 实例.
+     */
     public static Executor<Conditions, Collection<EntityRef>> build(
         String tableName,
         TransactionResource<Connection> resource,
@@ -59,7 +70,8 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         super(tableName, resource);
     }
 
-    public QueryLimitCommitidByConditionsExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public QueryLimitCommitidByConditionsExecutor(String tableName, TransactionResource<Connection> resource,
+                                                  long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 
@@ -125,7 +137,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     private String buildSQL(String where) {
         StringBuilder sql = new StringBuilder();
 
-        /**
+        /*
          * select id,op,oqsmajor,JSON_UNQUOTE(JSON_EXTRACT(attribute, '$.sort')) as sort from oqsbigentity
          * where ((entityclassl0 = ? and entityclassl1 = ? ...) and commitid = ?) and (where)
          */
@@ -139,7 +151,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         Sort sort = config.getSort();
         if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 
-            /**
+            /*
              * 这里没有使用mysql的->>符号原因是,shard-jdbc解析会出现错误.
              * JSON_UNQUOTE(JSON_EXTRACT())
              * 两个函数的连用结果和->>符号是等价的.

@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 
 /**
+ * 枚举校验.
+ *
  * @author dongbin
  * @version 0.1 2020/2/29 16:27
  * @since 1.8

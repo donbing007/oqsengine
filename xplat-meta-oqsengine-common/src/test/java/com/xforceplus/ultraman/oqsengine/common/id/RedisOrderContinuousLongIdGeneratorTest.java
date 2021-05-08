@@ -6,21 +6,20 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainer
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-
 /**
  * RedisOrderContinuousLongIdGenerator Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 12/17/2020
  * @since <pre>Dec 17, 2020</pre>
  */

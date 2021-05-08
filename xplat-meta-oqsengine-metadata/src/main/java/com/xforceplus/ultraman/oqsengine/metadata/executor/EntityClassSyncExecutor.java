@@ -1,5 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
@@ -7,36 +13,27 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * desc :
- * name : EntityClassSyncExecutor
+ * 元信息同步执行器.
  *
- * @author : xujia
- * date : 2021/2/18
- * @since : 1.8
+ * @author xujia 2021/2/18
+ * @since 1.8
  */
 public class EntityClassSyncExecutor implements SyncExecutor {
 
     final Logger logger = LoggerFactory.getLogger(EntityClassSyncExecutor.class);
 
     @Resource
-    private ICacheExecutor cacheExecutor;
+    private CacheExecutor cacheExecutor;
 
     @Resource
     private IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity> expireExecutor;
@@ -46,7 +43,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     private Thread thread;
 
     /**
-     * 创建监听delayTask的线程
+     * 创建监听delayTask的线程.
      */
     @PostConstruct
     public void start() {
@@ -60,7 +57,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     }
 
     /**
-     * 销毁delayTask的线程
+     * 销毁delayTask的线程.
      */
     @PreDestroy
     public void stop() {
@@ -70,11 +67,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     }
 
     /**
-     * 同步appId对应的EntityClass package
-     * @param appId
-     * @param version
-     * @param entityClassSyncRspProto
-     * @return
+     * 同步appId对应的EntityClass package.
      */
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
@@ -97,13 +90,13 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     // step3 update new Hash in redis
                     if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
                         throw new MetaSyncClientException(
-                                String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
+                            String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
                         );
                     }
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {
                         expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
-                                new ExpireExecutor.Expired(appId, expiredVersion)));
+                            new ExpireExecutor.Expired(appId, expiredVersion)));
                     }
 
                     return true;
@@ -120,9 +113,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     }
 
     /**
-     * 获取当前meta的版本信息
-     * @param appId
-     * @return
+     * 获取当前meta的版本信息.
      */
     @Override
     public int version(String appId) {
@@ -130,7 +121,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     }
 
     /**
-     * 清理过期任务
+     * 清理过期任务.
      */
     private void delayCleanTask() {
         while (!closed) {
@@ -143,14 +134,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
             try {
                 boolean isClean =
-                        cacheExecutor.clean(task.element().getAppId(), task.element().getVersion(), false);
+                    cacheExecutor.clean(task.element().getAppId(), task.element().getVersion(), false);
 
-                logger.debug("clean app : {}, version : {}， success : {}"
-                        , task.element().getAppId(), task.element().getVersion(), isClean);
+                logger.debug("clean app : {}, version : {}， success : {}",
+                    task.element().getAppId(), task.element().getVersion(), isClean);
             } catch (Exception e) {
                 //  ignore
-                logger.warn("clean app : {}, version : {} catch exception, message : {} , but will ignore..."
-                        , task.element().getAppId(), task.element().getVersion(), e.getMessage());
+                logger.warn("clean app : {}, version : {} catch exception, message : {} , but will ignore...",
+                    task.element().getAppId(), task.element().getVersion(), e.getMessage());
             }
         }
     }

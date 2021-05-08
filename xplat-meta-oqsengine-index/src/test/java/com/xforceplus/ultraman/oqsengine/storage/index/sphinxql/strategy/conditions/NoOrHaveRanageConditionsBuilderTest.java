@@ -118,10 +118,10 @@ public class NoOrHaveRanageConditionsBuilderTest {
                 new Conditions(
                     new Condition(
                         new EntityField(9223372036854775807L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
                         new StringValue(new EntityField(9223372036854775807L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ).addAnd(
                     new Condition(
@@ -158,10 +158,10 @@ public class NoOrHaveRanageConditionsBuilderTest {
                 ).addAnd(
                     new Condition(
                         new EntityField(9223372036854775806L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
                         new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ),
                 String.format(
@@ -199,10 +199,10 @@ public class NoOrHaveRanageConditionsBuilderTest {
                 ).addAnd(
                     new Condition(
                         new EntityField(9223372036854775806L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
                         new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
-                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ).addAnd(
                     new Condition(

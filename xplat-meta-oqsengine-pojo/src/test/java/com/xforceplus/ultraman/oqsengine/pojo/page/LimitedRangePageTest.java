@@ -9,6 +9,7 @@ import org.junit.Test;
 
 /**
  * 测试限制行号的分页对象.
+ *
  * @author dongbin
  * @version 0.1 2020/5/29 17:05
  * @since 1.5
@@ -45,7 +46,7 @@ public class LimitedRangePageTest {
         int dataTotal = 1000;
         long rangeL = 3;
         long rangeR = 7;
-        Page page = new LimitedRangePage(index,size,rangeL,rangeR);
+        Page page = new LimitedRangePage(index, size, rangeL, rangeR);
         page.setTotalCount(dataTotal);
         PageScope scope = page.getNextPage();
         Assert.assertEquals(scope.startLine, 3);
@@ -70,7 +71,7 @@ public class LimitedRangePageTest {
         int dataTotal = 1000;
         long rangeL = 3;
         long rangeR = 7;
-        Page page = new LimitedRangePage(index,size,rangeL,rangeR);
+        Page page = new LimitedRangePage(index, size, rangeL, rangeR);
         page.setTotalCount(dataTotal);
 
         PageScope scope = page.getAppointPage(5);

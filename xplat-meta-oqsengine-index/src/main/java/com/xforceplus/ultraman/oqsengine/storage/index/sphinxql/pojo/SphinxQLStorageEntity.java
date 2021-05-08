@@ -100,16 +100,16 @@ public class SphinxQLStorageEntity implements Serializable {
             return false;
         }
         SphinxQLStorageEntity that = (SphinxQLStorageEntity) o;
-        return getId() == that.getId() &&
-            getTx() == that.getTx() &&
-            getCommitId() == that.getCommitId() &&
-            getCreateTime() == that.getCreateTime() &&
-            getUpdateTime() == that.getUpdateTime() &&
-            getMaintainId() == that.getMaintainId() &&
-            getOqsmajor() == that.getOqsmajor() &&
-            Objects.equals(getEntityClassF(), that.getEntityClassF()) &&
-            Objects.equals(getAttributeF(), that.getAttributeF()) &&
-            Objects.equals(getAttribute(), that.getAttribute());
+        return getId() == that.getId()
+            && getTx() == that.getTx()
+            && getCommitId() == that.getCommitId()
+            && getCreateTime() == that.getCreateTime()
+            && getUpdateTime() == that.getUpdateTime()
+            && getMaintainId() == that.getMaintainId()
+            && getOqsmajor() == that.getOqsmajor()
+            && Objects.equals(getEntityClassF(), that.getEntityClassF())
+            && Objects.equals(getAttributeF(), that.getAttributeF())
+            && Objects.equals(getAttribute(), that.getAttribute());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class SphinxQLStorageEntity implements Serializable {
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private long id;
@@ -162,7 +162,7 @@ public class SphinxQLStorageEntity implements Serializable {
         private Builder() {
         }
 
-        public static Builder aManticoreStorageEntity() {
+        public static Builder anManticoreStorageEntity() {
             return new Builder();
         }
 
@@ -216,6 +216,11 @@ public class SphinxQLStorageEntity implements Serializable {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public SphinxQLStorageEntity build() {
             SphinxQLStorageEntity sphinxQLStorageEntity = new SphinxQLStorageEntity();
             sphinxQLStorageEntity.updateTime = this.updateTime;

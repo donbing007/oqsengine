@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
@@ -76,21 +75,21 @@ public class SelectConfig implements Serializable {
         return Objects.hash(commitId, sort, page, excludedIds, dataAccessFilterCondtitions, facet);
     }
 
-//    @Override
-//    public String toString() {
-//        final StringBuffer sb = new StringBuffer("SelectConfig{");
-//        sb.append("commitId=").append(commitId);
-//        sb.append(", sort=").append(sort);
-//        sb.append(", page=").append(page);
-//        sb.append(", excludedIds=").append(excludedIds);
-//        sb.append(", dataAccessFilterCondtitions=").append(dataAccessFilterCondtitions);
-//        sb.append(", facet=").append(facet);
-//        sb.append('}');
-//        return sb.toString();
-//    }
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("SelectConfig{");
+        sb.append("commitId=").append(commitId);
+        sb.append(", sort=").append(sort);
+        sb.append(", page=").append(page);
+        sb.append(", excludedIds=").append(excludedIds);
+        sb.append(", dataAccessFilterCondtitions=").append(dataAccessFilterCondtitions);
+        sb.append(", facet=").append(facet);
+        sb.append('}');
+        return sb.toString();
+    }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private long commitId = 0;
@@ -103,7 +102,7 @@ public class SelectConfig implements Serializable {
         private Builder() {
         }
 
-        public static Builder aSelectConfig() {
+        public static Builder anSelectConfig() {
             return new Builder();
         }
 
@@ -132,11 +131,14 @@ public class SelectConfig implements Serializable {
             return this;
         }
 
+        /**
+         * 排除的ID.
+         */
         public Builder withExcludedIds(Set<Long> excludedIds) {
             if (excludedIds == null) {
                 return this;
             }
-            
+
             if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet(excludedIds);
             } else {
@@ -146,6 +148,9 @@ public class SelectConfig implements Serializable {
             return this;
         }
 
+        /**
+         * 排除id.
+         */
         public Builder withExcludeId(long excludeId) {
             if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet<>();
@@ -154,6 +159,9 @@ public class SelectConfig implements Serializable {
             return this;
         }
 
+        /**
+         * 构造实例.
+         */
         public SelectConfig build() {
             SelectConfig selectConfig = new SelectConfig();
             selectConfig.sort = this.sort;

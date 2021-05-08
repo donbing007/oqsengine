@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.common.lock;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 资源锁定义.
+ *
  * @author dongbin
  * @version 0.1 2020/11/26 11:10
  * @since 1.5

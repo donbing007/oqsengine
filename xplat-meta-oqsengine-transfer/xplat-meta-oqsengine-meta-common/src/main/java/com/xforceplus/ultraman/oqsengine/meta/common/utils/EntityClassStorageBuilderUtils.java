@@ -177,7 +177,7 @@ public class EntityClassStorageBuilderUtils {
      * @return
      */
     private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig) {
-        return FieldConfig.Builder.aFieldConfig()
+        return FieldConfig.Builder.anFieldConfig()
                 .withSearchable(fieldConfig.getSearchable())
                 .withMax(fieldConfig.getMax())
                 .withMin(fieldConfig.getMin())

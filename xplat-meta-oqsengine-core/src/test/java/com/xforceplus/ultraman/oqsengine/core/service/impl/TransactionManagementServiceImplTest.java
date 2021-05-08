@@ -1,20 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
+import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.sql.SQLException;
-
-import static org.mockito.Mockito.*;
 
 /**
  * TransactionManagementServiceImpl Tester.
@@ -89,7 +91,7 @@ public class TransactionManagementServiceImplTest {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
 
-        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        TransactionManager tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -117,7 +119,7 @@ public class TransactionManagementServiceImplTest {
     public void testRollback() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        TransactionManager tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -146,7 +148,7 @@ public class TransactionManagementServiceImplTest {
     public void testCompleted() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        TransactionManager tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)

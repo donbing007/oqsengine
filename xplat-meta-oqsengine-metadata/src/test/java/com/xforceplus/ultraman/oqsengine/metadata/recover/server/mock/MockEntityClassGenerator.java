@@ -5,11 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerat
 
 
 /**
- * desc :
+ * desc :.
  * name : EntityClassGenerator
  *
- * @author : xujia
- * date : 2021/3/1
+ * @author : xujia 2021/3/1
  * @since : 1.8
  */
 public class MockEntityClassGenerator implements EntityClassGenerator {
@@ -24,7 +23,8 @@ public class MockEntityClassGenerator implements EntityClassGenerator {
 
     @Override
     public AppUpdateEvent pull(String appId, String env) {
-        return new AppUpdateEvent("mock", appId, env, version, MockEntityClassSyncRspProtoBuilder.entityClassSyncRspProtoGenerator(entityId));
+        return new AppUpdateEvent("mock", appId, env, version,
+            MockEntityClassSyncRspProtoBuilder.entityClassSyncRspProtoGenerator(entityId));
     }
 
 }

@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.wildcard.WildcardTokenizer;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;

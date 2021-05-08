@@ -10,7 +10,11 @@ import com.xforceplus.ultraman.oqsengine.changelog.SnapshotService;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.impl.DefaultChangelogGateway;
 import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogCommandHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.*;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.DefaultChangelogCommandHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PersistentEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PropagationEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.SnapshotEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.VersionEventHandler;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultChangelogImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultSnapshotServiceImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.RedisChangelogHandler;
@@ -34,49 +38,49 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * changelog configuration
+ * changelog configuration.
  */
 @ConditionalOnProperty("changelog.enabled")
 @Configuration
 public class ChangelogConfiguration {
 
     @Bean
-    public QueryStorage queryStorage(){
+    public QueryStorage queryStorage() {
         return new SQLQueryStorage();
     }
 
     @Bean
-    public ChangelogStorage changelogStorage(){
+    public ChangelogStorage changelogStorage() {
         return new SQLChangelogStorage();
     }
 
     @Bean
-    public SnapshotStorage snapshotStorage(){
+    public SnapshotStorage snapshotStorage() {
         return new SQLSnapshotStorage();
     }
 
     @Bean
-    public ReplayService replayService(){
+    public ReplayService replayService() {
         return new ReplayServiceImpl();
     }
 
     @Bean
-    public ChangelogCommandHandler changelogCommandHandler(){
+    public ChangelogCommandHandler changelogCommandHandler() {
         return new DefaultChangelogCommandHandler();
     }
 
     @Bean
-    public PersistentEventHandler persistentEventHandler(){
+    public PersistentEventHandler persistentEventHandler() {
         return new PersistentEventHandler();
     }
 
     @Bean
-    public PropagationEventHandler propagationEventHandler(){
+    public PropagationEventHandler propagationEventHandler() {
         return new PropagationEventHandler();
     }
 
     @Bean
-    public SnapshotEventHandler snapshotEventHandler(){
+    public SnapshotEventHandler snapshotEventHandler() {
         return new SnapshotEventHandler();
     }
 
@@ -86,45 +90,50 @@ public class ChangelogConfiguration {
     }
 
     @Bean
-    public SnapshotService snapshotService(){
+    public SnapshotService snapshotService() {
         return new DefaultSnapshotServiceImpl();
     }
 
     @Bean
-    public Gateway gateway(){
+    public Gateway gateway() {
         return new DefaultChangelogGateway();
     }
 
+    /**
+     * change log handler.
+     */
     @Bean
-    public ChangelogHandler changelogHandler(@Value("changelog.queue") String queueName
-            , NodeIdGenerator nodeIdGenerator
-            , RedisClient redisClientChangeLog
-            , Gateway gateway
-            , ObjectMapper mapper
-    ){
-        RedisChangelogHandler redisChangelogHandler = new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClientChangeLog, gateway, mapper);
+    public ChangelogHandler changelogHandler(@Value("changelog.queue") String queueName,
+                                             NodeIdGenerator nodeIdGenerator,
+                                             RedisClient redisClientChangeLog,
+                                             Gateway gateway,
+                                             ObjectMapper mapper) {
+        RedisChangelogHandler redisChangelogHandler =
+            new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClientChangeLog, gateway,
+                mapper);
         redisChangelogHandler.prepareConsumer();
         return redisChangelogHandler;
     }
 
     @Bean
-    public ChangelogService changelogService(){
+    public ChangelogService changelogService() {
         return new DefaultChangelogImpl();
     }
 
     /**
      * RedisEventLifecycleHandler(RedisClient redisClient
-     * , ChangelogHandler changelogHandler, ObjectMapper mapper) {
-     * @return
+     * , ChangelogHandler changelogHandler, ObjectMapper mapper) {.
      */
     @Bean
-    public EventLifecycleAware eventLifecycleAware(RedisClient redisClient, ChangelogHandler changelogHandler, ObjectMapper mapper, MetaManager manager, FlowRegistry flowRegistry){
+    public EventLifecycleAware eventLifecycleAware(RedisClient redisClient, ChangelogHandler changelogHandler,
+                                                   ObjectMapper mapper, MetaManager manager,
+                                                   FlowRegistry flowRegistry) {
         return new RedisEventLifecycleHandler(redisClient, changelogHandler, mapper, flowRegistry, manager);
     }
 
     @Bean
-    public FlowRegistry flowRegistry(ActorMaterializer mat){
-       return new FlowRegistry(mat, 10000);
+    public FlowRegistry flowRegistry(ActorMaterializer mat) {
+        return new FlowRegistry(mat, 10000);
     }
 
     @Bean(destroyMethod = "terminate")

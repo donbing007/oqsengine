@@ -1,21 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.core.service.utils;
 
+import static java.util.stream.Collectors.toList;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static java.util.stream.Collectors.toList;
-
 /**
  * StreamMerger Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 12/03/2020
  * @since <pre>Dec 3, 2020</pre>
  */
@@ -31,8 +30,6 @@ public class StreamMergerTest {
 
     @Test
     public void mergeTest() {
-        StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
-
         List<EntityRef> masterRefs = new LinkedList<>();
 
         AtomicLong al = new AtomicLong(0);
@@ -80,7 +77,10 @@ public class StreamMergerTest {
         ientityRef4.setOrderValue("1232.12");
         indexRefs.add(ientityRef4);
 
-        List<EntityRef> collect = streamMerger.merge(masterRefs.stream(), indexRefs.stream(), new EntityRefComparator(FieldType.DECIMAL), true).collect(toList());
+        StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
+        List<EntityRef> collect = streamMerger
+            .merge(masterRefs.stream(), indexRefs.stream(), new EntityRefComparator(FieldType.DECIMAL), true)
+            .collect(toList());
 
         System.out.println(collect);
 

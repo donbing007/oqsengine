@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -9,11 +12,15 @@ import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AbstractConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
@@ -33,20 +40,27 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.vavr.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * entity 搜索服务.
@@ -61,19 +75,19 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     final Logger logger = LoggerFactory.getLogger(EntitySearchServiceImpl.class);
 
     /**
-     * 最大允许的 join 数量,
+     * 最大允许的 join 数量.
      */
-    final int DEFAULT_MAX_JOIN_ENTITY_NUMBER = 2;
+    static final int DEFAULT_MAX_JOIN_ENTITY_NUMBER = 2;
 
     /**
      * 驱动关联表的匹配数据上限.
      */
-    final int DEFAULT_MAX_JOIN_DRIVER_LINE_NUMBER = 1000;
+    static final int DEFAULT_MAX_JOIN_DRIVER_LINE_NUMBER = 1000;
 
     /**
      * 查询时最大可见数据量.
      */
-    final int DEFAULT_MAX_VISIBLE_TOTAL_COUNT = 10000;
+    static final int DEFAULT_MAX_VISIBLE_TOTAL_COUNT = 10000;
 
     private Counter oneReadCountTotal = Metrics.counter(MetricsDefine.READ_COUNT_TOTAL, "action", "one");
     private Counter multipleReadCountTotal = Metrics.counter(MetricsDefine.READ_COUNT_TOTAL, "action", "multiple");
@@ -217,20 +231,23 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
-        return selectByConditions(conditions, entityClassRef, SearchConfig.Builder.aSearchConfig().withPage(page).build());
+        return selectByConditions(conditions, entityClassRef,
+            SearchConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort,
+                                                  Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.aSearchConfig().withSort(sort).withPage(page).build());
+            SearchConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, SearchConfig config)
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                                  SearchConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -244,7 +261,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             throw new SQLException("Invalid search config.");
         }
 
-        /**
+        /*
          * 数据过滤不会使有和含有模糊搜索的条件.
          */
         if (config.getFilter().isPresent()) {
@@ -337,10 +354,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                 if (size > maxJoinEntityNumber) {
                     throw new SQLException(
-                            String.format("Join queries can be associated with at most %d entities.", maxJoinEntityNumber));
+                        String.format("Join queries can be associated with at most %d entities.", maxJoinEntityNumber));
                 }
 
-                /**
+                /*
                  * 得到了所有非OR开始及其子孙结点没有 OR 的子树.即所有子孙结点没有一个是 OR 关联的子树根结点.
                  * 每一个子树都是 AND 的组合,或者只有一个值结点.
                  *
@@ -355,15 +372,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                  *
                  * 三个结点.
                  */
-                Collection<ConditionNode> safeNodes = conditions.collectSubTree(c -> !c.isRed(), true);
+                Collection<AbstractConditionNode> safeNodes = conditions.collectSubTree(c -> !c.isRed(), true);
 
-                /**
+                /*
                  * 所有的安全结点组成的 Conditions 集合.最终这些条件将会以 OR 连接起来做为最终查询.
                  * 这些条件中的关联 entity 已经被替换成了合式的条件.
                  */
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
 
-                for (ConditionNode safeNode : safeNodes) {
+                for (AbstractConditionNode safeNode : safeNodes) {
                     subConditions.add(buildSafeNodeConditions(entityClass, safeNode, minUnSyncCommitId));
                 }
 
@@ -385,7 +402,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = combinedStorage.select(
                 useConditions,
                 entityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withCommitId(reviseCommitId(minUnSyncCommitId))
                     .withSort(useSort)
                     .withPage(usePage)
@@ -406,7 +423,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         if (e == null) {
                             logger.info("Select conditions result: [NULL]");
                         } else {
-                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(), usePage.getTotalCount());
+                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(),
+                                usePage.getTotalCount());
                         }
                     });
                 }
@@ -458,8 +476,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             return true;
         }
 
-        Optional<IEntityField> fOp = entityClass.field(c.getField().id());
-        if (fOp.isPresent() && fOp.get().config().isSearchable()) {
+        Optional<IEntityField> fieldOp = entityClass.field(c.getField().id());
+        if (fieldOp.isPresent() && fieldOp.get().config().isSearchable()) {
             return true;
         }
 
@@ -467,7 +485,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 收集条件中的 entityClass
+     * 收集条件中的 entityClass.
      */
     private Map<Long, IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
         Map<Long, IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
@@ -476,7 +494,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     //self reference
                     return Tuple.of(c.getRelationId(), mainEntityClass);
                 } else {
-                    return Tuple.of(c.getRelationId(), EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get()));
+                    return Tuple.of(c.getRelationId(),
+                        EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get()));
                 }
             } else {
                 return Tuple.of(0L, mainEntityClass);
@@ -508,29 +527,33 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, ConditionNode safeNode, long commitId)
+    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode,
+                                               long commitId)
         throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
 
         Collection<Condition> safeCondititons = processConditions.collectCondition();
         // 只包含驱动 entity 条件的集合.
-        /**
-         * condition中的entityClassRef存在只是表示字段的本身来源 e.g.  A(f1,f2) <-- A'(f3) 那么 f1的condition上就会存在EntityClassRef[A] f3的condition暂时没有
-         * 所以判断是否是另一个驱动表查询的条件需要同时考虑到是否有relationId存在 relationId表示EntityClassRef和当前查询EntityClassRef的路径(关系) 即如何从 A -findEntityBy(relationId)-> B
+        /*
+         * condition中的entityClassRef存在只是表示字段的本身来源 e.g.  A(f1,f2) <-- A'(f3)
+         * 那么 f1的condition上就会存在EntityClassRef[A] f3的condition暂时没有
+         * 所以判断是否是另一个驱动表查询的条件需要同时考虑到是否有relationId存在
+         * relationId表示EntityClassRef和当前查询EntityClassRef的路径(关系) 即如何从 A -findEntityBy(relationId)-> B
          * 所以存在relationId时 即告知当前condition来源于另一个对象，并且当前对象A通过 relationId所指 relation可以找到该对象。
          */
         Collection<Condition> driverConditionCollection = safeCondititons.stream()
-                .filter(c -> c.getEntityClassRef().isPresent() && c.getRelationId() > 0)
+            .filter(c -> c.getEntityClassRef().isPresent() && c.getRelationId() > 0)
             .collect(toList());
 
         // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
-        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(mainEntityClass, driverConditionCollection);
+        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup =
+            splitEntityClassCondition(mainEntityClass, driverConditionCollection);
 
         // driver 数据收集 future.
         List<Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>>> futures =
             new ArrayList<>(driverEntityConditionsGroup.size());
-        /**
+        /*
          * 过滤掉所有 entityClass 等于 ignoreEntityClass
          * 并将剩余的构造成 DriverEntityTask 实例交由线程池执行.
          */
@@ -545,7 +568,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             try {
                 Map.Entry<DriverEntityKey, Collection<EntityRef>> driverQueryResult = future.get();
-                /**
+                /*
                  * 由于所有安全结点都以 and 连接,所以当其中任意一个 driver 条件出现0匹配时安全结点都应该被修剪.
                  */
                 if (driverQueryResult.getValue().isEmpty()) {
@@ -589,7 +612,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         } else {
             // 之前过滤掉了非 driver 的条件,这里需要加入.
-            processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0).forEach(c -> {
+            processConditions.collectCondition().stream()
+                .filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0).forEach(c -> {
                     conditions.addAnd(c);
                 }
             );
@@ -603,13 +627,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
      * 不能处理非 driver 的 entity 查询条件.
      */
-    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(IEntityClass mainEntityClass, Collection<Condition> conditionCollection)
+    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(IEntityClass mainEntityClass,
+                                                                       Collection<Condition> conditionCollection)
         throws SQLException {
 
 
         Map<DriverEntityKey, Conditions> result = new HashMap(MapUtils.calculateInitSize(conditionCollection.size()));
 
-        /**
+        /*
          * 关系字段.最终驱动表的查询结果将使用此字段来进行in过滤.
          */
         IEntityField relationField = null;
@@ -620,13 +645,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             if (c.getEntityClassRef().isPresent() && c.getRelationId() > 0) {
                 driverEntityClass = EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
-                throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
+                throw new SQLException(
+                    "An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
             Optional<OqsRelation> relationOp = mainEntityClass.oqsRelations().stream()
                 .filter(r -> r.getId() == c.getRelationId()).findFirst();
             if (!relationOp.isPresent()) {
-                throw new SQLException(String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));
+                throw new SQLException(
+                    String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));
             }
             OqsRelation relation = relationOp.get();
             relationField = relation.getEntityField();
@@ -712,13 +739,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = combinedStorage.select(
                 conditions,
                 key.getEntityClass(),
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withCommitId(commitId)
                     .withSort(Sort.buildOutOfSort())
                     .withPage(driverPage).build()
             );
 
-            /**
+            /*
              * 确保驱动表的查询数据总量不超过 maxJoinDriverLineNumber.
              * 由于上限定义最多会返回 maxJoinDriverLineNumber 数量,如果实际匹配数量超过阀值会造成结果不精确.
              * 这里如果出现不精确以错误响应.
@@ -783,7 +810,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 masterRefs = masterStorage.select(
                     conditions,
                     entityClass,
-                    SelectConfig.Builder.aSelectConfig()
+                    SelectConfig.Builder.anSelectConfig()
                         .withSort(sort)
                         .withCommitId(commitId)
                         .withDataAccessFitlerCondtitons(filterCondition)
@@ -799,16 +826,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             masterRefs = fixNullSortValue(masterRefs, sort);
 
-            /**
+            /*
              * filter ids
              */
             Set<Long> filterIdsFromMaster = masterRefs.stream()
-                .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
+                .filter(
+                    x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
                 .map(EntityRef::getId)
                 .collect(toSet());
 
 
-            /**
+            /*
              * 这里在查询索引时新创建一个page的原因是在查询索引时会调用page.getNextPage()造成当前页增加.相当于如下.
              * Page page = new Page(1,20);
              * page.getNextPage();
@@ -827,7 +855,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> indexRefs = indexStorage.select(
                 conditions,
                 entityClass,
-                SelectConfig.Builder.aSelectConfig()
+                SelectConfig.Builder.anSelectConfig()
                     .withSort(sort)
                     .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
@@ -836,8 +864,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             );
             indexRefs = fixNullSortValue(indexRefs, sort);
 
-            Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
-                filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
+            Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream()
+                .filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
 
             Collection<EntityRef> retRefs;
             //combine two refs
@@ -862,7 +890,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             long pageSize = page.getPageSize();
 
             long skips = scope == null ? 0 : scope.getStartLine();
-            Collection<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
+            Collection<EntityRef> limitedSelect =
+                retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
             return limitedSelect;
         }
 
@@ -920,7 +949,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         // 只有一个条件.
         final int onlyOne = 1;
 
-        /**
+        /*
          * related
          */
         final int notRelated = 0;
@@ -929,7 +958,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (conditions.size() == onlyOne) {
             for (Condition condition : conditions.collectCondition()) {
                 result = condition.getField().config().isIdentifie();
-                result = result && condition.getRelationId() <= notRelated && (condition.getOperator() == ConditionOperator.EQUALS);
+                result = result && condition.getRelationId() <= notRelated
+                    && (condition.getOperator() == ConditionOperator.EQUALS);
                 break;
             }
         }

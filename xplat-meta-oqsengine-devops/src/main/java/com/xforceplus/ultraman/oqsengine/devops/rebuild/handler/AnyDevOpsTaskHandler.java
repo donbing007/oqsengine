@@ -1,17 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
-
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import java.util.Optional;
 
 /**
- * desc :
- * name : AnyDevOpsTaskHandler
+ * 任意任务.
  *
- * @author : xujia
- * date : 2021/3/30
- * @since : 1.8
+ * @author xujia 2021/3/30
+ * @since 1.8
  */
 public class AnyDevOpsTaskHandler implements TaskHandler {
     @Override
@@ -45,7 +42,7 @@ public class AnyDevOpsTaskHandler implements TaskHandler {
     }
 
     @Override
-    public IDevOpsTaskInfo devOpsTaskInfo() {
+    public DevOpsTaskInfo devOpsTaskInfo() {
         return null;
     }
 }

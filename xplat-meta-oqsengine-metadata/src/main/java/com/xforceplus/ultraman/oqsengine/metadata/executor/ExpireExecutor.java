@@ -1,24 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * desc :
- * name : ExpireExecutor
+ * 元信息淘汰执行器.
  *
- * @author : xujia
- * date : 2021/2/18
- * @since : 1.8
+ * @author xujia 2021/2/18
+ * @since 1.8
  */
-public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity>  {
+public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity> {
 
     final Logger logger = LoggerFactory.getLogger(ExpireExecutor.class);
 
@@ -60,19 +57,25 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
         isActive = true;
     }
 
+    /**
+     * 延时任务.
+     */
     public static class DelayCleanEntity implements Delayed {
-        private Expired e;
+        private Expired expired;
         private long start;
         private long expireTime;
 
-        public DelayCleanEntity(long delayInMillis, Expired e) {
-            this.e = e;
+        /**
+         * 实例.
+         */
+        public DelayCleanEntity(long delayInMillis, Expired expired) {
+            this.expired = expired;
             start = System.currentTimeMillis();
             expireTime = delayInMillis;
         }
 
         public Expired element() {
-            return e;
+            return expired;
         }
 
         @Override
@@ -87,7 +90,7 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
     }
 
     /**
-     *
+     * 过期信息.
      */
     public static class Expired {
         private String appId;

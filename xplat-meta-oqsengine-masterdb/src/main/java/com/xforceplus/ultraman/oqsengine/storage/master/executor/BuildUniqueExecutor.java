@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -19,7 +18,7 @@ import java.util.Collections;
 public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEntity, Integer> {
 
     public static Executor<StorageUniqueEntity, Integer> build(
-            String tableName, TransactionResource resource, long timeout) {
+        String tableName, TransactionResource resource, long timeout) {
         return new BuildUniqueExecutor(tableName, resource, timeout);
     }
 
@@ -46,7 +45,8 @@ public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEnt
     }
 
 
-    private int fullEntityClass(int startPos, PreparedStatement st, StorageUniqueEntity storageUniqueEntity) throws SQLException {
+    private int fullEntityClass(int startPos, PreparedStatement st, StorageUniqueEntity storageUniqueEntity)
+        throws SQLException {
         int pos = startPos;
         for (int i = 0; i < storageUniqueEntity.getEntityClasses().length; i++) {
             st.setLong(pos++, storageUniqueEntity.getEntityClasses()[i]);
@@ -58,21 +58,21 @@ public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEnt
         StringBuilder buff = new StringBuilder();
         // insert into ${table}
         buff.append("INSERT INTO ").append(getTableName())
-                .append(" (").append(String.join(",",
-                FieldDefine.ID,
-                FieldDefine.UNIQUE_KEY
-                )
+            .append(" (").append(String.join(",",
+            FieldDefine.ID,
+            FieldDefine.UNIQUE_KEY
+            )
         );
         for (int i = 0; i < entityClassSize; i++) {
             buff.append(",")
-                    .append(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
+                .append(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
         }
 
         final int baseColumnSize = 2;
 
         buff.append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(baseColumnSize + entityClassSize, "?")))
-                .append(")");
+            .append(String.join(",", Collections.nCopies(baseColumnSize + entityClassSize, "?")))
+            .append(")");
         return buff.toString();
     }
 }

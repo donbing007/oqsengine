@@ -1,10 +1,35 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_FORMAT_ERROR;
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_INSERT_ERROR;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getBooleanFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_VERSION;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ATTRIBUTE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.COMMITID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.CREATETIME;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.DELETED;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ENTITYCLASSL0;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ENTITYCLASSL4;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OP;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OQSMAJOR;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.TX;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.UPDATETIME;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.VERSION;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.getByOrdinal;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
@@ -17,28 +42,19 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.*;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_FORMAT_ERROR;
-import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType.DATA_INSERT_ERROR;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
-
 /**
- * desc :
- * name : SphinxSyncService
+ * 同步执行器.
  *
- * @author : xujia
- * date : 2020/11/13
+ * @author xujia 2020/11/13
  * @since : 1.8
  */
 public class SphinxSyncExecutor implements SyncExecutor {
@@ -70,7 +86,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
         for (RawEntry rawEntry : rawEntries) {
             try {
                 //  获取记录
-                OriginalEntity entity = prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
+                OriginalEntity entity =
+                    prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
 
                 //  加入更新列表
                 storageEntityList.add(entity);
@@ -87,8 +104,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
             } catch (Exception e) {
                 //  是否修复
-                if (!recordOrRecover(cdcMetrics.getBatchId(), UN_KNOW_ID, UN_KNOW_ID, UN_KNOW_VERSION, UN_KNOW_OP, UN_KNOW_ID
-                                                    , DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
+                if (!recordOrRecover(cdcMetrics.getBatchId(), UN_KNOW_ID, UN_KNOW_ID, UN_KNOW_VERSION, UN_KNOW_OP,
+                    UN_KNOW_ID, DATA_INSERT_ERROR, e.getMessage(), storageEntityList)) {
                     throw e;
                 }
             }
@@ -120,34 +137,37 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     /**
-     * @param batchId
-     * @param id
-     * @param commitId
-     * @param errorType
-     * @param message
-     * @param entities
-     * @return 当返回为true时代表已经修复了错误数据，此时则cdc继续往下执行
-     * 目前修复仅支持批量写index时的报错由运维工具修改OriginalEntity列表后重新提交(ErrorType = DATA_INSERT_ERROR)，
-     * 单条格式错误不支持修复，即不支持(ErrorType = DATA_FORMAT_ERROR)
-     * @throws SQLException
+     * 当返回为true时代表已经修复了错误数据，
+     * 此时则cdc继续往下执行目前修复仅支持批量写index时的报错由运维工具修改OriginalEntity
+     * 列表后重新提交(ErrorType = DATA_INSERT_ERROR)，单条格式错误不支持修复，即不支持(ErrorType = DATA_FORMAT_ERROR).d
      */
-    private boolean recordOrRecover(long batchId, long id, long entity, int version, int op, long commitId
-                            , ErrorType errorType, String message, List<OriginalEntity> entities) throws SQLException {
-        logger.warn("[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}"
-                , batchId, id, commitId, null == message ? "unKnow" : message);
+    private boolean recordOrRecover(long batchId,
+                                    long id,
+                                    long entity,
+                                    int version,
+                                    int op,
+                                    long commitId,
+                                    ErrorType errorType,
+                                    String message,
+                                    List<OriginalEntity> entities) throws SQLException {
+        logger.warn(
+            "[{}] batchId : {}, sphinx consume error will be record in cdcErrors,  id: {}, commitId: {}, message: {}",
+            "cdc-sync-executor", batchId, id, commitId, null == message ? "unKnow" : message);
 
         CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
 
         cdcErrorQueryCondition.setBatchId(batchId)
-                .setId(id).setCommitId(commitId).setType(errorType.getType()).setStatus(FixedStatus.FIXED.getStatus()).setEqualStatus(false);
+            .setId(id).setCommitId(commitId).setType(errorType.getType()).setStatus(FixedStatus.FIXED.getStatus())
+            .setEqualStatus(false);
 
         try {
             Collection<CdcErrorTask> errorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
             if (null == errorTasks || errorTasks.isEmpty()) {
                 cdcErrorStorage.buildCdcError(
-                        CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, entity, version, op, commitId,
-                                errorType.getType(), (null == entities) ? "{}" :  OriginalEntityUtils.toOriginalEntityStr(entities)
-                                , null == message ? errorType.name() : message)
+                    CdcErrorTask.buildErrorTask(seqNoGenerator.next(), batchId, id, entity, version, op, commitId,
+                        errorType.getType(),
+                        (null == entities) ? "{}" : OriginalEntityUtils.toOriginalEntityStr(entities),
+                        null == message ? errorType.name() : message)
                 );
                 return false;
             }
@@ -161,15 +181,17 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
                     try {
                         //  将数据反序列为originalEntities
-                        List<OriginalEntity> originalEntities = OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
+                        List<OriginalEntity> originalEntities =
+                            OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
 
                         //  触发修复, 写index
                         sphinxQLIndexStorage.saveOrDeleteOriginalEntities(originalEntities);
                     } catch (Exception e) {
-                        logger.warn("[cdc-sync-executor] fixed error, seqNo : [{}], batchId : [{}], message : [{}]"
-                                , cdcErrorTask.getSeqNo(), cdcErrorTask.getBatchId(), e.getMessage());
+                        logger.warn("[cdc-sync-executor] fixed error, seqNo : [{}], batchId : [{}], message : [{}]",
+                            cdcErrorTask.getSeqNo(), cdcErrorTask.getBatchId(), e.getMessage());
                         //  失败需要将状态置为失败
-                        cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.FIX_ERROR, OriginalEntityUtils.toOriginalEntityStr(entities));
+                        cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.FIX_ERROR,
+                            OriginalEntityUtils.toOriginalEntityStr(entities));
                         return false;
                     }
 
@@ -235,38 +257,43 @@ public class SphinxSyncExecutor implements SyncExecutor {
         try {
             return attributesToList(attrStr);
         } catch (Exception e) {
-            String error = String.format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id, e.getMessage(), attrStr);
+            String error = String
+                .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
+                    e.getMessage(), attrStr);
             logger.warn(error);
             throw new SQLException(error);
         }
     }
 
-    private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
+    private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId)
+        throws SQLException {
         //  通过解析binlog获取
 
         IEntityClass entityClass = getEntityClass(id, columns);
         if (null == entityClass) {
-            throw new SQLException(String.format("[cdc-sync-executor] id [%d], commitId [%d] has no entityClass...", id, commitId));
+            throw new SQLException(
+                String.format("[cdc-sync-executor] id [%d], commitId [%d] has no entityClass...", id, commitId));
         }
         Collection<Object> attributes = attrCollection(id, columns);
         if (attributes.isEmpty()) {
-            throw new SQLException(String.format("[cdc-sync-executor] id [%d], commitId [%d] has no attributes...", id, commitId));
+            throw new SQLException(
+                String.format("[cdc-sync-executor] id [%d], commitId [%d] has no attributes...", id, commitId));
         }
 
         boolean isDelete = getBooleanFromColumn(columns, DELETED);
 
         return OriginalEntity.Builder.anOriginalEntity()
-                .withId(id)
-                .withDeleted(isDelete)
-                .withOp(isDelete ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue())
-                .withVersion(getIntegerFromColumn(columns, VERSION))
-                .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
-                .withCreateTime(getLongFromColumn(columns, CREATETIME))
-                .withUpdateTime(getLongFromColumn(columns, UPDATETIME))
-                .withTx(getLongFromColumn(columns, TX))
-                .withCommitid(commitId)
-                .withEntityClass(entityClass)
-                .withAttributes(attributes)
-                .build();
+            .withId(id)
+            .withDeleted(isDelete)
+            .withOp(isDelete ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue())
+            .withVersion(getIntegerFromColumn(columns, VERSION))
+            .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
+            .withCreateTime(getLongFromColumn(columns, CREATETIME))
+            .withUpdateTime(getLongFromColumn(columns, UPDATETIME))
+            .withTx(getLongFromColumn(columns, TX))
+            .withCommitid(commitId)
+            .withEntityClass(entityClass)
+            .withAttributes(attributes)
+            .build();
     }
 }

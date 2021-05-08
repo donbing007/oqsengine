@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -39,7 +38,7 @@ public interface PreciseSelectStorage {
      *
      * @param id 目标标识.
      * @return true 存在,false不存在.
-     * @throws SQLException
+     * @throws SQLException 异常.
      */
     boolean exist(long id) throws SQLException;
 

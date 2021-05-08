@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-
 import java.util.Set;
 
 /**
  * 事务累加器.
- *
  * 实现必须并发安全.
  *
  * @author dongbin

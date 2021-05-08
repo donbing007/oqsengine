@@ -28,18 +28,17 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * entity 管理服务实现.
@@ -129,9 +128,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public void init() {
         setNormalMode();
         if (!ignoreCDCStatus) {
-            checkCDCStatusWorker = new ScheduledThreadPoolExecutor(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
+            checkCDCStatusWorker =
+                new ScheduledThreadPoolExecutor(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
             checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
-                /**
+                /*
                  * 几种情况会认为是CDC同步停止.
                  * 1. CDC状态非正常.
                  * 2. CDC心跳.
@@ -145,11 +145,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
-                /**
+                /*
                  * 检查CDC指标.
                  */
                 Optional<CDCAckMetrics> ackOp = cdcStatusService.getAck();
@@ -162,7 +162,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     }
 
                 }
-                /**
+                /*
                  * 查询不到结果时,假定存活.
                  */
                 setNormalMode();
@@ -204,17 +204,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.restMaintainId(0);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                        ResultStatus.UNCREATED);
                 }
 
                 if (!tx.getAccumulator().accumulateBuild(entity)) {
                     hint.setRollback(true);
-                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNACCUMULATE);
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                        ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
-                return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
+                    ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -245,18 +248,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
-                /**
+                /*
                  * 获取当前的原始版本.
                  */
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                        ResultStatus.NOT_FOUND);
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
 
-                /**
+                /*
                  * 保留修改前的.
                  */
                 IEntity oldEntity = null;
@@ -264,7 +268,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     oldEntity = (IEntity) targetEntity.clone();
                 } catch (CloneNotSupportedException e) {
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                        ResultStatus.NOT_FOUND);
                 }
 
                 // 操作时间
@@ -274,7 +279,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.CONFLICT);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                        ResultStatus.CONFLICT);
                 }
 
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
@@ -283,12 +289,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
                     hint.setRollback(true);
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.UNACCUMULATE);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                        ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
-                return new OperationResult(tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(tx.id(), entity.id(), targetEntity.version(),
+                    EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -316,25 +324,29 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
+                        ResultStatus.NOT_FOUND);
                 }
 
                 if (isConflict(masterStorage.delete(targetEntityOp.orElse(entity), entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
+                        ResultStatus.CONFLICT);
                 }
 
                 if (!tx.getAccumulator().accumulateDelete(targetEntityOp.get())) {
                     hint.setRollback(true);
                     return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.UNACCUMULATE);
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
+                        ResultStatus.UNACCUMULATE);
                 }
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
                 return new OperationResult(
-                    tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
+                    tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(),
+                    ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -347,10 +359,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deleteforce"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "all", "action", "deleteforce"}
+    )
     @Override
     public OperationResult deleteForce(IEntity entity) throws SQLException {
-        /**
+        /*
          * 设置万能版本,表示和所有的版本都匹配.
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
@@ -367,7 +382,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private void checkReady() throws SQLException {
         if (!ready) {
             if (blockMessage != null) {
-                throw new SQLException(String.format("Currently in read-only mode for the reason of [%s].", blockMessage));
+                throw new SQLException(
+                    String.format("Currently in read-only mode for the reason of [%s].", blockMessage));
             } else {
                 throw new SQLException("Currently in read-only mode for unknown reasons.");
             }
@@ -417,7 +433,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 break;
             }
             case ENTITY_REPLACE: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
+                eventBus
+                    .notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
                 break;
             }
             case ENTITY_DELETE: {
@@ -436,7 +453,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw new SQLException("Invalid object entity.");
         }
 
-        if (entity.entityClassRef() == null || entity.entityClassRef().getId() <= 0 || entity.entityClassRef().getCode() == null) {
+        if (entity.entityClassRef() == null
+            || entity.entityClassRef().getId() <= 0
+            || entity.entityClassRef().getCode() == null) {
             throw new SQLException(String.format("Incomplete entity(%d) type information.", entity.id()));
         }
 

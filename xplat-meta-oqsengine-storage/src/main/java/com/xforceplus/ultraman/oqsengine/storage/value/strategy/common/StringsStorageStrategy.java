@@ -8,12 +8,12 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 多字符串转换策略.
+ *
  * @author dongbin
  * @version 0.1 2020/3/27 18:27
  * @since 1.8

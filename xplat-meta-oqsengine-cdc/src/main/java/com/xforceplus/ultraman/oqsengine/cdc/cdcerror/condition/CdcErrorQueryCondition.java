@@ -3,11 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
 
 /**
- * desc :
- * name : CdcErrorQueryCondition
+ * CDC 错误信息查询条件.
  *
- * @author : xujia
- * date : 2020/11/22
+ * @author xujia 2020/11/22
  * @since : 1.8
  */
 public class CdcErrorQueryCondition {
@@ -19,11 +17,14 @@ public class CdcErrorQueryCondition {
     private Integer status;
     private Boolean isEqualStatus;
     private Integer type;
-    private Long rangeLEExecuteTime;
+    private Long rangeLeExecuteTime;
     private Long rangeGeExecuteTime;
-    private Long rangeLEFixedTime;
+    private Long rangeLeFixedTime;
     private Long rangeGeFixedTime;
 
+    /**
+     * 条件查询语句.
+     */
     public String conditionToQuerySql() {
         boolean hasEnd = false;
         StringBuilder stringBuilder = new StringBuilder();
@@ -93,7 +94,7 @@ public class CdcErrorQueryCondition {
         }
 
         //  add rangeLEExecuteTime
-        if (null != rangeLEExecuteTime) {
+        if (null != rangeLeExecuteTime) {
             if (hasEnd) {
                 stringBuilder.append(" AND ");
             }
@@ -111,7 +112,7 @@ public class CdcErrorQueryCondition {
         }
 
         //  add rangeLEFixedTime
-        if (null != rangeLEFixedTime) {
+        if (null != rangeLeFixedTime) {
             if (hasEnd) {
                 stringBuilder.append(" AND ");
             }
@@ -146,16 +147,16 @@ public class CdcErrorQueryCondition {
         return status;
     }
 
-    public Long getRangeLEExecuteTime() {
-        return rangeLEExecuteTime;
+    public Long getRangeLeExecuteTime() {
+        return rangeLeExecuteTime;
     }
 
     public Long getRangeGeExecuteTime() {
         return rangeGeExecuteTime;
     }
 
-    public Long getRangeLEFixedTime() {
-        return rangeLEFixedTime;
+    public Long getRangeLeFixedTime() {
+        return rangeLeFixedTime;
     }
 
     public Long getRangeGeFixedTime() {
@@ -193,8 +194,8 @@ public class CdcErrorQueryCondition {
         return this;
     }
 
-    public CdcErrorQueryCondition setRangeLEExecuteTime(Long rangeLEExecuteTime) {
-        this.rangeLEExecuteTime = rangeLEExecuteTime;
+    public CdcErrorQueryCondition setRangeLeExecuteTime(Long rangeLeExecuteTime) {
+        this.rangeLeExecuteTime = rangeLeExecuteTime;
         return this;
     }
 
@@ -203,8 +204,8 @@ public class CdcErrorQueryCondition {
         return this;
     }
 
-    public CdcErrorQueryCondition setRangeLEFixedTime(Long rangeLEFixedTime) {
-        this.rangeLEFixedTime = rangeLEFixedTime;
+    public CdcErrorQueryCondition setRangeLeFixedTime(Long rangeLeFixedTime) {
+        this.rangeLeFixedTime = rangeLeFixedTime;
         return this;
     }
 

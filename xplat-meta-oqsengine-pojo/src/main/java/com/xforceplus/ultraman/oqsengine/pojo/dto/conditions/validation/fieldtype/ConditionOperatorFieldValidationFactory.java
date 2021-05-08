@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldty
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +31,12 @@ public final class ConditionOperatorFieldValidationFactory {
     private ConditionOperatorFieldValidationFactory() {
     }
 
+    /**
+     * 获得校验实例.
+     *
+     * @param type 字段类型.
+     * @return 校验实例.
+     */
     public static ConditionValidation getValidation(FieldType type) {
         ConditionValidation validation = VALIDATION_MAP.get(type);
         if (validation == null) {

@@ -1,22 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.devops.repair;
 
+import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
+
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Optional;
-
-import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
+import javax.annotation.Resource;
 
 /**
- * desc :
- * name : CommitIdRepairImpl
+ * 提交号修复执行器.
  *
- * @author : xujia
- * date : 2020/12/11
- * @since : 1.8
+ * @author xujia 2020/12/11
+ * @since 1.8
  */
 public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Resource
@@ -54,8 +51,10 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Override
     public void cleanLessThan(long id) {
         long[] result = Arrays.stream(commitIdStatusService.getAll())
-                        .filter(s -> {return s > id;})
-                        .toArray();
+            .filter(s -> {
+                return s > id;
+            })
+            .toArray();
 
         commitIdStatusService.obsolete(result);
     }
@@ -64,18 +63,6 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Deprecated
     @Override
     public void repair(Optional<Long> commitId) throws SQLException {
-//        Long repairId = 0L;
-//        if (!commitId.isPresent()) {
-//            //  获取主库最大的commitId
-//            Long dbMinCommitId = masterStorage.maxCommitId().orElseGet(() -> INIT_COMMIT_ID);
-//            //  获取redis最大的commitId
-//            Long redisMinCommitId = commitIdStatusService.getMax().orElseGet(() -> INIT_COMMIT_ID);
-//            //  两者取大
-//            repairId = dbMinCommitId > redisMinCommitId ? dbMinCommitId : redisMinCommitId;
-//        } else {
-//            repairId = commitId.get();
-//        }
-//
-//        commitIdStatusService.save(repairId, true);
+
     }
 }

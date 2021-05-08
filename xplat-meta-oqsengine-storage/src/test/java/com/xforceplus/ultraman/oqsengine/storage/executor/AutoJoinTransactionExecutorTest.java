@@ -1,11 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
@@ -14,6 +23,10 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Optional;
+import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,17 +34,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Optional;
-
-import static org.mockito.Mockito.*;
-
 /**
  * AutoTransactionExecutor Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
@@ -59,7 +65,7 @@ public class AutoJoinTransactionExecutorTest {
         idGenerator = new IncreasingOrderLongIdGenerator();
         commitIdGenerator = new IncreasingOrderLongIdGenerator();
 
-        tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(idGenerator)
             .withCommitIdGenerator(commitIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)

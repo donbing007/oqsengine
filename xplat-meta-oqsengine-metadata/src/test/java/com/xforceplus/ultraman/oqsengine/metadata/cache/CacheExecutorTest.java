@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
@@ -10,6 +12,12 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,25 +25,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-
 /**
- * desc :
- * name : CacheExecutorTest
+ * 测试.
  *
- * @author : xujia
- * date : 2021/2/16
- * @since : 1.8
+ * @author xujia 2021/2/16
+ * @since 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS})
 public class CacheExecutorTest {
 
     private RedisClient redisClient;
-    private CacheExecutor cacheExecutor;
+    private DefaultCacheExecutor cacheExecutor;
 
     @Before
     public void before() throws Exception {
@@ -45,7 +46,7 @@ public class CacheExecutorTest {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        cacheExecutor = new CacheExecutor();
+        cacheExecutor = new DefaultCacheExecutor();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
         ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
@@ -64,69 +65,69 @@ public class CacheExecutorTest {
 
     @Test
     public void prepareTest() throws InterruptedException {
-        /**
+        /*
          * 设置prepare appId = 1 version = 1，预期返回true
          */
         boolean ret = cacheExecutor.prepare("1", 1);
         Assert.assertTrue(ret);
 
-        /**
+        /*
          * 当前appId = 1 已经被锁定，重复发起会被拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 2);
         Assert.assertFalse(ret);
 
-        /**
+        /*
          * 结束当前的appId prepare，预期返回true
          */
         ret = cacheExecutor.endPrepare("1");
         Assert.assertTrue(ret);
 
-        /**
+        /*
          * 结束一个不存在的(appId = 2)prepare，预期返回false
          */
         ret = cacheExecutor.endPrepare("2");
         Assert.assertFalse(ret);
 
-        /**
+        /*
          * 重置当前的版本version = 2，预期返回true
          */
         ret = cacheExecutor.resetVersion("1", 2, null);
         Assert.assertTrue(ret);
 
-        /**
+        /*
          * 更新版本小于当前活动版本,拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 1);
         Assert.assertFalse(ret);
 
-        /**
+        /*
          * 更新版本等于当前活动版本,拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 2);
         Assert.assertFalse(ret);
 
-        /**
+        /*
          * 更新版本大于当前活动版本,接收，预期返回true
          */
         ret = cacheExecutor.prepare("1", 3);
         Assert.assertTrue(ret);
 
-        /**
+        /*
          * 等待时间未到达指定时常，将被拒绝
          */
         Thread.sleep(30_000);
         ret = cacheExecutor.prepare("1", 4);
         Assert.assertFalse(ret);
 
-        /**
+        /*
          * 等待时间超过expired time，将被接收
          */
         Thread.sleep(31_000);
         ret = cacheExecutor.prepare("1", 4);
         Assert.assertTrue(ret);
 
-        /**
+        /*
          * 结束当前prepare
          */
         ret = cacheExecutor.endPrepare("1");
@@ -135,7 +136,7 @@ public class CacheExecutorTest {
 
     @Test
     public void versionTest() {
-        /**
+        /*
          * 当前的版本version = 2，预期返回true
          */
         String appId = "testResetVersion";
@@ -150,7 +151,7 @@ public class CacheExecutorTest {
         Assert.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(0)));
 
         Assert.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(1)));
-        /**
+        /*
          * 使用一个未关联的entityId 3 进行版本信息查询，将返回NOT_EXIST_VERSION
          */
         Assert.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L));
@@ -211,12 +212,15 @@ public class CacheExecutorTest {
     }
 
     /**
-     * test & check
+     * test & check.
      */
-    private void check(int expectedVersion, List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList, List<EntityClassStorage> entityClassStorageList) throws JsonProcessingException {
+    private void check(int expectedVersion,
+                       List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList,
+                       List<EntityClassStorage> entityClassStorageList) throws JsonProcessingException {
         Map<Long, EntityClassStorage> fullCheckMaps = null;
         if (null != entityClassStorageList && entityClassStorageList.size() > 0) {
-            fullCheckMaps = entityClassStorageList.stream().collect(Collectors.toMap(EntityClassStorage::getId, f1 -> f1, (f1, f2) -> f1));
+            fullCheckMaps = entityClassStorageList.stream()
+                .collect(Collectors.toMap(EntityClassStorage::getId, f1 -> f1, (f1, f2) -> f1));
         }
 
         for (EntityClassStorageBuilder.ExpectedEntityStorage e : expectedEntityStorageList) {
@@ -224,9 +228,6 @@ public class CacheExecutorTest {
             Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
 
             Assert.assertNotNull(results.remove(e.getSelf()));
-            if (null != fullCheckMaps) {
-
-            }
 
             if (null != e.getAncestors()) {
                 for (Long id : e.getAncestors()) {
@@ -271,7 +272,7 @@ public class CacheExecutorTest {
         //  entityFields
         if (null != expected.getFields()) {
             Map<Long, IEntityField> entityFieldMap =
-                     actual.getFields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
+                actual.getFields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
 
             for (int i = 0; i < expected.getFields().size(); i++) {
                 IEntityField exp = expected.getFields().get(i);
@@ -284,39 +285,48 @@ public class CacheExecutorTest {
         }
     }
 
-    private void initEntityStorage(List<EntityClassStorage> entityClassStorageList, List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList) {
-        /**
+    private void initEntityStorage(List<EntityClassStorage> entityClassStorageList,
+                                   List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList) {
+        /*
          * set self
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage self = new EntityClassStorageBuilder.ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
+        EntityClassStorageBuilder.ExpectedEntityStorage self =
+            new EntityClassStorageBuilder.ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
         entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(self));
         expectedEntityStorageList.add(self);
 
-        /**
+        /*
          * set father
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage father = new EntityClassStorageBuilder.ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L), Arrays.asList(20L));
+        EntityClassStorageBuilder.ExpectedEntityStorage father =
+            new EntityClassStorageBuilder.ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L),
+                Arrays.asList(20L));
         entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(father));
         expectedEntityStorageList.add(father);
 
-        /**
+        /*
          * set ancestor
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage ancestor = new EntityClassStorageBuilder.ExpectedEntityStorage(20L, null, null, null);
+        EntityClassStorageBuilder.ExpectedEntityStorage ancestor =
+            new EntityClassStorageBuilder.ExpectedEntityStorage(20L, null, null, null);
         entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(ancestor));
         expectedEntityStorageList.add(ancestor);
 
-        /**
+        /*
          * set son
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage son = new EntityClassStorageBuilder.ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L), Arrays.asList(5L, 20L));
+        EntityClassStorageBuilder.ExpectedEntityStorage son =
+            new EntityClassStorageBuilder.ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L),
+                Arrays.asList(5L, 20L));
         entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(son));
         expectedEntityStorageList.add(son);
 
-        /**
+        /*
          * set brother
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage brother = new EntityClassStorageBuilder.ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L), Arrays.asList(4L, 20L));
+        EntityClassStorageBuilder.ExpectedEntityStorage brother =
+            new EntityClassStorageBuilder.ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L),
+                Arrays.asList(4L, 20L));
         entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(brother));
         expectedEntityStorageList.add(brother);
     }

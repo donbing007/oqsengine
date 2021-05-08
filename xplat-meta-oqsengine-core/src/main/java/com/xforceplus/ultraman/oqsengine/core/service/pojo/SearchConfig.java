@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-
 import java.util.Objects;
 import java.util.Optional;
 
@@ -42,8 +41,12 @@ public class SearchConfig {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SearchConfig that = (SearchConfig) o;
         return Objects.equals(page, that.page)
             && Objects.equals(sort, that.sort)
@@ -58,16 +61,16 @@ public class SearchConfig {
 
     @Override
     public String toString() {
-        return "SearchConfig{" +
-            "page=" + page +
-            ", sort=" + sort +
-            ", facet=" + facet +
-            ", secondFilter=" + filter +
-            '}';
+        return "SearchConfig{"
+            + "page=" + page
+            + ", sort=" + sort
+            + ", facet=" + facet
+            + ", secondFilter=" + filter
+            + '}';
     }
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private Page page;
@@ -78,7 +81,7 @@ public class SearchConfig {
         private Builder() {
         }
 
-        public static Builder aSearchConfig() {
+        public static Builder anSearchConfig() {
             return new Builder();
         }
 
@@ -102,6 +105,11 @@ public class SearchConfig {
             return this;
         }
 
+        /**
+         * 获得 SearchConfig 实例.
+         *
+         * @return 实例.
+         */
         public SearchConfig build() {
             SearchConfig searchConfig = new SearchConfig();
             searchConfig.filter = this.filter;

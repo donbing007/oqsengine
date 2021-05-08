@@ -3,52 +3,55 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 一个元信息定义,OQS内部使用的对象元信息定义.
  *
- * @author : xujia
- * date : 2021/2/18
- * @since : 1.8
+ * @author xujia 2021/2/18
+ * @since 1.8
  */
 public class OqsEntityClass implements IEntityClass {
 
-    /**
+    /*
      * 元数据boId
      */
     private long id;
 
-    /**
+    /*
      * 对象名称
      */
     private String name;
 
-    /**
+    /*
      * 对象code
      */
     private String code;
-    /**
+    /*
      * 元数据版本.
      */
     private int version;
 
-    /**
+    /*
      * 元信息处于的继承层级
      */
     private int level;
 
-    /**
+    /*
      * 关系信息
      */
     private Collection<OqsRelation> relations;
 
-    /**
+    /*
      * 继承的对象类型.
      */
     private IEntityClass father;
-    /**
+    /*
      * 对象属性信息
      */
     private Collection<IEntityField> fields = Collections.emptyList();
@@ -133,11 +136,11 @@ public class OqsEntityClass implements IEntityClass {
         List<IEntityField> entityFields = new ArrayList<>(fields);
         if (null != relations) {
             relations.forEach(
-                    r -> {
-                        if (null != r && r.isSelfRelation(id)) {
-                            entityFields.add(r.getEntityField());
-                        }
+                r -> {
+                    if (null != r && r.isSelfRelation(id)) {
+                        entityFields.add(r.getEntityField());
                     }
+                }
             );
         }
 
@@ -151,7 +154,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(String name) {
         Optional<IEntityField> entityFieldOp =
-                fields.stream().filter(f -> name.equals(f.name())).findFirst();
+            fields.stream().filter(f -> name.equals(f.name())).findFirst();
 
         //  找到
         if (entityFieldOp.isPresent()) {
@@ -159,9 +162,9 @@ public class OqsEntityClass implements IEntityClass {
         } else {
             //  从关系中找
             for (OqsRelation relation : relations) {
-                if (null != relation &&
-                        relation.isSelfRelation(this.id) &&
-                        relation.getEntityField().name().equals(name)) {
+                if (null != relation
+                    && relation.isSelfRelation(this.id)
+                    && relation.getEntityField().name().equals(name)) {
                     return Optional.of(relation.getEntityField());
                 }
             }
@@ -177,7 +180,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(long id) {
         Optional<IEntityField> entityFieldOp =
-                fields.stream().filter(f -> id == f.id()).findFirst();
+            fields.stream().filter(f -> id == f.id()).findFirst();
 
         //  找到
         if (entityFieldOp.isPresent()) {
@@ -185,9 +188,9 @@ public class OqsEntityClass implements IEntityClass {
         } else {
             //  从关系中找
             for (OqsRelation relation : relations) {
-                if (null != relation &&
-                        relation.isSelfRelation(this.id) &&
-                        relation.getEntityField().id() == id) {
+                if (null != relation
+                    && relation.isSelfRelation(this.id)
+                    && relation.getEntityField().id() == id) {
                     return Optional.of(relation.getEntityField());
                 }
             }
@@ -209,14 +212,14 @@ public class OqsEntityClass implements IEntityClass {
             return false;
         }
         OqsEntityClass that = (OqsEntityClass) o;
-        return id == that.id &&
-                version == that.version &&
-                level == that.level &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(code, that.code) &&
-                Objects.equals(father, that.father) &&
-                Objects.equals(relations, that.relations) &&
-                Objects.equals(fields, that.fields);
+        return id == that.id
+            && version == that.version
+            && level == that.level
+            && Objects.equals(name, that.name)
+            && Objects.equals(code, that.code)
+            && Objects.equals(father, that.father)
+            && Objects.equals(relations, that.relations)
+            && Objects.equals(fields, that.fields);
     }
 
     @Override
@@ -240,7 +243,7 @@ public class OqsEntityClass implements IEntityClass {
     }
 
     /**
-     * Builder
+     * Builder.
      */
     public static final class Builder {
         private long id;
@@ -299,6 +302,12 @@ public class OqsEntityClass implements IEntityClass {
             return this;
         }
 
+        /**
+         * 增加新的字段.
+         *
+         * @param field 目标字段.
+         * @return 当前构造器.
+         */
         public OqsEntityClass.Builder withField(IEntityField field) {
             if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
                 this.fields = new ArrayList<>(fields);
@@ -309,6 +318,11 @@ public class OqsEntityClass implements IEntityClass {
             return this;
         }
 
+        /**
+         * 构造一个OqsEntityClass 实例.
+         *
+         * @return 实例.
+         */
         public OqsEntityClass build() {
             OqsEntityClass entityClass = new OqsEntityClass();
             entityClass.id = id;

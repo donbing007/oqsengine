@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -15,34 +14,34 @@ import java.util.Objects;
  */
 public class Entity implements IEntity, Serializable {
 
-    /**
+    /*
      * 数据id
      */
     private long id;
-    /**
+    /*
      * 时间
      */
     private long time;
-    /**
+    /*
      * 数据结构
      */
     private EntityClassRef entityClassRef;
-    /**
+    /*
      * 数据集合
      */
     private IEntityValue entityValue;
 
-    /**
+    /*
      * 数据版本
      */
     private int version;
 
-    /**
+    /*
      * 维护标识.
      */
     private long maintainid;
 
-    /**
+    /*
      * 产生数据的oqs版本.
      */
     private int major;
@@ -63,8 +62,8 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
-    public void resetEntityValue(IEntityValue iEntityValue) {
-        this.entityValue = iEntityValue;
+    public void resetEntityValue(IEntityValue enetityValue) {
+        this.entityValue = enetityValue;
     }
 
     @Override
@@ -88,15 +87,15 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
+    public void markTime() {
+        this.time = System.currentTimeMillis();
+    }
+
+    @Override
     public long maintainId() {
         return maintainid;
     }
 
-
-    @Override
-    public void markTime() {
-        this.time = System.currentTimeMillis();
-    }
 
     @Override
     public int major() {
@@ -141,13 +140,13 @@ public class Entity implements IEntity, Serializable {
             return false;
         }
         Entity entity = (Entity) o;
-        return id == entity.id &&
-            time == entity.time &&
-            version == entity.version &&
-            maintainid == entity.maintainid &&
-            major == entity.major &&
-            entityClassRef.equals(entity.entityClassRef) &&
-            entityValue.equals(entity.entityValue);
+        return id == entity.id
+            && time == entity.time
+            && version == entity.version
+            && maintainid == entity.maintainid
+            && major == entity.major
+            && entityClassRef.equals(entity.entityClassRef)
+            && entityValue.equals(entity.entityValue);
     }
 
     @Override
@@ -156,7 +155,7 @@ public class Entity implements IEntity, Serializable {
     }
 
     /**
-     * Builder
+     * Builder.
      */
     public static final class Builder {
         private long id;
@@ -209,6 +208,11 @@ public class Entity implements IEntity, Serializable {
             return this;
         }
 
+        /**
+         * 构造Entity实例.
+         *
+         * @return 实例.
+         */
         public Entity build() {
             Entity entity = new Entity();
             entity.maintainid = this.maintainid;

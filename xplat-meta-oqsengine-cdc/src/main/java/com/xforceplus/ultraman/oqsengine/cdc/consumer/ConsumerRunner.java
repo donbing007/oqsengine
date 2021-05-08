@@ -1,24 +1,31 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.FREE_MESSAGE_WAIT_IN_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IS_BACK_UP_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_LOOPS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_TIME;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MESSAGE_GET_WARM_INTERVAL;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.RECONNECT_WAIT_IN_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
+
 import com.alibaba.otter.canal.protocol.Message;
-import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
+import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
-
 /**
- * desc :
+ * desc :.
  * name : ConsumerThread
  *
- * @author : xujia
- * date : 2020/11/3
+ * @author : xujia 2020/11/3
  * @since : 1.8
  */
 public class ConsumerRunner extends Thread {
@@ -29,19 +36,25 @@ public class ConsumerRunner extends Thread {
 
     private CDCMetricsService cdcMetricsService;
 
-    private CDCConnector cdcConnector;
+    private AbstractCDCConnector abstractCdcConnector;
 
     private static volatile RunningStatus runningStatus;
 
+    /**
+     * 实例化.
+     */
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsService cdcMetricsService,
-                          CDCConnector cdcConnector) {
+                          AbstractCDCConnector abstractCdcConnector) {
 
         this.consumerService = consumerService;
         this.cdcMetricsService = cdcMetricsService;
-        this.cdcConnector = cdcConnector;
+        this.abstractCdcConnector = abstractCdcConnector;
     }
 
+    /**
+     * 优雅停止.
+     */
     public void shutdown() {
         runningStatus = RunningStatus.TRY_STOP;
         cdcMetricsService.shutdown();
@@ -72,6 +85,9 @@ public class ConsumerRunner extends Thread {
         return runningStatus.equals(RunningStatus.STOP_SUCCESS);
     }
 
+    /**
+     * 开始运行.
+     */
     public void run() {
         runningStatus = RunningStatus.INIT;
 
@@ -88,7 +104,7 @@ public class ConsumerRunner extends Thread {
                 connectAndReset();
             } catch (Exception e) {
                 closeToNextReconnect(CDCStatus.DIS_CONNECTED,
-                        String.format("[cdc-runner] %s, %s", "canal-server connection error", e.getMessage()));
+                    String.format("[cdc-runner] %s, %s", "canal-server connection error", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
@@ -99,21 +115,21 @@ public class ConsumerRunner extends Thread {
                 consume();
             } catch (Exception e) {
                 closeToNextReconnect(CDCStatus.CONSUME_FAILED,
-                        String.format("[cdc-runner] %s, %s", "canal-client consume error", e.getMessage()));
+                    String.format("[cdc-runner] %s, %s", "canal-client consume error", e.getMessage()));
             }
         }
     }
 
     private void connectAndReset() throws SQLException {
 
-        cdcConnector.open();
+        abstractCdcConnector.open();
 
         //  首先将上次记录完整的信息(batchID)确认到Canal中
         syncAndRecover();
     }
 
     private void closeToNextReconnect(CDCStatus cdcStatus, String errorMessage) {
-        cdcConnector.close();
+        abstractCdcConnector.close();
         logger.error(errorMessage);
 
         //  这里将进行睡眠->同步错误信息->进入下次循环
@@ -122,13 +138,16 @@ public class ConsumerRunner extends Thread {
 
     private boolean checkForStop() {
         if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
-            cdcConnector.shutdown();
+            abstractCdcConnector.shutdown();
             runningStatus = RunningStatus.STOP_SUCCESS;
             return true;
         }
         return false;
     }
 
+    /**
+     * 消费.
+     */
     public void consume() throws SQLException {
         while (true) {
             //  服务被终止
@@ -142,18 +161,19 @@ public class ConsumerRunner extends Thread {
             try {
                 long start = System.currentTimeMillis();
                 //获取指定数量的数据
-                message = cdcConnector.getMessageWithoutAck();
+                message = abstractCdcConnector.getMessageWithoutAck();
                 long duration = System.currentTimeMillis() - start;
 
                 batchId = message.getId();
 
                 if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
-                    logger.info("[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}"
-                            , duration, message.getId());
+                    logger.info(
+                        "[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}",
+                        duration, message.getId());
                 }
             } catch (Exception e) {
                 //  未获取到数据,回滚
-                cdcConnector.rollback();
+                abstractCdcConnector.rollback();
                 String error = String.format("get message from canal server error, %s", e.toString());
                 logger.error("[cdc-runner] {}", error);
                 throw new SQLException(error);
@@ -178,7 +198,7 @@ public class ConsumerRunner extends Thread {
 
                     //  当前没有任务需要消费
                     cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
-                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                        cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
                     cdcMetrics.getCdcAckMetrics().setExecuteRows(ZERO);
 
                     synced = backMetrics(cdcMetrics);
@@ -189,7 +209,7 @@ public class ConsumerRunner extends Thread {
                 String error = "";
                 if (!synced) {
                     //  当未执行到最终必须成功时,需进行rollback
-                    cdcConnector.rollback();
+                    abstractCdcConnector.rollback();
                     error = "consume message error";
                 } else {
                     error = "sync finish status error";
@@ -209,9 +229,7 @@ public class ConsumerRunner extends Thread {
     private void syncFree(long batchId) throws SQLException {
 
         //  同步状态
-        cdcConnector.ack(batchId);
-
-//        cdcMetricsService.syncFreeMessage(EMPTY_BATCH_ID);
+        abstractCdcConnector.ack(batchId);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
         threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
@@ -237,7 +255,8 @@ public class ConsumerRunner extends Thread {
             //  回调告知当前成功信息
             callBackSuccess(originBatchId, cdcMetrics, true);
 
-            logger.info("[cdc-runner] recover from last ackMetrics position success..., originBatchId : {}", originBatchId);
+            logger.info("[cdc-runner] recover from last ackMetrics position success..., originBatchId : {}",
+                originBatchId);
         } else {
             //  回调告知当前为一个新的开始
             cdcMetricsService.newConnectCallBack();
@@ -245,7 +264,7 @@ public class ConsumerRunner extends Thread {
         }
 
         //  确认完毕，需要将当前未提交的数据回滚到当前已确认batchId所对应的初始位置
-        cdcConnector.rollback();
+        abstractCdcConnector.rollback();
     }
 
     /*
@@ -261,6 +280,7 @@ public class ConsumerRunner extends Thread {
             callBackSuccess(originBatchId, cdcMetrics, false);
         }
     }
+
     /*
         由于采用2阶段prepare -> confirm模式，当进入backAfterAck的逻辑时,必须保证一致性（成功）
         所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖unCommitMetrics。
@@ -268,7 +288,7 @@ public class ConsumerRunner extends Thread {
      */
     private void backAfterAck(long originBatchId, CDCMetrics cdcMetrics) throws SQLException {
         //  1.确认ack batchId
-        cdcConnector.ack(originBatchId);
+        abstractCdcConnector.ack(originBatchId);
         logger.debug("ack batch success, batchId : {}", originBatchId);
         //  2.设置当前batchId为-LONG.MAX_VALUE
         cdcMetrics.setBatchId(IS_BACK_UP_ID);

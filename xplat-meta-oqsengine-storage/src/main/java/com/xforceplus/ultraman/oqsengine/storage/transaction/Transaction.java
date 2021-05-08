@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -100,7 +99,8 @@ public interface Transaction {
     void attach(long id);
 
     /**
-     * Is it a read-only transaction?
+     * .
+     * Is it a read-only transaction ?
      *
      * @return true readOnly,false not readOnly.
      */

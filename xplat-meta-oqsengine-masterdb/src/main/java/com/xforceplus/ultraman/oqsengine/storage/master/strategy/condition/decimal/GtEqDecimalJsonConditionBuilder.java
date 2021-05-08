@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * 大于等于.
+ *
  * @author dongbin
  * @version 0.1 2020/11/4 17:26
  * @since 1.8

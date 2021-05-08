@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.Objects;
 
 /**
@@ -53,8 +52,7 @@ public class BooleanValue extends AbstractValue<Boolean> {
 
         BooleanValue that = (BooleanValue) o;
 
-        return Objects.equals(getField(), that.getField()) &&
-                Objects.equals(this.getValue(), that.getValue());
+        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
     }
 
     @Override
@@ -64,9 +62,6 @@ public class BooleanValue extends AbstractValue<Boolean> {
 
     @Override
     public String toString() {
-        return "BooleanValue{" +
-                "field=" + getField() +
-                ", value=" + getValue() +
-                '}';
+        return "BooleanValue{" + "field=" + getField() + ", value=" + getValue() + '}';
     }
 }

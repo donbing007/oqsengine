@@ -3,19 +3,24 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
  * Entity实体值对象.
- * @author wangzheng
+ *
+ * @author wangzheng.
  * @version 1.0 2020/3/26 15:10
  */
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
-    /**
+    /*
      * Entity的值集合
      */
     private Map<Long, IValue> values;
@@ -58,7 +63,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         }
 
         return values.entrySet().stream().filter(x -> x.getKey() == fieldId)
-                .map(Map.Entry::getValue).findFirst();
+            .map(Map.Entry::getValue).findFirst();
     }
 
     @Override

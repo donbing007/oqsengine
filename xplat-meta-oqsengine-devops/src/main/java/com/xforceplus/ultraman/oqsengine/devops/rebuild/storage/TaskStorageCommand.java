@@ -1,30 +1,29 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.storage;
 
-import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.sql.SQL;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
- * desc :
- * name : TaskStorageCommand
+ * 任务储存命令.
  *
- * @author : xujia
- * date : 2020/8/24
- * @since : 1.8
+ * @author xujia 2020/8/24
+ * @since 1.8
  */
 public class TaskStorageCommand {
 
@@ -36,16 +35,19 @@ public class TaskStorageCommand {
         this.tableName = tableName;
     }
 
-    public Collection<IDevOpsTaskInfo> selectActive(DataSource dataSource, long id) throws SQLException {
+    /**
+     * 查找活动任务.
+     */
+    public Collection<DevOpsTaskInfo> selectActive(DataSource dataSource, long id) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            return selectActive(connection, id);
+            return doSelectActive(connection, id);
         }
     }
 
-    public Optional<IDevOpsTaskInfo> selectByUnique(DataSource dataSource, long taskId) throws SQLException {
-//        "select maintainid, entity, starts, ends, batchsize, " +
-//                "finishsize, status, createtime, updatetime, message, startId from %s " +
-//                "where maintainid = ?";
+    /**
+     * 查询单独任务.
+     */
+    public Optional<DevOpsTaskInfo> selectByUnique(DataSource dataSource, long taskId) throws SQLException {
         String sql = String.format(SQL.SELECT_SQL_TASK_ID, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -56,9 +58,10 @@ public class TaskStorageCommand {
         }
     }
 
+    /**
+     * 恢复任务.
+     */
     public int resumeTask(DataSource dataSource, long maintainid) throws SQLException {
-//        "update %s set updatetime = ?, status = ?, message = ? " +
-//                "where maintainid = ? and status not in (0, 1, 2)";
         String sql = String.format(SQL.RESUME_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -80,23 +83,30 @@ public class TaskStorageCommand {
         }
     }
 
-    public Collection<IDevOpsTaskInfo> listActives(DataSource dataSource, Page page) throws SQLException {
-//        "select maintainid, entity, starts, ends, batchsize, " +
-//                "finishsize, status, createtime, updatetime, message, startid from %s where status in (0, 1) order by maintainid desc limit ?, ?";
+    /**
+     * 列出活动任务.
+     */
+    public Collection<DevOpsTaskInfo> listActives(DataSource dataSource, Page page) throws SQLException {
         String selectSql = String.format(SQL.LIST_ACTIVES, tableName);
-//        "select count(1) from %s where status in (0, 1)";
         String countSql = String.format(SQL.COUNT_ACTIVES, tableName);
         return lists(dataSource, selectSql, countSql, page);
     }
 
-    public Collection<IDevOpsTaskInfo> listAll(DataSource dataSource, Page page) throws SQLException {
+    /**
+     * 列出所有任务.
+     */
+    public Collection<DevOpsTaskInfo> listAll(DataSource dataSource, Page page) throws SQLException {
         String selectSql = String.format(SQL.LIST_ALL, tableName);
         String countSql = String.format(SQL.COUNT_ALL, tableName);
 
         return lists(dataSource, selectSql, countSql, page);
     }
 
-    public Collection<IDevOpsTaskInfo> lists(DataSource dataSource, String selectSql, String countSql, Page page) throws SQLException {
+    /**
+     * 列出任务.
+     */
+    public Collection<DevOpsTaskInfo> lists(DataSource dataSource, String selectSql, String countSql, Page page)
+        throws SQLException {
         // 空页,空结果返回.
         if (page.isEmptyPage()) {
             return Collections.emptyList();
@@ -127,12 +137,15 @@ public class TaskStorageCommand {
         }
     }
 
-    public int build(DataSource dataSource, IDevOpsTaskInfo taskInfo) throws SQLException {
+    /**
+     * 构造任务执行.
+     */
+    public int build(DataSource dataSource, DevOpsTaskInfo taskInfo) throws SQLException {
         String sql = String.format(SQL.BUILD_SQL, tableName);
 
         Connection connection = dataSource.getConnection();
         try {
-            return build(connection, sql, taskInfo);
+            return doBuild(connection, sql, taskInfo);
         } catch (SQLException e) {
             throw e;
         } finally {
@@ -140,17 +153,17 @@ public class TaskStorageCommand {
         }
     }
 
-    private Collection<IDevOpsTaskInfo> selectActive(Connection connection, long id) throws SQLException {
+    private Collection<DevOpsTaskInfo> doSelectActive(Connection connection, long id) throws SQLException {
         String sql = String.format(SQL.SELECT_SQL_ACTIVE, tableName);
-        try(PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setLong(1, id); // id
 
             return executeListResults(st);
         }
     }
 
-    private int build(Connection connection, String sql, IDevOpsTaskInfo devTask) throws SQLException {
-        DevOpsTaskInfo taskInfo = (DevOpsTaskInfo) devTask;
+    private int doBuild(Connection connection, String sql, DevOpsTaskInfo devTask) throws SQLException {
+        DefaultDevOpsTaskInfo taskInfo = (DefaultDevOpsTaskInfo) devTask;
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             // taskId
             st.setLong(1, taskInfo.getMaintainid());
@@ -179,9 +192,10 @@ public class TaskStorageCommand {
         }
     }
 
-    public int update(DataSource dataSource, DevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
-//        "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, startid = ? " +
-//                "where maintainid = ? and status not in (2, 3, 4)";
+    /**
+     * 更新任务.
+     */
+    public int update(DataSource dataSource, DefaultDevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
         String sql = String.format(SQL.UPDATE_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -207,9 +221,10 @@ public class TaskStorageCommand {
         }
     }
 
-    public int error(DataSource dataSource, DevOpsTaskInfo taskInfo) throws SQLException {
-//        "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, startid = ? " +
-//                "where maintainid = ? and status != 2";
+    /**
+     * 任务错误结束.
+     */
+    public int error(DataSource dataSource, DefaultDevOpsTaskInfo taskInfo) throws SQLException {
         String sql = String.format(SQL.ERROR_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -235,8 +250,10 @@ public class TaskStorageCommand {
         }
     }
 
+    /**
+     * 设置任务状态.
+     */
     public int status(DataSource dataSource, long taskId, BatchStatus batchStatus, String message) throws SQLException {
-        //  "update %s set updatetime = ?, status = ?, message = ? where maintainid = ? and status not in (2, 3, 4)";
         String sql = String.format(SQL.STATUS_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -274,7 +291,7 @@ public class TaskStorageCommand {
         }
     }
 
-    private Optional<IDevOpsTaskInfo> executeResult(PreparedStatement st) throws SQLException {
+    private Optional<DevOpsTaskInfo> executeResult(PreparedStatement st) throws SQLException {
         try (ResultSet rs = st.executeQuery()) {
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -287,13 +304,13 @@ public class TaskStorageCommand {
         }
     }
 
-    private Collection<IDevOpsTaskInfo> executeListResults(PreparedStatement st) throws SQLException {
+    private Collection<DevOpsTaskInfo> executeListResults(PreparedStatement st) throws SQLException {
         try (ResultSet rs = st.executeQuery()) {
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
             }
 
-            Collection<IDevOpsTaskInfo> taskInfoList = new ArrayList<>();
+            Collection<DevOpsTaskInfo> taskInfoList = new ArrayList<>();
             while (rs.next()) {
                 taskInfoList.add(fillByResultSet(rs));
             }
@@ -301,18 +318,18 @@ public class TaskStorageCommand {
         }
     }
 
-    private IDevOpsTaskInfo fillByResultSet(ResultSet rs) throws SQLException {
+    private DevOpsTaskInfo fillByResultSet(ResultSet rs) throws SQLException {
 
-        DevOpsTaskInfo taskInfo = new DevOpsTaskInfo(
-                rs.getLong("maintainid"),
-                rs.getLong("entity"),
-                rs.getLong("starts"),
-                rs.getLong("ends"),
-                rs.getInt("batchsize"),
-                rs.getInt("finishsize"),
-                rs.getInt("status"),
-                rs.getLong("createtime"),
-                rs.getLong("updatetime"));
+        DefaultDevOpsTaskInfo taskInfo = new DefaultDevOpsTaskInfo(
+            rs.getLong("maintainid"),
+            rs.getLong("entity"),
+            rs.getLong("starts"),
+            rs.getLong("ends"),
+            rs.getInt("batchsize"),
+            rs.getInt("finishsize"),
+            rs.getInt("status"),
+            rs.getLong("createtime"),
+            rs.getLong("updatetime"));
 
         taskInfo.resetMessage(rs.getString("message"));
         taskInfo.resetStartId(rs.getLong("startid"));

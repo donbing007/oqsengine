@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
-
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -100,7 +99,7 @@ public class SphinxQLHelper {
 
         buff.append(shortStorageName.getPrefix())
             .append(filterSymbols(value.value().toString()));
-        /**
+        /*
          * 如果使用组名的话,忽略尾部定位序号.
          */
         if (useGroupName) {

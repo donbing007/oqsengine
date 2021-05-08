@@ -1,29 +1,31 @@
 package com.xforceplus.ultraman.oqsengine.metadata.recover;
 
-import com.xforceplus.ultraman.oqsengine.metadata.InitBase;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.TEST_APP_ID;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.TEST_ENTITY_CLASS_ID;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.TEST_ENV;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.TEST_START_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.IF_TEST;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.IS_CLIENT_CLOSED;
+import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.IS_SERVER_OK;
 
+import com.xforceplus.ultraman.oqsengine.metadata.InitBase;
 import com.xforceplus.ultraman.oqsengine.metadata.recover.server.CacheRecoverMockServer;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.util.Optional;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-
-import java.util.Optional;
-
-import static com.xforceplus.ultraman.oqsengine.metadata.recover.Constant.*;
-
 /**
- * desc :
+ * desc :.
  * name : CacheRecoverClientTest
  *
- * @author : xujia
- * date : 2021/4/7
+ * @author : xujia 2021/4/7
  * @since : 1.8
  */
 @RunWith(ContainerRunner.class)
@@ -36,7 +38,7 @@ public class CacheRecoverClientTest extends BaseRequest {
 
     @Before
     public void before() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             baseInit();
 
             initBase = new InitBase(requestHandler);
@@ -53,15 +55,15 @@ public class CacheRecoverClientTest extends BaseRequest {
 
             int i = 0;
             while (i < 100) {
-                if (isServerOk) {
+                if (IS_SERVER_OK) {
                     entityClassSyncClient.start();
-                    
+
                     Thread.sleep(5_000);
                     return;
                 }
                 //  睡眠1秒
                 Thread.sleep(1_000);
-                i ++;
+                i++;
             }
             throw new RuntimeException("test has failed due to server not start.");
         }
@@ -69,17 +71,17 @@ public class CacheRecoverClientTest extends BaseRequest {
 
     @After
     public void after() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             entityClassSyncClient.stop();
             initBase.clear();
-            isClientClosed = true;
+            IS_CLIENT_CLOSED = true;
         }
     }
 
     //  测试connect sdk中持有版本信息，cache中被清理，是否会重新拉取
     @Test
     public void testClientHasCacheLost() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             clientHasCacheLost();
         }
     }
@@ -97,7 +99,7 @@ public class CacheRecoverClientTest extends BaseRequest {
 
         //  再次获取则为空
         Optional<IEntityClass> entityClassOp =
-                initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
+            initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
 
         Assert.assertFalse(entityClassOp.isPresent());
 
@@ -111,7 +113,7 @@ public class CacheRecoverClientTest extends BaseRequest {
         Assert.assertEquals(TEST_START_VERSION, version);
 
         Optional<IEntityClass> entityClassOp =
-                initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
+            initBase.storageMetaManager.load(TEST_ENTITY_CLASS_ID);
 
         Assert.assertTrue(entityClassOp.isPresent());
     }

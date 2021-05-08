@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -18,6 +17,14 @@ public class SphinxQLTransactionResource extends AbstractConnectionTransactionRe
 
     private boolean autocommit;
 
+    /**
+     * 实例化.
+     *
+     * @param key        资源key.
+     * @param conn       JDBC连接.
+     * @param autocommit true 自动提交, false 手动.
+     * @throws SQLException 异常.
+     */
     public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         super(key, conn, true);
 

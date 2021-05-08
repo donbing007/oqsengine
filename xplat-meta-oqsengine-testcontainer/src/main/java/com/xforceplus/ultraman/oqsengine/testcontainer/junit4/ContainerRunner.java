@@ -18,7 +18,7 @@ public class ContainerRunner extends BlockJUnit4ClassRunner {
     /**
      * 创建一个容器的测试类.
      *
-     * @param klass
+     * @param klass 目标类型.
      * @throws InitializationError if the test class is malformed.
      */
     public ContainerRunner(Class<?> klass) throws InitializationError {

@@ -1,48 +1,48 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-import io.micrometer.core.annotation.Timed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.function.Supplier;
-
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import io.micrometer.core.annotation.Timed;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * desc :
- * name : StorageMetaManager
- * Meta管理类
+ * Meta管理类实现.
  *
- * @author : xujia
- * date : 2021/2/9
- * @since : 1.8
+ * @author xujia 2021/2/9
+ * @since 1.8
  */
 public class StorageMetaManager implements MetaManager {
 
     final Logger logger = LoggerFactory.getLogger(StorageMetaManager.class);
 
     @Resource
-    private ICacheExecutor cacheExecutor;
+    private CacheExecutor cacheExecutor;
 
     @Resource
     private IRequestHandler requestHandler;
@@ -55,9 +55,10 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 使用entityClassId获取对应的EntityClass
+     * 使用entityClassId获取对应的EntityClass.
+     *
      * @param id 元信息的标识.
-     * @return
+     * @return 元信息实现.
      */
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "load"})
     @Override
@@ -80,11 +81,12 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 需要关注某个appId
-     * 注意：当前的实现只支持单个appId的单个Env，即appId如果关注了test env，则无法再次关注其他环境
+     * 需要关注某个appId.
+     * 注意：当前的实现只支持单个appId的单个Env，即appId如果关注了test env，则无法再次关注其他环境.
+     *
      * @param appId 应用标识.
-     * @param env
-     * @return
+     * @param env 环境编码.
+     * @return 版本号.
      */
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "need"})
     @Override
@@ -103,7 +105,7 @@ public class StorageMetaManager implements MetaManager {
             if (version < 0) {
                 CompletableFuture<Integer> future = async(() -> {
                     int ver;
-                    /**
+                    /*
                      * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
                      */
                     while (true) {
@@ -129,7 +131,8 @@ public class StorageMetaManager implements MetaManager {
                 }
 
                 if (version == NOT_EXIST_VERSION) {
-                    throw new RuntimeException(String.format("get version of appId [%s] failed, reach max wait time", appId));
+                    throw new RuntimeException(
+                        String.format("get version of appId [%s] failed, reach max wait time", appId));
                 }
             }
             return version;
@@ -139,7 +142,7 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 使本地缓存失效
+     * 使本地缓存失效.
      */
     @Override
     public void invalidateLocal() {
@@ -147,28 +150,25 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 生成IEntityClass
-     * @param id
-     * @param entityClassStorageMaps
-     * @return
-     * @throws SQLException
+     * 生成IEntityClass.
      */
-    private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
+    private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps)
+        throws SQLException {
         EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
         if (null == entityClassStorage) {
             throw new SQLException(String.format("entity class [%d] not found.", id));
         }
 
         OqsEntityClass.Builder builder =
-                OqsEntityClass.Builder.anEntityClass()
-                        .withId(entityClassStorage.getId())
-                        .withCode(entityClassStorage.getCode())
-                        .withName(entityClassStorage.getName())
-                        .withLevel(entityClassStorage.getLevel())
-                        .withVersion(entityClassStorage.getVersion())
-                        .withRelations(toQqsRelation(entityClassStorage.getRelations()))
-                        .withFields(entityClassStorage.getFields());
-        /**
+            OqsEntityClass.Builder.anEntityClass()
+                .withId(entityClassStorage.getId())
+                .withCode(entityClassStorage.getCode())
+                .withName(entityClassStorage.getName())
+                .withLevel(entityClassStorage.getLevel())
+                .withVersion(entityClassStorage.getVersion())
+                .withRelations(toQqsRelation(entityClassStorage.getRelations()))
+                .withFields(entityClassStorage.getFields());
+        /*
          * 加载父类
          */
         if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
@@ -179,30 +179,27 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 加载relation
-     *
-     * @param relationStorageList
-     * @return
+     * 加载relation.
      */
     private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
         List<OqsRelation> oqsRelations = new ArrayList<>();
         relationStorageList.forEach(
-                r -> {
-                    OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
-                            .withId(r.getId())
-                            .withCode(r.getCode())
-                            .withLeftEntityClassId(r.getLeftEntityClassId())
-                            .withLeftEntityClassCode(r.getLeftEntityClassCode())
-                            .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
-                            .withIdentity(r.isIdentity())
-                            .withStrong(r.isStrong())
-                            .withRightEntityClassId(r.getRightEntityClassId())
-                            .withRightEntityClassLoader(this::load)
-                            .withEntityField(r.getEntityField())
-                            .withBelongToOwner(r.isBelongToOwner());
+            r -> {
+                OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
+                    .withId(r.getId())
+                    .withCode(r.getCode())
+                    .withLeftEntityClassId(r.getLeftEntityClassId())
+                    .withLeftEntityClassCode(r.getLeftEntityClassCode())
+                    .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
+                    .withIdentity(r.isIdentity())
+                    .withStrong(r.isStrong())
+                    .withRightEntityClassId(r.getRightEntityClassId())
+                    .withRightEntityClassLoader(this::load)
+                    .withEntityField(r.getEntityField())
+                    .withBelongToOwner(r.isBelongToOwner());
 
-                    oqsRelations.add(builder.build());
-                }
+                oqsRelations.add(builder.build());
+            }
         );
         return oqsRelations;
     }

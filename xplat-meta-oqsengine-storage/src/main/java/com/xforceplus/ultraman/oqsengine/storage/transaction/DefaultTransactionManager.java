@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
-
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,7 +30,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     public Transaction doCreate(String msg) {
         long txId = txIdGenerator.next();
 
-        MultiLocalTransaction.Builder builder = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+        MultiLocalTransaction.Builder builder = MultiLocalTransaction.Builder.anMultiLocalTransaction()
             .withId(txId)
             .withCommitIdStatusService(commitIdStatusService)
             .withLongIdGenerator(commitIdGenerator)
@@ -50,7 +49,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
 
 
     /**
-     * builder
+     * builder.
      */
     public static final class Builder {
         private LongIdGenerator txIdGenerator;
@@ -64,7 +63,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
         private Builder() {
         }
 
-        public static Builder aDefaultTransactionManager() {
+        public static Builder anDefaultTransactionManager() {
             return new Builder();
         }
 
@@ -103,6 +102,11 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             return this;
         }
 
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
         public DefaultTransactionManager build() {
             DefaultTransactionManager defaultTransactionManager = new DefaultTransactionManager(survivalTimeMs);
             defaultTransactionManager.eventBus = this.eventBus;
@@ -124,7 +128,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
 
             if (null == cacheEventHandler) {
                 throw new IllegalArgumentException(
-                        "cacheEventHandler could not be null.");
+                    "cacheEventHandler could not be null.");
             }
             return defaultTransactionManager;
         }

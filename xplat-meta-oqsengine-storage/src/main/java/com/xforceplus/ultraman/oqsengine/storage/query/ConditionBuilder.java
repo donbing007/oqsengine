@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 /**
  * 条件构造器.
  *
- * @param <T>
+ * @param <T> 返回类型.
  * @author dongbin
  * @version 0.1 2020/3/26 09:49
  * @since 1.8

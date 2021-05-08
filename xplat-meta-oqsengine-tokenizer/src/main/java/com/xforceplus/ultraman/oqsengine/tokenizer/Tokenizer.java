@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-
 import java.io.IOException;
 import java.util.Iterator;
 

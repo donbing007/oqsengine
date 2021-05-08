@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define;
 
 /**
  * 字段定义.
+ *
  * @author dongbin
  * @version 0.1 2020/3/1 20:59
  * @since 1.8
@@ -19,7 +20,7 @@ public class FieldDefine {
      */
     public static final String TX = "tx";
     /**
-     * 提交号
+     * 提交号.
      */
     public static final String COMMITID = "commitid";
     /**

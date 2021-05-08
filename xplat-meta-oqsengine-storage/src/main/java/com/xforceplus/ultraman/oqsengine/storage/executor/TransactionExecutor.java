@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-
 import java.sql.SQLException;
 
 /**

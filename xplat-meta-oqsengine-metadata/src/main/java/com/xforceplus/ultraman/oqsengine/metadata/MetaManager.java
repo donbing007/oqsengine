@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.util.Optional;
 
 /**
- * oqs 元数据管理
+ * oqs 元数据管理.
  *
  * @author dongbin
  * @version 0.1 2021/2/2 11:26
@@ -38,8 +37,8 @@ public interface MetaManager {
     int need(String appId, String env);
 
     /**
-     * 清空本地缓存
-     * 这个操作将强制将本地缓存清除
+     * 清空本地缓存.
+     * 这个操作将强制将本地缓存清除.
      */
     void invalidateLocal();
 }

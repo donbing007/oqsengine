@@ -20,7 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * CDCStatusServiceImpl Tester.
  *
- * @author <Authors name>
+ * @author xujia
  * @version 1.0 11/16/2020
  * @since <pre>Nov 16, 2020</pre>
  */
@@ -84,8 +84,6 @@ public class CDCStatusServiceImplTest {
 
     /**
      * 如果逻辑时间达到了Long.MAX_VALUE进行回卷.
-     *
-     * @throws Exception
      */
     @Test
     public void testHeartBeatRewind() throws Exception {

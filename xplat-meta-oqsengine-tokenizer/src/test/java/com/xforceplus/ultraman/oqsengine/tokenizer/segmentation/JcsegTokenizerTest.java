@@ -1,16 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-
 /**
  * JcsegTokenizer Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/15/2021
  * @since <pre>Mar 15, 2021</pre>
  */
@@ -36,10 +39,12 @@ public class JcsegTokenizerTest {
             }
 
             Assert.assertEquals(
-                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(), c.expectedWords.size());
+                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(),
+                c.expectedWords.size());
 
             for (String word : wordList) {
-                Assert.assertTrue(String.format("expected:%s, actual:%s", c.expectedWords, wordList), c.expectedWords.contains(word));
+                Assert.assertTrue(String.format("expected:%s, actual:%s", c.expectedWords, wordList),
+                    c.expectedWords.contains(word));
             }
         });
     }
@@ -49,13 +54,11 @@ public class JcsegTokenizerTest {
             new Case(
                 "abc",
                 Arrays.asList()
-            )
-            ,
+            ),
             new Case(
                 "abcd",
                 Arrays.asList()
-            )
-            ,
+            ),
             new Case(
                 "中英文hello world混合",
                 Arrays.asList(
@@ -65,8 +68,7 @@ public class JcsegTokenizerTest {
                     "world",
                     "混合"
                 )
-            )
-            ,
+            ),
             new Case(
                 "UUID-123,这个的上海云砺有限公司",
                 Arrays.asList(
@@ -77,8 +79,7 @@ public class JcsegTokenizerTest {
                     "砺",
                     "有限公司"
                 )
-            )
-            ,
+            ),
             new Case(
                 "我的名称叫董斌",
                 Arrays.asList(
@@ -87,24 +88,21 @@ public class JcsegTokenizerTest {
                     "叫",
                     "董斌"
                 )
-            )
-            ,
+            ),
             new Case(
                 "Apple pay",
                 Arrays.asList(
                     "apple",
                     "pay"
                 )
-            )
-            ,
+            ),
             new Case(
                 "测试test",
                 Arrays.asList(
                     "测试",
                     "test"
                 )
-            )
-            ,
+            ),
             new Case(
                 "我test",
                 Arrays.asList("test")

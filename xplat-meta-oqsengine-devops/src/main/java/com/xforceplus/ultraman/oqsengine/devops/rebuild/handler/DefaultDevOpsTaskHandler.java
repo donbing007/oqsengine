@@ -1,32 +1,29 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
-
-import java.sql.SQLException;
-import java.util.Optional;
-
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor.BATCH_STATUS_CACHE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.BATCH_STATUS;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.CANCEL;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor.BATCH_STATUS_CACHE;
+
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
+import java.sql.SQLException;
+import java.util.Optional;
 
 
 /**
- * desc :
- * name : DevOpsTaskHandler
+ * 默认的devops任务实现.
  *
- * @author : xujia
- * date : 2020/8/25
+ * @author : xujia 2020/8/25
  * @since : 1.8
  */
 public class DefaultDevOpsTaskHandler implements TaskHandler {
-    protected IDevOpsTaskInfo devOpsTaskInfo;
+    protected DevOpsTaskInfo devOpsTaskInfo;
     private SQLTaskStorage sqlTaskStorage;
 
-    public DefaultDevOpsTaskHandler(SQLTaskStorage sqlTaskStorage, IDevOpsTaskInfo taskInfo) {
+    public DefaultDevOpsTaskHandler(SQLTaskStorage sqlTaskStorage, DevOpsTaskInfo taskInfo) {
         this.devOpsTaskInfo = taskInfo;
         this.sqlTaskStorage = sqlTaskStorage;
     }
@@ -54,7 +51,7 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
 
     @Override
     public void cancel() throws SQLException {
-        ((DevOpsTaskInfo)devOpsTaskInfo).setStatus(CANCEL.getCode());
+        ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(CANCEL.getCode());
         sqlTaskStorage.cancel(devOpsTaskInfo.getMaintainid());
     }
 
@@ -83,27 +80,26 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
     }
 
     @Override
-    public IDevOpsTaskInfo devOpsTaskInfo() {
+    public DevOpsTaskInfo devOpsTaskInfo() {
         return devOpsTaskInfo;
     }
 
     private void syncTask() {
         try {
-            Optional<IDevOpsTaskInfo> dev = sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid());
+            Optional<DevOpsTaskInfo> dev = sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid());
             dev.ifPresent(
-                    devOps -> {
-                        synchronized (DefaultDevOpsTaskHandler.class) {
-                            if (devOps.getFinishSize() >
-                                    (devOpsTaskInfo).getFinishSize()) {
-                                ((DevOpsTaskInfo)devOpsTaskInfo).setFinishSize(devOps.getFinishSize());
-                            } else if (devOps.getFinishSize() == devOps.getBatchSize()) {
-                                ((DevOpsTaskInfo)devOpsTaskInfo).setStatus(devOps.getStatus());
-                            } else if (devOps.getStatus() != devOpsTaskInfo.getStatus()) {
-                                ((DevOpsTaskInfo) devOpsTaskInfo).setStatus(devOps.getStatus());
-                                devOpsTaskInfo.resetMessage(devOps.message());
-                            }
+                devOps -> {
+                    synchronized (DefaultDevOpsTaskHandler.class) {
+                        if (devOps.getFinishSize() > (devOpsTaskInfo).getFinishSize()) {
+                            devOpsTaskInfo.setFinishSize(devOps.getFinishSize());
+                        } else if (devOps.getFinishSize() == devOps.getBatchSize()) {
+                            ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(devOps.getStatus());
+                        } else if (devOps.getStatus() != devOpsTaskInfo.getStatus()) {
+                            ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(devOps.getStatus());
+                            devOpsTaskInfo.resetMessage(devOps.message());
                         }
                     }
+                }
             );
         } catch (Exception e) {
             e.printStackTrace();

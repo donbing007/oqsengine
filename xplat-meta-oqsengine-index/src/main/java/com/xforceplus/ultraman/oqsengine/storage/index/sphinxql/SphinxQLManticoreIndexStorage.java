@@ -38,16 +38,28 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 基于manticore的索引storage实现.
@@ -117,9 +129,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "condition"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action",
+        "condition"})
     @Override
-    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
+    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+        throws SQLException {
         Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             Set<Long> useFilterIds = null;
 
@@ -132,7 +146,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 useFilterIds = config.getExcludedIds();
             }
 
-            SelectConfig useConfig = SelectConfig.Builder.aSelectConfig()
+            SelectConfig useConfig = SelectConfig.Builder.anSelectConfig()
                 .withCommitId(config.getCommitId())
                 .withSort(config.getSort())
                 .withPage(config.getPage())
@@ -155,7 +169,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
     @Override
     public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
-        CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
+        CleanExecutor executor = CleanExecutor.Builder.anCleanExecutor()
             .withEntityClass(entityClass)
             .withStart(start)
             .withEnd(end)
@@ -177,7 +191,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         Collection<OriginalEntitySection> sections = split(originalEntities);
 
-        /**
+        /*
          * 失败重试间隔毫秒.
          */
         final long retryDurationMs = 3000;
@@ -228,29 +242,26 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             boolean exit = false;
             boolean error = false;
             Exception exception = null;
-            try {
-                while (!exit) {
-                    try {
-                        doSave();
+            while (!exit) {
+                try {
+                    doSave();
+                    exit = true;
+                    error = false;
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                    logger.error("Batch write error, wait {} milliseconds to try again.", retryDurationMs);
+                    if (stopWhenFail) {
                         exit = true;
-                        error = false;
-                    } catch (Exception ex) {
-                        logger.error(ex.getMessage(), ex);
-                        logger.error("Batch write error, wait {} milliseconds to try again.", retryDurationMs);
-                        if (stopWhenFail) {
-                            exit = true;
-                            exception = ex;
-                        } else {
-                            exit = false;
-                        }
-                        error = true;
-
-                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(retryDurationMs));
+                        exception = ex;
+                    } else {
+                        exit = false;
                     }
-                }
-            } finally {
+                    error = true;
 
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(retryDurationMs));
+                }
             }
+
 
             if (exception != null) {
                 throw exception;
@@ -266,11 +277,13 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 switch (op) {
                     case CREATE:
                     case UPDATE: {
-                        totalSize += doSaveOpSection(op, section.getIndexName(), section.getShardKey(), sectionMap.get(op));
+                        totalSize +=
+                            doSaveOpSection(op, section.getIndexName(), section.getShardKey(), sectionMap.get(op));
                         break;
                     }
                     case DELETE: {
-                        totalSize += doDeleteOpSection(section.getIndexName(), section.getShardKey(), sectionMap.get(op));
+                        totalSize +=
+                            doDeleteOpSection(section.getIndexName(), section.getShardKey(), sectionMap.get(op));
                         break;
                     }
                     default: {
@@ -283,7 +296,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
 
         // 保存更新和创建的分区.
-        private int doSaveOpSection(OperationType op, String indexName, String shardKey, Collection<OriginalEntity> originalEntities)
+        private int doSaveOpSection(OperationType op, String indexName, String shardKey,
+                                    Collection<OriginalEntity> originalEntities)
             throws SQLException {
 
             Collection<SphinxQLStorageEntity> manticoreStorageEntities = new ArrayList<>(originalEntities.size());
@@ -330,7 +344,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     private SphinxQLStorageEntity toStorageEntityFromOriginal(OriginalEntity originalEntity) throws SQLException {
-        SphinxQLStorageEntity.Builder builder = SphinxQLStorageEntity.Builder.aManticoreStorageEntity()
+        SphinxQLStorageEntity.Builder builder = SphinxQLStorageEntity.Builder.anManticoreStorageEntity()
             .withId(originalEntity.getId())
             .withCommitId(originalEntity.getCommitid())
             .withTx(originalEntity.getTx())
@@ -352,7 +366,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         Map<String, Object> attributeMap = new HashMap(MapUtils.calculateInitSize(attrSize, 0.75F));
         for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
 
-            /**
+            /*
              * key = 字段物理储存名称.
              * value = 字段物理值.
              */
@@ -365,7 +379,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
             ShortStorageName shortStorageName = anyStorageValue.shortStorageName();
 
-            /**
+            /*
              * 字符串需要处理特殊字符.
              */
             if (StorageType.STRING == anyStorageValue.type()) {
@@ -442,7 +456,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         StringBuilder buff = new StringBuilder();
 
-        /**
+        /*
          * 字符串需要处理特殊字符.
          * fuzzyType只有字符串才会处理.
          */
@@ -451,14 +465,14 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
             if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
                 || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
-                /**
+                /*
                  * 硬编码字符串长度超过30的将只分词前30个字符.
                  */
                 String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
                 Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
                 Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
-                /**
+                /*
                  * 处理当前字段分词结果.
                  */
                 while (words.hasNext()) {
@@ -474,7 +488,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            /**
+            /*
              * 如果是多值,这里会忽略掉字段定位序号.
              * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
              * 最终在储存时将会去除尾部的定位序号,变成如下.
@@ -501,7 +515,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         OriginalEntitySection originalEntitySection;
 
         int dsSize = writerDataSourceSelector.selects().size();
-        int tSize = indexWriteIndexNameSelector.selects().size();
+        int indexWriteNameSize = indexWriteIndexNameSelector.selects().size();
 
         Map<DataSource, Map<String, OriginalEntitySection>> dsSectionMap =
             new HashMap(MapUtils.calculateInitSize(dsSize, 0.75F));
@@ -516,7 +530,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             nameSectionMap = dsSectionMap.get(dataSource);
             if (nameSectionMap == null) {
 
-                nameSectionMap = new HashMap(MapUtils.calculateInitSize(tSize, 0.75F));
+                nameSectionMap = new HashMap(MapUtils.calculateInitSize(indexWriteNameSize, 0.75F));
                 dsSectionMap.put(dataSource, nameSectionMap);
             }
 
@@ -621,7 +635,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             // 通用检查表示需要.
             if (result) {
                 if (attr) {
-                    /**
+                    /*
                      * 检查是否需要出现在属性中.检查如下.
                      * 1. 是否可排序.
                      */

@@ -8,12 +8,11 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
 /**
  * 根据条件中是否需要 OR 查询,各属性是否需要范围查询来决定生成器.
@@ -64,6 +63,12 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
         });
     }
 
+    /**
+     * 获取实例.
+     *
+     * @param conditions 条件.
+     * @return 实例.
+     */
     public ConditionsBuilder<SphinxQLWhere> getBuilder(Conditions conditions) {
         if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
@@ -81,7 +86,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
      */
     public ConditionsBuilder<SphinxQLWhere> getBuilder(boolean or, boolean range) {
 
-        /**
+        /*
          * or 字节低位开始第2位.
          * ranage 字节低位开始第1位.
          */

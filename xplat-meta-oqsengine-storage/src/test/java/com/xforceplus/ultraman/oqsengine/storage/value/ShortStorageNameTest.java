@@ -8,7 +8,7 @@ import org.junit.Test;
 /**
  * ShortStorageName Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/16/2021
  * @since <pre>Mar 16, 2021</pre>
  */

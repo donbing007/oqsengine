@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,11 +15,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * desc :
+ * desc :.
  * name : BatchQueryExecutor
  *
- * @author : xujia
- * date : 2020/11/18
+ * @author : xujia 2020/11/18
  * @since : 1.8
  */
 public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<MasterStorageEntity>> {
@@ -30,6 +28,17 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
     private long endTime;
     private int pageSize;
 
+    /**
+     * 实例.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param timeout 超时毫秒.
+     * @param entityClass 元信息.
+     * @param startTime 开始时间.
+     * @param endTime 结束时间.
+     * @param pageSize 分页大小.
+     */
     public BatchQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
                               IEntityClass entityClass, long startTime, long endTime, int pageSize) {
         super(tableName, resource, timeout);
@@ -68,7 +77,7 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
 
-                    entity = MasterStorageEntity.Builder.aStorageEntity()
+                    entity = MasterStorageEntity.Builder.anStorageEntity()
                         .withId(rs.getLong(FieldDefine.ID))
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))

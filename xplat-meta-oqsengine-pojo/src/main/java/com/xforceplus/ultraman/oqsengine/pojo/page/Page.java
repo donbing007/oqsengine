@@ -21,11 +21,11 @@ public class Page implements Externalizable, Cloneable {
 
     private static final long UNSET = -1;
     /**
-     * 默认页面大小
+     * 默认页面大小.
      */
     private static final long DEFAULT_PAGE_SIZE = 10;
     /**
-     * 默认页面页数
+     * 默认页面页数.
      */
     private static final long DEFAULT_PAGE_INDEX = 1;
     /**
@@ -37,23 +37,23 @@ public class Page implements Externalizable, Cloneable {
      */
     private boolean emptyPage = false;
     /**
-     * 页面大小
+     * 页面大小.
      */
     private long pageSize;
     /**
-     * 页面页数
+     * 页面页数.
      */
     private long pageIndex;
     /**
-     * 数据总量
+     * 数据总量.
      */
     private long totalCount = UNSET;
     /**
-     * 数据剩余总量
+     * 数据剩余总量.
      */
     private long surplusCount;
     /**
-     * 页面总量
+     * 页面总量.
      */
     private long pageCount;
     /**
@@ -66,19 +66,19 @@ public class Page implements Externalizable, Cloneable {
     private boolean lastPage = false;
 
     /**
-     * 可见数据量
+     * 可见数据量.
      */
     private long visibleTotalCount = UNSET;
 
     /**
-     * 默认构造方法，以内定默认页面大小和当前页数构造。
+     * 默认构造方法，以内定默认页面大小和当前页数构造.
      */
     public Page() {
         this(Page.DEFAULT_PAGE_INDEX, Page.DEFAULT_PAGE_SIZE);
     }
 
     /**
-     * 以指定的页数和页面大小构造对象。
+     * 以指定的页数和页面大小构造对象.
      *
      * @param pageIndex 当前页面序号,如果指定数小于1则使用默认设置1。
      * @param pageSize  页面大小，如果指数数小于1，则使用默认设置1.
@@ -105,7 +105,7 @@ public class Page implements Externalizable, Cloneable {
      * @return 分页实例.
      */
     public static Page emptyPage() {
-        /**
+        /*
          * 因定取第1页的第一条,实际这些值没有意义.
          */
         final long fixOne = 1;
@@ -141,7 +141,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回当前的页的序号。
+     * 返回当前的页的序号.
      *
      * @return 当前面的序号。
      */
@@ -151,7 +151,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 获取当前总页数．
+     * 获取当前总页数.
      *
      * @return 总页数．
      */
@@ -203,7 +203,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 设定数据总量，这个值必须在使用前设置。
+     * 设定数据总量，这个值必须在使用前设置.
      *
      * @param totalCount 数据总量
      */
@@ -231,7 +231,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回当前数据总量，初始为－１。
+     * 返回当前数据总量，初始为－１.
      *
      * @return 当前数据总量，如果为-1代表没有设置真实数据总量。
      */
@@ -310,7 +310,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 判断是否已经没有下一页。
+     * 判断是否已经没有下一页.
      *
      * @return 是否还有下一页, <tt>true</tt>还有可用页,<tt>false</tt>已经没有可用页了.
      */
@@ -333,7 +333,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回此分页信息的字符串表示。
+     * 返回此分页信息的字符串表示.
      * 该字符串由分页信息的＂页面大小＂，＂当前页面序号＂，＂总记录数＂，＂是否准备好＂组成．
      *
      * @return 此分页信息的字符串表示。
@@ -456,7 +456,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 获取当前页面大小
+     * 获取当前页面大小.
      *
      * @return 页面大小
      */
@@ -465,9 +465,9 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回当前分页建议。
+     * 返回当前分页建议.
      *
-     * @return <true>当前是单页，只是当前一页。<false>需要进行正常分页。
+     * @return true当前是单页，只是当前一页。false需要进行正常分页.
      */
     public boolean isSinglePage() {
         return singlePage;
@@ -494,7 +494,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 计算数据剩余量
+     * 计算数据剩余量.
      *
      * @param indexNumber 当前页面序号.
      * @param sizeNumber  每页最大数据量.

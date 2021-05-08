@@ -48,7 +48,7 @@ public class MatchConditionBuilderTest {
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            MatchConditionBuilder builder = new MatchConditionBuilder(
+            MatchConditionBuilderAbstract builder = new MatchConditionBuilderAbstract(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
             try {
                 builder.setTokenizerFacotry(new DefaultTokenizerFactory());

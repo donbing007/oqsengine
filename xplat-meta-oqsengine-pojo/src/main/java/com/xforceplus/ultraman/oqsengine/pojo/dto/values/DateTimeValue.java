@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 表示日期/时间值,储存时时间使用 Asia/Shanghai.
@@ -23,7 +22,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     /**
      * 格式化时使用的时区.
      */
-    public static final ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+    public static final ZoneId ZONE_ID = ZoneId.of("Asia/Shanghai");
 
     public DateTimeValue(IEntityField field, LocalDateTime value) {
         super(field, value);
@@ -31,12 +30,13 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     @Override
     LocalDateTime fromString(String value) {
-        if (value == null)
+        if (value == null) {
             return null;
+        }
         try {
             long timestamp = Long.parseLong(value);
             LocalDateTime time =
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId);
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
 
             return time;
         } catch (Exception ex) {
@@ -47,7 +47,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     @Override
     public long valueToLong() {
-        Instant instant = getValue().atZone(zoneId).toInstant();
+        Instant instant = getValue().atZone(ZONE_ID).toInstant();
         return instant.toEpochMilli();
     }
 
@@ -67,8 +67,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
         DateTimeValue that = (DateTimeValue) o;
 
-        return Objects.equals(getField(), that.getField()) &&
-                Objects.equals(this.getValue(), that.getValue());
+        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
     }
 
     @Override
@@ -83,9 +82,6 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     @Override
     public String toString() {
-        return "DateTimeValue{" +
-                "field=" + getField() +
-                ", value=" + getValue() +
-                '}';
+        return "DateTimeValue{" + "field=" + getField() + ", value=" + getValue() + '}';
     }
 }

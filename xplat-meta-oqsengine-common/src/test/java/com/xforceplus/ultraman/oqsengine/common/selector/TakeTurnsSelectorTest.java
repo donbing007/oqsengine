@@ -1,16 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.common.selector;
 
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
 /**
  * TakeTurnsSelector Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/02/2020
  * @since <pre>Nov 2, 2020</pre>
  */
@@ -25,7 +24,7 @@ public class TakeTurnsSelectorTest {
     }
 
     /**
-     * Method: select(String key)
+     * Method: select(String key).
      */
     @Test
     public void testSelect() throws Exception {

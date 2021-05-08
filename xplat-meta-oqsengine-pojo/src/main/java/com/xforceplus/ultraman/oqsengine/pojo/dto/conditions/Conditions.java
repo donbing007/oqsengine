@@ -2,9 +2,14 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -41,7 +46,7 @@ public class Conditions implements Serializable {
     /**
      * 条件树根结点.
      */
-    private ConditionNode head;
+    private AbstractConditionNode head;
 
     public static Conditions buildEmtpyConditions() {
         return new Conditions();
@@ -74,7 +79,7 @@ public class Conditions implements Serializable {
      *
      * @param head 条件树.
      */
-    public Conditions(ConditionNode head) {
+    public Conditions(AbstractConditionNode head) {
         this.head = head;
         Collection<Condition> conditionCollection = collectCondition();
         this.size = conditionCollection.size();
@@ -176,12 +181,12 @@ public class Conditions implements Serializable {
     }
 
     /**
-     * 迭代
+     * 迭代.
      *
      * @return 集合.
      */
-    public Collection<ConditionNode> collect() {
-        List<ConditionNode> nodes = new LinkedList<>();
+    public Collection<AbstractConditionNode> collect() {
+        List<AbstractConditionNode> nodes = new LinkedList<>();
         iterTree(c -> true, c -> nodes.add(c), false);
         return nodes;
     }
@@ -199,13 +204,11 @@ public class Conditions implements Serializable {
 
     /**
      * 查找符合条件的子树.
-     * <p>
      * 假如这样的一个条件树.
      * and(red)               //1
      * c1        or(red)            //2
      * c2              and(green)        //3
      * c4                c5
-     * <p>
      * 给出条件 c -> !c.isRed()
      * 表示所有红色结点的开始的子树
      * 那么将返回 //3 处的那个结点开始的树.
@@ -214,8 +217,9 @@ public class Conditions implements Serializable {
      * @param brake     是否匹配首个后当前结点后的所有不再匹配.
      * @return 收集结果.
      */
-    public Collection<ConditionNode> collectSubTree(Predicate<? super ConditionNode> predicate, boolean brake) {
-        List<ConditionNode> nodes = new ArrayList<>(size);
+    public Collection<AbstractConditionNode> collectSubTree(Predicate<? super AbstractConditionNode> predicate,
+                                                            boolean brake) {
+        List<AbstractConditionNode> nodes = new ArrayList<>(size);
         iterTree(predicate, c -> nodes.add(c), brake);
         return nodes;
     }
@@ -225,7 +229,7 @@ public class Conditions implements Serializable {
      *
      * @return 条件树.
      */
-    public ConditionNode collectConditionTree() {
+    public AbstractConditionNode collectConditionTree() {
         return head;
     }
 
@@ -252,7 +256,7 @@ public class Conditions implements Serializable {
      * 前辍表达式.
      *
      * @return 表达式.
-     * @see ConditionNode
+     * @see AbstractConditionNode
      */
     public String toPrefixExpression() {
         return head.toPrefixExpression();
@@ -282,7 +286,7 @@ public class Conditions implements Serializable {
      * @param node 目标结点.
      * @return true 是条件值结点,false 不是.
      */
-    public static boolean isValueNode(ConditionNode node) {
+    public static boolean isValueNode(AbstractConditionNode node) {
         return node instanceof ValueConditionNode;
     }
 
@@ -292,7 +296,7 @@ public class Conditions implements Serializable {
      * @param node 目标结点.
      * @return true 括号结点,false不是.
      */
-    public static boolean isParentheseNode(ConditionNode node) {
+    public static boolean isParentheseNode(AbstractConditionNode node) {
         return node instanceof ParentheseConditionNode;
     }
 
@@ -302,7 +306,7 @@ public class Conditions implements Serializable {
      * @param node 目标结点.
      * @return true 是连接结点,false 不是.
      */
-    public static boolean isLinkNode(ConditionNode node) {
+    public static boolean isLinkNode(AbstractConditionNode node) {
         return node instanceof LinkConditionNode;
     }
 
@@ -315,9 +319,7 @@ public class Conditions implements Serializable {
             return false;
         }
         Conditions that = (Conditions) o;
-        boolean result = size == that.size &&
-            or == that.or &&
-            range == that.range;
+        boolean result = size == that.size && or == that.or && range == that.range;
         if (result) {
             if (head == null) {
                 return that.head == null ? true : false;
@@ -334,6 +336,15 @@ public class Conditions implements Serializable {
         return Objects.hash(size, or, range, size > 0 ? head.toString() : "");
     }
 
+    private void validate(Condition condition) {
+        ConditionValidation validation =
+            ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
+
+        if (!validation.validate(condition)) {
+            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition));
+        }
+    }
+
     /**
      * 实际增加条件处理.
      */
@@ -341,7 +352,7 @@ public class Conditions implements Serializable {
 
         validate(condition);
 
-        ConditionNode newValueNode = new ValueConditionNode(condition);
+        AbstractConditionNode newValueNode = new ValueConditionNode(condition);
         doAddNode(newValueNode, link, false);
         size++;
 
@@ -358,15 +369,6 @@ public class Conditions implements Serializable {
         }
 
         return this;
-    }
-
-    private void validate(Condition condition) {
-        ConditionValidation validation =
-            ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
-
-        if (!validation.validate(condition)) {
-            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition));
-        }
     }
 
     private Conditions doAdd(ConditionLink link, Conditions conditions, boolean close) {
@@ -397,7 +399,7 @@ public class Conditions implements Serializable {
     /**
      * 增加新的结点.
      */
-    private void doAddNode(ConditionNode newNode, ConditionLink link, boolean close) {
+    private void doAddNode(AbstractConditionNode newNode, ConditionLink link, boolean close) {
         if (size == 0) {
             head = newNode;
         } else {
@@ -411,7 +413,7 @@ public class Conditions implements Serializable {
             final int onlyOneCondition = 1;
             if (size == onlyOneCondition) {
 
-                /**
+                /*
                  * 目标为只有一个条件的树.
                  *    c1
                  *
@@ -420,7 +422,7 @@ public class Conditions implements Serializable {
                  *     and
                  *  c1     c2
                  */
-                ConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
+                AbstractConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
                 if (ConditionLink.OR == link) {
                     // 设置为红色结点,因为是 or.
                     newLinkNode.setRed(true);
@@ -428,7 +430,7 @@ public class Conditions implements Serializable {
                 head = newLinkNode;
             } else {
 
-                /**
+                /*
                  * 目标为这样的结构类型.
                  *       or
                  * c1        and
@@ -445,13 +447,13 @@ public class Conditions implements Serializable {
                 LinkConditionNode linkHead = (LinkConditionNode) head;
                 if (!linkHead.isClosed() && linkHead.getLink() == ConditionLink.OR && ConditionLink.AND == link) {
 
-                    ConditionNode newLinkNode =
+                    AbstractConditionNode newLinkNode =
                         new LinkConditionNode(linkHead.getRight(), newNode, ConditionLink.AND);
                     linkHead.setRight(newLinkNode);
 
                 } else {
 
-                    ConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
+                    AbstractConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
                     head = newLinkNode;
 
                 }
@@ -462,22 +464,22 @@ public class Conditions implements Serializable {
     /**
      * 迭代条件树.
      * brake true 时表示是否匹配某个结点就直接停止迭代之后的子结点退回上层结点选择另一个分支进行迭代.
-     *          or
-     *     c1          and
-     *            c2        c3
-     *  如果设置的条件为非or结点,那么第一个OR结点之后的结点不会再迭代,反之会继承迭代到 and c2 c3这个子树.
-     *
-     *  最终迭代的目的是保持这样一个顺序.
-     *   左结点 当前结点  右结点. 以上述的树为例,最后迭代顺序如下.
-     *   c1 or c2 and c3
+     * or
+     * c1          and
+     * c2        c3
+     * 如果设置的条件为非or结点,那么第一个OR结点之后的结点不会再迭代,反之会继承迭代到 and c2 c3这个子树.
+     * 最终迭代的目的是保持这样一个顺序.
+     * 左结点 当前结点  右结点. 以上述的树为例,最后迭代顺序如下.
+     * c1 or c2 and c3
      */
-    private void iterTree(Predicate<? super ConditionNode> predicate, Consumer<? super ConditionNode> consumer, boolean brake) {
+    private void iterTree(Predicate<? super AbstractConditionNode> predicate,
+                          Consumer<? super AbstractConditionNode> consumer, boolean brake) {
         if (head == null) {
             return;
         }
-        Deque<ConditionNode> stack = new ArrayDeque<>(size());
+        Deque<AbstractConditionNode> stack = new ArrayDeque<>(size());
         stack.push(head);
-        ConditionNode node;
+        AbstractConditionNode node;
         while (!stack.isEmpty()) {
             node = stack.pop();
 

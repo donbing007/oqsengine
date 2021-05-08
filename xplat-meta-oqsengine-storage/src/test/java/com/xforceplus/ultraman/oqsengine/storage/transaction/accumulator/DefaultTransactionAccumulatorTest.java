@@ -1,22 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
 /**
  * DefaultTransactionAccumulator Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 12/11/2020
  * @since <pre>Dec 11, 2020</pre>
  */
@@ -31,11 +27,12 @@ public class DefaultTransactionAccumulatorTest {
     }
 
     /**
-     * Method: accumulateBuild()
+     * Method: accumulateBuild().
      */
     @Test
     public void testAccumulate() throws Exception {
-        DefaultTransactionAccumulator accumulator = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
+        DefaultTransactionAccumulator accumulator =
+            new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(1).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(2).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(3).build());
@@ -45,20 +42,22 @@ public class DefaultTransactionAccumulatorTest {
         accumulator.accumulateDelete(Entity.Builder.anEntity().withId(5).build());
         Assert.assertEquals(2, accumulator.getDeleteNumbers());
 
-        accumulator.accumulateReplace(Entity.Builder.anEntity().withId(6).build(), Entity.Builder.anEntity().withId(6).build());
+        accumulator.accumulateReplace(Entity.Builder.anEntity().withId(6).build(),
+            Entity.Builder.anEntity().withId(6).build());
         Assert.assertEquals(1, accumulator.getReplaceNumbers());
     }
 
     /**
      * 重复操作.
-     * @throws Exception
      */
     @Test
     public void testRepeat() throws Exception {
         DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
+            Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(10).build());
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
+            Entity.Builder.anEntity().withId(10).build());
 
         Assert.assertEquals(2, acc.getReplaceNumbers());
         Assert.assertEquals(1, acc.getUpdateIds().size());
@@ -78,9 +77,11 @@ public class DefaultTransactionAccumulatorTest {
     public void testReset() throws Exception {
         DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         acc.reset();
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(), Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
+            Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(20).build());
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(30).build(), Entity.Builder.anEntity().withId(30).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(30).build(),
+            Entity.Builder.anEntity().withId(30).build());
 
         Assert.assertEquals(2, acc.getReplaceNumbers());
         Assert.assertEquals(1, acc.getDeleteNumbers());

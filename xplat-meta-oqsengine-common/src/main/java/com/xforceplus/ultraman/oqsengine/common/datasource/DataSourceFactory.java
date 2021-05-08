@@ -7,13 +7,12 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.Metrics;
-
-import javax.sql.DataSource;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * {
@@ -124,7 +123,7 @@ public class DataSourceFactory {
         DataSource changelogDataSource;
         if (config.hasPath(CHANGE_LOG_PATH)) {
             List<DataSource> devOps =
-                    buildDataSources("master", (List<Config>) config.getConfigList(CHANGE_LOG_PATH), showSql);
+                buildDataSources("master", (List<Config>) config.getConfigList(CHANGE_LOG_PATH), showSql);
             if (devOps.size() > 0) {
                 changelogDataSource = devOps.get(0);
             } else {
@@ -157,7 +156,8 @@ public class DataSourceFactory {
             try {
                 invokeMethod(hikariConfig, e.getKey(), e.getValue());
             } catch (Exception ex) {
-                throw new RuntimeException(String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
+                throw new RuntimeException(
+                    String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
             }
         });
 

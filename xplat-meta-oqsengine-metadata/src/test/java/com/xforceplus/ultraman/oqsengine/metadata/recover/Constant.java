@@ -3,30 +3,32 @@ package com.xforceplus.ultraman.oqsengine.metadata.recover;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 
 /**
- * desc :
+ * desc :.
  * name : Constant
  *
- * @author : xujia
- * date : 2021/4/7
+ * @author : xujia 2021/4/7
  * @since : 1.8
  */
 public class Constant {
     public static final String HOST = "localhost";
     public static final int PORT = 8081;
 
-    public static final boolean ifTest = true;
-    public volatile static boolean isServerOk = false;
-    public volatile static boolean isClientClosed = false;
+    public static final boolean IF_TEST = true;
+    public static volatile boolean IS_SERVER_OK = false;
+    public static volatile boolean IS_CLIENT_CLOSED = false;
 
-    public static GRpcParams gRpcParamsConfig() {
-        GRpcParams gRpcParamsConfig = new GRpcParams();
-        gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
-        gRpcParamsConfig.setKeepAliveSendDuration(5_000);
-        gRpcParamsConfig.setReconnectDuration(5_000);
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(30_000);
-        gRpcParamsConfig.setMonitorSleepDuration(1_000);
+    /**
+     * grpc 配置.
+     */
+    public static GRpcParams grpcParamsConfig() {
+        GRpcParams grpcParamsConfig = new GRpcParams();
+        grpcParamsConfig.setDefaultDelayTaskDuration(30_000);
+        grpcParamsConfig.setKeepAliveSendDuration(5_000);
+        grpcParamsConfig.setReconnectDuration(5_000);
+        grpcParamsConfig.setDefaultHeartbeatTimeout(30_000);
+        grpcParamsConfig.setMonitorSleepDuration(1_000);
 
-        return gRpcParamsConfig;
+        return grpcParamsConfig;
     }
 
     public static final String TEST_APP_ID = "TEST_70";

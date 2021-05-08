@@ -1,17 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
 
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
-
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+
 /**
- * desc :
+ * desc :.
  * name : CDCMetrics
  *
- * @author : xujia
- * date : 2020/11/7
+ * @author : xujia 2020/11/7
  * @since : 1.8
  */
 public class CDCMetrics {
@@ -20,12 +19,17 @@ public class CDCMetrics {
     private CDCUnCommitMetrics cdcUnCommitMetrics;
 
     public CDCMetrics() {
-        this.batchId = EMPTY_BATCH_ID;
-        this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
+        this(EMPTY_BATCH_ID, new CDCAckMetrics(CDCStatus.CONNECTED), new CDCUnCommitMetrics());
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
-        this.cdcUnCommitMetrics = new CDCUnCommitMetrics();
     }
 
+    /**
+     * 实例化.
+     *
+     * @param batchId            批次id.
+     * @param cdcAckMetrics      指标.
+     * @param cdcUnCommitMetrics 未同步提交号指标.
+     */
     public CDCMetrics(long batchId, CDCAckMetrics cdcAckMetrics, CDCUnCommitMetrics cdcUnCommitMetrics) {
         this.batchId = batchId;
         this.cdcAckMetrics = cdcAckMetrics;
@@ -66,6 +70,9 @@ public class CDCMetrics {
         this.cdcAckMetrics.setExecuteRows(ZERO);
     }
 
+    /**
+     * 成功.
+     */
     public void consumeSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
         this.batchId = originBatchId;
 

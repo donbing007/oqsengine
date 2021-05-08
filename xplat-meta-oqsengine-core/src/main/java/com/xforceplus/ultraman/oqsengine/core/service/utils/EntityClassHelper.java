@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.core.service.utils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -22,14 +21,13 @@ public class EntityClassHelper {
      * @param metaManager    元信息管理器.
      * @param entityClassRef 元信息指针.
      * @return 元信息.
-     * @throws SQLException
      */
     public static IEntityClass checkEntityClass(MetaManager metaManager, EntityClassRef entityClassRef) {
         Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef.getId());
         if (!entityClassOptional.isPresent()) {
             throw new IllegalArgumentException(
-                    String.format("Invalid meta information %d-%s.",
-                            entityClassRef.getId(), entityClassRef.getCode()));
+                String.format("Invalid meta information %d-%s.",
+                    entityClassRef.getId(), entityClassRef.getCode()));
         }
 
         return entityClassOptional.get();
