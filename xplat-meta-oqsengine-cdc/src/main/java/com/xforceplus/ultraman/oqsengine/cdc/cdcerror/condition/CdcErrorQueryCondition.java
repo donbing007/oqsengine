@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
  */
 public class CdcErrorQueryCondition {
     private Long seqNo;
+    private String uniKey;
     private Long batchId;
     private Long id;
     private Long entity;
@@ -32,6 +33,14 @@ public class CdcErrorQueryCondition {
         //  add seqNo
         if (null != seqNo) {
             stringBuilder.append(ErrorFieldDefine.SEQ_NO).append("=").append("?");
+            hasEnd = true;
+        }
+
+        if (null != uniKey) {
+            if (hasEnd) {
+                stringBuilder.append(" AND ");
+            }
+            stringBuilder.append(ErrorFieldDefine.UNI_KEY).append("=").append("?");
             hasEnd = true;
         }
 
@@ -179,6 +188,10 @@ public class CdcErrorQueryCondition {
         return isEqualStatus;
     }
 
+    public String getUniKey() {
+        return uniKey;
+    }
+
     public CdcErrorQueryCondition setSeqNo(Long seqNo) {
         this.seqNo = seqNo;
         return this;
@@ -236,6 +249,11 @@ public class CdcErrorQueryCondition {
 
     public CdcErrorQueryCondition setEntity(Long entity) {
         this.entity = entity;
+        return this;
+    }
+
+    public CdcErrorQueryCondition setUniKey(String uniKey) {
+        this.uniKey = uniKey;
         return this;
     }
 }

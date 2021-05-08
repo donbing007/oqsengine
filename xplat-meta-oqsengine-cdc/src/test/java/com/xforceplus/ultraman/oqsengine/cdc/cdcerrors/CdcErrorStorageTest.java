@@ -16,6 +16,7 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 
 /**
@@ -44,8 +45,12 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     private static String expectedObjectStr = "111";
 
+    private static String expectedUniKey = uniKeyGenerate("111", 1, ErrorType.DATA_INSERT_ERROR);
+
+
+
     private static CdcErrorTask expectedCdcErrorTask =
-                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedBatchId, expectedId, expectedEntityId
+                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedUniKey, expectedBatchId, expectedId, expectedEntityId
                         , expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
 
 
@@ -119,6 +124,11 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         cdcErrorQueryCondition.setCommitId(expectedCommitId);
         queryWithOneExpected(cdcErrorQueryCondition);
 
+        //  使用unikey
+        cdcErrorQueryCondition = new CdcErrorQueryCondition();
+        cdcErrorQueryCondition.setUniKey(expectedUniKey);
+        queryWithOneExpected(cdcErrorQueryCondition);
+
         //使用batchId和NOT_FIXED 且 isEquals = false
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
@@ -129,6 +139,8 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         cdcErrorQueryCondition.setBatchId(expectedBatchId)
                 .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
+
+
     }
 
     private void queryWithOneExpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
@@ -144,6 +156,7 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     private void isExpectedCdcErrorTask(CdcErrorTask cdcErrorTask) {
         Assert.assertEquals(expectedSeqNo, cdcErrorTask.getSeqNo());
+        Assert.assertEquals(expectedUniKey, cdcErrorTask.getUniKey());
         Assert.assertEquals(expectedBatchId, cdcErrorTask.getBatchId());
         Assert.assertEquals(expectedId, cdcErrorTask.getId());
         Assert.assertEquals(expectedEntityId, cdcErrorTask.getEntity());

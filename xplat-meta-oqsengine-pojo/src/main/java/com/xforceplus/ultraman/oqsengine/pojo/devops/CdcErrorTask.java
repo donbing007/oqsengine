@@ -10,6 +10,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.devops;
  */
 public class CdcErrorTask {
     private long seqNo;
+    private String uniKey;
     private long batchId;
     private long id;
     private long entity;
@@ -28,10 +29,11 @@ public class CdcErrorTask {
      * 创建记录CDC错误任务.
      */
     public static CdcErrorTask buildErrorTask(
-        long seqNo, long batchId, long id, long entity, int version, int op, long commitId, int errorType,
+        long seqNo, String uniKey, long batchId, long id, long entity, int version, int op, long commitId, int errorType,
         String operationObject, String message) {
         CdcErrorTask cdcErrorTask = new CdcErrorTask();
         cdcErrorTask.setSeqNo(seqNo);
+        cdcErrorTask.setUniKey(uniKey);
         cdcErrorTask.setBatchId(batchId);
         cdcErrorTask.setId(id);
         cdcErrorTask.setEntity(entity);
@@ -151,5 +153,13 @@ public class CdcErrorTask {
 
     public void setOp(int op) {
         this.op = op;
+    }
+
+    public String getUniKey() {
+        return uniKey;
+    }
+
+    public void setUniKey(String uniKey) {
+        this.uniKey = uniKey;
     }
 }

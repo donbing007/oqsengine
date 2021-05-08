@@ -45,6 +45,11 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                     st.setLong(parameterIndex++, res.getSeqNo());
                 }
 
+                //  add seqNo
+                if (null != res.getUniKey()) {
+                    st.setString(parameterIndex++, res.getUniKey());
+                }
+
                 //  add batch
                 if (null != res.getBatchId()) {
                     st.setLong(parameterIndex++, res.getBatchId());
@@ -111,6 +116,7 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
                 while (rs.next()) {
                     cdcErrorTask = new CdcErrorTask();
                     cdcErrorTask.setSeqNo(rs.getLong(ErrorFieldDefine.SEQ_NO));
+                    cdcErrorTask.setUniKey(rs.getString(ErrorFieldDefine.UNI_KEY));
                     cdcErrorTask.setBatchId(rs.getLong(ErrorFieldDefine.BATCH_ID));
                     cdcErrorTask.setId(rs.getLong(ErrorFieldDefine.ID));
                     cdcErrorTask.setEntity(rs.getLong(ErrorFieldDefine.ENTITY));
@@ -140,6 +146,7 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         buff.append("SELECT ")
             .append(String.join(",",
                 ErrorFieldDefine.SEQ_NO,
+                ErrorFieldDefine.UNI_KEY,
                 ErrorFieldDefine.BATCH_ID,
                 ErrorFieldDefine.ID,
                 ErrorFieldDefine.ENTITY,
@@ -161,7 +168,7 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         boolean haveCondition = false;
         if (!conditionString.isEmpty()) {
             buff.append(" WHERE ")
-                .append(conditionString);
+                    .append(conditionString);
             haveCondition = true;
         }
 

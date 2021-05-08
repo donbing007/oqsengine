@@ -67,6 +67,7 @@ public class SphinxConsumerServiceTest extends CDCAbstractContainer {
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService(commitIdStatusService));
     }
 
+
     @Test
     public void errorTest() throws Exception {
         before(true);

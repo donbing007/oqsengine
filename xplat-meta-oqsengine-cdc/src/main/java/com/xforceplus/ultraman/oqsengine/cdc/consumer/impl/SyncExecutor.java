@@ -16,6 +16,6 @@ import java.util.List;
 public interface SyncExecutor {
     int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException;
 
-    boolean errorHandle(List<CanalEntry.Column> columns, Long batchId, String message) throws SQLException;
+    boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId, String message) throws SQLException;
 
 }

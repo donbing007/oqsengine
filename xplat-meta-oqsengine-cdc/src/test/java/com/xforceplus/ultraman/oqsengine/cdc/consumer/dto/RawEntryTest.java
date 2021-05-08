@@ -50,6 +50,6 @@ public class RawEntryTest {
     }
 
     private RawEntry buildRawEntry(int i) {
-        return new RawEntry(i, 1L, System.currentTimeMillis(), new ArrayList<>());
+        return new RawEntry("test", 1, i, 1L, System.currentTimeMillis(), new ArrayList<>());
     }
 }

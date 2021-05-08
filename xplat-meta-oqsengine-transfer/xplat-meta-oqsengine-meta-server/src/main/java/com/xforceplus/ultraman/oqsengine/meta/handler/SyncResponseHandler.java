@@ -171,13 +171,14 @@ public class SyncResponseHandler implements IResponseHandler {
 
                 /**
                  * 客户端版本为-1或者
-                 * 当前的服务端记录版本不存在或者
-                 * 当前的服务端记录版本小于 appId + env 对应的版本时，将从元数据获取一次数据、异步推出
+                 * 当前的服务端版本不存在
+                 * 当前的服务端记录版本与 appId + env 对应的版本不一致时，
+                 * 将从元数据获取一次数据、异步推出
                  */
                 Integer currentVersion = responseWatchExecutor.version(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv());
                 if (null == currentVersion ||
                         NOT_EXIST_VERSION == entityClassSyncRequest.getVersion() ||
-                        currentVersion < entityClassSyncRequest.getVersion()) {
+                        entityClassSyncRequest.getVersion() != currentVersion) {
                     pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
                     logger.debug("pull data success on SYNC_OK, uid [{}], appId [{}], env [{}], version [{}]",
                             entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
