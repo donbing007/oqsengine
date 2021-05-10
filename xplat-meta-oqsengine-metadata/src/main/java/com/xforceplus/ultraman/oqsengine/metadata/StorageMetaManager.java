@@ -183,10 +183,10 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 加载relation
+     * 加载relation.
      *
-     * @param relationStorageList
-     * @return
+     * @param relationStorageList 关系存储列表.
+     * @return 关系列表.
      */
     private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
         List<OqsRelation> oqsRelations = new ArrayList<>();
