@@ -12,7 +12,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import io.micrometer.core.annotation.Timed;
@@ -27,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,7 +171,7 @@ public class StorageMetaManager implements MetaManager {
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
                 .withRelations(toQqsRelation(entityClassStorage.getRelations()))
-                .withFields(entityClassStorage.getFields());
+                .withFields(entityClassStorage.getFields().stream().map(this::cloneEntityField).collect(Collectors.toList()));
         /*
          * 加载父类
          */
@@ -179,7 +183,10 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 加载relation.
+     * 加载relation
+     *
+     * @param relationStorageList
+     * @return
      */
     private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
         List<OqsRelation> oqsRelations = new ArrayList<>();
@@ -195,12 +202,46 @@ public class StorageMetaManager implements MetaManager {
                     .withStrong(r.isStrong())
                     .withRightEntityClassId(r.getRightEntityClassId())
                     .withRightEntityClassLoader(this::load)
-                    .withEntityField(r.getEntityField())
+                    .withEntityField(cloneEntityField(r.getEntityField()))
                     .withBelongToOwner(r.isBelongToOwner());
 
                 oqsRelations.add(builder.build());
             }
         );
         return oqsRelations;
+    }
+
+    private IEntityField cloneEntityField(IEntityField entityField) {
+        EntityField.Builder builder = EntityField.Builder.anEntityField()
+            .withName(entityField.name())
+            .withCnName(entityField.cnName())
+            .withFieldType(entityField.type())
+            .withDictId(entityField.dictId())
+            .withId(entityField.id())
+            .withDefaultValue(entityField.defaultValue());
+
+        if (null != entityField.config()) {
+            FieldConfig config = entityField.config();
+            builder.withConfig(FieldConfig.Builder.anFieldConfig()
+                .withDelimiter(config.getDelimiter())
+                .withDisplayType(config.getDisplayType())
+                .withFieldSense(config.getFieldSense())
+                .withFuzzyType(config.getFuzzyType())
+                .withIdentifie(config.isIdentifie())
+                .withMax(config.getMax())
+                .withMin(config.getMin())
+                .withPrecision(config.getPrecision())
+                .withRequired(config.isRequired())
+                .withSearchable(config.isSearchable())
+                .withSplittable(config.isSplittable())
+                .withUniqueName(config.getUniqueName())
+                .withValidateRegexString(config.getValidateRegexString())
+                .withWildcardMaxWidth(config.getWildcardMaxWidth())
+                .withWildcardMinWidth(config.getWildcardMinWidth())
+                .build()
+            );
+        }
+
+        return builder.build();
     }
 }
