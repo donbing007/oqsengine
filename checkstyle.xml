@@ -257,7 +257,7 @@
         <module name="AbbreviationAsWordInName">
             <property name="ignoreFinal" value="false"/>
             <property name="allowedAbbreviationLength" value="1"/>
-            <property name="allowedAbbreviations" value="CDC, SQL, QL, JDBC, UUID, ID" />
+            <property name="allowedAbbreviations" value="CDC, SQL, QL, JDBC, UUID, ID"/>
             <property name="tokens"
                       value="INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,
                     PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,
@@ -332,7 +332,8 @@
         <module name="MissingJavadocMethod">
             <property name="scope" value="public"/>
             <property name="minLineCount" value="2"/>
-            <property name="allowedAnnotations" value="Override, Test, BeforeClass, Before, After, PostConstruct, PreDestroy"/>
+            <property name="allowedAnnotations"
+                      value="Override, Test, AfterClass, BeforeClass, Before, After, PostConstruct, PreDestroy"/>
             <property name="tokens" value="METHOD_DEF, CTOR_DEF, ANNOTATION_FIELD_DEF,
                                    COMPACT_CTOR_DEF"/>
         </module>

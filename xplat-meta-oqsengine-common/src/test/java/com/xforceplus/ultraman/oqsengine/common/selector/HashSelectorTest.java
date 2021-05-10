@@ -30,7 +30,7 @@ public class HashSelectorTest {
     }
 
     /**
-     * Method: select(String key)
+     * Method: select(String key).
      */
     @Test
     public void testSelect() throws Exception {

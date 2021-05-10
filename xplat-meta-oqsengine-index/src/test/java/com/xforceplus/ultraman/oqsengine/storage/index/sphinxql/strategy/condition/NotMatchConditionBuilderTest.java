@@ -11,19 +11,18 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * NotMatchConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -77,7 +76,8 @@ public class NotMatchConditionBuilderTest {
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                     ConditionOperator.EQUALS,
-                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
+                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
+                        new BigDecimal("123.246"))
                 ),
                 FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L0 = 123 AND " +
                     FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L1 = 246000000000000000"
@@ -103,7 +103,8 @@ public class NotMatchConditionBuilderTest {
                     new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                     ConditionOperator.GREATER_THAN,
                     new LongValue(
-                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         200L)
                 ),
                 "id > 200"

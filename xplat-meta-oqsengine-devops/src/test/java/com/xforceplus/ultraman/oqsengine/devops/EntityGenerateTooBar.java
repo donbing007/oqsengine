@@ -52,6 +52,7 @@ public class EntityGenerateTooBar {
 
     /**
      * 准备数字字段的entity.
+     *
      * @param size 需要的数量.
      * @return 实例列表.
      */

@@ -9,24 +9,24 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * SQLJsonConditionBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/05/2020
  * @since <pre>Nov 5, 2020</pre>
  */
 public class SQLJsonConditionBuilderTest {
 
-    private static IEntityField idField = new EntityField(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true));
+    private static IEntityField idField =
+        new EntityField(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true));
     private static IEntityField longField = new EntityField(1, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(2, "string", FieldType.STRING);
     private static IEntityField wildCardStringField = EntityField.Builder.anEntityField()
@@ -73,29 +73,25 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(idField, 100L)
                 ),
                 "id = 100"
-            )
-            ,
-                new Case(
-                        new Condition(
-                                idField,
-                                ConditionOperator.MULTIPLE_EQUALS,
-                                new LongValue(idField, 100L)
-                        ),
-                        "id IN (100)"
-                )
-                ,
+            ),
+            new Case(
+                new Condition(
+                    idField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(idField, 100L)
+                ),
+                "id IN (100)"
+            ),
+            new Case(
+                new Condition(
+                    idField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(idField, 100L),
+                    new LongValue(idField, 200L)
+                ),
 
-                new Case(
-                        new Condition(
-                                idField,
-                                ConditionOperator.MULTIPLE_EQUALS,
-                                new LongValue(idField, 100L),
-                                new LongValue(idField, 200L)
-                        ),
-
-                        "id IN (100,200)"
-                )
-                ,
+                "id IN (100,200)"
+            ),
             new Case(
                 new Condition(
                     longField,
@@ -103,8 +99,7 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(longField, 200L)
                 ),
                 "CAST(attribute->>'$.F1L' AS SIGNED) = 200"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     longField,
@@ -113,8 +108,7 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(longField, 300L)
                 ),
                 "CAST(attribute->>'$.F1L' AS SIGNED) IN (200,300)"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     stringField,
@@ -123,8 +117,7 @@ public class SQLJsonConditionBuilderTest {
                     new StringValue(stringField, "300L")
                 ),
                 "attribute->>'$.F2S' IN (\"200L\",\"300L\")"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     longField,
@@ -132,8 +125,7 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(longField, 200L)
                 ),
                 "CAST(attribute->>'$.F1L' AS SIGNED) <= 200"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     longField,
@@ -141,8 +133,7 @@ public class SQLJsonConditionBuilderTest {
                     new LongValue(longField, 200L)
                 ),
                 "CAST(attribute->>'$.F1L' AS SIGNED) >= 200"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     stringField,
@@ -150,8 +141,7 @@ public class SQLJsonConditionBuilderTest {
                     new StringValue(stringField, "200L")
                 ),
                 "2 = 1"
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     wildCardStringField,
@@ -159,8 +149,7 @@ public class SQLJsonConditionBuilderTest {
                     new StringValue(wildCardStringField, "186213")
                 ),
                 "attribute->>'$.F3S' LIKE \"%186213%\""
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     wildCardStringField,

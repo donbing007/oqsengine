@@ -26,7 +26,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class CDCDaemonServiceTest extends CDCAbstractContainer {
+public class CDCDaemonServiceTest extends AbstractCDCContainer {
 
     private CDCDaemonService cdcDaemonService;
 

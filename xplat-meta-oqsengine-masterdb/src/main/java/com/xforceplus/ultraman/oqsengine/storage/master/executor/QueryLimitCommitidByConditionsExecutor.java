@@ -165,11 +165,15 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                 .append("')) AS ").append(SELECT_SORT_COLUMN);
 
         }
+        /*
+        要注意,这里依赖一个索引 commitid_entity_class (commitid, entityclass0....)
+        这样一个多级索引.
+         */
         sql.append(" FROM ").append(getTableName())
             .append(" WHERE (")
-            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
-            .append(" AND ")
             .append(FieldDefine.COMMITID).append(" >= ?")
+            .append(" AND ")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(")");
         if (where.length() > 0 && !where.isEmpty()) {
             sql.append(" AND (").append(where).append(")");

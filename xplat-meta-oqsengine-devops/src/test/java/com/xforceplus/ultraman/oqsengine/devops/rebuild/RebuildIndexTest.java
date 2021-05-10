@@ -1,5 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.PREPARE_PAUSE_RESUME_ENTITY_CLASS;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.SUR_PLUS_ENTITY_CLASS;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.now;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.prepareLongStringEntity;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.preparePauseResumeEntity;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.prepareSurPlusNeedDeleteEntity;
+import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.startPos;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
+
 import com.xforceplus.ultraman.oqsengine.devops.AbstractDevOpsContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
@@ -16,25 +26,22 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.sql.SQLException;
-import java.util.*;
-
-import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.*;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
-
 /**
- * desc :
+ * desc :.
  * name : RebuildIndexTest
  *
- * @author : xujia
- * date : 2020/8/27
- * @since : 1.8
+ * @author xujia 2020/8/27
+ * @since 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
@@ -74,8 +81,9 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
 
         Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
-                taskHandler.devOpsTaskInfo().getFinishSize());
+            taskHandler.devOpsTaskInfo().getFinishSize());
     }
+
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {
         if (wakeUp >= maxSleepWaitLoops) {
             throw new RuntimeException(String.format("function-[%s] too many wait loops, test failed.", errorFunction));
@@ -97,8 +105,8 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
         long expectSeconds = totalSize - 5;
 
         TaskHandler taskHandler = taskExecutor.rebuildIndex(LONG_STRING_ENTITY_CLASS,
-                EntityGenerateTooBar.now,
-                EntityGenerateTooBar.now.plusSeconds(expectSeconds));
+            EntityGenerateTooBar.now,
+            EntityGenerateTooBar.now.plusSeconds(expectSeconds));
 
         check(taskHandler, "rebuildIndexSimple");
 
@@ -119,8 +127,8 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
         long expectedTasks = totalSize - skip;
 
         TaskHandler taskHandler = taskExecutor.rebuildIndex(SUR_PLUS_ENTITY_CLASS,
-                now,
-                now.plusSeconds(totalSize));
+            now,
+            now.plusSeconds(totalSize));
 
         check(taskHandler, "rebuildIndexDeleteSurPlus");
 
@@ -140,7 +148,7 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
         Assert.assertTrue(initOk);
 
         TaskHandler taskHandler = taskExecutor.rebuildIndex(PREPARE_PAUSE_RESUME_ENTITY_CLASS,
-                now, now.plusSeconds(testResumeCount));
+            now, now.plusSeconds(testResumeCount));
 
         /*
             测试sleep N秒后暂停任务
@@ -156,7 +164,7 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
         }
         Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
-                taskHandler.devOpsTaskInfo().getFinishSize());
+            taskHandler.devOpsTaskInfo().getFinishSize());
     }
 
     private void cancelResumeByCondition(String taskId) throws Exception {
@@ -166,7 +174,8 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
             taskHandler.cancel();
             Thread.sleep(2 * 1000);
 
-            taskHandler = taskExecutor.resumeIndex(PREPARE_PAUSE_RESUME_ENTITY_CLASS, taskHandler.devOpsTaskInfo().id(), 0);
+            taskHandler =
+                taskExecutor.resumeIndex(PREPARE_PAUSE_RESUME_ENTITY_CLASS, taskHandler.devOpsTaskInfo().id(), 0);
 
             if (taskHandler instanceof DefaultDevOpsTaskHandler) {
                 Assert.assertNotNull(taskHandler.devOpsTaskInfo());
@@ -176,17 +185,17 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
 
     private OriginalEntity buildStorageEntity(IEntity v, IEntityClass entityClass, long txId, long commitId) {
         return OriginalEntity.Builder.anOriginalEntity()
-                                            .withId(v.id())
-                                            .withCommitid(commitId)
-                                            .withDeleted(false)
-                                            .withCreateTime(v.time())
-                                            .withUpdateTime(v.time())
-                                            .withTx(txId)
-                                            .withOp(OperationType.UPDATE.getValue())
-                                            .withOqsMajor(v.major())
-                                            .withEntityClass(entityClass)
-                                            .withAttributes(toIndexAttrs(v.entityValue()))
-                                            .build();
+            .withId(v.id())
+            .withCommitid(commitId)
+            .withDeleted(false)
+            .withCreateTime(v.time())
+            .withUpdateTime(v.time())
+            .withTx(txId)
+            .withOp(OperationType.UPDATE.getValue())
+            .withOqsMajor(v.major())
+            .withEntityClass(entityClass)
+            .withAttributes(toIndexAttrs(v.entityValue()))
+            .build();
     }
 
 

@@ -13,7 +13,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
@@ -41,14 +44,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainer
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.RedisClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,8 +59,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
+ * 索引搜索测试.
+ *
  * @author dongbin
  * @version 0.1 2021/3/10 14:01
  * @since 1.8
@@ -181,7 +185,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         commitIdStatusService.init();
 
         writeDataSourceSelector = buildWriteDataSourceSelector();
-        DataSource searchDataSource = buildSearchDataSourceSelector();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -196,14 +199,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        TransactionExecutor searchExecutor =
-            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
-                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
-        TransactionExecutor writeExecutor =
-            new AutoJoinTransactionExecutor(
-                transactionManager, new SphinxQLTransactionResourceFactory(),
-                writeDataSourceSelector, indexWriteIndexNameSelector);
-
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
 
@@ -217,6 +212,17 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         threadPool = Executors.newFixedThreadPool(3);
 
         storage = new SphinxQLManticoreIndexStorage();
+
+        DataSource searchDataSource = buildSearchDataSourceSelector();
+        TransactionExecutor searchExecutor =
+            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
+                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
+        TransactionExecutor writeExecutor =
+            new AutoJoinTransactionExecutor(
+                transactionManager, new SphinxQLTransactionResourceFactory(),
+                writeDataSourceSelector, indexWriteIndexNameSelector);
+
+
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
         ReflectionTestUtils.setField(storage, "writeTransactionExecutor", writeExecutor);
@@ -258,8 +264,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
     /**
      * 测试如果使用Page.emptyPage()实例做为分页,那么page的数据总量还是会被填充的.
-     *
-     * @throws Exception
      */
     @Test
     public void testEmptyPageCount() throws Exception {
@@ -291,8 +295,9 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             Assert.assertEquals(
                 String.format("%s check length failed.", c.description), expectedIds.length, refs.size());
             for (EntityRef ref : refs) {
-                Assert.assertTrue(String.format("%s validation failed to find expected %d.", c.description, ref.getId()),
-                    Arrays.binarySearch(expectedIds, ref.getId()) >= 0);
+                Assert
+                    .assertTrue(String.format("%s validation failed to find expected %d.", c.description, ref.getId()),
+                        Arrays.binarySearch(expectedIds, ref.getId()) >= 0);
             }
 
             if (c.otherCheck != null) {
@@ -330,8 +335,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
                     return null;
                 }
-            )
-            ,
+            ),
             new Case(
                 "sort with value",
                 Conditions.buildEmtpyConditions(),
@@ -349,8 +353,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     }
                     return null;
                 }
-            )
-            ,
+            ),
             new Case(
                 "empty",
                 Conditions.buildEmtpyConditions(),
@@ -372,8 +375,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
                     return null;
                 }
-            )
-            ,
+            ),
             new Case(
                 "order by id asc",
                 Conditions.buildEmtpyConditions(),
@@ -384,8 +386,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .build(),
                 null,
                 r -> isSorted(r.refs, false) ? null : "Not expecting descending order"
-            )
-            ,
+            ),
             new Case(
                 "order by id desc",
                 Conditions.buildEmtpyConditions(),
@@ -396,8 +397,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .build(),
                 null,
                 r -> isSorted(r.refs, true) ? null : "Not expecting descending order"
-            )
-            ,
+            ),
             new Case(
                 "first page",
                 Conditions.buildEmtpyConditions(),
@@ -406,11 +406,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(new Page(1, 5))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4
                 }
-            )
-            ,
+            ),
             new Case(
                 "last page",
                 Conditions.buildEmtpyConditions(),
@@ -420,8 +419,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
                 null
-            )
-            ,
+            ),
             new Case(
                 "long eq",
                 Conditions.buildEmtpyConditions()
@@ -435,11 +433,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 4
                 }
-            )
-            ,
+            ),
             new Case(
                 "long not equals",
                 Conditions.buildEmtpyConditions()
@@ -453,13 +450,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "long >",
                 Conditions.buildEmtpyConditions()
@@ -473,12 +469,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "long <",
                 Conditions.buildEmtpyConditions()
@@ -492,11 +487,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 3,
                 }
-            )
-            ,
+            ),
             new Case(
                 "long >=",
                 Conditions.buildEmtpyConditions()
@@ -510,13 +504,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "long <=",
                 Conditions.buildEmtpyConditions()
@@ -530,11 +523,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 3, Long.MAX_VALUE - 7,
                 }
-            )
-            ,
+            ),
             new Case(
                 "long in",
                 Conditions.buildEmtpyConditions()
@@ -549,11 +541,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 7,
                 }
-            )
-            ,
+            ),
             new Case(
                 "String eq",
                 Conditions.buildEmtpyConditions()
@@ -567,11 +558,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 1
                 }
-            )
-            ,
+            ),
             new Case(
                 "String no eq",
                 Conditions.buildEmtpyConditions()
@@ -585,13 +575,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4, Long.MAX_VALUE - 9,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 3
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 熊鹤轩 (熊鹤轩)",
                 Conditions.buildEmtpyConditions()
@@ -605,11 +594,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 18159301250 (301)",
                 Conditions.buildEmtpyConditions()
@@ -623,11 +611,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 18159301250 (3012)",
                 Conditions.buildEmtpyConditions()
@@ -641,11 +628,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 18159301250 (30125)",
                 Conditions.buildEmtpyConditions()
@@ -659,11 +645,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 18159301250 (301250)",
                 Conditions.buildEmtpyConditions()
@@ -677,11 +662,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "String like 18159301250 (9301250)",
                 Conditions.buildEmtpyConditions()
@@ -695,11 +679,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "decimal eq",
                 Conditions.buildEmtpyConditions()
@@ -713,11 +696,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "decimal not eq",
                 Conditions.buildEmtpyConditions()
@@ -731,13 +713,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
                     Long.MAX_VALUE - 8
                 }
-            )
-            ,
+            ),
             new Case(
                 "decimal >",
                 Conditions.buildEmtpyConditions()
@@ -751,12 +732,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8
                 }
-            )
-            ,
+            ),
             new Case(
                 "decimal between",
                 Conditions.buildEmtpyConditions()
@@ -775,12 +755,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7
                 }
-            )
-            ,
+            ),
             new Case(
                 "strings eq",
                 Conditions.buildEmtpyConditions()
@@ -794,11 +773,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 3
                 }
-            )
-            ,
+            ),
             new Case(
                 "strings in",
                 Conditions.buildEmtpyConditions()
@@ -813,11 +791,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 3
                 }
-            )
-            ,
+            ),
             new Case(
                 "update time desc",
                 Conditions.buildEmtpyConditions(),
@@ -826,13 +803,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.UPDATE_TIME_FILED))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
                     Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "l0-long or l0-long",
                 Conditions.buildEmtpyConditions()
@@ -842,23 +818,23 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             ConditionOperator.EQUALS,
                             new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                         )
-                    ).addOr(
-                    new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
                     )
-                ),
+                    .addOr(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 7,
                 }
-            )
-            ,
+            ),
             new Case(
                 "l0-long eq or l0-long no eq",
                 Conditions.buildEmtpyConditions()
@@ -868,25 +844,25 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             ConditionOperator.EQUALS,
                             new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
                         )
-                    ).addOr(
-                    new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.NOT_EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
                     )
-                ),
+                    .addOr(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.NOT_EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "l0-long > or l0-long =",
                 Conditions.buildEmtpyConditions()
@@ -896,24 +872,24 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             ConditionOperator.GREATER_THAN,
                             new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
                         )
-                    ).addOr(
-                    new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
                     )
-                ),
+                    .addOr(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE
                 }
-            )
-            ,
+            ),
             new Case(
                 "l0-long > or l0-long = (filter l0-long !=)",
                 Conditions.buildEmtpyConditions()
@@ -923,13 +899,14 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             ConditionOperator.GREATER_THAN,
                             new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
                         )
-                    ).addOr(
-                    new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
                     )
-                ),
+                    .addOr(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
@@ -945,12 +922,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             )
                     )
                     .build(),
-                new long[]{
+                new long[] {
                     Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 2
                 }
-            )
-            ,
+            ),
             new Case(
                 "l0-long = and l0-long = (filter l0-long !=)",
                 Conditions.buildEmtpyConditions()
@@ -960,13 +936,14 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             ConditionOperator.EQUALS,
                             new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
                         )
-                    ).addAnd(
-                    new Condition(
-                        l2EntityClass.field("l1-long").get(),
-                        ConditionOperator.EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 162L)
                     )
-                ),
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l1-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 162L)
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(1000))
@@ -982,7 +959,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                             )
                     )
                     .build(),
-                new long[]{
+                new long[] {
                 }
             )
         );
@@ -1034,7 +1011,8 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         private long[] expectedIds;
         private Function<? super SelectResult, ? super String> otherCheck;
 
-        public Case(String description, Conditions conditions, IEntityClass entityClass, SelectConfig selectConfig, long[] expectedIds) {
+        public Case(String description, Conditions conditions, IEntityClass entityClass, SelectConfig selectConfig,
+                    long[] expectedIds) {
             this.description = description;
             this.conditions = conditions;
             this.entityClass = entityClass;

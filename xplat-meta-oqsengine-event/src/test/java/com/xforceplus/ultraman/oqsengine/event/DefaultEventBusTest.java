@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * DefaultEventBus Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/24/2021
  * @since <pre>Mar 24, 2021</pre>
  */

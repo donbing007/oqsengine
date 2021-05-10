@@ -39,10 +39,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
-import org.junit.Ignore;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -51,17 +47,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.sql.DataSource;
+import org.junit.Ignore;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * desc :
+ * desc :.
  * name : AbstractContainer
  *
- * @author : xujia
- * date : 2020/11/5
- * @since : 1.8
+ * @author xujia 2020/11/5
+ * @since 1.8
  */
 @Ignore
-public abstract class CDCAbstractContainer {
+public abstract class AbstractCDCContainer {
 
     protected StorageStrategyFactory masterStorageStrategyFactory;
 
@@ -132,16 +130,9 @@ public abstract class CDCAbstractContainer {
     }
 
     private void initIndex() throws SQLException, InterruptedException {
-        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
-        DataSource searchDataSource = buildSearchDataSource();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
-
-        TransactionExecutor writeExecutor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
-        TransactionExecutor searchExecutor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -150,17 +141,25 @@ public abstract class CDCAbstractContainer {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
-
         executorService = new ThreadPoolExecutor(5, 5, 0,
             TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         indexStorage = new SphinxQLManticoreIndexStorage();
+
+        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
+        DataSource searchDataSource = buildSearchDataSource();
+        TransactionExecutor writeExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
+        TransactionExecutor searchExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
+        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
+
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
         ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchExecutor);
         ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeExecutor);
-        ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
+        ReflectionTestUtils
+            .setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(indexStorage, "threadPool", executorService);
 
@@ -169,13 +168,11 @@ public abstract class CDCAbstractContainer {
     }
 
     private void initDevOps() throws Exception {
-
-        DataSource devOpsDataSource = buildDevOpsDataSource();
-
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
+        DataSource devOpsDataSource = buildDevOpsDataSource();
         cdcErrorStorage = new SQLCdcErrorStorage();
         ReflectionTestUtils.setField(cdcErrorStorage, "devOpsDataSource", devOpsDataSource);
         cdcErrorStorage.setCdcErrorRecordTable(cdcErrors);
@@ -244,6 +241,9 @@ public abstract class CDCAbstractContainer {
         return dataSourcePackage.getIndexSearch().get(0);
     }
 
+    /**
+     * 清理.
+     */
     public void clear() throws SQLException {
         for (DataSource ds : dataSourcePackage.getMaster()) {
             Connection conn = ds.getConnection();
@@ -263,6 +263,9 @@ public abstract class CDCAbstractContainer {
         }
     }
 
+    /**
+     * IndexStorage的Mock实现.
+     */
     protected class MockIndexStorage implements IndexStorage {
 
         public int error = 0;
@@ -274,7 +277,7 @@ public abstract class CDCAbstractContainer {
 
         @Override
         public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
-            error ++;
+            error++;
 
             if (error < 3) {
                 throw new SQLException("mock error");
@@ -282,7 +285,8 @@ public abstract class CDCAbstractContainer {
         }
 
         @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
             return null;
         }
     }

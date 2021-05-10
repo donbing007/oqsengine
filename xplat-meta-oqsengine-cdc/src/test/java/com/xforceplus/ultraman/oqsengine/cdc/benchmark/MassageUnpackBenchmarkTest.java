@@ -1,34 +1,37 @@
 package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import org.junit.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
-
 /**
- * desc :
+ * desc :.
  * name : MassageUnpackBenchmarkTest
  *
- * @author : xujia
- * date : 2020/11/13
+ * @author : xujia 2020/11/13
  * @since : 1.8
  */
-public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
+public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
@@ -83,7 +86,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
 
         Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
         logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-                cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+            cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
     }
 
     @Test
@@ -107,10 +110,11 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 =
-                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1, false);
+            CanalEntry.Entry fatherRanDom1 =
+                buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1,
+                    false);
 
-            entries.add(fRanDom_1);
+            entries.add(fatherRanDom1);
         }
     }
 }

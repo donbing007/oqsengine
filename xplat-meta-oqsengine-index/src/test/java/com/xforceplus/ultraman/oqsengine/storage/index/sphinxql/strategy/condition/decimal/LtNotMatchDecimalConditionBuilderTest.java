@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 /**
  * LtNotMatchDecimalConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */

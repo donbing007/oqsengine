@@ -10,18 +10,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * MeqNotMatchConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -60,13 +59,16 @@ public class MeqNotMatchConditionBuilderTest {
                     new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new LongValue(
-                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         1L),
                     new LongValue(
-                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         2L),
                     new LongValue(
-                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         3L)
                 ),
                 "id IN (1,2,3)"

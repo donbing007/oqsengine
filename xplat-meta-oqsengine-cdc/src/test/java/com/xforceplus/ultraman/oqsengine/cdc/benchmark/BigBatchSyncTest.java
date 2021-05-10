@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
@@ -8,25 +11,25 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import org.junit.*;
+import java.sql.SQLException;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
-
 /**
- * desc :
+ * desc :.
  * name : BigBatchSyncTest
  *
- * @author : xujia
- * date : 2020/11/23
+ * @author : xujia 2020/11/23
  * @since : 1.8
  */
-public class BigBatchSyncTest extends CDCAbstractContainer {
+public class BigBatchSyncTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
     private static int expectedSize = 0;

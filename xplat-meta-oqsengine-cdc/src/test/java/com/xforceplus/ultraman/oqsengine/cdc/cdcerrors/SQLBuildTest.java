@@ -7,37 +7,40 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorQuer
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorRecoverExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 /**
- * desc :
+ * desc :.
  * name : SQLBuildTest
  *
- * @author : xujia
- * date : 2020/11/22
+ * @author : xujia 2020/11/22
  * @since : 1.8
  */
 public class SQLBuildTest {
     private String tableName = "cdcerrors";
 
-    private String expectedBuild = "INSERT INTO cdcerrors (seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private String expectedBuild =
+        "INSERT INTO cdcerrors (seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private String expectedUpdate = "UPDATE cdcerrors SET status=?, fixedtime=? WHERE seqno=?";
     private String expectedRecover = "UPDATE cdcerrors SET status=?, operationobject=? WHERE seqno=?";
-    private String expectedFullSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
-    private String expectedFullNotEqualStatusSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
+    private String expectedFullSelect =
+        "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
+    private String expectedFullNotEqualStatusSelect =
+        "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE seqno=? AND unikey=? AND batchid=? AND id=? AND commitid=? AND type=? AND status!=? AND executetime<=? AND executetime>=? AND fixedtime<=? AND fixedtime>=? order by executetime desc";
 
-    private String expectedEmptySelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors order by executetime desc";
-    private String expectedIdSelect = "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=? order by executetime desc";
+    private String expectedEmptySelect =
+        "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors order by executetime desc";
+    private String expectedIdSelect =
+        "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE id=? order by executetime desc";
 
     @Test
     public void buildSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CdcErrorBuildExecutor cdcErrorBuildExecutor = new CdcErrorBuildExecutor(tableName, null, 0);
         Method m = cdcErrorBuildExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{});
+            .getDeclaredMethod("buildSQL", new Class[] {});
         m.setAccessible(true);
 
         String result = (String) m.invoke(cdcErrorBuildExecutor, null);
@@ -47,10 +50,11 @@ public class SQLBuildTest {
     }
 
     @Test
-    public void UpdateSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CdcErrorUpdateExecutor cdcErrorUpdateExecutor = new CdcErrorUpdateExecutor(tableName, null, 0, FixedStatus.FIXED);
+    public void updateSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CdcErrorUpdateExecutor cdcErrorUpdateExecutor =
+            new CdcErrorUpdateExecutor(tableName, null, 0, FixedStatus.FIXED);
         Method m = cdcErrorUpdateExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{});
+            .getDeclaredMethod("buildSQL", new Class[] {});
         m.setAccessible(true);
 
         String result = (String) m.invoke(cdcErrorUpdateExecutor, null);
@@ -61,9 +65,10 @@ public class SQLBuildTest {
 
     @Test
     public void recoverSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CdcErrorRecoverExecutor cdcErrorRecoverExecutor = new CdcErrorRecoverExecutor(tableName, null, 0, FixedStatus.SUBMIT_FIX_REQ, "1");
+        CdcErrorRecoverExecutor cdcErrorRecoverExecutor =
+            new CdcErrorRecoverExecutor(tableName, null, 0, FixedStatus.SUBMIT_FIX_REQ, "1");
         Method m = cdcErrorRecoverExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{});
+            .getDeclaredMethod("buildSQL", new Class[] {});
         m.setAccessible(true);
 
         String result = (String) m.invoke(cdcErrorRecoverExecutor, null);
@@ -78,19 +83,21 @@ public class SQLBuildTest {
     }
 
     @Test
-    public void expectedFullNotEqualStatusSelectSqlTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public void expectedFullNotEqualStatusSelectSqlTest()
+        throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         checkByCondition(false, expectedFullNotEqualStatusSelect);
     }
 
     @Test
-    public void QueryIdConditionSqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void queryIdConditionSqlTest()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CdcErrorQueryCondition expectErrorQueryCondition = new CdcErrorQueryCondition();
         expectErrorQueryCondition.setId(1L);
 
         CdcErrorQueryExecutor cdcErrorQueryExecutor = new CdcErrorQueryExecutor(tableName, null, 0);
         Method m = cdcErrorQueryExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{StringBuilder.class, CdcErrorQueryCondition.class});
+            .getDeclaredMethod("buildSQL", new Class[] {StringBuilder.class, CdcErrorQueryCondition.class});
         m.setAccessible(true);
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -103,13 +110,13 @@ public class SQLBuildTest {
     }
 
     @Test
-    public void EmptyQuerySqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void emptyQuerySqlTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CdcErrorQueryCondition expectErrorQueryCondition = new CdcErrorQueryCondition();
 
         CdcErrorQueryExecutor cdcErrorQueryExecutor = new CdcErrorQueryExecutor(tableName, null, 0);
         Method m = cdcErrorQueryExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{StringBuilder.class, CdcErrorQueryCondition.class});
+            .getDeclaredMethod("buildSQL", new Class[] {StringBuilder.class, CdcErrorQueryCondition.class});
         m.setAccessible(true);
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -121,12 +128,13 @@ public class SQLBuildTest {
         Assert.assertEquals(expectedEmptySelect, stringBuilder.toString());
     }
 
-    private void checkByCondition(boolean isEquals, String expectString) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private void checkByCondition(boolean isEquals, String expectString)
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CdcErrorQueryCondition expectErrorQueryCondition = init(isEquals);
 
         CdcErrorQueryExecutor cdcErrorQueryExecutor = new CdcErrorQueryExecutor(tableName, null, 0);
         Method m = cdcErrorQueryExecutor.getClass()
-                .getDeclaredMethod("buildSQL", new Class[]{StringBuilder.class, CdcErrorQueryCondition.class});
+            .getDeclaredMethod("buildSQL", new Class[] {StringBuilder.class, CdcErrorQueryCondition.class});
         m.setAccessible(true);
 
         StringBuilder stringBuilder = new StringBuilder();
