@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
-
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
@@ -11,18 +9,16 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
 
 /**
  * desc :.
@@ -80,13 +76,15 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
         //  预热
         sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-        long start = System.currentTimeMillis();
-        CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
-        long duration = System.currentTimeMillis() - start;
+        for (int i = 0; i < 10; i++) {
+            long start = System.currentTimeMillis();
+            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
+            long duration = System.currentTimeMillis() - start;
 
-        Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
-        logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-            cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+            Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            logger.info("end sphinxConsumerBenchmarkTest, loop : {} excuted-Rows : {}, use timeMs : {} ms",
+                i, cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+        }
     }
 
     @Test
