@@ -21,7 +21,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
@@ -48,14 +53,6 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.RedisClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -63,17 +60,30 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * MantiocreIndexStorage Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/08/2021
  * @since <pre>Mar 8, 2021</pre>
  */
@@ -190,7 +200,6 @@ public class SphinxQLManticoreIndexStorageTest {
         commitIdStatusService.init();
 
         writeDataSourceSelector = buildWriteDataSourceSelector();
-        DataSource searchDataSource = buildSearchDataSourceSelector();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -205,14 +214,6 @@ public class SphinxQLManticoreIndexStorageTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        TransactionExecutor searchExecutor =
-            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
-                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
-        TransactionExecutor writeExecutor =
-            new AutoJoinTransactionExecutor(
-                transactionManager, new SphinxQLTransactionResourceFactory(),
-                writeDataSourceSelector, indexWriteIndexNameSelector);
-
         tokenizerFactory = new DefaultTokenizerFactory();
 
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
@@ -223,6 +224,16 @@ public class SphinxQLManticoreIndexStorageTest {
         threadPool = Executors.newFixedThreadPool(3);
 
         storage = new SphinxQLManticoreIndexStorage();
+
+        DataSource searchDataSource = buildSearchDataSourceSelector();
+        TransactionExecutor searchExecutor =
+            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
+                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
+        TransactionExecutor writeExecutor =
+            new AutoJoinTransactionExecutor(
+                transactionManager, new SphinxQLTransactionResourceFactory(),
+                writeDataSourceSelector, indexWriteIndexNameSelector);
+
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
         ReflectionTestUtils.setField(storage, "writeTransactionExecutor", writeExecutor);
@@ -590,7 +601,8 @@ public class SphinxQLManticoreIndexStorageTest {
                 }
                 case "l2-time": {
                     storageValue = storageStrategy.toStorageValue(
-                        new DateTimeValue(f, LocalDateTime.ofInstant(faker.date().birthday().toInstant(), ZoneId.systemDefault())));
+                        new DateTimeValue(f,
+                            LocalDateTime.ofInstant(faker.date().birthday().toInstant(), ZoneId.systemDefault())));
                     break;
                 }
                 case "l2-enum": {

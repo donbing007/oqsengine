@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * SphinxQLConditionsBuilderFactory Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 04/21/2020
  * @since <pre>Apr 21, 2020</pre>
  */
@@ -31,7 +31,7 @@ public class SphinxQLConditionsBuilderFactoryTest {
     }
 
     /**
-     * Method: getBuilder(Conditions conditions)
+     * Method: getBuilder(Conditions conditions).
      */
     @Test
     public void testGetBuilder() throws Exception {

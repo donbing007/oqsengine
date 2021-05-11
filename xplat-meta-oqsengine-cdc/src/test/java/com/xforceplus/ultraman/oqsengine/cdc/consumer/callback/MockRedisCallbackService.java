@@ -5,17 +5,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * desc :
+ * desc :.
  * name : MockRedisCallbackService
  *
- * @author : xujia
- * date : 2020/11/10
+ * @author : xujia 2020/11/10
  * @since : 1.8
  */
 public class MockRedisCallbackService implements CDCMetricsCallback {
@@ -31,6 +29,9 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     private long heartBeat;
     private long notReady;
 
+    /**
+     * 重置.
+     */
     public void reset() {
         cdcMetrics = null;
         ackMetrics = null;
@@ -47,7 +48,8 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
         this.commitIdStatusService = commitIdStatusService;
     }
 
-    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService, CDCStatusServiceImpl cdcStatusService) {
+    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService,
+                                    CDCStatusServiceImpl cdcStatusService) {
         this.commitIdStatusService = commitIdStatusService;
         this.cdcStatusService = cdcStatusService;
     }
@@ -59,9 +61,9 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
         if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED) {
             if (null != commitIdStatusService) {
                 ackMetrics.getCommitList().forEach(
-                        id -> {
-                            commitIdStatusService.obsolete(id);
-                        }
+                    id -> {
+                        commitIdStatusService.obsolete(id);
+                    }
                 );
             }
 

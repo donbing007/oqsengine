@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -9,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,16 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
-
 /**
  * Created by justin.xu on 05/2021
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class ConsumerErrorTest extends CDCAbstractContainer {
+public class ConsumerErrorTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;
 
@@ -93,7 +92,7 @@ public class ConsumerErrorTest extends CDCAbstractContainer {
 
     private void initData(Transaction tx, IEntity[] datas, boolean replacement) throws SQLException {
         for (IEntity entity : datas) {
-           if (replacement) {
+            if (replacement) {
                 entity.resetVersion(0);
                 masterStorage.replace(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateReplace(entity, entity);

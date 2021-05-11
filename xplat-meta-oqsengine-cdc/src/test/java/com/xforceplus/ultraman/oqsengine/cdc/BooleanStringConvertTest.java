@@ -1,17 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.convertStringToBoolean;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.convertStringToBoolean;
-
 /**
- * desc :
+ * desc :.
  * name : BooleanStringConvertTest
  *
- * @author : xujia
- * date : 2020/11/13
- * @since : 1.8
+ * @author xujia 2020/11/13
+ * @since 1.8
  */
 public class BooleanStringConvertTest {
     @Test

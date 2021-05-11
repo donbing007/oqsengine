@@ -45,7 +45,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 抽像的devops启动容器.
- * 
+ *
  * @author xujia 2020/11/22
  * @since 1.8
  */
@@ -150,9 +150,9 @@ public abstract class AbstractDevOpsContainer {
         TimeUnit.SECONDS.sleep(1L);
 
         final TransactionExecutor writeExecutor = new AutoJoinTransactionExecutor(transactionManager,
-                new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
+            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
         final TransactionExecutor searchExecutor = new AutoJoinTransactionExecutor(transactionManager,
-                new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
+            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());

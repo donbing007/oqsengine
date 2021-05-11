@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -9,27 +12,27 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarte
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import org.junit.*;
-import org.junit.runner.RunWith;
-
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
+import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
- * desc :
+ * desc :.
  * name : SQLDevOpsStorageTest
  *
- * @author : xujia
- * date : 2020/11/22
+ * @author : xujia 2020/11/22
  * @since : 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
-public class CdcErrorStorageTest extends CDCAbstractContainer {
+public class CdcErrorStorageTest extends AbstractCDCContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
@@ -48,10 +51,9 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
     private static String expectedUniKey = uniKeyGenerate("111", 1, ErrorType.DATA_INSERT_ERROR);
 
 
-
     private static CdcErrorTask expectedCdcErrorTask =
-                CdcErrorTask.buildErrorTask(expectedSeqNo, expectedUniKey, expectedBatchId, expectedId, expectedEntityId
-                        , expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
+        CdcErrorTask.buildErrorTask(expectedSeqNo, expectedUniKey, expectedBatchId, expectedId, expectedEntityId,
+            expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
 
 
     @BeforeClass
@@ -84,11 +86,12 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
 
     @Test
-    public void cdcCRU() throws Exception {
+    public void cdcCru() throws Exception {
         int count = cdcErrorStorage.buildCdcError(expectedCdcErrorTask);
         Assert.assertEquals(1, count);
 
-        count = cdcErrorStorage.submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, expectedObjectStr);
+        count = cdcErrorStorage
+            .submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, expectedObjectStr);
         Assert.assertEquals(1, count);
 
         count = cdcErrorStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
@@ -131,13 +134,16 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
 
         //使用batchId和NOT_FIXED 且 isEquals = false
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
+        cdcErrorQueryCondition.setBatchId(expectedBatchId).setId(null).setCommitId(null)
+            .setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus())
+            .setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
 
         //使用所有条件查询
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setBatchId(expectedBatchId)
-                .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType()).setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
+            .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType())
+            .setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
 
 
@@ -167,7 +173,8 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
         Assert.assertEquals(expectedMessage, cdcErrorTask.getMessage());
         Assert.assertEquals(expectedObjectStr, cdcErrorTask.getOperationObject());
         Assert.assertEquals(FixedStatus.FIXED.getStatus(), cdcErrorTask.getStatus());
-        Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
+        Assert.assertTrue(
+            System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);
     }
 }

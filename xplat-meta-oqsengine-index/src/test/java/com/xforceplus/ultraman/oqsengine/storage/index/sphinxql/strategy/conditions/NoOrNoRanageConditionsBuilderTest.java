@@ -16,17 +16,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * NoOrNorRanageConditionsBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/22/2020
  * @since <pre>Feb 22, 2020</pre>
  */
@@ -36,7 +35,7 @@ public class NoOrNoRanageConditionsBuilderTest {
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(longField));
 
     /**
-     * Method: build(Conditions conditions)
+     * Method: build(Conditions conditions).
      */
     @Test
     public void testBuild() throws Exception {
@@ -65,8 +64,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                     )
                 ),
                 String.format("MATCH('((@%s 1y2p0ij10032e8e7L))')", FieldDefine.ATTRIBUTEF)
-            )
-            ,
+            ),
             new Case(
                 new Conditions(
                     new Condition(
@@ -74,12 +72,12 @@ public class NoOrNoRanageConditionsBuilderTest {
                             FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
                         new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING,
-                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            "test")
                     )
                 ),
                 String.format("MATCH('((@%s 1y2p0ijtest32e8e7S))')", FieldDefine.ATTRIBUTEF)
-            )
-            ,
+            ),
             new Case(
                 new Conditions(
                     new Condition(
@@ -90,7 +88,8 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(9223372036854775806L, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "test"))),
-                String.format("MATCH('((@%s 1y2p0ij10032e8e7L) (@%s 1y2p0ijtest32e8e6S))')", FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF)
+                String.format("MATCH('((@%s 1y2p0ij10032e8e7L) (@%s 1y2p0ijtest32e8e6S))')", FieldDefine.ATTRIBUTEF,
+                    FieldDefine.ATTRIBUTEF)
             ),
             new Case(
                 new Conditions(
@@ -102,9 +101,9 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(9223372036854775806L, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "test"))),
-                String.format("MATCH('((@%s -1y2p0ij10032e8e7L) (@%s -1y2p0ijtest32e8e6S))')", FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF)
-            )
-            ,
+                String.format("MATCH('((@%s -1y2p0ij10032e8e7L) (@%s -1y2p0ijtest32e8e6S))')", FieldDefine.ATTRIBUTEF,
+                    FieldDefine.ATTRIBUTEF)
+            ),
             new Case(
                 new Conditions(
                     new Condition(
@@ -115,9 +114,9 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                String.format("MATCH('((@%s (1y2p0ij12345632e8e7L0 1y2p0ij12345600000000000032e8e7L1)))')", FieldDefine.ATTRIBUTEF)
-            )
-            ,
+                String.format("MATCH('((@%s (1y2p0ij12345632e8e7L0 1y2p0ij12345600000000000032e8e7L1)))')",
+                    FieldDefine.ATTRIBUTEF)
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
@@ -126,8 +125,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new StringsValue(new EntityField(9223372036854775807L, "c1", FieldType.STRINGS), "v1")
                     )),
                 String.format("MATCH('((@%s 1y2p0ijv132e8e7S))')", FieldDefine.ATTRIBUTEF)
-            )
-            ,
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
@@ -135,8 +133,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.NOT_EQUALS,
                         new StringsValue(new EntityField(9223372036854775807L, "c1", FieldType.STRINGS), "v1")
                     )),
-                String.format("MATCH('((@%s -1y2p0ijv132e8e7S))')"
-                    , FieldDefine.ATTRIBUTEF)
+                String.format("MATCH('((@%s -1y2p0ijv132e8e7S))')", FieldDefine.ATTRIBUTEF)
             )
         );
     }

@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -20,17 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.NO_TRANSACTION_COMMIT_ID;
 
 /**
- * desc :
+ * desc :.
  * name : MassageUnpackBenchmarkTest
  *
- * @author : xujia
- * date : 2020/11/13
+ * @author : xujia 2020/11/13
  * @since : 1.8
  */
-public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
+public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
@@ -74,7 +71,6 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         closeAll();
     }
 
-    int testLoops = 100;
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
         //  预热
@@ -112,10 +108,11 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 =
-                    buildRow(start, 1, Long.MAX_VALUE, true, 1, NO_TRANSACTION_COMMIT_ID, "false", 0, 1, 1, false);
+            CanalEntry.Entry fatherRanDom1 =
+                buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1,
+                    false);
 
-            entries.add(fRanDom_1);
+            entries.add(fatherRanDom1);
         }
     }
 }

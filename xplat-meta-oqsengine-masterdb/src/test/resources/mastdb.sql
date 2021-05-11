@@ -17,7 +17,7 @@ create table oqsbigentity
     attribute      json                  not null comment '当前 entity 的属性集合.',
     oqsmajor       int     default 0     not null comment '产生数据的oqs主版本号',
     primary key (id),
-    KEY commitid_entity_index (commitid, entityclassl0, entityclassl1, entityclassl2, entityclassl3, entityclassl4),
+    KEY commitid_entity_index (commitid, entityclassl0, entityclassl1, entityclassl2),
     KEY tx_index (tx),
     KEY update_time_index (updatetime)
 ) ENGINE = InnoDB

@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -9,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,28 +21,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
-
 
 /**
- * desc :
+ * desc :.
  * name : ConsumerRunnerTest
  *
- * @author : xujia
- * date : 2020/11/9
+ * @author : xujia 2020/11/9
  * @since : 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class ConsumerRunnerTest extends CDCAbstractContainer {
+public class ConsumerRunnerTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;
 
     private MockRedisCallbackService mockRedisCallbackService;
 
-    private long t = 0;
+    private long startId = 0;
 
     private int expectedCount = 0;
 
@@ -66,7 +64,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     }
 
     private void startConsumerRunner(long partitionId) throws Exception {
-        t = partitionId;
+        startId = partitionId;
         expectedCount = 0;
     }
 
@@ -77,15 +75,16 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
             if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
                 break;
             }
-            logger.warn("func -> {}, current -> {}, expectedCount -> {}", func, mockRedisCallbackService.getExecuted().get(), expectedCount);
+            logger.warn("func -> {}, current -> {}, expectedCount -> {}", func,
+                mockRedisCallbackService.getExecuted().get(), expectedCount);
 
             Thread.sleep(1_000);
             loop++;
         }
-        logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
+        logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount,
+            mockRedisCallbackService.getExecuted().get());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
-
 
 
     @Test
@@ -97,12 +96,12 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
             transactionManager.bind(tx.id());
 
             try {
-                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(startId, 0);
                 initData(tx, entities, false, false);
 
                 Thread.sleep(1000);
 
-                entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+                entities = EntityGenerateToolBar.generateFixedEntities(startId, 1);
                 initData(tx, entities, true, false);
 
                 expectedCount += entities.length;
@@ -121,7 +120,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     }
 
     @Test
-    public void SyncDeleteTest() throws Exception {
+    public void syncDeleteTest() throws Exception {
         startConsumerRunner(1000000);
 
         try {
@@ -129,7 +128,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
             transactionManager.bind(tx.id());
 
             try {
-                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(startId, 0);
                 initData(tx, entities, false, false);
 
                 Thread.sleep(1000);
@@ -162,10 +161,10 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
                 Transaction tx = transactionManager.create(30_000);
                 transactionManager.bind(tx.id());
                 try {
-                    IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                    IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(startId, 0);
                     initData(tx, entities, false, false);
 
-                    entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+                    entities = EntityGenerateToolBar.generateFixedEntities(startId, 1);
                     initData(tx, entities, true, false);
                     expectedCount += entities.length;
                 } catch (Exception ex) {
@@ -180,7 +179,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
                 transactionManager.finish();
 
                 i++;
-                t += gap;
+                startId += gap;
             }
         } finally {
             stopConsumerRunner("loopTest");
@@ -199,7 +198,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
 
             try {
                 IEntity[] entities;
-                for (long i = t; i < t + gap * size; i += gap) {
+                for (long i = startId; i < startId + gap * size; i += gap) {
                     entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
                     initData(tx, entities, false, false);
                     expectedCount += entities.length;
@@ -230,8 +229,8 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
 
         startConsumerRunner(50000);
         try {
-            long i = t;
-            long limits = t + gap * loops;
+            long i = startId;
+            long limits = startId + gap * loops;
 
             while (i < limits) {
                 Transaction tx = transactionManager.create();

@@ -6,21 +6,20 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefi
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
 /**
  * SphinxQLTransactionResource Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 12/02/2020
  * @since <pre>Dec 2, 2020</pre>
  */

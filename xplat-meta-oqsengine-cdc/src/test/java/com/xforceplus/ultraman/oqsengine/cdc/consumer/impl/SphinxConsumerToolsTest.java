@@ -1,39 +1,41 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRowChange;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass2;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClassMap;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getBooleanFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
+
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.ByteString;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.sql.SQLException;
-import java.util.*;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRowChange;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.*;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
-
 
 /**
- * desc :
+ * desc :.
  * name : SphinxConsumerToolsTest
  *
- * @author : xujia
- * date : 2020/11/6
+ * @author : xujia 2020/11/6
  * @since : 1.8
  */
 public class SphinxConsumerToolsTest {
@@ -46,23 +48,23 @@ public class SphinxConsumerToolsTest {
 
     private void initGetEntityClass() throws NoSuchMethodException {
         testGetEntityClass = sphinxSyncExecutor.getClass()
-                .getDeclaredMethod("getEntityClass", new Class[]{long.class, List.class});
+            .getDeclaredMethod("getEntityClass", new Class[] {long.class, List.class});
         testGetEntityClass.setAccessible(true);
     }
 
     private void initAttrCollection() throws NoSuchMethodException {
         testAttrCollection = sphinxSyncExecutor.getClass()
-                .getDeclaredMethod("attrCollection", new Class[]{long.class, List.class});
+            .getDeclaredMethod("attrCollection", new Class[] {long.class, List.class});
         testAttrCollection.setAccessible(true);
     }
 
     private void initPrepareForUpdateDelete() throws NoSuchMethodException {
         testPrepareForUpdateDelete = sphinxSyncExecutor.getClass()
-                .getDeclaredMethod("prepareForUpdateDelete", new Class[]{List.class, long.class, long.class});
+            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class});
         testPrepareForUpdateDelete.setAccessible(true);
     }
 
-    public void init() throws NoSuchMethodException {
+    private void init() throws NoSuchMethodException {
         EntityClassBuilder metaManager = new EntityClassBuilder();
         sphinxSyncExecutor = new SphinxSyncExecutor();
         ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", metaManager);
@@ -80,15 +82,15 @@ public class SphinxConsumerToolsTest {
             long commitId = 1;
             CanalEntryTools.Case cas = new CanalEntryTools.Case(id, commitId);
             cas.withLevelOrdinal(1 + i)
-                    .withEntityId(Long.MAX_VALUE - i)
-                    .withReplacement(true)
-                    .withTx(1)
-                    .withDeleted(false)
-                    .withAttr(i)
-                    .withQqsmajor(1)
-                    .withVersion(1)
-                    .withCreate(System.currentTimeMillis())
-                    .withUpdate(System.currentTimeMillis());
+                .withEntityId(Long.MAX_VALUE - i)
+                .withReplacement(true)
+                .withTx(1)
+                .withDeleted(false)
+                .withAttr(i)
+                .withQqsmajor(1)
+                .withVersion(1)
+                .withCreate(System.currentTimeMillis())
+                .withUpdate(System.currentTimeMillis());
 
             CanalEntry.Entry entry = buildRow(cas, false);
 
@@ -175,13 +177,15 @@ public class SphinxConsumerToolsTest {
     }
 
     private void assertGetEntityClass(List<CanalEntry.Column> columns) throws Exception {
-        IEntityClass entityClass = (IEntityClass) testGetEntityClass.invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
+        IEntityClass entityClass = (IEntityClass) testGetEntityClass
+            .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
         Assert.assertNotNull(entityClass);
     }
 
     @SuppressWarnings("unchecked")
     private void assertAttributes(List<CanalEntry.Column> columns, int index) throws Exception {
-        List<Object> objects = (List<Object>) testAttrCollection.invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
+        List<Object> objects = (List<Object>) testAttrCollection
+            .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
         Assert.assertTrue(null != objects && !objects.isEmpty() && objects.size() % 2 == 0);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -189,27 +193,29 @@ public class SphinxConsumerToolsTest {
 
 
         kv.forEach(
-                (k, v) -> {
-                    boolean findKey = false;
-                    for (int i = 0; i < objects.size(); i++) {
-                        Object object = objects.get(i);
-                        if (i % 2 == 0) {
-                            Assert.assertEquals(String.class, object.getClass());
-                            if (object.equals(k)) {
-                                findKey = true;
-                                Assert.assertEquals(v, objects.get(i + 1));
-                                break;
-                            }
+            (k, v) -> {
+                boolean findKey = false;
+                for (int i = 0; i < objects.size(); i++) {
+                    Object object = objects.get(i);
+                    if (i % 2 == 0) {
+                        Assert.assertEquals(String.class, object.getClass());
+                        if (object.equals(k)) {
+                            findKey = true;
+                            Assert.assertEquals(v, objects.get(i + 1));
+                            break;
                         }
                     }
-                    Assert.assertTrue(findKey);
                 }
+                Assert.assertTrue(findKey);
+            }
         );
     }
 
-    private void assertPrepareForUpdateDelete(List<CanalEntry.Column> columns, CanalEntryTools.Case caseEntry) throws InvocationTargetException, IllegalAccessException, SQLException {
+    private void assertPrepareForUpdateDelete(List<CanalEntry.Column> columns, CanalEntryTools.Case caseEntry)
+        throws InvocationTargetException, IllegalAccessException, SQLException {
         OriginalEntity originalEntity = (OriginalEntity) testPrepareForUpdateDelete.invoke(sphinxSyncExecutor, columns,
-                getLongFromColumn(columns, OqsBigEntityColumns.ID), getLongFromColumn(columns, OqsBigEntityColumns.COMMITID));
+            getLongFromColumn(columns, OqsBigEntityColumns.ID),
+            getLongFromColumn(columns, OqsBigEntityColumns.COMMITID));
         Assert.assertNotNull(originalEntity);
         assertByCaseEntry(caseEntry, originalEntity);
     }
@@ -249,7 +255,9 @@ public class SphinxConsumerToolsTest {
 
             builder.setHeader(buildHeader());
 
-            builder.setStoreValue(buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false).toByteString());
+            builder.setStoreValue(
+                buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false)
+                    .toByteString());
 
             entries.add(builder.build());
 

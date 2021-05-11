@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * EntityClassHelper Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/26/2021
  * @since <pre>Feb 26, 2021</pre>
  */
@@ -27,7 +27,7 @@ public class EntityClassHelperTest {
     }
 
     /**
-     * Method: buildEntityClassQuerySql(IEntityClass entityClass)
+     * Method: buildEntityClassQuerySql(IEntityClass entityClass).
      */
     @Test
     public void testBuildEntityClassQuerySql() throws Exception {

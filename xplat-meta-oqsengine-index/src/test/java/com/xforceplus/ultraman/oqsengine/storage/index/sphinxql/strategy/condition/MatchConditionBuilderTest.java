@@ -5,25 +5,28 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * MatchConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -42,7 +45,7 @@ public class MatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
@@ -88,7 +91,8 @@ public class MatchConditionBuilderTest {
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                     ConditionOperator.EQUALS,
-                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
+                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
+                        new BigDecimal("123.246"))
                 ),
                 r -> {
                     Assert.assertEquals("(1y2p0ij12332e8e7L0 1y2p0ij24600000000000000032e8e7L1)", r);
@@ -126,7 +130,8 @@ public class MatchConditionBuilderTest {
                     new StringValue(EntityField.Builder.anEntityField()
                         .withFieldType(FieldType.STRING)
                         .withId(9223372036854775807L)
-                        .withConfig(FieldConfig.build().fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build(), "工作状态有限公司")
+                        .withConfig(FieldConfig.build().fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build(),
+                        "工作状态有限公司")
                 ),
                 r -> {
                     Assert.assertEquals("(1y2p0ij工作32e8e7S << 1y2p0ij状态32e8e7S << 1y2p0ij有限公司32e8e7S)", r);
