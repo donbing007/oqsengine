@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.NO_TRANSACTION_COMMIT_ID;
 
 /**
  * desc :
@@ -72,18 +74,21 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         closeAll();
     }
 
+    int testLoops = 100;
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
         //  预热
         sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-        long start = System.currentTimeMillis();
-        CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
-        long duration = System.currentTimeMillis() - start;
+        for (int i = 0; i < testLoops; i++) {
+            long start = System.currentTimeMillis();
+            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
+            long duration = System.currentTimeMillis() - start;
 
-        Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
-        logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-                cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+            Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            logger.info("end sphinxConsumerBenchmarkTest, loop : {} excuted-Rows : {}, use timeMs : {} ms",
+                i, cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+        }
     }
 
     @Test
@@ -108,7 +113,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
             CanalEntry.Entry fRanDom_1 =
-                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1, false);
+                    buildRow(start, 1, Long.MAX_VALUE, true, 1, NO_TRANSACTION_COMMIT_ID, "false", 0, 1, 1, false);
 
             entries.add(fRanDom_1);
         }

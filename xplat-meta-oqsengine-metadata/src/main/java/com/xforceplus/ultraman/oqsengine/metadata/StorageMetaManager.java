@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +73,7 @@ public class StorageMetaManager implements MetaManager {
             Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
             return Optional.of(toEntityClass(id, entityClassStorageMaps));
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getCause().toString()));
             return Optional.empty();
         }
     }
@@ -89,7 +88,7 @@ public class StorageMetaManager implements MetaManager {
      * 注意：当前的实现只支持单个appId的单个Env，即appId如果关注了test env，则无法再次关注其他环境.
      *
      * @param appId 应用标识.
-     * @param env 环境编码.
+     * @param env   环境编码.
      * @return 版本号.
      */
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "need"})
@@ -163,6 +162,19 @@ public class StorageMetaManager implements MetaManager {
             throw new SQLException(String.format("entity class [%d] not found.", id));
         }
 
+        List<IEntityField> entityFields = new ArrayList<>();
+        if (null != entityClassStorage.getFields()) {
+            entityClassStorage.getFields()
+                .forEach(
+                    e -> {
+                        IEntityField entityField = cloneEntityField(e);
+                        if (null != entityField) {
+                            entityFields.add(entityField);
+                        }
+                    }
+                );
+        }
+
         OqsEntityClass.Builder builder =
             OqsEntityClass.Builder.anEntityClass()
                 .withId(entityClassStorage.getId())
@@ -171,7 +183,7 @@ public class StorageMetaManager implements MetaManager {
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
                 .withRelations(toQqsRelation(entityClassStorage.getRelations()))
-                .withFields(entityClassStorage.getFields().stream().map(this::cloneEntityField).collect(Collectors.toList()));
+                .withFields(entityFields);
         /*
          * 加载父类
          */
@@ -183,65 +195,67 @@ public class StorageMetaManager implements MetaManager {
     }
 
     /**
-     * 加载relation
-     *
-     * @param relationStorageList
-     * @return
+     * 加载relation.
      */
     private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
         List<OqsRelation> oqsRelations = new ArrayList<>();
-        relationStorageList.forEach(
-            r -> {
-                OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
-                    .withId(r.getId())
-                    .withCode(r.getCode())
-                    .withLeftEntityClassId(r.getLeftEntityClassId())
-                    .withLeftEntityClassCode(r.getLeftEntityClassCode())
-                    .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
-                    .withIdentity(r.isIdentity())
-                    .withStrong(r.isStrong())
-                    .withRightEntityClassId(r.getRightEntityClassId())
-                    .withRightEntityClassLoader(this::load)
-                    .withEntityField(cloneEntityField(r.getEntityField()))
-                    .withBelongToOwner(r.isBelongToOwner());
+        if (null != relationStorageList) {
+            relationStorageList.forEach(
+                r -> {
+                    OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
+                        .withId(r.getId())
+                        .withCode(r.getCode())
+                        .withLeftEntityClassId(r.getLeftEntityClassId())
+                        .withLeftEntityClassCode(r.getLeftEntityClassCode())
+                        .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
+                        .withIdentity(r.isIdentity())
+                        .withStrong(r.isStrong())
+                        .withRightEntityClassId(r.getRightEntityClassId())
+                        .withRightEntityClassLoader(this::load)
+                        .withEntityField(cloneEntityField(r.getEntityField()))
+                        .withBelongToOwner(r.isBelongToOwner());
 
-                oqsRelations.add(builder.build());
-            }
-        );
+                    oqsRelations.add(builder.build());
+                }
+            );
+        }
         return oqsRelations;
     }
 
     private IEntityField cloneEntityField(IEntityField entityField) {
-        EntityField.Builder builder = EntityField.Builder.anEntityField()
-            .withName(entityField.name())
-            .withCnName(entityField.cnName())
-            .withFieldType(entityField.type())
-            .withDictId(entityField.dictId())
-            .withId(entityField.id())
-            .withDefaultValue(entityField.defaultValue());
+        if (null != entityField) {
+            EntityField.Builder builder = EntityField.Builder.anEntityField()
+                .withName(entityField.name())
+                .withCnName(entityField.cnName())
+                .withFieldType(entityField.type())
+                .withDictId(entityField.dictId())
+                .withId(entityField.id())
+                .withDefaultValue(entityField.defaultValue());
 
-        if (null != entityField.config()) {
-            FieldConfig config = entityField.config();
-            builder.withConfig(FieldConfig.Builder.anFieldConfig()
-                .withDelimiter(config.getDelimiter())
-                .withDisplayType(config.getDisplayType())
-                .withFieldSense(config.getFieldSense())
-                .withFuzzyType(config.getFuzzyType())
-                .withIdentifie(config.isIdentifie())
-                .withMax(config.getMax())
-                .withMin(config.getMin())
-                .withPrecision(config.getPrecision())
-                .withRequired(config.isRequired())
-                .withSearchable(config.isSearchable())
-                .withSplittable(config.isSplittable())
-                .withUniqueName(config.getUniqueName())
-                .withValidateRegexString(config.getValidateRegexString())
-                .withWildcardMaxWidth(config.getWildcardMaxWidth())
-                .withWildcardMinWidth(config.getWildcardMinWidth())
-                .build()
-            );
+            if (null != entityField.config()) {
+                FieldConfig config = entityField.config();
+                builder.withConfig(FieldConfig.Builder.anFieldConfig()
+                    .withDelimiter(config.getDelimiter())
+                    .withDisplayType(config.getDisplayType())
+                    .withFieldSense(config.getFieldSense())
+                    .withFuzzyType(config.getFuzzyType())
+                    .withIdentifie(config.isIdentifie())
+                    .withMax(config.getMax())
+                    .withMin(config.getMin())
+                    .withPrecision(config.getPrecision())
+                    .withRequired(config.isRequired())
+                    .withSearchable(config.isSearchable())
+                    .withSplittable(config.isSplittable())
+                    .withUniqueName(config.getUniqueName())
+                    .withValidateRegexString(config.getValidateRegexString())
+                    .withWildcardMaxWidth(config.getWildcardMaxWidth())
+                    .withWildcardMinWidth(config.getWildcardMinWidth())
+                    .build()
+                );
+            }
+
+            return builder.build();
         }
-
-        return builder.build();
+        return null;
     }
 }
