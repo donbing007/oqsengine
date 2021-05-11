@@ -1,8 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -13,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -57,7 +55,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -187,6 +187,10 @@ public class SQLMasterStorageQueryTest {
 
     @Before
     public void before() throws Exception {
+
+        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
+
+
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
@@ -204,6 +208,10 @@ public class SQLMasterStorageQueryTest {
             .withWaitCommitSync(false)
             .build();
 
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
+            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
@@ -213,15 +221,7 @@ public class SQLMasterStorageQueryTest {
         sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
-        MetaManager metaManager = mock(MetaManager.class);
-        when(metaManager.load(l0EntityClass.id())).thenReturn(Optional.of(l0EntityClass));
-        when(metaManager.load(l1EntityClass.id())).thenReturn(Optional.of(l1EntityClass));
-        when(metaManager.load(l2EntityClass.id())).thenReturn(Optional.of(l2EntityClass));
-
-        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+        MetaManager metaManager = new MockMasterNeedMeta(l0EntityClass, l1EntityClass, l2EntityClass);
 
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
@@ -1007,5 +1007,41 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L)
                 )
             )).build());
+    }
+
+
+    private static class MockMasterNeedMeta implements MetaManager {
+        private Map<Long, IEntityClass> metas = new HashMap<>();
+
+        public MockMasterNeedMeta(IEntityClass... entityClasses) {
+            for (IEntityClass entityClass : entityClasses) {
+                metas.put(entityClass.id(), entityClass);
+            }
+        }
+
+        @Override
+        public Optional<IEntityClass> load(long id) {
+            return Optional.ofNullable(metas.get(id));
+        }
+
+        @Override
+        public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+            return Optional.ofNullable(metas.get(entityClassRef.getId()));
+        }
+
+        @Override
+        public Optional<IEntityClass> loadHistory(long id, int version) {
+            return Optional.empty();
+        }
+
+        @Override
+        public int need(String appId, String env) {
+            return 0;
+        }
+
+        @Override
+        public void invalidateLocal() {
+
+        }
     }
 }

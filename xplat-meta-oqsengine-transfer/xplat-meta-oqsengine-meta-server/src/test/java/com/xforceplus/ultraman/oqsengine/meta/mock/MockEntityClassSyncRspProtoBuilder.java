@@ -37,8 +37,8 @@ public class MockEntityClassSyncRspProtoBuilder {
 
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
-        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
-        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
+        entityFieldInfos.add(entityFieldInfo(id, "LONG"));
+        entityFieldInfos.add(entityFieldInfo(id + 1, "STRING"));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
         relationInfos.add(relationInfo(id, id + 2, id, 0, id));
@@ -56,14 +56,14 @@ public class MockEntityClassSyncRspProtoBuilder {
                 .build();
     }
 
-    public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
+    public static EntityFieldInfo entityFieldInfo(long id, String fieldType) {
         return EntityFieldInfo.newBuilder()
                 .setId(id)
                 .setName(id + "_name")
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
+                .setFieldConfig(fieldConfig(true, 1))
                 .build();
     }
 
@@ -77,7 +77,7 @@ public class MockEntityClassSyncRspProtoBuilder {
                 .setStrong(true)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
-                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setFieldType("LONG")
                         .setName(fieldId + "_name")
                         .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
@@ -87,7 +87,7 @@ public class MockEntityClassSyncRspProtoBuilder {
     }
 
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
-    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+    fieldConfig(boolean searchable, int systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)

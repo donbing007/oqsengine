@@ -7,6 +7,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringWithoutNullCheck;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_VERSION;
@@ -20,6 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OP;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OQSMAJOR;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.PROFILE;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.TX;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.UPDATETIME;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.VERSION;
@@ -37,6 +39,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -143,8 +146,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
             //  ignore
 
         }
-
-        recordOrRecover(batchId, uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR),
+        String uniKey = uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR);
+        recordOrRecover(batchId, uniKey,
             id, entity, version, op, commitId, DATA_FORMAT_ERROR, message, new ArrayList<>());
 
         return true;
@@ -251,9 +254,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
     private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
         long entityId = getEntity(columns);
+        String profile = getStringWithoutNullCheck(columns, PROFILE);
 
         if (entityId > ZERO) {
-            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId);
+            Optional<IEntityClass> entityClassOptional =
+                metaManager.load(new EntityClassRef(entityId, "cdc", profile));
+
             if (entityClassOptional.isPresent()) {
                 return entityClassOptional.get();
             }

@@ -65,6 +65,7 @@ public class BuildExecutor extends AbstractMasterExecutor<MasterStorageEntity, I
             st.setBoolean(pos++, false);
             st.setString(pos++, masterStorageEntity.getAttribute());
             st.setInt(pos++, OqsVersion.MAJOR);
+            st.setString(pos++, masterStorageEntity.getProfile());
             fullEntityClass(pos, st, masterStorageEntity);
 
             checkTimeout(st);
@@ -97,7 +98,8 @@ public class BuildExecutor extends AbstractMasterExecutor<MasterStorageEntity, I
             FieldDefine.UPDATE_TIME,
             FieldDefine.DELETED,
             FieldDefine.ATTRIBUTE,
-            FieldDefine.OQS_MAJOR)
+            FieldDefine.OQS_MAJOR,
+            FieldDefine.PROFILE)
         );
 
         for (int i = 0; i < entityClassSize; i++) {
@@ -105,7 +107,7 @@ public class BuildExecutor extends AbstractMasterExecutor<MasterStorageEntity, I
                 .append(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
         }
 
-        final int baseColumnSize = 11;
+        final int baseColumnSize = 12;
 
         buff.append(") VALUES (")
             .append(String.join(",", Collections.nCopies(baseColumnSize + entityClassSize, "?")))

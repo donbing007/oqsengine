@@ -35,6 +35,11 @@ public final class EntityClassSyncProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_EntityClassInfo_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ProfileInfo_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ProfileInfo_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_EntityFieldInfo_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -44,6 +49,11 @@ public final class EntityClassSyncProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_FieldConfig_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Formula_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_Formula_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_RelationInfo_descriptor;
   static final 
@@ -67,43 +77,41 @@ public final class EntityClassSyncProto {
       "(\t\0229\n\027entityClassSyncRspProto\030\007 \001(\0132\030.En" +
       "tityClassSyncRspProto\022\r\n\005force\030\010 \001(\010\"B\n\027" +
       "EntityClassSyncRspProto\022\'\n\rentityClasses" +
-      "\030\001 \003(\0132\020.EntityClassInfo\"\263\001\n\017EntityClass" +
+      "\030\001 \003(\0132\020.EntityClassInfo\"\323\001\n\017EntityClass" +
       "Info\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name\030\003" +
       " \001(\t\022\016\n\006father\030\004 \001(\003\022\r\n\005level\030\005 \001(\005\022\017\n\007v" +
       "ersion\030\006 \001(\005\022&\n\014entityFields\030\007 \003(\0132\020.Ent" +
       "ityFieldInfo\022 \n\trelations\030\010 \003(\0132\r.Relati" +
-      "onInfo\"\241\002\n\017EntityFieldInfo\022\n\n\002id\030\001 \001(\003\022\014" +
-      "\n\004name\030\002 \001(\t\022\r\n\005cname\030\003 \001(\t\022-\n\tfieldType" +
-      "\030\004 \001(\0162\032.EntityFieldInfo.FieldType\022\016\n\006di" +
-      "ctId\030\005 \001(\t\022\024\n\014defaultValue\030\006 \001(\t\022!\n\013fiel" +
-      "dConfig\030\007 \001(\0132\014.FieldConfig\"m\n\tFieldType" +
-      "\022\013\n\007UNKNOWN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004ENUM\020\002\022\014\n\010" +
-      "DATETIME\020\003\022\010\n\004LONG\020\004\022\n\n\006STRING\020\005\022\013\n\007STRI" +
-      "NGS\020\006\022\013\n\007DECIMAL\020\007\"\213\004\n\013FieldConfig\022\022\n\nse" +
-      "archable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013\n\003min\030\003 \001(\003" +
-      "\022\021\n\tprecision\030\004 \001(\005\022\022\n\nidentifier\030\005 \001(\010\022" +
-      "\022\n\nisRequired\030\006 \001(\010\022\033\n\023validateRegexStri" +
-      "ng\030\007 \001(\t\022\023\n\013displayType\030\010 \001(\t\0223\n\016metaFie" +
-      "ldSense\030\t \001(\0162\033.FieldConfig.MetaFieldSen" +
-      "se\022\021\n\tfuzzyType\030\n \001(\005\022\030\n\020wildcardMinWidt" +
-      "h\030\013 \001(\005\022\030\n\020wildcardMaxWidth\030\014 \001(\005\022\022\n\nuni" +
-      "queName\030\r \001(\t\"\320\001\n\016MetaFieldSense\022\013\n\007UNKN" +
-      "OWN\020\000\022\n\n\006NORMAL\020\001\022\r\n\tTENANT_ID\020\002\022\017\n\013TENA" +
-      "NT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013UPDATE_TIM" +
-      "E\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016UPDATE_USER_I" +
-      "D\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024\n\020UPDATE_USER" +
-      "_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\362\001\n\014RelationInf" +
-      "o\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEnti" +
-      "tyClassId\030\003 \001(\003\022\031\n\021leftEntityClassId\030\004 \001" +
-      "(\003\022\033\n\023leftEntityClassCode\030\005 \001(\t\022\024\n\014relat" +
-      "ionType\030\006 \001(\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entit" +
-      "yField\030\010 \001(\0132\020.EntityFieldInfo\022\025\n\rbelong" +
-      "ToOwner\030\t \001(\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityC" +
-      "lassSync\022C\n\010register\022\027.EntityClassSyncRe" +
-      "quest\032\030.EntityClassSyncResponse\"\000(\0010\001BR\n" +
-      "8com.xforceplus.ultraman.oqsengine.meta." +
-      "common.proto.syncB\024EntityClassSyncProtoP" +
-      "\001b\006proto3"
+      "onInfo\022\036\n\010profiles\030\t \003(\0132\014.ProfileInfo\"k" +
+      "\n\013ProfileInfo\022\014\n\004code\030\001 \001(\t\022)\n\017entityFie" +
+      "ldInfo\030\002 \003(\0132\020.EntityFieldInfo\022#\n\014relati" +
+      "onInfo\030\003 \003(\0132\r.RelationInfo\"\310\001\n\017EntityFi" +
+      "eldInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\r\n\005cna" +
+      "me\030\003 \001(\t\022\021\n\tfieldType\030\004 \001(\t\022\016\n\006dictId\030\005 " +
+      "\001(\t\022\024\n\014defaultValue\030\006 \001(\t\022!\n\013fieldConfig" +
+      "\030\007 \001(\0132\014.FieldConfig\022\025\n\rcalculateType\030\010 " +
+      "\001(\005\022\031\n\007formula\030\t \001(\0132\010.Formula\"\233\002\n\013Field" +
+      "Config\022\022\n\nsearchable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022" +
+      "\013\n\003min\030\003 \001(\003\022\021\n\tprecision\030\004 \001(\005\022\022\n\nident" +
+      "ifier\030\005 \001(\010\022\022\n\nisRequired\030\006 \001(\010\022\033\n\023valid" +
+      "ateRegexString\030\007 \001(\t\022\023\n\013displayType\030\010 \001(" +
+      "\t\022\026\n\016metaFieldSense\030\t \001(\005\022\021\n\tfuzzyType\030\n" +
+      " \001(\005\022\030\n\020wildcardMinWidth\030\013 \001(\005\022\030\n\020wildca" +
+      "rdMaxWidth\030\014 \001(\005\022\022\n\nuniqueName\030\r \001(\t\"v\n\007" +
+      "Formula\022\017\n\007formula\030\001 \001(\t\022\021\n\tvalidator\030\002 " +
+      "\001(\t\022\013\n\003min\030\003 \001(\t\022\013\n\003max\030\004 \001(\t\022\021\n\tconditi" +
+      "on\030\005 \001(\t\022\032\n\022emptyValueTransfer\030\006 \001(\t\"\362\001\n" +
+      "\014RelationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022" +
+      "\032\n\022rightEntityClassId\030\003 \001(\003\022\031\n\021leftEntit" +
+      "yClassId\030\004 \001(\003\022\033\n\023leftEntityClassCode\030\005 " +
+      "\001(\t\022\024\n\014relationType\030\006 \001(\005\022\020\n\010identity\030\007 " +
+      "\001(\010\022%\n\013entityField\030\010 \001(\0132\020.EntityFieldIn" +
+      "fo\022\025\n\rbelongToOwner\030\t \001(\010\022\016\n\006strong\030\n \001(" +
+      "\0102V\n\017EntityClassSync\022C\n\010register\022\027.Entit" +
+      "yClassSyncRequest\032\030.EntityClassSyncRespo" +
+      "nse\"\000(\0010\001BR\n8com.xforceplus.ultraman.oqs" +
+      "engine.meta.common.proto.syncB\024EntityCla" +
+      "ssSyncProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -140,21 +148,33 @@ public final class EntityClassSyncProto {
     internal_static_EntityClassInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassInfo_descriptor,
-        new java.lang.String[] { "Code", "Id", "Name", "Father", "Level", "Version", "EntityFields", "Relations", });
-    internal_static_EntityFieldInfo_descriptor =
+        new java.lang.String[] { "Code", "Id", "Name", "Father", "Level", "Version", "EntityFields", "Relations", "Profiles", });
+    internal_static_ProfileInfo_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_ProfileInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ProfileInfo_descriptor,
+        new java.lang.String[] { "Code", "EntityFieldInfo", "RelationInfo", });
+    internal_static_EntityFieldInfo_descriptor =
+      getDescriptor().getMessageTypes().get(5);
     internal_static_EntityFieldInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityFieldInfo_descriptor,
-        new java.lang.String[] { "Id", "Name", "Cname", "FieldType", "DictId", "DefaultValue", "FieldConfig", });
+        new java.lang.String[] { "Id", "Name", "Cname", "FieldType", "DictId", "DefaultValue", "FieldConfig", "CalculateType", "Formula", });
     internal_static_FieldConfig_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_FieldConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConfig_descriptor,
         new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "DisplayType", "MetaFieldSense", "FuzzyType", "WildcardMinWidth", "WildcardMaxWidth", "UniqueName", });
+    internal_static_Formula_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_Formula_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_Formula_descriptor,
+        new java.lang.String[] { "Formula", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", });
     internal_static_RelationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_RelationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationInfo_descriptor,

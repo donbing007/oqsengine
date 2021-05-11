@@ -1,40 +1,40 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
+
 
 /**
- * desc :
- * name : EntityClassStorageBuilderUtils
+ * EntityClassStorageBuilderUtils.
  *
  * @author : xujia
- * date : 2021/2/25
  * @since : 1.8
  */
 public class EntityClassStorageBuilderUtils {
 
     /**
-     * 将protoBuf转为EntityClassStorage列表
-     * @param entityClassSyncRspProto
-     * @return
+     * 将protoBuf转为EntityClassStorage列表.
      */
     public static List<EntityClassStorage> protoToStorageList(EntityClassSyncRspProto entityClassSyncRspProto) {
         Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
@@ -51,8 +51,8 @@ public class EntityClassStorageBuilderUtils {
                         EntityClassStorage entityClassStorage = temp.get(fatherId);
                         if (null == entityClassStorage) {
                             throw new MetaSyncClientException(
-                                    String.format("entityClass id [%d], father entityClass : [%d] missed.", v.getId(), fatherId)
-                                                                            , BUSINESS_HANDLER_ERROR.ordinal());
+                                    String.format("entityClass id [%d], father entityClass : [%d] missed.", v.getId(), fatherId),
+                                                BUSINESS_HANDLER_ERROR.ordinal());
                         }
                         v.addAncestors(fatherId);
                         fatherId = entityClassStorage.getFatherId();
@@ -69,28 +69,26 @@ public class EntityClassStorageBuilderUtils {
     private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap, RelationStorage relationStorage) {
         if (relationStorage.getRightEntityClassId() <= 0) {
             throw new MetaSyncClientException(
-                    String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0."
-                                            , id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                    String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0.",
+                        id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
 
         if (null == entityClassStorageMap.get(relationStorage.getRightEntityClassId())) {
             throw new MetaSyncClientException(
-                    String.format("entityClass id [%d], relation entityClass [%d] missed."
-                            , id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                    String.format("entityClass id [%d], relation entityClass [%d] missed.",
+                        id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
     }
 
     /**
-     * 转换单个EntityClassStorage
-     * @param entityClassInfo
-     * @return
+     * 转换单个EntityClassStorage.
      */
     private static EntityClassStorage protoValuesToLocalStorage(EntityClassInfo entityClassInfo) {
         if (null == entityClassInfo) {
             throw new MetaSyncClientException("entityClassInfo should not be null.", false);
         }
 
-        /**
+        /*
          * convert
          */
         EntityClassStorage storage = new EntityClassStorage();
@@ -117,9 +115,51 @@ public class EntityClassStorageBuilderUtils {
         storage.setFatherId(entityClassInfo.getFather());
 
         //  relations
+        storage.setRelations(toRelationStorageList(entityClassInfo.getRelationsList()));
+
+        //  entityFields
+        storage.setFields(toEntityFieldList(entityClassInfo.getEntityFieldsList()));
+
+        //  profiles
+        Map<String, ProfileStorage> profileStorageMap = new HashMap<>();
+        if (null != entityClassInfo.getProfilesList()) {
+            for (ProfileInfo p : entityClassInfo.getProfilesList()) {
+                if (p.getCode().isEmpty()) {
+                    throw new MetaSyncClientException("profile code is invalid.", false);
+                }
+
+                if (p.getEntityFieldInfoList().isEmpty() && p.getRelationInfoList().isEmpty()) {
+                    throw new MetaSyncClientException(
+                            String.format("profile [%d-%s] must have at least one element, fieldList/relationList", id, p.getCode()), false);
+                }
+
+                List<IEntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
+                List<RelationStorage> relationStorageList = toRelationStorageList(p.getRelationInfoList());
+                profileStorageMap.put(p.getCode(), new ProfileStorage(p.getCode(), fieldList, relationStorageList));
+            }
+        }
+        storage.setProfileStorageMap(profileStorageMap);
+
+        return storage;
+    }
+
+    private static List<IEntityField> toEntityFieldList(List<EntityFieldInfo> entityFieldInfoList) {
+        List<IEntityField> fields = new ArrayList<>();
+        if (null != entityFieldInfoList) {
+            for (EntityFieldInfo e : entityFieldInfoList) {
+                EntityField entityField = toEntityField(e);
+
+                fields.add(entityField);
+            }
+        }
+
+        return fields;
+    }
+
+    private static List<RelationStorage> toRelationStorageList(List<RelationInfo> relationInfoList) {
         List<RelationStorage> relations = new ArrayList<>();
-        if (entityClassInfo.getRelationsList() != null) {
-            for (RelationInfo r : entityClassInfo.getRelationsList()) {
+        if (null != relationInfoList) {
+            for (RelationInfo r : relationInfoList) {
                 RelationStorage relation = new RelationStorage();
                 relation.setId(r.getId());
                 relation.setCode(r.getCode());
@@ -137,20 +177,8 @@ public class EntityClassStorageBuilderUtils {
                 relations.add(relation);
             }
         }
-        storage.setRelations(relations);
 
-        //  entityFields
-        List<IEntityField> fields = new ArrayList<>();
-        if (entityClassInfo.getEntityFieldsList() != null) {
-            for (EntityFieldInfo e : entityClassInfo.getEntityFieldsList()) {
-                EntityField entityField = toEntityField(e);
-
-                fields.add(entityField);
-            }
-        }
-        storage.setFields(fields);
-
-        return storage;
+        return relations;
     }
 
     private static EntityField toEntityField(EntityFieldInfo e) {
@@ -163,7 +191,7 @@ public class EntityClassStorageBuilderUtils {
                 .withId(eid)
                 .withName(e.getName())
                 .withCnName(e.getCname())
-                .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
+                .withFieldType(FieldType.fromRawType(e.getFieldType()))
                 .withDictId(e.getDictId())
                 .withDefaultValue(e.getDefaultValue())
                 .withConfig(toFieldConfig(e.getFieldConfig()));
@@ -172,9 +200,7 @@ public class EntityClassStorageBuilderUtils {
     }
 
     /**
-     * 转换FieldConfig
-     * @param fieldConfig
-     * @return
+     * 转换FieldConfig.
      */
     private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig) {
         return FieldConfig.Builder.anFieldConfig()
@@ -188,7 +214,7 @@ public class EntityClassStorageBuilderUtils {
                 .withSplittable(false)
                 .withDelimiter("")
                 .withDisplayType(fieldConfig.getDisplayType())
-                .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
+                .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSense()))
                 .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
                 .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
                 .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())

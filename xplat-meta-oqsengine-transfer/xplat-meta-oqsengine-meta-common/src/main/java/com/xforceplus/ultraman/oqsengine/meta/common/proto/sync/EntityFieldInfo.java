@@ -19,9 +19,10 @@ private static final long serialVersionUID = 0L;
     id_ = 0L;
     name_ = "";
     cname_ = "";
-    fieldType_ = 0;
+    fieldType_ = "";
     dictId_ = "";
     defaultValue_ = "";
+    calculateType_ = 0;
   }
 
   @java.lang.Override
@@ -72,10 +73,10 @@ private static final long serialVersionUID = 0L;
             cname_ = s;
             break;
           }
-          case 32: {
-            int rawValue = input.readEnum();
+          case 34: {
+            java.lang.String s = input.readStringRequireUtf8();
 
-            fieldType_ = rawValue;
+            fieldType_ = s;
             break;
           }
           case 42: {
@@ -103,6 +104,24 @@ private static final long serialVersionUID = 0L;
 
             break;
           }
+          case 64: {
+
+            calculateType_ = input.readInt32();
+            break;
+          }
+          case 74: {
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder subBuilder = null;
+            if (formula_ != null) {
+              subBuilder = formula_.toBuilder();
+            }
+            formula_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(formula_);
+              formula_ = subBuilder.buildPartial();
+            }
+
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -125,158 +144,6 @@ private static final long serialVersionUID = 0L;
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityFieldInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder.class);
-  }
-
-  /**
-   * Protobuf enum {@code EntityFieldInfo.FieldType}
-   */
-  public enum FieldType
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>UNKNOWN = 0;</code>
-     */
-    UNKNOWN(0),
-    /**
-     * <code>BOOLEAN = 1;</code>
-     */
-    BOOLEAN(1),
-    /**
-     * <code>ENUM = 2;</code>
-     */
-    ENUM(2),
-    /**
-     * <code>DATETIME = 3;</code>
-     */
-    DATETIME(3),
-    /**
-     * <code>LONG = 4;</code>
-     */
-    LONG(4),
-    /**
-     * <code>STRING = 5;</code>
-     */
-    STRING(5),
-    /**
-     * <code>STRINGS = 6;</code>
-     */
-    STRINGS(6),
-    /**
-     * <code>DECIMAL = 7;</code>
-     */
-    DECIMAL(7),
-    UNRECOGNIZED(-1),
-    ;
-
-    /**
-     * <code>UNKNOWN = 0;</code>
-     */
-    public static final int UNKNOWN_VALUE = 0;
-    /**
-     * <code>BOOLEAN = 1;</code>
-     */
-    public static final int BOOLEAN_VALUE = 1;
-    /**
-     * <code>ENUM = 2;</code>
-     */
-    public static final int ENUM_VALUE = 2;
-    /**
-     * <code>DATETIME = 3;</code>
-     */
-    public static final int DATETIME_VALUE = 3;
-    /**
-     * <code>LONG = 4;</code>
-     */
-    public static final int LONG_VALUE = 4;
-    /**
-     * <code>STRING = 5;</code>
-     */
-    public static final int STRING_VALUE = 5;
-    /**
-     * <code>STRINGS = 6;</code>
-     */
-    public static final int STRINGS_VALUE = 6;
-    /**
-     * <code>DECIMAL = 7;</code>
-     */
-    public static final int DECIMAL_VALUE = 7;
-
-
-    public final int getNumber() {
-      if (this == UNRECOGNIZED) {
-        throw new java.lang.IllegalArgumentException(
-            "Can't get the number of an unknown enum value.");
-      }
-      return value;
-    }
-
-    /**
-     * @deprecated Use {@link #forNumber(int)} instead.
-     */
-    @java.lang.Deprecated
-    public static FieldType valueOf(int value) {
-      return forNumber(value);
-    }
-
-    public static FieldType forNumber(int value) {
-      switch (value) {
-        case 0: return UNKNOWN;
-        case 1: return BOOLEAN;
-        case 2: return ENUM;
-        case 3: return DATETIME;
-        case 4: return LONG;
-        case 5: return STRING;
-        case 6: return STRINGS;
-        case 7: return DECIMAL;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<FieldType>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static final com.google.protobuf.Internal.EnumLiteMap<
-        FieldType> internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<FieldType>() {
-            public FieldType findValueByNumber(int number) {
-              return FieldType.forNumber(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(ordinal());
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDescriptor().getEnumTypes().get(0);
-    }
-
-    private static final FieldType[] VALUES = values();
-
-    public static FieldType valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      if (desc.getIndex() == -1) {
-        return UNRECOGNIZED;
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int value;
-
-    private FieldType(int value) {
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:EntityFieldInfo.FieldType)
   }
 
   public static final int ID_FIELD_NUMBER = 1;
@@ -357,19 +224,37 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int FIELDTYPE_FIELD_NUMBER = 4;
-  private int fieldType_;
+  private volatile java.lang.Object fieldType_;
   /**
-   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+   * <code>string fieldType = 4;</code>
    */
-  public int getFieldTypeValue() {
-    return fieldType_;
+  public java.lang.String getFieldType() {
+    java.lang.Object ref = fieldType_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      fieldType_ = s;
+      return s;
+    }
   }
   /**
-   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+   * <code>string fieldType = 4;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType() {
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.valueOf(fieldType_);
-    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNRECOGNIZED : result;
+  public com.google.protobuf.ByteString
+      getFieldTypeBytes() {
+    java.lang.Object ref = fieldType_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      fieldType_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
   }
 
   public static final int DICTID_FIELD_NUMBER = 5;
@@ -461,6 +346,36 @@ private static final long serialVersionUID = 0L;
     return getFieldConfig();
   }
 
+  public static final int CALCULATETYPE_FIELD_NUMBER = 8;
+  private int calculateType_;
+  /**
+   * <code>int32 calculateType = 8;</code>
+   */
+  public int getCalculateType() {
+    return calculateType_;
+  }
+
+  public static final int FORMULA_FIELD_NUMBER = 9;
+  private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula_;
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  public boolean hasFormula() {
+    return formula_ != null;
+  }
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getFormula() {
+    return formula_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+  }
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder getFormulaOrBuilder() {
+    return getFormula();
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -482,8 +397,8 @@ private static final long serialVersionUID = 0L;
     if (!getCnameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 3, cname_);
     }
-    if (fieldType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNKNOWN.getNumber()) {
-      output.writeEnum(4, fieldType_);
+    if (!getFieldTypeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, fieldType_);
     }
     if (!getDictIdBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, dictId_);
@@ -493,6 +408,12 @@ private static final long serialVersionUID = 0L;
     }
     if (fieldConfig_ != null) {
       output.writeMessage(7, getFieldConfig());
+    }
+    if (calculateType_ != 0) {
+      output.writeInt32(8, calculateType_);
+    }
+    if (formula_ != null) {
+      output.writeMessage(9, getFormula());
     }
     unknownFields.writeTo(output);
   }
@@ -512,9 +433,8 @@ private static final long serialVersionUID = 0L;
     if (!getCnameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, cname_);
     }
-    if (fieldType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNKNOWN.getNumber()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeEnumSize(4, fieldType_);
+    if (!getFieldTypeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, fieldType_);
     }
     if (!getDictIdBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, dictId_);
@@ -525,6 +445,14 @@ private static final long serialVersionUID = 0L;
     if (fieldConfig_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(7, getFieldConfig());
+    }
+    if (calculateType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(8, calculateType_);
+    }
+    if (formula_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(9, getFormula());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -548,7 +476,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getName());
     result = result && getCname()
         .equals(other.getCname());
-    result = result && fieldType_ == other.fieldType_;
+    result = result && getFieldType()
+        .equals(other.getFieldType());
     result = result && getDictId()
         .equals(other.getDictId());
     result = result && getDefaultValue()
@@ -557,6 +486,13 @@ private static final long serialVersionUID = 0L;
     if (hasFieldConfig()) {
       result = result && getFieldConfig()
           .equals(other.getFieldConfig());
+    }
+    result = result && (getCalculateType()
+        == other.getCalculateType());
+    result = result && (hasFormula() == other.hasFormula());
+    if (hasFormula()) {
+      result = result && getFormula()
+          .equals(other.getFormula());
     }
     result = result && unknownFields.equals(other.unknownFields);
     return result;
@@ -577,7 +513,7 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + CNAME_FIELD_NUMBER;
     hash = (53 * hash) + getCname().hashCode();
     hash = (37 * hash) + FIELDTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + fieldType_;
+    hash = (53 * hash) + getFieldType().hashCode();
     hash = (37 * hash) + DICTID_FIELD_NUMBER;
     hash = (53 * hash) + getDictId().hashCode();
     hash = (37 * hash) + DEFAULTVALUE_FIELD_NUMBER;
@@ -585,6 +521,12 @@ private static final long serialVersionUID = 0L;
     if (hasFieldConfig()) {
       hash = (37 * hash) + FIELDCONFIG_FIELD_NUMBER;
       hash = (53 * hash) + getFieldConfig().hashCode();
+    }
+    hash = (37 * hash) + CALCULATETYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getCalculateType();
+    if (hasFormula()) {
+      hash = (37 * hash) + FORMULA_FIELD_NUMBER;
+      hash = (53 * hash) + getFormula().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -721,7 +663,7 @@ private static final long serialVersionUID = 0L;
 
       cname_ = "";
 
-      fieldType_ = 0;
+      fieldType_ = "";
 
       dictId_ = "";
 
@@ -732,6 +674,14 @@ private static final long serialVersionUID = 0L;
       } else {
         fieldConfig_ = null;
         fieldConfigBuilder_ = null;
+      }
+      calculateType_ = 0;
+
+      if (formulaBuilder_ == null) {
+        formula_ = null;
+      } else {
+        formula_ = null;
+        formulaBuilder_ = null;
       }
       return this;
     }
@@ -765,6 +715,12 @@ private static final long serialVersionUID = 0L;
         result.fieldConfig_ = fieldConfig_;
       } else {
         result.fieldConfig_ = fieldConfigBuilder_.build();
+      }
+      result.calculateType_ = calculateType_;
+      if (formulaBuilder_ == null) {
+        result.formula_ = formula_;
+      } else {
+        result.formula_ = formulaBuilder_.build();
       }
       onBuilt();
       return result;
@@ -818,8 +774,9 @@ private static final long serialVersionUID = 0L;
         cname_ = other.cname_;
         onChanged();
       }
-      if (other.fieldType_ != 0) {
-        setFieldTypeValue(other.getFieldTypeValue());
+      if (!other.getFieldType().isEmpty()) {
+        fieldType_ = other.fieldType_;
+        onChanged();
       }
       if (!other.getDictId().isEmpty()) {
         dictId_ = other.dictId_;
@@ -831,6 +788,12 @@ private static final long serialVersionUID = 0L;
       }
       if (other.hasFieldConfig()) {
         mergeFieldConfig(other.getFieldConfig());
+      }
+      if (other.getCalculateType() != 0) {
+        setCalculateType(other.getCalculateType());
+      }
+      if (other.hasFormula()) {
+        mergeFormula(other.getFormula());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1023,46 +986,71 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int fieldType_ = 0;
+    private java.lang.Object fieldType_ = "";
     /**
-     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     * <code>string fieldType = 4;</code>
      */
-    public int getFieldTypeValue() {
-      return fieldType_;
+    public java.lang.String getFieldType() {
+      java.lang.Object ref = fieldType_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        fieldType_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
     /**
-     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     * <code>string fieldType = 4;</code>
      */
-    public Builder setFieldTypeValue(int value) {
+    public com.google.protobuf.ByteString
+        getFieldTypeBytes() {
+      java.lang.Object ref = fieldType_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        fieldType_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string fieldType = 4;</code>
+     */
+    public Builder setFieldType(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
       fieldType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     * <code>string fieldType = 4;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.valueOf(fieldType_);
-      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNRECOGNIZED : result;
-    }
-    /**
-     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
-     */
-    public Builder setFieldType(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType value) {
-      if (value == null) {
-        throw new NullPointerException();
-      }
+    public Builder clearFieldType() {
       
-      fieldType_ = value.getNumber();
+      fieldType_ = getDefaultInstance().getFieldType();
       onChanged();
       return this;
     }
     /**
-     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     * <code>string fieldType = 4;</code>
      */
-    public Builder clearFieldType() {
+    public Builder setFieldTypeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
       
-      fieldType_ = 0;
+      fieldType_ = value;
       onChanged();
       return this;
     }
@@ -1320,6 +1308,149 @@ private static final long serialVersionUID = 0L;
         fieldConfig_ = null;
       }
       return fieldConfigBuilder_;
+    }
+
+    private int calculateType_ ;
+    /**
+     * <code>int32 calculateType = 8;</code>
+     */
+    public int getCalculateType() {
+      return calculateType_;
+    }
+    /**
+     * <code>int32 calculateType = 8;</code>
+     */
+    public Builder setCalculateType(int value) {
+      
+      calculateType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 calculateType = 8;</code>
+     */
+    public Builder clearCalculateType() {
+      
+      calculateType_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula_ = null;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder> formulaBuilder_;
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public boolean hasFormula() {
+      return formulaBuilder_ != null || formula_ != null;
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getFormula() {
+      if (formulaBuilder_ == null) {
+        return formula_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+      } else {
+        return formulaBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public Builder setFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula value) {
+      if (formulaBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        formula_ = value;
+        onChanged();
+      } else {
+        formulaBuilder_.setMessage(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public Builder setFormula(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder builderForValue) {
+      if (formulaBuilder_ == null) {
+        formula_ = builderForValue.build();
+        onChanged();
+      } else {
+        formulaBuilder_.setMessage(builderForValue.build());
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public Builder mergeFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula value) {
+      if (formulaBuilder_ == null) {
+        if (formula_ != null) {
+          formula_ =
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.newBuilder(formula_).mergeFrom(value).buildPartial();
+        } else {
+          formula_ = value;
+        }
+        onChanged();
+      } else {
+        formulaBuilder_.mergeFrom(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public Builder clearFormula() {
+      if (formulaBuilder_ == null) {
+        formula_ = null;
+        onChanged();
+      } else {
+        formula_ = null;
+        formulaBuilder_ = null;
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder getFormulaBuilder() {
+      
+      onChanged();
+      return getFormulaFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder getFormulaOrBuilder() {
+      if (formulaBuilder_ != null) {
+        return formulaBuilder_.getMessageOrBuilder();
+      } else {
+        return formula_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+      }
+    }
+    /**
+     * <code>.Formula formula = 9;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder> 
+        getFormulaFieldBuilder() {
+      if (formulaBuilder_ == null) {
+        formulaBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder>(
+                getFormula(),
+                getParentForChildren(),
+                isClean());
+        formula_ = null;
+      }
+      return formulaBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

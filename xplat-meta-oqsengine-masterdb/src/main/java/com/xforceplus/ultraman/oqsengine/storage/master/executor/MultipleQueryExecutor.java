@@ -63,7 +63,8 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
                         .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
                         .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
                         .withOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR))
-                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE))
+                        .withProfile(rs.getString(FieldDefine.PROFILE));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
@@ -94,7 +95,8 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
             FieldDefine.VERSION,
             FieldDefine.OP,
             FieldDefine.OQS_MAJOR,
-            FieldDefine.ATTRIBUTE
+            FieldDefine.ATTRIBUTE,
+            FieldDefine.PROFILE
             )
         )
             .append(" FROM ")

@@ -45,8 +45,8 @@ public class MockEntityClassSyncRspProtoBuilder {
      */
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
-        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
-        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
+        entityFieldInfos.add(entityFieldInfo(id, "LONG"));
+        entityFieldInfos.add(entityFieldInfo(id + 1, "STRING"));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
 
@@ -65,14 +65,14 @@ public class MockEntityClassSyncRspProtoBuilder {
     /**
      * 生成.
      */
-    public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
+    public static EntityFieldInfo entityFieldInfo(long id, String fieldType) {
         return EntityFieldInfo.newBuilder()
             .setId(id)
             .setName(id + "_name")
             .setCname(id + "_cname")
             .setFieldType(fieldType)
             .setDictId(id + "_dictId")
-            .setFieldConfig(fieldConfig(true, FieldConfig.MetaFieldSense.NORMAL))
+            .setFieldConfig(fieldConfig(true, 1))
             .build();
     }
 
@@ -89,7 +89,7 @@ public class MockEntityClassSyncRspProtoBuilder {
             .setStrong(true)
             .setEntityField(EntityFieldInfo.newBuilder()
                 .setId(fieldId)
-                .setFieldType(EntityFieldInfo.FieldType.LONG)
+                .setFieldType("LONG")
                 .setName(fieldId + "_name")
                 .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                 .build())
@@ -101,7 +101,7 @@ public class MockEntityClassSyncRspProtoBuilder {
     /**
      * 生成.
      */
-    public static FieldConfig fieldConfig(boolean searchable, FieldConfig.MetaFieldSense systemFieldType) {
+    public static FieldConfig fieldConfig(boolean searchable, int systemFieldType) {
         return FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)

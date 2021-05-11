@@ -3,15 +3,15 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -34,6 +34,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommi
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -70,19 +71,6 @@ import org.slf4j.LoggerFactory;
 public class SQLMasterStorage implements MasterStorage {
 
     private final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
-
-    private final ObjectMapper objectMapper = JsonMapper.builder()
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
-        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
-        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
@@ -214,7 +202,8 @@ public class SQLMasterStorage implements MasterStorage {
                         .withEntityClassVersion(entityClass.version())
                         .withVersion(0)
                         .withAttribute(toJson(entity.entityValue()))
-                        .withOp(OperationType.CREATE.getValue());
+                        .withOp(OperationType.CREATE.getValue())
+                        .withProfile(entity.entityClassRef().getProfile());
                 } catch (Exception ex) {
                     throw new SQLException(ex.getMessage(), ex);
                 }
@@ -313,7 +302,7 @@ public class SQLMasterStorage implements MasterStorage {
         throws SQLException {
         Map<String, Object> object;
         try {
-            object = objectMapper.readValue(masterStorageEntity.getAttribute(), Map.class);
+            object = SerializeUtils.OBJECT_MAPPER.readValue(masterStorageEntity.getAttribute(), Map.class);
         } catch (JsonProcessingException e) {
             throw new SQLException(e.getMessage(), e);
         }
@@ -402,7 +391,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        return objectMapper.writeValueAsString(values);
+        return SerializeUtils.OBJECT_MAPPER.writeValueAsString(values);
     }
 
     private Optional<IEntity> buildEntityFromStorageEntity(MasterStorageEntity se, IEntityClass entityClass) throws
@@ -434,7 +423,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        Optional<IEntityClass> actualEntityClassOp = metaManager.load(actualEntityClassId);
+        Optional<IEntityClass> actualEntityClassOp = metaManager.load(new EntityClassRef(actualEntityClassId, entityClass.code(), se.getProfile()));
         if (!actualEntityClassOp.isPresent()) {
             throw new SQLException(
                 String.format("Unable to find the expected EntityClass.[%d]", actualEntityClassId));
@@ -444,7 +433,7 @@ public class SQLMasterStorage implements MasterStorage {
         Entity.Builder entityBuilder = Entity.Builder.anEntity()
             .withId(se.getId())
             .withTime(se.getUpdateTime())
-            .withEntityClassRef(actualEntityClass.ref())
+            .withEntityClassRef(EntityClassRefHelper.fullEntityClassRef(actualEntityClass, se.getProfile()))
             .withVersion(se.getVersion())
             .withEntityValue(toEntityValue(se, actualEntityClass))
             .withMajor(se.getOqsMajor());
@@ -534,8 +523,21 @@ public class SQLMasterStorage implements MasterStorage {
                 Collection<OriginalEntity> originalEntities = new ArrayList<>();
                 for (MasterStorageEntity entity : storageEntities) {
                     try {
+                        IEntityClass realEntityClass = entityClass;
+
+                        //  这里获取一次带有JOJO的真实entityClass
+                        if (null != entity.getAttribute() && !entity.getProfile().equals(OqsProfile.UN_DEFINE_PROFILE)) {
+                            Optional<IEntityClass> entityClassOp =
+                                metaManager.load(new EntityClassRef(entityClass.id(), entityClass.code(), entity.getProfile()));
+                            if (!entityClassOp.isPresent()) {
+                                throw new SQLException(
+                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
+                            }
+                            realEntityClass = entityClassOp.get();
+                        }
+
                         OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
-                            .withEntityClass(entityClass)
+                            .withEntityClass(realEntityClass)
                             .withId(entity.getId())
                             .withCreateTime(entity.getCreateTime())
                             .withUpdateTime(entity.getUpdateTime())

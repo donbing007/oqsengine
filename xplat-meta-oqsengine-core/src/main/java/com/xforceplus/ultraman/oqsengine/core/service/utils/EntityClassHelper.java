@@ -23,7 +23,7 @@ public class EntityClassHelper {
      * @return 元信息.
      */
     public static IEntityClass checkEntityClass(MetaManager metaManager, EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef.getId());
+        Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef);
         if (!entityClassOptional.isPresent()) {
             throw new IllegalArgumentException(
                 String.format("Invalid meta information %d-%s.",

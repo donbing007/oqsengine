@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 
@@ -19,6 +20,14 @@ public interface MetaManager {
      * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long id);
+
+    /**
+     * 加载指定的IEntityCalss实例.
+     *
+     * @param entityClassRef 元信息的标识.
+     * @return 元信息的实例.
+     */
+    Optional<IEntityClass> load(EntityClassRef entityClassRef);
 
     /**
      * 加载指定的IEntityCalss + version实例.

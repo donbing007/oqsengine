@@ -114,6 +114,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
                     storageEntityBuilder.withEntityClasses(entityClassIds);
+                    storageEntityBuilder.withProfile(rs.getString(FieldDefine.PROFILE));
 
                     if (!noDetail) {
                         storageEntityBuilder.withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
@@ -139,7 +140,8 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
             FieldDefine.CREATE_TIME,
             FieldDefine.UPDATE_TIME,
             FieldDefine.OQS_MAJOR,
-            FieldDefine.OP
+            FieldDefine.OP,
+            FieldDefine.PROFILE
             )
         );
         if (!noDetail) {

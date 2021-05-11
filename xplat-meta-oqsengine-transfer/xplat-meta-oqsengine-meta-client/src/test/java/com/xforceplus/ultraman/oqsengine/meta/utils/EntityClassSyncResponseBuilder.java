@@ -21,10 +21,7 @@ public class EntityClassSyncResponseBuilder {
     /**
      * 将生成随机的3层父子类结构[爷爷、父亲、儿子]
      * 每层有2个随机的EntityField [String、Long] 各一
-     * 每层存在2条关系
-     * @param appId
-     * @param version
-     * @return
+     * 每层存在2条关系.
      */
     public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
                                                                            boolean withMD5, List<ExpectedEntityStorage> expectedEntityStorages) {
@@ -40,8 +37,11 @@ public class EntityClassSyncResponseBuilder {
         return builder.build();
     }
 
+    /**
+     * entityClassSyncRspProtoGenerator.
+     */
     public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(List<ExpectedEntityStorage> expectedEntityStorages) {
-        /**
+        /*
          * 生成爷爷
          */
         List<EntityClassInfo> entityClassInfos = new ArrayList<>();
@@ -57,10 +57,14 @@ public class EntityClassSyncResponseBuilder {
                 .build();
     }
 
+
+    /**
+     * entityClassInfo.
+     */
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
-        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
-        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
+        entityFieldInfos.add(entityFieldInfo(id, "LONG"));
+        entityFieldInfos.add(entityFieldInfo(id + 1, "STRING"));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
         relationInfos.add(relationInfo(id, id + 2, id, 1, id));
@@ -75,17 +79,32 @@ public class EntityClassSyncResponseBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
+                .addAllProfiles(Collections.singletonList(profileInfo(id * 10)))
                 .build();
     }
 
-    public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
+
+    /**
+     * profileInfo.
+     */
+    public static ProfileInfo profileInfo(long id) {
+        return ProfileInfo.newBuilder().setCode("common")
+                .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
+                .addEntityFieldInfo(entityFieldInfo(id, "LONG"))
+                .build();
+    }
+
+    /**
+     * entityFieldInfo.
+     */
+    public static EntityFieldInfo entityFieldInfo(long id, String fieldType) {
         return EntityFieldInfo.newBuilder()
                 .setId(id)
                 .setName(id + "_name")
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
+                .setFieldConfig(fieldConfig(true, 1))
                 .build();
     }
 
@@ -99,7 +118,7 @@ public class EntityClassSyncResponseBuilder {
                 .setBelongToOwner(id % 2 == 0)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
-                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setFieldType("LONG")
                         .setName(fieldId + "_name")
                         .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
@@ -108,7 +127,7 @@ public class EntityClassSyncResponseBuilder {
     }
 
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
-    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+    fieldConfig(boolean searchable, int systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)

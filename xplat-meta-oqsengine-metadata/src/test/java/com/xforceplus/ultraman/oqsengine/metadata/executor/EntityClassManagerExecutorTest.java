@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -21,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,6 +63,9 @@ public class EntityClassManagerExecutorTest {
 
     private ExecutorService executorService;
 
+
+    public static final AbstractMap.SimpleEntry<String, Long> Code_1 = new AbstractMap.SimpleEntry<>("CODE_1", 10L);
+    public static final AbstractMap.SimpleEntry<String, Long> Code_2 = new AbstractMap.SimpleEntry<>("CODE_2", 20L);
 
     @Before
     public void before() throws Exception {
@@ -127,6 +132,52 @@ public class EntityClassManagerExecutorTest {
         int expectedVersion = EXIST_MIN_VERSION + 1;
         int version = storageMetaManager.need(appId, env);
         Assert.assertEquals(expectedVersion, version);
+    }
+
+    @Test
+    public void loadByEntityRefTest() {
+        String expectedAppId = "testLoad";
+        int expectedVersion = 1;
+        long expectedId = System.currentTimeMillis() + 3600_000;
+        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+        try {
+            storageMetaManager.load(expectedId);
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+        }
+
+        EntityClassSyncResponse entityClassSyncResponse =
+                EntityClassStorageBuilder.entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
+
+        //  测试替身1
+        Optional<IEntityClass> entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", Code_1.getKey()));
+        Assert.assertTrue(entityClassOp.isPresent());
+
+        Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
+
+        Optional<IEntityField> fieldOp = entityClassOp.get().field(expectedId * Code_1.getValue());
+        Assert.assertTrue(fieldOp.isPresent());
+        //  不包含替身2
+        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_2.getValue()).isPresent());
+
+
+        //  测试替身2
+        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", Code_2.getKey()));
+        Assert.assertTrue(entityClassOp.isPresent());
+        Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
+
+        fieldOp = entityClassOp.get().field(expectedId * Code_2.getValue());
+        Assert.assertTrue(fieldOp.isPresent());
+        //  不包含替身1
+        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_1.getValue()).isPresent());
+
+        //  测试不带替身
+        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", null));
+        Assert.assertTrue(entityClassOp.isPresent());
+        Assert.assertEquals(2 * 3, entityClassOp.get().fields().size());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_1.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_2.getValue()).isPresent());
     }
 
     @Test
@@ -299,7 +350,7 @@ public class EntityClassManagerExecutorTest {
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
         Assert.assertEquals(exp.getName(), act.name());
         Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType().name(), act.type().name());
+        Assert.assertEquals(exp.getFieldType(), act.type().name());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
@@ -315,7 +366,7 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(efc.getPrecision(), afc.precision());
             Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
             Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getMetaFieldSense(), afc.getFieldSense().ordinal());
             Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
             Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }

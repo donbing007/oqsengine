@@ -5,13 +5,17 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -67,13 +71,21 @@ public class StorageMetaManager implements MetaManager {
     @Override
     public Optional<IEntityClass> load(long id) {
         try {
-            if (id == HEALTH_CHECK_ENTITY_ID) {
-                return Optional.of(HealthCheckEntityClass.getInstance());
-            }
-            Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-            return Optional.of(toEntityClass(id, entityClassStorageMaps));
+            return innerLoad(id, null);
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getCause().toString()));
+            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+
+        try {
+            return innerLoad(entityClassRef.getId(), entityClassRef.getProfile());
+        } catch (Exception e) {
+            logger.warn(String.format("load entityClass [%d]-[%s] error, message [%s]",
+                entityClassRef.getId(), entityClassRef.getCode(), e.getMessage()));
             return Optional.empty();
         }
     }
@@ -152,15 +164,26 @@ public class StorageMetaManager implements MetaManager {
         cacheExecutor.invalidateLocal();
     }
 
+    private Optional<IEntityClass> innerLoad(long id, String profileCode)
+        throws SQLException, JsonProcessingException {
+        if (id == HEALTH_CHECK_ENTITY_ID) {
+            return Optional.of(HealthCheckEntityClass.getInstance());
+        }
+        Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
+        return Optional.of(toEntityClass(id, profileCode, entityClassStorageMaps));
+    }
+
     /**
      * 生成IEntityClass.
      */
-    private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps)
-        throws SQLException {
+    private IEntityClass toEntityClass(long id, String profileCode,
+                                       Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
         EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
         if (null == entityClassStorage) {
             throw new SQLException(String.format("entity class [%d] not found.", id));
         }
+
+        List<OqsRelation> oqsRelations = toQqsRelation(entityClassStorage.getRelations());
 
         List<IEntityField> entityFields = new ArrayList<>();
         if (null != entityClassStorage.getFields()) {
@@ -175,6 +198,27 @@ public class StorageMetaManager implements MetaManager {
                 );
         }
 
+        //  加载profile
+        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)) {
+            ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
+            if (null != profileStorage) {
+                if (null != profileStorage.getEntityFieldList()) {
+                    profileStorage.getEntityFieldList().forEach(
+                        ps -> {
+                            IEntityField entityField = cloneEntityField(ps);
+                            if (null != entityField) {
+                                entityFields.add(entityField);
+                            }
+                        }
+                    );
+                }
+
+                if (null != profileStorage.getRelationStorageList()) {
+                    oqsRelations.addAll(toQqsRelation(profileStorage.getRelationStorageList()));
+                }
+            }
+        }
+
         OqsEntityClass.Builder builder =
             OqsEntityClass.Builder.anEntityClass()
                 .withId(entityClassStorage.getId())
@@ -182,17 +226,16 @@ public class StorageMetaManager implements MetaManager {
                 .withName(entityClassStorage.getName())
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
-                .withRelations(toQqsRelation(entityClassStorage.getRelations()))
+                .withRelations(oqsRelations)
                 .withFields(entityFields);
-        /*
-         * 加载父类
-         */
+        //   加载父类.
         if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
-            builder.withFather(toEntityClass(entityClassStorage.getFatherId(), entityClassStorageMaps));
+            builder.withFather(toEntityClass(entityClassStorage.getFatherId(), profileCode, entityClassStorageMaps));
         }
 
         return builder.build();
     }
+
 
     /**
      * 加载relation.

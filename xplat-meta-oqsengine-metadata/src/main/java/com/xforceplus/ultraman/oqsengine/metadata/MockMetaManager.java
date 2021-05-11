@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,11 @@ public class MockMetaManager implements MetaManager {
                 return 0;
             }
         }).get().getValue());
+    }
+
+    @Override
+    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+        return load(entityClassRef.getId());
     }
 
     @Override

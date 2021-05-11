@@ -86,6 +86,7 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
                         .withTx(rs.getLong(FieldDefine.TX))
                         .withCommitid(rs.getLong(FieldDefine.COMMITID))
                         .withAttribute(rs.getString(FieldDefine.ATTRIBUTE))
+                        .withProfile(rs.getString(FieldDefine.PROFILE))
                         .withEntityClasses(entityClassIds).build();
 
                     entities.add(entity);
@@ -112,7 +113,8 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
             FieldDefine.ATTRIBUTE,
             FieldDefine.OP,
             FieldDefine.TX,
-            FieldDefine.COMMITID
+            FieldDefine.COMMITID,
+            FieldDefine.PROFILE
             )
         );
 

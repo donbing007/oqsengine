@@ -14,6 +14,8 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
+ * 请注意这个测试常关闭，只作为连接某个环境排查redis中错误使用.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/11
  * @since 1.8

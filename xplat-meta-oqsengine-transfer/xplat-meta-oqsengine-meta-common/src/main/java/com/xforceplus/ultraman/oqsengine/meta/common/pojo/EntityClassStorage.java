@@ -1,32 +1,31 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * desc :
- * name : EntityClassStorage
+ * 缓存的EntityClass raw.
  *
- * @author : xujia
- * date : 2021/2/9
+ * @author : j.xu
+ * @version 0.1
  * @since : 1.8
  */
 public class EntityClassStorage {
 
     /**
-     * 元数据boId
+     * 元数据boId.
      */
     private long id;
 
     /**
-     * 对象名称
+     * 对象名称.
      */
     private String name;
 
     /**
-     * 对象code
+     * 对象code.
      */
     private String code;
     /**
@@ -35,12 +34,12 @@ public class EntityClassStorage {
     private int version;
 
     /**
-     * 元信息处于的继承层级
+     * 元信息处于的继承层级.
      */
     private int level;
 
     /**
-     * 关系信息
+     * 关系信息.
      */
     private List<RelationStorage> relations;
 
@@ -56,9 +55,15 @@ public class EntityClassStorage {
     private List<Long> ancestors;
 
     /**
-     * entityField
+     * entityField.
      */
     private List<IEntityField> fields;
+
+    /**
+     * custom定制结构，
+     * 目前需求驱动于用于租户定制，可支持多种定制.
+     */
+    private Map<String, ProfileStorage> profileStorageMap;
 
     public long getId() {
         return id;
@@ -137,5 +142,13 @@ public class EntityClassStorage {
 
     public void setFields(List<IEntityField> fields) {
         this.fields = fields;
+    }
+
+    public Map<String, ProfileStorage> getProfileStorageMap() {
+        return profileStorageMap;
+    }
+
+    public void setProfileStorageMap(Map<String, ProfileStorage> profileStorageMap) {
+        this.profileStorageMap = profileStorageMap;
     }
 }

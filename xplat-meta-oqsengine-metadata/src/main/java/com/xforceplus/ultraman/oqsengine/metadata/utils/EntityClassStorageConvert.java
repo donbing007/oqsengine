@@ -7,16 +7,22 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_LEVEL;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -102,12 +108,28 @@ public class EntityClassStorageConvert {
 
         //  entityFields
         List<IEntityField> fields = new ArrayList<>();
-        for (Map.Entry<String, String> entry : keyValues.entrySet()) {
+        //profile
+        Map<String, ProfileStorage> profileStorageMap = new HashMap<>();
+        Iterator<Map.Entry<String, String>> iterator = keyValues.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
                 fields.add(objectMapper.readValue(entry.getValue(), EntityField.class));
+            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_FIELDS)) {
+                String key = parseOneKeyFromProfileEntity(entry.getKey());
+                profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
+                    .addField(objectMapper.readValue(entry.getValue(), EntityField.class));
+            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS)) {
+                String key = parseOneKeyFromProfileRelations(entry.getKey());
+                String profileRelations = keyValues.get(entry.getKey());
+                profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
+                    .setRelationStorageList(objectMapper.readValue(profileRelations,
+                        objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class)));
             }
         }
+
         entityClassStorage.setFields(fields);
+        entityClassStorage.setProfileStorageMap(profileStorageMap);
 
         return entityClassStorage;
     }

@@ -33,13 +33,14 @@ public interface EntityFieldInfoOrBuilder extends
       getCnameBytes();
 
   /**
-   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+   * <code>string fieldType = 4;</code>
    */
-  int getFieldTypeValue();
+  java.lang.String getFieldType();
   /**
-   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+   * <code>string fieldType = 4;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType();
+  com.google.protobuf.ByteString
+      getFieldTypeBytes();
 
   /**
    * <code>string dictId = 5;</code>
@@ -73,4 +74,22 @@ public interface EntityFieldInfoOrBuilder extends
    * <code>.FieldConfig fieldConfig = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfigOrBuilder getFieldConfigOrBuilder();
+
+  /**
+   * <code>int32 calculateType = 8;</code>
+   */
+  int getCalculateType();
+
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  boolean hasFormula();
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getFormula();
+  /**
+   * <code>.Formula formula = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder getFormulaOrBuilder();
 }

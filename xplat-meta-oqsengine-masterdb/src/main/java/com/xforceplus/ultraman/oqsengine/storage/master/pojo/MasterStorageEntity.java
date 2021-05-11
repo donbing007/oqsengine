@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.pojo;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
@@ -20,6 +21,7 @@ public class MasterStorageEntity implements Serializable {
     private long createTime;
     private long updateTime;
     private int oqsMajor;
+    private String profile;
 
     public long getId() {
         return id;
@@ -67,6 +69,10 @@ public class MasterStorageEntity implements Serializable {
 
     public int getOqsMajor() {
         return oqsMajor;
+    }
+
+    public String getProfile() {
+        return profile;
     }
 
     @Override
@@ -126,6 +132,7 @@ public class MasterStorageEntity implements Serializable {
         private long createTime;
         private long updateTime;
         private int oqsMajor;
+        private String profile;
 
         private Builder() {
         }
@@ -194,6 +201,11 @@ public class MasterStorageEntity implements Serializable {
             return this;
         }
 
+        public Builder withProfile(String profile) {
+            this.profile = profile;
+            return this;
+        }
+
         /**
          * 构造MasterStorageEntity实例.
          */
@@ -211,6 +223,7 @@ public class MasterStorageEntity implements Serializable {
             masterStorageEntity.oqsMajor = this.oqsMajor;
             masterStorageEntity.attribute = this.attribute;
             masterStorageEntity.entityClasses = this.entityClasses;
+            masterStorageEntity.profile = (null == this.profile) ? OqsProfile.UN_DEFINE_PROFILE : this.profile;
             return masterStorageEntity;
         }
     }

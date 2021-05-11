@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class BinLogParseUtils {
     /**
-     * 获取长整形数值型字段值.
+     * 获取长整形数值型字段值，当异常时返回默认值.
      */
     public static long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns,
                                          Long defaultValue) {
@@ -27,13 +27,16 @@ public class BinLogParseUtils {
         }
     }
 
+    /**
+     * 获取长整形数值型字段值，抛出异常.
+     */
     public static long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns)
         throws SQLException {
         return Long.parseLong(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
     }
 
     /**
-     * 获取整形数值字段值.
+     * 获取整形数值字段值，当异常时返回默认值.
      */
     public static int getIntegerFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns,
                                            Integer defaultValue) {
@@ -44,7 +47,9 @@ public class BinLogParseUtils {
         }
     }
 
-
+    /**
+     * 获取整形数值字段值，抛出异常.
+     */
     public static int getIntegerFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns)
         throws SQLException {
         return Integer.parseInt(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
@@ -75,6 +80,16 @@ public class BinLogParseUtils {
         } catch (Exception e) {
             throw e;
         }
+    }
+    /**
+     * 获取字符串，允许为空.
+     */
+    public static String getStringWithoutNullCheck(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) {
+        CanalEntry.Column column = existsColumn(columns, oqsBigEntityColumns);
+        if (null != column && !column.getValue().isEmpty()) {
+            return column.getValue();
+        }
+        return null;
     }
 
     /**

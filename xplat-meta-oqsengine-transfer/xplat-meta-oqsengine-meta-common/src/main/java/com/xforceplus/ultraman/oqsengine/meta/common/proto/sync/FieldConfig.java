@@ -105,9 +105,8 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 72: {
-            int rawValue = input.readEnum();
 
-            metaFieldSense_ = rawValue;
+            metaFieldSense_ = input.readInt32();
             break;
           }
           case 80: {
@@ -153,185 +152,6 @@ private static final long serialVersionUID = 0L;
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_FieldConfig_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.Builder.class);
-  }
-
-  /**
-   * Protobuf enum {@code FieldConfig.MetaFieldSense}
-   */
-  public enum MetaFieldSense
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>UNKNOWN = 0;</code>
-     */
-    UNKNOWN(0),
-    /**
-     * <code>NORMAL = 1;</code>
-     */
-    NORMAL(1),
-    /**
-     * <code>TENANT_ID = 2;</code>
-     */
-    TENANT_ID(2),
-    /**
-     * <code>TENANT_CODE = 3;</code>
-     */
-    TENANT_CODE(3),
-    /**
-     * <code>CREATE_TIME = 4;</code>
-     */
-    CREATE_TIME(4),
-    /**
-     * <code>UPDATE_TIME = 5;</code>
-     */
-    UPDATE_TIME(5),
-    /**
-     * <code>CREATE_USER_ID = 6;</code>
-     */
-    CREATE_USER_ID(6),
-    /**
-     * <code>UPDATE_USER_ID = 7;</code>
-     */
-    UPDATE_USER_ID(7),
-    /**
-     * <code>CREATE_USER_NAME = 8;</code>
-     */
-    CREATE_USER_NAME(8),
-    /**
-     * <code>UPDATE_USER_NAME = 9;</code>
-     */
-    UPDATE_USER_NAME(9),
-    /**
-     * <code>DELETE_FLAG = 10;</code>
-     */
-    DELETE_FLAG(10),
-    UNRECOGNIZED(-1),
-    ;
-
-    /**
-     * <code>UNKNOWN = 0;</code>
-     */
-    public static final int UNKNOWN_VALUE = 0;
-    /**
-     * <code>NORMAL = 1;</code>
-     */
-    public static final int NORMAL_VALUE = 1;
-    /**
-     * <code>TENANT_ID = 2;</code>
-     */
-    public static final int TENANT_ID_VALUE = 2;
-    /**
-     * <code>TENANT_CODE = 3;</code>
-     */
-    public static final int TENANT_CODE_VALUE = 3;
-    /**
-     * <code>CREATE_TIME = 4;</code>
-     */
-    public static final int CREATE_TIME_VALUE = 4;
-    /**
-     * <code>UPDATE_TIME = 5;</code>
-     */
-    public static final int UPDATE_TIME_VALUE = 5;
-    /**
-     * <code>CREATE_USER_ID = 6;</code>
-     */
-    public static final int CREATE_USER_ID_VALUE = 6;
-    /**
-     * <code>UPDATE_USER_ID = 7;</code>
-     */
-    public static final int UPDATE_USER_ID_VALUE = 7;
-    /**
-     * <code>CREATE_USER_NAME = 8;</code>
-     */
-    public static final int CREATE_USER_NAME_VALUE = 8;
-    /**
-     * <code>UPDATE_USER_NAME = 9;</code>
-     */
-    public static final int UPDATE_USER_NAME_VALUE = 9;
-    /**
-     * <code>DELETE_FLAG = 10;</code>
-     */
-    public static final int DELETE_FLAG_VALUE = 10;
-
-
-    public final int getNumber() {
-      if (this == UNRECOGNIZED) {
-        throw new java.lang.IllegalArgumentException(
-            "Can't get the number of an unknown enum value.");
-      }
-      return value;
-    }
-
-    /**
-     * @deprecated Use {@link #forNumber(int)} instead.
-     */
-    @java.lang.Deprecated
-    public static MetaFieldSense valueOf(int value) {
-      return forNumber(value);
-    }
-
-    public static MetaFieldSense forNumber(int value) {
-      switch (value) {
-        case 0: return UNKNOWN;
-        case 1: return NORMAL;
-        case 2: return TENANT_ID;
-        case 3: return TENANT_CODE;
-        case 4: return CREATE_TIME;
-        case 5: return UPDATE_TIME;
-        case 6: return CREATE_USER_ID;
-        case 7: return UPDATE_USER_ID;
-        case 8: return CREATE_USER_NAME;
-        case 9: return UPDATE_USER_NAME;
-        case 10: return DELETE_FLAG;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<MetaFieldSense>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static final com.google.protobuf.Internal.EnumLiteMap<
-        MetaFieldSense> internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<MetaFieldSense>() {
-            public MetaFieldSense findValueByNumber(int number) {
-              return MetaFieldSense.forNumber(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(ordinal());
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.getDescriptor().getEnumTypes().get(0);
-    }
-
-    private static final MetaFieldSense[] VALUES = values();
-
-    public static MetaFieldSense valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      if (desc.getIndex() == -1) {
-        return UNRECOGNIZED;
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int value;
-
-    private MetaFieldSense(int value) {
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:FieldConfig.MetaFieldSense)
   }
 
   public static final int SEARCHABLE_FIELD_NUMBER = 1;
@@ -459,17 +279,10 @@ private static final long serialVersionUID = 0L;
   public static final int METAFIELDSENSE_FIELD_NUMBER = 9;
   private int metaFieldSense_;
   /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
+   * <code>int32 metaFieldSense = 9;</code>
    */
-  public int getMetaFieldSenseValue() {
+  public int getMetaFieldSense() {
     return metaFieldSense_;
-  }
-  /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense getMetaFieldSense() {
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
-    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
   }
 
   public static final int FUZZYTYPE_FIELD_NUMBER = 10;
@@ -569,8 +382,8 @@ private static final long serialVersionUID = 0L;
     if (!getDisplayTypeBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 8, displayType_);
     }
-    if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
-      output.writeEnum(9, metaFieldSense_);
+    if (metaFieldSense_ != 0) {
+      output.writeInt32(9, metaFieldSense_);
     }
     if (fuzzyType_ != 0) {
       output.writeInt32(10, fuzzyType_);
@@ -622,9 +435,9 @@ private static final long serialVersionUID = 0L;
     if (!getDisplayTypeBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, displayType_);
     }
-    if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
+    if (metaFieldSense_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeEnumSize(9, metaFieldSense_);
+        .computeInt32Size(9, metaFieldSense_);
     }
     if (fuzzyType_ != 0) {
       size += com.google.protobuf.CodedOutputStream
@@ -673,7 +486,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getValidateRegexString());
     result = result && getDisplayType()
         .equals(other.getDisplayType());
-    result = result && metaFieldSense_ == other.metaFieldSense_;
+    result = result && (getMetaFieldSense()
+        == other.getMetaFieldSense());
     result = result && (getFuzzyType()
         == other.getFuzzyType());
     result = result && (getWildcardMinWidth()
@@ -715,7 +529,7 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + DISPLAYTYPE_FIELD_NUMBER;
     hash = (53 * hash) + getDisplayType().hashCode();
     hash = (37 * hash) + METAFIELDSENSE_FIELD_NUMBER;
-    hash = (53 * hash) + metaFieldSense_;
+    hash = (53 * hash) + getMetaFieldSense();
     hash = (37 * hash) + FUZZYTYPE_FIELD_NUMBER;
     hash = (53 * hash) + getFuzzyType();
     hash = (37 * hash) + WILDCARDMINWIDTH_FIELD_NUMBER;
@@ -981,8 +795,8 @@ private static final long serialVersionUID = 0L;
         displayType_ = other.displayType_;
         onChanged();
       }
-      if (other.metaFieldSense_ != 0) {
-        setMetaFieldSenseValue(other.getMetaFieldSenseValue());
+      if (other.getMetaFieldSense() != 0) {
+        setMetaFieldSense(other.getMetaFieldSense());
       }
       if (other.getFuzzyType() != 0) {
         setFuzzyType(other.getFuzzyType());
@@ -1318,42 +1132,24 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int metaFieldSense_ = 0;
+    private int metaFieldSense_ ;
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
+     * <code>int32 metaFieldSense = 9;</code>
      */
-    public int getMetaFieldSenseValue() {
+    public int getMetaFieldSense() {
       return metaFieldSense_;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
+     * <code>int32 metaFieldSense = 9;</code>
      */
-    public Builder setMetaFieldSenseValue(int value) {
+    public Builder setMetaFieldSense(int value) {
+      
       metaFieldSense_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense getMetaFieldSense() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
-      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
-    }
-    /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
-     */
-    public Builder setMetaFieldSense(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense value) {
-      if (value == null) {
-        throw new NullPointerException();
-      }
-      
-      metaFieldSense_ = value.getNumber();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
+     * <code>int32 metaFieldSense = 9;</code>
      */
     public Builder clearMetaFieldSense() {
       

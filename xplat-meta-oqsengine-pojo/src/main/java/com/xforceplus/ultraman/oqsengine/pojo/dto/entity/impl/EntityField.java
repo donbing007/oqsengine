@@ -2,8 +2,10 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 import java.util.Objects;
@@ -79,6 +81,20 @@ public class EntityField implements IEntityField, Serializable {
      */
     @JsonProperty(value = "config")
     private FieldConfig config;
+
+    /**
+     * 计算类型，包括公式、自增等.
+     */
+    @JsonProperty(value = "calculateType")
+    private CalculateType calculateType;
+
+    /**
+     * 公式字段的实际对象表达
+     * 当calculateType == CalculateType.FORMULA时
+     * 该对象值不能为空.
+     */
+    @JsonProperty(value = "formula")
+    private Formula formula;
 
     public EntityField() {
     }
@@ -257,6 +273,8 @@ public class EntityField implements IEntityField, Serializable {
         private String dictId;
         private String defaultValue;
         private FieldConfig config;
+        private CalculateType calculateType;
+        private Formula formula;
 
         private Builder() {
         }
@@ -300,6 +318,16 @@ public class EntityField implements IEntityField, Serializable {
             return this;
         }
 
+        public Builder withCalculateType(CalculateType calculateType) {
+            this.calculateType = calculateType;
+            return this;
+        }
+
+        public Builder withFormula(Formula formula) {
+            this.formula = formula;
+            return this;
+        }
+
         /**
          * 构造实例.
          *
@@ -314,6 +342,8 @@ public class EntityField implements IEntityField, Serializable {
             entityField.dictId = this.dictId;
             entityField.defaultValue = this.defaultValue;
             entityField.config = this.config;
+            entityField.calculateType = this.calculateType;
+            entityField.formula = this.formula;
             return entityField;
         }
     }

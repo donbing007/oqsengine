@@ -44,6 +44,13 @@ message EntityClassInfo {
 	int32 version = 6;
 	repeated EntityFieldInfo entityFields = 7;
 	repeated RelationInfo relations = 8;
+	repeated ProfileInfo profiles = 9;
+}
+
+message ProfileInfo {
+	string code = 1;
+	repeated EntityFieldInfo entityFieldInfo = 2;
+	repeated RelationInfo relationInfo = 3;
 }
 
 message EntityFieldInfo {
@@ -51,21 +58,13 @@ message EntityFieldInfo {
 	string name = 2;
 	string cname = 3;
 
-	enum FieldType {
-		UNKNOWN = 0;
-		BOOLEAN = 1;
-		ENUM = 2;
-		DATETIME = 3;
-		LONG = 4;
-		STRING = 5;
-		STRINGS = 6;
-		DECIMAL = 7;
-	}
-
-	FieldType fieldType = 4;
+	string fieldType = 4;
 	string dictId = 5;
 	string defaultValue = 6;
 	FieldConfig fieldConfig = 7;
+
+	int32 calculateType = 8;
+	Formula formula = 9;
 }
 
 message FieldConfig {
@@ -77,26 +76,21 @@ message FieldConfig {
 	bool isRequired = 6;
 	string validateRegexString = 7;
 	string displayType = 8;
-	MetaFieldSense metaFieldSense = 9;
-
-	enum MetaFieldSense {
-			UNKNOWN = 0;
-			NORMAL = 1;
-			TENANT_ID = 2;
-			TENANT_CODE = 3;
-			CREATE_TIME = 4;
-			UPDATE_TIME = 5;
-			CREATE_USER_ID = 6;
-			UPDATE_USER_ID = 7;
-			CREATE_USER_NAME = 8;
-			UPDATE_USER_NAME = 9;
-			DELETE_FLAG = 10;
-	}
+	int32 metaFieldSense = 9;
 
 	int32 fuzzyType = 10;
 	int32 wildcardMinWidth = 11;
 	int32 wildcardMaxWidth = 12;
 	string uniqueName = 13;
+}
+
+message Formula {
+	string formula = 1;
+	string validator = 2;
+	string min = 3;
+	string max = 4;
+	string condition = 5;
+	string emptyValueTransfer = 6;
 }
 
 message RelationInfo {
@@ -111,3 +105,37 @@ message RelationInfo {
 	bool belongToOwner = 9;
 	bool strong = 10;
 }
+
+/**
+	enum MetaFieldSense {
+		UNKNOWN = 0;
+		NORMAL = 1;
+		TENANT_ID = 2;
+		TENANT_CODE = 3;
+		CREATE_TIME = 4;
+		UPDATE_TIME = 5;
+		CREATE_USER_ID = 6;
+		UPDATE_USER_ID = 7;
+		CREATE_USER_NAME = 8;
+		UPDATE_USER_NAME = 9;
+		DELETE_FLAG = 10;
+	}
+
+	enum FieldType {
+		UNKNOWN;
+		BOOLEAN;
+		ENUM;
+		DATETIME;
+		LONG;
+		STRING;
+		STRINGS;
+		DECIMAL;
+	}
+
+	enum CalculateType {
+		UNKNOWN = 0;
+		NORMAL = 1;
+		FORMULA = 2;
+		INCREMENTAL = 3;
+	}
+ */

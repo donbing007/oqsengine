@@ -6,7 +6,9 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutorTest;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -177,6 +179,7 @@ public class EntityClassStorageBuilder {
             .build();
     }
 
+
     /**
      * 生成.
      */
@@ -184,8 +187,8 @@ public class EntityClassStorageBuilder {
         List<RelationInfo> relationInfos = new ArrayList<>();
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
 
-        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
-        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
+        entityFieldInfos.add(entityFieldInfo(id, "LONG"));
+        entityFieldInfos.add(entityFieldInfo(id + 1, "STRING"));
 
         if (null != relationEntityIds) {
             for (int i = 0; i < relationEntityIds.size(); i++) {
@@ -195,34 +198,45 @@ public class EntityClassStorageBuilder {
         }
 
         return EntityClassInfo.newBuilder()
-            .setId(id)
-            .setVersion(1)
-            .setCode(id + "_level" + level + "_code")
-            .setName(id + "_level" + level + "_name")
-            .setFather(father)
-            .setLevel(level)
-            .addAllEntityFields(entityFieldInfos)
-            .addAllRelations(relationInfos)
-            .build();
+                .setId(id)
+                .setVersion(1)
+                .setCode(id + "_level" + level + "_code")
+                .setName(id + "_level" + level + "_name")
+                .setFather(father)
+                .setLevel(level)
+                .addAllEntityFields(entityFieldInfos)
+                .addAllRelations(relationInfos)
+                .addProfiles(profileInfo(EntityClassManagerExecutorTest.Code_1.getValue() * id, EntityClassManagerExecutorTest.Code_1.getKey()))
+                .addProfiles(profileInfo(EntityClassManagerExecutorTest.Code_2.getValue() * id, EntityClassManagerExecutorTest.Code_2.getKey()))
+                .build();
     }
 
     /**
-     * 生成.
+     * 生成profileInfo.
      */
-    public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
+    public static ProfileInfo profileInfo(long id, String code) {
+        return ProfileInfo.newBuilder().setCode(code)
+                .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
+                .addEntityFieldInfo(entityFieldInfo(id, "LONG"))
+                .build();
+    }
+
+    /**
+     * 生成entityFieldInfo.
+     */
+    public static EntityFieldInfo entityFieldInfo(long id, String fieldType) {
         return EntityFieldInfo.newBuilder()
             .setId(id)
             .setName(id + "_name")
             .setCname(id + "_cname")
             .setFieldType(fieldType)
             .setDictId(id + "_dictId")
-            .setFieldConfig(fieldConfig(true,
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
+            .setFieldConfig(fieldConfig(true, 1))
             .build();
     }
 
     /**
-     * 生成.
+     * 生成relationInfo.
      */
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
@@ -233,7 +247,7 @@ public class EntityClassStorageBuilder {
             .setRelationType(relationType)
             .setEntityField(EntityFieldInfo.newBuilder()
                 .setId(fieldId)
-                .setFieldType(EntityFieldInfo.FieldType.LONG)
+                .setFieldType("LONG")
                 .setName(fieldId + "_name")
                 .setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                     .setSearchable(true).build())
@@ -247,8 +261,7 @@ public class EntityClassStorageBuilder {
      * 生成.
      */
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(
-        boolean searchable,
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        boolean searchable, int systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)

@@ -12,6 +12,9 @@ import java.security.MessageDigest;
  */
 public class MD5Utils {
 
+    /**
+     * 获取byte[]的md5.
+     */
     public static String getMD5(byte[] bytes) {
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");

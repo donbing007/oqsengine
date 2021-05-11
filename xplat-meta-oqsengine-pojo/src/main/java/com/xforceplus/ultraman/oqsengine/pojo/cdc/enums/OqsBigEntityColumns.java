@@ -27,7 +27,8 @@ public enum OqsBigEntityColumns {
     UPDATETIME,
     DELETED,
     ATTRIBUTE,
-    OQSMAJOR;
+    OQSMAJOR,
+    PROFILE;
 
 
     /**
