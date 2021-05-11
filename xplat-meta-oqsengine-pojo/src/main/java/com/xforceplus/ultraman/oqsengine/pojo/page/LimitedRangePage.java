@@ -108,11 +108,6 @@ public class LimitedRangePage extends Page implements Externalizable, Cloneable 
             scope.startLine = oldStart;
         }
 
-        long oldEnd = scope.endLine;
-        if (scope.endLine > oldEnd) {
-            scope.endLine = oldEnd;
-        }
-
         return scope;
     }
 

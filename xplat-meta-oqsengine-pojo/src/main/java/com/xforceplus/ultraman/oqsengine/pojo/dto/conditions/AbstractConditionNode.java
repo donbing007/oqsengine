@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -11,7 +12,7 @@ import java.util.Deque;
  * @version 0.1 2020/2/20 15:56
  * @since 1.8
  */
-public abstract class AbstractConditionNode {
+public abstract class AbstractConditionNode implements Serializable {
 
     private AbstractConditionNode left;
     private AbstractConditionNode right;

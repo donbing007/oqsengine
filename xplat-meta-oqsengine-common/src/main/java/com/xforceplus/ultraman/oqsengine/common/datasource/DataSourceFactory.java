@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import javax.sql.DataSource;
 
 /**
@@ -180,7 +181,7 @@ public class DataSourceFactory {
 
     private static void invokeMethod(HikariConfig hikariConfig, String attrName, ConfigValue value) throws Exception {
         Class clazz = hikariConfig.getClass();
-        String methodName = "set" + attrName.toUpperCase().substring(0, 1) + attrName.substring(1);
+        String methodName = "set" + attrName.toUpperCase(Locale.US).substring(0, 1) + attrName.substring(1);
         Method method = null;
         switch (value.valueType()) {
             case NUMBER: {

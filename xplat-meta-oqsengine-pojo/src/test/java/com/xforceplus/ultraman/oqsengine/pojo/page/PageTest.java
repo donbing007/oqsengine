@@ -209,6 +209,20 @@ public class PageTest {
         Assert.assertNull(scope);
     }
 
+    @Test
+    public void testClone() throws CloneNotSupportedException {
+        Page sourcePage = Page.emptyPage();
+        sourcePage.setTotalCount(100);
+        Page clonePage = sourcePage.clone();
+
+        Assert.assertTrue(clonePage.isEmptyPage());
+        Assert.assertEquals(100, clonePage.getTotalCount());
+        clonePage.setVisibleTotalCount(2000);
+        Assert.assertEquals(2000, clonePage.getVisibleTotalCount());
+        Assert.assertEquals(-1, sourcePage.getVisibleTotalCount());
+
+    }
+
     /**
      * 计算总页数.
      *

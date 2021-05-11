@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import java.io.Serializable;
+
 /**
  * 表示括号的结点,主要在中序迭代条件树时临时使用.
  * 不会实际出现在条件结点树中.
@@ -8,7 +10,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
  * @version 0.1 2021/04/07 14:11
  * @since 1.8
  */
-public class ParentheseConditionNode extends AbstractConditionNode {
+public class ParentheseConditionNode extends AbstractConditionNode implements Serializable {
 
     private static AbstractConditionNode LEFT = new ParentheseConditionNode(true);
     private static AbstractConditionNode RIGHT = new ParentheseConditionNode(false);

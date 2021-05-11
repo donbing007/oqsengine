@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * snowflake 的 ID 算法生成.
@@ -48,14 +50,10 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             if (currentTime < referenceTime) {
                 long offset = referenceTime - currentTime;
                 if (offset <= 5) {
-                    try {
-                        wait(offset << 1);
-                        currentTime = timeGen();
-                        if (currentTime < referenceTime) {
-                            throw new ClockBackwardsException(referenceTime, currentTime);
-                        }
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(offset << 1));
+                    currentTime = timeGen();
+                    if (currentTime < referenceTime) {
+                        throw new ClockBackwardsException(referenceTime, currentTime);
                     }
                 } else {
                     //throw

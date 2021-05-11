@@ -376,20 +376,7 @@ public class Page implements Externalizable, Cloneable {
      */
     @Override
     public Page clone() throws CloneNotSupportedException {
-        if (this.isEmptyPage()) {
-            return Page.emptyPage();
-        } else if (this.isSinglePage()) {
-            return Page.newSinglePage(this.getPageSize());
-        } else {
-            Page newPage = new Page(this.getIndex(), this.getPageSize());
-            if (this.isReady()) {
-                newPage.setTotalCount(this.getTotalCount());
-            }
-            if (this.hasVisibleTotalCountLimit()) {
-                newPage.setVisibleTotalCount(this.getVisibleTotalCount());
-            }
-            return newPage;
-        }
+        return (Page) super.clone();
     }
 
     /**

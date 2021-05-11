@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/20 15:58
  * @since 1.8
  */
-public class LinkConditionNode extends AbstractConditionNode {
+public class LinkConditionNode extends AbstractConditionNode implements Serializable {
 
     /*
      * 条件连接方式.

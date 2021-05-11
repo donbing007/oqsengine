@@ -21,10 +21,10 @@ public class RedisInfoParser implements KeyValueParser<String, Map> {
 
     static final char SEGMENTATION_SYMBOLS = ':';
 
-    public static KeyValueParser<String, Map> instance = new RedisInfoParser();
+    public static final KeyValueParser<String, Map> INSTANCE = new RedisInfoParser();
 
     public static KeyValueParser<String, Map> getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     private RedisInfoParser() {
@@ -40,7 +40,7 @@ public class RedisInfoParser implements KeyValueParser<String, Map> {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                if (line != null && !line.isEmpty()) {
+                if (!line.isEmpty()) {
 
                     //忽略掉注解
                     if (line.startsWith("#")) {

@@ -69,9 +69,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
                 try {
                     await(delay);
                 } catch (InterruptedException ex) {
-                    if (!ok) {
-                        removeThreadId(key);
-                    }
+                    removeThreadId(key);
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
             }
@@ -124,9 +122,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
                 try {
                     await(delay);
                 } catch (InterruptedException ex) {
-                    if (!ok) {
-                        removeThreadId(key);
-                    }
+                    removeThreadId(key);
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
                 timePass += delay;
