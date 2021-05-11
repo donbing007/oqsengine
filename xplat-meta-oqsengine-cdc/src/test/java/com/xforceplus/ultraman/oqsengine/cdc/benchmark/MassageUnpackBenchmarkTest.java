@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
@@ -76,7 +76,7 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
         //  预热
         sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-        for (int i = 0; i < testLoops; i++) {
+        for (int i = 0; i < 10; i++) {
             long start = System.currentTimeMillis();
             CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
             long duration = System.currentTimeMillis() - start;
