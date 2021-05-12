@@ -101,7 +101,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                     return true;
                 } catch (Exception e) {
-                    logger.warn(e.getMessage());
+                    logger.warn("sync-error, message[{}]", e.toString());
                     return false;
                 }
             } finally {
