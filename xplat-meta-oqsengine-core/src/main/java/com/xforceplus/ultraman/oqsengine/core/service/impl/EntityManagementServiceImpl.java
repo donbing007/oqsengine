@@ -25,6 +25,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -33,7 +43,9 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
+import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -486,6 +498,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         Map<String, Object> context = new HashMap<>();
         List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
 
+        IEntityValue entityValue = EntityValue.build();
         entity.entityValue().values().forEach(
             v -> {
                 /*
@@ -497,13 +510,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                         //  todo 计算自动填充值并写入context中
+                        Object result = null;
 
+                        if (null != result) {
+                            context.put(entityField.name(), result);
+                            entityValue.addValue(toIValue(entityField, result));
+                        }
                     } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                         Map<String, Object> local = (Map<String, Object>) v.getValue();
                         if (null != local) {
                             context.putAll(local);
                         }
                         executionWrappers.add(initExecutionWrapper(entityField));
+                    } else {
+                        entityValue.addValue(v);
                     }
                 }
             }
@@ -514,9 +534,47 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         Map<String, Object> result = formulaStorage.execute(executionWrappers, context);
         if (null != result) {
-            entity.entityValue().values().forEach(
-
+            entityClass.fields().forEach(
+                e -> {
+                    if (e.calculateType().equals(CalculateType.FORMULA)) {
+                        Object o = result.get(e.name());
+                        if (null != o) {
+                            entityValue.addValue(toIValue(e, o));
+                        }
+                    }
+                }
             );
+        }
+
+        entity.resetEntityValue(entityValue);
+    }
+
+    private IValue<?> toIValue(IEntityField field, Object result) {
+        switch (field.type()) {
+            case BOOLEAN : {
+                return new BooleanValue(field, (Boolean) result);
+            }
+            case ENUM: {
+                return new EnumValue(field, (String) result);
+            }
+            case DATETIME: {
+                return new DateTimeValue(field, (LocalDateTime) result);
+            }
+            case LONG: {
+                return new LongValue(field, (Long) result);
+            }
+            case STRING: {
+                return new StringValue(field, (String) result);
+            }
+            case STRINGS: {
+                return new StringsValue(field, (String[]) result);
+            }
+            case DECIMAL: {
+                return new DecimalValue(field, (BigDecimal) result);
+            }
+            default: {
+                throw new IllegalArgumentException("unknown field type.");
+            }
         }
     }
 
