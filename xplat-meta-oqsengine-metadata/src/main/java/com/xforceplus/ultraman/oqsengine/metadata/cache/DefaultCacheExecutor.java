@@ -23,8 +23,6 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileEntity;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileRelations;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,7 +31,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
@@ -59,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultCacheExecutor implements CacheExecutor {
 
-    final Logger logger = LoggerFactory.getLogger(CacheExecutor.class);
+    final Logger logger = LoggerFactory.getLogger(DefaultCacheExecutor.class);
 
     @Resource
     private RedisClient redisClient;
@@ -163,7 +160,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private String entityStorageKeys;
 
     /**
-     * 构造函数.
+     * 默认实例化.
      */
     public DefaultCacheExecutor() {
         this(NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER,
@@ -176,7 +173,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     /**
-     * 构造函数.
+     * 实例化.
+     *
+     * @param maxCacheSize 缓存最多元素.
+     * @param prepareExpireSeconds 预备的等待超时秒数.
+     * @param cacheExpireSeconds 缓存过期的秒数.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
         this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
@@ -189,11 +190,21 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     /**
-     * 构造函数.
+     * 实例化.
+     *
+     * @param maxCacheSize 缓存的最多元素.
+     * @param prepareExpireSeconds 预备的等等超时秒数.
+     * @param cacheExpireSeconds 缓存过期的秒数.
+     * @param appEnvKeys 应用环境KEY.
+     * @param appVersionKeys 应用版本KEY.
+     * @param appPrepareKeyPrefix 应用预备的KEY.
+     * @param entityStorageKeys 元信息储存KEY.
+     * @param appEntityMappingKey 元信息属性MAP的KEY.
+     * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
-                         String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
-                         String appEntityMappingKey, String appEntityCollectionsKey) {
+                                String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+                                String appEntityMappingKey, String appEntityCollectionsKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
             this.maxCacheSize = maxCacheSize;
@@ -292,6 +303,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
         syncConnect.close();
     }
 
+    /**
+     * 存储appId级别的所有EntityClassStorage对象.
+     */
     @Override
     public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
         //  set data
@@ -367,9 +381,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         //  reset version
-        return resetVersion(appId, version, storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
+        return resetVersion(appId, version,
+            storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
     }
 
+    /**
+     * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象.
+     */
     @Override
     public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
         int version = version(entityClassId);
@@ -416,6 +434,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return entityClassStorageMap;
     }
 
+    /**
+     * 根据Ids读取EntityStorage列表.
+     */
     @Override
     public Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException {
         Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
@@ -436,6 +457,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return entityClassStorageMap;
     }
 
+    /**
+     * 获取当前appId对应的版本信息.
+     */
     @Override
     public int version(String appId) {
         String versionStr = syncCommands.hget(appVersionKeys, appId);
@@ -445,6 +469,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return NOT_EXIST_VERSION;
     }
 
+
+    /**
+     * 通过entityClassId获取当前活动版本.
+     */
     @Override
     public int version(Long entityClassId) {
         if (null == entityClassId || entityClassId <= 0) {
@@ -464,6 +492,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return null != v ? Integer.parseInt(v) : NOT_EXIST_VERSION;
     }
 
+    /**
+     * 重置appId对应的版本信息.
+     */
     @Override
     public boolean resetVersion(String appId, int version, List<Long> ids) {
         if (null == appId || appId.isEmpty()) {
@@ -520,13 +551,18 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return ret;
     }
 
+    /**
+     * 锁定当前AppId一分钟，在此期间其他对于该AppId的更新操作将被拒绝.
+     */
     @Override
     public boolean prepare(String appId, int version) {
         if (null == appId || appId.isEmpty()) {
+            logger.warn("prepare appId is empty.");
             return false;
         }
 
         if (version < 0) {
+            logger.warn("prepare [{}] failed, version [{}] is less than 0", appId, version);
             return false;
         }
 
@@ -534,20 +570,31 @@ public class DefaultCacheExecutor implements CacheExecutor {
             appVersionKeys,
             appPrepareKeyPrefix,
         };
-
-        return syncCommands.evalsha(
-            prepareVersionScriptSha,
-            ScriptOutputType.BOOLEAN,
-            keys, Integer.toString(version), appId, Integer.toString(prepareExpire));
+        try {
+            return syncCommands.evalsha(
+                prepareVersionScriptSha,
+                ScriptOutputType.BOOLEAN,
+                keys, Integer.toString(version), appId, Integer.toString(prepareExpire));
+        } catch (Exception e) {
+            logger.warn("do prepare [{}]-[{}] failed, message [{}]", appId, version, e.toString());
+            throw e;
+        }
     }
 
+    /**
+     * 删除当前锁定更新的appId.
+     */
     @Override
     public boolean endPrepare(String appId) {
         if (null == appId || appId.isEmpty()) {
             return false;
         }
-
-        return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
+        try {
+            return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
+        } catch (Exception e) {
+            logger.warn("end prepare [{}] failed, message [{}]", appId, e.toString());
+            return false;
+        }
     }
 
     @Override
@@ -565,6 +612,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return syncCommands.hdel(appEnvKeys, appId) == 1;
     }
 
+    /**
+     * 删除已经过期AppId版本.
+     * 删除只能进行一次，当删除进行中由于某些原因导致redis删除失败时，需要手动进入redis清理过期信息.
+     */
     @Override
     public boolean clean(String appId, int version, boolean force) {
         //check version
@@ -586,7 +637,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 List<Long> ids = objectMapper.readValue(v,
                     objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
                 for (Long id : ids) {
-                    innerClean(id, version);
+                    doClean(id, version);
                 }
                 //  删除 appId + version 映射的 entityIds列表
                 syncCommands.hdel(appEntityCollectionsKey, fieldName);
@@ -603,13 +654,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         entityClassStorageCache.invalidateAll();
     }
 
-    /*
-     * 删除过期版本的EntityClass信息
-     * @param entityId
-     * @param version
-     * @return
+    /**
+     * 删除过期版本的EntityClass信息.
      */
-    private boolean innerClean(Long entityId, int version) {
+    private boolean doClean(Long entityId, int version) {
         if (null == entityId) {
             return false;
         }
@@ -630,19 +678,21 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     private boolean invalidateFromRemote(Long entityId, int version) {
+
         /*
-         * 获取当前的Key
+         * 获取当前的Key.
          */
         String keys = String.format("%s.%s.%s", entityStorageKeys, Integer.toString(version), Long.toString(entityId));
 
         try {
-            List<String> existKeys = syncCommands.hkeys(keys);
-            if (null != existKeys && existKeys.size() > 0) {
-                return syncCommands.hdel(keys, existKeys.toArray(new String[existKeys.size()])) == existKeys.size();
+            List<String> entityClassKeys = syncCommands.hkeys(keys);
+            if (null != entityClassKeys && entityClassKeys.size() > 0) {
+                return syncCommands.hdel(keys, entityClassKeys.toArray(new String[entityClassKeys.size()])) == entityClassKeys.size();
             }
             return true;
         } catch (Exception e) {
-            logger.warn("delete remote failed, entityId:[{}], version:[{}], message:[{}]", entityId, version, e.getMessage());
+            logger.warn("delete remote failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
+                e.getMessage());
             return false;
         }
     }
@@ -684,7 +734,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return redisValuesToLocalStorage(objectMapper, keyValues);
     }
 
-    private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap) throws JsonProcessingException {
+    private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap)
+        throws JsonProcessingException {
 
         int extraSize = ids.size();
         String[] extraEntityIds = new String[extraSize + 1];
@@ -714,7 +765,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
          */
         if (extraSize != valuePairs.size()) {
             throw new RuntimeException(
-                String.format("missed some extend or children entityClassStorage, should be [%d], actual [%d] ", extraSize, valuePairs.size()));
+                String.format("missed some extend or children entityClassStorage, should be [%d], actual [%d] ",
+                    extraSize, valuePairs.size()));
         }
 
         for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
@@ -741,7 +793,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         try {
             entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
         } catch (Exception e) {
-            logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version, e.getMessage());
+            logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
+                e.getMessage());
         }
     }
 }
