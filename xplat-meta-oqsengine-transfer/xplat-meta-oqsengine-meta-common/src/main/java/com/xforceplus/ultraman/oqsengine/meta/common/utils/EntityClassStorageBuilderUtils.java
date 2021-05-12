@@ -13,8 +13,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
@@ -22,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 
 /**
@@ -38,45 +39,47 @@ public class EntityClassStorageBuilderUtils {
      */
     public static List<EntityClassStorage> protoToStorageList(EntityClassSyncRspProto entityClassSyncRspProto) {
         Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
-                ecs -> {
-                    EntityClassStorage e = protoValuesToLocalStorage(ecs);
-                    return e;
-                }
+            ecs -> {
+                EntityClassStorage e = protoValuesToLocalStorage(ecs);
+                return e;
+            }
         ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1, (s1, s2) -> s1));
 
         return temp.values().stream().peek(
-                v -> {
-                    Long fatherId = v.getFatherId();
-                    while (null != fatherId && fatherId >= MIN_ID) {
-                        EntityClassStorage entityClassStorage = temp.get(fatherId);
-                        if (null == entityClassStorage) {
-                            throw new MetaSyncClientException(
-                                    String.format("entityClass id [%d], father entityClass : [%d] missed.", v.getId(), fatherId),
-                                                BUSINESS_HANDLER_ERROR.ordinal());
-                        }
-                        v.addAncestors(fatherId);
-                        fatherId = entityClassStorage.getFatherId();
+            v -> {
+                Long fatherId = v.getFatherId();
+                while (null != fatherId && fatherId >= MIN_ID) {
+                    EntityClassStorage entityClassStorage = temp.get(fatherId);
+                    if (null == entityClassStorage) {
+                        throw new MetaSyncClientException(
+                            String
+                                .format("entityClass id [%d], father entityClass : [%d] missed.", v.getId(), fatherId),
+                            BUSINESS_HANDLER_ERROR.ordinal());
                     }
-                    v.getRelations().forEach(
-                            relationStorage -> {
-                                relationCheck(v.getId(), temp, relationStorage);
-                            }
-                    );
+                    v.addAncestors(fatherId);
+                    fatherId = entityClassStorage.getFatherId();
                 }
+                v.getRelations().forEach(
+                    relationStorage -> {
+                        relationCheck(v.getId(), temp, relationStorage);
+                    }
+                );
+            }
         ).collect(Collectors.toList());
     }
 
-    private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap, RelationStorage relationStorage) {
+    private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap,
+                                      RelationStorage relationStorage) {
         if (relationStorage.getRightEntityClassId() <= 0) {
             throw new MetaSyncClientException(
-                    String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0.",
-                        id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0.",
+                    id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
 
         if (null == entityClassStorageMap.get(relationStorage.getRightEntityClassId())) {
             throw new MetaSyncClientException(
-                    String.format("entityClass id [%d], relation entityClass [%d] missed.",
-                        id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                String.format("entityClass id [%d], relation entityClass [%d] missed.",
+                    id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
     }
 
@@ -130,7 +133,8 @@ public class EntityClassStorageBuilderUtils {
 
                 if (p.getEntityFieldInfoList().isEmpty() && p.getRelationInfoList().isEmpty()) {
                     throw new MetaSyncClientException(
-                            String.format("profile [%d-%s] must have at least one element, fieldList/relationList", id, p.getCode()), false);
+                        String.format("profile [%d-%s] must have at least one element, fieldList/relationList", id,
+                            p.getCode()), false);
                 }
 
                 List<IEntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
@@ -187,38 +191,63 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
 
+        CalculateType calculateType = CalculateType.instance(e.getCalculateType());
         EntityField.Builder builder = EntityField.Builder.anEntityField()
-                .withId(eid)
-                .withName(e.getName())
-                .withCnName(e.getCname())
-                .withFieldType(FieldType.fromRawType(e.getFieldType()))
-                .withDictId(e.getDictId())
-                .withDefaultValue(e.getDefaultValue())
-                .withConfig(toFieldConfig(e.getFieldConfig()));
+            .withId(eid)
+            .withName(e.getName())
+            .withCnName(e.getCname())
+            .withFieldType(FieldType.fromRawType(e.getFieldType()))
+            .withDictId(e.getDictId())
+            .withDefaultValue(e.getDefaultValue())
+            .withConfig(toFieldConfig(e.getFieldConfig()))
+            .withCalculateType(calculateType);
+
+        if (calculateType.equals(CalculateType.FORMULA)) {
+            builder.withFormula(toFormula(e.getFormula()));
+        }
 
         return builder.build();
+    }
+
+    private static Formula toFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula) {
+        /*
+            formula必须初始化
+         */
+        if (null == formula || formula.getFormula().isEmpty()) {
+            throw new MetaSyncClientException("formula not init with calculateType['FORMULA']", false);
+        }
+
+        return Formula.Builder.anFormula()
+            .withFormula(formula.getFormula())
+            .withMax(formula.getMax())
+            .withMin(formula.getMin())
+            .withCondition(formula.getCondition())
+            .withValidator(formula.getValidator())
+            .withEmptyValueTransfer(formula.getEmptyValueTransfer())
+            .build();
     }
 
     /**
      * 转换FieldConfig.
      */
-    private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig) {
+    private static FieldConfig toFieldConfig(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig) {
         return FieldConfig.Builder.anFieldConfig()
-                .withSearchable(fieldConfig.getSearchable())
-                .withMax(fieldConfig.getMax())
-                .withMin(fieldConfig.getMin())
-                .withPrecision(fieldConfig.getPrecision())
-                .withIdentifie(fieldConfig.getIdentifier())
-                .withRequired(fieldConfig.getIsRequired())
-                .withValidateRegexString(fieldConfig.getValidateRegexString())
-                .withSplittable(false)
-                .withDelimiter("")
-                .withDisplayType(fieldConfig.getDisplayType())
-                .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSense()))
-                .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
-                .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
-                .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
-                .withUniqueName(fieldConfig.getUniqueName())
-                .build();
+            .withSearchable(fieldConfig.getSearchable())
+            .withMax(fieldConfig.getMax())
+            .withMin(fieldConfig.getMin())
+            .withPrecision(fieldConfig.getPrecision())
+            .withIdentifie(fieldConfig.getIdentifier())
+            .withRequired(fieldConfig.getIsRequired())
+            .withValidateRegexString(fieldConfig.getValidateRegexString())
+            .withSplittable(false)
+            .withDelimiter("")
+            .withDisplayType(fieldConfig.getDisplayType())
+            .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSense()))
+            .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
+            .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
+            .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
+            .withUniqueName(fieldConfig.getUniqueName())
+            .build();
     }
 }
