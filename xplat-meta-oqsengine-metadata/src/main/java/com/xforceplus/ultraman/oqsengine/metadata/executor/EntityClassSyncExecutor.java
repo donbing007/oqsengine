@@ -79,7 +79,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 try {
                     expiredVersion = version(appId);
                 } catch (Exception e) {
-                    logger.warn(e.getMessage());
+                    logger.warn("query expiredVersion failed, [{}]", e.toString());
                     return false;
                 }
 
