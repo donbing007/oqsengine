@@ -17,6 +17,7 @@ private static final long serialVersionUID = 0L;
   }
   private Formula() {
     formula_ = "";
+    level_ = 0;
     validator_ = "";
     min_ = "";
     max_ = "";
@@ -61,31 +62,36 @@ private static final long serialVersionUID = 0L;
             formula_ = s;
             break;
           }
-          case 18: {
-            java.lang.String s = input.readStringRequireUtf8();
+          case 16: {
 
-            validator_ = s;
+            level_ = input.readInt32();
             break;
           }
           case 26: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            min_ = s;
+            validator_ = s;
             break;
           }
           case 34: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            max_ = s;
+            min_ = s;
             break;
           }
           case 42: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            condition_ = s;
+            max_ = s;
             break;
           }
           case 50: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            condition_ = s;
+            break;
+          }
+          case 58: {
             java.lang.String s = input.readStringRequireUtf8();
 
             emptyValueTransfer_ = s;
@@ -149,10 +155,19 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int VALIDATOR_FIELD_NUMBER = 2;
+  public static final int LEVEL_FIELD_NUMBER = 2;
+  private int level_;
+  /**
+   * <code>int32 level = 2;</code>
+   */
+  public int getLevel() {
+    return level_;
+  }
+
+  public static final int VALIDATOR_FIELD_NUMBER = 3;
   private volatile java.lang.Object validator_;
   /**
-   * <code>string validator = 2;</code>
+   * <code>string validator = 3;</code>
    */
   public java.lang.String getValidator() {
     java.lang.Object ref = validator_;
@@ -167,7 +182,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string validator = 2;</code>
+   * <code>string validator = 3;</code>
    */
   public com.google.protobuf.ByteString
       getValidatorBytes() {
@@ -183,10 +198,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int MIN_FIELD_NUMBER = 3;
+  public static final int MIN_FIELD_NUMBER = 4;
   private volatile java.lang.Object min_;
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   public java.lang.String getMin() {
     java.lang.Object ref = min_;
@@ -201,7 +216,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   public com.google.protobuf.ByteString
       getMinBytes() {
@@ -217,10 +232,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int MAX_FIELD_NUMBER = 4;
+  public static final int MAX_FIELD_NUMBER = 5;
   private volatile java.lang.Object max_;
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   public java.lang.String getMax() {
     java.lang.Object ref = max_;
@@ -235,7 +250,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   public com.google.protobuf.ByteString
       getMaxBytes() {
@@ -251,10 +266,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int CONDITION_FIELD_NUMBER = 5;
+  public static final int CONDITION_FIELD_NUMBER = 6;
   private volatile java.lang.Object condition_;
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   public java.lang.String getCondition() {
     java.lang.Object ref = condition_;
@@ -269,7 +284,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   public com.google.protobuf.ByteString
       getConditionBytes() {
@@ -285,10 +300,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int EMPTYVALUETRANSFER_FIELD_NUMBER = 6;
+  public static final int EMPTYVALUETRANSFER_FIELD_NUMBER = 7;
   private volatile java.lang.Object emptyValueTransfer_;
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   public java.lang.String getEmptyValueTransfer() {
     java.lang.Object ref = emptyValueTransfer_;
@@ -303,7 +318,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   public com.google.protobuf.ByteString
       getEmptyValueTransferBytes() {
@@ -334,20 +349,23 @@ private static final long serialVersionUID = 0L;
     if (!getFormulaBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, formula_);
     }
+    if (level_ != 0) {
+      output.writeInt32(2, level_);
+    }
     if (!getValidatorBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, validator_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, validator_);
     }
     if (!getMinBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, min_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, min_);
     }
     if (!getMaxBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, max_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, max_);
     }
     if (!getConditionBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, condition_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, condition_);
     }
     if (!getEmptyValueTransferBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, emptyValueTransfer_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, emptyValueTransfer_);
     }
     unknownFields.writeTo(output);
   }
@@ -360,20 +378,24 @@ private static final long serialVersionUID = 0L;
     if (!getFormulaBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, formula_);
     }
+    if (level_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(2, level_);
+    }
     if (!getValidatorBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, validator_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, validator_);
     }
     if (!getMinBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, min_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, min_);
     }
     if (!getMaxBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, max_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, max_);
     }
     if (!getConditionBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, condition_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, condition_);
     }
     if (!getEmptyValueTransferBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, emptyValueTransfer_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, emptyValueTransfer_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -393,6 +415,8 @@ private static final long serialVersionUID = 0L;
     boolean result = true;
     result = result && getFormula()
         .equals(other.getFormula());
+    result = result && (getLevel()
+        == other.getLevel());
     result = result && getValidator()
         .equals(other.getValidator());
     result = result && getMin()
@@ -416,6 +440,8 @@ private static final long serialVersionUID = 0L;
     hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + FORMULA_FIELD_NUMBER;
     hash = (53 * hash) + getFormula().hashCode();
+    hash = (37 * hash) + LEVEL_FIELD_NUMBER;
+    hash = (53 * hash) + getLevel();
     hash = (37 * hash) + VALIDATOR_FIELD_NUMBER;
     hash = (53 * hash) + getValidator().hashCode();
     hash = (37 * hash) + MIN_FIELD_NUMBER;
@@ -557,6 +583,8 @@ private static final long serialVersionUID = 0L;
       super.clear();
       formula_ = "";
 
+      level_ = 0;
+
       validator_ = "";
 
       min_ = "";
@@ -590,6 +618,7 @@ private static final long serialVersionUID = 0L;
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula buildPartial() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula(this);
       result.formula_ = formula_;
+      result.level_ = level_;
       result.validator_ = validator_;
       result.min_ = min_;
       result.max_ = max_;
@@ -639,6 +668,9 @@ private static final long serialVersionUID = 0L;
       if (!other.getFormula().isEmpty()) {
         formula_ = other.formula_;
         onChanged();
+      }
+      if (other.getLevel() != 0) {
+        setLevel(other.getLevel());
       }
       if (!other.getValidator().isEmpty()) {
         validator_ = other.validator_;
@@ -756,9 +788,35 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private int level_ ;
+    /**
+     * <code>int32 level = 2;</code>
+     */
+    public int getLevel() {
+      return level_;
+    }
+    /**
+     * <code>int32 level = 2;</code>
+     */
+    public Builder setLevel(int value) {
+      
+      level_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 level = 2;</code>
+     */
+    public Builder clearLevel() {
+      
+      level_ = 0;
+      onChanged();
+      return this;
+    }
+
     private java.lang.Object validator_ = "";
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public java.lang.String getValidator() {
       java.lang.Object ref = validator_;
@@ -773,7 +831,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public com.google.protobuf.ByteString
         getValidatorBytes() {
@@ -789,7 +847,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder setValidator(
         java.lang.String value) {
@@ -802,7 +860,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder clearValidator() {
       
@@ -811,7 +869,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder setValidatorBytes(
         com.google.protobuf.ByteString value) {
@@ -827,7 +885,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object min_ = "";
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public java.lang.String getMin() {
       java.lang.Object ref = min_;
@@ -842,7 +900,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public com.google.protobuf.ByteString
         getMinBytes() {
@@ -858,7 +916,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder setMin(
         java.lang.String value) {
@@ -871,7 +929,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder clearMin() {
       
@@ -880,7 +938,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder setMinBytes(
         com.google.protobuf.ByteString value) {
@@ -896,7 +954,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object max_ = "";
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public java.lang.String getMax() {
       java.lang.Object ref = max_;
@@ -911,7 +969,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public com.google.protobuf.ByteString
         getMaxBytes() {
@@ -927,7 +985,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder setMax(
         java.lang.String value) {
@@ -940,7 +998,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder clearMax() {
       
@@ -949,7 +1007,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder setMaxBytes(
         com.google.protobuf.ByteString value) {
@@ -965,7 +1023,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object condition_ = "";
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public java.lang.String getCondition() {
       java.lang.Object ref = condition_;
@@ -980,7 +1038,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public com.google.protobuf.ByteString
         getConditionBytes() {
@@ -996,7 +1054,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder setCondition(
         java.lang.String value) {
@@ -1009,7 +1067,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder clearCondition() {
       
@@ -1018,7 +1076,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder setConditionBytes(
         com.google.protobuf.ByteString value) {
@@ -1034,7 +1092,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object emptyValueTransfer_ = "";
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public java.lang.String getEmptyValueTransfer() {
       java.lang.Object ref = emptyValueTransfer_;
@@ -1049,7 +1107,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public com.google.protobuf.ByteString
         getEmptyValueTransferBytes() {
@@ -1065,7 +1123,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransfer(
         java.lang.String value) {
@@ -1078,7 +1136,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder clearEmptyValueTransfer() {
       
@@ -1087,7 +1145,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransferBytes(
         com.google.protobuf.ByteString value) {

@@ -202,6 +202,16 @@ public class EntityField implements IEntityField, Serializable {
         return this.defaultValue;
     }
 
+    @Override
+    public CalculateType calculateType() {
+        return null;
+    }
+
+    @Override
+    public Formula formula() {
+        return null;
+    }
+
     public String getDictId() {
         return dictId;
     }

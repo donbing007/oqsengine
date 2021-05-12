@@ -7,7 +7,7 @@ public enum CalculateType {
     UNKNOWN(0),
     NORMAL(1),
     FORMULA(2),
-    INCREMENTAL(3);
+    AUTO_FILL(3);
 
     private int type;
 

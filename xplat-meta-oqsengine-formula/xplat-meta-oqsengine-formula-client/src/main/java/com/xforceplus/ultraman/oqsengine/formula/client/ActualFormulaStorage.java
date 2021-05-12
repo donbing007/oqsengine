@@ -1,9 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.formula.client;
 
 import com.googlecode.aviator.Expression;
+import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaClientException;
+import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaExecutionException;
 import com.xforceplus.ultraman.oqsengine.formula.client.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.formula.client.utils.TypeCheck;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,17 +21,72 @@ import java.util.Map;
 public class ActualFormulaStorage implements FormulaStorage {
 
     @Override
-    public boolean compile(ExpressionWrapper expression) {
-        return ExpressionUtils.compile(expression) != null;
+    public boolean compile(String expression) {
+        return ExpressionUtils.compile(ExpressionWrapper.Builder.anExpression()
+            .withExpression(expression).build()) != null;
+    }
+
+    @Override
+    public boolean compile(ExpressionWrapper expressionWrapper) {
+        return ExpressionUtils.compile(expressionWrapper) != null;
     }
 
     @Override
     public Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
         Expression expression = ExpressionUtils.compile(expressionWrapper);
         if (null == expression) {
-            throw new FormulaClientException(String.format("compile expression failed [%s-%s].",
-                                        expressionWrapper.getCode(), expressionWrapper.getExpression()));
+            throw new FormulaExecutionException(String.format("compile expression failed [%s-%s].",
+                expressionWrapper.getCode(), expressionWrapper.getExpression()));
         }
         return expression.execute(params);
     }
+
+    @Override
+    public Map<String, Object> execute(List<ExecutionWrapper<?>> expressionWrappers, Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>(params);
+
+        Map<Integer, List<ExecutionWrapper<?>>> partitionExpressionWraps = new HashMap<>();
+
+        int maxLevel = 0;
+        /*
+            将所有expressionWrappers按照Level分层
+         */
+        for (ExecutionWrapper<?> expressionWrapper : expressionWrappers) {
+            if (expressionWrapper.getLevel() > maxLevel) {
+                maxLevel = expressionWrapper.getLevel();
+            }
+            partitionExpressionWraps.computeIfAbsent(expressionWrapper.getLevel(), ArrayList::new)
+                .add(expressionWrapper);
+        }
+
+        /*
+            从1-N的顺序执行每一层中的所有表达式
+         */
+        for (int i = 1; i <= maxLevel; i++) {
+            List<ExecutionWrapper<?>> needExecutions = partitionExpressionWraps.get(i);
+            if (null != needExecutions) {
+                for (ExecutionWrapper<?> executionWrapper : needExecutions) {
+                    Object object = execute(executionWrapper.getExpressionWrapper(), params);
+
+                    if (null != object) {
+                        /*
+                            校验返回类型相符
+                        */
+                        if (!TypeCheck.check(executionWrapper.getRetClazz(), object)) {
+                            throw new FormulaExecutionException(
+                                String.format("code-[%s], retType not equals to define, define [%s], actual [%s]",
+                                    executionWrapper.getCode(), executionWrapper.getRetClazz().getCanonicalName(),
+                                    object.getClass().getCanonicalName()));
+                        }
+
+                        result.put(executionWrapper.getCode(), object);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+
 }

@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
  */
 public class EntityClassStorageBuilderUtils {
 
+    private static final int MIN_FORMULA_LEVEL = 1;
+
     /**
      * 将protoBuf转为EntityClassStorage列表.
      */
@@ -125,7 +127,7 @@ public class EntityClassStorageBuilderUtils {
 
         //  profiles
         Map<String, ProfileStorage> profileStorageMap = new HashMap<>();
-        if (null != entityClassInfo.getProfilesList()) {
+        if (!entityClassInfo.getProfilesList().isEmpty()) {
             for (ProfileInfo p : entityClassInfo.getProfilesList()) {
                 if (p.getCode().isEmpty()) {
                     throw new MetaSyncClientException("profile code is invalid.", false);
@@ -217,8 +219,13 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("formula not init with calculateType['FORMULA']", false);
         }
 
+        if (formula.getLevel() < MIN_FORMULA_LEVEL) {
+            throw new MetaSyncClientException(String.format("formula level could not be less than %d", MIN_FORMULA_LEVEL), false);
+        }
+
         return Formula.Builder.anFormula()
             .withFormula(formula.getFormula())
+            .withLevel(formula.getLevel())
             .withMax(formula.getMax())
             .withMin(formula.getMin())
             .withCondition(formula.getCondition())

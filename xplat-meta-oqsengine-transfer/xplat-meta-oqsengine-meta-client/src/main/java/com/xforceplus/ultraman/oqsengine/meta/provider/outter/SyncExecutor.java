@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 public interface SyncExecutor {
     /**
      * 外部实现sync接口
+     *
      * @param appId
      * @param version
      * @param entityClassSyncRspProto
@@ -23,6 +24,7 @@ public interface SyncExecutor {
 
     /**
      * 外部实现获取版本
+     *
      * @param appId
      * @return
      */

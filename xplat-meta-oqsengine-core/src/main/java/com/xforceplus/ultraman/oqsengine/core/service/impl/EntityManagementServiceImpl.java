@@ -15,12 +15,16 @@ import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
 import com.xforceplus.ultraman.oqsengine.formula.client.FormulaStorage;
+import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -30,6 +34,10 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -207,6 +215,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
 
+                /*
+                    执行自动编号、公式字段计算
+                 */
+
+
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNCREATED);
@@ -231,10 +244,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw ex;
 
         } finally {
-
             inserCountTotal.increment();
-
-
         }
     }
 
@@ -467,6 +477,60 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw new SQLException(String.format("Entity(%d-%s) does not have any attributes.",
                 entity.id(), entity.entityClassRef().getCode()));
         }
+    }
+
+    private void entityValueCalculate(IEntity entity, IEntityClass entityClass) {
+        /*
+            1.计算自动填充
+         */
+        Map<String, Object> context = new HashMap<>();
+        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
+
+        entity.entityValue().values().forEach(
+            v -> {
+                /*
+                    这里以oqs内部获取到的entityClass为准
+                 */
+                Optional<IEntityField> entityFieldOp = entityClass.field(v.getField().id());
+                if (entityFieldOp.isPresent()) {
+                    IEntityField entityField = entityFieldOp.get();
+
+                    if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                        //  todo 计算自动填充值并写入context中
+
+                    } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
+                        Map<String, Object> local = (Map<String, Object>) v.getValue();
+                        if (null != local) {
+                            context.putAll(local);
+                        }
+                        executionWrappers.add(initExecutionWrapper(entityField));
+                    }
+                }
+            }
+        );
+
+        /*
+            2.计算公式字段
+         */
+        Map<String, Object> result = formulaStorage.execute(executionWrappers, context);
+        if (null != result) {
+            entity.entityValue().values().forEach(
+
+            );
+        }
+    }
+
+    private ExecutionWrapper<?> initExecutionWrapper(IEntityField entityField) {
+        return ExecutionWrapper.Builder.anExecution()
+            .withCode(entityField.name())
+            .withRetClass(entityField.type().getJavaType())
+            .witLevel(entityField.formula().getLevel())
+            .withExpressionWrapper(
+                ExpressionWrapper.Builder.anExpression()
+                    .withExpression(entityField.formula().getFormula())
+                    .withCached(true)
+                    .build()
+            ).build();
     }
 
 }

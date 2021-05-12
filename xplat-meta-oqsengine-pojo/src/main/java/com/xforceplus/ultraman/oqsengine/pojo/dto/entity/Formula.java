@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import static com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper.Builder.DEFAULT_FORMULA_LEVEL;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.formula.client.utils.MD5Utils;
 
@@ -13,6 +15,9 @@ public class Formula {
 
     @JsonProperty(value = "formula")
     private String formula;
+
+    @JsonProperty(value = "level")
+    private int level;
 
     @JsonProperty(value = "validator")
     private String validator;
@@ -61,6 +66,13 @@ public class Formula {
         this.formula = formula;
     }
 
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
 
     public void setValidator(String validator) {
         this.validator = validator;
@@ -86,7 +98,9 @@ public class Formula {
      * builder.
      */
     public static final class Builder {
+
         private String formula;
+        private Integer level = DEFAULT_FORMULA_LEVEL;
         private String validator;
         private String min;
         private String max;
@@ -105,6 +119,10 @@ public class Formula {
             return this;
         }
 
+        public Formula.Builder withLevel(int level) {
+            this.level = level;
+            return this;
+        }
 
         public Formula.Builder withValidator(String validator) {
             this.validator = validator;
@@ -140,6 +158,7 @@ public class Formula {
                 formula.formula = this.formula;
                 formula.code = MD5Utils.encrypt(this.formula);
             }
+            formula.level = this.level;
             formula.validator = this.validator;
             formula.min = this.min;
             formula.max = this.max;

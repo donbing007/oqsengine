@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.formula.client.dto;
 
-import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaClientException;
+import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaExecutionException;
 import com.xforceplus.ultraman.oqsengine.formula.client.utils.MD5Utils;
 
 /**
@@ -13,7 +13,7 @@ import com.xforceplus.ultraman.oqsengine.formula.client.utils.MD5Utils;
 public class ExpressionWrapper {
 
     /**
-     * 表达式唯一key,目前由expression的base64编码构成.
+     * 表达式唯一key,目前由expression的md5编码构成.
      */
     private String code;
 
@@ -26,6 +26,7 @@ public class ExpressionWrapper {
      * 是否需要在规则引擎中缓存该规则.
      */
     private boolean cached;
+
 
     /**
      * 构造函数.
@@ -59,6 +60,9 @@ public class ExpressionWrapper {
      * builder.
      */
     public static final class Builder {
+
+        public static final int DEFAULT_FORMULA_LEVEL = 1;
+
         private String code;
 
         private String expression;
@@ -68,7 +72,7 @@ public class ExpressionWrapper {
         private Builder() {
         }
 
-        public static ExpressionWrapper.Builder anFormula() {
+        public static Builder anExpression() {
             return new ExpressionWrapper.Builder();
         }
 
@@ -92,7 +96,7 @@ public class ExpressionWrapper {
          */
         public ExpressionWrapper build() {
             if (null == this.expression || this.expression.isEmpty()) {
-                throw new FormulaClientException("expression can't be null in build function.");
+                throw new FormulaExecutionException("expression can't be null in build function.");
             }
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 

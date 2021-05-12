@@ -59,6 +59,20 @@ public interface IEntityField extends Comparable<IEntityField> {
     String defaultValue();
 
     /**
+     * 获取计算类型.
+     *
+     * @return 计算类型
+     */
+    CalculateType calculateType();
+
+    /**
+     * 获取计算对象.
+     *
+     * @return 计算对象
+     */
+    Formula formula();
+
+    /**
      * 名称是否等于当前名称.
      *
      * @param name 被检测的名称.
