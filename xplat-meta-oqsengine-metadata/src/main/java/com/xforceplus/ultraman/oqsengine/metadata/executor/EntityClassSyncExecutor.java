@@ -108,6 +108,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 cacheExecutor.endPrepare(appId);
             }
         }
+        logger.warn("sync-prepare failed, have another sync job, current [{}]-[{}] will be canceled.",
+            appId, version);
 
         return false;
     }
