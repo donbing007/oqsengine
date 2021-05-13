@@ -136,21 +136,8 @@ public class EntityClassHelper {
     /**
      * 将 FieldUp转换成 IEntityField 实例.
      */
-    public static IEntityField toEntityField(FieldUp fieldUp) {
-        return EntityField.Builder.anEntityField()
-            .withId(fieldUp.getId())
-            .withName(fieldUp.getCode())
-            .withFieldType(FieldType.valueOf(fieldUp.getFieldType()))
-            .withConfig(FieldConfig.build()
-                .searchable(ofEmptyStr(fieldUp.getSearchable())
-                    .map(Boolean::valueOf).orElse(false))
-                .max(ofEmptyStr(fieldUp.getMaxLength())
-                    .map(String::valueOf)
-                    .map(Long::parseLong).orElse(-1L))
-                .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
-                    .map(Long::parseLong).orElse(-1L))
-                .precision(fieldUp.getPrecision())
-                .identifie(fieldUp.getIdentifier())).build();
+    public static Optional<IEntityField> toEntityField(IEntityClass entityClass, FieldUp fieldUp) {
+        return entityClass.field(fieldUp.getId());
     }
 
     private static String toValueStr(IValue value) {
