@@ -19,13 +19,16 @@ public class DataSourcePackage {
     private List<DataSource> indexSearch;
     private DataSource devOps;
     private DataSource changelog;
+    private DataSource segment;
 
-    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch, DataSource devOps, DataSource changelog) {
+    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter,
+                             List<DataSource> indexSearch, DataSource devOps, DataSource changelog, DataSource segment) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
         this.devOps = devOps;
         this.changelog = changelog;
+        this.segment = segment;
     }
 
     public List<DataSource> getMaster() {
@@ -46,6 +49,10 @@ public class DataSourcePackage {
 
     public DataSource getChangelog() {
         return changelog;
+    }
+
+    public DataSource getSegment() {
+        return segment;
     }
 
     public void close() {

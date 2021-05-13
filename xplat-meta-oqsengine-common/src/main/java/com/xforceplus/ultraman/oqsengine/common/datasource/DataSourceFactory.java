@@ -62,6 +62,7 @@ public class DataSourceFactory {
     private static final String MASTER_PATH = "dataSources.master";
     private static final String DEV_OPS_PATH = MASTER_PATH;
     private static final String CHANGE_LOG_PATH = MASTER_PATH;
+    private static final String SEGMENT_PATH = MASTER_PATH;
 
     public static DataSourcePackage build() {
         return build(false);
@@ -121,6 +122,19 @@ public class DataSourceFactory {
             devOpsDataSource = null;
         }
 
+        DataSource segmentDataSource;
+        if (config.hasPath(SEGMENT_PATH)) {
+            List<DataSource> segmentSource =
+                    buildDataSources("master", (List<Config>) config.getConfigList(SEGMENT_PATH), showSql);
+            if (segmentSource.size() > 0) {
+                segmentDataSource = segmentSource.get(0);
+            } else {
+                throw new RuntimeException("Segment dataSource was been configure, but not init success");
+            }
+        } else {
+            segmentDataSource = null;
+        }
+
         DataSource changelogDataSource;
         if (config.hasPath(CHANGE_LOG_PATH)) {
             List<DataSource> devOps =
@@ -134,7 +148,7 @@ public class DataSourceFactory {
             changelogDataSource = null;
         }
 
-        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource, changelogDataSource);
+        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource, changelogDataSource, segmentDataSource);
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs, boolean showSql) {
