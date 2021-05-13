@@ -40,13 +40,13 @@ public class MeqMatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            MeqMatchConditionBuilderAbstract builder = new MeqMatchConditionBuilderAbstract(
+            MeqMatchConditionBuilder builder = new MeqMatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.useGroupName);
 
             String result = builder.build(c.condition);
@@ -67,8 +67,7 @@ public class MeqMatchConditionBuilderTest {
                 r -> {
                     Assert.assertEquals("(1y2p0ijtest032e8e7S | 1y2p0ijtest132e8e7S | 1y2p0ijtest232e8e7S)", r);
                 }
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.LONG),
@@ -80,8 +79,7 @@ public class MeqMatchConditionBuilderTest {
                 r -> {
                     Assert.assertEquals("(1y2p0ij132e8e7L | 1y2p0ij232e8e7L | 1y2p0ij332e8e7L)", r);
                 }
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.ENUM),
@@ -91,8 +89,7 @@ public class MeqMatchConditionBuilderTest {
                 r -> {
                     Assert.assertEquals("(1y2p0ijone32e8e7S)", r);
                 }
-            )
-            ,
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.STRINGS),

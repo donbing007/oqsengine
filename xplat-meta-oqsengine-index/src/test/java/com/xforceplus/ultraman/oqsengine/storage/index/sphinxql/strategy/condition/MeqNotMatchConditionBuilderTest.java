@@ -39,13 +39,13 @@ public class MeqNotMatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            MeqNotMatchConditionBuilderAbstract builder = new MeqNotMatchConditionBuilderAbstract(
+            MeqNotMatchConditionBuilder builder = new MeqNotMatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type());
 
             Assert.assertEquals(c.expected, builder.build(c.condition));
@@ -98,6 +98,24 @@ public class MeqNotMatchConditionBuilderTest {
                         "!@#$%^&*()300")
                 ),
                 FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7S IN ('!@#$%^&*()300')"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 300L),
+                    new LongValue(EntityField.CREATE_TIME_FILED, 200L)
+                ),
+                FieldDefine.CREATE_TIME + " IN (300,200)"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 300L),
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
+                ),
+                FieldDefine.UPDATE_TIME + " IN (300,200)"
             )
         );
     }

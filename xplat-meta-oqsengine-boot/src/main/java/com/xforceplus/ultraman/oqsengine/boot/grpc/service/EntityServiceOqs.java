@@ -414,7 +414,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 } else {
                     FieldSortUp sortUp = sort.get(0);
                     //get related field
-                    sortField = Optional.of(toEntityField(sortUp.getField()));
+                    sortField = toEntityField(entityClass, sortUp.getField());
                 }
 
                 if (!sortField.isPresent()) {
@@ -746,12 +746,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 } else {
                     FieldSortUp sortUp = sort.get(0);
                     //get related field
-                    sortField = Optional.of(toEntityField(sortUp.getField()));
+                    sortField = toEntityField(entityClass, sortUp.getField());
                 }
 
                 Optional<Conditions> extraCondition = Optional.empty();
-                if (in.hasField(
-                    SelectByCondition.getDescriptor().findFieldByNumber(SelectByCondition.TREE_FIELD_NUMBER))) {
+                if (in.hasTree()) {
                     SelectByTree tree = in.getTree();
                     Filters filters = tree.getFilters();
                     extraCondition = toConditions(entityClass, filters, metaManager);

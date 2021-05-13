@@ -16,9 +16,9 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/3/26 14:33
  * @since 1.8
  */
-public class MeqMatchConditionBuilderAbstract extends AbstractSphinxQLConditionBuilder {
+public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public MeqMatchConditionBuilderAbstract(StorageStrategyFactory storageStrategyFactory, FieldType fieldType, boolean useGroupName) {
+    public MeqMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType, boolean useGroupName) {
         super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, true, useGroupName);
     }
 
