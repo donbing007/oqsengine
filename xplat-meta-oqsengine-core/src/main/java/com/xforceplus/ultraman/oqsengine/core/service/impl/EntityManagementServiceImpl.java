@@ -230,7 +230,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 /*
                     执行自动编号、公式字段计算
                  */
-
+                buildElevate(entity);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -300,7 +300,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 操作时间
                 targetEntity.markTime(entity.time());
-                targetEntity.entityValue().addValues(entity.entityValue().values());
+
+                /*
+                    执行自动编号、公式字段计算
+                 */
+                replaceElevate(targetEntity, entity);
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -491,51 +495,116 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private void entityValueCalculate(IEntity entity, IEntityClass entityClass) {
-        /*
-            1.计算自动填充
-         */
+    private void buildElevate(IEntity entity) {
+        //  全局context
         Map<String, Object> context = new HashMap<>();
+        //  需要进行计算的公式字段
         List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
-
+        //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
+        //  1.过滤出需要计算的公式字段，并对自动填充字段进行计算
+        prepareBuild(entity, entityValue, context, executionWrappers);
+
+        //  2.计算全局context
+
+        //  3.计算公式字段
+        formulaElevator(entity, entityValue, context, executionWrappers);
+
+        //  将entityValue加入到目标中
+        entity.entityValue().addValues(entityValue.values());
+    }
+
+    /*
+        将需更新的内容合并到目标entity中
+     */
+    private void replaceElevate(IEntity targetEntity, IEntity updateEntity) {
+        //  全局context
+        Map<String, Object> context = new HashMap<>();
+        //  需要进行计算的公式字段
+        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
+        //  生成的新的entityValue
+        IEntityValue entityValue = EntityValue.build();
+
+        //  合并新旧entity
+        prepareReplace(targetEntity, updateEntity, entityValue, context, executionWrappers);
+
+        //  计算公式字段
+        formulaElevator(updateEntity, entityValue, context, executionWrappers);
+
+        //  将entityValue加入到目标中
+        targetEntity.entityValue().addValues(entityValue.values());
+    }
+
+    private void prepareBuild(IEntity entity, IEntityValue entityValue,
+                          Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+
         entity.entityValue().values().forEach(
             v -> {
-                /*
-                    这里以oqs内部获取到的entityClass为准
-                 */
-                Optional<IEntityField> entityFieldOp = entityClass.field(v.getField().id());
-                if (entityFieldOp.isPresent()) {
-                    IEntityField entityField = entityFieldOp.get();
+                //  以oqs内部获取到的entityClass为准
+                IEntityField entityField = v.getField();
 
-                    if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
-                        //  todo 计算自动填充值并写入context中
-                        Object result = null;
+                if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                    //  todo 计算自动填充值并写入context中
+                    Object result = null;
 
-                        if (null != result) {
-                            context.put(entityField.name(), result);
-                            entityValue.addValue(toIValue(entityField, result));
-                        }
-                    } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
-                        Map<String, Object> local = (Map<String, Object>) v.getValue();
-                        if (null != local) {
-                            context.putAll(local);
-                        }
-                        executionWrappers.add(initExecutionWrapper(entityField));
-                    } else {
-                        entityValue.addValue(v);
+                    if (null != result) {
+                        context.put(entityField.name(), result);
+                        entityValue.addValue(toIValue(entityField, result));
+                    }
+                } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
+                    Map<String, Object> local = (Map<String, Object>) v.getValue();
+                    if (null != local) {
+                        context.putAll(local);
+                    }
+                    executionWrappers.add(initExecutionWrapper(entityField));
+                }
+            }
+        );
+    }
+
+    private void prepareReplace(IEntity oldEntity, IEntity newEntity, IEntityValue entityValue,
+                       Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+        //  合并new
+        newEntity.entityValue().values().forEach(
+            v -> {
+                //  以oqs内部获取到的entityClass为准
+                IEntityField entityField = v.getField();
+
+                Map<String, Object> local = (Map<String, Object>) v.getValue();
+                if (null != local) {
+                    context.putAll(local);
+                }
+                //  需要进行计算
+                if (entityField.calculateType().equals(CalculateType.FORMULA)) {
+                    executionWrappers.add(initExecutionWrapper(entityField));
+                } else {
+                    //  加入新的entityValue中
+                    entityValue.addValue(v);
+                }
+            }
+        );
+        //  合并old
+        oldEntity.entityValue().values().forEach(
+            v -> {
+                //  old字段中所有的公式字段都不会参与replace计算
+                if (!v.getField().calculateType().equals(CalculateType.FORMULA)) {
+                    //  当context中不存在该key时，加入,不使用putIfAbsent的原因是允许空值
+                    if (!context.containsKey(v.getField().name())) {
+                        context.put(v.getField().name(), v.getValue());
                     }
                 }
             }
         );
+    }
 
-        /*
-            2.计算公式字段
-         */
+
+    private void formulaElevator(IEntity entity, IEntityValue entityValue,
+                                                Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         Map<String, Object> result = formulaStorage.execute(executionWrappers, context);
         if (null != result) {
-            entityClass.fields().forEach(
-                e -> {
+            entity.entityValue().values().forEach(
+                v -> {
+                    IEntityField e = v.getField();
                     if (e.calculateType().equals(CalculateType.FORMULA)) {
                         Object o = result.get(e.name());
                         if (null != o) {
@@ -546,7 +615,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             );
         }
 
-        entity.resetEntityValue(entityValue);
     }
 
     private IValue<?> toIValue(IEntityField field, Object result) {
