@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>xplat-meta-oqsengine-formula</artifactId>
+    <artifactId>xplat-meta-oqsengine-calculate</artifactId>
 
     <properties>
         <aviator.version>5.0.0</aviator.version>
