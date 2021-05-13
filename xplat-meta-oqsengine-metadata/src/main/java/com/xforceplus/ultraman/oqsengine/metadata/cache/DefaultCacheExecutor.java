@@ -177,9 +177,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
     /**
      * 实例化.
      *
-     * @param maxCacheSize 缓存最多元素.
+     * @param maxCacheSize         缓存最多元素.
      * @param prepareExpireSeconds 预备的等待超时秒数.
-     * @param cacheExpireSeconds 缓存过期的秒数.
+     * @param cacheExpireSeconds   缓存过期的秒数.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
         this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
@@ -194,18 +194,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
     /**
      * 实例化.
      *
-     * @param maxCacheSize 缓存的最多元素.
-     * @param prepareExpireSeconds 预备的等等超时秒数.
-     * @param cacheExpireSeconds 缓存过期的秒数.
-     * @param appEnvKeys 应用环境KEY.
-     * @param appVersionKeys 应用版本KEY.
-     * @param appPrepareKeyPrefix 应用预备的KEY.
-     * @param entityStorageKeys 元信息储存KEY.
-     * @param appEntityMappingKey 元信息属性MAP的KEY.
+     * @param maxCacheSize            缓存的最多元素.
+     * @param prepareExpireSeconds    预备的等等超时秒数.
+     * @param cacheExpireSeconds      缓存过期的秒数.
+     * @param appEnvKeys              应用环境KEY.
+     * @param appVersionKeys          应用版本KEY.
+     * @param appPrepareKeyPrefix     应用预备的KEY.
+     * @param entityStorageKeys       元信息储存KEY.
+     * @param appEntityMappingKey     元信息属性MAP的KEY.
      * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
-                                String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+                                String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
+                                String entityStorageKeys,
                                 String appEntityMappingKey, String appEntityCollectionsKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
@@ -536,10 +537,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public boolean prepare(String appId, int version) {
         if (null == appId || appId.isEmpty()) {
+            logger.warn("prepare appId is empty.");
             return false;
         }
 
         if (version < 0) {
+            logger.warn("prepare [{}] failed, version [{}] is less than 0", appId, version);
             return false;
         }
 
@@ -547,11 +550,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
             appVersionKeys,
             appPrepareKeyPrefix,
         };
-
-        return syncCommands.evalsha(
-            prepareVersionScriptSha,
-            ScriptOutputType.BOOLEAN,
-            keys, Integer.toString(version), appId, Integer.toString(prepareExpire));
+        try {
+            return syncCommands.evalsha(
+                prepareVersionScriptSha,
+                ScriptOutputType.BOOLEAN,
+                keys, Integer.toString(version), appId, Integer.toString(prepareExpire));
+        } catch (Exception e) {
+            logger.warn("do prepare [{}]-[{}] failed, message [{}]", appId, version, e.toString());
+            throw e;
+        }
     }
 
     /**
@@ -562,8 +569,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null == appId || appId.isEmpty()) {
             return false;
         }
-
-        return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
+        try {
+            return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
+        } catch (Exception e) {
+            logger.warn("end prepare [{}] failed, message [{}]", appId, e.toString());
+            return false;
+        }
     }
 
     @Override
@@ -656,7 +667,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         try {
             List<String> entityClassKeys = syncCommands.hkeys(keys);
             if (null != entityClassKeys && entityClassKeys.size() > 0) {
-                return syncCommands.hdel(keys, entityClassKeys.toArray(new String[entityClassKeys.size()])) == entityClassKeys.size();
+                return syncCommands.hdel(keys, entityClassKeys.toArray(new String[entityClassKeys.size()]))
+                    == entityClassKeys.size();
             }
             return true;
         } catch (Exception e) {
