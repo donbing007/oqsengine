@@ -71,6 +71,9 @@ public class DataSourceConfiguration {
         return dataSourcePackage.getSegment();
     }
 
+    /**
+     * 主库数据源.
+     */
     @Bean
     @DependsOn("dataSourcePackage")
     public DataSource masterDataSource(DataSourcePackage dataSourcePackage,

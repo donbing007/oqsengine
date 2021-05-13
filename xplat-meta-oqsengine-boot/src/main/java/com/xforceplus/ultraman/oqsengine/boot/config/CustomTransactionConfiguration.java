@@ -17,8 +17,8 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
 import io.lettuce.core.RedisClient;
-import org.springframework.beans.factory.annotation.Qualifier;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -116,7 +116,7 @@ public class CustomTransactionConfiguration {
     }
 
     /**
-     * Segment
+     * Segment.
      */
     @Bean
     public TransactionExecutor segmentJDBCTransactionExecutor(
@@ -127,11 +127,17 @@ public class CustomTransactionConfiguration {
         return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
     }
 
+    /**
+     * serviceTransactionExecutor.
+     */
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
     }
 
+    /**
+     * cacheEventHandler.
+     */
     @Bean
     public CacheEventHandler cacheEventHandler(RedisClient redisClientCacheEvent,
                                                ObjectMapper objectMapper,
