@@ -79,7 +79,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 try {
                     expiredVersion = version(appId);
                 } catch (Exception e) {
-                    logger.warn(e.getMessage());
+                    logger.warn("query expiredVersion failed, [{}]", e.toString());
                     return false;
                 }
 
@@ -101,13 +101,15 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                     return true;
                 } catch (Exception e) {
-                    logger.warn(e.getMessage());
+                    logger.warn("sync-error, message[{}]", e.toString());
                     return false;
                 }
             } finally {
                 cacheExecutor.endPrepare(appId);
             }
         }
+        logger.warn("sync-prepare failed, have another sync job, current [{}]-[{}] will be canceled.",
+            appId, version);
 
         return false;
     }

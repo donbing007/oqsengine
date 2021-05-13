@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -19,9 +20,9 @@ import java.util.Arrays;
  * @version 0.1 2020/3/26 14:42
  * @since 1.8
  */
-public class MeqNotMatchConditionBuilderAbstract extends AbstractSphinxQLConditionBuilder {
+public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public MeqNotMatchConditionBuilderAbstract(StorageStrategyFactory storageStrategyFactory, FieldType fieldType) {
+    public MeqNotMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType) {
         super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, false);
     }
 
@@ -32,10 +33,26 @@ public class MeqNotMatchConditionBuilderAbstract extends AbstractSphinxQLConditi
         StorageValue storageValue = storageStrategy.toStorageValue(firstValue);
         StringBuilder buff = new StringBuilder();
 
-        if (condition.getField().config().isIdentifie()) {
+        FieldConfig fieldConfig = condition.getField().config();
+        if (fieldConfig.isIdentifie()) {
+
             buff.append(FieldDefine.ID);
+
         } else {
-            buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+
+            switch (fieldConfig.getFieldSense()) {
+                case CREATE_TIME: {
+                    buff.append(FieldDefine.CREATE_TIME);
+                    break;
+                }
+                case UPDATE_TIME: {
+                    buff.append(FieldDefine.UPDATE_TIME);
+                    break;
+                }
+                default: {
+                    buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                }
+            }
         }
         buff.append(" IN (");
         buff.append(buildConditionValue(storageValue, storageStrategy));

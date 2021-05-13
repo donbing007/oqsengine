@@ -26,7 +26,6 @@ public class CDCCallBackTest {
         System.out.println(cdcMetrics1);
     }
 
-
     @Test
     public void testEnum() throws JsonProcessingException {
 
