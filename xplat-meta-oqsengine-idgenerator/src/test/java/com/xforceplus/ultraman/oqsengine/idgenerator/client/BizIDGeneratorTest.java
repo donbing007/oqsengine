@@ -57,7 +57,7 @@ public class BizIDGeneratorTest {
     public void before() throws SQLException {
         storage = mock(SqlSegmentStorage.class);
         SegmentInfo segmentInfo = SegmentInfo.builder().withId(1l)
-                .withBeginId(1l).withBizType(bizType).withMaxId(2000l).withMode(1)
+                .withBeginId(1l).withBizType(bizType).withMaxId(0l).withMode(1)
                 .withPatten("YYYY-MM-DD:{0000}").withStep(1000).withCreateTime(new Timestamp(System.currentTimeMillis()))
                 .withUpdateTime(new Timestamp(System.currentTimeMillis())).withVersion(1l).build();
         when(storage.query(any())).thenReturn(Optional.of(segmentInfo));
@@ -106,12 +106,12 @@ public class BizIDGeneratorTest {
              bizId = bizIDGenerator.nextId(bizType);
              System.out.println(bizId);
         }
-        Assert.assertEquals(bizId,"YYYY-MM-DD:2010");
+        Assert.assertEquals(bizId,"YYYY-MM-DD:0010");
         for(int i=0; i<1000; i++) {
             bizId = bizIDGenerator.nextId(bizType);
             System.out.println(bizId);
         }
-        Assert.assertEquals("YYYY-MM-DD:3010",bizId);
+        Assert.assertEquals("YYYY-MM-DD:1010",bizId);
     }
 
     @Test

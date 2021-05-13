@@ -26,7 +26,7 @@ public class SegmentId implements Serializable {
 
 
     public IDResult nextId() {
-        PattenValue idValue = currentId.updateAndGet(pattenValue -> {
+            PattenValue idValue = currentId.updateAndGet(pattenValue -> {
             PattenValue newValue = new PattenValue(pattenValue.getId()+1,
                     PattenParserUtil.getInstance().parse(patten,pattenValue.getId()+1));
             return newValue;

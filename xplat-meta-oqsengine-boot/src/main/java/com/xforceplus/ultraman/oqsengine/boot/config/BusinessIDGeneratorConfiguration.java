@@ -49,7 +49,8 @@ public class BusinessIDGeneratorConfiguration {
 
     /**
      * pattenParserUtil.
-     * @return
+     *
+     * @return PattenParserUtil
      */
     @Bean
     public PattenParserUtil pattenParserUtil() {
