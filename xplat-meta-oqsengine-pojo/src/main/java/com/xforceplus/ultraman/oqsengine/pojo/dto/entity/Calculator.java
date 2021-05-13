@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.formula.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 
 /**
  * Created by justin.xu on 05/2021
