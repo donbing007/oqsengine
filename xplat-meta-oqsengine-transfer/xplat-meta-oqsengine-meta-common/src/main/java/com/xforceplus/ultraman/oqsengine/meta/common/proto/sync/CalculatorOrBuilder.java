@@ -3,97 +3,102 @@
 
 package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 
-public interface FormulaOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:Formula)
+public interface CalculatorOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:Calculator)
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>string formula = 1;</code>
+   * <code>int32 calculateType = 1;</code>
    */
-  java.lang.String getFormula();
-  /**
-   * <code>string formula = 1;</code>
-   */
-  com.google.protobuf.ByteString
-      getFormulaBytes();
+  int getCalculateType();
 
   /**
-   * <code>string validator = 2;</code>
+   * <code>string expression = 2;</code>
+   */
+  java.lang.String getExpression();
+  /**
+   * <code>string expression = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getExpressionBytes();
+
+  /**
+   * <code>string validator = 3;</code>
    */
   java.lang.String getValidator();
   /**
-   * <code>string validator = 2;</code>
+   * <code>string validator = 3;</code>
    */
   com.google.protobuf.ByteString
       getValidatorBytes();
 
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   java.lang.String getMin();
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   com.google.protobuf.ByteString
       getMinBytes();
 
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   java.lang.String getMax();
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   com.google.protobuf.ByteString
       getMaxBytes();
 
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   java.lang.String getCondition();
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   com.google.protobuf.ByteString
       getConditionBytes();
 
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   java.lang.String getEmptyValueTransfer();
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   com.google.protobuf.ByteString
       getEmptyValueTransferBytes();
 
   /**
-   * <code>string patten = 7;</code>
+   * <code>string patten = 8;</code>
    */
   java.lang.String getPatten();
   /**
-   * <code>string patten = 7;</code>
+   * <code>string patten = 8;</code>
    */
   com.google.protobuf.ByteString
       getPattenBytes();
 
   /**
-   * <code>string model = 8;</code>
+   * <code>string model = 9;</code>
    */
   java.lang.String getModel();
   /**
-   * <code>string model = 8;</code>
+   * <code>string model = 9;</code>
    */
   com.google.protobuf.ByteString
       getModelBytes();
 
   /**
-   * <code>int32 step = 9;</code>
+   * <code>int32 step = 10;</code>
    */
   int getStep();
 
   /**
-   * <code>int32 level = 10;</code>
+   * <code>int32 level = 11;</code>
    */
   int getLevel();
 }

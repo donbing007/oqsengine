@@ -7,13 +7,15 @@ import com.xforceplus.ultraman.oqsengine.formula.utils.MD5Utils;
 /**
  * Created by justin.xu on 05/2021
  */
-public class Formula {
+public class Calculator {
+    @JsonProperty(value = "calculateType")
+    private CalculateType calculateType;
 
     @JsonProperty(value = "code")
     private String code;
 
-    @JsonProperty(value = "formula")
-    private String formula;
+    @JsonProperty(value = "expression")
+    private String expression;
 
     @JsonProperty(value = "validator")
     private String validator;
@@ -47,8 +49,16 @@ public class Formula {
         return code;
     }
 
-    public String getFormula() {
-        return formula;
+    public String getExpression() {
+        return expression;
+    }
+
+    public CalculateType getCalculateType() {
+        return calculateType;
+    }
+
+    public void setCalculateType(CalculateType calculateType) {
+        this.calculateType = calculateType;
     }
 
     public String getValidator() {
@@ -71,8 +81,8 @@ public class Formula {
         return emptyValueTransfer;
     }
 
-    public void setFormula(String formula) {
-        this.formula = formula;
+    public void setExpression(String expression) {
+        this.expression = expression;
     }
 
     public int getLevel() {
@@ -131,8 +141,8 @@ public class Formula {
      * builder.
      */
     public static final class Builder {
-
-        private String formula;
+        private CalculateType calculateType;
+        private String expression;
         private Integer level = ExecutionWrapper.Builder.DEFAULT_FORMULA_LEVEL;
         private String validator;
         private String min;
@@ -146,56 +156,61 @@ public class Formula {
         private Builder() {
         }
 
-        public static Formula.Builder anFormula() {
-            return new Formula.Builder();
+        public static Calculator.Builder anCalculator() {
+            return new Calculator.Builder();
         }
 
-        public Formula.Builder withFormula(String formula) {
-            this.formula = formula;
+        public Calculator.Builder withCalculateType(CalculateType calculateType) {
+            this.calculateType = calculateType;
             return this;
         }
 
-        public Formula.Builder withLevel(int level) {
+        public Calculator.Builder withExpression(String expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        public Calculator.Builder withLevel(int level) {
             this.level = level;
             return this;
         }
 
-        public Formula.Builder withValidator(String validator) {
+        public Calculator.Builder withValidator(String validator) {
             this.validator = validator;
             return this;
         }
 
-        public Formula.Builder withMin(String min) {
+        public Calculator.Builder withMin(String min) {
             this.min = min;
             return this;
         }
 
-        public Formula.Builder withMax(String max) {
+        public Calculator.Builder withMax(String max) {
             this.max = max;
             return this;
         }
 
-        public Formula.Builder withCondition(String condition) {
+        public Calculator.Builder withCondition(String condition) {
             this.condition = condition;
             return this;
         }
 
-        public Formula.Builder withEmptyValueTransfer(String emptyValueTransfer) {
+        public Calculator.Builder withEmptyValueTransfer(String emptyValueTransfer) {
             this.emptyValueTransfer = emptyValueTransfer;
             return this;
         }
 
-        public Formula.Builder withPatten(String patten) {
+        public Calculator.Builder withPatten(String patten) {
             this.patten = patten;
             return this;
         }
 
-        public Formula.Builder withModel(String model) {
+        public Calculator.Builder withModel(String model) {
             this.model = model;
             return this;
         }
 
-        public Formula.Builder withStep(int step) {
+        public Calculator.Builder withStep(int step) {
             this.step = step;
             return this;
         }
@@ -203,23 +218,24 @@ public class Formula {
         /**
          * build.
          */
-        public Formula build() {
-            Formula formula = new Formula();
-            if (null != this.formula && !this.formula.isEmpty()) {
-                formula.formula = this.formula;
-                formula.code = MD5Utils.encrypt(this.formula);
+        public Calculator build() {
+            Calculator calculator = new Calculator();
+            calculator.calculateType = this.calculateType;
+            calculator.expression = this.expression;
+            if (null != calculator.expression && !calculator.expression.isEmpty()) {
+                calculator.code = MD5Utils.encrypt(calculator.expression);
             }
-            formula.validator = this.validator;
-            formula.min = this.min;
-            formula.max = this.max;
-            formula.condition = this.condition;
-            formula.emptyValueTransfer = this.emptyValueTransfer;
-            formula.patten = this.patten;
-            formula.model = this.model;
-            formula.step = this.step;
-            formula.level = this.level;
+            calculator.validator = this.validator;
+            calculator.min = this.min;
+            calculator.max = this.max;
+            calculator.condition = this.condition;
+            calculator.emptyValueTransfer = this.emptyValueTransfer;
+            calculator.patten = this.patten;
+            calculator.model = this.model;
+            calculator.step = this.step;
+            calculator.level = this.level;
 
-            return formula;
+            return calculator;
         }
     }
 }

@@ -660,10 +660,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return ExecutionWrapper.Builder.anExecution()
             .withCode(entityField.name())
             .withRetClass(entityField.type().getJavaType())
-            .witLevel(entityField.formula().getLevel())
+            .witLevel(entityField.calculator().getLevel())
             .withExpressionWrapper(
                 ExpressionWrapper.Builder.anExpression()
-                    .withExpression(entityField.formula().getFormula())
+                    .withExpression(entityField.calculator().getExpression())
                     .withCached(true)
                     .build()
             ).build();

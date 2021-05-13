@@ -70,7 +70,7 @@ public interface IEntityField extends Comparable<IEntityField> {
      *
      * @return 计算对象
      */
-    Formula formula();
+    Calculator calculator();
 
     /**
      * 名称是否等于当前名称.

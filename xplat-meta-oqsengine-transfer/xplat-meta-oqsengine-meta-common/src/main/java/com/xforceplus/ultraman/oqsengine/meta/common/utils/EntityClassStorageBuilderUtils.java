@@ -14,9 +14,9 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
@@ -193,7 +193,6 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
 
-        CalculateType calculateType = CalculateType.instance(e.getCalculateType());
         EntityField.Builder builder = EntityField.Builder.anEntityField()
             .withId(eid)
             .withName(e.getName())
@@ -201,41 +200,57 @@ public class EntityClassStorageBuilderUtils {
             .withFieldType(FieldType.fromRawType(e.getFieldType()))
             .withDictId(e.getDictId())
             .withDefaultValue(e.getDefaultValue())
-            .withConfig(toFieldConfig(e.getFieldConfig()))
-            .withCalculateType(calculateType);
+            .withConfig(toFieldConfig(e.getFieldConfig()));
 
-        if (calculateType.equals(CalculateType.AUTO_FILL)
-                    || calculateType.equals(CalculateType.FORMULA)) {
-            builder.withFormula(toFormula(e.getFormula()));
-        }
+        builder.withCalculator(toCalculator(e.getCalculator()));
 
         return builder.build();
     }
 
-    private static Formula toFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula) {
+    private static Calculator toCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+        if (null == calculator || !calculator.isInitialized()) {
+            throw new MetaSyncClientException("calculator is null or not init.", false);
+        }
+
+        CalculateType calculateType = CalculateType.instance(calculator.getCalculateType());
         /*
-            formula必须初始化
+            初始化
          */
-        if (null == formula || formula.getFormula().isEmpty()) {
-            throw new MetaSyncClientException("formula not init with calculateType['FORMULA']", false);
+
+        //  check
+        switch (calculateType) {
+            case FORMULA: {
+                if (calculator.getExpression().isEmpty()) {
+                    throw new MetaSyncClientException("calculator [expression] could not be null with type [formula].", false);
+                }
+                if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
+                    throw new MetaSyncClientException(
+                        String.format("calculator [level] could not be less than %d with type [formula].", MIN_FORMULA_LEVEL), false);
+                }
+                break;
+            }
+            case AUTO_FILL: {
+                if (calculator.getPatten().isEmpty()) {
+                    throw new MetaSyncClientException("calculator [patten] could not be null with type [autoFill].", false);
+                }
+                break;
+            }
+            default:
+                break;
         }
 
-        if (formula.getLevel() < MIN_FORMULA_LEVEL) {
-            throw new MetaSyncClientException(
-                String.format("formula level could not be less than %d", MIN_FORMULA_LEVEL), false);
-        }
-
-        return Formula.Builder.anFormula()
-            .withFormula(formula.getFormula())
-            .withMax(formula.getMax())
-            .withMin(formula.getMin())
-            .withCondition(formula.getCondition())
-            .withValidator(formula.getValidator())
-            .withEmptyValueTransfer(formula.getEmptyValueTransfer())
-            .withPatten(formula.getPatten())
-            .withModel(formula.getModel())
-            .withStep(formula.getStep())
-            .withLevel(formula.getLevel())
+        return Calculator.Builder.anCalculator()
+            .withCalculateType(calculateType)
+            .withExpression(calculator.getExpression())
+            .withMax(calculator.getMax())
+            .withMin(calculator.getMin())
+            .withCondition(calculator.getCondition())
+            .withValidator(calculator.getValidator())
+            .withEmptyValueTransfer(calculator.getEmptyValueTransfer())
+            .withPatten(calculator.getPatten())
+            .withModel(calculator.getModel())
+            .withStep(calculator.getStep())
+            .withLevel(calculator.getLevel())
             .build();
     }
 

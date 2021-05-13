@@ -4,19 +4,20 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 
 /**
- * Protobuf type {@code Formula}
+ * Protobuf type {@code Calculator}
  */
-public  final class Formula extends
+public  final class Calculator extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:Formula)
-    FormulaOrBuilder {
+    // @@protoc_insertion_point(message_implements:Calculator)
+    CalculatorOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use Formula.newBuilder() to construct.
-  private Formula(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use Calculator.newBuilder() to construct.
+  private Calculator(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private Formula() {
-    formula_ = "";
+  private Calculator() {
+    calculateType_ = 0;
+    expression_ = "";
     validator_ = "";
     min_ = "";
     max_ = "";
@@ -33,7 +34,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private Formula(
+  private Calculator(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -59,60 +60,65 @@ private static final long serialVersionUID = 0L;
             }
             break;
           }
-          case 10: {
-            java.lang.String s = input.readStringRequireUtf8();
+          case 8: {
 
-            formula_ = s;
+            calculateType_ = input.readInt32();
             break;
           }
           case 18: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            validator_ = s;
+            expression_ = s;
             break;
           }
           case 26: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            min_ = s;
+            validator_ = s;
             break;
           }
           case 34: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            max_ = s;
+            min_ = s;
             break;
           }
           case 42: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            condition_ = s;
+            max_ = s;
             break;
           }
           case 50: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            emptyValueTransfer_ = s;
+            condition_ = s;
             break;
           }
           case 58: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            patten_ = s;
+            emptyValueTransfer_ = s;
             break;
           }
           case 66: {
             java.lang.String s = input.readStringRequireUtf8();
 
+            patten_ = s;
+            break;
+          }
+          case 74: {
+            java.lang.String s = input.readStringRequireUtf8();
+
             model_ = s;
             break;
           }
-          case 72: {
+          case 80: {
 
             step_ = input.readInt32();
             break;
           }
-          case 80: {
+          case 88: {
 
             level_ = input.readInt32();
             break;
@@ -131,54 +137,63 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Formula_descriptor;
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
   }
 
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Formula_fieldAccessorTable
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder.class);
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
   }
 
-  public static final int FORMULA_FIELD_NUMBER = 1;
-  private volatile java.lang.Object formula_;
+  public static final int CALCULATETYPE_FIELD_NUMBER = 1;
+  private int calculateType_;
   /**
-   * <code>string formula = 1;</code>
+   * <code>int32 calculateType = 1;</code>
    */
-  public java.lang.String getFormula() {
-    java.lang.Object ref = formula_;
+  public int getCalculateType() {
+    return calculateType_;
+  }
+
+  public static final int EXPRESSION_FIELD_NUMBER = 2;
+  private volatile java.lang.Object expression_;
+  /**
+   * <code>string expression = 2;</code>
+   */
+  public java.lang.String getExpression() {
+    java.lang.Object ref = expression_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      formula_ = s;
+      expression_ = s;
       return s;
     }
   }
   /**
-   * <code>string formula = 1;</code>
+   * <code>string expression = 2;</code>
    */
   public com.google.protobuf.ByteString
-      getFormulaBytes() {
-    java.lang.Object ref = formula_;
+      getExpressionBytes() {
+    java.lang.Object ref = expression_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      formula_ = b;
+      expression_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int VALIDATOR_FIELD_NUMBER = 2;
+  public static final int VALIDATOR_FIELD_NUMBER = 3;
   private volatile java.lang.Object validator_;
   /**
-   * <code>string validator = 2;</code>
+   * <code>string validator = 3;</code>
    */
   public java.lang.String getValidator() {
     java.lang.Object ref = validator_;
@@ -193,7 +208,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string validator = 2;</code>
+   * <code>string validator = 3;</code>
    */
   public com.google.protobuf.ByteString
       getValidatorBytes() {
@@ -209,10 +224,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int MIN_FIELD_NUMBER = 3;
+  public static final int MIN_FIELD_NUMBER = 4;
   private volatile java.lang.Object min_;
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   public java.lang.String getMin() {
     java.lang.Object ref = min_;
@@ -227,7 +242,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string min = 3;</code>
+   * <code>string min = 4;</code>
    */
   public com.google.protobuf.ByteString
       getMinBytes() {
@@ -243,10 +258,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int MAX_FIELD_NUMBER = 4;
+  public static final int MAX_FIELD_NUMBER = 5;
   private volatile java.lang.Object max_;
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   public java.lang.String getMax() {
     java.lang.Object ref = max_;
@@ -261,7 +276,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string max = 4;</code>
+   * <code>string max = 5;</code>
    */
   public com.google.protobuf.ByteString
       getMaxBytes() {
@@ -277,10 +292,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int CONDITION_FIELD_NUMBER = 5;
+  public static final int CONDITION_FIELD_NUMBER = 6;
   private volatile java.lang.Object condition_;
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   public java.lang.String getCondition() {
     java.lang.Object ref = condition_;
@@ -295,7 +310,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string condition = 5;</code>
+   * <code>string condition = 6;</code>
    */
   public com.google.protobuf.ByteString
       getConditionBytes() {
@@ -311,10 +326,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int EMPTYVALUETRANSFER_FIELD_NUMBER = 6;
+  public static final int EMPTYVALUETRANSFER_FIELD_NUMBER = 7;
   private volatile java.lang.Object emptyValueTransfer_;
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   public java.lang.String getEmptyValueTransfer() {
     java.lang.Object ref = emptyValueTransfer_;
@@ -329,7 +344,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string emptyValueTransfer = 6;</code>
+   * <code>string emptyValueTransfer = 7;</code>
    */
   public com.google.protobuf.ByteString
       getEmptyValueTransferBytes() {
@@ -345,10 +360,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int PATTEN_FIELD_NUMBER = 7;
+  public static final int PATTEN_FIELD_NUMBER = 8;
   private volatile java.lang.Object patten_;
   /**
-   * <code>string patten = 7;</code>
+   * <code>string patten = 8;</code>
    */
   public java.lang.String getPatten() {
     java.lang.Object ref = patten_;
@@ -363,7 +378,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string patten = 7;</code>
+   * <code>string patten = 8;</code>
    */
   public com.google.protobuf.ByteString
       getPattenBytes() {
@@ -379,10 +394,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int MODEL_FIELD_NUMBER = 8;
+  public static final int MODEL_FIELD_NUMBER = 9;
   private volatile java.lang.Object model_;
   /**
-   * <code>string model = 8;</code>
+   * <code>string model = 9;</code>
    */
   public java.lang.String getModel() {
     java.lang.Object ref = model_;
@@ -397,7 +412,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string model = 8;</code>
+   * <code>string model = 9;</code>
    */
   public com.google.protobuf.ByteString
       getModelBytes() {
@@ -413,19 +428,19 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int STEP_FIELD_NUMBER = 9;
+  public static final int STEP_FIELD_NUMBER = 10;
   private int step_;
   /**
-   * <code>int32 step = 9;</code>
+   * <code>int32 step = 10;</code>
    */
   public int getStep() {
     return step_;
   }
 
-  public static final int LEVEL_FIELD_NUMBER = 10;
+  public static final int LEVEL_FIELD_NUMBER = 11;
   private int level_;
   /**
-   * <code>int32 level = 10;</code>
+   * <code>int32 level = 11;</code>
    */
   public int getLevel() {
     return level_;
@@ -443,35 +458,38 @@ private static final long serialVersionUID = 0L;
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (!getFormulaBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, formula_);
+    if (calculateType_ != 0) {
+      output.writeInt32(1, calculateType_);
+    }
+    if (!getExpressionBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, expression_);
     }
     if (!getValidatorBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, validator_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, validator_);
     }
     if (!getMinBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, min_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, min_);
     }
     if (!getMaxBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, max_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, max_);
     }
     if (!getConditionBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, condition_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, condition_);
     }
     if (!getEmptyValueTransferBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, emptyValueTransfer_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, emptyValueTransfer_);
     }
     if (!getPattenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, patten_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 8, patten_);
     }
     if (!getModelBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 8, model_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 9, model_);
     }
     if (step_ != 0) {
-      output.writeInt32(9, step_);
+      output.writeInt32(10, step_);
     }
     if (level_ != 0) {
-      output.writeInt32(10, level_);
+      output.writeInt32(11, level_);
     }
     unknownFields.writeTo(output);
   }
@@ -481,37 +499,41 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (!getFormulaBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, formula_);
+    if (calculateType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(1, calculateType_);
+    }
+    if (!getExpressionBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, expression_);
     }
     if (!getValidatorBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, validator_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, validator_);
     }
     if (!getMinBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, min_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, min_);
     }
     if (!getMaxBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, max_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, max_);
     }
     if (!getConditionBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, condition_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, condition_);
     }
     if (!getEmptyValueTransferBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, emptyValueTransfer_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, emptyValueTransfer_);
     }
     if (!getPattenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, patten_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, patten_);
     }
     if (!getModelBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, model_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, model_);
     }
     if (step_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(9, step_);
+        .computeInt32Size(10, step_);
     }
     if (level_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(10, level_);
+        .computeInt32Size(11, level_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -523,14 +545,16 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula)) {
+    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator)) {
       return super.equals(obj);
     }
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula) obj;
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) obj;
 
     boolean result = true;
-    result = result && getFormula()
-        .equals(other.getFormula());
+    result = result && (getCalculateType()
+        == other.getCalculateType());
+    result = result && getExpression()
+        .equals(other.getExpression());
     result = result && getValidator()
         .equals(other.getValidator());
     result = result && getMin()
@@ -560,8 +584,10 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + FORMULA_FIELD_NUMBER;
-    hash = (53 * hash) + getFormula().hashCode();
+    hash = (37 * hash) + CALCULATETYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getCalculateType();
+    hash = (37 * hash) + EXPRESSION_FIELD_NUMBER;
+    hash = (53 * hash) + getExpression().hashCode();
     hash = (37 * hash) + VALIDATOR_FIELD_NUMBER;
     hash = (53 * hash) + getValidator().hashCode();
     hash = (37 * hash) + MIN_FIELD_NUMBER;
@@ -585,69 +611,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(byte[] data)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseDelimitedFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseDelimitedFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -659,7 +685,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula prototype) {
+  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() {
@@ -674,25 +700,25 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code Formula}
+   * Protobuf type {@code Calculator}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:Formula)
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder {
+      // @@protoc_insertion_point(builder_implements:Calculator)
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Formula_descriptor;
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Formula_fieldAccessorTable
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder.class);
+              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
     }
 
-    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.newBuilder()
+    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -709,7 +735,9 @@ private static final long serialVersionUID = 0L;
     }
     public Builder clear() {
       super.clear();
-      formula_ = "";
+      calculateType_ = 0;
+
+      expression_ = "";
 
       validator_ = "";
 
@@ -734,24 +762,25 @@ private static final long serialVersionUID = 0L;
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Formula_descriptor;
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getDefaultInstanceForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getDefaultInstanceForType() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance();
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula build() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula result = buildPartial();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator build() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula buildPartial() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula(this);
-      result.formula_ = formula_;
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator buildPartial() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator(this);
+      result.calculateType_ = calculateType_;
+      result.expression_ = expression_;
       result.validator_ = validator_;
       result.min_ = min_;
       result.max_ = max_;
@@ -792,18 +821,21 @@ private static final long serialVersionUID = 0L;
       return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula) {
-        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula)other);
+      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) {
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula other) {
-      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance()) return this;
-      if (!other.getFormula().isEmpty()) {
-        formula_ = other.formula_;
+    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator other) {
+      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance()) return this;
+      if (other.getCalculateType() != 0) {
+        setCalculateType(other.getCalculateType());
+      }
+      if (!other.getExpression().isEmpty()) {
+        expression_ = other.expression_;
         onChanged();
       }
       if (!other.getValidator().isEmpty()) {
@@ -853,11 +885,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula parsedMessage = null;
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula) e.getUnfinishedMessage();
+        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -867,78 +899,104 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object formula_ = "";
+    private int calculateType_ ;
     /**
-     * <code>string formula = 1;</code>
+     * <code>int32 calculateType = 1;</code>
      */
-    public java.lang.String getFormula() {
-      java.lang.Object ref = formula_;
+    public int getCalculateType() {
+      return calculateType_;
+    }
+    /**
+     * <code>int32 calculateType = 1;</code>
+     */
+    public Builder setCalculateType(int value) {
+      
+      calculateType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 calculateType = 1;</code>
+     */
+    public Builder clearCalculateType() {
+      
+      calculateType_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object expression_ = "";
+    /**
+     * <code>string expression = 2;</code>
+     */
+    public java.lang.String getExpression() {
+      java.lang.Object ref = expression_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        formula_ = s;
+        expression_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string formula = 1;</code>
+     * <code>string expression = 2;</code>
      */
     public com.google.protobuf.ByteString
-        getFormulaBytes() {
-      java.lang.Object ref = formula_;
+        getExpressionBytes() {
+      java.lang.Object ref = expression_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        formula_ = b;
+        expression_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string formula = 1;</code>
+     * <code>string expression = 2;</code>
      */
-    public Builder setFormula(
+    public Builder setExpression(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      formula_ = value;
+      expression_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string formula = 1;</code>
+     * <code>string expression = 2;</code>
      */
-    public Builder clearFormula() {
+    public Builder clearExpression() {
       
-      formula_ = getDefaultInstance().getFormula();
+      expression_ = getDefaultInstance().getExpression();
       onChanged();
       return this;
     }
     /**
-     * <code>string formula = 1;</code>
+     * <code>string expression = 2;</code>
      */
-    public Builder setFormulaBytes(
+    public Builder setExpressionBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      formula_ = value;
+      expression_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object validator_ = "";
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public java.lang.String getValidator() {
       java.lang.Object ref = validator_;
@@ -953,7 +1011,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public com.google.protobuf.ByteString
         getValidatorBytes() {
@@ -969,7 +1027,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder setValidator(
         java.lang.String value) {
@@ -982,7 +1040,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder clearValidator() {
       
@@ -991,7 +1049,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string validator = 2;</code>
+     * <code>string validator = 3;</code>
      */
     public Builder setValidatorBytes(
         com.google.protobuf.ByteString value) {
@@ -1007,7 +1065,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object min_ = "";
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public java.lang.String getMin() {
       java.lang.Object ref = min_;
@@ -1022,7 +1080,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public com.google.protobuf.ByteString
         getMinBytes() {
@@ -1038,7 +1096,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder setMin(
         java.lang.String value) {
@@ -1051,7 +1109,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder clearMin() {
       
@@ -1060,7 +1118,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string min = 3;</code>
+     * <code>string min = 4;</code>
      */
     public Builder setMinBytes(
         com.google.protobuf.ByteString value) {
@@ -1076,7 +1134,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object max_ = "";
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public java.lang.String getMax() {
       java.lang.Object ref = max_;
@@ -1091,7 +1149,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public com.google.protobuf.ByteString
         getMaxBytes() {
@@ -1107,7 +1165,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder setMax(
         java.lang.String value) {
@@ -1120,7 +1178,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder clearMax() {
       
@@ -1129,7 +1187,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string max = 4;</code>
+     * <code>string max = 5;</code>
      */
     public Builder setMaxBytes(
         com.google.protobuf.ByteString value) {
@@ -1145,7 +1203,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object condition_ = "";
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public java.lang.String getCondition() {
       java.lang.Object ref = condition_;
@@ -1160,7 +1218,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public com.google.protobuf.ByteString
         getConditionBytes() {
@@ -1176,7 +1234,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder setCondition(
         java.lang.String value) {
@@ -1189,7 +1247,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder clearCondition() {
       
@@ -1198,7 +1256,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string condition = 5;</code>
+     * <code>string condition = 6;</code>
      */
     public Builder setConditionBytes(
         com.google.protobuf.ByteString value) {
@@ -1214,7 +1272,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object emptyValueTransfer_ = "";
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public java.lang.String getEmptyValueTransfer() {
       java.lang.Object ref = emptyValueTransfer_;
@@ -1229,7 +1287,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public com.google.protobuf.ByteString
         getEmptyValueTransferBytes() {
@@ -1245,7 +1303,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransfer(
         java.lang.String value) {
@@ -1258,7 +1316,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder clearEmptyValueTransfer() {
       
@@ -1267,7 +1325,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string emptyValueTransfer = 6;</code>
+     * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransferBytes(
         com.google.protobuf.ByteString value) {
@@ -1283,7 +1341,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object patten_ = "";
     /**
-     * <code>string patten = 7;</code>
+     * <code>string patten = 8;</code>
      */
     public java.lang.String getPatten() {
       java.lang.Object ref = patten_;
@@ -1298,7 +1356,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string patten = 7;</code>
+     * <code>string patten = 8;</code>
      */
     public com.google.protobuf.ByteString
         getPattenBytes() {
@@ -1314,7 +1372,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string patten = 7;</code>
+     * <code>string patten = 8;</code>
      */
     public Builder setPatten(
         java.lang.String value) {
@@ -1327,7 +1385,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string patten = 7;</code>
+     * <code>string patten = 8;</code>
      */
     public Builder clearPatten() {
       
@@ -1336,7 +1394,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string patten = 7;</code>
+     * <code>string patten = 8;</code>
      */
     public Builder setPattenBytes(
         com.google.protobuf.ByteString value) {
@@ -1352,7 +1410,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object model_ = "";
     /**
-     * <code>string model = 8;</code>
+     * <code>string model = 9;</code>
      */
     public java.lang.String getModel() {
       java.lang.Object ref = model_;
@@ -1367,7 +1425,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string model = 8;</code>
+     * <code>string model = 9;</code>
      */
     public com.google.protobuf.ByteString
         getModelBytes() {
@@ -1383,7 +1441,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string model = 8;</code>
+     * <code>string model = 9;</code>
      */
     public Builder setModel(
         java.lang.String value) {
@@ -1396,7 +1454,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string model = 8;</code>
+     * <code>string model = 9;</code>
      */
     public Builder clearModel() {
       
@@ -1405,7 +1463,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string model = 8;</code>
+     * <code>string model = 9;</code>
      */
     public Builder setModelBytes(
         com.google.protobuf.ByteString value) {
@@ -1421,13 +1479,13 @@ private static final long serialVersionUID = 0L;
 
     private int step_ ;
     /**
-     * <code>int32 step = 9;</code>
+     * <code>int32 step = 10;</code>
      */
     public int getStep() {
       return step_;
     }
     /**
-     * <code>int32 step = 9;</code>
+     * <code>int32 step = 10;</code>
      */
     public Builder setStep(int value) {
       
@@ -1436,7 +1494,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int32 step = 9;</code>
+     * <code>int32 step = 10;</code>
      */
     public Builder clearStep() {
       
@@ -1447,13 +1505,13 @@ private static final long serialVersionUID = 0L;
 
     private int level_ ;
     /**
-     * <code>int32 level = 10;</code>
+     * <code>int32 level = 11;</code>
      */
     public int getLevel() {
       return level_;
     }
     /**
-     * <code>int32 level = 10;</code>
+     * <code>int32 level = 11;</code>
      */
     public Builder setLevel(int value) {
       
@@ -1462,7 +1520,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int32 level = 10;</code>
+     * <code>int32 level = 11;</code>
      */
     public Builder clearLevel() {
       
@@ -1481,39 +1539,39 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:Formula)
+    // @@protoc_insertion_point(builder_scope:Calculator)
   }
 
-  // @@protoc_insertion_point(class_scope:Formula)
-  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:Calculator)
+  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula();
+    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator();
   }
 
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getDefaultInstance() {
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<Formula>
-      PARSER = new com.google.protobuf.AbstractParser<Formula>() {
-    public Formula parsePartialFrom(
+  private static final com.google.protobuf.Parser<Calculator>
+      PARSER = new com.google.protobuf.AbstractParser<Calculator>() {
+    public Calculator parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new Formula(input, extensionRegistry);
+      return new Calculator(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<Formula> parser() {
+  public static com.google.protobuf.Parser<Calculator> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<Formula> getParserForType() {
+  public com.google.protobuf.Parser<Calculator> getParserForType() {
     return PARSER;
   }
 
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getDefaultInstanceForType() {
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

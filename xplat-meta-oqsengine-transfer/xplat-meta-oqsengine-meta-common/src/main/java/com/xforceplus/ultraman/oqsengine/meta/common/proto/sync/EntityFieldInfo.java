@@ -22,7 +22,6 @@ private static final long serialVersionUID = 0L;
     fieldType_ = "";
     dictId_ = "";
     defaultValue_ = "";
-    calculateType_ = 0;
   }
 
   @java.lang.Override
@@ -104,20 +103,15 @@ private static final long serialVersionUID = 0L;
 
             break;
           }
-          case 64: {
-
-            calculateType_ = input.readInt32();
-            break;
-          }
           case 74: {
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder subBuilder = null;
-            if (formula_ != null) {
-              subBuilder = formula_.toBuilder();
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder subBuilder = null;
+            if (calculator_ != null) {
+              subBuilder = calculator_.toBuilder();
             }
-            formula_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.parser(), extensionRegistry);
+            calculator_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.parser(), extensionRegistry);
             if (subBuilder != null) {
-              subBuilder.mergeFrom(formula_);
-              formula_ = subBuilder.buildPartial();
+              subBuilder.mergeFrom(calculator_);
+              calculator_ = subBuilder.buildPartial();
             }
 
             break;
@@ -346,34 +340,25 @@ private static final long serialVersionUID = 0L;
     return getFieldConfig();
   }
 
-  public static final int CALCULATETYPE_FIELD_NUMBER = 8;
-  private int calculateType_;
+  public static final int CALCULATOR_FIELD_NUMBER = 9;
+  private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator_;
   /**
-   * <code>int32 calculateType = 8;</code>
+   * <code>.Calculator calculator = 9;</code>
    */
-  public int getCalculateType() {
-    return calculateType_;
-  }
-
-  public static final int FORMULA_FIELD_NUMBER = 9;
-  private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula_;
-  /**
-   * <code>.Formula formula = 9;</code>
-   */
-  public boolean hasFormula() {
-    return formula_ != null;
+  public boolean hasCalculator() {
+    return calculator_ != null;
   }
   /**
-   * <code>.Formula formula = 9;</code>
+   * <code>.Calculator calculator = 9;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getFormula() {
-    return formula_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getCalculator() {
+    return calculator_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
   }
   /**
-   * <code>.Formula formula = 9;</code>
+   * <code>.Calculator calculator = 9;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder getFormulaOrBuilder() {
-    return getFormula();
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder getCalculatorOrBuilder() {
+    return getCalculator();
   }
 
   private byte memoizedIsInitialized = -1;
@@ -409,11 +394,8 @@ private static final long serialVersionUID = 0L;
     if (fieldConfig_ != null) {
       output.writeMessage(7, getFieldConfig());
     }
-    if (calculateType_ != 0) {
-      output.writeInt32(8, calculateType_);
-    }
-    if (formula_ != null) {
-      output.writeMessage(9, getFormula());
+    if (calculator_ != null) {
+      output.writeMessage(9, getCalculator());
     }
     unknownFields.writeTo(output);
   }
@@ -446,13 +428,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(7, getFieldConfig());
     }
-    if (calculateType_ != 0) {
+    if (calculator_ != null) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(8, calculateType_);
-    }
-    if (formula_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(9, getFormula());
+        .computeMessageSize(9, getCalculator());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -487,12 +465,10 @@ private static final long serialVersionUID = 0L;
       result = result && getFieldConfig()
           .equals(other.getFieldConfig());
     }
-    result = result && (getCalculateType()
-        == other.getCalculateType());
-    result = result && (hasFormula() == other.hasFormula());
-    if (hasFormula()) {
-      result = result && getFormula()
-          .equals(other.getFormula());
+    result = result && (hasCalculator() == other.hasCalculator());
+    if (hasCalculator()) {
+      result = result && getCalculator()
+          .equals(other.getCalculator());
     }
     result = result && unknownFields.equals(other.unknownFields);
     return result;
@@ -522,11 +498,9 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + FIELDCONFIG_FIELD_NUMBER;
       hash = (53 * hash) + getFieldConfig().hashCode();
     }
-    hash = (37 * hash) + CALCULATETYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getCalculateType();
-    if (hasFormula()) {
-      hash = (37 * hash) + FORMULA_FIELD_NUMBER;
-      hash = (53 * hash) + getFormula().hashCode();
+    if (hasCalculator()) {
+      hash = (37 * hash) + CALCULATOR_FIELD_NUMBER;
+      hash = (53 * hash) + getCalculator().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -675,13 +649,11 @@ private static final long serialVersionUID = 0L;
         fieldConfig_ = null;
         fieldConfigBuilder_ = null;
       }
-      calculateType_ = 0;
-
-      if (formulaBuilder_ == null) {
-        formula_ = null;
+      if (calculatorBuilder_ == null) {
+        calculator_ = null;
       } else {
-        formula_ = null;
-        formulaBuilder_ = null;
+        calculator_ = null;
+        calculatorBuilder_ = null;
       }
       return this;
     }
@@ -716,11 +688,10 @@ private static final long serialVersionUID = 0L;
       } else {
         result.fieldConfig_ = fieldConfigBuilder_.build();
       }
-      result.calculateType_ = calculateType_;
-      if (formulaBuilder_ == null) {
-        result.formula_ = formula_;
+      if (calculatorBuilder_ == null) {
+        result.calculator_ = calculator_;
       } else {
-        result.formula_ = formulaBuilder_.build();
+        result.calculator_ = calculatorBuilder_.build();
       }
       onBuilt();
       return result;
@@ -789,11 +760,8 @@ private static final long serialVersionUID = 0L;
       if (other.hasFieldConfig()) {
         mergeFieldConfig(other.getFieldConfig());
       }
-      if (other.getCalculateType() != 0) {
-        setCalculateType(other.getCalculateType());
-      }
-      if (other.hasFormula()) {
-        mergeFormula(other.getFormula());
+      if (other.hasCalculator()) {
+        mergeCalculator(other.getCalculator());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1310,147 +1278,121 @@ private static final long serialVersionUID = 0L;
       return fieldConfigBuilder_;
     }
 
-    private int calculateType_ ;
-    /**
-     * <code>int32 calculateType = 8;</code>
-     */
-    public int getCalculateType() {
-      return calculateType_;
-    }
-    /**
-     * <code>int32 calculateType = 8;</code>
-     */
-    public Builder setCalculateType(int value) {
-      
-      calculateType_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int32 calculateType = 8;</code>
-     */
-    public Builder clearCalculateType() {
-      
-      calculateType_ = 0;
-      onChanged();
-      return this;
-    }
-
-    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula formula_ = null;
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator_ = null;
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder> formulaBuilder_;
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder> calculatorBuilder_;
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public boolean hasFormula() {
-      return formulaBuilder_ != null || formula_ != null;
+    public boolean hasCalculator() {
+      return calculatorBuilder_ != null || calculator_ != null;
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula getFormula() {
-      if (formulaBuilder_ == null) {
-        return formula_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getCalculator() {
+      if (calculatorBuilder_ == null) {
+        return calculator_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
       } else {
-        return formulaBuilder_.getMessage();
+        return calculatorBuilder_.getMessage();
       }
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public Builder setFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula value) {
-      if (formulaBuilder_ == null) {
+    public Builder setCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator value) {
+      if (calculatorBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
         }
-        formula_ = value;
+        calculator_ = value;
         onChanged();
       } else {
-        formulaBuilder_.setMessage(value);
+        calculatorBuilder_.setMessage(value);
       }
 
       return this;
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public Builder setFormula(
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder builderForValue) {
-      if (formulaBuilder_ == null) {
-        formula_ = builderForValue.build();
+    public Builder setCalculator(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder builderForValue) {
+      if (calculatorBuilder_ == null) {
+        calculator_ = builderForValue.build();
         onChanged();
       } else {
-        formulaBuilder_.setMessage(builderForValue.build());
+        calculatorBuilder_.setMessage(builderForValue.build());
       }
 
       return this;
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public Builder mergeFormula(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula value) {
-      if (formulaBuilder_ == null) {
-        if (formula_ != null) {
-          formula_ =
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.newBuilder(formula_).mergeFrom(value).buildPartial();
+    public Builder mergeCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator value) {
+      if (calculatorBuilder_ == null) {
+        if (calculator_ != null) {
+          calculator_ =
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.newBuilder(calculator_).mergeFrom(value).buildPartial();
         } else {
-          formula_ = value;
+          calculator_ = value;
         }
         onChanged();
       } else {
-        formulaBuilder_.mergeFrom(value);
+        calculatorBuilder_.mergeFrom(value);
       }
 
       return this;
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public Builder clearFormula() {
-      if (formulaBuilder_ == null) {
-        formula_ = null;
+    public Builder clearCalculator() {
+      if (calculatorBuilder_ == null) {
+        calculator_ = null;
         onChanged();
       } else {
-        formula_ = null;
-        formulaBuilder_ = null;
+        calculator_ = null;
+        calculatorBuilder_ = null;
       }
 
       return this;
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder getFormulaBuilder() {
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder getCalculatorBuilder() {
       
       onChanged();
-      return getFormulaFieldBuilder().getBuilder();
+      return getCalculatorFieldBuilder().getBuilder();
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder getFormulaOrBuilder() {
-      if (formulaBuilder_ != null) {
-        return formulaBuilder_.getMessageOrBuilder();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder getCalculatorOrBuilder() {
+      if (calculatorBuilder_ != null) {
+        return calculatorBuilder_.getMessageOrBuilder();
       } else {
-        return formula_ == null ?
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.getDefaultInstance() : formula_;
+        return calculator_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
       }
     }
     /**
-     * <code>.Formula formula = 9;</code>
+     * <code>.Calculator calculator = 9;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder> 
-        getFormulaFieldBuilder() {
-      if (formulaBuilder_ == null) {
-        formulaBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Formula.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FormulaOrBuilder>(
-                getFormula(),
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder> 
+        getCalculatorFieldBuilder() {
+      if (calculatorBuilder_ == null) {
+        calculatorBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder>(
+                getCalculator(),
                 getParentForChildren(),
                 isClean());
-        formula_ = null;
+        calculator_ = null;
       }
-      return formulaBuilder_;
+      return calculatorBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
