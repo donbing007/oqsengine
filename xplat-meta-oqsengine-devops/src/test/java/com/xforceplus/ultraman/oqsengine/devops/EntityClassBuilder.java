@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.devops;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -86,6 +87,11 @@ public class EntityClassBuilder implements MetaManager {
     @Override
     public Optional<IEntityClass> load(long id) {
         return Optional.of(getEntityClass(id));
+    }
+
+    @Override
+    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+        return Optional.of(getEntityClass(entityClassRef.getId()));
     }
 
     @Override

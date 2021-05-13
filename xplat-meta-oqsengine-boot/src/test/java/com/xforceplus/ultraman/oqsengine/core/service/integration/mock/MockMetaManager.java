@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -213,6 +214,11 @@ public class MockMetaManager implements MetaManager {
     @Override
     public Optional<IEntityClass> load(long id) {
         return entities.stream().filter(e -> e.id() == id).findFirst();
+    }
+
+    @Override
+    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+        return entities.stream().filter(e -> e.id() == entityClassRef.getId()).findFirst();
     }
 
     @Override

@@ -81,10 +81,12 @@ public class BinLogParseUtils {
             throw e;
         }
     }
+
     /**
      * 获取字符串，允许为空.
      */
-    public static String getStringWithoutNullCheck(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) {
+    public static String getStringWithoutNullCheck(List<CanalEntry.Column> columns,
+                                                   OqsBigEntityColumns oqsBigEntityColumns) {
         CanalEntry.Column column = existsColumn(columns, oqsBigEntityColumns);
         if (null != column && !column.getValue().isEmpty()) {
             return column.getValue();
