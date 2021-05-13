@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.calculate.FormulaStorage;
+import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -95,7 +95,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private EventBus eventBus;
 
     @Resource
-    private FormulaStorage formulaStorage;
+    private CalculateStorage calculateStorage;
 
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
@@ -610,7 +610,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
                                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
-        Map<String, Object> result = formulaStorage.execute(executionWrappers, context);
+        Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
         if (null != result) {
             entity.entityValue().values().forEach(
                 v -> {
