@@ -15,6 +15,13 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class BusinessIDGeneratorConfiguration {
+
+    /**
+     * segment storage
+     * @param tableName
+     * @param maxQueryTimeMs
+     * @return
+     */
     @Bean
     public SqlSegmentStorage sqlSegmentStorage(
             @Value("${storage.generator.segment.name:segment}") String tableName,
@@ -26,6 +33,10 @@ public class BusinessIDGeneratorConfiguration {
         return storage;
     }
 
+    /**
+     * parser manager
+     * @return
+     */
     @Bean
     public PattenParserManager pattenParserManager() {
         PattenParserManager pattenParserManager = new PattenParserManager();

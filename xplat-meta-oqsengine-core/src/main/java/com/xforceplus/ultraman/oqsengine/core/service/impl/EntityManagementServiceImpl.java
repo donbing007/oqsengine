@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -96,6 +97,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private FormulaStorage formulaStorage;
+
+    @Resource
+    private BizIDGenerator bizIDGenerator;
 
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
@@ -528,8 +532,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  自动填充
                 if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  todo 计算自动填充值并写入context中
-                    Object result = null;
-
+                    Object result = bizIDGenerator.nextId(String.valueOf(entityField.id()));;
                     if (null != result) {
                         context.put(entityField.name(), result);
                         entityValue.addValue(toIValue(entityField, result));
