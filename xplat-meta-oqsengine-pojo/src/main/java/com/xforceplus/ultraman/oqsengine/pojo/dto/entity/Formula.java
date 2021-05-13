@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import static com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper.Builder.DEFAULT_FORMULA_LEVEL;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.formula.client.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.formula.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.utils.MD5Utils;
 
 /**
  * Created by justin.xu on 05/2021
@@ -15,9 +14,6 @@ public class Formula {
 
     @JsonProperty(value = "formula")
     private String formula;
-
-    @JsonProperty(value = "level")
-    private int level;
 
     @JsonProperty(value = "validator")
     private String validator;
@@ -33,6 +29,19 @@ public class Formula {
 
     @JsonProperty(value = "emptyValueTransfer")
     private String emptyValueTransfer;
+
+    @JsonProperty(value = "patten")
+    private String patten;
+
+    @JsonProperty(value = "model")
+    private String model;
+
+    @JsonProperty(value = "step")
+    private int step;
+
+    @JsonProperty(value = "level")
+    private int level;
+
 
     public String getCode() {
         return code;
@@ -94,18 +103,45 @@ public class Formula {
         this.emptyValueTransfer = emptyValueTransfer;
     }
 
+    public String getPatten() {
+        return patten;
+    }
+
+    public void setPatten(String patten) {
+        this.patten = patten;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public int getStep() {
+        return step;
+    }
+
+    public void setStep(int step) {
+        this.step = step;
+    }
+
     /**
      * builder.
      */
     public static final class Builder {
 
         private String formula;
-        private Integer level = DEFAULT_FORMULA_LEVEL;
+        private Integer level = ExecutionWrapper.Builder.DEFAULT_FORMULA_LEVEL;
         private String validator;
         private String min;
         private String max;
         private String condition;
         private String emptyValueTransfer;
+        private String patten;
+        private String model;
+        private int step;
 
         private Builder() {
         }
@@ -149,6 +185,21 @@ public class Formula {
             return this;
         }
 
+        public Formula.Builder withPatten(String patten) {
+            this.patten = patten;
+            return this;
+        }
+
+        public Formula.Builder withModel(String model) {
+            this.model = model;
+            return this;
+        }
+
+        public Formula.Builder withStep(int step) {
+            this.step = step;
+            return this;
+        }
+
         /**
          * build.
          */
@@ -158,12 +209,15 @@ public class Formula {
                 formula.formula = this.formula;
                 formula.code = MD5Utils.encrypt(this.formula);
             }
-            formula.level = this.level;
             formula.validator = this.validator;
             formula.min = this.min;
             formula.max = this.max;
             formula.condition = this.condition;
             formula.emptyValueTransfer = this.emptyValueTransfer;
+            formula.patten = this.patten;
+            formula.model = this.model;
+            formula.step = this.step;
+            formula.level = this.level;
 
             return formula;
         }

@@ -18,57 +18,82 @@ public interface FormulaOrBuilder extends
       getFormulaBytes();
 
   /**
-   * <code>int32 level = 2;</code>
-   */
-  int getLevel();
-
-  /**
-   * <code>string validator = 3;</code>
+   * <code>string validator = 2;</code>
    */
   java.lang.String getValidator();
   /**
-   * <code>string validator = 3;</code>
+   * <code>string validator = 2;</code>
    */
   com.google.protobuf.ByteString
       getValidatorBytes();
 
   /**
-   * <code>string min = 4;</code>
+   * <code>string min = 3;</code>
    */
   java.lang.String getMin();
   /**
-   * <code>string min = 4;</code>
+   * <code>string min = 3;</code>
    */
   com.google.protobuf.ByteString
       getMinBytes();
 
   /**
-   * <code>string max = 5;</code>
+   * <code>string max = 4;</code>
    */
   java.lang.String getMax();
   /**
-   * <code>string max = 5;</code>
+   * <code>string max = 4;</code>
    */
   com.google.protobuf.ByteString
       getMaxBytes();
 
   /**
-   * <code>string condition = 6;</code>
+   * <code>string condition = 5;</code>
    */
   java.lang.String getCondition();
   /**
-   * <code>string condition = 6;</code>
+   * <code>string condition = 5;</code>
    */
   com.google.protobuf.ByteString
       getConditionBytes();
 
   /**
-   * <code>string emptyValueTransfer = 7;</code>
+   * <code>string emptyValueTransfer = 6;</code>
    */
   java.lang.String getEmptyValueTransfer();
   /**
-   * <code>string emptyValueTransfer = 7;</code>
+   * <code>string emptyValueTransfer = 6;</code>
    */
   com.google.protobuf.ByteString
       getEmptyValueTransferBytes();
+
+  /**
+   * <code>string patten = 7;</code>
+   */
+  java.lang.String getPatten();
+  /**
+   * <code>string patten = 7;</code>
+   */
+  com.google.protobuf.ByteString
+      getPattenBytes();
+
+  /**
+   * <code>string model = 8;</code>
+   */
+  java.lang.String getModel();
+  /**
+   * <code>string model = 8;</code>
+   */
+  com.google.protobuf.ByteString
+      getModelBytes();
+
+  /**
+   * <code>int32 step = 9;</code>
+   */
+  int getStep();
+
+  /**
+   * <code>int32 level = 10;</code>
+   */
+  int getLevel();
 }

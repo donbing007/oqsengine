@@ -14,9 +14,9 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
-import com.xforceplus.ultraman.oqsengine.formula.client.FormulaStorage;
-import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.FormulaStorage;
+import com.xforceplus.ultraman.oqsengine.formula.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -230,7 +231,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 /*
                     执行自动编号、公式字段计算
                  */
-                buildElevate(entity);
+                try {
+                    prepareBuild(entity);
+                } catch (Exception e) {
+                    logger.warn("prepare build error, message [{}]", e.toString());
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                        ResultStatus.ELEVATEFAILED);
+                }
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -298,13 +306,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         ResultStatus.NOT_FOUND);
                 }
 
-                // 操作时间
-                targetEntity.markTime(entity.time());
-
                 /*
                     执行自动编号、公式字段计算
                  */
-                replaceElevate(targetEntity, entity);
+                try {
+                    prepareReplace(targetEntity, entity);
+                } catch (Exception e) {
+                    logger.warn("prepare replace error, message [{}]", e.toString());
+                    return new OperationResult(
+                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                        ResultStatus.ELEVATEFAILED);
+                }
+
+                // 操作时间
+                targetEntity.markTime(entity.time());
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -495,54 +510,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private void buildElevate(IEntity entity) {
-        //  全局context
-        Map<String, Object> context = new HashMap<>();
-        //  需要进行计算的公式字段
-        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
-        //  生成的新的entityValue
-        IEntityValue entityValue = EntityValue.build();
-        //  1.过滤出需要计算的公式字段，并对自动填充字段进行计算
-        prepareBuild(entity, entityValue, context, executionWrappers);
+    //  build前的准备
+    private void prepareBuild(IEntity entity) {
 
-        //  2.计算全局context
-
-        //  3.计算公式字段
-        formulaElevator(entity, entityValue, context, executionWrappers);
-
-        //  将entityValue加入到目标中
-        entity.entityValue().addValues(entityValue.values());
-    }
-
-    /*
-        将需更新的内容合并到目标entity中
-     */
-    private void replaceElevate(IEntity targetEntity, IEntity updateEntity) {
-        //  全局context
-        Map<String, Object> context = new HashMap<>();
-        //  需要进行计算的公式字段
-        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
 
-        //  合并新旧entity
-        prepareReplace(targetEntity, updateEntity, entityValue, context, executionWrappers);
+        //  context
+        Map<String, Object> context = new HashMap<>();
 
-        //  计算公式字段
-        formulaElevator(updateEntity, entityValue, context, executionWrappers);
-
-        //  将entityValue加入到目标中
-        targetEntity.entityValue().addValues(entityValue.values());
-    }
-
-    private void prepareBuild(IEntity entity, IEntityValue entityValue,
-                          Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+        //  需要进行计算的公式字段
+        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
 
         entity.entityValue().values().forEach(
             v -> {
-                //  以oqs内部获取到的entityClass为准
                 IEntityField entityField = v.getField();
-
+                //  自动填充
                 if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  todo 计算自动填充值并写入context中
                     Object result = null;
@@ -552,39 +535,47 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         entityValue.addValue(toIValue(entityField, result));
                     }
                 } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
-                    Map<String, Object> local = (Map<String, Object>) v.getValue();
-                    if (null != local) {
-                        context.putAll(local);
-                    }
-                    executionWrappers.add(initExecutionWrapper(entityField));
+                    addContextWrappers(v, context, executionWrappers);
                 }
             }
         );
+
+        //  计算公式字段
+        formulaElevator(entity, entityValue, context, executionWrappers);
+
+        //  将entityValue加入到目标中
+        entity.entityValue().addValues(entityValue.values());
     }
 
-    private void prepareReplace(IEntity oldEntity, IEntity newEntity, IEntityValue entityValue,
-                       Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+    //  replace前的准备
+    private void prepareReplace(IEntity targetEntity, IEntity updateEntity) {
+
+        //  生成的新的entityValue
+        IEntityValue entityValue = EntityValue.build();
+
+        //  context
+        Map<String, Object> context = new HashMap<>();
+
+        //  需要进行计算的公式字段
+        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
+
         //  合并new
-        newEntity.entityValue().values().forEach(
+        updateEntity.entityValue().values().forEach(
             v -> {
-                //  以oqs内部获取到的entityClass为准
                 IEntityField entityField = v.getField();
 
-                Map<String, Object> local = (Map<String, Object>) v.getValue();
-                if (null != local) {
-                    context.putAll(local);
-                }
-                //  需要进行计算
+                //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
                 if (entityField.calculateType().equals(CalculateType.FORMULA)) {
-                    executionWrappers.add(initExecutionWrapper(entityField));
+                    addContextWrappers(v, context, executionWrappers);
                 } else {
                     //  加入新的entityValue中
                     entityValue.addValue(v);
                 }
             }
         );
-        //  合并old
-        oldEntity.entityValue().values().forEach(
+
+        //  将targetEntity中剩余entity加入进行计算
+        targetEntity.entityValue().values().forEach(
             v -> {
                 //  old字段中所有的公式字段都不会参与replace计算
                 if (!v.getField().calculateType().equals(CalculateType.FORMULA)) {
@@ -595,8 +586,27 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
             }
         );
+
+        //  计算公式字段
+        formulaElevator(targetEntity, entityValue, context, executionWrappers);
+
+        //  将entityValue加入到目标中
+        targetEntity.entityValue().addValues(entityValue.values());
     }
 
+    private void addContextWrappers(IValue<?> v, Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+        if (!(v instanceof FormulaTypedValue)) {
+            throw new IllegalArgumentException(
+                "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
+        }
+        executionWrappers.add(initExecutionWrapper(v.getField()));
+
+        //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
+        Map<String, Object> local = (Map<String, Object>) v.getValue();
+        if (null != local) {
+            context.putAll(local);
+        }
+    }
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
                                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {

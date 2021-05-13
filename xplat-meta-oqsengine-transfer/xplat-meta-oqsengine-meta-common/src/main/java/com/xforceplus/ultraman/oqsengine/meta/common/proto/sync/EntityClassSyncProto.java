@@ -97,21 +97,23 @@ public final class EntityClassSyncProto {
       "ateRegexString\030\007 \001(\t\022\023\n\013displayType\030\010 \001(" +
       "\t\022\026\n\016metaFieldSense\030\t \001(\005\022\021\n\tfuzzyType\030\n" +
       " \001(\005\022\030\n\020wildcardMinWidth\030\013 \001(\005\022\030\n\020wildca" +
-      "rdMaxWidth\030\014 \001(\005\022\022\n\nuniqueName\030\r \001(\t\"\205\001\n" +
-      "\007Formula\022\017\n\007formula\030\001 \001(\t\022\r\n\005level\030\002 \001(\005" +
-      "\022\021\n\tvalidator\030\003 \001(\t\022\013\n\003min\030\004 \001(\t\022\013\n\003max\030" +
-      "\005 \001(\t\022\021\n\tcondition\030\006 \001(\t\022\032\n\022emptyValueTr" +
-      "ansfer\030\007 \001(\t\"\362\001\n\014RelationInfo\022\n\n\002id\030\001 \001(" +
-      "\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEntityClassId\030\003 " +
-      "\001(\003\022\031\n\021leftEntityClassId\030\004 \001(\003\022\033\n\023leftEn" +
-      "tityClassCode\030\005 \001(\t\022\024\n\014relationType\030\006 \001(" +
-      "\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entityField\030\010 \001(\013" +
-      "2\020.EntityFieldInfo\022\025\n\rbelongToOwner\030\t \001(" +
-      "\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityClassSync\022C\n\010" +
-      "register\022\027.EntityClassSyncRequest\032\030.Enti" +
-      "tyClassSyncResponse\"\000(\0010\001BR\n8com.xforcep" +
-      "lus.ultraman.oqsengine.meta.common.proto" +
-      ".syncB\024EntityClassSyncProtoP\001b\006proto3"
+      "rdMaxWidth\030\014 \001(\005\022\022\n\nuniqueName\030\r \001(\t\"\262\001\n" +
+      "\007Formula\022\017\n\007formula\030\001 \001(\t\022\021\n\tvalidator\030\002" +
+      " \001(\t\022\013\n\003min\030\003 \001(\t\022\013\n\003max\030\004 \001(\t\022\021\n\tcondit" +
+      "ion\030\005 \001(\t\022\032\n\022emptyValueTransfer\030\006 \001(\t\022\016\n" +
+      "\006patten\030\007 \001(\t\022\r\n\005model\030\010 \001(\t\022\014\n\004step\030\t \001" +
+      "(\005\022\r\n\005level\030\n \001(\005\"\362\001\n\014RelationInfo\022\n\n\002id" +
+      "\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEntityClass" +
+      "Id\030\003 \001(\003\022\031\n\021leftEntityClassId\030\004 \001(\003\022\033\n\023l" +
+      "eftEntityClassCode\030\005 \001(\t\022\024\n\014relationType" +
+      "\030\006 \001(\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entityField\030" +
+      "\010 \001(\0132\020.EntityFieldInfo\022\025\n\rbelongToOwner" +
+      "\030\t \001(\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityClassSyn" +
+      "c\022C\n\010register\022\027.EntityClassSyncRequest\032\030" +
+      ".EntityClassSyncResponse\"\000(\0010\001BR\n8com.xf" +
+      "orceplus.ultraman.oqsengine.meta.common." +
+      "proto.syncB\024EntityClassSyncProtoP\001b\006prot" +
+      "o3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -172,7 +174,7 @@ public final class EntityClassSyncProto {
     internal_static_Formula_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Formula_descriptor,
-        new java.lang.String[] { "Formula", "Level", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", });
+        new java.lang.String[] { "Formula", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", "Patten", "Model", "Step", "Level", });
     internal_static_RelationInfo_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_RelationInfo_fieldAccessorTable = new

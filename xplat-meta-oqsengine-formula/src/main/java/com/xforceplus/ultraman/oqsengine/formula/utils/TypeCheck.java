@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.formula.client.utils;
+package com.xforceplus.ultraman.oqsengine.formula.utils;
 
 /**
  * @author j.xu

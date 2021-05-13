@@ -20,7 +20,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>xplat-meta-oqsengine-formula-client</artifactId>
+            <artifactId>xplat-meta-oqsengine-formula</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

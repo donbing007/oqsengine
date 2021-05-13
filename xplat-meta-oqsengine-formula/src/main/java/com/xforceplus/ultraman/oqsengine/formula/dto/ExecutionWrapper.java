@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.formula.client.dto;
+package com.xforceplus.ultraman.oqsengine.formula.dto;
 
-import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaExecutionException;
+import com.xforceplus.ultraman.oqsengine.formula.exception.FormulaExecutionException;
 
 /**
  *  执行一个表达式的对象表示.
@@ -55,6 +55,9 @@ public class ExecutionWrapper<T> {
      * builder.
      */
     public static final class Builder<T> {
+
+        public static final int DEFAULT_FORMULA_LEVEL = 1;
+
         private String code;
         private Integer level;
         private Class<T> retClazz;

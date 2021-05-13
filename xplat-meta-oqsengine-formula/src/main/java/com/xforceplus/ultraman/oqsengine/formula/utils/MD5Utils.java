@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.formula.client.utils;
+package com.xforceplus.ultraman.oqsengine.formula.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

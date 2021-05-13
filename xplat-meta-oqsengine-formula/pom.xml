@@ -10,10 +10,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xplat-meta-oqsengine-formula</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>xplat-meta-oqsengine-formula-client</module>
-    </modules>
 
+    <properties>
+        <aviator.version>5.0.0</aviator.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
+            <version>${aviator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>

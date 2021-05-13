@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.formula.client.exception;
+package com.xforceplus.ultraman.oqsengine.formula.exception;
 
 /**
  * formula client exception.

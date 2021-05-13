@@ -86,12 +86,15 @@ message FieldConfig {
 
 message Formula {
 	string formula = 1;
-	int32 level = 2;
-	string validator = 3;
-	string min = 4;
-	string max = 5;
-	string condition = 6;
-	string emptyValueTransfer = 7;
+	string validator = 2;
+	string min = 3;
+	string max = 4;
+	string condition = 5;
+	string emptyValueTransfer = 6;
+	string patten = 7;
+	string model = 8;
+	int32 step = 9;
+	int32 level = 10;
 }
 
 message RelationInfo {

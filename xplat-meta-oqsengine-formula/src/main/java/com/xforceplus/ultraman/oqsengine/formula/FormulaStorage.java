@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.formula.client;
+package com.xforceplus.ultraman.oqsengine.formula;
 
-import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.client.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
 import java.util.List;
 import java.util.Map;
 

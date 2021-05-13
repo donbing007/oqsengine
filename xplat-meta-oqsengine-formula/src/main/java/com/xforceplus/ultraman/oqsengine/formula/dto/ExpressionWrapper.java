@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.formula.client.dto;
+package com.xforceplus.ultraman.oqsengine.formula.dto;
 
-import com.xforceplus.ultraman.oqsengine.formula.client.exception.FormulaExecutionException;
-import com.xforceplus.ultraman.oqsengine.formula.client.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.formula.exception.FormulaExecutionException;
+import com.xforceplus.ultraman.oqsengine.formula.utils.MD5Utils;
 
 /**
  *  表达式.
@@ -60,8 +60,6 @@ public class ExpressionWrapper {
      * builder.
      */
     public static final class Builder {
-
-        public static final int DEFAULT_FORMULA_LEVEL = 1;
 
         private String code;
 

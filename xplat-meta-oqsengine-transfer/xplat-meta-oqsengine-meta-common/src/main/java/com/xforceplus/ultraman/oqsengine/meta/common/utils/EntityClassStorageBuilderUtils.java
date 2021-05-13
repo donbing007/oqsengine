@@ -204,7 +204,8 @@ public class EntityClassStorageBuilderUtils {
             .withConfig(toFieldConfig(e.getFieldConfig()))
             .withCalculateType(calculateType);
 
-        if (calculateType.equals(CalculateType.FORMULA)) {
+        if (calculateType.equals(CalculateType.AUTO_FILL)
+                    || calculateType.equals(CalculateType.FORMULA)) {
             builder.withFormula(toFormula(e.getFormula()));
         }
 
@@ -220,17 +221,21 @@ public class EntityClassStorageBuilderUtils {
         }
 
         if (formula.getLevel() < MIN_FORMULA_LEVEL) {
-            throw new MetaSyncClientException(String.format("formula level could not be less than %d", MIN_FORMULA_LEVEL), false);
+            throw new MetaSyncClientException(
+                String.format("formula level could not be less than %d", MIN_FORMULA_LEVEL), false);
         }
 
         return Formula.Builder.anFormula()
             .withFormula(formula.getFormula())
-            .withLevel(formula.getLevel())
             .withMax(formula.getMax())
             .withMin(formula.getMin())
             .withCondition(formula.getCondition())
             .withValidator(formula.getValidator())
             .withEmptyValueTransfer(formula.getEmptyValueTransfer())
+            .withPatten(formula.getPatten())
+            .withModel(formula.getModel())
+            .withStep(formula.getStep())
+            .withLevel(formula.getLevel())
             .build();
     }
 
