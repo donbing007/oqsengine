@@ -41,13 +41,13 @@ public class NotMatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            NotMatchConditionBuilderAbstract builder = new NotMatchConditionBuilderAbstract(
+            NotMatchConditionBuilder builder = new NotMatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator());
 
             Assert.assertEquals(c.expected, builder.build(c.condition));
@@ -79,8 +79,8 @@ public class NotMatchConditionBuilderTest {
                     new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                         new BigDecimal("123.246"))
                 ),
-                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L0 = 123 AND " +
-                    FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L1 = 246000000000000000"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L0 = 123 AND "
+                    + FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L1 = 246000000000000000"
             ),
             new Case(
                 new Condition(
@@ -118,6 +118,22 @@ public class NotMatchConditionBuilderTest {
                         "!@#$%^&*()300")
                 ),
                 FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S = '!@#$%^&*()300'"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 1000L)
+                ),
+                FieldDefine.CREATE_TIME + " = 1000"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 1000L)
+                ),
+                FieldDefine.UPDATE_TIME + " = 1000"
             )
         );
     }

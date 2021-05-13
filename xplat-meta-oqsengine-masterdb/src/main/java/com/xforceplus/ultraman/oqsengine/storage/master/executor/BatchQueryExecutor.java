@@ -121,6 +121,8 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
         sql.append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
+            .append(FieldDefine.COMMITID).append(" >= ").append(0)
+            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")
