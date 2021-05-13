@@ -6,6 +6,10 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.PO
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
 
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
@@ -14,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -37,6 +42,9 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
     @Resource
     private IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity> expireExecutor;
+
+    @Resource
+    private EventBus eventBus;
 
     private volatile boolean closed = false;
 
@@ -85,14 +93,15 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
-
+                List<Event<?>> payloads = new ArrayList<>();
                 try {
                     // step3 update new Hash in redis
-                    if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
+                    if (!cacheExecutor.save(appId, version, entityClassStorageList, payloads)) {
                         throw new MetaSyncClientException(
                             String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
                         );
                     }
+
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {
                         expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
@@ -101,8 +110,11 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                     return true;
                 } catch (Exception e) {
+                    payloads.clear();
                     logger.warn("sync-error, message[{}]", e.toString());
                     return false;
+                } finally {
+                    publish(payloads);
                 }
             } finally {
                 cacheExecutor.endPrepare(appId);
@@ -146,5 +158,13 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     task.element().getAppId(), task.element().getVersion(), e.getMessage());
             }
         }
+    }
+
+    private void publish(List<Event<?>> payloads) {
+        payloads.forEach(
+            payload -> {
+                eventBus.notify(payload);
+            }
+        );
     }
 }

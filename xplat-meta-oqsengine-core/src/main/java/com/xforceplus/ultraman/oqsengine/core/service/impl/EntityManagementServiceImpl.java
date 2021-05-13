@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.calculate.FormulaStorage;
+import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
-import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -96,10 +95,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private EventBus eventBus;
 
     @Resource
-    private FormulaStorage formulaStorage;
-
-    @Resource
-    private BizIDGenerator bizIDGenerator;
+    private CalculateStorage calculateStorage;
 
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
@@ -532,8 +528,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  自动填充
                 if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  todo 计算自动填充值并写入context中
-                    Object result = bizIDGenerator.nextId(String.valueOf(entityField.id()));
-                    ;
+                    Object result = null;
+
                     if (null != result) {
                         context.put(entityField.name(), result);
                         entityValue.addValue(toIValue(entityField, result));
@@ -598,8 +594,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         targetEntity.entityValue().addValues(entityValue.values());
     }
 
-    private void addContextWrappers(IValue<?> v, Map<String, Object> context,
-                                    List<ExecutionWrapper<?>> executionWrappers) {
+    private void addContextWrappers(IValue<?> v, Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         if (!(v instanceof FormulaTypedValue)) {
             throw new IllegalArgumentException(
                 "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
@@ -614,8 +609,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
-                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
-        Map<String, Object> result = formulaStorage.execute(executionWrappers, context);
+                                                Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+        Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
         if (null != result) {
             entity.entityValue().values().forEach(
                 v -> {
@@ -624,6 +619,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         Object o = result.get(e.name());
                         if (null != o) {
                             entityValue.addValue(toIValue(e, o));
+                        } else {
+                            logger.debug("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
                         }
                     }
                 }
@@ -634,7 +631,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private IValue<?> toIValue(IEntityField field, Object result) {
         switch (field.type()) {
-            case BOOLEAN: {
+            case BOOLEAN : {
                 return new BooleanValue(field, (Boolean) result);
             }
             case ENUM: {

@@ -18,27 +18,12 @@ import java.util.Map;
  * @version 0.1 2021/05/2021/5/10
  * @since 1.8
  */
-public class ActualFormulaStorage implements FormulaStorage {
+public class ActualCalculateStorage implements CalculateStorage {
 
     @Override
-    public boolean compile(String expression) {
+    public Expression compile(String expression) {
         return ExpressionUtils.compile(ExpressionWrapper.Builder.anExpression()
-            .withExpression(expression).build()) != null;
-    }
-
-    @Override
-    public boolean compile(ExpressionWrapper expressionWrapper) {
-        return ExpressionUtils.compile(expressionWrapper) != null;
-    }
-
-    @Override
-    public Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
-        if (null == expression) {
-            throw new CalculateExecutionException(String.format("compile expression failed [%s-%s].",
-                expressionWrapper.getCode(), expressionWrapper.getExpression()));
-        }
-        return expression.execute(params);
+            .withExpression(expression).build());
     }
 
     @Override
@@ -88,5 +73,12 @@ public class ActualFormulaStorage implements FormulaStorage {
         return result;
     }
 
-
+    private Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
+        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        if (null == expression) {
+            throw new CalculateExecutionException(String.format("compile expression failed [%s-%s].",
+                expressionWrapper.getCode(), expressionWrapper.getExpression()));
+        }
+        return expression.execute(params);
+    }
 }
