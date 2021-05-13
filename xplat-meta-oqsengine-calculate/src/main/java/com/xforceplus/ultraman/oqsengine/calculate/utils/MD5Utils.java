@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.formula.utils;
+package com.xforceplus.ultraman.oqsengine.calculate.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -23,7 +23,7 @@ public class MD5Utils {
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");
             m.update(str.getBytes(StandardCharsets.UTF_8));
-            byte s[] = m.digest();
+            byte[] s = m.digest();
 
             for (int i = 0; i < s.length; i++) {
                 hexString.append(Integer.toHexString((0x000000FF & s[i]) | 0xFFFFFF00).substring(6));

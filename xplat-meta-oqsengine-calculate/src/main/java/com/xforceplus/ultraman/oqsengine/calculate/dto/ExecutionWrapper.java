@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.formula.dto;
+package com.xforceplus.ultraman.oqsengine.calculate.dto;
 
-import com.xforceplus.ultraman.oqsengine.formula.exception.FormulaExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
 
 /**
  *  执行一个表达式的对象表示.
@@ -99,12 +99,12 @@ public class ExecutionWrapper<T> {
             ExecutionWrapper<T> executionWrapper = new ExecutionWrapper<T>();
 
             if (null == this.code) {
-                throw new FormulaExecutionException("build ExecutionWrapper error, code couldn't be null.");
+                throw new CalculateExecutionException("build ExecutionWrapper error, code couldn't be null.");
             }
             executionWrapper.code = this.code;
 
             if (null == this.level) {
-                throw new FormulaExecutionException(
+                throw new CalculateExecutionException(
                     String.format("build ExecutionWrapper error, level couldn't be null, code-[%s].", this.code));
             }
             executionWrapper.level = this.level;
@@ -112,7 +112,7 @@ public class ExecutionWrapper<T> {
             executionWrapper.retClazz = this.retClazz;
 
             if (null == this.expressionWrapper) {
-                throw new FormulaExecutionException(
+                throw new CalculateExecutionException(
                     String.format("build ExecutionWrapper error, expressionWrapper couldn't be null, code-[%s].", this.code));
             }
             executionWrapper.expressionWrapper = this.expressionWrapper;

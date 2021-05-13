@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.formula.dto;
+package com.xforceplus.ultraman.oqsengine.calculate.dto;
 
-import com.xforceplus.ultraman.oqsengine.formula.exception.FormulaExecutionException;
-import com.xforceplus.ultraman.oqsengine.formula.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 
 /**
  *  表达式.
@@ -94,7 +94,7 @@ public class ExpressionWrapper {
          */
         public ExpressionWrapper build() {
             if (null == this.expression || this.expression.isEmpty()) {
-                throw new FormulaExecutionException("expression can't be null in build function.");
+                throw new CalculateExecutionException("expression can't be null in build function.");
             }
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 

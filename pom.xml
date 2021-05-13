@@ -127,7 +127,6 @@
         <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
-        <module>xplat-meta-oqsengine-formula</module>
     </modules>
 
     <distributionManagement>

@@ -1,11 +1,11 @@
-package com.xforceplus.ultraman.oqsengine.formula;
+package com.xforceplus.ultraman.oqsengine.calculate;
 
 import com.googlecode.aviator.Expression;
-import com.xforceplus.ultraman.oqsengine.formula.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.formula.exception.FormulaExecutionException;
-import com.xforceplus.ultraman.oqsengine.formula.utils.ExpressionUtils;
-import com.xforceplus.ultraman.oqsengine.formula.utils.TypeCheck;
+import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.TypeCheck;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +35,7 @@ public class ActualFormulaStorage implements FormulaStorage {
     public Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
         Expression expression = ExpressionUtils.compile(expressionWrapper);
         if (null == expression) {
-            throw new FormulaExecutionException(String.format("compile expression failed [%s-%s].",
+            throw new CalculateExecutionException(String.format("compile expression failed [%s-%s].",
                 expressionWrapper.getCode(), expressionWrapper.getExpression()));
         }
         return expression.execute(params);
@@ -73,7 +73,7 @@ public class ActualFormulaStorage implements FormulaStorage {
                             校验返回类型相符
                         */
                         if (!TypeCheck.check(executionWrapper.getRetClazz(), object)) {
-                            throw new FormulaExecutionException(
+                            throw new CalculateExecutionException(
                                 String.format("code-[%s], retType not equals to define, define [%s], actual [%s]",
                                     executionWrapper.getCode(), executionWrapper.getRetClazz().getCanonicalName(),
                                     object.getClass().getCanonicalName()));

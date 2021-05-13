@@ -1,9 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.formula.utils;
+package com.xforceplus.ultraman.oqsengine.calculate.utils;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;
 import com.googlecode.aviator.Expression;
-import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 
 /**
  * 表达式工具类.
