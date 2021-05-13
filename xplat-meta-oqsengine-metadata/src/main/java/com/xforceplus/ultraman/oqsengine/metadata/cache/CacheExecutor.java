@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +21,10 @@ public interface CacheExecutor {
      * @param appId       应用标识.
      * @param version     版本号.
      * @param storageList 需要保存的元信息.
+     * @param payLoads 需要发布的事件.
      * @return true成功, false失败.
      */
-    boolean save(String appId, int version, List<EntityClassStorage> storageList);
+    boolean save(String appId, int version, List<EntityClassStorage> storageList, List<Event<?>> payLoads);
 
     /**
      * 读取storageList原始信息，由外部进行EntityClass拼装.

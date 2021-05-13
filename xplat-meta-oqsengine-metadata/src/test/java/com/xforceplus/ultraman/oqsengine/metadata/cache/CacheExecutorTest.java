@@ -169,7 +169,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList)) {
+        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
             throw new RuntimeException("save error.");
         }
 
@@ -189,7 +189,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE - 1;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList)) {
+        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
             throw new RuntimeException("save error.");
         }
 

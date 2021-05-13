@@ -619,6 +619,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         Object o = result.get(e.name());
                         if (null != o) {
                             entityValue.addValue(toIValue(e, o));
+                        } else {
+                            logger.debug("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
                         }
                     }
                 }
