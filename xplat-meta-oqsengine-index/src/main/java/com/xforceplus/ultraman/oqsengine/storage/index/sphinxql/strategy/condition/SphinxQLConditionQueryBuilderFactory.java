@@ -62,40 +62,40 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
         // meq
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.LONG, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.LONG, false)
         );
         builders.put(
             buildKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.STRING, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRING, false)
         );
         builders.put(
             buildKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.BOOLEAN, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
         );
         builders.put(
             buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.ENUM, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.ENUM, false)
         );
 
         // long
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.LONG)
+            new MeqNotMatchConditionBuilder(storageStrategyFactory, FieldType.LONG)
         );
 
         // strings
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
-            new MatchConditionBuilderAbstract(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
+            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
-            new MatchConditionBuilderAbstract(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS,
+            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS,
                 true)
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilderAbstract(storageStrategyFactory, FieldType.STRINGS, true)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, true)
         );
 
         builders.values().stream().forEach(b -> {
@@ -120,11 +120,11 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
         AbstractSphinxQLConditionBuilder builder = builders.computeIfAbsent(key, k -> {
             AbstractSphinxQLConditionBuilder b;
             if (match) {
-                b = new MatchConditionBuilderAbstract(
+                b = new MatchConditionBuilder(
                     storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
             } else {
 
-                b = new NotMatchConditionBuilderAbstract(
+                b = new NotMatchConditionBuilder(
                     storageStrategyFactory, condition.getField().type(), condition.getOperator());
             }
 
