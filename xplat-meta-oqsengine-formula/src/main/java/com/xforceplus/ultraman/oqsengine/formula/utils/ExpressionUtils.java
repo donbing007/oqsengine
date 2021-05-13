@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.formula.utils;
 
 import com.googlecode.aviator.AviatorEvaluator;
+import com.googlecode.aviator.AviatorEvaluatorInstance;
 import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
 
@@ -13,8 +14,15 @@ import com.xforceplus.ultraman.oqsengine.formula.dto.ExpressionWrapper;
  */
 public class ExpressionUtils {
 
+    private static final int CAPACITY = 1024 * 10;
+    private static final AviatorEvaluatorInstance INSTANCE;
+
+    static {
+        INSTANCE = AviatorEvaluator.getInstance().useLRUExpressionCache(CAPACITY);
+    }
+
     public static Expression compile(ExpressionWrapper expressionWrapper) {
-        return AviatorEvaluator.getInstance()
-            .compile(expressionWrapper.getCode(),  expressionWrapper.getExpression(), expressionWrapper.isCached());
+        return INSTANCE.compile(expressionWrapper.getCode(),
+                            expressionWrapper.getExpression(), expressionWrapper.isCached());
     }
 }
