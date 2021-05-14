@@ -73,7 +73,7 @@ public class StorageMetaManager implements MetaManager {
             Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
             return Optional.of(toEntityClass(id, entityClassStorageMaps));
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d] error.message is [%s]", id, e.getMessage()), e);
+            logger.warn("load entityClass [{}] error.message is [{}]", id,  e.toString());
             return Optional.empty();
         }
     }
