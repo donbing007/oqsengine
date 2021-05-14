@@ -137,7 +137,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -487,7 +487,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * StorageType.Long
      * aZl8N0123y58M7S
      */
-    private String[] wrapperAttribute(
+    private String wrapperAttribute(
         ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
 
         StringBuilder attributeBuff = new StringBuilder();
@@ -519,18 +519,21 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         attributeBuff.append(' ');
                     }
 
-                    attributeBuff.append(shortStorageName.getPrefix())
-                        .append(word)
-                        .append(shortStorageName.getSuffix());
+                    if (!word.equals(strValue)) {
 
-                    if (FieldType.STRING == field.type()) {
-                        // 搜索属性
-                        if (searchBuff.length() > 0) {
-                            searchBuff.append(' ');
-                        }
-                        searchBuff.append(field.name())
+                        attributeBuff.append(shortStorageName.getPrefix())
                             .append(word)
-                            .append(field.name());
+                            .append(shortStorageName.getSuffix());
+
+                        if (FieldType.STRING == field.type()) {
+                            // 搜索属性
+                            if (searchBuff.length() > 0) {
+                                searchBuff.append(' ');
+                            }
+                            searchBuff.append(field.name())
+                                .append(word)
+                                .append(field.name());
+                        }
                     }
                 }
 
