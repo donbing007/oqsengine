@@ -72,7 +72,7 @@ public class StorageUniqueEntity implements Serializable {
         private long[] entityClasses;
         private String key;
 
-        StorageUniqueEntityBuilder() {
+        public StorageUniqueEntityBuilder() {
         }
 
         public StorageUniqueEntity.StorageUniqueEntityBuilder id(final long id) {
@@ -80,7 +80,7 @@ public class StorageUniqueEntity implements Serializable {
             return this;
         }
 
-        public StorageUniqueEntity.StorageUniqueEntityBuilder entity(final long[] entity) {
+        public StorageUniqueEntity.StorageUniqueEntityBuilder entityClasses(final long[] entity) {
             this.entityClasses = entity;
             return this;
         }
