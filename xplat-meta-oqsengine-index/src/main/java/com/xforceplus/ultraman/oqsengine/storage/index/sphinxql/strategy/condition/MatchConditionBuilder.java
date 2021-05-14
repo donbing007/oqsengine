@@ -19,11 +19,11 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
  * @version 0.1 2020/3/26 10:13
  * @since 1.8
  */
-public class MatchConditionBuilderAbstract extends AbstractSphinxQLConditionBuilder implements TokenizerFactoryAble {
+public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder implements TokenizerFactoryAble {
 
     private TokenizerFactory tokenizerFactory;
 
-    public MatchConditionBuilderAbstract(
+    public MatchConditionBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean useGroupName) {
         super(storageStrategyFactory, fieldType, operator, true, useGroupName);
     }

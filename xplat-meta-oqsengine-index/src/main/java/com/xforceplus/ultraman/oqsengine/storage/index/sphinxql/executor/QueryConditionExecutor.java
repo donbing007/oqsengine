@@ -387,8 +387,11 @@ public class QueryConditionExecutor
             } else {
                 st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
             }
-            st.setLong(3,
-                page.hasVisibleTotalCountLimit() ? page.getVisibleTotalCount() : page.getPageSize() * page.getIndex());
+            long maxMatch = page.getPageSize() * (page.getIndex() - 1);
+            if (page.hasVisibleTotalCountLimit()) {
+                maxMatch = maxMatch > page.getVisibleTotalCount() ? page.getVisibleTotalCount() : maxMatch;
+            }
+            st.setLong(3, maxMatch <= 0 ? 1 : maxMatch);
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
 
