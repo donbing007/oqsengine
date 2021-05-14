@@ -11,10 +11,10 @@ create table devopstasks
      createtime bigint not null comment '任务创建时间',
      updatetime bigint default null comment '任务结束时间',
      message varchar(512) default null comment '任务摘要',
-     checkpoint varchar(512) default null comment '任务坐标信息',
+     startid bigint default 0 not null comment '起始ID',
      constraint devopstasks_pk0 primary key (maintainid),
      key devopstasks_k0 (entity)
-) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET = utf8;
 
 create table cdcerrors
 (

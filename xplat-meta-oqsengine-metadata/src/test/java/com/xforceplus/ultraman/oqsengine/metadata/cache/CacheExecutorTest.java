@@ -5,7 +5,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
@@ -161,7 +162,7 @@ public class CacheExecutorTest {
     public void entityClassStorageQueryTest() throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = new ArrayList<>();
+        List<ExpectedEntityStorage> expectedEntityStorageList = new ArrayList<>();
 
         initEntityStorage(entityClassStorageList, expectedEntityStorageList);
 
@@ -181,7 +182,7 @@ public class CacheExecutorTest {
     @Test
     public void cleanTest() throws JsonProcessingException {
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = new ArrayList<>();
+        List<ExpectedEntityStorage> expectedEntityStorageList = new ArrayList<>();
 
         initEntityStorage(entityClassStorageList, expectedEntityStorageList);
 
@@ -198,7 +199,7 @@ public class CacheExecutorTest {
         boolean ret = cacheExecutor.clean(expectedAppId, expectedVersion, true);
         Assert.assertTrue(ret);
 
-        for (EntityClassStorageBuilder.ExpectedEntityStorage e : expectedEntityStorageList) {
+        for (ExpectedEntityStorage e : expectedEntityStorageList) {
             invalid(e.getSelf(), "entityClassStorage is null, may be delete.");
         }
     }
@@ -215,7 +216,7 @@ public class CacheExecutorTest {
      * test & check.
      */
     private void check(int expectedVersion,
-                       List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList,
+                       List<ExpectedEntityStorage> expectedEntityStorageList,
                        List<EntityClassStorage> entityClassStorageList) throws JsonProcessingException {
         Map<Long, EntityClassStorage> fullCheckMaps = null;
         if (null != entityClassStorageList && entityClassStorageList.size() > 0) {
@@ -223,7 +224,7 @@ public class CacheExecutorTest {
                 .collect(Collectors.toMap(EntityClassStorage::getId, f1 -> f1, (f1, f2) -> f1));
         }
 
-        for (EntityClassStorageBuilder.ExpectedEntityStorage e : expectedEntityStorageList) {
+        for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Assert.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
             Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
 
@@ -286,48 +287,48 @@ public class CacheExecutorTest {
     }
 
     private void initEntityStorage(List<EntityClassStorage> entityClassStorageList,
-                                   List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList) {
+                                   List<ExpectedEntityStorage> expectedEntityStorageList) {
         /*
          * set self
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage self =
-            new EntityClassStorageBuilder.ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
-        entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(self));
+        ExpectedEntityStorage self =
+            new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
+        entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(self));
         expectedEntityStorageList.add(self);
 
         /*
          * set father
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage father =
-            new EntityClassStorageBuilder.ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L),
+        ExpectedEntityStorage father =
+            new ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L),
                 Arrays.asList(20L));
-        entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(father));
+        entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(father));
         expectedEntityStorageList.add(father);
 
         /*
          * set ancestor
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage ancestor =
-            new EntityClassStorageBuilder.ExpectedEntityStorage(20L, null, null, null);
-        entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(ancestor));
+        ExpectedEntityStorage ancestor =
+            new ExpectedEntityStorage(20L, null, null, null);
+        entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(ancestor));
         expectedEntityStorageList.add(ancestor);
 
         /*
          * set son
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage son =
-            new EntityClassStorageBuilder.ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L),
+        ExpectedEntityStorage son =
+            new ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L),
                 Arrays.asList(5L, 20L));
-        entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(son));
+        entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(son));
         expectedEntityStorageList.add(son);
 
         /*
          * set brother
          */
-        EntityClassStorageBuilder.ExpectedEntityStorage brother =
-            new EntityClassStorageBuilder.ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L),
+        ExpectedEntityStorage brother =
+            new ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L),
                 Arrays.asList(4L, 20L));
-        entityClassStorageList.add(EntityClassStorageBuilder.prepareEntity(brother));
+        entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(brother));
         expectedEntityStorageList.add(brother);
     }
 }

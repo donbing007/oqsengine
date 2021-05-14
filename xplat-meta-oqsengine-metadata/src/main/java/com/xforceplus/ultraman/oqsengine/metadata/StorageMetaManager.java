@@ -73,7 +73,7 @@ public class StorageMetaManager implements MetaManager {
         try {
             return innerLoad(id, null);
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
             return Optional.empty();
         }
     }

@@ -84,6 +84,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         if (cacheExecutor.prepare(appId, version)) {
             int expiredVersion = -1;
             try {
+                List<Event<?>> payloads = new ArrayList<>();
                 try {
                     expiredVersion = version(appId);
                 } catch (Exception e) {
@@ -93,7 +94,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
-                List<Event<?>> payloads = new ArrayList<>();
                 try {
                     // step3 update new Hash in redis
                     if (!cacheExecutor.save(appId, version, entityClassStorageList, payloads)) {

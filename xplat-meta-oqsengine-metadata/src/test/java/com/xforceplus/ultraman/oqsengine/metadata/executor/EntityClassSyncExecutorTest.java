@@ -2,12 +2,16 @@ package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -20,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +79,18 @@ public class EntityClassSyncExecutorTest {
         entityClassSyncExecutor = new EntityClassSyncExecutor();
         ReflectionTestUtils.setField(entityClassSyncExecutor, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(entityClassSyncExecutor, "expireExecutor", new ExpireExecutor());
+        ReflectionTestUtils.setField(entityClassSyncExecutor, "eventBus", new EventBus() {
+
+            @Override
+            public void watch(EventType type, Consumer<Event> listener) {
+                Assert.assertEquals(type, EventType.AUTO_FILL_UPGRADE);
+            }
+
+            @Override
+            public void notify(Event event) {
+                Assert.assertEquals(event.type(), EventType.AUTO_FILL_UPGRADE);
+            }
+        });
 
         entityClassSyncExecutor.start();
 
@@ -102,11 +119,11 @@ public class EntityClassSyncExecutorTest {
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
 
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList =
-            EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+        List<ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
         EntityClassSyncRspProto entityClassSyncRspProto =
-            EntityClassStorageBuilder.entityClassSyncRspProtoGenerator(expectedEntityStorageList);
+            EntityClassSyncProtoBufMocker.Response.entityClassSyncRspProtoGenerator(expectedEntityStorageList);
 
         boolean ret =
             entityClassSyncExecutor.sync(expectedAppId, expectedVersion, entityClassSyncRspProto);
@@ -132,7 +149,7 @@ public class EntityClassSyncExecutorTest {
 
         Assert.assertEquals(newVersion, cacheExecutor.version(expectedAppId));
 
-        for (EntityClassStorageBuilder.ExpectedEntityStorage e : expectedEntityStorageList) {
+        for (ExpectedEntityStorage e : expectedEntityStorageList) {
             /*
              * 本地缓存中已不存在
              */
