@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
-import com.sun.org.apache.regexp.internal.RE;
 import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
