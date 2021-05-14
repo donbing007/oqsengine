@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -20,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CrossSearchExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveIndexExecutor;
@@ -27,6 +29,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.CrossSearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -134,7 +137,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -162,8 +165,14 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 getMaxSearchTimeoutMs()).execute(
                 Tuple.of(entityClass, conditions, useConfig));
         });
+    }
 
-        return refs;
+    @Override
+    public Collection<EntityRef> search(String code, String text, CrossSearchConfig config) throws SQLException {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+            return CrossSearchExecutor.build(getSearchIndexName(), resource, getMaxSearchTimeoutMs())
+                .execute(Tuple.of(code, text, config));
+        });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
@@ -352,9 +361,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             .withUpdateTime(originalEntity.getUpdateTime())
             .withMaintainId(originalEntity.getMaintainid())
             .withOqsmajor(originalEntity.getOqsMajor())
-            .withAttributeF(toAttributesF(originalEntity))
             .withEntityClassF(toEntityClassF(originalEntity))
             .withAttribute(toAttribute(originalEntity));
+
+        // 填充全文属性.
+        builder = fillAttributeF(originalEntity, builder);
+
         return builder.build();
     }
 
@@ -401,14 +413,21 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
     }
 
-    // 全文属性
-    private String toAttributesF(OriginalEntity originalEntity) throws SQLException {
-        StringBuilder buff = new StringBuilder();
-        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
-            IEntityClass entityClass = originalEntity.getEntityClass();
-            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
+    // 填允全文属性.
+    private SphinxQLStorageEntity.Builder fillAttributeF(OriginalEntity source, SphinxQLStorageEntity.Builder builder)
+        throws SQLException {
 
-            Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
+        StringBuilder attributeFBuff = new StringBuilder();
+        StringBuilder searchAttributeFBuff = new StringBuilder();
+
+        IEntityClass entityClass = source.getEntityClass();
+        Optional<IEntityField> fieldOp;
+        StorageValue anyStorageValue;
+        for (Map.Entry<String, Object> attr : source.listAttributes()) {
+
+            anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
+
+            fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
 
             if (StorageType.UNKNOWN == anyStorageValue.type()) {
                 if (fieldOp.isPresent()) {
@@ -426,16 +445,33 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             if (!needField(entityClass, anyStorageValue, false)) {
                 continue;
             }
+            final int normalAttribute = 0;
+            final int searchAttribute = 1;
 
-            buff.append(
-                wrapperAttribute(
-                    anyStorageValue.shortStorageName(),
-                    attr.getValue(),
-                    anyStorageValue.type(),
-                    fieldOp.get()))
-                .append(' ');
+            // 单个属性的包装分词处理.
+            String[] attributes = wrapperAttribute(
+                anyStorageValue.shortStorageName(),
+                attr.getValue(),
+                anyStorageValue.type(),
+                fieldOp.get());
+
+            // 普通搜索属性处理.
+            if (!attributes[normalAttribute].isEmpty()) {
+                attributeFBuff.append(attributes[normalAttribute]).append(' ');
+            }
+
+            /*
+            全文搜索处理.
+            限制为字符串或者枚举类型.
+             */
+            if (!attributes[searchAttribute].isEmpty()) {
+                searchAttributeFBuff.append(attributes[searchAttribute]).append(' ');
+            }
         }
-        return buff.toString();
+
+        builder.withAttributeF(attributeFBuff.toString());
+        builder.withSearchAttributeF(searchAttributeFBuff.toString());
+        return builder;
     }
 
     // 全文元信息
@@ -451,11 +487,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * StorageType.Long
      * aZl8N0123y58M7S
      */
-    private String wrapperAttribute(
+    private String[] wrapperAttribute(
         ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
 
-        StringBuilder buff = new StringBuilder();
-
+        StringBuilder attributeBuff = new StringBuilder();
+        StringBuilder searchBuff = new StringBuilder();
         /*
          * 字符串需要处理特殊字符.
          * fuzzyType只有字符串才会处理.
@@ -475,16 +511,35 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 /*
                  * 处理当前字段分词结果.
                  */
+                String word;
                 while (words.hasNext()) {
-                    if (buff.length() > 0) {
-                        buff.append(' ');
+                    word = words.next();
+                    // 普通属性.
+                    if (attributeBuff.length() > 0) {
+                        attributeBuff.append(' ');
                     }
-                    buff.append(shortStorageName.getPrefix())
-                        .append(words.next())
+
+                    attributeBuff.append(shortStorageName.getPrefix())
+                        .append(word)
                         .append(shortStorageName.getSuffix());
+
+                    if (FieldType.STRING == field.type()) {
+                        // 搜索属性
+                        if (searchBuff.length() > 0) {
+                            searchBuff.append(' ');
+                        }
+                        searchBuff.append(field.name())
+                            .append(word)
+                            .append(field.name());
+                    }
                 }
-                if (buff.length() > 0) {
-                    buff.append(' ');
+
+                if (attributeBuff.length() > 0) {
+                    attributeBuff.append(' ');
+                }
+
+                if (searchBuff.length() > 0) {
+                    searchBuff.append(' ');
                 }
             }
 
@@ -493,18 +548,32 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
              * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
              * 最终在储存时将会去除尾部的定位序号,变成如下.
              * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
+             * 这里储存完整词用以精确查询.
              */
-            buff.append(shortStorageName.getPrefix())
+            attributeBuff.append(shortStorageName.getPrefix())
                 .append(strValue)
                 .append(shortStorageName.getNoLocationSuffix());
+
+            /*
+            这里记录跨entity的搜索完整属性.
+             */
+            if (FieldType.STRING == field.type()) {
+                searchBuff.append(field.name())
+                    .append(strValue)
+                    .append(field.name());
+            }
+
         } else {
 
-            buff.append(shortStorageName.getPrefix())
+            attributeBuff.append(shortStorageName.getPrefix())
                 .append(value.toString())
                 .append(shortStorageName.getSuffix());
         }
 
-        return buff.toString();
+        return new String[] {
+            attributeBuff.toString(),
+            searchBuff.toString()
+        };
     }
 
     // 根据最终数据的储存目标切割.
