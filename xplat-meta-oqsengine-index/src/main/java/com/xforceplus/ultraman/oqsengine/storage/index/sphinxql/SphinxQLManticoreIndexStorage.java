@@ -475,13 +475,18 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 /*
                  * 处理当前字段分词结果.
                  */
+                String word;
                 while (words.hasNext()) {
                     if (buff.length() > 0) {
                         buff.append(' ');
                     }
-                    buff.append(shortStorageName.getPrefix())
-                        .append(words.next())
-                        .append(shortStorageName.getSuffix());
+                    word = words.next();
+                    // 防止和原始字符相同的分词结果.
+                    if (!word.equals(strValue)) {
+                        buff.append(shortStorageName.getPrefix())
+                            .append(word)
+                            .append(shortStorageName.getSuffix());
+                    }
                 }
                 if (buff.length() > 0) {
                     buff.append(' ');
