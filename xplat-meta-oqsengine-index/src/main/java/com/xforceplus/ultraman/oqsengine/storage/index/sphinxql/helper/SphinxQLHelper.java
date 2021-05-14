@@ -1,12 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
+import com.sun.org.apache.regexp.internal.RE;
 import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * SphinxQL帮助类.
@@ -21,7 +24,7 @@ public class SphinxQLHelper {
      * 半角空格不可过滤,只有全角空格需要过滤.
      */
     protected static final int[] IGNORE_SYMBOLS = {
-        '\'', '\\', '\"', '+', '-', '#', '%', '.', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
+        '\'', '\\', '\"', '+', '#', '%', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
         '<', '>', '≮', '≯', '≤', '≥', '‰', '∞', '∝', '√', '∵', '∴', '∷', '∠', '⌒', '⊙', '○', 'π', '△', '⊥', '∪', '∩',
         '∫', '∑', '°', '′', '″', '℃', '{', '}', '(', ')', '[', ']', '|', '‖', '*', '/', ':', ';', '?', '!', '&', '～',
         '§', '→', '^', '$', '@', '`', '❤', '❥', '︼', '﹄', '﹂', 'ˉ', '︾', '︺', '﹀', '︸', '︶', '︻', '﹃', '﹁',
@@ -30,12 +33,21 @@ public class SphinxQLHelper {
         '＠', '［', '＼', '］', '＾', '＿', '｀', '｛', '｜', '｝', '～', '　',
     };
 
+    protected static final Map<Character, String> REPLACE_SYMBOLS;
+
     static {
         Arrays.sort(IGNORE_SYMBOLS);
+
+        /*
+         * 替换成英文表示,追加S表示Symbol缩写.
+         */
+        REPLACE_SYMBOLS = new HashMap<>();
+        REPLACE_SYMBOLS.put('-', "M");
+        REPLACE_SYMBOLS.put('.', "D");
     }
 
     /**
-     * 过滤所有不合式的符号.
+     * 过滤所有不合式的符号.替换需要的字符为合式的字符.
      *
      * @param value 目标字串.
      * @return 结果.
@@ -46,9 +58,15 @@ public class SphinxQLHelper {
             return value;
         }
         StringBuilder buff = new StringBuilder();
+        String replaceString;
         for (char c : value.toCharArray()) {
             if (Arrays.binarySearch(IGNORE_SYMBOLS, c) < 0) {
-                buff.append(c);
+                replaceString = REPLACE_SYMBOLS.get(c);
+                if (replaceString != null) {
+                    buff.append(replaceString);
+                } else {
+                    buff.append(c);
+                }
             }
         }
 

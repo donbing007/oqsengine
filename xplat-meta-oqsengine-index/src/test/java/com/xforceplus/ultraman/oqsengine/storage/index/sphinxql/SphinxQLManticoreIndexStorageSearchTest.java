@@ -278,7 +278,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 .build()
         );
         Assert.assertEquals(page.getTotalCount(), expectedDatas.size());
-
     }
 
     @Test
@@ -311,6 +310,33 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
+            new Case(
+                "all",
+                Conditions.buildEmtpyConditions(),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[] {
+                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
+                }
+            ),
+            new Case(
+                "string .- symbol",
+                Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "15796500901.-12")
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig().build(),
+                new long[] {
+                    9223372036854775798L
+                }
+            ),
             new Case(
                 "id in (not exist)",
                 Conditions.buildEmtpyConditions()
