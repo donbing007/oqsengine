@@ -1,55 +1,55 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toTypedValue;
-import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
-import static io.vavr.Predicates.instanceOf;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.Tuple2;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toTypedValue;
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 /**
  * new helper.
  */
 public class EntityClassHelper {
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    private static Logger logger = LoggerFactory.getLogger(EntityClassHelper.class);
+
     /**
      * convert entityUp to EntityRef.
      */
-    public static EntityClassRef toEntityClassRef(EntityUp entityUp) {
+    public static EntityClassRef toEntityClassRef(EntityUp entityUp, String profile) {
         EntityClassRef entityClassRef = EntityClassRef
-            .Builder
-            .anEntityClassRef()
-            .withEntityClassId(entityUp.getId())
-            .withEntityClassCode(entityUp.getCode())
-            .build();
+                .Builder
+                .anEntityClassRef()
+                .withEntityClassProfile(profile)
+                .withEntityClassId(entityUp.getId())
+                .withEntityClassCode(entityUp.getCode())
+                .build();
         return entityClassRef;
     }
 
@@ -58,10 +58,10 @@ public class EntityClassHelper {
      */
     public static IEntity toEntity(EntityClassRef entityClassRef, IEntityClass entityClass, EntityUp in) {
         return Entity.Builder.anEntity()
-            .withId(in.getObjId())
-            .withEntityClassRef(entityClassRef)
-            .withEntityValue(toEntityValue(entityClass, in))
-            .build();
+                .withId(in.getObjId())
+                .withEntityClassRef(entityClassRef)
+                .withEntityValue(toEntityValue(entityClass, in))
+                .build();
     }
 
     public static boolean isRelatedField(Tuple2<OqsRelation, IEntityField> tuple) {
@@ -79,12 +79,12 @@ public class EntityClassHelper {
         }
 
         Optional<IEntityField> firstField = entityClass.oqsRelations().stream()
-            .filter(x -> x.getLeftEntityClassId() == entityClass.id())
-            .map(x -> {
-                IEntityClass relatedEntityClass = x.getRightEntityClass();
-                Optional<IEntityField> entityField = relatedEntityClass.field(x.getId());
-                return entityField;
-            }).filter(Optional::isPresent).map(Optional::get).findFirst();
+                .filter(x -> x.getLeftEntityClassId() == entityClass.id())
+                .map(x -> {
+                    IEntityClass relatedEntityClass = x.getRightEntityClass();
+                    Optional<IEntityField> entityField = relatedEntityClass.field(x.getId());
+                    return entityField;
+                }).filter(Optional::isPresent).map(Optional::get).findFirst();
 
         return firstField;
     }
@@ -94,14 +94,33 @@ public class EntityClassHelper {
      */
     private static EntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
         List<IValue> valueList = entityUp.getValuesList().stream()
-            .flatMap(y -> {
-                //TODO cannot find field like this
-                Optional<? extends IEntityField> entityFieldOp = entityClass.field(y.getFieldId());
-                return entityFieldOp
-                    .map(x -> toTypedValue(x, y.getValue()))
-                    .orElseGet(Collections::emptyList)
-                    .stream();
-            }).filter(Objects::nonNull).collect(Collectors.toList());
+                .flatMap(y -> {
+                    //TODO cannot find field like this
+                    Optional<? extends IEntityField> entityFieldOp = entityClass.field(y.getFieldId());
+                    return entityFieldOp
+                            .map(x -> {
+
+                                if (x.calculateType() == CalculateType.FORMULA) {
+                                    String contextStr = y.getContextStr();
+                                    Map<String, Object> contextMap = Collections.emptyMap();
+                                    if (!StringUtils.isEmpty(contextStr)) {
+                                        try {
+                                            contextMap = mapper.readValue(contextStr, new TypeReference<Map<String, Object>>() {
+                                            });
+                                        } catch (JsonProcessingException e) {
+                                            //error
+                                            logger.error("{}", e);
+                                        }
+                                    }
+                                    FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
+                                    return Collections.singletonList(retValue);
+                                } else {
+                                    return toTypedValue(x, y.getValue());
+                                }
+                            })
+                            .orElseGet(Collections::emptyList)
+                            .stream();
+                }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue();
         entityValue.addValues(valueList);
         return entityValue;
@@ -115,8 +134,8 @@ public class EntityClassHelper {
 
         builder.setObjId(entity.id());
         builder.addAllValues(entity.entityValue().values().stream()
-            .map(EntityClassHelper::toValueUp)
-            .collect(Collectors.toList()));
+                .map(EntityClassHelper::toValueUp)
+                .collect(Collectors.toList()));
         builder.setId(entity.entityClassRef().getId());
         return builder.build();
     }
@@ -125,11 +144,11 @@ public class EntityClassHelper {
         //TODO format?
         IEntityField field = value.getField();
         return ValueUp.newBuilder()
-            .setValue(toValueStr(value))
-            .setName(field.name())
-            .setFieldId(field.id())
-            .setFieldType(field.type().name())
-            .build();
+                .setValue(toValueStr(value))
+                .setName(field.name())
+                .setFieldId(field.id())
+                .setFieldType(field.type().name())
+                .build();
     }
 
 
@@ -142,9 +161,9 @@ public class EntityClassHelper {
 
     private static String toValueStr(IValue value) {
         String retVal
-            = Match(value)
-            .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
-                Case($(), IValue::valueToString));
+                = Match(value)
+                .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
+                        Case($(), IValue::valueToString));
         return retVal;
     }
 
@@ -153,10 +172,10 @@ public class EntityClassHelper {
      */
     public static OperationResult toOperationResult(EntityDomain entityDomain) {
         return OperationResult.newBuilder()
-            .setCode(OperationResult.Code.OK)
-            .setTotalRow(1)
-            .addQueryResult(toEntityUp(entityDomain.getEntity()))
-            .build();
+                .setCode(OperationResult.Code.OK)
+                .setTotalRow(1)
+                .addQueryResult(toEntityUp(entityDomain.getEntity()))
+                .build();
     }
 
     /**
@@ -177,9 +196,9 @@ public class EntityClassHelper {
         }
 
         return OperationResult.newBuilder()
-            .setCode(OperationResult.Code.OK)
-            .setTotalRow(result.size())
-            .addAllQueryResult(result)
-            .build();
+                .setCode(OperationResult.Code.OK)
+                .setTotalRow(result.size())
+                .addAllQueryResult(result)
+                .build();
     }
 }
