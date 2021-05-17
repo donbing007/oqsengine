@@ -22,7 +22,7 @@ public class ExpressionUtils {
     }
 
     public static Expression compile(ExpressionWrapper expressionWrapper) {
-        return INSTANCE.compile(expressionWrapper.getCode(),
-                            expressionWrapper.getExpression(), expressionWrapper.isCached());
+        String functionBody = AviatorUtil.parseRule(expressionWrapper.getExpression());
+        return INSTANCE.compile(expressionWrapper.getCode(), functionBody, expressionWrapper.isCached());
     }
 }

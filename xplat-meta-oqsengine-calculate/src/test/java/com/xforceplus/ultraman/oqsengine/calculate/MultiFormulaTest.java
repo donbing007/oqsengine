@@ -2,6 +2,10 @@ package com.xforceplus.ultraman.oqsengine.calculate;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import com.googlecode.aviator.utils.Env;
+import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.AviatorUtil;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -37,5 +41,21 @@ public class MultiFormulaTest {
 //        Assert.assertNotNull(value.get("a"));
 //        Assert.assertNotNull(value.get("b"));
 //        Assert.assertNotNull(value.get("c"));
+    }
+
+    @Test
+    public void testSimpleString() {
+        String a = "${name}";
+        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(a).build();
+
+
+        Expression expression = ExpressionUtils.compile(expressionWrapper);
+
+        Map<String, Object> params = new HashMap<>();
+        String expectedValue = "aaaaa";
+        params.put("name", expectedValue);
+        String res = (String) expression.execute(params);
+
+        Assert.assertEquals(expectedValue, res);
     }
 }
