@@ -46,6 +46,16 @@ public class StorageConfiguration {
         return storage;
     }
 
+    @Bean
+    public UniqueMasterStorage masterUniqueStorage(
+        @Value("${storage.master.unique.name:oqsunique}") String tableName,
+        @Value("${storage.timeoutMs.query:3000}") long queryTimeout) {
+        MasterUniqueStorage storage = new MasterUniqueStorage();
+        storage.setTableName(tableName);
+        storage.setQueryTimeout(queryTimeout);
+        return storage;
+    }
+
     /**
      * 索引存储存.
      */
