@@ -433,7 +433,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+        if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
             uniqueStorage.delete(entity, entityClass);
         }
         return delete(entity);
@@ -586,7 +586,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
                 if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
-                } else {
+                } else if (!entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  加入新的entityValue中
                     entityValue.addValue(v);
                 }
@@ -596,12 +596,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  将targetEntity中剩余entity加入进行计算
         targetEntity.entityValue().values().forEach(
             v -> {
-                //  old字段中所有的公式字段都不会参与replace计算
-                if (!v.getField().calculateType().equals(CalculateType.FORMULA)) {
-                    //  当context中不存在该key时，加入,不使用putIfAbsent的原因是允许空值
-                    if (!context.containsKey(v.getField().name())) {
-                        context.put(v.getField().name(), v.getValue());
-                    }
+                //  CalculateType为AUTO_FILL 或者
+                //  CalculateType不等于FORMULA同时在新字段中不存在
+                if (v.getField().calculateType().equals(CalculateType.AUTO_FILL) ||
+                    (!v.getField().calculateType().equals(CalculateType.FORMULA) &&
+                        !context.containsKey(v.getField().name()))) {
+                    context.put(v.getField().name(), v.getValue());
                 }
             }
         );
@@ -613,7 +613,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         targetEntity.entityValue().addValues(entityValue.values());
     }
 
-    private void addContextWrappers(IValue<?> v, Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+    private void addContextWrappers(IValue<?> v, Map<String, Object> context,
+                                    List<ExecutionWrapper<?>> executionWrappers) {
         if (!(v instanceof FormulaTypedValue)) {
             throw new IllegalArgumentException(
                 "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
@@ -628,7 +629,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
-                                                Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
         if (null != result) {
             entity.entityValue().values().forEach(
@@ -650,7 +651,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private IValue<?> toIValue(IEntityField field, Object result) {
         switch (field.type()) {
-            case BOOLEAN : {
+            case BOOLEAN: {
                 return new BooleanValue(field, (Boolean) result);
             }
             case ENUM: {

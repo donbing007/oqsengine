@@ -32,6 +32,7 @@ public interface EntitySearchService {
 
     /**
      * 根据业务主键搜索一个entity实例
+     *
      * @param key
      * @param entityClassRef
      * @return

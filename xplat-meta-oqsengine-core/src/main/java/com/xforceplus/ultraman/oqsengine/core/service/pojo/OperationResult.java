@@ -28,7 +28,11 @@ public class OperationResult {
         this.eventType = eventType;
     }
 
-    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus, String message) {
+    /**
+     * 实例化.
+     */
+    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
+                           String message) {
         this.txId = txId;
         this.version = version;
         this.resultStatus = resultStatus;
