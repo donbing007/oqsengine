@@ -62,18 +62,33 @@ public class BusinessIDGeneratorConfiguration {
         return pattenParserUtil;
     }
 
+    /**
+     * bizIDGenerator.
+     *
+     * @return BizIDGenerator
+     */
     @Bean
     public BizIDGenerator bizIDGenerator() {
         BizIDGenerator bizIDGenerator = new BizIDGenerator();
         return bizIDGenerator;
     }
 
+    /**
+     * idGeneratorFactory.
+     *
+     * @return IDGeneratorFactory
+     */
     @Bean
     public IDGeneratorFactory idGeneratorFactory() {
         IDGeneratorFactory factory = new IDGeneratorFactoryImpl();
         return factory;
     }
 
+    /**
+     * segmentService.
+     *
+     * @return SegmentService
+     */
     @Bean
     public SegmentService segmentService() {
         SegmentService segmentService = new SegmentServiceImpl();

@@ -39,8 +39,6 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
-    @Resource(name = "masterDataSourceSelector")
-    private Selector<DataSource> dataSourceSelector;
 
     public void setTableName(String tableName) {
         this.tableName = tableName;

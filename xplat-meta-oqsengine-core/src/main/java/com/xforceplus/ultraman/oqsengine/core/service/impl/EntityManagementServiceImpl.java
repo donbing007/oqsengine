@@ -42,6 +42,7 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterUniqueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -100,7 +101,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private CalculateStorage calculateStorage;
 
     @Resource
-    private MasterUniqueStorage uniqueStorage;
+    private UniqueMasterStorage uniqueStorage;
 
     @Resource
     private BizIDGenerator bizIDGenerator;
