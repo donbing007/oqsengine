@@ -432,7 +432,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+        if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
             uniqueStorage.delete(entity, entityClass);
         }
         return delete(entity);
@@ -612,7 +612,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         targetEntity.entityValue().addValues(entityValue.values());
     }
 
-    private void addContextWrappers(IValue<?> v, Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+    private void addContextWrappers(IValue<?> v, Map<String, Object> context,
+                                    List<ExecutionWrapper<?>> executionWrappers) {
         if (!(v instanceof FormulaTypedValue)) {
             throw new IllegalArgumentException(
                 "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
@@ -627,7 +628,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
-                                                Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
         if (null != result) {
             entity.entityValue().values().forEach(
@@ -649,7 +650,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private IValue<?> toIValue(IEntityField field, Object result) {
         switch (field.type()) {
-            case BOOLEAN : {
+            case BOOLEAN: {
                 return new BooleanValue(field, (Boolean) result);
             }
             case ENUM: {
