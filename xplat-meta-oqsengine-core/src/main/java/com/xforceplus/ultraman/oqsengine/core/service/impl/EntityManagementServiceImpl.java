@@ -547,9 +547,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 IEntityField entityField = v.getField();
                 //  自动填充
                 if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
-                    //  todo 计算自动填充值并写入context中
-                    Object result;
-                    result = bizIDGenerator.nextId(String.valueOf(entityField.id()));
+                    Object result = bizIDGenerator.nextId(String.valueOf(entityField.id()));
                     if (null != result) {
                         context.put(entityField.name(), result);
                         entityValue.addValue(toIValue(entityField, result));
