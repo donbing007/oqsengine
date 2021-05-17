@@ -4,14 +4,13 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * 删除执行器.
- * 删除业务主键
+ * 删除业务主键执行期.
+ *
  * @author leo
  * @version 0.1 2020/03/21 16:03
  * @since 1.8
@@ -33,12 +32,12 @@ public class DeleteUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEn
 
     @Override
     public Integer execute(StorageUniqueEntity storageUniqueEntity) throws SQLException {
-            String sql = buildForceSQL();
-            try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                st.setLong(1, storageUniqueEntity.getId());
-                checkTimeout(st);
-                return st.executeUpdate();
-            }
+        String sql = buildForceSQL();
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            st.setLong(1, storageUniqueEntity.getId());
+            checkTimeout(st);
+            return st.executeUpdate();
+        }
     }
 
     private String buildForceSQL() {

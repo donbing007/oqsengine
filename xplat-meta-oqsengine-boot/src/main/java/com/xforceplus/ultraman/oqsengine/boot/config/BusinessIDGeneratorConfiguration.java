@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
@@ -25,14 +26,14 @@ public class BusinessIDGeneratorConfiguration {
     /**
      * segment storage.
      *
-     * @param tableName 表名.
+     * @param tableName      表名.
      * @param maxQueryTimeMs 超时时间 .
      * @return SqlSegmentStorage .
      */
     @Bean
     public SqlSegmentStorage sqlSegmentStorage(
-            @Value("${storage.generator.segment.name:segment}") String tableName,
-            @Value("${storage.devOps.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
+        @Value("${storage.generator.segment.name:segment}") String tableName,
+        @Value("${storage.devOps.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
 
         SqlSegmentStorage storage = new SqlSegmentStorage();
         storage.setQueryTimeout(maxQueryTimeMs);
@@ -62,21 +63,47 @@ public class BusinessIDGeneratorConfiguration {
         return pattenParserUtil;
     }
 
+    /**
+     * bizIDGenerator.
+     *
+     * @return BizIDGenerator
+     */
     @Bean
     public BizIDGenerator bizIDGenerator() {
         BizIDGenerator bizIDGenerator = new BizIDGenerator();
         return bizIDGenerator;
     }
 
+    /**
+     * idGeneratorFactory.
+     *
+     * @return IDGeneratorFactory
+     */
     @Bean
     public IDGeneratorFactory idGeneratorFactory() {
         IDGeneratorFactory factory = new IDGeneratorFactoryImpl();
         return factory;
     }
 
+    /**
+     * segmentService.
+     *
+     * @return SegmentService
+     */
     @Bean
     public SegmentService segmentService() {
         SegmentService segmentService = new SegmentServiceImpl();
         return segmentService;
+    }
+
+    /**
+     * autoFillUpgradeListener.
+     *
+     * @return AutoFillUpgradeListener
+     */
+    @Bean
+    public AutoFillUpgradeListener autoFillUpgradeListener() {
+        AutoFillUpgradeListener autoFillUpgradeListener = new AutoFillUpgradeListener();
+        return autoFillUpgradeListener;
     }
 }

@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
