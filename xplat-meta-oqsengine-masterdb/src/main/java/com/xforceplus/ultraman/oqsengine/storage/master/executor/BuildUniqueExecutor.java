@@ -11,7 +11,7 @@ import java.util.Collections;
 /**
  * 项目名称: 票易通
  * JDK 版本: JDK1.8
- * 说明:
+ * 说明: 新增业务主键
  * 作者(@author): liwei
  * 创建时间: 2021/3/19 4:55 PM
  */

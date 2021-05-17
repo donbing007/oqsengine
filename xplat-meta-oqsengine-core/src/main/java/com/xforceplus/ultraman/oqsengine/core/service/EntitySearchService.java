@@ -4,10 +4,12 @@ import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,6 +29,16 @@ public interface EntitySearchService {
      * @return 目标 entity 实体.
      */
     Optional<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException;
+
+    /**
+     * 根据业务主键搜索一个entity实例
+     * @param key
+     * @param entityClassRef
+     * @return
+     * @throws SQLException
+     */
+    Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
+
 
     /**
      * 根据多个 id 搜索 entity 实例.

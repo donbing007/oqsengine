@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AbstractConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -23,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -31,6 +34,8 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -96,6 +101,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource
     private MasterStorage masterStorage;
+
+    @Resource
+    private UniqueMasterStorage uniqueMasterStorage;
 
     @Resource
     private IndexStorage indexStorage;
@@ -201,6 +209,19 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             oneReadCountTotal.increment();
         }
 
+    }
+
+    @Override
+    public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
+        Optional<IEntityClass> entityClass =  metaManager.load(entityClassRef.getId());
+        if (!entityClass.isPresent()) {
+            throw new RuntimeException(String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
+        }
+        Optional<StorageUniqueEntity> uniqueStorage = uniqueMasterStorage.select(key, entityClass.get());
+        if (!uniqueStorage.isPresent()) {
+            return Optional.empty();
+        }
+        return selectOne(uniqueStorage.get().getId(), entityClassRef);
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})

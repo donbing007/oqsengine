@@ -40,6 +40,7 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterUniqueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -96,6 +97,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private CalculateStorage calculateStorage;
+
+    @Resource
+    private MasterUniqueStorage uniqueStorage;
 
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
@@ -321,6 +325,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 // 操作时间
                 targetEntity.markTime(entity.time());
 
+                if (uniqueStorage.containUniqueConfig(targetEntity, entityClass)) {
+                    uniqueStorage.replace(targetEntity, entityClass);
+                }
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
@@ -386,7 +393,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
-
+                if (uniqueStorage.containUniqueConfig(targetEntityOp.orElse(entity), entityClass)) {
+                    uniqueStorage.delete(targetEntityOp.orElse(entity), entityClass);
+                }
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
                 return new OperationResult(
@@ -414,7 +423,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          * 设置万能版本,表示和所有的版本都匹配.
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-
+        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+        uniqueStorage.delete(entity, entityClass);
         return delete(entity);
     }
 
