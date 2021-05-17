@@ -586,7 +586,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
                 if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
-                } else {
+                } else if (!entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  加入新的entityValue中
                     entityValue.addValue(v);
                 }
@@ -596,12 +596,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  将targetEntity中剩余entity加入进行计算
         targetEntity.entityValue().values().forEach(
             v -> {
-                //  old字段中所有的公式字段都不会参与replace计算
-                if (!v.getField().calculateType().equals(CalculateType.FORMULA)) {
-                    //  当context中不存在该key时，加入,不使用putIfAbsent的原因是允许空值
-                    if (!context.containsKey(v.getField().name())) {
-                        context.put(v.getField().name(), v.getValue());
-                    }
+                //  CalculateType为AUTO_FILL 或者
+                //  CalculateType不等于FORMULA同时在新字段中不存在
+                if (v.getField().calculateType().equals(CalculateType.AUTO_FILL) ||
+                    (!v.getField().calculateType().equals(CalculateType.FORMULA) &&
+                        !context.containsKey(v.getField().name()))) {
+                    context.put(v.getField().name(), v.getValue());
                 }
             }
         );
