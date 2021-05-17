@@ -62,7 +62,7 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static FieldConfig defaultFieldConfig() {
-        return FieldConfig.Builder.aFieldConfig()
+        return FieldConfig.Builder.anFieldConfig()
             .withFieldSense(FieldConfig.FieldSense.NORMAL)
             .withSearchable(true)
             .withRequired(true)

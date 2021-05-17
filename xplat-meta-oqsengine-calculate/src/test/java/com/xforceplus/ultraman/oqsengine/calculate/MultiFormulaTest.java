@@ -69,15 +69,17 @@ public class MultiFormulaTest {
         Expression expression = ExpressionUtils.compile(expressionWrapper);
 
         Map<String, Object> params = new HashMap<>();
-        long expectedAmount = 10010;
+        BigDecimal expectedAmount = new BigDecimal("10010.000000");
 //        Integer taxRate = 13;
 //        BigDecimal taxRate = BigDecimal.valueOf(13);
-        BigDecimal taxRate = BigDecimal.valueOf(new Double("0.13"));
+        BigDecimal taxRate = BigDecimal.valueOf(new Double("0.130000"));
         params.put("taxRate", taxRate);
         params.put("amount", expectedAmount);
 
         Object res = expression.execute(params);
         Assert.assertEquals(BigDecimal.class, res.getClass());
+//        BigDecimal finalRes = ((BigDecimal)res).setScale(6);
+//        System.out.println(finalRes + "");
     }
 
     @Test

@@ -370,7 +370,7 @@ public class RedisEventHandlerTest extends MiddleWare {
             .withCnName("id" + "_name")
             .withFieldType(fieldType)
             .withConfig(
-                    FieldConfig.Builder.aFieldConfig().build()
+                    FieldConfig.Builder.anFieldConfig().build()
             ).build();
     }
 
