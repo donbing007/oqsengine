@@ -2,10 +2,9 @@ package com.xforceplus.ultraman.oqsengine.calculate;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
-import com.googlecode.aviator.utils.Env;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.AviatorUtil;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -18,14 +17,14 @@ import org.junit.Test;
  */
 public class MultiFormulaTest {
 
-    String expression = "a = 1010 + d; b = a + 100; c = a + b; let m = seq.map('%s', c, '%s', b, '%s', a); return m;";
-
     @Test
     public void test() {
+        String expression1 = "a = 1010 + d; b = a + 100; c = a + b; let m = seq.map('%s', c, '%s', b, '%s', a); return m;";
+
         String c = "c";
         String b = "b";
         String a = "a";
-        String fullExpression = String.format(expression, c, b, a);
+        String fullExpression = String.format(expression1, c, b, a);
 
         Expression expression = AviatorEvaluator.getInstance()
             .compile("test",  fullExpression, false);
@@ -57,5 +56,24 @@ public class MultiFormulaTest {
         String res = (String) expression.execute(params);
 
         Assert.assertEquals(expectedValue, res);
+    }
+
+    @Test
+    public void testPlus() {
+        String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
+        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+
+        Expression expression = ExpressionUtils.compile(expressionWrapper);
+
+        Map<String, Object> params = new HashMap<>();
+        long expectedAmount = 10010;
+//        Integer taxRate = 13;
+//        BigDecimal taxRate = BigDecimal.valueOf(13);
+        BigDecimal taxRate = BigDecimal.valueOf(new Double("0.13"));
+        params.put("taxRate", taxRate);
+        params.put("amount", expectedAmount);
+
+        Object res = expression.execute(params);
+        Assert.assertEquals(BigDecimal.class, res.getClass());
     }
 }
