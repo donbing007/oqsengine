@@ -14,12 +14,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 public interface ConditionsBuilder<V> {
 
     /**
-     * 构造出条件的字符串表示.
+     * 查询构造器.
      *
-     * @param entityClass 查询主类型.
-     * @param conditions 条件.
-     * @return 构造结果.
+     * @param conditions    条件.
+     * @param entityClasses 多个元信息.
+     * @return V 构造结果.
+     * @author dongbin
      */
-    V build(IEntityClass entityClass, Conditions conditions);
+    V build(Conditions conditions, IEntityClass... entityClasses);
 
 }

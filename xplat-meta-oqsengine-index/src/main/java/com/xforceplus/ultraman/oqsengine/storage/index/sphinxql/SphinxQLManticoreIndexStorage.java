@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -137,7 +138,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -168,10 +169,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     @Override
-    public Collection<EntityRef> search(String code, String text, CrossSearchConfig config) throws SQLException {
+    public Collection<EntityRef> search(Condition condition, CrossSearchConfig config) throws SQLException {
         return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             return CrossSearchExecutor.build(getSearchIndexName(), resource, getMaxSearchTimeoutMs())
-                .execute(Tuple.of(code, text, config));
+                .execute(Tuple.of(condition, config));
         });
     }
 
@@ -481,13 +482,22 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     /**
-     * 短名称为 aZl8N0y58M7S
-     * StorageType.STRING
-     * aZl8N0{空格}aZl8N0testy58M7S{空格}y58M7S
-     * StorageType.Long
+     * 格式为 {短名称前辍}{内容}{短名称后辍}{储存类型 S|L}.
+     *
+     * <p>例如:
+     * 短名称为 aZl8N0y58M7S.
+     *
+     * <p>StorageType.STRING.
+     *
+     * <p>aZl8N0testy58M7S
+     *
+     * <p>StorageType.Long.
      * aZl8N0123y58M7S
+     *
+     * <P>搜索字段属性全名用相似的格式,只是做如下改变.
+     * {字段code}{内容}{字段code}
      */
-    private String wrapperAttribute(
+    private String[] wrapperAttribute(
         ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
 
         StringBuilder attributeBuff = new StringBuilder();

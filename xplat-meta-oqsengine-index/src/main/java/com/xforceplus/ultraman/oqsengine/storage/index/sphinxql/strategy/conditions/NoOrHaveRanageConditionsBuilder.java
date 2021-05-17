@@ -19,7 +19,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuilder {
 
     @Override
-    public SphinxQLWhere build(IEntityClass entityClass, Conditions conditions) {
+    public SphinxQLWhere build(Conditions conditions, IEntityClass... entityClasses) {
         Conditions eqConditions = Conditions.buildEmtpyConditions();
         SphinxQLWhere where = new SphinxQLWhere();
         conditions.scan(
@@ -61,7 +61,7 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
         );
 
         if (!eqConditions.isEmtpy()) {
-            where.addWhere(super.build(entityClass, eqConditions), true);
+            where.addWhere(super.build(eqConditions, entityClasses), true);
         }
 
         return where;

@@ -55,18 +55,18 @@ public class QueryConditionExecutor
     /**
      * 实例化.
      *
-     * @param indexTableName 索引名称.
-     * @param resource 事务资源.
+     * @param indexTableName           索引名称.
+     * @param resource                 事务资源.
      * @param conditionsBuilderFactory 条件构造器工厂.
-     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
-     * @param maxQueryTimeMs 最大查询超时毫秒.
+     * @param storageStrategyFactory   逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs           最大查询超时毫秒.
      */
     public QueryConditionExecutor(
         String indexTableName,
         TransactionResource<Connection> resource,
         SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory,
-        Long maxQueryTimeMs) {
+        long maxQueryTimeMs) {
 
         super(indexTableName, resource, maxQueryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
@@ -76,11 +76,11 @@ public class QueryConditionExecutor
     /**
      * 构造方法.
      *
-     * @param indexTableName 索引名称.
-     * @param resource 事务资源.
+     * @param indexTableName           索引名称.
+     * @param resource                 事务资源.
      * @param conditionsBuilderFactory 条件构造器工厂.
-     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
-     * @param maxQueryTimeMs 最大查询超时毫秒.
+     * @param storageStrategyFactory   逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs           最大查询超时毫秒.
      * @return 实例.
      */
     public static Executor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> build(
@@ -297,14 +297,14 @@ public class QueryConditionExecutor
         long commitId = queryCondition._3().getCommitId();
         Conditions filterConditions = queryCondition._3().getDataAccessFilterCondtitions();
 
-        SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+        SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(conditions, entityClass);
         /*
          * 如果有数据过滤条件,那么将默认以OR=true,range=true的方式找到条件构造器.
          * 目的是防止进入全文字段.
          */
         if (!filterConditions.isEmtpy()) {
             SphinxQLWhere filterWhere =
-                conditionsBuilderFactory.getBuilder(true, true).build(entityClass, filterConditions);
+                conditionsBuilderFactory.getBuilder(true, true).build(filterConditions, entityClass);
 
             where.addWhere(filterWhere, true);
 
@@ -321,7 +321,7 @@ public class QueryConditionExecutor
             where.setCommitId(commitId);
         }
 
-        where.setEntityClass(entityClass);
+        where.addEntityClass(entityClass);
 
         Page page = queryCondition._3().getPage();
         if (!page.isSinglePage()) {

@@ -56,7 +56,9 @@ public class CrossSearchConfig implements Serializable {
         return sb.toString();
     }
 
-
+    /**
+     * builder.
+     */
     public static final class Builder {
         private Page page = Page.newSinglePage(10);
         private Collection<IEntityClass> entityClasses;

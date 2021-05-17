@@ -29,6 +29,8 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
     private ConditionsBuilder<SphinxQLWhere> emptyConditionsBuilder;
 
+    private ConditionsBuilder<SphinxQLWhere> crossSearchConditionsBuilder;
+
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 

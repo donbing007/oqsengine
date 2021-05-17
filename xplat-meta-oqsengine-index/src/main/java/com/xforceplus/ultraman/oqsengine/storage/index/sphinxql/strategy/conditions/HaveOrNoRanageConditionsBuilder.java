@@ -18,8 +18,11 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
  */
 public class HaveOrNoRanageConditionsBuilder extends AbstractConditionsBuilder {
 
+    // 目标元信息索引.
+    final int onlyOneEntityClassIndex = 0;
+
     @Override
-    public SphinxQLWhere build(IEntityClass entityClass, Conditions conditions) {
+    public SphinxQLWhere build(Conditions conditions, IEntityClass... entityClasses) {
         SphinxQLWhere where = new SphinxQLWhere();
         conditions.scan(
             link -> {
@@ -52,7 +55,7 @@ public class HaveOrNoRanageConditionsBuilder extends AbstractConditionsBuilder {
 
                 if (condition.getOperator() == ConditionOperator.NOT_EQUALS) {
 
-                    where.addMatch(processNotEquals(entityClass, builder.build(condition)));
+                    where.addMatch(processNotEquals(entityClasses[onlyOneEntityClassIndex], builder.build(condition)));
 
                 } else {
                     where.addMatch("(@")

@@ -5,12 +5,11 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 /**
  * SphinxQLHelper Tester.

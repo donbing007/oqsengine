@@ -38,7 +38,7 @@ public class SphinxQLHelper {
         Arrays.sort(IGNORE_SYMBOLS);
 
         /*
-         * 替换成英文表示,追加S表示Symbol缩写.
+         * 替换成英文表示.
          */
         REPLACE_SYMBOLS = new HashMap<>();
         REPLACE_SYMBOLS.put('-', "M");

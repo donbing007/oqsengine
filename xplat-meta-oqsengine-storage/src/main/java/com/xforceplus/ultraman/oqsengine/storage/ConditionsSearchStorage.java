@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.CrossSearchConfig;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -17,11 +18,10 @@ public interface ConditionsSearchStorage {
     /**
      * 全文搜索.
      *
-     * @param code 目标字段code.
-     * @param text 搜索目标内容.
+     * @param condition 查询条件.
      * @param config 搜索配置.
      * @return 搜索结果.
      * @throws SQLException 搜索发生异常.
      */
-    Collection<EntityRef> search(String code, String text, CrossSearchConfig config) throws SQLException;
+    Collection<EntityRef> search(Condition condition, CrossSearchConfig config) throws SQLException;
 }

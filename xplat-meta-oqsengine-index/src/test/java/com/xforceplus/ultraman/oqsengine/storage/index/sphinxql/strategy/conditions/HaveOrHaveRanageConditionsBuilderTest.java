@@ -43,7 +43,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
 
 
         buildCase().forEach(c -> {
-            String where = builder.build(entityClass, c.conditions).toString();
+            String where = builder.build(c.conditions, entityClass).toString();
             Assert.assertEquals(c.expected, where);
         });
     }

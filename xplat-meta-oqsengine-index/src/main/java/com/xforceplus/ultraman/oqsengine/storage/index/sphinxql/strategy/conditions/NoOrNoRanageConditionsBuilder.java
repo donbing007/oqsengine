@@ -18,9 +18,11 @@ public class NoOrNoRanageConditionsBuilder extends AbstractConditionsBuilder {
 
     /**
      * 没有 or 只有 and 不需要关注连接符.
+     * 针对不等于,这里直接排除了关键字.并没有在一个范围内排除.
+     * 原因是须有调用者追加entityclass的条件.
      */
     @Override
-    public SphinxQLWhere build(IEntityClass entityClass, Conditions conditions) {
+    public SphinxQLWhere build(Conditions conditions, IEntityClass... entityClasses) {
         SphinxQLWhere where = new SphinxQLWhere();
         conditions.scan(
             link -> {

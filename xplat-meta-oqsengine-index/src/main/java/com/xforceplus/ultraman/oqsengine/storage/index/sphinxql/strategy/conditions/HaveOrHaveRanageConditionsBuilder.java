@@ -17,7 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 public class HaveOrHaveRanageConditionsBuilder extends AbstractConditionsBuilder {
 
     @Override
-    public SphinxQLWhere build(IEntityClass entityClass, Conditions conditions) {
+    public SphinxQLWhere build(Conditions conditions, IEntityClass... entityClasses) {
         SphinxQLWhere where = new SphinxQLWhere();
         conditions.scan(
             linkNode -> {

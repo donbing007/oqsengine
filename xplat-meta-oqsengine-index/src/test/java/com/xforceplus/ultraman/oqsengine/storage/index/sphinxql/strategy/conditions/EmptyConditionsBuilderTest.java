@@ -43,7 +43,7 @@ public class EmptyConditionsBuilderTest {
     public void testBuild() throws Exception {
 
         EmptyConditionsBuilder emptyConditionsBuilder = new EmptyConditionsBuilder();
-        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions()).toString();
+        String where = emptyConditionsBuilder.build(Conditions.buildEmtpyConditions(), entityClass).toString();
 
         Assert.assertTrue(where.isEmpty());
     }
