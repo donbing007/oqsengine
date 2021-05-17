@@ -28,6 +28,9 @@ public class OperationResult {
         this.eventType = eventType;
     }
 
+    /**
+     * 实例化.
+     */
     public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
                            String message) {
         this.txId = txId;
