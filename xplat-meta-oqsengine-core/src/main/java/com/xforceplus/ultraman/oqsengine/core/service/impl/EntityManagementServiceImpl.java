@@ -598,9 +598,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             v -> {
                 //  CalculateType为AUTO_FILL 或者
                 //  CalculateType不等于FORMULA同时在新字段中不存在
-                if (v.getField().calculateType().equals(CalculateType.AUTO_FILL) ||
-                    (!v.getField().calculateType().equals(CalculateType.FORMULA) &&
-                        !context.containsKey(v.getField().name()))) {
+                if (v.getField().calculateType().equals(CalculateType.AUTO_FILL)
+                    || (!v.getField().calculateType().equals(CalculateType.FORMULA)
+                        && !context.containsKey(v.getField().name()))) {
                     context.put(v.getField().name(), v.getValue());
                 }
             }

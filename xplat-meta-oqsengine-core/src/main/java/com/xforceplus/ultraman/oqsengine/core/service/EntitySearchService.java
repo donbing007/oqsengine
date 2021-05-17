@@ -31,10 +31,10 @@ public interface EntitySearchService {
     Optional<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException;
 
     /**
-     * 根据业务主键搜索一个entity实例
+     * 根据业务主键搜索一个entity实例.
      *
-     * @param key
-     * @param entityClassRef
+     * @param key               业务主键.
+     * @param entityClassRef    ref.
      * @return
      * @throws SQLException
      */
