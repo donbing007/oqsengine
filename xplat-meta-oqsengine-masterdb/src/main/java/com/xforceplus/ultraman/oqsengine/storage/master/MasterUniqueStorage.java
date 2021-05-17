@@ -1,24 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.google.common.collect.Lists;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildUniqueExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteUniqueExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueIndexValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -66,14 +65,13 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
             return 0;
         }
         return (int) transactionExecutor.execute(
-                (tx, resource, hint) -> {
-                   StorageUniqueEntity storageUniqueEntity =  StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
-                            .entityClasses(getEntityClasses(entityClass)).build();
-//                    fullTransactionInformation(storageEntityBuilder, resource);
-                    return BuildUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageUniqueEntity);
-                });
+            (tx, resource, hint) -> {
+                StorageUniqueEntity storageUniqueEntity = StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
+                    .entityClasses(getEntityClasses(entityClass)).build();
+                //fullTransactionInformation(storageEntityBuilder, resource);
+                return BuildUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageUniqueEntity);
+            });
     }
-
 
 
     private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
@@ -94,7 +92,8 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
         return matchUniqueConfig(entityClass, values).isPresent();
     }
 
-    private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException {
+    private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass)
+        throws SQLException {
         Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
         Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
         return indexValue.isPresent() ? indexValue.get().getValue() : "";
@@ -124,8 +123,9 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
     }
 
 
-    private void fullEntityClassInformation(StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder, IEntityClass
-        entityClass) {
+    private void fullEntityClassInformation(StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder,
+                                            IEntityClass
+                                                entityClass) {
         Collection<IEntityClass> family = entityClass.family();
         long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
         storageEntityBuilder.entityClasses(tileEntityClassesIds);
@@ -144,38 +144,41 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
             updateResult = build(entity, entityClass);
         }
         return updateResult;
-//        return (int) transactionExecutor.execute(
-//                (tx, resource, hint) -> {
-//                    StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
-//                    storageEntityBuilder.id(entity.id()).key(uniqueKey);
-//                    fullEntityClassInformation(storageEntityBuilder, entityClass);
-////                    fullTransactionInformation(storageEntityBuilder, resource);
-//                    return UpdateUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-//                });
+        //return (int) transactionExecutor.execute(
+        //    (tx, resource, hint) -> {
+        //        StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
+        //        storageEntityBuilder.id(entity.id()).key(uniqueKey);
+        //        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        //        fullTransactionInformation(storageEntityBuilder, resource);
+        //        return UpdateUniqueExecutor.build(tableName, resource, queryTimeout)
+        //            .execute(storageEntityBuilder.build());
+        //    });
     }
 
 
     @Override
     public int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
         return (int) transactionExecutor.execute(
-                (tx, resource, hint) -> {
-                    StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
-                    storageEntityBuilder.id(entity.id());
-//                    fullTransactionInformation(storageEntityBuilder, resource);
-                    return DeleteUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-                });
+            (tx, resource, hint) -> {
+                StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
+                storageEntityBuilder.id(entity.id());
+                //fullTransactionInformation(storageEntityBuilder, resource);
+                return DeleteUniqueExecutor.build(tableName, resource, queryTimeout)
+                    .execute(storageEntityBuilder.build());
+            });
     }
 
     @Override
-    public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException {
+    public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
+        throws SQLException {
         if (!containUniqueConfig(businessKeys, entityClass)) {
             return Optional.empty();
         }
         String uniqueKey = buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass);
         return (Optional<StorageUniqueEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<StorageUniqueEntity> seOP =
-                    new QueryUniqueExecutor(tableName, resource, entityClass, queryTimeout).execute(uniqueKey);
-                return seOP;
+                new QueryUniqueExecutor(tableName, resource, entityClass, queryTimeout).execute(uniqueKey);
+            return seOP;
         });
     }
 }

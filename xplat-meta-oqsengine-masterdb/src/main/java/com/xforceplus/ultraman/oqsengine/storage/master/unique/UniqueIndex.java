@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.unique;
 
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SortedEntityField;
-
 import java.util.List;
 
 /**
@@ -35,7 +34,7 @@ public class UniqueIndex {
 
     public List<SortedEntityField> getFields() {
 
-       return fields;
+        return fields;
     }
 
 

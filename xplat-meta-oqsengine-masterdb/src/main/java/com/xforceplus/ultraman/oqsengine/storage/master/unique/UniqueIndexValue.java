@@ -13,6 +13,13 @@ public class UniqueIndexValue {
     private String code;
     private String value;
 
+    /**
+     * constructor.
+     *
+     * @param name Field name
+     * @param code Object code
+     * @param value Field value
+     */
     public UniqueIndexValue(String name, String code, String value) {
         this.name = name;
         this.code = code;
@@ -49,15 +56,15 @@ public class UniqueIndexValue {
 
     @Override
     public String toString() {
-        return "UniqueIndexValue{" +
-            "name='" + name + '\'' +
-            ", code='" + code + '\'' +
-            ", value='" + value + '\'' +
-            '}';
+        return "UniqueIndexValue{"
+            + "name='" + name + '\''
+            + ", code='" + code + '\''
+            + ", value='" + value + '\''
+            + '}';
     }
 
     /**
-     *
+     * UniqueIndexValueBuilder.
      */
     public static class UniqueIndexValueBuilder {
         private String name;
@@ -88,7 +95,13 @@ public class UniqueIndexValue {
 
         @Override
         public String toString() {
-            return "UniqueIndexValue.UniqueIndexValueBuilder(name=" + this.name + ", code=" + this.code + ", value=" + this.value + ")";
+            return "UniqueIndexValue.UniqueIndexValueBuilder(name="
+                + this.name
+                + ", code="
+                + this.code
+                + ", value="
+                + this.value
+                + ")";
         }
     }
 }
