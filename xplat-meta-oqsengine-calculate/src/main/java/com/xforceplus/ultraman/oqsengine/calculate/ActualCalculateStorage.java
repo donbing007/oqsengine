@@ -5,8 +5,13 @@ import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.TypeCheck;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +59,16 @@ public class ActualCalculateStorage implements CalculateStorage {
                     Object object = execute(executionWrapper.getExpressionWrapper(), params);
 
                     if (null != object) {
+                        if (null != executionWrapper.getRetClazz()) {
+                            if (executionWrapper.getRetClazz().equals(LocalDateTime.class)) {
+                                if (object instanceof Date) {
+                                    object = TimeUtils.convert((Date) object);
+                                } else {
+                                    object = TimeUtils.convert((Long) object);
+                                }
+                            }
+                        }
+
                         /*
                             校验返回类型相符
                         */
