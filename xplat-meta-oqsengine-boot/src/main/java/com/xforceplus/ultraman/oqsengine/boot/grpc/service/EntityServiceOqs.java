@@ -200,8 +200,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
             IEntityClass entityClass;
             try {
                 entityClass = checkedEntityClassRef(entityClassRef);
@@ -270,8 +272,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
             IEntityClass entityClass;
             try {
                 entityClass = checkedEntityClassRef(entityClassRef);
@@ -369,8 +373,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
         return asyncWrite(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in.getEntity());
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in.getEntity(), profile);
             IEntityClass entityClass;
             try {
                 entityClass = checkedEntityClassRef(entityClassRef);
@@ -499,8 +505,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
             IEntityClass entityClass;
             try {
                 entityClass = checkedEntityClassRef(entityClassRef);
@@ -637,8 +645,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return asyncRead(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
             IEntityClass entityClass;
 
             try {
@@ -701,8 +711,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return asyncRead(() -> {
 
+            String profile = extractProfile(metadata).orElse("");
+
             //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in.getEntity());
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in.getEntity(), profile);
             IEntityClass entityClass;
 
             try {
@@ -1024,6 +1036,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Optional<Long> extractTransaction(Metadata metadata) {
         Optional<String> transactionId = metadata.getText("transaction-id");
         return transactionId.map(Long::valueOf);
+    }
+
+    private Optional<String> extractProfile(Metadata metadata) {
+        Optional<String> profile = metadata.getText("profile");
+        return profile;
     }
 
     private void logInfo(Metadata metadata, BiFunction<String, String, String> template) {

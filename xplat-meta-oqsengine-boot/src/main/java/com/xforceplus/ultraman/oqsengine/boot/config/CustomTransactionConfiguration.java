@@ -90,7 +90,7 @@ public class CustomTransactionConfiguration {
     @Bean
     @Primary
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-        @Value("${storage.master.name:oqsbigentity}") String tableName) {
+            @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
@@ -120,7 +120,7 @@ public class CustomTransactionConfiguration {
      */
     @Bean
     public TransactionExecutor segmentJDBCTransactionExecutor(
-            @Qualifier(value = "segmentTransactionResourceFactory") SqlConnectionTransactionResourceFactory factory,
+            @Qualifier(value = "segmentTransactionResourceFactory") SegmentTransactionResourceFactory factory,
             TransactionManager tm,
             DataSource masterDataSource,
             @Value("${storage.generator.name:segment}") String tableName) {

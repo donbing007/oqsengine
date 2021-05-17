@@ -12,7 +12,7 @@
     <artifactId>xplat-meta-oqsengine-idgenerator</artifactId>
 
     <properties>
-        <hazelcast.version>5.0-SNAPSHOT</hazelcast.version>
+        <hazelcast.version>4.2</hazelcast.version>
     </properties>
     <dependencies>
         <dependency>
