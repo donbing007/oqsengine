@@ -36,15 +36,11 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
     private String tableName;
 
 
-    @Resource(name = "uniqueStorageJDBCTransactionExecutor")
+    @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
-
-
-    @Resource(name = "uniqueTableNameSelector")
-    private Selector<String> uniqueTableNameSelector;
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
@@ -84,7 +80,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
 
     private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
         Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
-        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass,values);
+        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
         return indexValue.isPresent() ? indexValue.get().getValue() : "";
     }
 
@@ -143,32 +139,26 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
         if (StringUtils.isBlank(uniqueKey)) {
             return 0;
         }
-        return (int) transactionExecutor.execute(
-                (tx, resource, hint) -> {
-                    StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
-                    storageEntityBuilder.id(entity.id()).key(uniqueKey);
-                    fullEntityClassInformation(storageEntityBuilder, entityClass);
-//                    fullTransactionInformation(storageEntityBuilder, resource);
-                    return UpdateUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-                });
+        //涉及到分片键的更新这里采用先删除后插入的方式
+        int ret = delete(entity, entityClass);
+        int updateResult = 0;
+        if (ret > 0) {
+            updateResult = build(entity, entityClass);
+        }
+        return updateResult;
+//        return (int) transactionExecutor.execute(
+//                (tx, resource, hint) -> {
+//                    StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
+//                    storageEntityBuilder.id(entity.id()).key(uniqueKey);
+//                    fullEntityClassInformation(storageEntityBuilder, entityClass);
+////                    fullTransactionInformation(storageEntityBuilder, resource);
+//                    return UpdateUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+//                });
     }
 
 
     @Override
     public int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
-        return (int) transactionExecutor.execute(
-                (tx, resource, hint) -> {
-                    StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
-                    storageEntityBuilder.id(entity.id());
-//                    fullTransactionInformation(storageEntityBuilder, resource);
-                    return DeleteUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-                });
-    }
-
-
-    @Override
-    public int deleteDirectly(IEntity entity) throws SQLException {
-        //shardKey强制为空 ，因此 不支持分库 todo 等能够拿到子类的shardkey信息再实现。
         return (int) transactionExecutor.execute(
                 (tx, resource, hint) -> {
                     StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();

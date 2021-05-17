@@ -206,7 +206,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
-                if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+                if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
                     uniqueStorage.build(entity, entityClass);
                 }
                 if (masterStorage.build(entity, entityClass) <= 0) {
@@ -277,8 +277,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 targetEntity.markTime(entity.time());
                 targetEntity.entityValue().addValues(entity.entityValue().values());
 
-                if(uniqueStorage.containUniqueConfig(targetEntity,entityClass)) {
-                    uniqueStorage.replace(targetEntity,entityClass);
+                if (uniqueStorage.containUniqueConfig(targetEntity, entityClass)) {
+                    uniqueStorage.replace(targetEntity, entityClass);
                 }
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -339,7 +339,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.UNACCUMULATE);
                 }
-
+                if (uniqueStorage.containUniqueConfig(targetEntityOp.orElse(entity), entityClass)) {
+                    uniqueStorage.delete(targetEntityOp.orElse(entity), entityClass);
+                }
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
                 return new OperationResult(
@@ -363,7 +365,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          * 设置万能版本,表示和所有的版本都匹配.
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-
+        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+        uniqueStorage.delete(entity, entityClass);
         return delete(entity);
     }
 

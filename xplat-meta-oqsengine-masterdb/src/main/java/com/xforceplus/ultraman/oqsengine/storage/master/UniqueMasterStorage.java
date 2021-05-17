@@ -44,16 +44,7 @@ public interface UniqueMasterStorage extends Storage {
      *
      * @return
      */
-    boolean containUniqueConfig(IEntity entity,IEntityClass entityClass);
-
-
-    /**
-     * 根据entityID直接删除
-     * @param entity
-     * @return
-     * @throws SQLException
-     */
-    int deleteDirectly(IEntity entity) throws SQLException;
+    boolean containUniqueConfig(IEntity entity, IEntityClass entityClass);
 
 
 }

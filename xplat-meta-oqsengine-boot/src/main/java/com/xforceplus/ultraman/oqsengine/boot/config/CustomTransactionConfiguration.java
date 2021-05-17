@@ -95,14 +95,6 @@ public class CustomTransactionConfiguration {
         return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
     }
 
-    public TransactionExecutor uniqueStorageJDBCTransactionExecutor(
-        SqlConnectionTransactionResourceFactory factory,
-        TransactionManager tm,
-        DataSource masterDataSource,
-        @Value("${storage.master.unique.name:oqsunique}") String tableName) {
-        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector<>(masterDataSource), new NoSelector(tableName));
-    }
-
 
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
