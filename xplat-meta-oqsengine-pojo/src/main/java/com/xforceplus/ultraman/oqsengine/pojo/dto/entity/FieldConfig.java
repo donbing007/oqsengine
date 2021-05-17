@@ -455,7 +455,7 @@ public class FieldConfig implements Serializable {
         private Builder() {
         }
 
-        public static Builder anFieldConfig() {
+        public static Builder aFieldConfig() {
             return new Builder();
         }
 

@@ -28,8 +28,8 @@ public class HealthCheck implements HealthIndicator {
 
     final Logger logger = LoggerFactory.getLogger(HealthCheck.class);
 
-    @Resource
-    private EntitySearchService entitySearchService;
+//    @Resource
+//    private EntitySearchService entitySearchService;
 
     private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
 
@@ -39,12 +39,12 @@ public class HealthCheck implements HealthIndicator {
     @Override
     public Health health() {
 
-        try {
-            entitySearchService.selectByConditions(conditions, entityClassRef, config);
-        } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-            return Health.down(e).build();
-        }
+//        try {
+//            entitySearchService.selectByConditions(conditions, entityClassRef, config);
+//        } catch (SQLException e) {
+//            logger.error(e.getMessage(), e);
+//            return Health.down(e).build();
+//        }
 
         return Health.up().build();
     }

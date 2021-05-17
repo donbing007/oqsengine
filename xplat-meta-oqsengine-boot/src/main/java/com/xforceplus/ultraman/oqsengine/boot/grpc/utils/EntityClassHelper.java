@@ -90,6 +90,34 @@ public class EntityClassHelper {
     }
 
     /**
+     * TODO to typed contextMap
+     *
+     * @param contextMap
+     * @param entityClass
+     */
+    private static Map<String, Object> toTypedContextMap(Map<String, Object> contextMap, IEntityClass entityClass) {
+        Set<String> keys = contextMap.keySet();
+
+        Map<String, Object> typedContextMap = new HashMap<>();
+
+        keys.stream().forEach(x -> {
+            Optional<IEntityField> field = entityClass.field(x);
+            if (field.isPresent()) {
+
+                Optional<IValue> iValue = field.get().type().toTypedValue(field.get(), contextMap.get(x) == null ? null : contextMap.get(x).toString());
+                if (iValue.isPresent()) {
+                    typedContextMap.put(x, iValue.get().getValue());
+                    return;
+                }
+            }
+
+            typedContextMap.put(x, contextMap.get(x));
+        });
+
+        return typedContextMap;
+    }
+
+    /**
      * 构造实体字段值实例.
      */
     private static EntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
@@ -107,6 +135,8 @@ public class EntityClassHelper {
                                         try {
                                             contextMap = mapper.readValue(contextStr, new TypeReference<Map<String, Object>>() {
                                             });
+
+                                            contextMap = toTypedContextMap(contextMap, entityClass);
                                         } catch (JsonProcessingException e) {
                                             //error
                                             logger.error("{}", e);

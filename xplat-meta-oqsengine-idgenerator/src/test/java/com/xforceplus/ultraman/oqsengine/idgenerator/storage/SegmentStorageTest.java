@@ -57,7 +57,7 @@ public class SegmentStorageTest {
         dataSource = buildDataSource("./src/test/resources/generator.conf");
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)

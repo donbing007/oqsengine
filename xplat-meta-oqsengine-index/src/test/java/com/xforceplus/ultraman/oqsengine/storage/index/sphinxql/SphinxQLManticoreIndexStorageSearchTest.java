@@ -130,7 +130,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 4)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(FieldConfig.Builder.aFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -189,7 +189,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)

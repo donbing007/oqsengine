@@ -291,7 +291,7 @@ public class StorageMetaManager implements MetaManager {
 
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();
-                builder.withConfig(FieldConfig.Builder.anFieldConfig()
+                builder.withConfig(FieldConfig.Builder.aFieldConfig()
                     .withDelimiter(config.getDelimiter())
                     .withDisplayType(config.getDisplayType())
                     .withFieldSense(config.getFieldSense())

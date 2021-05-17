@@ -63,7 +63,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
         private Builder() {
         }
 
-        public static Builder anDefaultTransactionManager() {
+        public static Builder aDefaultTransactionManager() {
             return new Builder();
         }
 

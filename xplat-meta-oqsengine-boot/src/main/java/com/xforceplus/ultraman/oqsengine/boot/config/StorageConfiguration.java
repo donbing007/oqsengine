@@ -9,10 +9,14 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticor
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterUniqueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -100,5 +104,16 @@ public class StorageConfiguration {
     public Selector<String> noShardingIndexWriteIndexNameSelector(
         @Value("${storage.index.write.name:oqsindex}") String baseIndexName) {
         return new NoSelector(baseIndexName);
+    }
+
+    //TODO
+    @Bean
+    public UniqueMasterStorage uniqueMasterStorage() {
+        return new MasterUniqueStorage();
+    }
+
+    @Bean
+    public UniqueKeyGenerator generator() {
+        return new SimpleFieldKeyGenerator();
     }
 }

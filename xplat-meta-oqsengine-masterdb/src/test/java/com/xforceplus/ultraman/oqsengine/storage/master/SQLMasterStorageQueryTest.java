@@ -97,7 +97,7 @@ public class SQLMasterStorageQueryTest {
         .withId(1001)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-        .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(FieldConfig.Builder.aFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -143,7 +143,7 @@ public class SQLMasterStorageQueryTest {
         .withId(2001)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(FieldConfig.Builder.aFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -200,7 +200,7 @@ public class SQLMasterStorageQueryTest {
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)

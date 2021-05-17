@@ -45,7 +45,7 @@ public class CustomTransactionConfiguration {
         CommitIdStatusService commitIdStatusService,
         EventBus eventBus,
         CacheEventHandler cacheEventHandler) {
-        return DefaultTransactionManager.Builder.anDefaultTransactionManager()
+        return DefaultTransactionManager.Builder.aDefaultTransactionManager()
             .withSurvivalTimeMs(transactionTimeoutMs)
             .withTxIdGenerator(snowflakeIdGenerator)
             .withCommitIdGenerator(redisIdGenerator)

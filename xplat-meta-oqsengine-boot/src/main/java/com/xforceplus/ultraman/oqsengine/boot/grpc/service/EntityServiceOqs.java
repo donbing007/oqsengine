@@ -237,7 +237,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
                 } else {
-                    throw new RuntimeException();
+                    throw new RuntimeException(resultStatus.name() + ":" + operationResult.getMessage());
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
