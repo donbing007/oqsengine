@@ -17,8 +17,8 @@ public class PattenParserUtil implements ApplicationContextAware {
 
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        applicationContext = applicationContext;
+    public void setApplicationContext(ApplicationContext inputApplicationContext) throws BeansException {
+        applicationContext = inputApplicationContext;
     }
 
     public static PattenParserManager getInstance() {

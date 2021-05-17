@@ -102,9 +102,9 @@ public class EntityClassHelper {
 
         keys.stream().forEach(x -> {
             Optional<IEntityField> field = entityClass.field(x);
-            if (field.isPresent()) {
+            if (field.isPresent() && contextMap.get(x) != null) {
 
-                Optional<IValue> iValue = field.get().type().toTypedValue(field.get(), contextMap.get(x) == null ? null : contextMap.get(x).toString());
+                Optional<IValue> iValue = field.get().type().toTypedValue(field.get(), contextMap.get(x).toString());
                 if (iValue.isPresent()) {
                     typedContextMap.put(x, iValue.get().getValue());
                     return;
@@ -151,8 +151,23 @@ public class EntityClassHelper {
                             .orElseGet(Collections::emptyList)
                             .stream();
                 }).filter(Objects::nonNull).collect(Collectors.toList());
+
+
+        /**
+         * add auto_fill
+         */
+        List<IValue> autoFilled = entityClass.fields().stream().filter(x -> x.calculateType() == CalculateType.AUTO_FILL).map(x -> {
+            return x.type().toTypedValue(x, "");
+        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+
         EntityValue entityValue = new EntityValue();
-        entityValue.addValues(valueList);
+        List<IValue> values = new LinkedList<>();
+
+        values.addAll(valueList);
+        values.addAll(autoFilled);
+        entityValue.addValues(values);
+
         return entityValue;
     }
 

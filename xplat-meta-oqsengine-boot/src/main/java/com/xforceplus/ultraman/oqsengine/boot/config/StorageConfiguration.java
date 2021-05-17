@@ -116,14 +116,8 @@ public class StorageConfiguration {
         return new NoSelector(baseIndexName);
     }
 
-    //TODO
     @Bean
-    public UniqueMasterStorage uniqueMasterStorage() {
-        return new MasterUniqueStorage();
-    }
-
-    @Bean
-    public UniqueKeyGenerator generator() {
+    public UniqueKeyGenerator uniqueKeyGenerator() {
         return new SimpleFieldKeyGenerator();
     }
 }
