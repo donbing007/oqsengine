@@ -67,6 +67,12 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
         requestHandler.start();
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         logger.info("entityClassSyncClient start.");
     }
 
