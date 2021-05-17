@@ -254,7 +254,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
-
+                if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
+                    uniqueStorage.build(entity, entityClass);
+                }
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
