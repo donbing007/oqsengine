@@ -42,7 +42,6 @@ public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
-
             st.setFetchSize(Integer.MIN_VALUE);
             st.setString(1, key);
             st.setLong(2, entityClass.id());
@@ -52,7 +51,6 @@ public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional
                 if (rs.next()) {
                     StorageUniqueEntity.StorageUniqueEntityBuilder builder = new StorageUniqueEntity.StorageUniqueEntityBuilder();
                     builder.key(key).id(rs.getLong(FieldDefine.ID));
-
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
@@ -67,7 +65,7 @@ public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional
 
     private String buildSQL() {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT id");
+        sql.append("SELECT id,entityclassl0,entityclassl1,entityclassl2,entityclassl3,entityclassl4");
         sql.append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")

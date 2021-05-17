@@ -44,7 +44,7 @@ public class DeleteUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEn
     private String buildForceSQL() {
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(getTableName())
-            .append("WHERE ")
+            .append(" WHERE ")
             .append(FieldDefine.ID).append("=").append('?');
         return sql.toString();
     }

@@ -88,7 +88,7 @@ public class SimpleFieldKeyGenerator implements UniqueKeyGenerator {
                     .value(keyBuilder.toString()).build();
             keys.put(e.getKey(), value);
             if (logger.isDebugEnabled()) {
-                logger.debug("UNIQUE KEY : {},value: {}", e.getKey(), value);
+                logger.debug("UNIQUE KEY : {},value: {}", e.getKey(), value.toString());
             }
         });
         return keys;
@@ -97,11 +97,6 @@ public class SimpleFieldKeyGenerator implements UniqueKeyGenerator {
     private Map<String, UniqueIndex> getUniqueIndexMap(IEntityClass entityClass) {
         Map<String, UniqueIndex> uniqueMap = new LinkedHashMap<>();
         List<IEntityField> totalFields = new ArrayList<>(entityClass.fields());
-        Optional<IEntityClass> tmp = entityClass.father();
-        while (tmp.isPresent()) {
-            totalFields.addAll(tmp.get().fields());
-            tmp = tmp.get().father();
-        }
         totalFields.stream()
                 .filter(item -> !StringUtils.isBlank(item.config().getUniqueName()))
                 .forEach(item -> {

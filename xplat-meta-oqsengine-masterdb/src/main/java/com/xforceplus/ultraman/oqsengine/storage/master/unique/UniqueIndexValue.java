@@ -47,6 +47,15 @@ public class UniqueIndexValue {
         this.value = value;
     }
 
+    @Override
+    public String toString() {
+        return "UniqueIndexValue{" +
+            "name='" + name + '\'' +
+            ", code='" + code + '\'' +
+            ", value='" + value + '\'' +
+            '}';
+    }
+
     /**
      *
      */

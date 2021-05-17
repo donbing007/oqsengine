@@ -103,5 +103,5 @@ public class FieldDefine {
     /**
      * 业务主键字段
      */
-    public static final String UNIQUE_KEY = "key";
+    public static final String UNIQUE_KEY = "unique_key";
 }

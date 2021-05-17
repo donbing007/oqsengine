@@ -1,5 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import static org.mockito.Mockito.calls;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -9,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -17,10 +23,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -28,9 +34,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -41,13 +47,16 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.crypto.KeyGenerator;
 import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
@@ -76,15 +85,18 @@ public class UniqueMasterStorageTest {
 
     private MasterUniqueStorage storage;
 
+    private SimpleFieldKeyGenerator keyGenerator;
+
     private DataSourcePackage dataSourcePackage;
 
-    private IEntityClass fatherEntityClass;
 
-    private IEntityClass childEntityClass;
 
     private LongIdGenerator idGenerator;
 
     private DataSource dataSource;
+
+    private MetaManager metaManager = mock(MetaManager.class);
+
 
     private CommitIdStatusServiceImpl commitIdStatusService;
 
@@ -158,6 +170,41 @@ public class UniqueMasterStorageTest {
             .build();
     }
 
+    private IEntity buildL1EntityWithDiff(long baseId) {
+        return Entity.Builder.anEntity()
+            .withId(baseId)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(buildFixedValue1(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,l1StringField1)))
+            .build();
+    }
+
+    private IEntityValue buildFixedValue1(Collection<IEntityField> fields) {
+        Collection<IValue> values = fields.stream().map(f -> {
+            switch (f.name()) {
+                case "c1":
+                    return new StringValue(f, "c1Value1");
+                case "c2":
+                    return new StringValue(f,"c2Value1");
+                case "l1":
+                    return new LongValue(f, 3L);
+                default:
+                    if(f.type() == FieldType.LONG) {
+                        return new LongValue(f, (long) buildRandomLong(10, 100000));
+                    }
+                    else {
+                        return new StringValue(f,buildRandomString(30));
+                    }
+            }
+        }).collect(Collectors.toList());
+        IEntityValue value = EntityValue.build();
+        value.addValues(values);
+        return value;
+    }
+
     private IEntityValue buildFixedValue(Collection<IEntityField> fields) {
         Collection<IValue> values = fields.stream().map(f -> {
             switch (f.name()) {
@@ -165,6 +212,12 @@ public class UniqueMasterStorageTest {
                     return new StringValue(f, "c1Value");
                 case "c2":
                     return new StringValue(f,"c2Value");
+                case "l0-string":
+                    return new StringValue(f,"l0Value");
+                case "l0-strings" :
+                    return new StringValue(f,"l0Values");
+                case "l0-long":
+                    return new LongValue(f,100L);
                 case "l1":
                     return new LongValue(f, 3L);
                 default:
@@ -183,8 +236,11 @@ public class UniqueMasterStorageTest {
 
     @Before
     public void before() throws Exception {
+        keyGenerator = new SimpleFieldKeyGenerator();
+        when(metaManager.load(1)).thenReturn(Optional.of(l1EntityClass));
+        when(metaManager.load(2)).thenReturn(Optional.of(l1EntityClass));
 
-        dataSource = buildDataSource("./src/test/resources/generator.conf");
+        dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
         transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
@@ -195,8 +251,8 @@ public class UniqueMasterStorageTest {
             .withWaitCommitSync(false)
             .build();
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("segment"),
-            new NoSelector<>(dataSource), new NoSelector<>("segment"));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsunique"),
+            new NoSelector<>(dataSource), new NoSelector<>("oqsunique"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -205,6 +261,8 @@ public class UniqueMasterStorageTest {
 
         storage = new MasterUniqueStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
+        ReflectionTestUtils.setField(storage,"keyGenerator",keyGenerator);
         storage.setTableName("oqsunique");
         storage.init();
 
@@ -220,6 +278,7 @@ public class UniqueMasterStorageTest {
     // 初始化数据for业务主键
     @Test
     public void testAddDuplicateKeyData() throws Exception {
+        thrown.expect(SQLIntegrityConstraintViolationException.class);
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
 
@@ -228,6 +287,40 @@ public class UniqueMasterStorageTest {
         try {
             storage.build(entity,l1EntityClass);
             storage.build(entity1,l1EntityClass);
+        }
+        catch (Exception ex){
+            transactionManager.getCurrent().get().rollback();
+            throw ex;
+        }
+        //将事务正常提交,并从事务管理器中销毁事务.
+        Transaction tx1 = transactionManager.getCurrent().get();
+        tx1.commit();
+        transactionManager.finish();
+    }
+
+
+    @Test
+    public void testAddandDeleteDuplicateKeyData() throws Exception {
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        IEntity entity = buildL1Entity(10001);
+        IEntity entity1 = buildL1Entity(10002);
+        try {
+            storage.build(entity,l1EntityClass);
+            storage.delete(entity,l1EntityClass);
+            storage.build(entity1,l1EntityClass);
+            BusinessKey key1 = new BusinessKey();
+            key1.setFieldName("c1");
+            key1.setValue("c1Value");
+            BusinessKey key2 = new BusinessKey();
+            key2.setFieldName("c2");
+            key2.setValue("c2Value");
+            List<BusinessKey> keys = new ArrayList<>();
+            keys.add(key1);
+            keys.add(key2);
+            Optional<StorageUniqueEntity> ret =  storage.select(keys,l1EntityClass);
+            Assert.assertEquals(ret.isPresent(),true);
+            Assert.assertEquals(ret.get().getId(),10002);
         }
         catch (Exception ex){
             transactionManager.getCurrent().get().rollback();
@@ -258,55 +351,234 @@ public class UniqueMasterStorageTest {
 
 
 
-//    @Test
-//    public void testAddandDeleteDuplicateKeyData() throws Exception {
-////        Transaction tx = transactionManager.create();
-////        transactionManager.bind(tx.id());
-////        IEntity entity = buildFixedEntity(200,200);
-////        IEntity entity1 = buildFixedEntity(300,200);
-////        try {
-////            storage.build(entity);
-////            storage.delete(entity);
-////            storage.build(entity1);
-////            Optional<StorageUniqueEntity> ret =  storage.select(entity1);
-////            Assert.assertEquals(ret.isPresent(),true);
-////            Optional<StorageUniqueEntity> ret1 =  storage.select(entity);
-////            Assert.assertEquals(true,ret1.isPresent());
-////            Assert.assertEquals(300,ret1.get().getId());
-////        }
-////        catch (Exception ex){
-////            transactionManager.getCurrent().get().rollback();
-////            throw ex;
-////        }
-////        //将事务正常提交,并从事务管理器中销毁事务.
-////        Transaction tx1 = transactionManager.getCurrent().get();
-////        tx1.commit();
-////        transactionManager.finish();
-//    }
+
+
 //
 //
-//    @Test
-//    public void testAddandUpdateDuplicateKeyData() throws Exception {
-//        Transaction tx = transactionManager.create();
-//        transactionManager.bind(tx.id());
-//        IEntity entity = buildFixedEntity(200,200);
-//        IEntity entity1 = buildFixedEntity(300,300);
-//        IEntity entity2= buildFixedEntity(300,200);
-//        IEntityClass entityClass = buildEntityClass(1000l);
-//        try {
-//            storage.build(entity,entityClass);
-//            storage.build(entity1,entityClass);
-//            storage.replace(entity2,entityClass);
-//        }
-//        catch (Exception ex){
-//            transactionManager.getCurrent().get().rollback();
-//            throw ex;
-//        }
-//        //将事务正常提交,并从事务管理器中销毁事务.
-//        Transaction tx1 = transactionManager.getCurrent().get();
-//        tx1.commit();
-//        transactionManager.finish();
-//    }
+    @Test
+    public void testAddandUpdateDuplicateKeyData() throws Exception {
+        thrown.expect(SQLIntegrityConstraintViolationException.class);
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        IEntity entity = buildL1Entity(200);
+        IEntity entity1 = buildL1EntityWithDiff(300);
+        IEntity entity2= buildL1Entity(300);
+        try {
+            storage.build(entity,l1EntityClass);
+            storage.build(entity1,l1EntityClass);
+            storage.replace(entity2,l1EntityClass);
+        }
+        catch (Exception ex){
+            transactionManager.getCurrent().get().rollback();
+            throw ex;
+        }
+        //将事务正常提交,并从事务管理器中销毁事务.
+        Transaction tx1 = transactionManager.getCurrent().get();
+        tx1.commit();
+        transactionManager.finish();
+    }
+
+    /**
+     * 插入子类，父类上有索引，子类上没有索引
+     * @throws SQLException
+     */
+    @Test
+    public void testBuildFatherIndexChild() throws SQLException {
+        thrown.expect(SQLIntegrityConstraintViolationException.class);
+         IEntityField l0LongField = EntityField.Builder.anEntityField()
+            .withId(1000)
+            .withFieldType(FieldType.LONG)
+            .withName("l0-long")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+         IEntityField l0StringField = EntityField.Builder.anEntityField()
+            .withId(1001)
+            .withFieldType(FieldType.STRING)
+            .withName("l0-string")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("father:u1:1").build()).build();
+         IEntityField l0StringsField = EntityField.Builder.anEntityField()
+            .withId(1003)
+            .withFieldType(FieldType.STRINGS)
+            .withName("l0-strings")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("father:u1:2").build()).build();
+
+         IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+            .withId(1)
+            .withLevel(0)
+            .withCode("father")
+            .withField(l0LongField)
+            .withField(l0StringField)
+            .withField(l0StringsField)
+            .build();
+
+         IEntityField l1LongField = EntityField.Builder.anEntityField()
+            .withId(2000)
+            .withFieldType(FieldType.LONG)
+            .withName("l1")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+         IEntityField l1StringField = EntityField.Builder.anEntityField()
+            .withId(2001)
+            .withFieldType(FieldType.STRING)
+            .withName("c1")
+             .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+         IEntityField l1StringField1 = EntityField.Builder.anEntityField()
+            .withId(2002)
+            .withFieldType(FieldType.STRING)
+            .withName("c2")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+         IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+            .withId(3)
+            .withLevel(1)
+            .withCode("child")
+            .withField(l1LongField)
+            .withField(l1StringField)
+            .withField(l1StringField1)
+            .withFather(l0EntityClass)
+            .build();
+        EntityClassRef l1EntityClassRef =
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
+
+
+        IEntity entity =  Entity.Builder.anEntity()
+            .withId(10000l)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,l1StringField1)))
+            .build();
+
+        IEntity entity1 =  Entity.Builder.anEntity()
+            .withId(10001l)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,l1StringField1)))
+            .build();
+        when(metaManager.load(3)).thenReturn(Optional.of(l1EntityClass));
+
+        storage.build(entity,l1EntityClass);
+        storage.build(entity1,l1EntityClass);
+    }
+
+
+    /**
+     * 插入子类，父类和子类上有共同的索引，索引属于子类
+     * @throws SQLException
+     */
+    @Test
+    public void testBuildFatherChildAllBuild() throws SQLException {
+        IEntityField l0LongField = EntityField.Builder.anEntityField()
+            .withId(1000)
+            .withFieldType(FieldType.LONG)
+            .withName("l0-long")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+        IEntityField l0StringField = EntityField.Builder.anEntityField()
+            .withId(1001)
+            .withFieldType(FieldType.STRING)
+            .withName("l0-string")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:1").build()).build();
+        IEntityField l0StringsField = EntityField.Builder.anEntityField()
+            .withId(1003)
+            .withFieldType(FieldType.STRINGS)
+            .withName("l0-strings")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+
+        IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+            .withId(1)
+            .withLevel(0)
+            .withCode("father")
+            .withField(l0LongField)
+            .withField(l0StringField)
+            .withField(l0StringsField)
+            .build();
+        EntityClassRef l0EntityClassRef =
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(l0EntityClass.id()).withEntityClassCode(l0EntityClass.code()).build();
+
+
+        IEntityField l1LongField = EntityField.Builder.anEntityField()
+            .withId(2000)
+            .withFieldType(FieldType.LONG)
+            .withName("l1")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+        IEntityField l1StringField = EntityField.Builder.anEntityField()
+            .withId(2001)
+            .withFieldType(FieldType.STRING)
+            .withName("c1")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+        IEntityField l1StringField1 = EntityField.Builder.anEntityField()
+            .withId(2002)
+            .withFieldType(FieldType.STRING)
+            .withName("c2")
+            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:2").build()).build();
+        IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+            .withId(3)
+            .withLevel(1)
+            .withCode("child")
+            .withField(l1LongField)
+            .withField(l1StringField)
+            .withField(l1StringField1)
+            .withFather(l0EntityClass)
+            .build();
+        EntityClassRef l1EntityClassRef =
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
+
+        IEntity entity0 =  Entity.Builder.anEntity()
+            .withId(9999L)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l0EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField))).build();
+
+        IEntity entity00 =  Entity.Builder.anEntity()
+            .withId(9998L)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l0EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField))).build();
+
+
+        IEntity entity =  Entity.Builder.anEntity()
+            .withId(10000l)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,l1StringField1)))
+            .build();
+
+        IEntity entity1 =  Entity.Builder.anEntity()
+            .withId(10001l)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(buildFixedValue(
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,l1StringField1)))
+            .build();
+        when(metaManager.load(3)).thenReturn(Optional.of(l1EntityClass));
+        when(metaManager.load(1)).thenReturn(Optional.of(l0EntityClass));
+     int ret =    storage.build(entity0,l0EntityClass);
+     int ret1 =    storage.build(entity00,l0EntityClass);
+     Assert.assertEquals(ret,1);
+     Assert.assertEquals(ret1,1);
+     int ret2 = storage.build(entity,l1EntityClass);
+     Assert.assertEquals(ret2,1);
+     storage.build(entity1,l1EntityClass);
+
+
+    }
+
+
+
 //
 //    /**
 //     * 测试插入父类对象，没有设置业务主键的情况
@@ -436,93 +708,8 @@ public class UniqueMasterStorageTest {
 //    }
 //
 //
-//    /**
-//     * 插入子类，父类上有索引，子类上没有索引
-//     * @throws SQLException
-//     */
-//    @Test
-//    public void testBuildFatherIndexChild() throws SQLException {
-//        FieldConfig config = FieldConfig.build();
-//        config.uniqueName("father:u1:1");
-//        FieldConfig config1 = FieldConfig.build();
-//        config1.uniqueName("father:u1:2");
-//        IEntityField field1 = new EntityField(100, "c1", FieldType.STRING,config);
-//        IEntityField field2 = new EntityField(101, "c2", FieldType.STRING,config1);
-//        Collection<IEntityField> fields = buildRandomFields(102, 3);
-//        fields.add(field1);
-//        fields.add(field2);
-//
-//        IEntityValue entityValue = new EntityValue(idGenerator.next());
-//        entityValue.addValues(buildFixedValue(1000,fields).values());
-//
-//        fatherEntityClass = new EntityClass(idGenerator.next(), "father",fields);
-//        IEntity father =  new Entity(
-//                1000,
-//                new EntityClass(1, "father", fields),
-//                entityValue
-//        );
-//
-//        Collection<IEntityField> childFields =
-//                Arrays.asList(new EntityField(idGenerator.next(), "c3", FieldType.LONG, FieldConfig.build().searchable(true).uniqueName("")),
-//                        new EntityField(idGenerator.next(), "c4", FieldType.LONG, FieldConfig.build().searchable(true).uniqueName("")));
-//        childEntityClass = new EntityClass(
-//                idGenerator.next(),
-//                "child",
-//                null,
-//                null,
-//                fatherEntityClass,
-//                childFields
-//        );
-//        entityValue.addValues(buildFixedValue(1001,childFields).values());
-//        IEntity child = new Entity(1001,childEntityClass,entityValue);
-//        int ret = storage.build(child);
-//        Assert.assertEquals(ret,0);
-//    }
-//
-//    /**
-//     * 插入子类，父类和子类上有共同的索引，索引属于子类
-//     * @throws SQLException
-//     */
-//    @Test
-//    public void testBuildFatherChildAllBuild() throws SQLException {
-//        FieldConfig config = FieldConfig.build();
-//        config.uniqueName("child:u1:1");
-//        FieldConfig config1 = FieldConfig.build();
-//        config1.uniqueName("");
-//        IEntityField field1 = new EntityField(100, "c1", FieldType.STRING,config);
-//        IEntityField field2 = new EntityField(101, "c2", FieldType.STRING,config1);
-//        Collection<IEntityField> fields = buildRandomFields(102, 3);
-//        fields.add(field1);
-//        fields.add(field2);
-//
-//        IEntityValue entityValue = new EntityValue(idGenerator.next());
-//        entityValue.addValues(buildFixedValue(1000,fields).values());
-//
-//        fatherEntityClass = new EntityClass(idGenerator.next(), "father",fields);
-//        IEntity father =  new Entity(
-//                1000,
-//                new EntityClass(1, "father", fields),
-//                entityValue
-//        );
-//
-//        Collection<IEntityField> childFields =
-//                Arrays.asList(new EntityField(idGenerator.next(), "c3", FieldType.LONG, FieldConfig.build().searchable(true).uniqueName("child:u1:2")),
-//                        new EntityField(idGenerator.next(), "c4", FieldType.LONG, FieldConfig.build().searchable(true).uniqueName("")));
-//        childEntityClass = new EntityClass(
-//                idGenerator.next(),
-//                "child",
-//                null,
-//                null,
-//                fatherEntityClass,
-//                childFields
-//        );
-//        entityValue.addValues(buildFixedValue(1001,childFields).values());
-//        IEntity child = new Entity(1001,childEntityClass,entityValue);
-//        int ret = storage.build(child);
-//        Assert.assertEquals(ret,1);
-//    }
-//
-//
+
+
 
 //
     private Collection<IEntityField> getFixedFields() {
@@ -591,7 +778,7 @@ public class UniqueMasterStorageTest {
 
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
+        dataSourcePackage = DataSourceFactory.build(true);
         return dataSourcePackage.getMaster().get(0);
     }
 
