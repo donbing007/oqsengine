@@ -46,7 +46,8 @@ public class MergedIterator<T> implements Iterator<T> {
 
     @Override
     public T next() {
-        boolean useStream1 = next1 != null && next2 == null || next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0));
+        boolean useStream1 =
+            next1 != null && next2 == null || next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0));
 
         if (useStream1) {
             T returnObject = next1;
