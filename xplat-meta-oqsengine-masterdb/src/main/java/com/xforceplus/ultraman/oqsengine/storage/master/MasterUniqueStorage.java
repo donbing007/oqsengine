@@ -67,7 +67,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
     @Override
     public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
         // todo:如果包含业务主键的实体，才需要走以下逻辑。
-        String uniqueKey = buildEntityUniqueKey(entity, entityClass);
+        String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
         if (StringUtils.isEmpty(uniqueKey)) {
             return 0;
         }
@@ -80,6 +80,32 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
                 });
     }
 
+
+
+    private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
+        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass,values);
+        return indexValue.isPresent() ? indexValue.get().getValue() : "";
+    }
+
+    @Override
+    public boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass) {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
+        return matchUniqueConfig(entityClass, values).isPresent();
+    }
+
+    @Override
+    public boolean containUniqueConfig(IEntity entity, IEntityClass entityClass) {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
+        return matchUniqueConfig(entityClass, values).isPresent();
+    }
+
+    private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
+        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
+        return indexValue.isPresent() ? indexValue.get().getValue() : "";
+    }
+
     private List<String> getAncestorCode(IEntityClass entityClass) {
         List<String> codes = Lists.newArrayList(entityClass.code());
         while (entityClass.father().isPresent()) {
@@ -89,25 +115,31 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
         return codes;
     }
 
-    private String buildEntityUniqueKey(IEntity entity, IEntityClass entityClass) throws SQLException {
+    private Optional<UniqueIndexValue> matchUniqueConfig(IEntityClass entityClass, Map<String, UniqueIndexValue> keys) {
         List<String> codes = getAncestorCode(entityClass);
-        Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
-        Optional<UniqueIndexValue> indexValue = values.values().stream()
+        return keys.values().stream()
             .filter(item -> codes.contains(item.getCode()))
-                .findAny();
-        return indexValue.isPresent() ? indexValue.get().getValue() : "";
+            .findAny();
     }
 
-    // 填充类型信息
+
     private long[] getEntityClasses(IEntityClass entityClass) {
         Collection<IEntityClass> family = entityClass.family();
         long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
         return tileEntityClassesIds;
     }
 
+
+    private void fullEntityClassInformation(StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder, IEntityClass
+        entityClass) {
+        Collection<IEntityClass> family = entityClass.family();
+        long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
+        storageEntityBuilder.entityClasses(tileEntityClassesIds);
+    }
+
     @Override
     public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
-        String uniqueKey = buildEntityUniqueKey(entity, entityClass);
+        String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
         if (StringUtils.isBlank(uniqueKey)) {
             return 0;
         }
@@ -119,16 +151,8 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
 //                    fullTransactionInformation(storageEntityBuilder, resource);
                     return UpdateUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
                 });
-
     }
 
-    // 填充类型信息
-    private void fullEntityClassInformation(StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder, IEntityClass
-            entityClass) {
-        Collection<IEntityClass> family = entityClass.family();
-        long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
-        storageEntityBuilder.entityClasses(tileEntityClassesIds);
-    }
 
     @Override
     public int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
@@ -141,38 +165,6 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
                 });
     }
 
-//    private Object buildUniqueRecord(IEntity entity, StorageCommand command) throws SQLException {
-//        int ret = 0;
-//        if (containUniqueConfig(entity)) {
-//            String uniqueKey = buildEntityUniqueKey(entity);
-//            ret = (int) transactionExecutor.execute(new AbstractDataSourceShardingTask(dataSourceSelector, uniqueKey) {
-//                @Override
-//                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-//                    StorageUniqueEntity storageUniqueEntity = StorageUniqueEntity.builder()
-//                            .id(entity.id())
-//                            .entity(entity.entityClass().id())
-//                            .key(uniqueKey).build();
-//                    return command.execute(resource, storageUniqueEntity);
-//                }
-//            });
-//        }
-//        return ret;
-//    }
-
-
-
-    private String buildEntityUniqueKeyByEntityClass(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException {
-        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
-        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
-        return indexValue.isPresent() ? indexValue.get().getValue() : "";
-    }
-
-
-    @Override
-    public boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass) {
-        Map<String, UniqueIndexValue> keys = keyGenerator.generator(businessKeys, entityClass);
-        return matchUniqueConfig(entityClass, keys).isPresent();
-    }
 
     @Override
     public int deleteDirectly(IEntity entity) throws SQLException {
@@ -186,20 +178,12 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
                 });
     }
 
-    private Optional<UniqueIndexValue> matchUniqueConfig(IEntityClass entityClass, Map<String, UniqueIndexValue> keys) {
-        return keys.values().stream()
-                .filter(item -> item.getCode()
-                        .equalsIgnoreCase(entityClass.code()))
-                .findAny();
-    }
-
-
     @Override
     public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException {
         if (!containUniqueConfig(businessKeys, entityClass)) {
             return Optional.empty();
         }
-        String uniqueKey = buildEntityUniqueKeyByEntityClass(businessKeys, entityClass);
+        String uniqueKey = buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass);
         return (Optional<StorageUniqueEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<StorageUniqueEntity> seOP =
                     new QueryUniqueExecutor(tableName, resource, entityClass, queryTimeout).execute(uniqueKey);

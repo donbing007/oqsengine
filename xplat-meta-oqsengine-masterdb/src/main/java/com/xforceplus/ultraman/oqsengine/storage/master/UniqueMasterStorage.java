@@ -20,6 +20,7 @@ public interface UniqueMasterStorage extends Storage {
      *
      * @param businessKeys
      * @param entityClass
+     *
      * @return
      * @throws SQLException
      */
@@ -30,9 +31,20 @@ public interface UniqueMasterStorage extends Storage {
      *
      * @param businessKeys
      * @param entityClass
+     *
      * @return
      */
     boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass);
+
+
+    /**
+     * judge if contain unique config
+     * @param entity
+     * @param entityClass
+     *
+     * @return
+     */
+    boolean containUniqueConfig(IEntity entity,IEntityClass entityClass);
 
 
     /**

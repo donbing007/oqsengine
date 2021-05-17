@@ -198,9 +198,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (!entityClass.isPresent()) {
             throw new RuntimeException(String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
         }
-        if (!uniqueMasterStorage.containUniqueConfig(key, entityClass.get())) {
-            return Optional.empty();
-        }
         Optional<StorageUniqueEntity> uniqueStorage = uniqueMasterStorage.select(key, entityClass.get());
         if (!uniqueStorage.isPresent()) {
             return Optional.empty();

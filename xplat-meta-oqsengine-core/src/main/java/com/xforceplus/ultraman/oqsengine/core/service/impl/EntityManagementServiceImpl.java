@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterUniqueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -72,6 +73,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private EventBus eventBus;
+
+    @Resource
+    private MasterUniqueStorage uniqueStorage;
 
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
@@ -202,7 +206,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
-
+                if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+                    uniqueStorage.build(entity, entityClass);
+                }
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
                 }
@@ -271,6 +277,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 targetEntity.markTime(entity.time());
                 targetEntity.entityValue().addValues(entity.entityValue().values());
 
+                if(uniqueStorage.containUniqueConfig(targetEntity,entityClass)) {
+                    uniqueStorage.replace(targetEntity,entityClass);
+                }
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
