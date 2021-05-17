@@ -426,7 +426,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        uniqueStorage.delete(entity, entityClass);
+        if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+            uniqueStorage.delete(entity, entityClass);
+        }
         return delete(entity);
     }
 
