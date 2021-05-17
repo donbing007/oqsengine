@@ -4,7 +4,10 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -60,7 +63,7 @@ public class MultiFormulaTest {
 
     @Test
     public void testPlus() {
-        String expression1 = "var abc = ${amount} * ${taxRate} / 100 + ${amount};return abc;";
+        String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
         Expression expression = ExpressionUtils.compile(expressionWrapper);
@@ -79,6 +82,20 @@ public class MultiFormulaTest {
 
     @Test
     public void testLocalDataTime() {
+        String expression1 = "${current_time}";
+        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        long now = System.currentTimeMillis();
+        Map<String, Object> params = new HashMap<>();
+        params.put("current_time", now);
 
+        Object res = expression.execute(params);
+        Assert.assertEquals(LocalDateTime.class, TimeUtils.convert((Long) res).getClass());
+
+        expression1 = "sysdate()";
+        expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+        expression = ExpressionUtils.compile(expressionWrapper);
+        res = expression.execute();
+        Assert.assertEquals(LocalDateTime.class, TimeUtils.convert((Date) res).getClass());
     }
 }

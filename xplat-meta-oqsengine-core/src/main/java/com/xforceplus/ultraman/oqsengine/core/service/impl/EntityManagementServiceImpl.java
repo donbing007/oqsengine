@@ -242,10 +242,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 try {
                     prepareBuild(entity);
                 } catch (Exception e) {
-                    logger.warn("prepare build error, message [{}]", e.toString());
+                    String message = e.toString();
+                    logger.warn("prepare build error, message [{}]", message);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
-                        ResultStatus.ELEVATEFAILED);
+                        ResultStatus.ELEVATEFAILED, message);
                 }
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
@@ -322,10 +323,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 try {
                     prepareReplace(targetEntity, entity);
                 } catch (Exception e) {
-                    logger.warn("prepare replace error, message [{}]", e.toString());
+                    String message = e.toString();
+                    logger.warn("prepare replace error, message [{}]", message);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                        ResultStatus.ELEVATEFAILED);
+                        ResultStatus.ELEVATEFAILED, message);
                 }
 
                 // 操作时间
