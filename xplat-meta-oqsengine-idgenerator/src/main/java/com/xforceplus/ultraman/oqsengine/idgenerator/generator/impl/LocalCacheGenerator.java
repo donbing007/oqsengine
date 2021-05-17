@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.IDResult;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PattenValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.ResultCode;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
@@ -90,6 +91,7 @@ public class LocalCacheGenerator implements IDGenerator {
                 loadCurrent();
                 continue;
             }
+            PattenValue currentValue = current.getCurrentId();
             IDResult result = current.nextId();
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent();

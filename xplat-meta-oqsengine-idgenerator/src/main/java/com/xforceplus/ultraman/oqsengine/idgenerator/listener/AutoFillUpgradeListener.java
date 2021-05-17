@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import io.lettuce.core.ScanCursor;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -53,8 +54,8 @@ public class AutoFillUpgradeListener {
                 AutoFillUpgradePayload payload =  (AutoFillUpgradePayload)event.payload().get();
                 String bizType = String.valueOf(payload.getEntityField().id());
                 Optional<SegmentInfo> segmentInfo = storage.query(bizType);
+                Calculator calculator = payload.getEntityField().calculator();
                 if(!segmentInfo.isPresent()) {
-                    Calculator calculator = payload.getEntityField().calculator();
                     SegmentInfo info = SegmentInfo.builder().withVersion(0L)
                         .withCreateTime(new Timestamp(System.currentTimeMillis()))
                         .withUpdateTime(new Timestamp(System.currentTimeMillis()))
@@ -64,6 +65,14 @@ public class AutoFillUpgradeListener {
                         .withMaxId(0L).withBizType(bizType)
                         .withBeginId(1L).build();
                     storage.build(info);
+                }
+                else {
+                   SegmentInfo info =  segmentInfo.get();
+                   info.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                   info.setStep(calculator.getStep());
+                   info.setPatten(calculator.getPatten());
+                   info.setMode(Integer.valueOf(calculator.getModel()));
+                    storage.udpate(info);
                 }
             }
     }
