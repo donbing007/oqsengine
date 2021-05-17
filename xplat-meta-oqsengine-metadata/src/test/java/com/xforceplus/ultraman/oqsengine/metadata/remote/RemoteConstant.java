@@ -3,11 +3,16 @@ package com.xforceplus.ultraman.oqsengine.metadata.remote;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 
 /**
+ * test-use.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/17
  * @since 1.8
  */
 public class RemoteConstant {
+    /**
+     * 连接元数据dev环境
+     */
     public static final String HOST = "120.55.249.44";
     public static final int PORT = 23111;
     public static final boolean IF_TEST = false;
