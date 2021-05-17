@@ -60,7 +60,7 @@ public class MultiFormulaTest {
 
     @Test
     public void testPlus() {
-        String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
+        String expression1 = "var abc = ${amount} * ${taxRate} / 100 + ${amount};return abc;";
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
         Expression expression = ExpressionUtils.compile(expressionWrapper);
@@ -75,5 +75,10 @@ public class MultiFormulaTest {
 
         Object res = expression.execute(params);
         Assert.assertEquals(BigDecimal.class, res.getClass());
+    }
+
+    @Test
+    public void testLocalDataTime() {
+
     }
 }
