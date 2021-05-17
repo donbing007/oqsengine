@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,7 +20,6 @@ import java.util.Optional;
 public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional<StorageUniqueEntity>> {
 
     private IEntityClass entityClass;
-
 
 
     public QueryUniqueExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
@@ -49,7 +47,8 @@ public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional
             StorageUniqueEntity entity = null;
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    StorageUniqueEntity.StorageUniqueEntityBuilder builder = new StorageUniqueEntity.StorageUniqueEntityBuilder();
+                    StorageUniqueEntity.StorageUniqueEntityBuilder builder =
+                        new StorageUniqueEntity.StorageUniqueEntityBuilder();
                     builder.key(key).id(rs.getLong(FieldDefine.ID));
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
