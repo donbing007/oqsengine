@@ -175,7 +175,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * checkout the entityClassRef.
      */
     private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId());
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
         if (entityClassOp.isPresent()) {
             IEntityClass entityClass = entityClassOp.get();
             return entityClass;
