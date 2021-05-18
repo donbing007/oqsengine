@@ -80,7 +80,7 @@ public abstract class AbstractDevOpsContainer {
             commitIdStatusService.init();
 
 
-            transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
                 .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdStatusService(commitIdStatusService)

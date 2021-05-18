@@ -35,8 +35,7 @@ public interface EntitySearchService {
      *
      * @param key               业务主键.
      * @param entityClassRef    ref.
-     * @return
-     * @throws SQLException
+     * @return 目标 entity 实体.
      */
     Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
 
