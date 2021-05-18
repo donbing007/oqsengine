@@ -131,7 +131,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
     public boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId,
                                      String message) throws SQLException {
         Long id = getLongFromColumn(columns, ID, UN_KNOW_ID);
-        Long commitId = getLongFromColumn(columns, COMMITID);
+        Long commitId = getLongFromColumn(columns, COMMITID, UN_KNOW_ID);
 
         Integer version = getIntegerFromColumn(columns, VERSION, UN_KNOW_VERSION);
         Integer op = getIntegerFromColumn(columns, OP, UN_KNOW_OP);
