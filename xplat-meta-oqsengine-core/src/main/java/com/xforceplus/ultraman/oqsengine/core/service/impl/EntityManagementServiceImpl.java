@@ -645,7 +645,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
             );
         }
-
     }
 
     private IValue<?> toIValue(IEntityField field, Object result) {

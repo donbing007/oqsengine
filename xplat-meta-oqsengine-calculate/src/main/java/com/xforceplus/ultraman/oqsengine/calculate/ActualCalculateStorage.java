@@ -65,18 +65,15 @@ public class ActualCalculateStorage implements CalculateStorage {
                             object = TimeUtils.toTimeStamp((Date) object);
                         }
 
-                        /*
-                            校验返回类型相符
-                        */
+                        //  校验返回类型相符
                         if (!TypeCheck.check(executionWrapper.getRetClazz(), object)) {
                             throw new CalculateExecutionException(
                                 String.format("code-[%s], retType not equals to define, define [%s], actual [%s]",
                                     executionWrapper.getCode(), executionWrapper.getRetClazz().getCanonicalName(),
                                     object.getClass().getCanonicalName()));
                         }
-
-                        result.put(executionWrapper.getCode(), object);
                     }
+                    result.put(executionWrapper.getCode(), object);
                 }
             }
         }

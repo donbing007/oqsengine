@@ -114,13 +114,18 @@ public class ManagementWithCalculatorTest {
 
     @Test
     public void replaceTest() throws SQLException {
-        expectedAutoFill = (Long.MAX_VALUE - 4) + "-" + (idGeneratorLocal++);
+
         buildTest();
 
         Map<String, Object> params = new HashMap<>();
 
         Long expectedValue = 20000L;
         params.put("longValue0", expectedValue);
+        params.put("longValue1", 200L);
+        params.put("longValue2", 100L);
+        params.put("dateValue0", 123L);
+        params.put("stringAutoFill", "111");
+        params.put("stringValueMix", "222");
 
         initAndAssert(expectedValue, params, false);
     }
