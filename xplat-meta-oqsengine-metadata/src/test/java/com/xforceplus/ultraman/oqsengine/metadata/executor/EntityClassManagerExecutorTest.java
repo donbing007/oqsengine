@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSync
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -380,6 +381,17 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(exp.getFieldType().toUpperCase(), act.type().getType().toUpperCase());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+
+        if (act.calculateType().equals(CalculateType.FORMULA)) {
+            Assert.assertEquals(exp.getCalculator().getCalculateType(), CalculateType.FORMULA.getType());
+            Assert.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
+            Assert.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
+        } else if (act.calculateType().equals(CalculateType.AUTO_FILL)) {
+            Assert.assertEquals(exp.getCalculator().getCalculateType(), CalculateType.AUTO_FILL.getType());
+            Assert.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());
+            Assert.assertEquals(exp.getCalculator().getModel(), act.calculator().getModel());
+            Assert.assertEquals(exp.getCalculator().getStep(), act.calculator().getStep());
+        }
 
         //  check field Config
         com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
