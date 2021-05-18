@@ -277,6 +277,11 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {
+
+        logger.info("getSync response, uid [{}], appId [{}], env [{}], version [{}].",
+            entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
+            entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
+
         //  执行OQS更新EntityClass
         EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
         if (entityClassSyncRequestBuilder.getStatus() != SYNC_OK.ordinal()) {
