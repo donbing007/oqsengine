@@ -46,6 +46,9 @@ public class StorageConfiguration {
         return storage;
     }
 
+    /**
+     * 业务主键储存.
+     */
     @Bean
     public UniqueMasterStorage masterUniqueStorage(
         @Value("${storage.master.unique.name:oqsunique}") String tableName,

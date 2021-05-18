@@ -238,7 +238,7 @@ public class UniqueMasterStorageTest {
         dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
-        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)

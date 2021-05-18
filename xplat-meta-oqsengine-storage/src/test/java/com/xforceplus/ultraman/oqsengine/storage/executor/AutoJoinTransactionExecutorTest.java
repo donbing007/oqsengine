@@ -65,7 +65,7 @@ public class AutoJoinTransactionExecutorTest {
         idGenerator = new IncreasingOrderLongIdGenerator();
         commitIdGenerator = new IncreasingOrderLongIdGenerator();
 
-        tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(idGenerator)
             .withCommitIdGenerator(commitIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
