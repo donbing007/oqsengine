@@ -57,17 +57,12 @@ public class ActualCalculateStorage implements CalculateStorage {
             List<ExecutionWrapper<?>> needExecutions = partitionExpressionWraps.get(i);
             if (null != needExecutions) {
                 for (ExecutionWrapper<?> executionWrapper : needExecutions) {
-                    Object object = execute(executionWrapper.getExpressionWrapper(), params);
+                    Object object = execute(executionWrapper.getExpressionWrapper(), result);
 
                     if (null != object) {
-                        if (null != executionWrapper.getRetClazz()) {
-                            if (executionWrapper.getRetClazz().equals(LocalDateTime.class)) {
-                                if (object instanceof Date) {
-                                    object = TimeUtils.convert((Date) object);
-                                } else {
-                                    object = TimeUtils.convert((Long) object);
-                                }
-                            }
+                        //  由于OQS中DATE_TIME的内部java类型为Long型，所以需要全部转为Long型进行TypeCheck
+                        if (object instanceof Date) {
+                            object = TimeUtils.toTimeStamp((Date) object);
                         }
 
                         /*

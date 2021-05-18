@@ -29,4 +29,8 @@ public class TimeUtils {
             throw new CalculateExecutionException("convert date to localDateTime failed.");
         }
     }
+
+    public static Long toTimeStamp(Date date) {
+        return date.getTime();
+    }
 }

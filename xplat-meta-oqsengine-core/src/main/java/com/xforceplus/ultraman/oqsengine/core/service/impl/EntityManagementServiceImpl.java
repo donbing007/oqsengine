@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -658,7 +659,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return new EnumValue(field, (String) result);
             }
             case DATETIME: {
-                return new DateTimeValue(field, (LocalDateTime) result);
+                return new DateTimeValue(field, TimeUtils.convert((Long) result));
             }
             case LONG: {
                 return new LongValue(field, (Long) result);
