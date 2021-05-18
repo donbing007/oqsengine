@@ -278,7 +278,7 @@ public class SyncRequestHandler implements IRequestHandler {
 
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {
 
-        logger.info("getSync response, uid [{}], appId [{}], env [{}], version [{}].",
+        logger.debug("getSync response, uid [{}], appId [{}], env [{}], version [{}].",
             entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
             entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
 
