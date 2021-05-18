@@ -34,16 +34,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 public class BaseInit {
 
     public static EntityManagementServiceImpl entityManagementService(MetaManager metaManager) {
-
         BizIDGenerator bizIDGenerator = new BizIDGenerator();
         ReflectionTestUtils.setField(bizIDGenerator, "idGeneratorFactory", new MockIDGeneratorFactory());
 
         EntityManagementServiceImpl impl = new EntityManagementServiceImpl(true);
+        ReflectionTestUtils.setField(impl, "bizIDGenerator", bizIDGenerator);
         ReflectionTestUtils.setField(impl, "idGenerator", idGenerator());
         ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "calculateStorage", new ActualCalculateStorage());
-        ReflectionTestUtils.setField(impl, "bizIDGenerator", bizIDGenerator);
         ReflectionTestUtils.setField(impl, "uniqueStorage", new MockUniqueMasterStorage());
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
             @Override
@@ -56,7 +55,6 @@ public class BaseInit {
 
             }
         });
-        impl.init();
 
         return impl;
     }

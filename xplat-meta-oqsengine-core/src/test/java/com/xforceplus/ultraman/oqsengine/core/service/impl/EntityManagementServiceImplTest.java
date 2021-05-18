@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
