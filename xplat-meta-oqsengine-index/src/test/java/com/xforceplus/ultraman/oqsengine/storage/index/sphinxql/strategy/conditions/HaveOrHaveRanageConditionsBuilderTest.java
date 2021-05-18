@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -67,8 +68,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                             new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
                         )
                     ),
-                String.format("(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200)",
-                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE)
+                "(createtime = 100 OR updatetime != 200)"
             ),
             // c1 or c2 or (c3 and c4)
             new Case(
@@ -104,10 +104,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                         ),
                     true
                 ),
-                String.format(
-                    "(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200 OR (%s.1y2p0ij32e8e5L = 300 AND %s.1y2p0ij32e8e5L = 400))",
-                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
-                )
+                "(createtime = 100 OR updatetime != 200 OR (updatetime = 300 AND updatetime = 400))"
             ),
             // (c1 and c2) or c3
             new Case(
@@ -133,40 +130,46 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                             new LongValue(EntityField.CREATE_TIME_FILED, 500L)
                         )
                     ),
-                String.format("((%s.1y2p0ij32e8e5L = 100 AND %s.1y2p0ij32e8e6L = 300) OR %s.1y2p0ij32e8e6L = 500)",
-                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
-                )
+                "((updatetime = 100 AND createtime = 300) OR createtime = 500)"
             ),
             // (c1 and c2) or (c3 and c4)
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            EntityField.UPDATE_TIME_FILED,
+                            new EntityField(Long.MAX_VALUE - 2, "updateTime", FieldType.LONG,
+                                FieldConfig.Builder.anFieldConfig().build()),
                             ConditionOperator.EQUALS,
-                            new LongValue(EntityField.UPDATE_TIME_FILED, 100L)
+                            new LongValue(new EntityField(Long.MAX_VALUE - 2, "updateTime", FieldType.LONG,
+                                FieldConfig.Builder.anFieldConfig().build()), 100L)
                         )
                     )
                     .addAnd(
                         new Condition(
-                            EntityField.CREATE_TIME_FILED,
+                            new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                FieldConfig.Builder.anFieldConfig().build()),
                             ConditionOperator.EQUALS,
-                            new LongValue(EntityField.CREATE_TIME_FILED, 300L)
+                            new LongValue(new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                FieldConfig.Builder.anFieldConfig().build()), 300L)
                         )
                     ).close().addOr(
                     Conditions.buildEmtpyConditions()
                         .addAnd(
                             new Condition(
-                                EntityField.CREATE_TIME_FILED,
+                                new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                    FieldConfig.Builder.anFieldConfig().build()),
                                 ConditionOperator.EQUALS,
-                                new LongValue(EntityField.CREATE_TIME_FILED, 500L)
+                                new LongValue(new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                    FieldConfig.Builder.anFieldConfig().build()), 500L)
                             )
                         )
                         .addAnd(
                             new Condition(
-                                EntityField.CREATE_TIME_FILED,
+                                new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                    FieldConfig.Builder.anFieldConfig().build()),
                                 ConditionOperator.EQUALS,
-                                new LongValue(EntityField.CREATE_TIME_FILED, 600L)
+                                new LongValue(new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+                                    FieldConfig.Builder.anFieldConfig().build()), 600L)
                             )
                         ),
                     true
