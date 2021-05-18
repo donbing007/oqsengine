@@ -67,13 +67,17 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
                 );
             }
 
-            if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
-                executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
-                lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
-            }
+            addMetrics();
         }
 //
 //        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+    }
+
+    private synchronized void addMetrics() {
+        if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
+            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+        }
     }
 
     @Override
