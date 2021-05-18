@@ -36,4 +36,4 @@ create table cdcerrors
     unique key unikey_upk (unikey),
     key cdcerrors_k0 (batchid)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
+  DEFAULT CHARSET = utf8mb4;
