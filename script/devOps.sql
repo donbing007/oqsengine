@@ -14,7 +14,7 @@ create table devopstasks
      startid bigint default 0 not null comment '起始ID',
      constraint devopstasks_pk0 primary key (maintainid),
      key devopstasks_k0 (entity)
-) ENGINE=InnoDB DEFAULT CHARSET = utf8;
+) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 create table cdcerrors
 (
