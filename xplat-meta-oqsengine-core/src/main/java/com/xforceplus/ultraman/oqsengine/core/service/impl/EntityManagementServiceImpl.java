@@ -50,14 +50,17 @@ import io.micrometer.core.instrument.Metrics;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -554,15 +557,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     }
                 } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
+                } else {
+                    entityValue.addValue(v);
                 }
             }
         );
 
+        logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
+            entity.id(),
+            context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+
         //  计算公式字段
         formulaElevator(entity, entityValue, context, executionWrappers);
 
+        logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
+            entity.id(), entityValue.values().toArray());
+
         //  将entityValue加入到目标中
-        entity.entityValue().addValues(entityValue.values());
+        entity.resetEntityValue(entityValue);
     }
 
     //  replace前的准备
@@ -581,7 +593,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         updateEntity.entityValue().values().forEach(
             v -> {
                 IEntityField entityField = v.getField();
-
                 //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
                 if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
@@ -595,12 +606,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  将targetEntity中剩余entity加入进行计算
         targetEntity.entityValue().values().forEach(
             v -> {
-                //  CalculateType为AUTO_FILL 或者
-                //  CalculateType不等于FORMULA同时在新字段中不存在
-                if (v.getField().calculateType().equals(CalculateType.AUTO_FILL)
-                    || (!v.getField().calculateType().equals(CalculateType.FORMULA)
-                        && !context.containsKey(v.getField().name()))) {
-                    context.put(v.getField().name(), v.getValue());
+                switch (v.getField().calculateType()) {
+                    case AUTO_FILL: {
+                        //  自动填充字段强制覆盖
+                        entityValue.addValue(v);
+                        context.put(v.getField().name(), v.getValue());
+                        break;
+                    }
+                    case FORMULA: {
+                        break;
+                    }
+                    default: {
+                        //  当context不存在该值时写入
+                        context.putIfAbsent(v.getField().name(), v.getValue());
+                        if (!entityValue.getValue(v.getField().id()).isPresent()) {
+                            entityValue.addValue(v);
+                        }
+                        break;
+                    }
                 }
             }
         );
@@ -609,7 +632,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         formulaElevator(targetEntity, entityValue, context, executionWrappers);
 
         //  将entityValue加入到目标中
-        targetEntity.entityValue().addValues(entityValue.values());
+        targetEntity.resetEntityValue(entityValue);
     }
 
     private void addContextWrappers(IValue<?> v, Map<String, Object> context,
@@ -636,10 +659,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     IEntityField e = v.getField();
                     if (e.calculateType().equals(CalculateType.FORMULA)) {
                         Object o = result.get(e.name());
-                        if (null != o) {
-                            entityValue.addValue(toIValue(e, o));
+
+                        if (null == o) {
+                            logger.warn("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
                         } else {
-                            logger.debug("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
+                            entityValue.addValue(toIValue(e, o));
                         }
                     }
                 }
@@ -656,6 +680,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return new EnumValue(field, (String) result);
             }
             case DATETIME: {
+                if (result instanceof Date) {
+                    return new DateTimeValue(field, TimeUtils.convert((Date) result));
+                }
                 return new DateTimeValue(field, TimeUtils.convert((Long) result));
             }
             case LONG: {

@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,7 +96,7 @@ public class ManagementWithCalculatorTest {
     private long expectedId = 2;
     private Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
     private String expectedAutoFill = null;
-    private Long idGeneratorLocal = 0L;
+    private static Long idGeneratorLocal = 0L;
 
     @Test
     public void buildTest() throws SQLException {

@@ -7,10 +7,6 @@ import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionE
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.TypeCheck;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,20 +55,6 @@ public class ActualCalculateStorage implements CalculateStorage {
                 for (ExecutionWrapper<?> executionWrapper : needExecutions) {
                     Object object = execute(executionWrapper.getExpressionWrapper(), result);
 
-                    if (null != object) {
-                        //  由于OQS中DATE_TIME的内部java类型为Long型，所以需要全部转为Long型进行TypeCheck
-                        if (object instanceof Date) {
-                            object = TimeUtils.toTimeStamp((Date) object);
-                        }
-
-                        //  校验返回类型相符
-                        if (!TypeCheck.check(executionWrapper.getRetClazz(), object)) {
-                            throw new CalculateExecutionException(
-                                String.format("code-[%s], retType not equals to define, define [%s], actual [%s]",
-                                    executionWrapper.getCode(), executionWrapper.getRetClazz().getCanonicalName(),
-                                    object.getClass().getCanonicalName()));
-                        }
-                    }
                     result.put(executionWrapper.getCode(), object);
                 }
             }

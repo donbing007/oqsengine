@@ -55,7 +55,7 @@ public class MultiFormulaTest {
 
         Map<String, Object> params = new HashMap<>();
         String expectedValue = "aaaaa";
-        params.put("name", expectedValue);
+//        params.put("name", expectedValue);
         String res = (String) expression.execute(params);
 
         Assert.assertEquals(expectedValue, res);
