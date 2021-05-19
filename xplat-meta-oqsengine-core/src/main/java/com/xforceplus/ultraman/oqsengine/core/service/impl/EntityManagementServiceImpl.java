@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -48,16 +49,18 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -432,7 +435,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        if(uniqueStorage.containUniqueConfig(entity,entityClass)) {
+        if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
             uniqueStorage.delete(entity, entityClass);
         }
         return delete(entity);
@@ -554,15 +557,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     }
                 } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
+                } else {
+                    entityValue.addValue(v);
                 }
             }
         );
 
+        logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
+            entity.id(),
+            context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+
         //  计算公式字段
         formulaElevator(entity, entityValue, context, executionWrappers);
 
+        logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
+            entity.id(), entityValue.values().toArray());
+
         //  将entityValue加入到目标中
-        entity.entityValue().addValues(entityValue.values());
+        entity.resetEntityValue(entityValue);
     }
 
     //  replace前的准备
@@ -581,11 +593,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         updateEntity.entityValue().values().forEach(
             v -> {
                 IEntityField entityField = v.getField();
-
                 //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
                 if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
-                } else {
+                } else if (!entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
                     //  加入新的entityValue中
                     entityValue.addValue(v);
                 }
@@ -595,11 +606,23 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  将targetEntity中剩余entity加入进行计算
         targetEntity.entityValue().values().forEach(
             v -> {
-                //  old字段中所有的公式字段都不会参与replace计算
-                if (!v.getField().calculateType().equals(CalculateType.FORMULA)) {
-                    //  当context中不存在该key时，加入,不使用putIfAbsent的原因是允许空值
-                    if (!context.containsKey(v.getField().name())) {
+                switch (v.getField().calculateType()) {
+                    case AUTO_FILL: {
+                        //  自动填充字段强制覆盖
+                        entityValue.addValue(v);
                         context.put(v.getField().name(), v.getValue());
+                        break;
+                    }
+                    case FORMULA: {
+                        break;
+                    }
+                    default: {
+                        //  当context不存在该值时写入
+                        context.putIfAbsent(v.getField().name(), v.getValue());
+                        if (!entityValue.getValue(v.getField().id()).isPresent()) {
+                            entityValue.addValue(v);
+                        }
+                        break;
                     }
                 }
             }
@@ -609,10 +632,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         formulaElevator(targetEntity, entityValue, context, executionWrappers);
 
         //  将entityValue加入到目标中
-        targetEntity.entityValue().addValues(entityValue.values());
+        targetEntity.resetEntityValue(entityValue);
     }
 
-    private void addContextWrappers(IValue<?> v, Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+    private void addContextWrappers(IValue<?> v, Map<String, Object> context,
+                                    List<ExecutionWrapper<?>> executionWrappers) {
         if (!(v instanceof FormulaTypedValue)) {
             throw new IllegalArgumentException(
                 "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
@@ -627,7 +651,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private void formulaElevator(IEntity entity, IEntityValue entityValue,
-                                                Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
+                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
         if (null != result) {
             entity.entityValue().values().forEach(
@@ -635,28 +659,31 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     IEntityField e = v.getField();
                     if (e.calculateType().equals(CalculateType.FORMULA)) {
                         Object o = result.get(e.name());
-                        if (null != o) {
-                            entityValue.addValue(toIValue(e, o));
+
+                        if (null == o) {
+                            logger.warn("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
                         } else {
-                            logger.debug("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
+                            entityValue.addValue(toIValue(e, o));
                         }
                     }
                 }
             );
         }
-
     }
 
     private IValue<?> toIValue(IEntityField field, Object result) {
         switch (field.type()) {
-            case BOOLEAN : {
+            case BOOLEAN: {
                 return new BooleanValue(field, (Boolean) result);
             }
             case ENUM: {
                 return new EnumValue(field, (String) result);
             }
             case DATETIME: {
-                return new DateTimeValue(field, (LocalDateTime) result);
+                if (result instanceof Date) {
+                    return new DateTimeValue(field, TimeUtils.convert((Date) result));
+                }
+                return new DateTimeValue(field, TimeUtils.convert((Long) result));
             }
             case LONG: {
                 return new LongValue(field, (Long) result);

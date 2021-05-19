@@ -4,8 +4,12 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
@@ -105,5 +109,25 @@ public class BusinessIDGeneratorConfiguration {
     public AutoFillUpgradeListener autoFillUpgradeListener() {
         AutoFillUpgradeListener autoFillUpgradeListener = new AutoFillUpgradeListener();
         return autoFillUpgradeListener;
+    }
+
+    /**
+     * datePattenParser.
+     *
+     * @return datePattenParser
+     */
+    @Bean
+    public PattenParser datePattenParser() {
+        return new DatePattenParser();
+    }
+
+    /**
+     * numberPattenParser.
+     *
+     * @return numberPattenParser
+     */
+    @Bean
+    public PattenParser numberPattenParser() {
+        return new NumberPattenParser();
     }
 }

@@ -581,7 +581,7 @@ public class UniqueMasterStorageTest {
 //     */
 //    @Test
 //    public void testBuildNoIndexFather() throws SQLException {
-//        FieldConfig config = FieldConfig.Builder.aFieldConfig().withUniqueName("").build();
+//        FieldConfig config = FieldConfig.Builder.anFieldConfig().withUniqueName("").build();
 //        IEntityField field1 = new EntityField(100, "c1", FieldType.STRING,config);
 //        IEntityField field2 = new EntityField(101, "c2", FieldType.STRING,config);
 //        Collection<IEntityField> fields = buildRandomFields(102, 3);

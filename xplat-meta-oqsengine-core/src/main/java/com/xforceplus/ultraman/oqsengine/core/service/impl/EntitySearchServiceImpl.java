@@ -12,8 +12,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AbstractConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -213,9 +211,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Override
     public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
-        Optional<IEntityClass> entityClass =  metaManager.load(entityClassRef.getId());
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
         if (!entityClass.isPresent()) {
-            throw new RuntimeException(String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
+            throw new RuntimeException(
+                String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
         }
         Optional<StorageUniqueEntity> uniqueStorage = uniqueMasterStorage.select(key, entityClass.get());
         if (!uniqueStorage.isPresent()) {

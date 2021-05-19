@@ -2,11 +2,15 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
@@ -70,10 +74,16 @@ public class EntityHelper {
     }
 
 
-    //private helper
+    /**
+     * to typed value.
+     */
     public static List<IValue> toTypedValue(IEntityField entityField, String value) {
-        return entityField.type().toTypedValue(entityField, value).map(Collections::singletonList)
-            .orElseGet(Collections::emptyList);
+        if (value != null && EmptyValue.isEmpty(value)) {
+            return Collections.singletonList(new EmptyTypedValue(entityField));
+        } else {
+            return entityField.type().toTypedValue(entityField, value)
+                    .map(Collections::singletonList).orElseGet(Collections::emptyList);
+        }
     }
 
     /**

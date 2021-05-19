@@ -175,7 +175,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * checkout the entityClassRef.
      */
     private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId());
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
         if (entityClassOp.isPresent()) {
             IEntityClass entityClass = entityClassOp.get();
             return entityClass;
@@ -237,7 +237,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
                 } else {
-                    throw new RuntimeException();
+                    throw new RuntimeException(resultStatus.name() + ":" + operationResult.getMessage());
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
