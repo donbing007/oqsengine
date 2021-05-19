@@ -32,6 +32,8 @@ import org.springframework.context.annotation.DependsOn;
 @Configuration
 public class DataSourceConfiguration {
 
+    private static final String OQS_UNIQUE_TABLE_NAME = "oqsunique";
+
     @Bean
     public DataSourcePackage dataSourcePackage(
         @Value("${storage.debug.showsql:false}") boolean showSql) {
@@ -56,6 +58,8 @@ public class DataSourceConfiguration {
         return dataSourcePackage.getDevOps();
     }
 
+
+
     @Bean
     @DependsOn("dataSourcePackage")
     public DataSource changelogDataSource(DataSourcePackage dataSourcePackage) {
@@ -64,6 +68,15 @@ public class DataSourceConfiguration {
 
     /**
      * 主库存连接池.
+     */
+    @Bean
+    @DependsOn("dataSourcePackage")
+    public DataSource segmentDataSource(DataSourcePackage dataSourcePackage) {
+        return dataSourcePackage.getSegment();
+    }
+
+    /**
+     * 主库数据源.
      */
     @Bean
     @DependsOn("dataSourcePackage")
@@ -90,10 +103,15 @@ public class DataSourceConfiguration {
                 new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm(),
                     new CommonRangeShardingAlgorithm()));
 
-
+            TableRuleConfiguration uniqueTableRuleConfiguration = new TableRuleConfiguration(OQS_UNIQUE_TABLE_NAME,
+                    String.format("ds${0..%d}.%s${0..%d}", dsSize - 1, OQS_UNIQUE_TABLE_NAME, shardSize - 1));
+            uniqueTableRuleConfiguration.setDatabaseShardingStrategyConfig(
+                    new StandardShardingStrategyConfiguration("key", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
+            uniqueTableRuleConfiguration.setTableShardingStrategyConfig(
+                    new StandardShardingStrategyConfiguration("key", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
             ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
             shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
-
+            shardingRuleConfig.getTableRuleConfigs().add(uniqueTableRuleConfiguration);
             return ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, new Properties());
         }
     }

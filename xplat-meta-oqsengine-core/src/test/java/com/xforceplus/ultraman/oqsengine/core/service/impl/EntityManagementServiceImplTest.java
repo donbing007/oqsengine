@@ -2,15 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
-import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.EventBus;
-import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -19,15 +11,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.sql.SQLException;
 import java.util.Optional;
-import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,34 +29,12 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 public class EntityManagementServiceImplTest {
 
-    private LongIdGenerator idGenerator;
-    private MetaManager metaManager;
-    private TransactionExecutor transactionExecutor;
-
     private EntityManagementServiceImpl impl;
 
     @Before
     public void before() throws Exception {
+        impl = BaseInit.entityManagementService(new MockMetaManager());
 
-        idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
-        metaManager = new MockMetaManager();
-        transactionExecutor = new MockTransactionExecutor();
-
-        impl = new EntityManagementServiceImpl(true);
-        ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
-        ReflectionTestUtils.setField(impl, "transactionExecutor", transactionExecutor);
-        ReflectionTestUtils.setField(impl, "metaManager", metaManager);
-        ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
-            @Override
-            public void watch(EventType type, Consumer<Event> listener) {
-
-            }
-
-            @Override
-            public void notify(Event event) {
-
-            }
-        });
         impl.init();
     }
 
@@ -388,31 +352,6 @@ public class EntityManagementServiceImplTest {
             .build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
-    }
-
-    static class MockTransactionExecutor implements TransactionExecutor {
-
-        @Override
-        public Object execute(ResourceTask storageTask) throws SQLException {
-            return storageTask.run(
-                MultiLocalTransaction.Builder.anMultiLocalTransaction()
-                    .withId(1)
-                    .withCacheEventHandler(new DoNothingCacheEventHandler())
-                    .withEventBus(
-                        new EventBus() {
-                            @Override
-                            public void watch(EventType type, Consumer<Event> listener) {
-                            }
-
-                            @Override
-                            public void notify(Event event) {
-                            }
-                        }
-                    )
-                    .build(),
-                null,
-                new DefaultExecutorHint());
-        }
     }
 
 } 

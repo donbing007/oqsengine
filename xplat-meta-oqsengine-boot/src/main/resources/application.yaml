@@ -142,13 +142,13 @@ cdc:
 meta:
   grpc:
     type: client
-    host: ultraman.xforcecloud.com
+    #    host: ultraman.xforcecloud.com
     #    host: 120.55.249.44
     #host: 169.254.106.127
-#    host: localhost
-#    port: 8081
+    host: localhost
+    port: 8081
     #    port: 23111
-    port: 23120
+    #    port: 23120
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30

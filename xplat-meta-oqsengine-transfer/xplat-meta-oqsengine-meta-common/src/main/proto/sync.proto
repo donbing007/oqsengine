@@ -62,9 +62,7 @@ message EntityFieldInfo {
 	string dictId = 5;
 	string defaultValue = 6;
 	FieldConfig fieldConfig = 7;
-
-	int32 calculateType = 8;
-	Formula formula = 9;
+	Calculator calculator = 9;
 }
 
 message FieldConfig {
@@ -84,14 +82,18 @@ message FieldConfig {
 	string uniqueName = 13;
 }
 
-message Formula {
-	string formula = 1;
-	int32 level = 2;
+message Calculator {
+	int32 calculateType = 1;
+	string expression = 2;
 	string validator = 3;
 	string min = 4;
 	string max = 5;
 	string condition = 6;
 	string emptyValueTransfer = 7;
+	string patten = 8;
+	string model = 9;
+	int32 step = 10;
+	int32 level = 11;
 }
 
 message RelationInfo {

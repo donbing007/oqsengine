@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.idgenerator.transaction.SegmentTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -17,9 +18,11 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHan
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
 import io.lettuce.core.RedisClient;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * 自定义事务配置.
@@ -85,10 +88,19 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
+    @Primary
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-        @Value("${storage.master.name:oqsbigentity}") String tableName) {
+            @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
+
+    @Bean(name = "segmentTransactionResourceFactory")
+    public SegmentTransactionResourceFactory segmentTransactionResourceFactory(
+            @Value("${storage.generator.name:segment}") String tableName) {
+        return new SegmentTransactionResourceFactory(tableName);
+    }
+
+
 
     /**
      * master 的shard将由shard-jdbc来支持,所以主库不需处理shard.
@@ -103,11 +115,29 @@ public class CustomTransactionConfiguration {
             new NoSelector(tableName));
     }
 
+    /**
+     * Segment.
+     */
+    @Bean
+    public TransactionExecutor segmentJDBCTransactionExecutor(
+            @Qualifier(value = "segmentTransactionResourceFactory") SegmentTransactionResourceFactory factory,
+            TransactionManager tm,
+            DataSource masterDataSource,
+            @Value("${storage.generator.name:segment}") String tableName) {
+        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
+    }
+
+    /**
+     * serviceTransactionExecutor.
+     */
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
     }
 
+    /**
+     * cacheEventHandler.
+     */
     @Bean
     public CacheEventHandler cacheEventHandler(RedisClient redisClientCacheEvent,
                                                ObjectMapper objectMapper,

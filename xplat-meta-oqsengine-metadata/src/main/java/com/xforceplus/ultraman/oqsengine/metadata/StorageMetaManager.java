@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -73,7 +74,7 @@ public class StorageMetaManager implements MetaManager {
         try {
             return innerLoad(id, null);
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
             return Optional.empty();
         }
     }
@@ -272,7 +273,20 @@ public class StorageMetaManager implements MetaManager {
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue());
+                .withDefaultValue(entityField.defaultValue())
+                .withCalculator(Calculator.Builder.anCalculator()
+                                .withCalculateType(entityField.calculator().getCalculateType())
+                                .withExpression(entityField.calculator().getExpression())
+                                .withMin(entityField.calculator().getMin())
+                                .withMax(entityField.calculator().getMax())
+                                .withCondition(entityField.calculator().getCondition())
+                                .withEmptyValueTransfer(entityField.calculator().getEmptyValueTransfer())
+                                .withValidator(entityField.calculator().getValidator())
+                                .withModel(entityField.calculator().getModel())
+                                .withStep(entityField.calculator().getStep())
+                                .withLevel(entityField.calculator().getLevel())
+                                .withPatten(entityField.calculator().getPatten())
+                                .build());
 
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();

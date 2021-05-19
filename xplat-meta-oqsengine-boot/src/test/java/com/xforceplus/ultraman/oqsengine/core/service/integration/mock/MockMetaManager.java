@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -59,7 +60,7 @@ public class MockMetaManager implements MetaManager {
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-            .withConfig(FieldConfig.Builder.anFieldConfig()
+                .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
@@ -105,7 +106,7 @@ public class MockMetaManager implements MetaManager {
                 .withId(Long.MAX_VALUE - 9)
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
-                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                    .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                 .build())
             .withRelations(
                 Arrays.asList(
@@ -217,7 +218,7 @@ public class MockMetaManager implements MetaManager {
 
     @Override
     public Optional<IEntityClass> load(long id, String profile) {
-        return Optional.empty();
+        return load(id);
     }
 
     @Override

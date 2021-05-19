@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import io.lettuce.core.RedisClient;
@@ -183,6 +184,11 @@ public class ChangelogConfiguration {
             @Override
             public Optional<IEntityClass> load(long id) {
                 return Optional.ofNullable(example.getEntityClassById(id));
+            }
+
+            @Override
+            public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+                return Optional.ofNullable(example.getEntityClassById(entityClassRef.getId()));
             }
 
             @Override

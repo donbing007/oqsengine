@@ -31,9 +31,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
@@ -310,7 +315,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
+    public boolean save(String appId, int version, List<EntityClassStorage> storageList,
+                        List<Event<?>> payLoads) {
         //  set data
         for (EntityClassStorage storage : storageList) {
             String key = entityStorageKeys + "." + version + "." + storage.getId();
@@ -354,6 +360,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
                     }
+                    if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                        payLoads.add(
+                            new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
+                        );
+                    }
                 }
             }
 
@@ -367,6 +378,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 syncCommands.hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
                             } catch (JsonProcessingException e) {
                                 throw new MetaSyncClientException("parse profile-entityFields failed.", false);
+                            }
+
+                            if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                                payLoads.add(
+                                    new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
+                                );
                             }
                         }
                     }

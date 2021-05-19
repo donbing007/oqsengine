@@ -70,10 +70,10 @@ public class NoOrNoRanageConditionsBuilderTest {
                 new Conditions(
                     new Condition(
                         new EntityField(9223372036854775807L, "c1", FieldType.STRING,
-                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                                FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
                         new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING,
-                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                                FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                             "test")
                     )
                 ),

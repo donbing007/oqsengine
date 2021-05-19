@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import io.grpc.stub.StreamObserver;
 import javax.annotation.Resource;
 
@@ -41,9 +41,8 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        invoke(EntityClassStorageBuilder
-            .entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
-                EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
+        invoke(EntityClassSyncProtoBufMocker.Response.entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }
 

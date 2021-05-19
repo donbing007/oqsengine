@@ -60,7 +60,7 @@ public class ConnectorTest extends AbstractCDCContainer {
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
         ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll(false));
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
-        ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
+        ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", singleCDCConnector);
     }
 
 

@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -32,6 +33,8 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -98,6 +101,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource
     private MasterStorage masterStorage;
+
+    @Resource
+    private UniqueMasterStorage uniqueMasterStorage;
 
     @Resource
     private IndexStorage indexStorage;
@@ -205,6 +211,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     }
 
+    @Override
+    public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
+        if (!entityClass.isPresent()) {
+            throw new RuntimeException(
+                String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
+        }
+        Optional<StorageUniqueEntity> uniqueStorage = uniqueMasterStorage.select(key, entityClass.get());
+        if (!uniqueStorage.isPresent()) {
+            return Optional.empty();
+        }
+        return selectOne(uniqueStorage.get().getId(), entityClassRef);
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException {
@@ -234,7 +254,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
+            SearchConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
@@ -243,13 +263,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                                                   Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
+            SearchConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                  ServiceSelectConfig config)
+                                                  SearchConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -439,23 +459,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } finally {
             searchReadCountTotal.increment();
         }
-    }
-
-    @Override
-    public Collection<IEntity> search(ServiceSearchConfig config) throws SQLException {
-        SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
-            .withCode(config.getCode())
-            .withValue(config.getValue())
-            .withPage(config.getPage())
-            .withFuzzyType(config.getFuzzyType())
-            .build();
-        EntityClassRef[] entityClassRefs = config.getEntityClassRefs();
-        IEntityClass[] entityClasses = new IEntityClass[entityClassRefs.length];
-        for (int i = 0; i < entityClasses.length; i++) {
-            entityClasses[i] = EntityClassHelper.checkEntityClass(metaManager, entityClassRefs[i]);
-        }
-
-        return buildEntitiesFromRefs(indexStorage.search(searchConfig, entityClasses), null);
     }
 
     /**

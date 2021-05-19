@@ -2,8 +2,12 @@ package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
@@ -11,7 +15,11 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -33,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
@@ -86,12 +95,26 @@ public class EntityClassManagerExecutorTest {
         ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
         cacheExecutor.init();
 
+
+
         /*
          * init entityClassExecutor
          */
         entityClassSyncExecutor = new EntityClassSyncExecutor();
         ReflectionTestUtils.setField(entityClassSyncExecutor, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(entityClassSyncExecutor, "expireExecutor", new ExpireExecutor());
+        ReflectionTestUtils.setField(entityClassSyncExecutor, "eventBus", new EventBus() {
+
+            @Override
+            public void watch(EventType type, Consumer<Event> listener) {
+                Assert.assertEquals(type, EventType.AUTO_FILL_UPGRADE);
+            }
+
+            @Override
+            public void notify(Event event) {
+                Assert.assertEquals(event.type(), EventType.AUTO_FILL_UPGRADE);
+            }
+        });
 
         entityClassSyncExecutor.start();
 
@@ -139,57 +162,61 @@ public class EntityClassManagerExecutorTest {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList =
-            EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+        List<ExpectedEntityStorage> expectedEntityStorageList = EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
         try {
             storageMetaManager.load(expectedId);
         } catch (Exception e) {
-            Assert.assertTrue(
-                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            Assert.assertTrue(e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
 
         EntityClassSyncResponse entityClassSyncResponse =
-            EntityClassStorageBuilder
-                .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
+            EntityClassSyncProtoBufMocker.Response.entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         //  测试替身1
-        Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId, CODE_1.getKey());
+        Optional<IEntityClass> entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", GeneralConstant.PROFILE_CODE_1.getKey()));
         Assert.assertTrue(entityClassOp.isPresent());
 
-        Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
-
-        Optional<IEntityField> fieldOp = entityClassOp.get().field(expectedId * CODE_1.getValue());
+        Optional<IEntityField> fieldOp = entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA() , true));
         Assert.assertTrue(fieldOp.isPresent());
-        //  不包含替身2
-        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_2.getValue()).isPresent());
 
+        //  不包含替身2
+        Assert.assertFalse(entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)).isPresent()
+        );
 
         //  测试替身2
-        entityClassOp = storageMetaManager.load(expectedId, CODE_2.getKey());
+        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", GeneralConstant.PROFILE_CODE_2.getKey()));
         Assert.assertTrue(entityClassOp.isPresent());
-        Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
 
-        fieldOp = entityClassOp.get().field(expectedId * CODE_2.getValue());
+        fieldOp = entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)
+        );
         Assert.assertTrue(fieldOp.isPresent());
         //  不包含替身1
-        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_1.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)).isPresent()
+        );
 
         //  测试不带替身
-        entityClassOp = storageMetaManager.load(expectedId, null);
+        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", null));
         Assert.assertTrue(entityClassOp.isPresent());
-        Assert.assertEquals(2 * 3, entityClassOp.get().fields().size());
-        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_1.getValue()).isPresent());
-        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_2.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)).isPresent()
+        );
+        Assert.assertFalse(entityClassOp.get().field(
+            GeneralEntityUtils.EntityFieldHelper.id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)).isPresent()
+        );
     }
 
     @Test
     public void loadTest() throws InterruptedException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
-        long expectedId = System.currentTimeMillis() + 3600_000;
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList =
-            EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+        long expectedId = 1 + 3600;
+        List<ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
         try {
             storageMetaManager.load(expectedId);
@@ -199,7 +226,7 @@ public class EntityClassManagerExecutorTest {
         }
 
         EntityClassSyncResponse entityClassSyncResponse =
-            EntityClassStorageBuilder
+            EntityClassSyncProtoBufMocker.Response
                 .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
@@ -356,6 +383,17 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(exp.getFieldType(), act.type().name());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+
+        if (act.calculateType().equals(CalculateType.FORMULA)) {
+            Assert.assertEquals(exp.getCalculator().getCalculateType(), CalculateType.FORMULA.getType());
+            Assert.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
+            Assert.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
+        } else if (act.calculateType().equals(CalculateType.AUTO_FILL)) {
+            Assert.assertEquals(exp.getCalculator().getCalculateType(), CalculateType.AUTO_FILL.getType());
+            Assert.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());
+            Assert.assertEquals(exp.getCalculator().getModel(), act.calculator().getModel());
+            Assert.assertEquals(exp.getCalculator().getStep(), act.calculator().getStep());
+        }
 
         //  check field Config
         com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();

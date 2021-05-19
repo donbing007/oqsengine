@@ -32,7 +32,11 @@ public enum ResultStatus {
     /**
      * 累加器调用失败.
      */
-    UNACCUMULATE(5);
+    UNACCUMULATE(5),
+    /**
+     * 转换公式、自增编号失败.
+     */
+    ELEVATEFAILED(6);
 
     private int value;
 

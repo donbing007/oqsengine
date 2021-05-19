@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
@@ -11,6 +16,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import org.junit.Assert;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -63,6 +70,18 @@ public class InitBase {
         entityClassSyncExecutor = new EntityClassSyncExecutor();
         ReflectionTestUtils.setField(entityClassSyncExecutor, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(entityClassSyncExecutor, "expireExecutor", new ExpireExecutor());
+        ReflectionTestUtils.setField(entityClassSyncExecutor, "eventBus", new EventBus() {
+
+            @Override
+            public void watch(EventType type, Consumer<Event> listener) {
+                Assert.assertEquals(type, EventType.AUTO_FILL_UPGRADE);
+            }
+
+            @Override
+            public void notify(Event event) {
+                Assert.assertEquals(event.type(), EventType.AUTO_FILL_UPGRADE);
+            }
+        });
 
         entityClassSyncExecutor.start();
 

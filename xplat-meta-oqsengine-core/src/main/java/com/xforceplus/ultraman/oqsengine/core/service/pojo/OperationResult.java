@@ -15,6 +15,7 @@ public class OperationResult {
     private int version;
     private int eventType;
     private ResultStatus resultStatus;
+    private String message;
 
     /**
      * 实例化.
@@ -25,6 +26,19 @@ public class OperationResult {
         this.resultStatus = resultStatus;
         this.entityId = entityId;
         this.eventType = eventType;
+    }
+
+    /**
+     * 实例化.
+     */
+    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
+                           String message) {
+        this.txId = txId;
+        this.version = version;
+        this.resultStatus = resultStatus;
+        this.entityId = entityId;
+        this.eventType = eventType;
+        this.message = message;
     }
 
     public int getVersion() {
@@ -45,6 +59,10 @@ public class OperationResult {
 
     public long getEntityId() {
         return entityId;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     @Override
@@ -87,6 +105,7 @@ public class OperationResult {
         private int version;
         private int eventType;
         private ResultStatus resultStatus;
+        private String message;
 
         private Builder() {
         }
@@ -120,8 +139,13 @@ public class OperationResult {
             return this;
         }
 
+        public Builder withMessage(String message) {
+            this.message = message;
+            return this;
+        }
+
         public OperationResult build() {
-            return new OperationResult(txId, entityId, version, eventType, resultStatus);
+            return new OperationResult(txId, entityId, version, eventType, resultStatus, message);
         }
     }
 }

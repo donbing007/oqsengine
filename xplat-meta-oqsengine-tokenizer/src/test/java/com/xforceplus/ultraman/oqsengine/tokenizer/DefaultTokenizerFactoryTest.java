@@ -36,7 +36,7 @@ public class DefaultTokenizerFactoryTest {
 
         IEntityField field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.anFieldConfig()
+                    FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(7).build()).build();
@@ -50,7 +50,7 @@ public class DefaultTokenizerFactoryTest {
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.anFieldConfig()
+                    FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();
@@ -70,7 +70,7 @@ public class DefaultTokenizerFactoryTest {
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                FieldConfig.Builder.anFieldConfig()
+                    FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();

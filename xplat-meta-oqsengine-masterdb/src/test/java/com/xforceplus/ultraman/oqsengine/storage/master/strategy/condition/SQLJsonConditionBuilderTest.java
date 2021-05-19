@@ -33,7 +33,7 @@ public class SQLJsonConditionBuilderTest {
         .withId(3)
         .withName("wildcard-string")
         .withFieldType(FieldType.STRING)
-        .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()).build();
 
     @Before
     public void before() throws Exception {

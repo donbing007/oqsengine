@@ -18,6 +18,7 @@ public class DataSourcePackage {
     private List<DataSource> indexSearch;
     private DataSource devOps;
     private DataSource changelog;
+    private DataSource segment;
 
     /**
      * 数据源包装实例.
@@ -28,17 +29,14 @@ public class DataSourcePackage {
      * @param devOps devops数据源.
      * @param changelog changelog数据源.
      */
-    public DataSourcePackage(
-        List<DataSource> master,
-        List<DataSource> indexWriter,
-        List<DataSource> indexSearch,
-        DataSource devOps,
-        DataSource changelog) {
+    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter,
+                             List<DataSource> indexSearch, DataSource devOps, DataSource changelog, DataSource segment) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
         this.devOps = devOps;
         this.changelog = changelog;
+        this.segment = segment;
     }
 
     public List<DataSource> getMaster() {
@@ -59,6 +57,10 @@ public class DataSourcePackage {
 
     public DataSource getChangelog() {
         return changelog;
+    }
+
+    public DataSource getSegment() {
+        return segment;
     }
 
     /**
