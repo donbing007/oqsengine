@@ -18,7 +18,7 @@ import java.util.Map;
  * 作者(@author): liwei
  * 创建时间: 5/12/21 4:19 PM
  */
-public class DatePattenParserTest {
+public class DatePatternParserTest {
 
     @Test
     public void testNotNeedParse() {

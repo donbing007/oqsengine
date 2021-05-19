@@ -1,13 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.parser;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author leo
  * patten
  */
-public interface Patten {
+public interface Pattern {
     /**
      * year {yyyy}
      */

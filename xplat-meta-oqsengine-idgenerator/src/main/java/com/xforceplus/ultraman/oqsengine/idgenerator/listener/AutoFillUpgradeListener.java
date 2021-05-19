@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
-import io.lettuce.core.ScanCursor;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -70,7 +69,7 @@ public class AutoFillUpgradeListener {
                    SegmentInfo info =  segmentInfo.get();
                    info.setUpdateTime(new Timestamp(System.currentTimeMillis()));
                    info.setStep(calculator.getStep());
-                   info.setPatten(calculator.getPatten());
+                   info.setPattern(calculator.getPatten());
                    info.setMode(Integer.valueOf(calculator.getModel()));
                     storage.udpate(info);
                 }
