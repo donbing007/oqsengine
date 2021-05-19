@@ -3,12 +3,8 @@ package com.xforceplus.ultraman.oqsengine.calculate;
 import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.TypeCheck;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +49,9 @@ public class ActualCalculateStorage implements CalculateStorage {
             List<ExecutionWrapper<?>> needExecutions = partitionExpressionWraps.get(i);
             if (null != needExecutions) {
                 for (ExecutionWrapper<?> executionWrapper : needExecutions) {
+                    //  将执行结果写入context中
                     result.put(executionWrapper.getCode(),
-                        execute(executionWrapper.getExpressionWrapper(), result));
+                        ExpressionUtils.execute(executionWrapper.getExpressionWrapper(), result));
                 }
             }
         }
@@ -62,12 +59,5 @@ public class ActualCalculateStorage implements CalculateStorage {
         return result;
     }
 
-    private Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
-        if (null == expression) {
-            throw new CalculateExecutionException(String.format("compile expression failed [%s-%s].",
-                expressionWrapper.getCode(), expressionWrapper.getExpression()));
-        }
-        return expression.execute(params);
-    }
+
 }
