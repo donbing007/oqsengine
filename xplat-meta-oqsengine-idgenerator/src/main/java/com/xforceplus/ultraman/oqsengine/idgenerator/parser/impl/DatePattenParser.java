@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl;
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Patten;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Pattern;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
 
 import java.time.LocalDate;
@@ -27,13 +27,13 @@ public class DatePattenParser implements PattenParser {
         String year = String.valueOf(date.getYear());
         String month = String.format("%02d",date.getMonthValue());
         String day = String.format("%02d",date.getDayOfMonth());
-        return patten.replace(Patten.DAY,day).replace(Patten.MONTH,month).replace(Patten.YEAR,year);
+        return patten.replace(Pattern.DAY,day).replace(Pattern.MONTH,month).replace(Pattern.YEAR,year);
     }
 
     @Override
     public boolean needHandle(String patten) {
-        return patten.contains(Patten.YEAR)
-                || patten.contains(Patten.MONTH)
-                || patten.contains(Patten.DAY);
+        return patten.contains(Pattern.YEAR)
+                || patten.contains(Pattern.MONTH)
+                || patten.contains(Pattern.DAY);
     }
 }

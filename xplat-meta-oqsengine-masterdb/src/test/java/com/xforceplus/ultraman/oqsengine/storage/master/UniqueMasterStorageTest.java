@@ -128,17 +128,17 @@ public class UniqueMasterStorageTest {
         .withId(2000)
         .withFieldType(FieldType.LONG)
         .withName("l1")
-        .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+        .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
     private IEntityField l1StringField = EntityField.Builder.anEntityField()
         .withId(2001)
         .withFieldType(FieldType.STRING)
         .withName("c1")
-        .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:1").build()).build();
+        .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("child:u1:1").build()).build();
     private IEntityField l1StringField1 = EntityField.Builder.anEntityField()
         .withId(2002)
         .withFieldType(FieldType.STRING)
         .withName("c2")
-        .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:2").build()).build();
+        .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("child:u1:2").build()).build();
     private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(2)
         .withLevel(1)
@@ -238,7 +238,7 @@ public class UniqueMasterStorageTest {
         dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
-        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
@@ -384,17 +384,17 @@ public class UniqueMasterStorageTest {
             .withId(1000)
             .withFieldType(FieldType.LONG)
             .withName("l0-long")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
          IEntityField l0StringField = EntityField.Builder.anEntityField()
             .withId(1001)
             .withFieldType(FieldType.STRING)
             .withName("l0-string")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("father:u1:1").build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("father:u1:1").build()).build();
          IEntityField l0StringsField = EntityField.Builder.anEntityField()
             .withId(1003)
             .withFieldType(FieldType.STRINGS)
             .withName("l0-strings")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("father:u1:2").build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("father:u1:2").build()).build();
 
          IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(1)
@@ -409,17 +409,17 @@ public class UniqueMasterStorageTest {
             .withId(2000)
             .withFieldType(FieldType.LONG)
             .withName("l1")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
          IEntityField l1StringField = EntityField.Builder.anEntityField()
             .withId(2001)
             .withFieldType(FieldType.STRING)
             .withName("c1")
-             .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
          IEntityField l1StringField1 = EntityField.Builder.anEntityField()
             .withId(2002)
             .withFieldType(FieldType.STRING)
             .withName("c2")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
          IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(3)
             .withLevel(1)
@@ -470,17 +470,17 @@ public class UniqueMasterStorageTest {
             .withId(1000)
             .withFieldType(FieldType.LONG)
             .withName("l0-long")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
         IEntityField l0StringField = EntityField.Builder.anEntityField()
             .withId(1001)
             .withFieldType(FieldType.STRING)
             .withName("l0-string")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:1").build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("child:u1:1").build()).build();
         IEntityField l0StringsField = EntityField.Builder.anEntityField()
             .withId(1003)
             .withFieldType(FieldType.STRINGS)
             .withName("l0-strings")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
 
         IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(1)
@@ -499,17 +499,17 @@ public class UniqueMasterStorageTest {
             .withId(2000)
             .withFieldType(FieldType.LONG)
             .withName("l1")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
         IEntityField l1StringField = EntityField.Builder.anEntityField()
             .withId(2001)
             .withFieldType(FieldType.STRING)
             .withName("c1")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withSearchable(true).build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
         IEntityField l1StringField1 = EntityField.Builder.anEntityField()
             .withId(2002)
             .withFieldType(FieldType.STRING)
             .withName("c2")
-            .withConfig(FieldConfig.Builder.aFieldConfig().withUniqueName("child:u1:2").build()).build();
+            .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("child:u1:2").build()).build();
         IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(3)
             .withLevel(1)
@@ -708,8 +708,8 @@ public class UniqueMasterStorageTest {
 
 //
     private Collection<IEntityField> getFixedFields() {
-        FieldConfig config1 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:1").build();
-        FieldConfig config2 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:2").build();
+        FieldConfig config1 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:1").build();
+        FieldConfig config2 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:2").build();
         IEntityField field1 = EntityField.Builder.anEntityField().withId(101).withName("c1")
             .withFieldType(FieldType.STRING).withConfig(config1).build();
         IEntityField field2 = EntityField.Builder.anEntityField().withId(102).withName("c2")

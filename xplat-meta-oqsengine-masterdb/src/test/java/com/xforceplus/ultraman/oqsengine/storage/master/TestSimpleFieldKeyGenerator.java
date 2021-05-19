@@ -54,9 +54,9 @@ public class TestSimpleFieldKeyGenerator {
     }
 
     private IEntity buildEntity(long baseId) {
-       FieldConfig config =  FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:2,test:IDX_U2:1").build();
-       FieldConfig config1 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:1,test:IDX_U2:2").build();
-       FieldConfig config2 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U2:3").build();
+       FieldConfig config =  FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:2,test:IDX_U2:1").build();
+       FieldConfig config1 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:1,test:IDX_U2:2").build();
+       FieldConfig config2 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U2:3").build();
         IEntityField f1 = EntityField.Builder.anEntityField().withId(100000).withName("f1").withFieldType(FieldType.STRINGS).withConfig(config).build();
         IEntityField f2 = EntityField.Builder.anEntityField().withId(100001).withName("f2").withFieldType(FieldType.STRINGS).withConfig(config1).build();
         IEntityField f3 = EntityField.Builder.anEntityField().withId(100003).withName("f3").withFieldType(FieldType.STRINGS).build();
@@ -71,9 +71,9 @@ public class TestSimpleFieldKeyGenerator {
     }
 
     private IEntityClass buildEntityClass(long baseId) {
-        FieldConfig config =  FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:2,test:IDX_U2:1").build();
-        FieldConfig config1 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U1:1,test:IDX_U2:2").build();
-        FieldConfig config2 = FieldConfig.Builder.aFieldConfig().withUniqueName("test:IDX_U2:3").build();
+        FieldConfig config =  FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:2,test:IDX_U2:1").build();
+        FieldConfig config1 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:1,test:IDX_U2:2").build();
+        FieldConfig config2 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U2:3").build();
         IEntityField f1 = EntityField.Builder.anEntityField().withId(100000).withName("f1").withFieldType(FieldType.STRINGS).withConfig(config).build();
         IEntityField f2 = EntityField.Builder.anEntityField().withId(100001).withName("f2").withFieldType(FieldType.STRINGS).withConfig(config1).build();
         IEntityField f3 = EntityField.Builder.anEntityField().withId(100003).withName("f3").withFieldType(FieldType.STRINGS).build();

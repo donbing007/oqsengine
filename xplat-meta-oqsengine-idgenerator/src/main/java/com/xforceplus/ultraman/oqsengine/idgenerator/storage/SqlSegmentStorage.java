@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentResetExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 
@@ -59,6 +60,11 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
     public int udpate(SegmentInfo segmentInfo) throws SQLException {
         return (int)transactionExecutor.execute((transaction, resource, hint)
                 -> new SegmentUpdateExecutor(table,resource,queryTimeout).execute(segmentInfo));
+    }
+
+    public int reset(SegmentInfo segmentInfo) throws SQLException {
+        return (int)transactionExecutor.execute((transaction,resource,hint)
+            -> new SegmentResetExecutor(table,resource,queryTimeout).execute(segmentInfo));
     }
 
     @Override

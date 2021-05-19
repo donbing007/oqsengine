@@ -1,6 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.common.entity;
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
+import static com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil.getPatternKey;
+
+
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.ResetModel;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,39 +21,48 @@ public class SegmentId implements Serializable {
     private static final long serialVersionUID = -5222792505264340312L;
     private long maxId;
     private long loadingId;
-    private AtomicReference<PattenValue> currentId = new AtomicReference<>();
-    private String patten;
+    private AtomicReference<PatternValue> currentId = new AtomicReference<>();
+    private String pattern;
+    private int resetable;
+
 
     String convert(Long id) {
-        return PattenParserUtil.getInstance().parse(patten,id);
+        return PatternParserUtil.getInstance().parse(pattern, id);
     }
 
 
     public IDResult nextId() {
-            PattenValue idValue = currentId.updateAndGet(pattenValue -> {
-            PattenValue newValue = new PattenValue(pattenValue.getId()+1,
-                    PattenParserUtil.getInstance().parse(patten,pattenValue.getId()+1));
-            return newValue;
-        });
-        if (idValue.getId() > maxId) {
-            return new IDResult(ResultCode.OVER, convert(idValue.getId()));
+        PatternValue currentValue;
+        PatternValue nextValue;
+        do {
+            currentValue = currentId.get();
+            nextValue = new PatternValue(currentValue.getId() + 1,
+                PatternParserUtil.getInstance().parse(pattern, currentValue.getId() + 1));
         }
-        if (idValue.getId() >= loadingId) {
-            return new IDResult(ResultCode.LOADING, convert(idValue.getId()));
+        while (!currentId.compareAndSet(currentValue, nextValue));
+        if (nextValue.getId() > maxId) {
+            return new IDResult(ResultCode.OVER, convert(nextValue.getId()));
         }
-        return new IDResult(ResultCode.NORMAL, convert(idValue.getId()));
+        if (nextValue.getId() >= loadingId) {
+            return new IDResult(ResultCode.LOADING, convert(nextValue.getId()));
+        }
+        if(PatternParserUtil.needReset(pattern,currentValue,nextValue)
+            && ResetModel.fromValue(resetable).equals(ResetModel.RESETABLE)) {
+            return new IDResult((ResultCode.RESET),convert(nextValue.getId()),getPatternKey(nextValue));
+        }
+        return new IDResult(ResultCode.NORMAL, convert(nextValue.getId()));
     }
 
-    public String getPatten() {
-        return patten;
+    public String getPattern() {
+        return pattern;
     }
 
-    public void setPatten(String patten) {
-        this.patten = patten;
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
     }
 
     public boolean useful() {
-        return currentId.get().getId()  <= maxId;
+        return currentId.get().getId() <= maxId;
     }
 
     public long getMaxId() {
@@ -68,16 +81,24 @@ public class SegmentId implements Serializable {
         this.loadingId = loadingId;
     }
 
-    public PattenValue getCurrentId() {
+    public PatternValue getCurrentId() {
         return currentId.get();
     }
 
-    public void setCurrentId(PattenValue pattenValue) {
+    public void setCurrentId(PatternValue pattenValue) {
         this.currentId.set(pattenValue);
+    }
+
+    public int getResetable() {
+        return resetable;
+    }
+
+    public void setResetable(int resetable) {
+        this.resetable = resetable;
     }
 
     @Override
     public String toString() {
-        return "[maxId=" + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId  + ",patten="+ patten +"]";
+        return "[maxId=" + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId + ",patten=" + pattern + "]";
     }
 }
