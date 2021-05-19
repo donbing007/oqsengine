@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeLis
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
