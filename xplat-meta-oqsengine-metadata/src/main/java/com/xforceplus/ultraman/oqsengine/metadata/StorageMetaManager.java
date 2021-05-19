@@ -79,13 +79,12 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
+    public Optional<IEntityClass> load(long id, String profile) {
 
         try {
-            return innerLoad(entityClassRef.getId(), entityClassRef.getProfile());
+            return innerLoad(id, profile);
         } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d]-[%s] error, message [%s]",
-                entityClassRef.getId(), entityClassRef.getCode(), e.getMessage()));
+            logger.warn(String.format("load entityClass [%d]-[%s] error, message [%s]", id, profile, e.getMessage()));
             return Optional.empty();
         }
     }

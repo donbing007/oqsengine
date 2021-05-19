@@ -16,13 +16,13 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/11/4 15:49
  * @since 1.8
  */
-public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble {
+public class SQLJsonConditionsBuilder implements ConditionsBuilder<Conditions, String>, StorageStrategyFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
     private SQLConditionQueryBuilderFactory sqlConditionQueryBuilderFactory;
 
     @Override
-    public String build(IEntityClass entityClass, Conditions conditions) {
+    public String build(Conditions conditions, IEntityClass ...entityClasses) {
         if (conditions.isEmtpy()) {
             return "";
         }
@@ -32,7 +32,7 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
             link -> sql.append(" ").append(link.getLink().name()).append(" "),
             value -> {
                 Condition condition = value.getCondition();
-                ConditionBuilder<String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
+                ConditionBuilder<Condition, String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
                 sql.append(cb.build(condition));
             },
             parenthese -> sql.append(parenthese.toString())

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -119,7 +119,7 @@ public class EntitySearchServiceImplTest {
                 .withEntityClassId(MockMetaManager.l1EntityClass.id())
                 .withEntityClassCode(MockMetaManager.l1EntityClass.code())
                 .build(),
-            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
         Assert.assertEquals(0, entities.size());
@@ -185,7 +185,7 @@ public class EntitySearchServiceImplTest {
         Collection<IEntity> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
         Assert.assertEquals(3, entities.size());
@@ -238,7 +238,7 @@ public class EntitySearchServiceImplTest {
 
         Collection<IEntity> entities = impl.selectByConditions(conditions,
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );
 
         Assert.assertEquals(1, entities.size());
@@ -295,7 +295,7 @@ public class EntitySearchServiceImplTest {
         List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
             conditions,
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         ));
 
         Assert.assertEquals(3, entities.size());
@@ -312,7 +312,7 @@ public class EntitySearchServiceImplTest {
         impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig()
+            ServiceSelectConfig.Builder.anSearchConfig()
                 .withFilter(
                     Conditions.buildEmtpyConditions()
                         .addAnd(

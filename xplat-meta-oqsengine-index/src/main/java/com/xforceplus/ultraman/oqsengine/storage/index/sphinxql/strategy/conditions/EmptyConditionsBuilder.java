@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  * @version 0.1 2020/2/28 09:11
  * @since 1.8
  */
-public class EmptyConditionsBuilder implements ConditionsBuilder<SphinxQLWhere> {
+public class EmptyConditionsBuilder implements ConditionsBuilder<Conditions, SphinxQLWhere> {
 
     @Override
     public SphinxQLWhere build(Conditions conditions, IEntityClass ...entityClass) {

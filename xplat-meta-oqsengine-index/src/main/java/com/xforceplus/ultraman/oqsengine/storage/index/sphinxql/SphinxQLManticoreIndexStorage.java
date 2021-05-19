@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -22,15 +21,15 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CrossSearchExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SearchExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.search.CrossSearchConfig;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -42,6 +41,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -169,10 +169,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     @Override
-    public Collection<EntityRef> search(Condition condition, CrossSearchConfig config) throws SQLException {
+    public Collection<EntityRef> search(SearchConfig config, IEntityClass ...entityClasses)
+        throws SQLException {
         return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
-            return CrossSearchExecutor.build(getSearchIndexName(), resource, getMaxSearchTimeoutMs())
-                .execute(Tuple.of(condition, config));
+            return SearchExecutor.build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getMaxSearchTimeoutMs())
+                .execute(Tuple.of(config, entityClasses));
         });
     }
 

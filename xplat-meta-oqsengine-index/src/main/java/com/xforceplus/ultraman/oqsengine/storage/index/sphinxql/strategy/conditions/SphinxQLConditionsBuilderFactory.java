@@ -3,6 +3,12 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.search.SearchConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.HaveOrHaveRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.HaveOrNoRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.NoOrHaveRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.NoOrNoRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
@@ -27,9 +33,9 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
-    private ConditionsBuilder<SphinxQLWhere> emptyConditionsBuilder;
+    private ConditionsBuilder<Conditions, SphinxQLWhere> emptyConditionsBuilder;
 
-    private ConditionsBuilder<SphinxQLWhere> crossSearchConditionsBuilder;
+    private ConditionsBuilder<SearchConfig, SphinxQLWhere> searchConditionsBuilder;
 
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
@@ -63,6 +69,11 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
                 }
             }
         });
+
+        this.searchConditionsBuilder = new SearchConditionsBuilder();
+        if (TokenizerFactoryAble.class.isInstance(this.searchConditionsBuilder)) {
+            ((TokenizerFactoryAble) this.searchConditionsBuilder).setTokenizerFacotry(tokenizerFactory);
+        }
     }
 
     /**
@@ -71,7 +82,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
      * @param conditions 条件.
      * @return 实例.
      */
-    public ConditionsBuilder<SphinxQLWhere> getBuilder(Conditions conditions) {
+    public ConditionsBuilder<Conditions, SphinxQLWhere> getBuilder(Conditions conditions) {
         if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
         }
@@ -86,7 +97,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
      * @param range true 含有范围查询.
      * @return 条件构造器.
      */
-    public ConditionsBuilder<SphinxQLWhere> getBuilder(boolean or, boolean range) {
+    public ConditionsBuilder<Conditions, SphinxQLWhere> getBuilder(boolean or, boolean range) {
 
         /*
          * or 字节低位开始第2位.
@@ -95,6 +106,15 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
         int o = or ? 2 : 0;
         int r = range ? 1 : 0;
         return builderMap.get(o | r);
+    }
+
+    /**
+     * 获得搜索条件构造器.
+     *
+     * @return 条件构造器实例.
+     */
+    public ConditionsBuilder<SearchConfig, SphinxQLWhere> getSearchBuilder() {
+        return this.searchConditionsBuilder;
     }
 
 

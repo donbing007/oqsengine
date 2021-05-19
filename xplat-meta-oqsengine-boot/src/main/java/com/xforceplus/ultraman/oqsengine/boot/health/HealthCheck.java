@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.health;
 
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -34,7 +34,7 @@ public class HealthCheck implements HealthIndicator {
     private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
 
     private Conditions conditions = Conditions.buildEmtpyConditions();
-    private SearchConfig config = SearchConfig.Builder.anSearchConfig().withPage(Page.emptyPage()).build();
+    private ServiceSelectConfig config = ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.emptyPage()).build();
 
     @Override
     public Health health() {

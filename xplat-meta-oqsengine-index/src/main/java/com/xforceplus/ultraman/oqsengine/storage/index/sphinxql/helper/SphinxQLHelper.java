@@ -2,9 +2,16 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -172,5 +179,65 @@ public class SphinxQLHelper {
      */
     public static String buildWirdcardQuery(StorageValue value) {
         return buildPreciseQuery(value, false);
+    }
+
+    /**
+     * 构造字段的搜索.
+     *
+     * @author dongbin
+     * @param value 目标字段值.
+     * @param code 字段代码.
+     * @param tokenizer 分词器.
+     * @return java.lang.String 结果.
+     */
+    public static String buildSearch(String value, String code, Tokenizer tokenizer) {
+
+        String strValue = filterSymbols(value);
+        Iterator<String> words = tokenizer.tokenize(strValue);
+        StringBuilder buff = new StringBuilder();
+        buff.append("@").append(FieldDefine.SEARCH_ATTRIBUTEF).append(' ');
+        int emptyLen = buff.length();
+        while (words.hasNext()) {
+            if (buff.length() > emptyLen) {
+                buff.append(" << ");
+            }
+            buff.append(code)
+                .append(words.next())
+                .append(code);
+        }
+        // 无法分词,使用原始字符.
+        if (buff.length() == emptyLen) {
+            buff.append(code)
+                .append(value)
+                .append(code);
+        }
+
+        return buff.toString();
+    }
+
+    /**
+     * 计算sphinxql的查询数据总量.必须紧跟查询语句.
+     *
+     * @param resource 当前资源.
+     * @return 数量.
+     * @throws SQLException 发生异常.
+     */
+    public static long count(TransactionResource resource) throws SQLException {
+
+        long count = 0;
+        final String targetKey = "total_found";
+
+        Connection conn = (Connection) resource.value();
+        try (Statement statement = conn.createStatement()) {
+            try (ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL)) {
+                while (rs.next()) {
+                    if (targetKey.equals(rs.getString("Variable_name"))) {
+                        count = rs.getLong("Value");
+                        break;
+                    }
+                }
+            }
+        }
+        return count;
     }
 }

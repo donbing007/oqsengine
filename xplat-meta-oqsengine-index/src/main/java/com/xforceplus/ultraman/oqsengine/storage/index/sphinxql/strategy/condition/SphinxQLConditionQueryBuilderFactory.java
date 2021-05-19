@@ -3,10 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtEqNotMatchDecimalConditionBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtNotMatchDecimalConditionBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtEqNotMatchDecimalConditionBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MatchConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MeqMatchConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MeqNotMatchConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.NotMatchConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.GtEqNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.GtNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.LtEqNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.LtNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
@@ -109,7 +113,7 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
      * 获取条件查询条件构造器实例.
      *
      * @param condition 条件.
-     * @param match true 全文,false非全文.
+     * @param match     true 全文,false非全文.
      * @return 实例.
      */
     public AbstractSphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {

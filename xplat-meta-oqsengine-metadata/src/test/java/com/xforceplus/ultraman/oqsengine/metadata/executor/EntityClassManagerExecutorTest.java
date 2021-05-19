@@ -64,8 +64,8 @@ public class EntityClassManagerExecutorTest {
     private ExecutorService executorService;
 
 
-    public static final AbstractMap.SimpleEntry<String, Long> Code_1 = new AbstractMap.SimpleEntry<>("CODE_1", 10L);
-    public static final AbstractMap.SimpleEntry<String, Long> Code_2 = new AbstractMap.SimpleEntry<>("CODE_2", 20L);
+    public static final AbstractMap.SimpleEntry<String, Long> CODE_1 = new AbstractMap.SimpleEntry<>("CODE_1", 10L);
+    public static final AbstractMap.SimpleEntry<String, Long> CODE_2 = new AbstractMap.SimpleEntry<>("CODE_2", 20L);
 
     @Before
     public void before() throws Exception {
@@ -139,45 +139,48 @@ public class EntityClassManagerExecutorTest {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
-        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
+        List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate(expectedId);
         try {
             storageMetaManager.load(expectedId);
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            Assert.assertTrue(
+                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
 
         EntityClassSyncResponse entityClassSyncResponse =
-                EntityClassStorageBuilder.entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
+            EntityClassStorageBuilder
+                .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         //  测试替身1
-        Optional<IEntityClass> entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", Code_1.getKey()));
+        Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId, CODE_1.getKey());
         Assert.assertTrue(entityClassOp.isPresent());
 
         Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
 
-        Optional<IEntityField> fieldOp = entityClassOp.get().field(expectedId * Code_1.getValue());
+        Optional<IEntityField> fieldOp = entityClassOp.get().field(expectedId * CODE_1.getValue());
         Assert.assertTrue(fieldOp.isPresent());
         //  不包含替身2
-        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_2.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_2.getValue()).isPresent());
 
 
         //  测试替身2
-        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", Code_2.getKey()));
+        entityClassOp = storageMetaManager.load(expectedId, CODE_2.getKey());
         Assert.assertTrue(entityClassOp.isPresent());
         Assert.assertEquals(3 * 3, entityClassOp.get().fields().size());
 
-        fieldOp = entityClassOp.get().field(expectedId * Code_2.getValue());
+        fieldOp = entityClassOp.get().field(expectedId * CODE_2.getValue());
         Assert.assertTrue(fieldOp.isPresent());
         //  不包含替身1
-        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_1.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_1.getValue()).isPresent());
 
         //  测试不带替身
-        entityClassOp = storageMetaManager.load(new EntityClassRef(expectedId, "code", null));
+        entityClassOp = storageMetaManager.load(expectedId, null);
         Assert.assertTrue(entityClassOp.isPresent());
         Assert.assertEquals(2 * 3, entityClassOp.get().fields().size());
-        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_1.getValue()).isPresent());
-        Assert.assertFalse(entityClassOp.get().field(expectedId * Code_2.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_1.getValue()).isPresent());
+        Assert.assertFalse(entityClassOp.get().field(expectedId * CODE_2.getValue()).isPresent());
     }
 
     @Test

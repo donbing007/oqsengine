@@ -258,7 +258,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         if (entityId > ZERO) {
             Optional<IEntityClass> entityClassOptional =
-                metaManager.load(new EntityClassRef(entityId, "cdc", profile));
+                metaManager.load(entityId, profile);
 
             if (entityClassOptional.isPresent()) {
                 return entityClassOptional.get();

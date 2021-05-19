@@ -18,4 +18,20 @@ public interface TokenizerFactory {
      * @return 分词器.
      */
     public Tokenizer getTokenizer(IEntityField field);
+
+    /**
+     * 获得基于语义分词的分词器.
+     *
+     * @return com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer
+     */
+    public Tokenizer getSegmentationTokenizer();
+
+    /**
+     * 获得通配符分词器.
+     *
+     * @param min 通配符的最小分配字符数量.
+     * @param max 通配符的最大分配字符数量.
+     * @return com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer
+     */
+    public Tokenizer getWildcardTokenizer(int min, int max);
 }

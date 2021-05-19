@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -258,36 +259,6 @@ public class QueryConditionExecutor
         return sortFields;
     }
 
-    // 搜索数量
-    private long count(TransactionResource resource) throws SQLException {
-
-        long count = 0;
-        Statement statement = null;
-        try {
-            Connection conn = (Connection) resource.value();
-            statement = conn.createStatement();
-
-            ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL);
-            String totalFound = "total_found";
-            while (rs.next()) {
-                if (totalFound.equals(rs.getString("Variable_name"))) {
-                    count = rs.getLong("Value");
-                    break;
-                }
-            }
-            rs.close();
-        } catch (Exception ex) {
-            logger.error("QueryCount error:", ex);
-        } finally {
-            try {
-                statement.close();
-            } catch (Exception e) {
-                logger.error("Close rs error:", e);
-            }
-        }
-        return count;
-    }
-
     @Override
     public List<EntityRef> execute(Tuple3<IEntityClass, Conditions, SelectConfig> queryCondition) throws SQLException {
 
@@ -404,7 +375,6 @@ public class QueryConditionExecutor
                 while (rs.next()) {
                     EntityRef entityRef = new EntityRef();
                     entityRef.setId(rs.getLong(FieldDefine.ID));
-                    entityRef.setMajor(rs.getInt(FieldDefine.OQSMAJOR));
 
                     if (!useSort.isOutOfOrder()) {
                         if (useSort.getField().config().isIdentifie()) {
@@ -457,7 +427,7 @@ public class QueryConditionExecutor
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = count(getTransactionResource());
+                    long count = SphinxQLHelper.count(getTransactionResource());
                     page.setTotalCount(count);
                 } else {
                     page.setTotalCount(refs.size());

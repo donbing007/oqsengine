@@ -16,13 +16,29 @@ import java.util.Optional;
 public interface PreciseSelectStorage {
 
     /**
-     * 根据唯一标识查找相应的实例.
+     * 查询指定标识的实例.
+     *
+     * @param id 目标数据id.
+     * @return 实例.
+     */
+    Optional<IEntity> selectOne(long id) throws SQLException;
+
+    /**
+     * 查询指定标识指定类型的实例.
      *
      * @param id          目标实例标识.
      * @param entityClass 目标实例类型标识.
      * @return 目标实例.
      */
     Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
+
+    /**
+     * 查找多个实例.查询结果保证和查询顺序一致.
+     *
+     * @param ids 多个实例标识.
+     * @return 实例列表.
+     */
+    Collection<IEntity> selectMultiple(long[] ids) throws SQLException;
 
     /**
      * 同时查找多个不同类型的不同实例.返回结果不保证和ids顺序一致.

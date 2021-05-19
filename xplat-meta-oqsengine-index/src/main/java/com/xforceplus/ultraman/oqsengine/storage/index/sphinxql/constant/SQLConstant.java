@@ -14,7 +14,7 @@ public class SQLConstant {
         "SELECT " + FieldDefine.ID + " %s FROM %s WHERE %s %s LIMIT ?,? OPTION max_matches=?,max_query_time=?,ranker=none";
 
     public static final String SEARCH_SQL =
-        "SELECT " + FieldDefine.ID + " FROM %s WHERE %s LIMIT ?,? OPTION max_matches=?,max_query_time=?,ranker=?";
+        "SELECT " + FieldDefine.ID + " FROM %s WHERE %s LIMIT ?,? OPTION max_matches=?,max_query_time=?,ranker=%s";
 
     public static final String SELECT_COUNT_SQL = "show meta";
 

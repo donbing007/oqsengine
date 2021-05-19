@@ -206,8 +206,10 @@ public class EntityClassStorageBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .addProfiles(profileInfo(EntityClassManagerExecutorTest.Code_1.getValue() * id, EntityClassManagerExecutorTest.Code_1.getKey()))
-                .addProfiles(profileInfo(EntityClassManagerExecutorTest.Code_2.getValue() * id, EntityClassManagerExecutorTest.Code_2.getKey()))
+                .addProfiles(profileInfo(EntityClassManagerExecutorTest.CODE_1.getValue() * id, EntityClassManagerExecutorTest.CODE_1
+                    .getKey()))
+                .addProfiles(profileInfo(EntityClassManagerExecutorTest.CODE_2.getValue() * id, EntityClassManagerExecutorTest.CODE_2
+                    .getKey()))
                 .build();
     }
 

@@ -216,6 +216,11 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
+    public Optional<IEntityClass> load(long id, String profile) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<IEntityClass> loadHistory(long id, int version) {
         return Optional.empty();
     }

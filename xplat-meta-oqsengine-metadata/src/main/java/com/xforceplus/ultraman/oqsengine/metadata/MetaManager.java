@@ -24,10 +24,11 @@ public interface MetaManager {
     /**
      * 加载指定的IEntityCalss实例.
      *
-     * @param entityClassRef 元信息的标识.
+     * @param id 元信息标识.
+     * @param profile 个性化定制标识.
      * @return 元信息的实例.
      */
-    Optional<IEntityClass> load(EntityClassRef entityClassRef);
+    Optional<IEntityClass> load(long id, String profile);
 
     /**
      * 加载指定的IEntityCalss + version实例.

@@ -141,4 +141,14 @@ public interface IEntityClass {
     default boolean isDynamic() {
         return true;
     }
+
+    /**
+     * 判断指定的元信息是否兼容当前元信息.
+     *
+     * @param id 元信息标识.
+     * @return true 兼容, false 不兼容.
+     */
+    default boolean isCompatibility(long id) {
+        return family().stream().filter(e -> e.id() == id).count() >= 1;
+    }
 }
