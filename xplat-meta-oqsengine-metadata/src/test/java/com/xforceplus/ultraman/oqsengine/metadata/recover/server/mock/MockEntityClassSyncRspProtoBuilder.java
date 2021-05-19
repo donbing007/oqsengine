@@ -70,10 +70,19 @@ public class MockEntityClassSyncRspProtoBuilder {
             .setId(id)
             .setName(id + "_name")
             .setCname(id + "_cname")
-            .setFieldType(fieldType)
+            .setFieldType(toFieldType(fieldType))
             .setDictId(id + "_dictId")
-            .setFieldConfig(fieldConfig(true, 1))
+            .setFieldConfig(fieldConfig(true, FieldConfig.MetaFieldSense.NORMAL))
             .build();
+    }
+
+    private static EntityFieldInfo.FieldType toFieldType(String type) {
+        for (EntityFieldInfo.FieldType fieldType : EntityFieldInfo.FieldType.values()) {
+            if (fieldType.name().equals(type)) {
+                return fieldType;
+            }
+        }
+        return EntityFieldInfo.FieldType.UNKNOWN;
     }
 
     /**
@@ -89,7 +98,7 @@ public class MockEntityClassSyncRspProtoBuilder {
             .setStrong(true)
             .setEntityField(EntityFieldInfo.newBuilder()
                 .setId(fieldId)
-                .setFieldType("LONG")
+                .setFieldType(toFieldType("LONG"))
                 .setName(fieldId + "_name")
                 .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                 .build())
@@ -101,7 +110,8 @@ public class MockEntityClassSyncRspProtoBuilder {
     /**
      * 生成.
      */
-    public static FieldConfig fieldConfig(boolean searchable, int systemFieldType) {
+    public static FieldConfig fieldConfig(boolean searchable,
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)

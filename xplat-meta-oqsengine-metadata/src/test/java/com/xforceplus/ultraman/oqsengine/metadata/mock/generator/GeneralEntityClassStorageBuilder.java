@@ -94,14 +94,14 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static EntityField genericEntityField(long id,
-                                                 GeneralConstant.FourTa<Integer, FieldType, CalculateType, Boolean> fourTa) {
+                                                 GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
         EntityField.Builder builder = EntityField.Builder.anEntityField()
             .withCalculator(defaultCalculator())
             .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .withName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .withCnName(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .withDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .withFieldType(FieldType.fromRawType(fourTa.getB().getType()))
+            .withFieldType(FieldType.fromRawType(fourTa.getB()))
             .withConfig(defaultFieldConfig());
 
         switch (fourTa.getC()) {

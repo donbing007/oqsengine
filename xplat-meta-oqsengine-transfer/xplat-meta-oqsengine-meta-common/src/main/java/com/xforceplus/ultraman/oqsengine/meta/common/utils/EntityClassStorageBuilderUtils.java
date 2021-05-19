@@ -197,7 +197,7 @@ public class EntityClassStorageBuilderUtils {
             .withId(eid)
             .withName(e.getName())
             .withCnName(e.getCname())
-            .withFieldType(FieldType.fromRawType(e.getFieldType()))
+            .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
             .withDictId(e.getDictId())
             .withDefaultValue(e.getDefaultValue())
             .withConfig(toFieldConfig(e.getFieldConfig()));
@@ -270,7 +270,7 @@ public class EntityClassStorageBuilderUtils {
             .withSplittable(false)
             .withDelimiter("")
             .withDisplayType(fieldConfig.getDisplayType())
-            .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSense()))
+            .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
             .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
             .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
             .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())

@@ -378,7 +378,7 @@ public class EntityClassManagerExecutorTest {
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
         Assert.assertEquals(exp.getName(), act.name());
         Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType().toUpperCase(), act.type().getType().toUpperCase());
+        Assert.assertEquals(exp.getFieldType().name().toUpperCase(), act.type().getType().toUpperCase());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
@@ -405,7 +405,7 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(efc.getPrecision(), afc.precision());
             Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
             Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-            Assert.assertEquals(efc.getMetaFieldSense(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
             Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
             Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
