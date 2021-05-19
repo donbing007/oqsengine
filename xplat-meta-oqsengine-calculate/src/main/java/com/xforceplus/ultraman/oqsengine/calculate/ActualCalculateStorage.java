@@ -25,7 +25,7 @@ public class ActualCalculateStorage implements CalculateStorage {
     @Override
     public Expression compile(String expression) {
         return ExpressionUtils.compile(ExpressionWrapper.Builder.anExpression()
-            .withExpression(expression).build());
+            .withExpression(expression).withCached(true).build());
     }
 
     @Override
@@ -53,9 +53,8 @@ public class ActualCalculateStorage implements CalculateStorage {
             List<ExecutionWrapper<?>> needExecutions = partitionExpressionWraps.get(i);
             if (null != needExecutions) {
                 for (ExecutionWrapper<?> executionWrapper : needExecutions) {
-                    Object object = execute(executionWrapper.getExpressionWrapper(), result);
-
-                    result.put(executionWrapper.getCode(), object);
+                    result.put(executionWrapper.getCode(),
+                        execute(executionWrapper.getExpressionWrapper(), result));
                 }
             }
         }

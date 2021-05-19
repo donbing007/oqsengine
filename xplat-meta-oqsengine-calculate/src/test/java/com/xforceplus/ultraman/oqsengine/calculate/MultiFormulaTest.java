@@ -40,9 +40,43 @@ public class MultiFormulaTest {
         Object value = expression.execute(params);
 
         Assert.assertNotNull(value);
-//        Assert.assertNotNull(value.get("a"));
-//        Assert.assertNotNull(value.get("b"));
-//        Assert.assertNotNull(value.get("c"));
+        //  Assert.assertNotNull(value.get("a"));
+        //  Assert.assertNotNull(value.get("b"));
+        //  Assert.assertNotNull(value.get("c"));
+    }
+
+    @Test
+    public void testEmptyCalculate() {
+        String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
+
+        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+
+        Expression expression = ExpressionUtils.compile(expressionWrapper);
+
+        Map<String, Object> params = new HashMap<>();
+        BigDecimal expectedAmount = new BigDecimal("10010.000000");
+        //  BigDecimal taxRate = BigDecimal.valueOf(new Double("0.130000"));
+        //  params.put("taxRate", taxRate);
+        params.put("amount", expectedAmount);
+        Exception ex = null;
+        //  测试当未传入taxRate时, 抛出exception
+        try {
+            expression.execute(params);
+        } catch (Exception e) {
+            ex = e;
+        }
+        Assert.assertNotNull(ex);
+
+
+        String expression2 = "string.join(seq.list(${abc}, ${xyz}, '-'));";
+
+        expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression2).build();
+        expression = ExpressionUtils.compile(expressionWrapper);
+        params = new HashMap<>();
+        params.put("xyz", "xyz");
+        Object res = expression.execute(params);
+        //  当abc不存在时，没有报错而是返回null
+        Assert.assertNull(res);
     }
 
     @Test
@@ -55,7 +89,7 @@ public class MultiFormulaTest {
 
         Map<String, Object> params = new HashMap<>();
         String expectedValue = "aaaaa";
-//        params.put("name", expectedValue);
+        params.put("name", expectedValue);
         String res = (String) expression.execute(params);
 
         Assert.assertEquals(expectedValue, res);
@@ -70,16 +104,16 @@ public class MultiFormulaTest {
 
         Map<String, Object> params = new HashMap<>();
         BigDecimal expectedAmount = new BigDecimal("10010.000000");
-//        Integer taxRate = 13;
-//        BigDecimal taxRate = BigDecimal.valueOf(13);
+        //  Integer taxRate = 13;
+        //  BigDecimal taxRate = BigDecimal.valueOf(13);
         BigDecimal taxRate = BigDecimal.valueOf(new Double("0.130000"));
         params.put("taxRate", taxRate);
         params.put("amount", expectedAmount);
 
         Object res = expression.execute(params);
         Assert.assertEquals(BigDecimal.class, res.getClass());
-//        BigDecimal finalRes = ((BigDecimal)res).setScale(6);
-//        System.out.println(finalRes + "");
+        //  BigDecimal finalRes = ((BigDecimal)res).setScale(6);
+        //  System.out.println(finalRes + "");
     }
 
     @Test
