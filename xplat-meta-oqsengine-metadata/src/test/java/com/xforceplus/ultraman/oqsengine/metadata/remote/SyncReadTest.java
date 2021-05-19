@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.remote;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
@@ -25,10 +24,11 @@ import org.junit.runner.RunWith;
 public class SyncReadTest extends RemoteBaseRequest {
 
     private RemoteBase remoteBase;
+    public static final boolean IF_TEST = false;
 
     @Before
     public void before() throws Exception {
-        if (RemoteConstant.IF_TEST) {
+        if (IF_TEST) {
 
             remoteBase = new RemoteBase();
             remoteBase.init();
@@ -43,32 +43,36 @@ public class SyncReadTest extends RemoteBaseRequest {
 
     @After
     public void after() {
-        entityClassSyncClient.stop();
+        if (IF_TEST) {
+            entityClassSyncClient.stop();
 
-        remoteBase.clear();
+            remoteBase.clear();
+        }
     }
 
 
     @Test
     public void testGetFormula() throws JsonProcessingException, InterruptedException {
-        try {
-            remoteBase.storageMetaManager.need(RemoteConstant.TEST_APP_ID, RemoteConstant.TEST_ENV);
-        } catch (Exception e) {
+        if (IF_TEST) {
+            try {
+                remoteBase.storageMetaManager.need(RemoteConstant.TEST_APP_ID, RemoteConstant.TEST_ENV);
+            } catch (Exception e) {
 
-        }
-        int count = 0;
-        Optional<IEntityClass> entityClassOptional = null;
-        while (count < 500) {
-            entityClassOptional = remoteBase.storageMetaManager.load(RemoteConstant.TEST_ENTITY_CLASS_ID);
-            if (entityClassOptional.isPresent()) {
-                break;
             }
-            count ++;
-            Thread.sleep(1_000);
-        }
-        Assert.assertTrue(entityClassOptional.isPresent());
+            int count = 0;
+            Optional<IEntityClass> entityClassOptional = null;
+            while (count < 500) {
+                entityClassOptional = remoteBase.storageMetaManager.load(RemoteConstant.TEST_ENTITY_CLASS_ID);
+                if (entityClassOptional.isPresent()) {
+                    break;
+                }
+                count++;
+                Thread.sleep(1_000);
+            }
+            Assert.assertTrue(entityClassOptional.isPresent());
 
-        IEntityClass iEntityClass = entityClassOptional.get();
+            IEntityClass iEntityClass = entityClassOptional.get();
+        }
     }
 }
 

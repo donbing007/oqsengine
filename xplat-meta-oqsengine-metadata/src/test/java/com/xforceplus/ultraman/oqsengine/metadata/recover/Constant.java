@@ -13,7 +13,7 @@ public class Constant {
     public static final String HOST = "localhost";
     public static final int PORT = 8081;
 
-    public static final boolean IF_TEST = true;
+    public static final boolean IF_TEST = false;
     public static volatile boolean IS_SERVER_OK = false;
     public static volatile boolean IS_CLIENT_CLOSED = false;
 

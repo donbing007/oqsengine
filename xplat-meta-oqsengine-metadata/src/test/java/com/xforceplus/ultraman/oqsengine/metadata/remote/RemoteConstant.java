@@ -15,7 +15,6 @@ public class RemoteConstant {
      */
     public static final String HOST = "120.55.249.44";
     public static final int PORT = 23111;
-    public static final boolean IF_TEST = false;
 
     /**
      * grpc 配置.
