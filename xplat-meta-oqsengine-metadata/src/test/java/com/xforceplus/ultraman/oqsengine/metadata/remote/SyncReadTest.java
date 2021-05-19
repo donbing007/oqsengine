@@ -24,11 +24,11 @@ import org.junit.runner.RunWith;
 public class SyncReadTest extends RemoteBaseRequest {
 
     private RemoteBase remoteBase;
-    public static final boolean IF_TEST = false;
+
 
     @Before
     public void before() throws Exception {
-        if (IF_TEST) {
+        if (RemoteConstant.IF_TEST) {
 
             remoteBase = new RemoteBase();
             remoteBase.init();
@@ -43,7 +43,7 @@ public class SyncReadTest extends RemoteBaseRequest {
 
     @After
     public void after() {
-        if (IF_TEST) {
+        if (RemoteConstant.IF_TEST) {
             entityClassSyncClient.stop();
 
             remoteBase.clear();
@@ -53,7 +53,7 @@ public class SyncReadTest extends RemoteBaseRequest {
 
     @Test
     public void testGetFormula() throws JsonProcessingException, InterruptedException {
-        if (IF_TEST) {
+        if (RemoteConstant.IF_TEST) {
             try {
                 remoteBase.storageMetaManager.need(RemoteConstant.TEST_APP_ID, RemoteConstant.TEST_ENV);
             } catch (Exception e) {
