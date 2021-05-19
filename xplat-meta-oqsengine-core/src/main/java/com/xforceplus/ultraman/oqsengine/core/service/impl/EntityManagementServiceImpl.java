@@ -629,7 +629,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         );
 
         //  计算公式字段
-        formulaElevator(targetEntity, entityValue, context, executionWrappers);
+        formulaElevator(updateEntity, entityValue, context, executionWrappers);
 
         //  将entityValue加入到目标中
         targetEntity.resetEntityValue(entityValue);
