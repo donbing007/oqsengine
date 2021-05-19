@@ -269,7 +269,8 @@ public class SyncResponseHandler implements IResponseHandler {
             try {
                 needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
             } catch (Exception e) {
-                logger.warn("push event failed...event [{}], message [{}]", event.toString(), e.getMessage());
+                logger.warn("push event failed...event [{}-{}-{}], message [{}]",
+                            event.getAppId(), event.getEnv(), event.getVersion(), e.getMessage());
                 return false;
             }
 
