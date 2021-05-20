@@ -49,6 +49,7 @@ public class AutoFillUpgradeListener {
      * @param event ActualEvent
      */
     public void handleAutoFillUpgrade(ActualEvent event) throws SQLException{
+            logger.info("Receive event :{}",event);
             if(event.payload().isPresent()) {
                 AutoFillUpgradePayload payload =  (AutoFillUpgradePayload)event.payload().get();
                 String bizType = String.valueOf(payload.getEntityField().id());
