@@ -62,6 +62,7 @@ public class AutoFillUpgradeListener {
                         .withPatten(calculator.getPatten())
                         .withMode(Integer.valueOf(calculator.getModel()))
                         .withMaxId(0L).withBizType(bizType)
+                        .withPatternKey("").withResetable(0)
                         .withBeginId(1L).build();
                     storage.build(info);
                 }
