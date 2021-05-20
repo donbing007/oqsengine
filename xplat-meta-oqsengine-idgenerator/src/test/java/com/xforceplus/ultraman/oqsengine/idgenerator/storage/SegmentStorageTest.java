@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.transaction.SegmentTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
@@ -65,6 +66,8 @@ public class SegmentStorageTest {
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SegmentTransactionResourceFactory("segment"),
             new NoSelector<>(dataSource), new NoSelector<>("segment"));
+
+        TransactionExecutor executor1 = new AutoCreateTransactionExecutor(transactionManager);
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
