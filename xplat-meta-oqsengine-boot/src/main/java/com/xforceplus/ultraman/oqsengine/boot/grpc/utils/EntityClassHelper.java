@@ -1,5 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toTypedValue;
+import static io.vavr.API.$;
+import static io.vavr.API.Case;
+import static io.vavr.API.Match;
+import static io.vavr.Predicates.instanceOf;
+
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -16,15 +22,14 @@ import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.Tuple2;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
-import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toTypedValue;
-import static io.vavr.API.*;
-import static io.vavr.Predicates.instanceOf;
 
 /**
  * new helper.
