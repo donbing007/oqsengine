@@ -29,7 +29,7 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
     private long queryTimeout;
 
 
-    @Resource(name = "segmentJDBCTransactionExecutor")
+    @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     @Override
