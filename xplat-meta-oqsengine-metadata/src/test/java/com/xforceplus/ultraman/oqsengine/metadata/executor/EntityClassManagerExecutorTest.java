@@ -391,7 +391,7 @@ public class EntityClassManagerExecutorTest {
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
         Assert.assertEquals(exp.getName(), act.name());
         Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType().toUpperCase(), act.type().getType().toUpperCase());
+        Assert.assertEquals(exp.getFieldType().name().toUpperCase(), act.type().getType().toUpperCase());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
