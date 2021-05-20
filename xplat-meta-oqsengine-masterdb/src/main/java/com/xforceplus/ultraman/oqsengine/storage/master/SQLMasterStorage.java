@@ -137,16 +137,71 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
     @Override
-    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+    public Optional<IEntity> selectOne(long id) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<MasterStorageEntity> masterStorageEntityOptional =
-                QueryExecutor.buildHaveDetail(tableName, resource, entityClass, queryTimeout).execute(id);
+                QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
-                return buildEntityFromStorageEntity(masterStorageEntityOptional.get(), entityClass);
+                return Optional.ofNullable(buildEntityFromStorageEntity(masterStorageEntityOptional.get()));
             } else {
                 return Optional.empty();
             }
         });
+    }
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
+    @Override
+    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+        Optional<IEntity> entityOptional = selectOne(id);
+        if (entityOptional.isPresent()) {
+
+            // 校验类型是否正确.
+            IEntity e = entityOptional.get();
+            Optional<IEntityClass> actualEntityClassOp =
+                metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
+            if (actualEntityClassOp.isPresent()) {
+
+                if (actualEntityClassOp.get().isCompatibility(entityClass.id())) {
+                    return entityOptional;
+                } else {
+                    return Optional.empty();
+                }
+
+            } else {
+                return Optional.empty();
+            }
+
+        }
+        return entityOptional;
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "multiple"}
+    )
+    @Override
+    public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
+        // 排重.
+        long[] useIds = removeDuplicate(ids);
+
+        Collection<MasterStorageEntity> masterStorageEntities =
+            (Collection<MasterStorageEntity>) transactionExecutor.execute(
+                (tx, resource, hint) -> {
+
+                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(useIds);
+                }
+            );
+
+        List<IEntity> entities = new ArrayList<>(masterStorageEntities.size());
+        IEntity entity;
+        for (MasterStorageEntity masterStorageEntity : masterStorageEntities) {
+            entity = buildEntityFromStorageEntity(masterStorageEntity);
+            if (entity != null) {
+                entities.add(entity);
+            }
+        }
+
+        return entities;
     }
 
     @Timed(
@@ -155,28 +210,20 @@ public class SQLMasterStorage implements MasterStorage {
     )
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        Collection<IEntity> entities = selectMultiple(ids);
+        return entities.stream().filter(e ->  {
 
-        Collection<MasterStorageEntity> storageEntities = (Collection<MasterStorageEntity>) transactionExecutor.execute(
-            (tx, resource, hint) -> {
+            Optional<IEntityClass> actualEntityClassOp =
+                metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
+            if (actualEntityClassOp.isPresent()) {
 
-                return MultipleQueryExecutor.build(tableName, resource, entityClass, queryTimeout).execute(ids);
-            }
-        );
+                return actualEntityClassOp.get().isCompatibility(entityClass.id());
 
-
-        Map<Long, IEntity> entityMap = storageEntities.stream().map(se -> {
-            Optional<IEntity> op;
-            try {
-                op = buildEntityFromStorageEntity(se, entityClass);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
+            } else {
+                return false;
             }
 
-            return op.get();
-        }).collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
-
-        return Arrays.stream(ids).mapToObj(id -> entityMap.get(id)).collect(Collectors.toList());
-
+        }).collect(Collectors.toList());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})
@@ -394,41 +441,26 @@ public class SQLMasterStorage implements MasterStorage {
         return SerializeUtils.OBJECT_MAPPER.writeValueAsString(values);
     }
 
-    private Optional<IEntity> buildEntityFromStorageEntity(MasterStorageEntity se, IEntityClass entityClass) throws
-        SQLException {
+    // 无法实例化的数据将返回null.
+    private IEntity buildEntityFromStorageEntity(MasterStorageEntity se) throws SQLException {
         if (se == null) {
-            return Optional.empty();
+            return null;
         }
-        /*
-         * 校验当前数据是否和预期类型匹配.
-         */
-        long[] dataEntityClassIds = se.getEntityClasses();
-        int level = entityClass.level();
-        long dataEntityClassId = dataEntityClassIds[level];
-        if (entityClass.id() != dataEntityClassId) {
-            throw new SQLException(
-                String.format(
-                    "The incorrect Entity type is expected to be %d, but the actual data type is %d.",
-                    entityClass.id(), dataEntityClassId));
+        Optional<IEntityClass> entityClassOp;
+        if (se.getProfile() == null || se.getProfile().isEmpty()) {
+            entityClassOp = metaManager.load(se.getSelfEntityClassId());
+        } else {
+            entityClassOp = metaManager.load(
+                se.getSelfEntityClassId(),
+                se.getProfile()
+            );
         }
 
-        /*
-         * 实际的类型
-         */
-        long actualEntityClassId = 0;
-        for (int i = dataEntityClassIds.length - 1; i >= 0; i--) {
-            if (dataEntityClassIds[i] > 0) {
-                actualEntityClassId = dataEntityClassIds[i];
-                break;
-            }
+        if (!entityClassOp.isPresent()) {
+            return null;
         }
 
-        Optional<IEntityClass> actualEntityClassOp = metaManager.load(new EntityClassRef(actualEntityClassId, entityClass.code(), se.getProfile()));
-        if (!actualEntityClassOp.isPresent()) {
-            throw new SQLException(
-                String.format("Unable to find the expected EntityClass.[%d]", actualEntityClassId));
-        }
-        IEntityClass actualEntityClass = actualEntityClassOp.get();
+        IEntityClass actualEntityClass = entityClassOp.get();
 
         Entity.Builder entityBuilder = Entity.Builder.anEntity()
             .withId(se.getId())
@@ -438,7 +470,7 @@ public class SQLMasterStorage implements MasterStorage {
             .withEntityValue(toEntityValue(se, actualEntityClass))
             .withMajor(se.getOqsMajor());
 
-        return Optional.of(entityBuilder.build());
+        return entityBuilder.build();
     }
 
     // 填充事务信息.
@@ -526,9 +558,10 @@ public class SQLMasterStorage implements MasterStorage {
                         IEntityClass realEntityClass = entityClass;
 
                         //  这里获取一次带有JOJO的真实entityClass
-                        if (null != entity.getAttribute() && !entity.getProfile().equals(OqsProfile.UN_DEFINE_PROFILE)) {
+                        if (null != entity.getAttribute() && !entity.getProfile()
+                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
                             Optional<IEntityClass> entityClassOp =
-                                metaManager.load(new EntityClassRef(entityClass.id(), entityClass.code(), entity.getProfile()));
+                                metaManager.load(entityClass.id(), entity.getProfile());
                             if (!entityClassOp.isPresent()) {
                                 throw new SQLException(
                                     String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
@@ -588,5 +621,27 @@ public class SQLMasterStorage implements MasterStorage {
             this.storageValue = storageValue;
             this.strategy = strategy;
         }
+    }
+
+    // 删除重复项
+    private static long[] removeDuplicate(long[] ids) {
+        if (ids.length == 0 || ids.length == 1) {
+            return ids;
+        }
+
+        long[] newIds = Arrays.copyOf(ids, ids.length);
+        Arrays.sort(newIds);
+
+        int fast = 1;
+        int slow = 1;
+        int len = newIds.length;
+        while (fast < len) {
+            if (newIds[fast] != newIds[fast - 1]) {
+                newIds[slow++] = newIds[fast];
+            }
+            ++fast;
+        }
+
+        return Arrays.copyOf(newIds, slow);
     }
 }

@@ -39,7 +39,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -258,7 +257,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         if (entityId > ZERO) {
             Optional<IEntityClass> entityClassOptional =
-                metaManager.load(new EntityClassRef(entityId, "cdc", profile));
+                metaManager.load(entityId, profile);
 
             if (entityClassOptional.isPresent()) {
                 return entityClassOptional.get();

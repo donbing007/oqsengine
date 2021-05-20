@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * desc :.
@@ -20,7 +19,7 @@ import java.util.Optional;
  * @author : xujia 2021/3/9
  * @since : 1.8
  */
-public class EntityClassBuilder implements MetaManager {
+public class EntityClassBuilder {
 
     public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
 
@@ -68,39 +67,24 @@ public class EntityClassBuilder implements MetaManager {
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
 
+    static MetaManager metaManager;
+
     static {
         entityClassMap.put(entityClass0.id(), entityClass0);
         entityClassMap.put(entityClass1.id(), entityClass1);
         entityClassMap.put(entityClass2.id(), entityClass2);
 
+        MockMetaManager mockMetaManager = new MockMetaManager();
+        mockMetaManager.addEntityClass(entityClass2);
+        metaManager = mockMetaManager;
     }
+
 
     public static IEntityClass getEntityClass(long id) {
         return entityClassMap.get(id);
     }
 
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        return Optional.of(getEntityClass(id));
-    }
-
-    @Override
-    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-        return Optional.of(getEntityClass(entityClassRef.getId()));
-    }
-
-    @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
-        return Optional.empty();
-    }
-
-    @Override
-    public int need(String appId, String env) {
-        return 0;
-    }
-
-    @Override
-    public void invalidateLocal() {
-
+    public static MetaManager getMetaManager() {
+        return metaManager;
     }
 }

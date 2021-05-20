@@ -6,7 +6,8 @@ import static java.util.stream.Collectors.toSet;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
@@ -34,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -252,22 +254,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort,
-                                                  Page page)
-        throws SQLException {
+    public Collection<IEntity> selectByConditions(
+        Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page) throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                  SearchConfig config)
+                                                  ServiceSelectConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -459,6 +460,23 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
+    @Override
+    public Collection<IEntity> search(ServiceSearchConfig config) throws SQLException {
+        SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
+            .withCode(config.getCode())
+            .withValue(config.getValue())
+            .withPage(config.getPage())
+            .withFuzzyType(config.getFuzzyType())
+            .build();
+        EntityClassRef[] entityClassRefs = config.getEntityClassRefs();
+        IEntityClass[] entityClasses = new IEntityClass[entityClassRefs.length];
+        for (int i = 0; i < entityClasses.length; i++) {
+            entityClasses[i] = EntityClassHelper.checkEntityClass(metaManager, entityClassRefs[i]);
+        }
+
+        return buildEntitiesFromRefs(indexStorage.search(searchConfig, entityClasses), null);
+    }
+
     /**
      * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
      * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值.
@@ -528,9 +546,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-    /**
-     * 将根据数据查询的产生oqsmajor版本号来决定如何处理.
-     */
+    // 加载实体. entityClass 允许为null.
     private Collection<IEntity> buildEntitiesFromRefs(Collection<EntityRef> refs, IEntityClass entityClass)
         throws SQLException {
 
@@ -539,8 +555,25 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
 
         long[] ids = refs.stream().mapToLong(ref -> ref.getId()).toArray();
-        Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
-        return entities;
+        // 结果查询表.
+        Map<Long, IEntity> entityTable;
+        if (entityClass == null) {
+            entityTable = masterStorage.selectMultiple(ids).stream()
+                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
+        } else {
+            entityTable = masterStorage.selectMultiple(ids, entityClass).stream()
+                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
+        }
+
+        List<IEntity> results = new ArrayList<>(ids.length);
+        Arrays.stream(ids).forEach(id -> {
+            IEntity entity = entityTable.get(id);
+            if (entity != null) {
+                results.add(entity);
+            }
+        });
+
+        return results;
     }
 
     /**

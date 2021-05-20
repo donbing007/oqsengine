@@ -212,8 +212,18 @@ public class ManagementWithCalculatorTest {
         }
 
         @Override
+        public Optional<IEntity> selectOne(long id) throws SQLException {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return Optional.ofNullable(entityMap.get(id));
+        }
+
+        @Override
+        public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
+            return null;
         }
 
         @Override

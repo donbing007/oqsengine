@@ -23,10 +23,12 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanEx
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SearchExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -164,6 +166,16 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         });
 
         return refs;
+    }
+
+    @Override
+    public Collection<EntityRef> search(SearchConfig config, IEntityClass ...entityClasses)
+        throws SQLException {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+            return SearchExecutor.build(
+                    getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getMaxSearchTimeoutMs())
+                .execute(Tuple.of(config, entityClasses));
+        });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})

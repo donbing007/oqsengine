@@ -112,8 +112,8 @@ public class MockCalculatorMetaManager implements MetaManager {
     }
 
     @Override
-    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-        return entities.stream().filter(e -> e.id() == entityClassRef.getId()).findFirst();
+    public Optional<IEntityClass> load(long id, String profile) {
+        return entities.stream().filter(e -> e.id() == id).findFirst();
     }
 
     @Override

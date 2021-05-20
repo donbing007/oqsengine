@@ -60,7 +60,7 @@
                     <configLocation>../checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                    <excludes>**/*Grpc.java</excludes>
+                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*</excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -116,10 +116,12 @@
         <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
+        <module>xplat-meta-oqsengine-calculate</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
         <module>xplat-meta-oqsengine-metadata</module>
+        <module>xplat-meta-oqsengine-idgenerator</module>
         <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-cdc</module>
         <module>xplat-meta-oqsengine-core</module>
@@ -127,8 +129,6 @@
         <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
-        <module>xplat-meta-oqsengine-idgenerator</module>
-        <module>xplat-meta-oqsengine-calculate</module>
     </modules>
 
     <distributionManagement>

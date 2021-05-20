@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -84,11 +85,6 @@ public class SQLMasterStorageTest {
     private DataSource dataSource;
     private SQLMasterStorage storage;
 
-    //-------------jojo---------------------
-    private String testJojo0 = "jojo0";
-    private String testJojo1 = "jojo1";
-    private String testJojo2 = "jojo2";
-
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
         .withId(1000)
@@ -116,7 +112,7 @@ public class SQLMasterStorageTest {
     private EntityClassRef l0EntityClassRef =
         EntityClassRef.Builder.anEntityClassRef()
             .withEntityClassId(l0EntityClass.id()).withEntityClassCode(l0EntityClass.code())
-            .withEntityClassProfile(testJojo0).build();
+            .build();
 
     //-------------level 1--------------------
     private IEntityField l1LongField = EntityField.Builder.anEntityField()
@@ -140,7 +136,7 @@ public class SQLMasterStorageTest {
     private EntityClassRef l1EntityClassRef =
         EntityClassRef.Builder.anEntityClassRef()
             .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code())
-            .withEntityClassProfile(testJojo1).build();
+            .build();
 
     //-------------level 2--------------------
     private IEntityField l2LongField = EntityField.Builder.anEntityField()
@@ -164,14 +160,16 @@ public class SQLMasterStorageTest {
     private EntityClassRef l2EntityClassRef =
         EntityClassRef.Builder.anEntityClassRef()
             .withEntityClassId(l2EntityClass.id()).withEntityClassCode(l2EntityClass.code())
-            .withEntityClassProfile(testJojo2).build();
+            .build();
 
     private List<IEntity> expectedEntitys;
 
     @Before
     public void before() throws Exception {
 
-        metaManager = new MockMasterNeedMeta(l0EntityClass, l1EntityClass, l2EntityClass);
+        MockMetaManager mockMetaManager = new MockMetaManager();
+        mockMetaManager.addEntityClass(l2EntityClass);
+        metaManager = mockMetaManager;
 
         dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
@@ -265,9 +263,24 @@ public class SQLMasterStorageTest {
         Assert.assertEquals(0, targetEntity.version());
         Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
             entityOptional.get().time());
-        Assert.assertEquals(testJojo1, targetEntity.entityClassRef().getProfile());
     }
 
+    @Test
+    public void testSelectOne() throws Exception {
+        List<IEntity> entities = new ArrayList<>(expectedEntitys.size());
+        expectedEntitys.stream().mapToLong(e -> e.id()).forEach(id -> {
+            Optional<IEntity> entityOp;
+            try {
+                entityOp = storage.selectOne(id, l1EntityClass);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+            entities.add(entityOp.get());
+        });
+
+        Assert.assertEquals(expectedEntitys.size(), entities.size());
+
+    }
 
     @Test
     public void testSelectMultiple() throws Exception {
@@ -314,7 +327,6 @@ public class SQLMasterStorageTest {
         Assert.assertEquals(oldVersion + 1, targetEntityOp.get().version());
         Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
             targetEntityOp.get().time());
-        Assert.assertEquals(testJojo2, targetEntityOp.get().entityClassRef().getProfile());
     }
 
     @Test
@@ -448,40 +460,4 @@ public class SQLMasterStorageTest {
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
         return dataSourcePackage.getMaster().get(0);
     }
-
-    private static class MockMasterNeedMeta implements MetaManager {
-        private Map<Long, IEntityClass> metas = new HashMap<>();
-
-        public MockMasterNeedMeta(IEntityClass... entityClasses) {
-            for (IEntityClass entityClass : entityClasses) {
-                metas.put(entityClass.id(), entityClass);
-            }
-        }
-
-        @Override
-        public Optional<IEntityClass> load(long id) {
-            return Optional.ofNullable(metas.get(id));
-        }
-
-        @Override
-        public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-            return Optional.ofNullable(metas.get(entityClassRef.getId()));
-        }
-
-        @Override
-        public Optional<IEntityClass> loadHistory(long id, int version) {
-            return Optional.empty();
-        }
-
-        @Override
-        public int need(String appId, String env) {
-            return 0;
-        }
-
-        @Override
-        public void invalidateLocal() {
-
-        }
-    }
-
 }

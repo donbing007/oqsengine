@@ -5,17 +5,16 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
 /**
  * SphinxQLHelper Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 04/10/2020
  * @since <pre>Apr 10, 2020</pre>
  */
@@ -35,10 +34,13 @@ public class SphinxQLHelperTest {
         Arrays.stream(SphinxQLHelper.IGNORE_SYMBOLS).forEach(c -> {
             buff.append((char) c);
         });
+        SphinxQLHelper.REPLACE_SYMBOLS.keySet().forEach(c -> {
+            buff.append((char) c);
+        });
         buff.insert(0, "before");
         buff.append("after");
 
-        Assert.assertEquals("beforeafter", SphinxQLHelper.filterSymbols(buff.toString()));
+        Assert.assertEquals("beforeMDafter", SphinxQLHelper.filterSymbols(buff.toString()));
     }
 
     @Test

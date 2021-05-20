@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDec
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -185,7 +186,7 @@ public abstract class AbstractCDCContainer {
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
 
-        metaManager = new EntityClassBuilder();
+        metaManager = EntityClassBuilder.getMetaManager();
         sphinxSyncExecutor = new SphinxSyncExecutor();
 
 
@@ -287,6 +288,11 @@ public abstract class AbstractCDCContainer {
         @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
+            return null;
+        }
+
+        @Override
+        public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses) throws SQLException {
             return null;
         }
     }

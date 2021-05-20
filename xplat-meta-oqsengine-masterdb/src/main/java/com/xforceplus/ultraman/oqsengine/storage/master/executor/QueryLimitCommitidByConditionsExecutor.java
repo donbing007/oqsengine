@@ -40,13 +40,13 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     /**
      * 构造实例.
      *
-     * @param tableName 表名.
-     * @param resource 事务资源.
-     * @param entityClass 元信息.
-     * @param config 查询配置.
-     * @param timeoutMs 超时毫秒.
+     * @param tableName                表名.
+     * @param resource                 事务资源.
+     * @param entityClass              元信息.
+     * @param config                   查询配置.
+     * @param timeoutMs                超时毫秒.
      * @param conditionsBuilderFactory 条件查询构造器工厂.
-     * @param storageStrategyFactory 逻辑物理转换策略工厂.
+     * @param storageStrategyFactory   逻辑物理转换策略工厂.
      * @return 实例.
      */
     public static Executor<Conditions, Collection<EntityRef>> build(
@@ -97,7 +97,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
             conditions.addAnd(config.getDataAccessFilterCondtitions(), true);
         }
         // 当前查询条件.
-        String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
+        String where = conditionsBuilderFactory.getBuilder().build(conditions, entityClass);
 
         String sql = buildSQL(where);
 
