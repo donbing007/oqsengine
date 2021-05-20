@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -76,14 +75,13 @@ public class UniqueMasterStorageTest {
     private TransactionManager transactionManager;
 
     @Rule
-    public ExpectedException thrown= ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none();
 
     private MasterUniqueStorage storage;
 
     private SimpleFieldKeyGenerator keyGenerator;
 
     private DataSourcePackage dataSourcePackage;
-
 
 
     private LongIdGenerator idGenerator;
@@ -161,7 +159,7 @@ public class UniqueMasterStorageTest {
             .withEntityValue(buildFixedValue(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
     }
 
@@ -173,7 +171,7 @@ public class UniqueMasterStorageTest {
             .withEntityValue(buildFixedValue1(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
     }
 
@@ -183,15 +181,14 @@ public class UniqueMasterStorageTest {
                 case "c1":
                     return new StringValue(f, "c1Value1");
                 case "c2":
-                    return new StringValue(f,"c2Value1");
+                    return new StringValue(f, "c2Value1");
                 case "l1":
                     return new LongValue(f, 3L);
                 default:
-                    if(f.type() == FieldType.LONG) {
+                    if (f.type() == FieldType.LONG) {
                         return new LongValue(f, (long) buildRandomLong(10, 100000));
-                    }
-                    else {
-                        return new StringValue(f,buildRandomString(30));
+                    } else {
+                        return new StringValue(f, buildRandomString(30));
                     }
             }
         }).collect(Collectors.toList());
@@ -206,21 +203,20 @@ public class UniqueMasterStorageTest {
                 case "c1":
                     return new StringValue(f, "c1Value");
                 case "c2":
-                    return new StringValue(f,"c2Value");
+                    return new StringValue(f, "c2Value");
                 case "l0-string":
-                    return new StringValue(f,"l0Value");
-                case "l0-strings" :
-                    return new StringValue(f,"l0Values");
+                    return new StringValue(f, "l0Value");
+                case "l0-strings":
+                    return new StringValue(f, "l0Values");
                 case "l0-long":
-                    return new LongValue(f,100L);
+                    return new LongValue(f, 100L);
                 case "l1":
                     return new LongValue(f, 3L);
                 default:
-                    if(f.type() == FieldType.LONG) {
+                    if (f.type() == FieldType.LONG) {
                         return new LongValue(f, (long) buildRandomLong(10, 100000));
-                    }
-                    else {
-                        return new StringValue(f,buildRandomString(30));
+                    } else {
+                        return new StringValue(f, buildRandomString(30));
                     }
             }
         }).collect(Collectors.toList());
@@ -256,8 +252,8 @@ public class UniqueMasterStorageTest {
 
         storage = new MasterUniqueStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
-        ReflectionTestUtils.setField(storage,"keyGenerator",keyGenerator);
+        ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);
+        ReflectionTestUtils.setField(storage, "keyGenerator", keyGenerator);
         storage.setTableName("oqsunique");
         storage.init();
 
@@ -280,10 +276,9 @@ public class UniqueMasterStorageTest {
         IEntity entity = buildL1Entity(10001);
         IEntity entity1 = buildL1Entity(10002);
         try {
-            storage.build(entity,l1EntityClass);
-            storage.build(entity1,l1EntityClass);
-        }
-        catch (Exception ex){
+            storage.build(entity, l1EntityClass);
+            storage.build(entity1, l1EntityClass);
+        } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();
             throw ex;
         }
@@ -301,9 +296,9 @@ public class UniqueMasterStorageTest {
         IEntity entity = buildL1Entity(10001);
         IEntity entity1 = buildL1Entity(10002);
         try {
-            storage.build(entity,l1EntityClass);
-            storage.delete(entity,l1EntityClass);
-            storage.build(entity1,l1EntityClass);
+            storage.build(entity, l1EntityClass);
+            storage.delete(entity, l1EntityClass);
+            storage.build(entity1, l1EntityClass);
             BusinessKey key1 = new BusinessKey();
             key1.setFieldName("c1");
             key1.setValue("c1Value");
@@ -313,11 +308,10 @@ public class UniqueMasterStorageTest {
             List<BusinessKey> keys = new ArrayList<>();
             keys.add(key1);
             keys.add(key2);
-            Optional<StorageUniqueEntity> ret =  storage.select(keys,l1EntityClass);
-            Assert.assertEquals(ret.isPresent(),true);
-            Assert.assertEquals(ret.get().getId(),10002);
-        }
-        catch (Exception ex){
+            Optional<StorageUniqueEntity> ret = storage.select(keys, l1EntityClass);
+            Assert.assertEquals(ret.isPresent(), true);
+            Assert.assertEquals(ret.get().getId(), 10002);
+        } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();
             throw ex;
         }
@@ -326,7 +320,6 @@ public class UniqueMasterStorageTest {
         tx1.commit();
         transactionManager.finish();
     }
-
 
 
     private IEntityValue buildEntityValue(long id, Collection<IEntityField> fields) {
@@ -345,10 +338,7 @@ public class UniqueMasterStorageTest {
     }
 
 
-
-
-
-//
+    //
 //
     @Test
     public void testAddandUpdateDuplicateKeyData() throws Exception {
@@ -357,13 +347,12 @@ public class UniqueMasterStorageTest {
         transactionManager.bind(tx.id());
         IEntity entity = buildL1Entity(200);
         IEntity entity1 = buildL1EntityWithDiff(300);
-        IEntity entity2= buildL1Entity(300);
+        IEntity entity2 = buildL1Entity(300);
         try {
-            storage.build(entity,l1EntityClass);
-            storage.build(entity1,l1EntityClass);
-            storage.replace(entity2,l1EntityClass);
-        }
-        catch (Exception ex){
+            storage.build(entity, l1EntityClass);
+            storage.build(entity1, l1EntityClass);
+            storage.replace(entity2, l1EntityClass);
+        } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();
             throw ex;
         }
@@ -375,28 +364,29 @@ public class UniqueMasterStorageTest {
 
     /**
      * 插入子类，父类上有索引，子类上没有索引
+     *
      * @throws SQLException
      */
     @Test
     public void testBuildFatherIndexChild() throws SQLException {
         thrown.expect(SQLIntegrityConstraintViolationException.class);
-         IEntityField l0LongField = EntityField.Builder.anEntityField()
+        IEntityField l0LongField = EntityField.Builder.anEntityField()
             .withId(1000)
             .withFieldType(FieldType.LONG)
             .withName("l0-long")
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
-         IEntityField l0StringField = EntityField.Builder.anEntityField()
+        IEntityField l0StringField = EntityField.Builder.anEntityField()
             .withId(1001)
             .withFieldType(FieldType.STRING)
             .withName("l0-string")
             .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("father:u1:1").build()).build();
-         IEntityField l0StringsField = EntityField.Builder.anEntityField()
+        IEntityField l0StringsField = EntityField.Builder.anEntityField()
             .withId(1003)
             .withFieldType(FieldType.STRINGS)
             .withName("l0-strings")
             .withConfig(FieldConfig.Builder.anFieldConfig().withUniqueName("father:u1:2").build()).build();
 
-         IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+        IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(1)
             .withLevel(0)
             .withCode("father")
@@ -405,22 +395,22 @@ public class UniqueMasterStorageTest {
             .withField(l0StringsField)
             .build();
 
-         IEntityField l1LongField = EntityField.Builder.anEntityField()
+        IEntityField l1LongField = EntityField.Builder.anEntityField()
             .withId(2000)
             .withFieldType(FieldType.LONG)
             .withName("l1")
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
-         IEntityField l1StringField = EntityField.Builder.anEntityField()
+        IEntityField l1StringField = EntityField.Builder.anEntityField()
             .withId(2001)
             .withFieldType(FieldType.STRING)
             .withName("c1")
-             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
-         IEntityField l1StringField1 = EntityField.Builder.anEntityField()
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
+        IEntityField l1StringField1 = EntityField.Builder.anEntityField()
             .withId(2002)
             .withFieldType(FieldType.STRING)
             .withName("c2")
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build()).build();
-         IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+        IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
             .withId(3)
             .withLevel(1)
             .withCode("child")
@@ -434,34 +424,35 @@ public class UniqueMasterStorageTest {
                 .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
 
 
-        IEntity entity =  Entity.Builder.anEntity()
+        IEntity entity = Entity.Builder.anEntity()
             .withId(10000l)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l1EntityClassRef)
             .withEntityValue(buildFixedValue(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
 
-        IEntity entity1 =  Entity.Builder.anEntity()
+        IEntity entity1 = Entity.Builder.anEntity()
             .withId(10001l)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l1EntityClassRef)
             .withEntityValue(buildFixedValue(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
         when(metaManager.load(3)).thenReturn(Optional.of(l1EntityClass));
 
-        storage.build(entity,l1EntityClass);
-        storage.build(entity1,l1EntityClass);
+        storage.build(entity, l1EntityClass);
+        storage.build(entity1, l1EntityClass);
     }
 
 
     /**
      * 插入子类，父类和子类上有共同的索引，索引属于子类
+     *
      * @throws SQLException
      */
     @Test
@@ -523,7 +514,7 @@ public class UniqueMasterStorageTest {
             EntityClassRef.Builder.anEntityClassRef()
                 .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
 
-        IEntity entity0 =  Entity.Builder.anEntity()
+        IEntity entity0 = Entity.Builder.anEntity()
             .withId(9999L)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l0EntityClassRef)
@@ -531,7 +522,7 @@ public class UniqueMasterStorageTest {
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField))).build();
 
-        IEntity entity00 =  Entity.Builder.anEntity()
+        IEntity entity00 = Entity.Builder.anEntity()
             .withId(9998L)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l0EntityClassRef)
@@ -540,38 +531,37 @@ public class UniqueMasterStorageTest {
                     l0LongField, l0StringField, l0StringsField))).build();
 
 
-        IEntity entity =  Entity.Builder.anEntity()
+        IEntity entity = Entity.Builder.anEntity()
             .withId(10000l)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l1EntityClassRef)
             .withEntityValue(buildFixedValue(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
 
-        IEntity entity1 =  Entity.Builder.anEntity()
+        IEntity entity1 = Entity.Builder.anEntity()
             .withId(10001l)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l1EntityClassRef)
             .withEntityValue(buildFixedValue(
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,l1StringField1)))
+                    l1LongField, l1StringField, l1StringField1)))
             .build();
         when(metaManager.load(3)).thenReturn(Optional.of(l1EntityClass));
         when(metaManager.load(1)).thenReturn(Optional.of(l0EntityClass));
-     int ret =    storage.build(entity0,l0EntityClass);
-     int ret1 =    storage.build(entity00,l0EntityClass);
-     Assert.assertEquals(ret,1);
-     Assert.assertEquals(ret1,1);
-     int ret2 = storage.build(entity,l1EntityClass);
-     Assert.assertEquals(ret2,1);
-     storage.build(entity1,l1EntityClass);
+        int ret = storage.build(entity0, l0EntityClass);
+        int ret1 = storage.build(entity00, l0EntityClass);
+        Assert.assertEquals(ret, 1);
+        Assert.assertEquals(ret1, 1);
+        int ret2 = storage.build(entity, l1EntityClass);
+        Assert.assertEquals(ret2, 1);
+        storage.build(entity1, l1EntityClass);
 
 
     }
-
 
 
 //
@@ -705,8 +695,7 @@ public class UniqueMasterStorageTest {
 //
 
 
-
-//
+    //
     private Collection<IEntityField> getFixedFields() {
         FieldConfig config1 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:1").build();
         FieldConfig config2 = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:2").build();
@@ -719,7 +708,8 @@ public class UniqueMasterStorageTest {
         fields.add(field2);
         return fields;
     }
-//
+
+    //
 //    private IEntityClass buildEntityClass(long entityClassId) {
 //        Collection<IEntityField> fields = getFixedFields();
 //       return EntityClass.Builder.anEntityClass().withId(entityClassId).withLevel(0).withCode("test").withFields(fields).build();
@@ -730,7 +720,7 @@ public class UniqueMasterStorageTest {
         for (int i = 0; i < size; i++) {
             long fieldId = baseId + i;
             fields.add(new EntityField(fieldId, "c" + fieldId,
-                    ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
+                ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
         }
 
         return fields;

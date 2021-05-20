@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -55,18 +56,18 @@ public class QueryConditionExecutor
     /**
      * 实例化.
      *
-     * @param indexTableName 索引名称.
-     * @param resource 事务资源.
+     * @param indexTableName           索引名称.
+     * @param resource                 事务资源.
      * @param conditionsBuilderFactory 条件构造器工厂.
-     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
-     * @param maxQueryTimeMs 最大查询超时毫秒.
+     * @param storageStrategyFactory   逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs           最大查询超时毫秒.
      */
     public QueryConditionExecutor(
         String indexTableName,
         TransactionResource<Connection> resource,
         SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory,
-        Long maxQueryTimeMs) {
+        long maxQueryTimeMs) {
 
         super(indexTableName, resource, maxQueryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
@@ -76,11 +77,11 @@ public class QueryConditionExecutor
     /**
      * 构造方法.
      *
-     * @param indexTableName 索引名称.
-     * @param resource 事务资源.
+     * @param indexTableName           索引名称.
+     * @param resource                 事务资源.
      * @param conditionsBuilderFactory 条件构造器工厂.
-     * @param storageStrategyFactory 逻辑物理字段转换器工厂.
-     * @param maxQueryTimeMs 最大查询超时毫秒.
+     * @param storageStrategyFactory   逻辑物理字段转换器工厂.
+     * @param maxQueryTimeMs           最大查询超时毫秒.
      * @return 实例.
      */
     public static Executor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> build(
@@ -258,36 +259,6 @@ public class QueryConditionExecutor
         return sortFields;
     }
 
-    // 搜索数量
-    private long count(TransactionResource resource) throws SQLException {
-
-        long count = 0;
-        Statement statement = null;
-        try {
-            Connection conn = (Connection) resource.value();
-            statement = conn.createStatement();
-
-            ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL);
-            String totalFound = "total_found";
-            while (rs.next()) {
-                if (totalFound.equals(rs.getString("Variable_name"))) {
-                    count = rs.getLong("Value");
-                    break;
-                }
-            }
-            rs.close();
-        } catch (Exception ex) {
-            logger.error("QueryCount error:", ex);
-        } finally {
-            try {
-                statement.close();
-            } catch (Exception e) {
-                logger.error("Close rs error:", e);
-            }
-        }
-        return count;
-    }
-
     @Override
     public List<EntityRef> execute(Tuple3<IEntityClass, Conditions, SelectConfig> queryCondition) throws SQLException {
 
@@ -297,14 +268,14 @@ public class QueryConditionExecutor
         long commitId = queryCondition._3().getCommitId();
         Conditions filterConditions = queryCondition._3().getDataAccessFilterCondtitions();
 
-        SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+        SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(conditions, entityClass);
         /*
          * 如果有数据过滤条件,那么将默认以OR=true,range=true的方式找到条件构造器.
          * 目的是防止进入全文字段.
          */
         if (!filterConditions.isEmtpy()) {
             SphinxQLWhere filterWhere =
-                conditionsBuilderFactory.getBuilder(true, true).build(entityClass, filterConditions);
+                conditionsBuilderFactory.getBuilder(true, true).build(filterConditions, entityClass);
 
             where.addWhere(filterWhere, true);
 
@@ -321,7 +292,7 @@ public class QueryConditionExecutor
             where.setCommitId(commitId);
         }
 
-        where.setEntityClass(entityClass);
+        where.addEntityClass(entityClass);
 
         Page page = queryCondition._3().getPage();
         if (!page.isSinglePage()) {
@@ -404,7 +375,6 @@ public class QueryConditionExecutor
                 while (rs.next()) {
                     EntityRef entityRef = new EntityRef();
                     entityRef.setId(rs.getLong(FieldDefine.ID));
-                    entityRef.setMajor(rs.getInt(FieldDefine.OQSMAJOR));
 
                     if (!useSort.isOutOfOrder()) {
                         if (useSort.getField().config().isIdentifie()) {
@@ -457,7 +427,7 @@ public class QueryConditionExecutor
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = count(getTransactionResource());
+                    long count = SphinxQLHelper.count(getTransactionResource());
                     page.setTotalCount(count);
                 } else {
                     page.setTotalCount(refs.size());

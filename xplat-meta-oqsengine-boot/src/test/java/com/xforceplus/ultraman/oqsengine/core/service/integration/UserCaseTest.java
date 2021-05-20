@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -168,7 +168,7 @@ public class UserCaseTest {
                     )
                 ),
             MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
         );
         Assert.assertEquals(1, entities.size());
         Assert.assertEquals(99L,

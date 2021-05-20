@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
@@ -20,7 +21,7 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
 
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
-    private ConditionsBuilder<String> conditionsBuilder;
+    private ConditionsBuilder<Conditions, String> conditionsBuilder;
 
     @PostConstruct
     public void init() {
@@ -43,7 +44,7 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
-    public ConditionsBuilder<String> getBuilder() {
+    public ConditionsBuilder<Conditions, String> getBuilder() {
         return conditionsBuilder;
     }
 }

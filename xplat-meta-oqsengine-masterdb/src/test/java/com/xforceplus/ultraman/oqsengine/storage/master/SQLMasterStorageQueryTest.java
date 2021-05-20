@@ -5,12 +5,11 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -55,9 +54,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -97,7 +94,7 @@ public class SQLMasterStorageQueryTest {
         .withId(1001)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-            .withConfig(FieldConfig.Builder.anFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -143,7 +140,7 @@ public class SQLMasterStorageQueryTest {
         .withId(2001)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-            .withConfig(FieldConfig.Builder.anFieldConfig()
+        .withConfig(FieldConfig.Builder.anFieldConfig()
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
@@ -188,9 +185,6 @@ public class SQLMasterStorageQueryTest {
     @Before
     public void before() throws Exception {
 
-        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
-
-
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
@@ -208,10 +202,6 @@ public class SQLMasterStorageQueryTest {
             .withWaitCommitSync(false)
             .build();
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
-
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
@@ -221,12 +211,20 @@ public class SQLMasterStorageQueryTest {
         sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
-        MetaManager metaManager = new MockMasterNeedMeta(l0EntityClass, l1EntityClass, l2EntityClass);
-
         storage = new SQLMasterStorage();
+
+        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
+            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
+
+        MockMetaManager metaManager = new MockMetaManager();
+        metaManager.addEntityClass(l2EntityClass);
+
         ReflectionTestUtils.setField(storage, "metaManager", metaManager);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
@@ -1007,41 +1005,5 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L)
                 )
             )).build());
-    }
-
-
-    private static class MockMasterNeedMeta implements MetaManager {
-        private Map<Long, IEntityClass> metas = new HashMap<>();
-
-        public MockMasterNeedMeta(IEntityClass... entityClasses) {
-            for (IEntityClass entityClass : entityClasses) {
-                metas.put(entityClass.id(), entityClass);
-            }
-        }
-
-        @Override
-        public Optional<IEntityClass> load(long id) {
-            return Optional.ofNullable(metas.get(id));
-        }
-
-        @Override
-        public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-            return Optional.ofNullable(metas.get(entityClassRef.getId()));
-        }
-
-        @Override
-        public Optional<IEntityClass> loadHistory(long id, int version) {
-            return Optional.empty();
-        }
-
-        @Override
-        public int need(String appId, String env) {
-            return 0;
-        }
-
-        @Override
-        public void invalidateLocal() {
-
-        }
     }
 }

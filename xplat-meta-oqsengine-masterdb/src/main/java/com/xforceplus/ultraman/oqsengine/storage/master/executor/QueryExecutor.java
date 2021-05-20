@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -21,68 +20,63 @@ import java.util.Optional;
 public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterStorageEntity>> {
 
     private boolean noDetail;
-    private IEntityClass entityClass;
 
     /**
      * 查询所有信息.
      *
      * @param tableName 表名.
-     * @param resource 事务资源.
+     * @param resource  事务资源.
      * @param timeoutMs 超时毫秒.
      * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildHaveAllDetail(
-        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, entityClass, false, timeoutMs);
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
      * 查询包含详细信息.
      *
      * @param tableName 表名.
-     * @param resource 事务资源.
+     * @param resource  事务资源.
      * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildHaveDetail(
-        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, entityClass, false, timeoutMs);
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
      * 查询不包含详细信息.只有版本和事务信息.
      *
      * @param tableName 表名.
-     * @param resource 事务资源.
+     * @param resource  事务资源.
      * @return 执行器实例.
      */
     public static Executor<Long, Optional<MasterStorageEntity>> buildNoDetail(
-        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, entityClass, true, timeoutMs);
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, true, timeoutMs);
     }
 
-    public QueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
-                         boolean noDetail) {
-        this(tableName, resource, entityClass, noDetail, 0);
+    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
+        this(tableName, resource, noDetail, 0);
     }
 
     /**
      * 构造实例.
      *
      * @param tableName 表名.
-     * @param resource 事务资源.
-     * @param entityClass 元信息.
-     * @param noDetail true不需要详细信息, false需要详细信息.
+     * @param resource  事务资源.
+     * @param noDetail  true不需要详细信息, false需要详细信息.
      * @param timeoutMs 超时毫秒.
      */
     public QueryExecutor(
         String tableName,
         TransactionResource<Connection> resource,
-        IEntityClass entityClass,
         boolean noDetail,
         long timeoutMs) {
         super(tableName, resource, timeoutMs);
         this.noDetail = noDetail;
-        this.entityClass = entityClass;
     }
 
     @Override
@@ -94,7 +88,6 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
             st.setFetchSize(Integer.MIN_VALUE);
             st.setLong(1, id);
             st.setBoolean(2, false);
-            st.setLong(3, entityClass.id());
 
             checkTimeout(st);
 
@@ -157,11 +150,8 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterS
             .append(" WHERE ")
             .append(FieldDefine.ID).append("=").append("?")
             .append(" AND ")
-            .append(FieldDefine.DELETED).append("=").append("?")
-            .append(" AND ");
+            .append(FieldDefine.DELETED).append("=").append("?");
 
-        int level = entityClass.level();
-        sql.append(FieldDefine.ENTITYCLASS_LEVEL_LIST[level]).append("=?");
         return sql.toString();
     }
 }

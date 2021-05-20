@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
+package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.EmptyConditionsBuilder;
 import java.util.Arrays;
 import org.junit.After;
 import org.junit.Assert;
@@ -43,7 +44,7 @@ public class EmptyConditionsBuilderTest {
     public void testBuild() throws Exception {
 
         EmptyConditionsBuilder emptyConditionsBuilder = new EmptyConditionsBuilder();
-        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions()).toString();
+        String where = emptyConditionsBuilder.build(Conditions.buildEmtpyConditions(), entityClass).toString();
 
         Assert.assertTrue(where.isEmpty());
     }

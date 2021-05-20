@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * .
+ * metaManager 的mock测试.
  *
  * @author dongbin
  * @version 0.1 2021/04/14 16:09
@@ -69,5 +68,18 @@ public class MockMetaManagerTest {
         Assert.assertTrue(metaManager.load(1).isPresent());
         Assert.assertTrue(metaManager.load(2).isPresent());
         Assert.assertTrue(metaManager.load(3).isPresent());
+    }
+
+    @Test
+    public void testOneVersion() throws Exception {
+        MockMetaManager metaManager = new MockMetaManager();
+
+        metaManager.addEntityClass(
+            EntityClass.Builder.anEntityClass()
+                .withId(1)
+                .withVersion(0)
+                .build()
+        );
+        Assert.assertTrue(metaManager.load(1).isPresent());
     }
 }

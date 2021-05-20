@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSearchStorage;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
@@ -14,7 +15,7 @@ import java.util.Collection;
  * @version 0.1 2020/2/13 19:44
  * @since 1.8
  */
-public interface IndexStorage extends ConditionsSelectStorage, Lifecycle {
+public interface IndexStorage extends ConditionsSelectStorage, ConditionsSearchStorage, Lifecycle {
 
     /**
      * 维护接口,时间范围清理.

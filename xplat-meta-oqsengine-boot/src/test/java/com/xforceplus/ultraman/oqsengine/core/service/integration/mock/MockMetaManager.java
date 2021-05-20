@@ -21,7 +21,7 @@ import org.junit.Ignore;
  * @since 1.8
  */
 @Ignore
-public class MockMetaManager implements MetaManager {
+public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager{
 
 
     //-------------level 0--------------------
@@ -199,40 +199,10 @@ public class MockMetaManager implements MetaManager {
             .build();
     }
 
-
-    private Collection<IEntityClass> entities;
-
-    /**
-     * 构造实例.
-     */
     public MockMetaManager() {
-        entities = Arrays.asList(
-            l0EntityClass, l1EntityClass, l2EntityClass, driverEntityClass
-        );
-    }
+        super();
 
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        return entities.stream().filter(e -> e.id() == id).findFirst();
-    }
-
-    @Override
-    public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-        return entities.stream().filter(e -> e.id() == entityClassRef.getId()).findFirst();
-    }
-
-    @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
-        return Optional.empty();
-    }
-
-    @Override
-    public int need(String appId, String env) {
-        return 0;
-    }
-
-    @Override
-    public void invalidateLocal() {
-
+        this.addEntityClass(l2EntityClass);
+        this.addEntityClass(driverEntityClass);
     }
 }

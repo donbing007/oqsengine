@@ -14,7 +14,7 @@ import java.util.Objects;
  * @version 0.1 2020/3/25 18:14
  * @since 1.8
  */
-public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuilder<String> {
+public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuilder<Condition, String> {
 
     /**
      * 生成条件时是否使用物理值组名称.
@@ -51,10 +51,10 @@ public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuild
      * 实例化.
      *
      * @param storageStrategyFactory 逻辑物理字段转换策略工厂.
-     * @param fieldType 逻辑字段类型.
-     * @param operator 操作符.
-     * @param match true 全文,false非全文.
-     * @param useStorageGroupName 是否使用组名称.针对多值字段.
+     * @param fieldType              逻辑字段类型.
+     * @param operator               操作符.
+     * @param match                  true 全文,false非全文.
+     * @param useStorageGroupName    是否使用组名称.针对多值字段.
      */
     public AbstractSphinxQLConditionBuilder(
         StorageStrategyFactory storageStrategyFactory,

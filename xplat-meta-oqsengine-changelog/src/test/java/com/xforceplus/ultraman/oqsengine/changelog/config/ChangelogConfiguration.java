@@ -187,8 +187,8 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public Optional<IEntityClass> load(EntityClassRef entityClassRef) {
-                return Optional.ofNullable(example.getEntityClassById(entityClassRef.getId()));
+            public Optional<IEntityClass> load(long id, String profile) {
+                return Optional.ofNullable(example.getEntityClassById(id));
             }
 
             @Override

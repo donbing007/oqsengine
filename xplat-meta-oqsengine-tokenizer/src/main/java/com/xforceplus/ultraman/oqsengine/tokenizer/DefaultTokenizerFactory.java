@@ -60,8 +60,11 @@ public class DefaultTokenizerFactory implements TokenizerFactory {
     public Tokenizer getTokenizer(IEntityField field) {
         FieldConfig.FuzzyType type = field.config().getFuzzyType();
         switch (type) {
-            case WILDCARD:
-                return findWildcardTokenizer(field);
+            case WILDCARD: {
+                int min = field.config().getWildcardMinWidth();
+                int max = field.config().getWildcardMaxWidth();
+                return findWildcardTokenizer(min, max);
+            }
             case SEGMENTATION:
                 return segmentationTokenizer;
             case NOT:
@@ -71,20 +74,24 @@ public class DefaultTokenizerFactory implements TokenizerFactory {
         }
     }
 
-    public Map<Integer, WildcardTokenizer> getWildcardTokenizerCache() {
-        return new HashMap<>(wildcardTokenizerCache);
+    @Override
+    public Tokenizer getWildcardTokenizer(int min, int max) {
+        return findWildcardTokenizer(min, max);
     }
 
+    @Override
     public Tokenizer getSegmentationTokenizer() {
         return segmentationTokenizer;
+    }
+
+    public Map<Integer, WildcardTokenizer> getWildcardTokenizerCache() {
+        return new HashMap<>(wildcardTokenizerCache);
     }
 
     /**
      * 构造字段要求的通配符分词器.
      */
-    private Tokenizer findWildcardTokenizer(IEntityField field) {
-        int min = field.config().getWildcardMinWidth();
-        int max = field.config().getWildcardMaxWidth();
+    private Tokenizer findWildcardTokenizer(int min, int max) {
         List<Tokenizer> tokenizers = new ArrayList<>(max - min);
         for (int i = min; i <= max; i++) {
             tokenizers.add(wildcardTokenizerCache.computeIfAbsent(i, k -> new WildcardTokenizer(k)));

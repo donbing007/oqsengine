@@ -1,25 +1,26 @@
 package com.xforceplus.ultraman.oqsengine.storage.query;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 /**
  * 条件组构造器.
  *
- * @param <V> 条件构造结果类型.
+ * @param <R> 请求条件.
+ * @param <T> 条件构造结果类型.
  * @author dongbin
  * @version 0.1 2020/2/22 16:55
  * @since 1.8
  */
-public interface ConditionsBuilder<V> {
+public interface ConditionsBuilder<R, T> {
 
     /**
-     * 构造出条件的字符串表示.
+     * 查询构造器.
      *
-     * @param entityClass 查询主类型.
-     * @param conditions 条件.
-     * @return 构造结果.
+     * @param conditions    条件.
+     * @param entityClasses 多个元信息.
+     * @return V 构造结果.
+     * @author dongbin
      */
-    V build(IEntityClass entityClass, Conditions conditions);
+    T build(R conditions, IEntityClass... entityClasses);
 
 }

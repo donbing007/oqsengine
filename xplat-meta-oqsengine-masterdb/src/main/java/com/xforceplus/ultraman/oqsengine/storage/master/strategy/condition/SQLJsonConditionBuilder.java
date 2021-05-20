@@ -23,7 +23,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/11/4 15:56
  * @since 1.8
  */
-public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
+public class SQLJsonConditionBuilder implements ConditionBuilder<Condition, String> {
 
     private FieldType fieldType;
     private ConditionOperator operator;
@@ -35,8 +35,8 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
     /**
      * 构造基于JSON的条件查询构造器实例.
      *
-     * @param fieldType 字段逻辑类型.
-     * @param operator 操作符.
+     * @param fieldType              字段逻辑类型.
+     * @param operator               操作符.
      * @param storageStrategyFactory 逻辑物理字段转换策略工厂实例.
      */
     public SQLJsonConditionBuilder(

@@ -21,7 +21,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -175,7 +175,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * checkout the entityClassRef.
      */
     private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId(), entityClassRef.getProfile());
         if (entityClassOp.isPresent()) {
             IEntityClass entityClass = entityClassOp.get();
             return entityClass;
@@ -779,7 +779,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 }
 
-                SearchConfig searchConfig = SearchConfig
+                ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig
                     .Builder.anSearchConfig()
                     .withSort(sortParam)
                     .withPage(page)
@@ -791,10 +791,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (consOp.isPresent()) {
 
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, searchConfig);
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
                 } else {
                     entities = entitySearchService.selectByConditions(
-                        Conditions.buildEmtpyConditions(), entityClassRef, searchConfig);
+                        Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
                 }
 
                 result = OperationResult.newBuilder()
