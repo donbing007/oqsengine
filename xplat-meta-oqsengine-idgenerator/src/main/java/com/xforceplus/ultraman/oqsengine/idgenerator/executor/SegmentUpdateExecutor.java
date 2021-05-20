@@ -31,8 +31,7 @@ public class SegmentUpdateExecutor extends AbstractSegmentExecutor<SegmentInfo, 
     public Integer execute(SegmentInfo segmentInfo) throws SQLException {
         String sql = buildSQL();
 
-        try (Connection connection = getResource().value();
-             PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, segmentInfo.getId());
             st.setLong(2,segmentInfo.getMaxId());
             st.setLong(3, segmentInfo.getVersion());

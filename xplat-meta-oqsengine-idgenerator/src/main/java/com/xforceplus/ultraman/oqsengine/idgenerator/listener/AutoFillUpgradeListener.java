@@ -49,6 +49,7 @@ public class AutoFillUpgradeListener {
      * @param event ActualEvent
      */
     public void handleAutoFillUpgrade(ActualEvent event) throws SQLException{
+            logger.info("Receive event :{}",event);
             if(event.payload().isPresent()) {
                 AutoFillUpgradePayload payload =  (AutoFillUpgradePayload)event.payload().get();
                 String bizType = String.valueOf(payload.getEntityField().id());
@@ -62,6 +63,7 @@ public class AutoFillUpgradeListener {
                         .withPatten(calculator.getPatten())
                         .withMode(Integer.valueOf(calculator.getModel()))
                         .withMaxId(0L).withBizType(bizType)
+                        .withPatternKey("").withResetable(0)
                         .withBeginId(1L).build();
                     storage.build(info);
                 }
