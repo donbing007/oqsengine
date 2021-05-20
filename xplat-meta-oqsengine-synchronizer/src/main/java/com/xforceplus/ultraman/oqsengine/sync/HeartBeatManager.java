@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.sync;
 
 /**
- * a heart beat Manager
+ * TODO a heart beat Manager.
  */
-public class HeartBeatManager {
+public interface HeartBeatManager {
 
 
 }

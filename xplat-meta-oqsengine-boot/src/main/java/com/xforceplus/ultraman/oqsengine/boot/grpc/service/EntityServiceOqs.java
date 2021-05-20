@@ -56,6 +56,8 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
+
+import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +101,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Autowired(required = false)
     private ReplayService replayService;
+
+    @Autowired(required = false)
+    private LockStateService lockStateService;
 
     @Autowired
     private TransactionManager transactionManager;
@@ -1037,26 +1042,30 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public Source<LockResponse, NotUsed> communicate(Source<LockRequest, NotUsed> in, Metadata metadata) {
-        return null;
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.setupCommunication(in, node);
     }
 
     @Override
     public CompletionStage<LockResponse> test(LockRequest in, Metadata metadata) {
-        return null;
+        throw new RuntimeException("Not Supported");
     }
 
     @Override
     public CompletionStage<LockResponse> tryAcquire(LockRequest in, Metadata metadata) {
-        return null;
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.tryAcquire(in, node);
     }
 
     @Override
     public CompletionStage<LockResponse> tryRelease(LockRequest in, Metadata metadata) {
-        return null;
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.tryRelease(in, node);
     }
 
     @Override
     public CompletionStage<LockResponse> addWaiter(LockRequest in, Metadata metadata) {
-        return null;
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.addWaiter(in, node);
     }
 }

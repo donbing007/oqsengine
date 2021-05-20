@@ -1,7 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
 import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
+import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
+import com.xforceplus.ultraman.oqsengine.synchronizer.server.impl.LockStateServiceImpl;
+import org.redisson.command.CommandSyncService;
+import org.redisson.config.Config;
+import org.redisson.config.ConfigSupport;
+import org.redisson.connection.ConnectionManager;
+import org.redisson.liveobject.core.RedissonObjectBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,5 +25,17 @@ public class LockConfiguration {
     @Bean
     public ResourceLocker locker() {
         return new LocalResourceLocker();
+    }
+
+    @Bean
+    public LockStateService lockStateService(LettuceConfiguration configuration) {
+
+        Config config = new Config();
+        config.useSingleServer().setAddress(configuration.getUri());
+        Config configCopy = new Config(config);
+        ConnectionManager connectionManager = ConfigSupport.createConnectionManager(configCopy);
+        RedissonObjectBuilder objectBuilder = null;
+        CommandSyncService commandExecutor = new CommandSyncService(connectionManager, objectBuilder);
+        return new LockStateServiceImpl(commandExecutor);
     }
 }
