@@ -101,8 +101,8 @@ public class SegmentStorageTest {
      */
     @Test
     public void testCRUD() throws Exception {
-        //Transaction tx = transactionManager.create(300000L);
-        //transactionManager.bind(tx.id());
+        Transaction tx = transactionManager.create(300000L);
+        transactionManager.bind(tx.id());
         LocalDateTime updateTime = LocalDateTime.now();
         SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
@@ -135,7 +135,7 @@ public class SegmentStorageTest {
         entityOptional = storage.query("testBiz");
         Assert.assertEquals(0, entityOptional.get().getMaxId().intValue());
         Assert.assertEquals("2020-02-02", entityOptional.get().getPatternKey());
-        //tx.commit();
+        tx.commit();
 
 
     }

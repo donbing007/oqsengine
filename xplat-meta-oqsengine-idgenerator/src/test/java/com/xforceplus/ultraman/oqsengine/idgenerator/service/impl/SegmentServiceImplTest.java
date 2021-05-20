@@ -28,7 +28,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.Ref;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -39,10 +38,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -97,6 +93,7 @@ public class SegmentServiceImplTest {
 
         service = new SegmentServiceImpl();
         ReflectionTestUtils.setField(service,"sqlSegmentStorage",storage);
+        ReflectionTestUtils.setField(service,"transactionManager",transactionManager);
 
         SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
             .withCreateTime(new Timestamp(System.currentTimeMillis()))

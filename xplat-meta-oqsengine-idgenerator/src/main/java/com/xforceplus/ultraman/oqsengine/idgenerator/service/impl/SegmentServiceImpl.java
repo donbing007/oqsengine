@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorExcept
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +21,7 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 项目名称: 票易通
@@ -32,6 +35,9 @@ public class SegmentServiceImpl implements SegmentService {
 
     @Resource
     SqlSegmentStorage sqlSegmentStorage;
+
+    @Autowired
+    private TransactionManager transactionManager;
 
     private static final Logger logger = LoggerFactory.getLogger(SegmentServiceImpl.class);
 
@@ -53,10 +59,13 @@ public class SegmentServiceImpl implements SegmentService {
 
         // 获取nextTinyId的时候，有可能存在version冲突，需要重试
         for (int i = 0; i < Constants.RETRY; i++) {
+            Transaction tx = transactionManager.create(300000L);
+            transactionManager.bind(tx.id());
             Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
             SegmentInfo segmentInfo = targetSegmentInfo.get();
             Long newMaxId = segmentInfo.getMaxId() + segmentInfo.getStep();
             int row = sqlSegmentStorage.udpate(segmentInfo);
+            tx.commit();
             if (row == 1) {
                 segmentInfo.setMaxId(newMaxId);
                 SegmentId segmentId = convert(segmentInfo);

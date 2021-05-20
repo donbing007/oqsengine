@@ -29,9 +29,7 @@ public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, I
     @Override
     public Integer execute(SegmentInfo segmentInfo) throws SQLException {
         String sql = buildSQL();
-
-        try (Connection connection = getResource().value();
-             PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setString(1,segmentInfo.getPatternKey());
             st.setLong(2, segmentInfo.getId());
             st.setLong(3,segmentInfo.getMaxId());

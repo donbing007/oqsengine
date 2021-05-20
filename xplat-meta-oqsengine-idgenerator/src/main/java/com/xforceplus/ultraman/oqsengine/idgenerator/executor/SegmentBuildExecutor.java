@@ -30,9 +30,7 @@ public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, I
     @Override
     public Integer execute(SegmentInfo res) throws SQLException {
         String sql = buildSQL();
-        try (Connection connection = getResource().value();
-             PreparedStatement st = connection.prepareStatement(sql)) {
-
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int pos = 1;
             st.setString(pos++, res.getBizType());
             st.setLong(pos++, res.getBeginId());
@@ -42,8 +40,8 @@ public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, I
             st.setString(pos++, res.getPatternKey());
             st.setInt(pos++, res.getResetable());
             st.setInt(pos++, res.getMode());
-            st.setLong(pos++,res.getVersion());
-            st.setTimestamp(pos++,res.getCreateTime());
+            st.setLong(pos++, res.getVersion());
+            st.setTimestamp(pos++, res.getCreateTime());
             st.setTimestamp(pos, res.getUpdateTime());
             checkTimeout(st);
             if (logger.isDebugEnabled()) {
@@ -51,28 +49,29 @@ public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, I
             }
             return st.executeUpdate();
         }
+
     }
 
     private String buildSQL() {
         StringBuilder buff = new StringBuilder();
         buff.append("INSERT INTO ").append(getTableName())
-                .append(' ')
-                .append("(")
-                .append(String.join(",",
-                        SegmentFieldDefine.BIZ_TYPE,
-                        SegmentFieldDefine.BEGIN_ID,
-                        SegmentFieldDefine.MAX_ID,
-                        SegmentFieldDefine.STEP,
-                        SegmentFieldDefine.PATTERN,
-                        SegmentFieldDefine.PATTERN_KEY,
-                        SegmentFieldDefine.RESETABLE,
-                        SegmentFieldDefine.MODE,
-                        SegmentFieldDefine.VERSION,
-                        SegmentFieldDefine.CREATE_TIME,
-                        SegmentFieldDefine.UPDATE_TIME)
-                ).append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(11, "?")))
-                .append(")");
+            .append(' ')
+            .append("(")
+            .append(String.join(",",
+                SegmentFieldDefine.BIZ_TYPE,
+                SegmentFieldDefine.BEGIN_ID,
+                SegmentFieldDefine.MAX_ID,
+                SegmentFieldDefine.STEP,
+                SegmentFieldDefine.PATTERN,
+                SegmentFieldDefine.PATTERN_KEY,
+                SegmentFieldDefine.RESETABLE,
+                SegmentFieldDefine.MODE,
+                SegmentFieldDefine.VERSION,
+                SegmentFieldDefine.CREATE_TIME,
+                SegmentFieldDefine.UPDATE_TIME)
+            ).append(") VALUES (")
+            .append(String.join(",", Collections.nCopies(11, "?")))
+            .append(")");
         return buff.toString();
     }
 }
