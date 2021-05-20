@@ -50,6 +50,7 @@ import io.micrometer.core.instrument.Metrics;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -243,7 +244,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     执行自动编号、公式字段计算
                  */
                 try {
-                    prepareBuild(entity);
+                    prepareBuild(entityClass, entity);
                 } catch (Exception e) {
                     String message = e.toString();
                     logger.warn("prepare build error, message [{}]", message);
@@ -324,7 +325,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     执行自动编号、公式字段计算
                  */
                 try {
-                    prepareReplace(targetEntity, entity);
+                    prepareReplace(entityClass, targetEntity, entity);
                 } catch (Exception e) {
                     String message = e.toString();
                     logger.warn("prepare replace error, message [{}]", message);
@@ -534,7 +535,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     //  build前的准备
-    private void prepareBuild(IEntity entity) {
+    private void prepareBuild(IEntityClass entityClass, IEntity entity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
@@ -558,6 +559,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
                 } else {
+                    //  将没有置入context中的常量加入到计算中
+                    context.putIfAbsent(entityField.name(), v.getValue());
                     entityValue.addValue(v);
                 }
             }
@@ -568,7 +571,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
 
         //  计算公式字段
-        formulaElevator(entity, entityValue, context, executionWrappers);
+        formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
 
         logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
             entity.id(), entityValue.values().toArray());
@@ -578,7 +581,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     //  replace前的准备
-    private void prepareReplace(IEntity targetEntity, IEntity updateEntity) {
+    private void prepareReplace(IEntityClass entityClass, IEntity targetEntity, IEntity updateEntity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
@@ -629,7 +632,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         );
 
         //  计算公式字段
-        formulaElevator(targetEntity, entityValue, context, executionWrappers);
+        formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
 
         //  将entityValue加入到目标中
         targetEntity.resetEntityValue(entityValue);
@@ -650,13 +653,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private void formulaElevator(IEntity entity, IEntityValue entityValue,
+    private void formulaElevator(Collection<IEntityField> entityFields, IEntityValue entityValue,
                                  Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
         Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
-        if (null != result) {
-            entity.entityValue().values().forEach(
-                v -> {
-                    IEntityField e = v.getField();
+        if (null != result
+            && (null != entityFields && !entityFields.isEmpty())) {
+            entityFields.forEach(
+                e -> {
                     if (e.calculateType().equals(CalculateType.FORMULA)) {
                         Object o = result.get(e.name());
 
