@@ -217,12 +217,6 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
     }
 
     @Test
-    public void syncError() {
-
-    }
-
-
-    @Test
     public void loopSmallTransactionBatches() throws Exception {
         int gap = 10;
         int loops = 100;
