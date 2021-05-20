@@ -559,6 +559,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
                 } else {
+                    //  将没有置入context中的常量加入到计算中
+                    context.putIfAbsent(entityField.name(), v.getValue());
                     entityValue.addValue(v);
                 }
             }
