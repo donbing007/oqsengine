@@ -1,10 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo.search;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -107,16 +105,16 @@ public class SearchConfig implements Serializable {
          * builder.
          */
         public SearchConfig build() {
-            SearchConfig searchConfig = new SearchConfig();
-            searchConfig.fuzzyType = this.fuzzyType;
-            searchConfig.code = this.code;
-            searchConfig.value = this.value;
+            SearchConfig serviceSearchConfig = new SearchConfig();
+            serviceSearchConfig.fuzzyType = this.fuzzyType;
+            serviceSearchConfig.code = this.code;
+            serviceSearchConfig.value = this.value;
             if (this.page == null) {
-                searchConfig.page = Page.newSinglePage(10);
+                serviceSearchConfig.page = Page.newSinglePage(10);
             } else {
-                searchConfig.page = this.page;
+                serviceSearchConfig.page = this.page;
             }
-            return searchConfig;
+            return serviceSearchConfig;
         }
     }
 }

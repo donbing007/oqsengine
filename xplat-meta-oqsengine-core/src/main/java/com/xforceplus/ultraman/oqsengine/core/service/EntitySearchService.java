@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
@@ -35,8 +34,8 @@ public interface EntitySearchService {
     /**
      * 根据业务主键搜索一个entity实例.
      *
-     * @param key               业务主键.
-     * @param entityClassRef    ref.
+     * @param key            业务主键.
+     * @param entityClassRef ref.
      * @return 目标 entity 实体.
      */
     Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
@@ -85,7 +84,8 @@ public interface EntitySearchService {
      * @param config         查询配置.
      * @return 查询结果列表.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, ServiceSelectConfig config)
+    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                           ServiceSelectConfig config)
         throws SQLException;
 
     /**

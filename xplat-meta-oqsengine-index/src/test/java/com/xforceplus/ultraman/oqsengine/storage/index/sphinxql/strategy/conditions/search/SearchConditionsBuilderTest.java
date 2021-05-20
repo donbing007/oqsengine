@@ -41,7 +41,7 @@ public class SearchConditionsBuilderTest {
                     .withFuzzyType(FieldConfig.FuzzyType.NOT)
                     .withPage(Page.newSinglePage(10))
                     .withValue("test").build(),
-                "MATCH('(nametestname)')"
+                "MATCH('(@searchattrf nametestname)')"
             ),
             new Case(
                 SearchConfig.Builder.anSearchConfig()
@@ -49,7 +49,7 @@ public class SearchConditionsBuilderTest {
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withPage(Page.newSinglePage(10))
                     .withValue("test").build(),
-                "MATCH('(nametestname)')"
+                "MATCH('(@searchattrf nametestname)')"
             ),
             new Case(
                 SearchConfig.Builder.anSearchConfig()
@@ -57,7 +57,7 @@ public class SearchConditionsBuilderTest {
                     .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
                     .withPage(Page.newSinglePage(10))
                     .withValue("有限公").build(),
-                "MATCH('(name有限name << name公name)')"
+                "MATCH('(@searchattrf name有限name << name公name)')"
             )
         );
     }

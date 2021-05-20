@@ -41,7 +41,6 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;

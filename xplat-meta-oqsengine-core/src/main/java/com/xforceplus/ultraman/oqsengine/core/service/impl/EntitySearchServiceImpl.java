@@ -254,22 +254,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort,
-                                                  Page page)
-        throws SQLException {
+    public Collection<IEntity> selectByConditions(
+        Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page) throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                  SearchConfig config)
+                                                  ServiceSelectConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -459,6 +458,23 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } finally {
             searchReadCountTotal.increment();
         }
+    }
+
+    @Override
+    public Collection<IEntity> search(ServiceSearchConfig config) throws SQLException {
+        SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
+            .withCode(config.getCode())
+            .withValue(config.getValue())
+            .withPage(config.getPage())
+            .withFuzzyType(config.getFuzzyType())
+            .build();
+        EntityClassRef[] entityClassRefs = config.getEntityClassRefs();
+        IEntityClass[] entityClasses = new IEntityClass[entityClassRefs.length];
+        for (int i = 0; i < entityClasses.length; i++) {
+            entityClasses[i] = EntityClassHelper.checkEntityClass(metaManager, entityClassRefs[i]);
+        }
+
+        return buildEntitiesFromRefs(indexStorage.search(searchConfig, entityClasses), null);
     }
 
     /**

@@ -68,7 +68,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                             new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
                         )
                     ),
-                String.format("(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200)",
+                String.format("(createtime = 100 OR updatetime != 200)",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE)
             ),
             // c1 or c2 or (c3 and c4)
@@ -106,7 +106,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200 OR (%s.1y2p0ij32e8e5L = 300 AND %s.1y2p0ij32e8e5L = 400))",
+                    "(createtime = 100 OR updatetime != 200 OR (updatetime = 300 AND updatetime = 400))",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             ),
@@ -134,7 +134,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                             new LongValue(EntityField.CREATE_TIME_FILED, 500L)
                         )
                     ),
-                String.format("((%s.1y2p0ij32e8e5L = 100 AND %s.1y2p0ij32e8e6L = 300) OR %s.1y2p0ij32e8e6L = 500)",
+                String.format("((updatetime = 100 AND createtime = 300) OR createtime = 500)",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             ),
@@ -173,7 +173,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "((%s.1y2p0ij32e8e5L = 100 AND %s.1y2p0ij32e8e6L = 300) OR (%s.1y2p0ij32e8e6L = 500 AND %s.1y2p0ij32e8e6L = 600))",
+                    "((updatetime = 100 AND createtime = 300) OR (createtime = 500 AND createtime = 600))",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             )
