@@ -11,7 +11,9 @@ import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.other;
 import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
 
+import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
+import akka.stream.javadsl.Source;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
@@ -36,26 +38,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountResponse;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountSingle;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponse;
-import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponseList;
-import com.xforceplus.ultraman.oqsengine.sdk.CompatibleRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
-import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
-import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
-import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
-import com.xforceplus.ultraman.oqsengine.sdk.Filters;
-import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
-import com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp;
-import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
-import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
-import com.xforceplus.ultraman.oqsengine.sdk.SelectByTree;
-import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
+import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import java.sql.SQLException;
@@ -1033,6 +1016,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+
     private Optional<Long> extractTransaction(Metadata metadata) {
         Optional<String> transactionId = metadata.getText("transaction-id");
         return transactionId.map(Long::valueOf);
@@ -1048,5 +1032,31 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         String userName = metadata.getText("username").orElse("noname");
 
         logger.info(template.apply(displayName, userName));
+    }
+
+
+    @Override
+    public Source<LockResponse, NotUsed> communicate(Source<LockRequest, NotUsed> in, Metadata metadata) {
+        return null;
+    }
+
+    @Override
+    public CompletionStage<LockResponse> test(LockRequest in, Metadata metadata) {
+        return null;
+    }
+
+    @Override
+    public CompletionStage<LockResponse> tryAcquire(LockRequest in, Metadata metadata) {
+        return null;
+    }
+
+    @Override
+    public CompletionStage<LockResponse> tryRelease(LockRequest in, Metadata metadata) {
+        return null;
+    }
+
+    @Override
+    public CompletionStage<LockResponse> addWaiter(LockRequest in, Metadata metadata) {
+        return null;
     }
 }
