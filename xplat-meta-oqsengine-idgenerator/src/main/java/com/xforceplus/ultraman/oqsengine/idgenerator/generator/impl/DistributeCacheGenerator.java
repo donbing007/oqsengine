@@ -70,8 +70,9 @@ public class DistributeCacheGenerator implements IDGenerator {
             }
         } catch (Exception e) {
             message = e.getMessage();
+            throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
         }
-        throw new IDGeneratorException("error query segment: " + message);
+        throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
     }
 
     public void loadNext() {
