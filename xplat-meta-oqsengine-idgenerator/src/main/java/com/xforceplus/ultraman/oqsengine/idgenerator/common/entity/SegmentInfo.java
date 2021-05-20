@@ -18,7 +18,9 @@ public class SegmentInfo {
     private Long maxId;
     private Integer step;
     private Integer mode;
-    private String patten;
+    private String pattern;
+    private String patternKey;
+    private Integer resetable;
     private Timestamp createTime;
     private Timestamp updateTime;
     private Long version;
@@ -95,17 +97,34 @@ public class SegmentInfo {
         this.version = version;
     }
 
-    public String getPatten() {
-        return patten;
+    public String getPattern() {
+        return pattern;
     }
 
-    public void setPatten(String patten) {
-        this.patten = patten;
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
+    }
+
+    public String getPatternKey() {
+        return patternKey;
+    }
+
+    public void setPatternKey(String patternKey) {
+        this.patternKey = patternKey;
+    }
+
+    public Integer getResetable() {
+        return resetable;
+    }
+
+    public void setResetable(Integer resetable) {
+        this.resetable = resetable;
     }
 
     public static SegmentBuilder builder() {
         return new SegmentBuilder();
     }
+
 
     public static class SegmentBuilder {
         private Long id;
@@ -114,7 +133,9 @@ public class SegmentInfo {
         private Long maxId;
         private Integer step;
         private Integer mode;
-        private String patten;
+        private String pattern;
+        private String patternKey;
+        private Integer resetable;
         private Timestamp createTime;
         private Timestamp updateTime;
         private Long version;
@@ -150,7 +171,7 @@ public class SegmentInfo {
         }
 
         public SegmentBuilder withPatten(String patten) {
-            this.patten = patten;
+            this.pattern = patten;
             return  this;
         }
 
@@ -169,6 +190,17 @@ public class SegmentInfo {
             return this;
         }
 
+        public SegmentBuilder withPatternKey(String patternKey) {
+            this.patternKey = patternKey;
+            return this;
+        }
+
+        public SegmentBuilder withResetable(Integer resetable) {
+            this.resetable = resetable;
+            return this;
+        }
+
+
         public SegmentInfo build() {
             SegmentInfo segmentInfo = new SegmentInfo();
             segmentInfo.id = this.id;
@@ -177,10 +209,12 @@ public class SegmentInfo {
             segmentInfo.maxId = this.maxId;
             segmentInfo.step = this.step;
             segmentInfo.mode = this.mode;
-            segmentInfo.patten = this.patten;
+            segmentInfo.pattern = this.pattern;
             segmentInfo.version = this.version;
             segmentInfo.createTime = this.createTime;
             segmentInfo.updateTime = this.updateTime;
+            segmentInfo.patternKey = this.patternKey;
+            segmentInfo.resetable = this.resetable;
             return segmentInfo;
         }
     }

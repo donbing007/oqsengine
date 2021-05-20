@@ -11,10 +11,17 @@ public class IDResult {
 
     private ResultCode code;
     private String id;
+    private String patternKey;
 
     public IDResult(ResultCode code,String id) {
         this.code = code;
         this.id = id;
+    }
+
+    public IDResult(ResultCode code,String id,String patternKey) {
+        this.code = code;
+        this.id = id;
+        this.patternKey = patternKey;
     }
 
     public ResultCode getCode() {
@@ -31,5 +38,13 @@ public class IDResult {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getPatternKey() {
+        return patternKey;
+    }
+
+    public void setPatternKey(String patternKey) {
+        this.patternKey = patternKey;
     }
 }

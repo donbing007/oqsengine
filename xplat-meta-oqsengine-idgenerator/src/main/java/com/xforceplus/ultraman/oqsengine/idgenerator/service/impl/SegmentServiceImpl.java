@@ -4,12 +4,12 @@ import com.alibaba.google.common.cache.CacheBuilder;
 import com.alibaba.google.common.cache.CacheLoader;
 import com.alibaba.google.common.cache.LoadingCache;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PattenValue;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import org.slf4j.Logger;
@@ -19,7 +19,6 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 项目名称: 票易通
@@ -54,10 +53,7 @@ public class SegmentServiceImpl implements SegmentService {
 
         // 获取nextTinyId的时候，有可能存在version冲突，需要重试
         for (int i = 0; i < Constants.RETRY; i++) {
-            Optional<SegmentInfo> targetSegmentInfo = sqlSegmentStorage.query(bizType);
-            if (!targetSegmentInfo.isPresent()) {
-                throw new IDGeneratorException("can not find biztype:" + bizType);
-            }
+            Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
             SegmentInfo segmentInfo = targetSegmentInfo.get();
             Long newMaxId = segmentInfo.getMaxId() + segmentInfo.getStep();
             int row = sqlSegmentStorage.udpate(segmentInfo);
@@ -72,6 +68,25 @@ public class SegmentServiceImpl implements SegmentService {
         }
         throw new IDGeneratorException("get next segment conflict");
     }
+
+    @Override
+    public boolean resetSegment(String bizType,String patternKey) throws SQLException {
+        Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
+        SegmentInfo segmentInfo = targetSegmentInfo.get();
+        segmentInfo.setPatternKey(patternKey);
+        int row = sqlSegmentStorage.reset(segmentInfo);
+        return row > 0;
+    }
+
+    private Optional<SegmentInfo> getSegment(String bizType) throws SQLException {
+        Optional<SegmentInfo> targetSegmentInfo = sqlSegmentStorage.query(bizType);
+        if (!targetSegmentInfo.isPresent()) {
+            throw new IDGeneratorException("can not find biztype:" + bizType);
+        }
+        return targetSegmentInfo;
+    }
+
+
 
     @Override
     public IDModel getIDModel(String bizType) {
@@ -90,11 +105,9 @@ public class SegmentServiceImpl implements SegmentService {
         return model;
     }
 
+
     private IDModel innerGetIDModel(String bizType) throws SQLException {
-        Optional<SegmentInfo> targetSegmentInfo = sqlSegmentStorage.query(bizType);
-        if (!targetSegmentInfo.isPresent()) {
-            throw new IDGeneratorException("can not find biztype:" + bizType);
-        }
+        Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
         SegmentInfo segmentInfo = targetSegmentInfo.get();
         return IDModel.fromValue(segmentInfo.getMode());
     }
@@ -102,11 +115,12 @@ public class SegmentServiceImpl implements SegmentService {
     public SegmentId convert(SegmentInfo idInfo) {
         SegmentId segmentId = new SegmentId();
         long id = idInfo.getMaxId() - idInfo.getStep();
-        String value = PattenParserUtil.getInstance().parse(idInfo.getPatten(),id);
-        PattenValue pattenValue = new PattenValue(id,value);
+        String value = PatternParserUtil.getInstance().parse(idInfo.getPattern(),id);
+        PatternValue pattenValue = new PatternValue(id,value);
         segmentId.setCurrentId(pattenValue);
         segmentId.setMaxId(idInfo.getMaxId());
-        segmentId.setPatten(idInfo.getPatten());
+        segmentId.setPattern(idInfo.getPattern());
+        segmentId.setResetable(idInfo.getResetable());
         // 默认30%加载
         segmentId.setLoadingId(segmentId.getCurrentId().getId() + idInfo.getStep() * Constants.LOADING_PERCENT / 100);
         return segmentId;

@@ -38,7 +38,9 @@ public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, I
             st.setLong(pos++, res.getBeginId());
             st.setLong(pos++, res.getMaxId());
             st.setInt(pos++, res.getStep());
-            st.setString(pos++, res.getPatten());
+            st.setString(pos++, res.getPattern());
+            st.setString(pos++, res.getPatternKey());
+            st.setInt(pos++, res.getResetable());
             st.setInt(pos++, res.getMode());
             st.setLong(pos++,res.getVersion());
             st.setTimestamp(pos++,res.getCreateTime());
@@ -61,13 +63,15 @@ public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, I
                         SegmentFieldDefine.BEGIN_ID,
                         SegmentFieldDefine.MAX_ID,
                         SegmentFieldDefine.STEP,
-                        SegmentFieldDefine.PATTEN,
+                        SegmentFieldDefine.PATTERN,
+                        SegmentFieldDefine.PATTERN_KEY,
+                        SegmentFieldDefine.RESETABLE,
                         SegmentFieldDefine.MODE,
                         SegmentFieldDefine.VERSION,
                         SegmentFieldDefine.CREATE_TIME,
                         SegmentFieldDefine.UPDATE_TIME)
                 ).append(") VALUES (")
-                .append(String.join(",", Collections.nCopies(9, "?")))
+                .append(String.join(",", Collections.nCopies(11, "?")))
                 .append(")");
         return buff.toString();
     }

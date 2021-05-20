@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactor
 import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserUtil;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
@@ -61,9 +61,9 @@ public class BusinessIDGeneratorConfiguration {
      * @return PattenParserUtil
      */
     @Bean
-    public PattenParserUtil pattenParserUtil() {
-        PattenParserUtil pattenParserUtil = new PattenParserUtil();
-        return pattenParserUtil;
+    public PatternParserUtil pattenParserUtil() {
+        PatternParserUtil patternParserUtil = new PatternParserUtil();
+        return patternParserUtil;
     }
 
     /**

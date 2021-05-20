@@ -71,10 +71,6 @@ public class EntityClassManagerExecutorTest {
 
     private ExecutorService executorService;
 
-
-    public static final AbstractMap.SimpleEntry<String, Long> CODE_1 = new AbstractMap.SimpleEntry<>("CODE_1", 10L);
-    public static final AbstractMap.SimpleEntry<String, Long> CODE_2 = new AbstractMap.SimpleEntry<>("CODE_2", 20L);
-
     @Before
     public void before() throws Exception {
         /*
@@ -123,15 +119,17 @@ public class EntityClassManagerExecutorTest {
         mockRequestHandler = new MockRequestHandler();
         ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);
 
+        storageMetaManager = new StorageMetaManager();
+
         /*
          * init entityClassManagerExecutor
          */
         executorService = new ThreadPoolExecutor(5, 5, 0,
             TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
-        storageMetaManager = new StorageMetaManager();
         ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
+
     }
 
     @After
@@ -393,7 +391,7 @@ public class EntityClassManagerExecutorTest {
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
         Assert.assertEquals(exp.getName(), act.name());
         Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType(), act.type().name());
+        Assert.assertEquals(exp.getFieldType().toUpperCase(), act.type().getType().toUpperCase());
         Assert.assertEquals(exp.getDictId(), act.dictId());
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
@@ -420,7 +418,7 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(efc.getPrecision(), afc.precision());
             Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
             Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-            Assert.assertEquals(efc.getMetaFieldSense(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
             Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
             Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }

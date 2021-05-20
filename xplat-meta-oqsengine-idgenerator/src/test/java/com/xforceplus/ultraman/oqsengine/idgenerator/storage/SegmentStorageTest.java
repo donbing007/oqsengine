@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -20,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import io.lettuce.core.RedisClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -103,34 +101,41 @@ public class SegmentStorageTest {
      */
     @Test
     public void testCRUD() throws Exception {
-        Transaction tx = transactionManager.create(300000L);
-        transactionManager.bind(tx.id());
+        //Transaction tx = transactionManager.create(300000L);
+        //transactionManager.bind(tx.id());
         LocalDateTime updateTime = LocalDateTime.now();
         SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
-                .withCreateTime(new Timestamp(System.currentTimeMillis()))
-                .withMaxId(1000l).withPatten("yyyy-mm-dd{000}").withMode(2).withStep(1000)
-                .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-                .withVersion(1l).build();
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(1000l).withPatten("yyyy-mm-dd{000}").withMode(2).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1l)
+            .withResetable(0)
+            .withPatternKey("")
+            .build();
         int size = storage.build(info);
         Assert.assertEquals(1, size);
 
         Optional<SegmentInfo> entityOptional = storage.query("testBiz");
         Assert.assertTrue(entityOptional.isPresent());
         SegmentInfo targetEntity = entityOptional.get();
-        Assert.assertEquals(targetEntity.getBeginId(),Long.valueOf(1L));
-        Assert.assertEquals(targetEntity.getPatten(),"yyyy-mm-dd{000}");
+        Assert.assertEquals(targetEntity.getBeginId(), Long.valueOf(1L));
+        Assert.assertEquals(targetEntity.getPattern(), "yyyy-mm-dd{000}");
 
         storage.udpate(targetEntity);
 
         entityOptional = storage.query("testBiz");
         Assert.assertTrue(entityOptional.isPresent());
         SegmentInfo segmentInfo = entityOptional.get();
-        Assert.assertEquals(segmentInfo.getMaxId(),Long.valueOf(2000l));
-        Assert.assertEquals(segmentInfo.getVersion(),Long.valueOf(2l));
-        tx.commit();
+        Assert.assertEquals(segmentInfo.getMaxId(), Long.valueOf(2000l));
+        Assert.assertEquals(segmentInfo.getVersion(), Long.valueOf(2l));
 
-
-
+        segmentInfo.setPatternKey("2020-02-02");
+        int reset = storage.reset(segmentInfo);
+        Assert.assertEquals(reset, 1);
+        entityOptional = storage.query("testBiz");
+        Assert.assertEquals(0, entityOptional.get().getMaxId().intValue());
+        Assert.assertEquals("2020-02-02", entityOptional.get().getPatternKey());
+        //tx.commit();
 
 
     }

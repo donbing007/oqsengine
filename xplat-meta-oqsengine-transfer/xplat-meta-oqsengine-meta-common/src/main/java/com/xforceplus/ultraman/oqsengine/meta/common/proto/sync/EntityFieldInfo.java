@@ -19,7 +19,7 @@ private static final long serialVersionUID = 0L;
     id_ = 0L;
     name_ = "";
     cname_ = "";
-    fieldType_ = "";
+    fieldType_ = 0;
     dictId_ = "";
     defaultValue_ = "";
   }
@@ -72,10 +72,10 @@ private static final long serialVersionUID = 0L;
             cname_ = s;
             break;
           }
-          case 34: {
-            java.lang.String s = input.readStringRequireUtf8();
+          case 32: {
+            int rawValue = input.readEnum();
 
-            fieldType_ = s;
+            fieldType_ = rawValue;
             break;
           }
           case 42: {
@@ -138,6 +138,158 @@ private static final long serialVersionUID = 0L;
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityFieldInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder.class);
+  }
+
+  /**
+   * Protobuf enum {@code EntityFieldInfo.FieldType}
+   */
+  public enum FieldType
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>UNKNOWN = 0;</code>
+     */
+    UNKNOWN(0),
+    /**
+     * <code>BOOLEAN = 1;</code>
+     */
+    BOOLEAN(1),
+    /**
+     * <code>ENUM = 2;</code>
+     */
+    ENUM(2),
+    /**
+     * <code>DATETIME = 3;</code>
+     */
+    DATETIME(3),
+    /**
+     * <code>LONG = 4;</code>
+     */
+    LONG(4),
+    /**
+     * <code>STRING = 5;</code>
+     */
+    STRING(5),
+    /**
+     * <code>STRINGS = 6;</code>
+     */
+    STRINGS(6),
+    /**
+     * <code>DECIMAL = 7;</code>
+     */
+    DECIMAL(7),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>UNKNOWN = 0;</code>
+     */
+    public static final int UNKNOWN_VALUE = 0;
+    /**
+     * <code>BOOLEAN = 1;</code>
+     */
+    public static final int BOOLEAN_VALUE = 1;
+    /**
+     * <code>ENUM = 2;</code>
+     */
+    public static final int ENUM_VALUE = 2;
+    /**
+     * <code>DATETIME = 3;</code>
+     */
+    public static final int DATETIME_VALUE = 3;
+    /**
+     * <code>LONG = 4;</code>
+     */
+    public static final int LONG_VALUE = 4;
+    /**
+     * <code>STRING = 5;</code>
+     */
+    public static final int STRING_VALUE = 5;
+    /**
+     * <code>STRINGS = 6;</code>
+     */
+    public static final int STRINGS_VALUE = 6;
+    /**
+     * <code>DECIMAL = 7;</code>
+     */
+    public static final int DECIMAL_VALUE = 7;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static FieldType valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static FieldType forNumber(int value) {
+      switch (value) {
+        case 0: return UNKNOWN;
+        case 1: return BOOLEAN;
+        case 2: return ENUM;
+        case 3: return DATETIME;
+        case 4: return LONG;
+        case 5: return STRING;
+        case 6: return STRINGS;
+        case 7: return DECIMAL;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<FieldType>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        FieldType> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<FieldType>() {
+            public FieldType findValueByNumber(int number) {
+              return FieldType.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final FieldType[] VALUES = values();
+
+    public static FieldType valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private FieldType(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:EntityFieldInfo.FieldType)
   }
 
   public static final int ID_FIELD_NUMBER = 1;
@@ -218,37 +370,19 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int FIELDTYPE_FIELD_NUMBER = 4;
-  private volatile java.lang.Object fieldType_;
+  private int fieldType_;
   /**
-   * <code>string fieldType = 4;</code>
+   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
    */
-  public java.lang.String getFieldType() {
-    java.lang.Object ref = fieldType_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      fieldType_ = s;
-      return s;
-    }
+  public int getFieldTypeValue() {
+    return fieldType_;
   }
   /**
-   * <code>string fieldType = 4;</code>
+   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
    */
-  public com.google.protobuf.ByteString
-      getFieldTypeBytes() {
-    java.lang.Object ref = fieldType_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      fieldType_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType() {
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.valueOf(fieldType_);
+    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNRECOGNIZED : result;
   }
 
   public static final int DICTID_FIELD_NUMBER = 5;
@@ -382,8 +516,8 @@ private static final long serialVersionUID = 0L;
     if (!getCnameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 3, cname_);
     }
-    if (!getFieldTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, fieldType_);
+    if (fieldType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNKNOWN.getNumber()) {
+      output.writeEnum(4, fieldType_);
     }
     if (!getDictIdBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, dictId_);
@@ -415,8 +549,9 @@ private static final long serialVersionUID = 0L;
     if (!getCnameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, cname_);
     }
-    if (!getFieldTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, fieldType_);
+    if (fieldType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNKNOWN.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(4, fieldType_);
     }
     if (!getDictIdBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, dictId_);
@@ -454,8 +589,7 @@ private static final long serialVersionUID = 0L;
         .equals(other.getName());
     result = result && getCname()
         .equals(other.getCname());
-    result = result && getFieldType()
-        .equals(other.getFieldType());
+    result = result && fieldType_ == other.fieldType_;
     result = result && getDictId()
         .equals(other.getDictId());
     result = result && getDefaultValue()
@@ -489,7 +623,7 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + CNAME_FIELD_NUMBER;
     hash = (53 * hash) + getCname().hashCode();
     hash = (37 * hash) + FIELDTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getFieldType().hashCode();
+    hash = (53 * hash) + fieldType_;
     hash = (37 * hash) + DICTID_FIELD_NUMBER;
     hash = (53 * hash) + getDictId().hashCode();
     hash = (37 * hash) + DEFAULTVALUE_FIELD_NUMBER;
@@ -637,7 +771,7 @@ private static final long serialVersionUID = 0L;
 
       cname_ = "";
 
-      fieldType_ = "";
+      fieldType_ = 0;
 
       dictId_ = "";
 
@@ -745,9 +879,8 @@ private static final long serialVersionUID = 0L;
         cname_ = other.cname_;
         onChanged();
       }
-      if (!other.getFieldType().isEmpty()) {
-        fieldType_ = other.fieldType_;
-        onChanged();
+      if (other.fieldType_ != 0) {
+        setFieldTypeValue(other.getFieldTypeValue());
       }
       if (!other.getDictId().isEmpty()) {
         dictId_ = other.dictId_;
@@ -954,71 +1087,46 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object fieldType_ = "";
+    private int fieldType_ = 0;
     /**
-     * <code>string fieldType = 4;</code>
+     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
      */
-    public java.lang.String getFieldType() {
-      java.lang.Object ref = fieldType_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        fieldType_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+    public int getFieldTypeValue() {
+      return fieldType_;
     }
     /**
-     * <code>string fieldType = 4;</code>
+     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
      */
-    public com.google.protobuf.ByteString
-        getFieldTypeBytes() {
-      java.lang.Object ref = fieldType_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        fieldType_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string fieldType = 4;</code>
-     */
-    public Builder setFieldType(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+    public Builder setFieldTypeValue(int value) {
       fieldType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string fieldType = 4;</code>
+     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.valueOf(fieldType_);
+      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
+     */
+    public Builder setFieldType(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      
+      fieldType_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
      */
     public Builder clearFieldType() {
       
-      fieldType_ = getDefaultInstance().getFieldType();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string fieldType = 4;</code>
-     */
-    public Builder setFieldTypeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      fieldType_ = value;
+      fieldType_ = 0;
       onChanged();
       return this;
     }

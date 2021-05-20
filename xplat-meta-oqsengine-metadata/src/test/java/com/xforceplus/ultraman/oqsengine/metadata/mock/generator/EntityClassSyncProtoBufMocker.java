@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,16 +20,16 @@ import java.util.List;
  * @since 1.8
  */
 public class EntityClassSyncProtoBufMocker {
-    public static List<GeneralConstant.FourTa<Integer, FieldType, CalculateType, Boolean>> EXPECTED_ENTITY_INFO_LIST =
+    public static List<GeneralConstant.FourTa<Integer, String, CalculateType, Boolean>> EXPECTED_ENTITY_INFO_LIST =
         Arrays.asList(
-            new GeneralConstant.FourTa<>(1, FieldType.LONG, CalculateType.NORMAL, false),
-            new GeneralConstant.FourTa<>(2, FieldType.STRING, CalculateType.NORMAL, false),
-            new GeneralConstant.FourTa<>(3, FieldType.LONG, CalculateType.FORMULA, false),
-            new GeneralConstant.FourTa<>(4, FieldType.STRING, CalculateType.AUTO_FILL, false)
+            new GeneralConstant.FourTa<>(1, FieldType.LONG.name(), CalculateType.NORMAL, false),
+            new GeneralConstant.FourTa<>(2, FieldType.STRING.name(), CalculateType.NORMAL, false),
+            new GeneralConstant.FourTa<>(3, FieldType.LONG.name(), CalculateType.FORMULA, false),
+            new GeneralConstant.FourTa<>(4, FieldType.STRING.name(), CalculateType.AUTO_FILL, false)
         );
 
-    public static GeneralConstant.FourTa<Integer, FieldType, CalculateType, Boolean> EXPECTED_PROFILE_FOUR_TA =
-        new GeneralConstant.FourTa<>(10, FieldType.LONG, CalculateType.FORMULA, true);
+    public static GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> EXPECTED_PROFILE_FOUR_TA =
+        new GeneralConstant.FourTa<>(10, FieldType.LONG.name(), CalculateType.FORMULA, true);
 
     public static class Response {
         /**
@@ -110,7 +109,7 @@ public class EntityClassSyncProtoBufMocker {
     /**
      * 生成profileInfo.
      */
-    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, FieldType, CalculateType, Boolean> fourTa) {
+    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
         return ProfileInfo.newBuilder().setCode(code)
             .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id, GeneralConstant.DEFAULT_RELATION_TYPE, id))
             .addEntityFieldInfo(
@@ -141,16 +140,24 @@ public class EntityClassSyncProtoBufMocker {
             .setPatten(patten).setModel(model).setMin(min).setStep(step).build();
     }
 
+    private static EntityFieldInfo.FieldType toFieldType(String type) {
+        for (EntityFieldInfo.FieldType fieldType : EntityFieldInfo.FieldType.values()) {
+            if (fieldType.name().equals(type)) {
+                return fieldType;
+            }
+        }
+        return EntityFieldInfo.FieldType.UNKNOWN;
+    }
     /**
      * 生成entityFieldInfo.
      */
     public static EntityFieldInfo entityFieldInfo(long id,
-                                                  GeneralConstant.FourTa<Integer, FieldType, CalculateType, Boolean> fourTa) {
+                                                  GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()
             .setId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .setName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .setCname(GeneralEntityUtils.EntityFieldHelper.cname(id))
-            .setFieldType(fourTa.getB().getType())
+            .setFieldType(toFieldType(fourTa.getB()))
             .setDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
             .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
 
@@ -187,9 +194,9 @@ public class EntityClassSyncProtoBufMocker {
             .setRelationType(relationType)
             .setEntityField(EntityFieldInfo.newBuilder()
                 .setId(fieldId)
-                .setFieldType(FieldType.LONG.name())
+                .setFieldType(toFieldType(FieldType.LONG.name()))
                 .setName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-                .setFieldConfig(fieldConfig(true, FieldConfig.FieldSense.NORMAL.getSymbol()))
+                .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE))
                 .build())
             .setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id))
             .build();
@@ -199,7 +206,7 @@ public class EntityClassSyncProtoBufMocker {
      * 生成.
      */
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(
-        boolean searchable, int systemFieldType) {
+        boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)

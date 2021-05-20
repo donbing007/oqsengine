@@ -58,9 +58,13 @@ public interface FieldConfigOrBuilder extends
       getDisplayTypeBytes();
 
   /**
-   * <code>int32 metaFieldSense = 9;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
-  int getMetaFieldSense();
+  int getMetaFieldSenseValue();
+  /**
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense getMetaFieldSense();
 
   /**
    * <code>int32 fuzzyType = 10;</code>

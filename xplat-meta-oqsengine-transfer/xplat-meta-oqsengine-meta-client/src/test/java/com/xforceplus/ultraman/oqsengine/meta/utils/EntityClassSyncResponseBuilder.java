@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
@@ -63,8 +61,8 @@ public class EntityClassSyncResponseBuilder {
      */
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
-        entityFieldInfos.add(entityFieldInfo(id, "LONG"));
-        entityFieldInfos.add(entityFieldInfo(id + 1, "STRING"));
+        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
+        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
         relationInfos.add(relationInfo(id, id + 2, id, 1, id));
@@ -90,21 +88,21 @@ public class EntityClassSyncResponseBuilder {
     public static ProfileInfo profileInfo(long id) {
         return ProfileInfo.newBuilder().setCode("common")
                 .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
-                .addEntityFieldInfo(entityFieldInfo(id, "LONG"))
+                .addEntityFieldInfo(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG))
                 .build();
     }
 
     /**
      * entityFieldInfo.
      */
-    public static EntityFieldInfo entityFieldInfo(long id, String fieldType) {
+    public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
         return EntityFieldInfo.newBuilder()
                 .setId(id)
                 .setName(id + "_name")
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, 1))
+                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
                 .build();
     }
 
@@ -118,7 +116,7 @@ public class EntityClassSyncResponseBuilder {
                 .setBelongToOwner(id % 2 == 0)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
-                        .setFieldType("LONG")
+                        .setFieldType(EntityFieldInfo.FieldType.LONG)
                         .setName(fieldId + "_name")
                         .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
@@ -127,7 +125,7 @@ public class EntityClassSyncResponseBuilder {
     }
 
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
-    fieldConfig(boolean searchable, int systemFieldType) {
+    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)

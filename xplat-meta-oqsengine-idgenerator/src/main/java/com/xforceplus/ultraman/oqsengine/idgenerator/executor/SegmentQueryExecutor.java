@@ -48,7 +48,9 @@ public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Option
                             .withId(rs.getLong(SegmentFieldDefine.ID))
                             .withMaxId(rs.getLong(SegmentFieldDefine.MAX_ID))
                             .withMode(rs.getInt(SegmentFieldDefine.MODE))
-                            .withPatten(rs.getString(SegmentFieldDefine.PATTEN))
+                            .withPatten(rs.getString(SegmentFieldDefine.PATTERN))
+                            .withPatternKey(rs.getString(SegmentFieldDefine.PATTERN_KEY))
+                            .withResetable(rs.getInt(SegmentFieldDefine.RESETABLE))
                             .withStep(rs.getInt(SegmentFieldDefine.STEP))
                             .withVersion(rs.getLong(SegmentFieldDefine.VERSION)).build();
 
@@ -57,6 +59,10 @@ public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Option
                 return Optional.ofNullable(entity);
             }
         }
+        catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public String buildSQL() {
@@ -68,7 +74,9 @@ public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Option
                         SegmentFieldDefine.BEGIN_ID,
                         SegmentFieldDefine.MAX_ID,
                         SegmentFieldDefine.STEP,
-                        SegmentFieldDefine.PATTEN,
+                        SegmentFieldDefine.PATTERN,
+                        SegmentFieldDefine.PATTERN_KEY,
+                        SegmentFieldDefine.RESETABLE,
                         SegmentFieldDefine.MODE,
                         SegmentFieldDefine.VERSION,
                         SegmentFieldDefine.CREATE_TIME,

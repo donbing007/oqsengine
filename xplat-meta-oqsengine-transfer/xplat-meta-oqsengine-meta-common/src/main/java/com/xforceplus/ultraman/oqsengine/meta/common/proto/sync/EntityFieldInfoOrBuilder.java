@@ -33,14 +33,13 @@ public interface EntityFieldInfoOrBuilder extends
       getCnameBytes();
 
   /**
-   * <code>string fieldType = 4;</code>
+   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
    */
-  java.lang.String getFieldType();
+  int getFieldTypeValue();
   /**
-   * <code>string fieldType = 4;</code>
+   * <code>.EntityFieldInfo.FieldType fieldType = 4;</code>
    */
-  com.google.protobuf.ByteString
-      getFieldTypeBytes();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.FieldType getFieldType();
 
   /**
    * <code>string dictId = 5;</code>

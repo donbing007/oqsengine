@@ -9,11 +9,11 @@ import java.io.Serializable;
  * 作者(@author): liwei
  * 创建时间: 5/13/21 4:40 PM
  */
-public class PattenValue implements Serializable {
+public class PatternValue implements Serializable {
 
     private static final long serialVersionUID = -8015203769645869019L;
 
-    public PattenValue(long id, String value) {
+    public PatternValue(long id, String value) {
         this.id = id;
         this.value = value;
     }

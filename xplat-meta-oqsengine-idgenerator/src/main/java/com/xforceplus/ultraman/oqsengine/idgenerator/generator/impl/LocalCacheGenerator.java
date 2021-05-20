@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.IDResult;
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PattenValue;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.ResultCode;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
@@ -50,6 +50,28 @@ public class LocalCacheGenerator implements IDGenerator {
         }
     }
 
+    public synchronized void resetBizType(IDResult result) {
+        String message = null;
+        if(current != null) {
+            current = null;
+        }
+        if(next != null) {
+            next = null;
+        }
+        String patternKey = result.getPatternKey();
+        try {
+            segmentService.resetSegment(bizType, patternKey);
+        }
+        catch (Throwable throwable) {
+            message = throwable.getMessage();
+        }
+        if(message != null) {
+            throw new IDGeneratorException("Error reset the segment: "+ message);
+        }
+
+    }
+
+
     private SegmentId querySegmentId() {
         String message = null;
         try {
@@ -91,11 +113,14 @@ public class LocalCacheGenerator implements IDGenerator {
                 loadCurrent();
                 continue;
             }
-            PattenValue currentValue = current.getCurrentId();
             IDResult result = current.nextId();
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent();
-            } else {
+            }
+            else if(result.getCode() == ResultCode.RESET) {
+                resetBizType(result);
+            }
+            else {
                 if (result.getCode() == ResultCode.LOADING) {
                     loadNext();
                 }

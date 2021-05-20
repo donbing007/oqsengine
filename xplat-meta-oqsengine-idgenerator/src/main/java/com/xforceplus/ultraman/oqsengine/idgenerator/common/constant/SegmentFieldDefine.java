@@ -13,7 +13,9 @@ public class SegmentFieldDefine {
     public static final String BEGIN_ID = "begin_id";
     public static final String MAX_ID = "max_id";
     public static final String STEP = "step";
-    public static final String PATTEN = "patten";
+    public static final String PATTERN = "pattern";
+    public static final String PATTERN_KEY = "pattern_key";
+    public static final String RESETABLE = "resetable";
     public static final String MODE = "mode";
     public static final String CREATE_TIME = "create_time";
     public static final String UPDATE_TIME = "update_time";

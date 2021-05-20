@@ -100,6 +100,32 @@ public class DistributeCacheGenerator implements IDGenerator {
         }
     }
 
+
+    public synchronized void resetBizType(IDResult result) {
+        FencedLock lock = HazelcastUtil.getInstance().getCPSubsystem().getLock(this.bizType);
+        lock.lock();
+        try {
+            String message = null;
+            if (current != null) {
+                current.set(null);
+            }
+            if (next != null) {
+                next.set(null);
+            }
+            String patternKey = result.getPatternKey();
+            try {
+                segmentService.resetSegment(bizType, patternKey);
+            } catch (Throwable throwable) {
+                message = throwable.getMessage();
+            }
+            if (message != null) {
+                throw new IDGeneratorException("Error reset the segment: " + message);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public String nextId() {
         while (true) {
@@ -120,7 +146,11 @@ public class DistributeCacheGenerator implements IDGenerator {
             }
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent();
-            } else {
+            }
+            else if(result.getCode() == ResultCode.RESET) {
+                resetBizType(result);
+            }
+            else {
                 if (result.getCode() == ResultCode.LOADING) {
                     loadNext();
                 }

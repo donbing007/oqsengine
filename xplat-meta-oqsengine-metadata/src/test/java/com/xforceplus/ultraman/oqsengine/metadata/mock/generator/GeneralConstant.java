@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig;
 import java.util.AbstractMap;
 
 /**
@@ -15,7 +16,8 @@ public class GeneralConstant {
     public static final int DEFAULT_RELATION_TYPE = 1;
     public static final int MOCK_PROFILE_R_DISTANCE = 200101;
     public static final int MOCK_PROFILE_E_DISTANCE = 100101;
-    public static final int MOCK_SYSTEM_FIELD_TYPE = 1;
+    public static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense MOCK_SYSTEM_FIELD_TYPE =
+        FieldConfig.MetaFieldSense.NORMAL;
 
     public static final String MOCK_EXPRESSION = "return 1 + 1;";
     public static final int MOCK_LEVEL = 1;
