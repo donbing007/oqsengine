@@ -2,10 +2,10 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.SegmentFieldDefine;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 /**
  * desc :
@@ -17,19 +17,20 @@ import java.sql.SQLException;
  */
 public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, Integer> {
 
-    public SegmentResetExecutor(String tableName, TransactionResource resource, long timeoutMs) {
-        super(tableName, resource, timeoutMs);
+    public SegmentResetExecutor(String tableName, DataSource dataSource, long timeoutMs) {
+        super(tableName, dataSource, timeoutMs);
     }
 
     public static SegmentResetExecutor
-                                build(String tableName, TransactionResource resource, long timeout) {
-        return new SegmentResetExecutor(tableName, resource, timeout);
+                                build(String tableName, DataSource dataSource, long timeout) {
+        return new SegmentResetExecutor(tableName, dataSource, timeout);
     }
 
     @Override
     public Integer execute(SegmentInfo segmentInfo) throws SQLException {
         String sql = buildSQL();
-        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+        try (Connection connection = getDataSource().getConnection();
+             PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1,segmentInfo.getPatternKey());
             st.setLong(2, segmentInfo.getId());
             st.setLong(3,segmentInfo.getMaxId());

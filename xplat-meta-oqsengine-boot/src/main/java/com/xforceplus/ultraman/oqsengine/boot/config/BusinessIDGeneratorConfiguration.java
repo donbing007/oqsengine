@@ -129,4 +129,5 @@ public class BusinessIDGeneratorConfiguration {
     public PattenParser numberPattenParser() {
         return new NumberPattenParser();
     }
+
 }

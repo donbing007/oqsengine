@@ -59,6 +59,12 @@ public class DataSourceConfiguration {
 
     @Bean
     @DependsOn("dataSourcePackage")
+    public DataSource segmentDataSource(DataSourcePackage dataSourcePackage) {
+        return dataSourcePackage.getSegment();
+    }
+
+    @Bean
+    @DependsOn("dataSourcePackage")
     public DataSource changelogDataSource(DataSourcePackage dataSourcePackage) {
         return dataSourcePackage.getChangelog();
     }

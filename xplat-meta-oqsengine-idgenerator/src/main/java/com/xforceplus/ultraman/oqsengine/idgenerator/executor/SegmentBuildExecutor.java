@@ -2,12 +2,12 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.SegmentFieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
+import javax.sql.DataSource;
 
 /**
  * desc :
@@ -19,18 +19,19 @@ import java.util.Collections;
  */
 public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, Integer> {
 
-    public SegmentBuildExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public SegmentBuildExecutor(String tableName, DataSource resource, long timeout) {
         super(tableName, resource, timeout);
     }
 
-    public static SegmentBuildExecutor build(String tableName, TransactionResource<Connection> resource, long timeout) {
-        return new SegmentBuildExecutor(tableName, resource, timeout);
+    public static SegmentBuildExecutor build(String tableName, DataSource dataSource, long timeout) {
+        return new SegmentBuildExecutor(tableName, dataSource, timeout);
     }
 
     @Override
     public Integer execute(SegmentInfo res) throws SQLException {
         String sql = buildSQL();
-        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+        try (Connection connection = getDataSource().getConnection();
+             PreparedStatement st = connection.prepareStatement(sql)) {
             int pos = 1;
             st.setString(pos++, res.getBizType());
             st.setLong(pos++, res.getBeginId());
