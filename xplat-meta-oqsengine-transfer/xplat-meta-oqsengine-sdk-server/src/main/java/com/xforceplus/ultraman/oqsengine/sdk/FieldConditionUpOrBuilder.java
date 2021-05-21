@@ -69,4 +69,10 @@ public interface FieldConditionUpOrBuilder extends
    * <code>.FieldUp field = 4;</code>
    */
   com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getFieldOrBuilder();
+
+  /**
+   * <code>int64 relationId = 5;</code>
+   * @return The relationId.
+   */
+  long getRelationId();
 }

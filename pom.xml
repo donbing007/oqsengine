@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -48,7 +48,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.42</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <configLocation>../checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
@@ -105,15 +112,19 @@
     <modules>
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
+        <module>xplat-meta-oqsengine-tokenizer</module>
+        <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-metadata</module>
         <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-cdc</module>
         <module>xplat-meta-oqsengine-core</module>
         <module>xplat-meta-oqsengine-transfer</module>
+        <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
     </modules>
@@ -241,7 +252,7 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
-                <version>1.15.0-rc2</version>
+                <version>1.15.2</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -290,6 +301,31 @@
                 <groupId>p6spy</groupId>
                 <artifactId>p6spy</artifactId>
                 <version>3.9.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-core</artifactId>
+                <version>1.28</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-generator-annprocess</artifactId>
+                <version>1.28</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.javafaker</groupId>
+                <artifactId>javafaker</artifactId>
+                <version>1.0.2</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>jcseg-core</artifactId>
+                <version>2.6.2</version>
             </dependency>
 
         </dependencies>

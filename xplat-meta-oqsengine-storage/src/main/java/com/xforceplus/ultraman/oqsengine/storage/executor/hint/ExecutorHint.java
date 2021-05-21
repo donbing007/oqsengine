@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor.hint;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-
 /**
  * 执行器的提示器.
  *
@@ -24,13 +22,5 @@ public interface ExecutorHint {
      * @param rollback true需要,false不需要.
      */
     void setRollback(boolean rollback);
-
-    /**
-     * 返回事务累加器.
-     *
-     * @return 累加器.
-     */
-    TransactionAccumulator getAccumulator();
-
 
 }

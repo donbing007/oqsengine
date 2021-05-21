@@ -1,19 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 
-import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
 
 /**
- * desc :
+ * desc :.
  * name : RawEntryTest
  *
- * @author : xujia
- * date : 2020/11/5
+ * @author : xujia 2020/11/5
  * @since : 1.8
  */
 public class RawEntryTest {
@@ -35,7 +36,7 @@ public class RawEntryTest {
 
     @Test
     public void testHashMapRecover() {
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             rawEntries.put(Long.valueOf(i % expectedSize + ""), rawLists.get(i));
         }
 
@@ -49,6 +50,6 @@ public class RawEntryTest {
     }
 
     private RawEntry buildRawEntry(int i) {
-        return new RawEntry(i, 1L, System.currentTimeMillis(), new ArrayList<>());
+        return new RawEntry("test", 1, i, 1L, System.currentTimeMillis(), new ArrayList<>());
     }
 }

@@ -1,20 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-
-import static org.mockito.Mockito.*;
-
 /**
  * ConnectionTransactionResource Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/11/2020
  * @since <pre>Nov 11, 2020</pre>
  */
@@ -29,15 +30,7 @@ public class SqlConnectionTransactionResourceTest {
     }
 
     /**
-     * Method: type()
-     */
-    @Test
-    public void testType() throws Exception {
-//TODO: Test goes here... 
-    }
-
-    /**
-     * Method: commit(long txId, long commitId)
+     * Method: commit(long txId, long commitId).
      */
     @Test
     public void testCommit() throws Exception {

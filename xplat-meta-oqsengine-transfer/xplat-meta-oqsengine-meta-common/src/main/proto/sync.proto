@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto.sync";
+
+option java_outer_classname = "EntityClassSyncProto";
+
+
+service EntityClassSync {
+    rpc register (stream EntityClassSyncRequest) returns (stream EntityClassSyncResponse) {}
+}
+
+message EntityClassSyncRequest {
+	string uid = 1;
+	string appId = 2;
+	int32 version = 3;
+	int32 status = 4;
+	string env = 5;
+	bool force = 6;
+}
+
+message EntityClassSyncResponse {
+	string appId = 1;
+	int32 version = 2;
+	string uid = 3;
+	int32 status = 4;
+	string env = 5;
+	string md5 = 6;
+	EntityClassSyncRspProto entityClassSyncRspProto = 7;
+	bool force = 8;
+}
+
+message EntityClassSyncRspProto {
+	repeated EntityClassInfo entityClasses = 1;
+}
+
+message EntityClassInfo {
+	string code = 1;
+	int64 id = 2;
+	string name = 3;
+	int64 father = 4;
+	int32 level = 5;
+	int32 version = 6;
+	repeated EntityFieldInfo entityFields = 7;
+	repeated RelationInfo relations = 8;
+}
+
+message EntityFieldInfo {
+	int64 id = 1;
+	string name = 2;
+	string cname = 3;
+
+	enum FieldType {
+		UNKNOWN = 0;
+		BOOLEAN = 1;
+		ENUM = 2;
+		DATETIME = 3;
+		LONG = 4;
+		STRING = 5;
+		STRINGS = 6;
+		DECIMAL = 7;
+	}
+
+	FieldType fieldType = 4;
+	string dictId = 5;
+	string defaultValue = 6;
+	FieldConfig fieldConfig = 7;
+}
+
+message FieldConfig {
+	bool searchable = 1;
+	int64 max = 2;
+	int64 min = 3;
+	int32 precision = 4;
+	bool identifier = 5;
+	bool isRequired = 6;
+	string validateRegexString = 7;
+	string displayType = 8;
+	MetaFieldSense metaFieldSense = 9;
+
+	enum MetaFieldSense {
+			UNKNOWN = 0;
+			NORMAL = 1;
+			TENANT_ID = 2;
+			TENANT_CODE = 3;
+			CREATE_TIME = 4;
+			UPDATE_TIME = 5;
+			CREATE_USER_ID = 6;
+			UPDATE_USER_ID = 7;
+			CREATE_USER_NAME = 8;
+			UPDATE_USER_NAME = 9;
+			DELETE_FLAG = 10;
+	}
+
+	int32 fuzzyType = 10;
+	int32 wildcardMinWidth = 11;
+	int32 wildcardMaxWidth = 12;
+	string uniqueName = 13;
+}
+
+message RelationInfo {
+	int64 id = 1;
+	string code = 2;
+	int64 rightEntityClassId = 3;
+	int64 leftEntityClassId = 4;
+	string leftEntityClassCode = 5;
+	int32 relationType = 6;
+	bool identity = 7;
+	EntityFieldInfo entityField = 8;
+	bool belongToOwner = 9;
+	bool strong = 10;
+}

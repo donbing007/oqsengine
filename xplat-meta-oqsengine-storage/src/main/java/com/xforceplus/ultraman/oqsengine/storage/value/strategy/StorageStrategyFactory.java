@@ -1,8 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.*;
-
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.DateTimeStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.EnumStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringsStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.UnsupportStorageStrategy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,20 +20,23 @@ import java.util.Map;
  */
 public class StorageStrategyFactory {
 
-    private static final Map<FieldType, StorageStrategy> COMMON_STRATEGY = new HashMap() {{
-        put(FieldType.LONG, new LongStorageStrategy());
-        put(FieldType.STRING, new StringStorageStrategy());
-        put(FieldType.BOOLEAN, new BoolStorageStrategy());
-        put(FieldType.DATETIME, new DateTimeStorageStrategy());
-        put(FieldType.ENUM, new EnumStorageStrategy());
-        put(FieldType.STRINGS, new StringsStorageStrategy());
-    }};
+    private static final Map<FieldType, StorageStrategy> COMMON_STRATEGY = new HashMap();
 
-    private StorageStrategy DEFAULT_STRATEGY = new UnsupportStorageStrategy();
+    static {
+        COMMON_STRATEGY.put(FieldType.LONG, new LongStorageStrategy());
+        COMMON_STRATEGY.put(FieldType.STRING, new StringStorageStrategy());
+        COMMON_STRATEGY.put(FieldType.BOOLEAN, new BoolStorageStrategy());
+        COMMON_STRATEGY.put(FieldType.DATETIME, new DateTimeStorageStrategy());
+        COMMON_STRATEGY.put(FieldType.ENUM, new EnumStorageStrategy());
+        COMMON_STRATEGY.put(FieldType.STRINGS, new StringsStorageStrategy());
+    }
+
+    private static final StorageStrategy DEFAULT_STRATEGY = new UnsupportStorageStrategy();
     private Map<FieldType, StorageStrategy> strategies;
 
     /**
      * 得到一个默认的策略工厂,已经内置了基本类型的处理策略实现.
+     *
      * @return 工厂实例.
      */
     public static StorageStrategyFactory getDefaultFactory() {
@@ -44,7 +52,8 @@ public class StorageStrategyFactory {
 
     /**
      * 注册一个新的字段类型策略,如果已经存在相应字段类型策略将被覆盖.
-     * @param type 目标字段类型.
+     *
+     * @param type            目标字段类型.
      * @param storageStrategy 策略.
      */
     public void register(FieldType type, StorageStrategy storageStrategy) {
@@ -57,6 +66,7 @@ public class StorageStrategyFactory {
 
     /**
      * 根据逻辑值类型获取转换策略.
+     *
      * @param type 逻辑类型.
      * @return 储存策略.
      */

@@ -1,14 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.alibaba.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.LongStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 累加器的默认实现.
@@ -27,36 +27,58 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     private volatile Set<Long> processIds = null;
     private final Object processIdsLock = new Object();
+    /**
+     * 当前操作的最大序号,从0开始.
+     */
+    private AtomicLong opNumber = new AtomicLong(-1);
+
+    private CacheEventHandler cacheEventHandler;
+    private long txId;
+
+    public DefaultTransactionAccumulator(long txId, CacheEventHandler cacheEventHandler) {
+        this.txId = txId;
+        this.cacheEventHandler = cacheEventHandler;
+    }
 
     @Override
-    public void accumulateBuild(long id) {
+    public boolean accumulateBuild(IEntity entity) {
         buildNumbers.incrementAndGet();
+        opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: create number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: create number +1.[{}]", entity.id());
         }
+
+        return cacheEventHandler.create(txId, opNumber.get(), entity);
     }
 
     @Override
-    public void accumulateReplace(long id) {
+    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity) {
         replaceNumbers.incrementAndGet();
+        opNumber.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(id);
+        getProcessIdsIdsSet(true).add(newEntity.id());
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: replace number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: replace number +1.[{}]", newEntity.id());
         }
+
+        return cacheEventHandler.replace(txId, opNumber.get(), newEntity, oldEntity);
     }
 
     @Override
-    public void accumulateDelete(long id) {
+    public boolean accumulateDelete(IEntity entity) {
         deleteNumbers.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(id);
+        getProcessIdsIdsSet(true).add(entity.id());
+
+        opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: delete number +1.[{}]", id);
+            logger.debug("Transaction Accumulator: delete number +1.[{}]", entity.id());
         }
+
+        return cacheEventHandler.delete(txId, opNumber.get(), entity);
     }
 
     @Override
@@ -90,6 +112,12 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
         buildNumbers.set(0);
         replaceNumbers.set(0);
         deleteNumbers.set(0);
+        opNumber.set(0);
+    }
+
+    @Override
+    public long operationNumber() {
+        return opNumber.get();
     }
 
     private Set<Long> getProcessIdsIdsSet(boolean build) {

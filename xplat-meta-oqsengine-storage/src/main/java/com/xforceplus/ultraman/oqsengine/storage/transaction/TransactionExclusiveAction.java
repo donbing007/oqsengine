@@ -14,7 +14,7 @@ public interface TransactionExclusiveAction {
     /**
      * 实际动作.
      *
-     * @throws SQLException
+     * @throws SQLException 异常.
      */
     void act() throws SQLException;
 }

@@ -16,6 +16,7 @@ public interface ConditionCompareStrategy<T> {
 
     /**
      * 生成条件 SQL.
+     *
      * @param fieldPrefix 最终每个字段的前辍.
      * @param condition 目标条伯.
      * @param storageStrategyFactory storage转换策略工厂.

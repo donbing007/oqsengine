@@ -1,15 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 时间轮转算法实现.
- * <p>
  * 所有的时间单位都以毫秒为单位.
  * 默认分隔为512个槽位,每一个槽位时间区间为100毫秒.
  *
@@ -25,11 +32,11 @@ public class TimerWheel<T> {
 
     private final Lock lock = new ReentrantLock();
 
-    /**
+    /*
      * 时间单位
      */
     private final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
-    /**
+    /*
      * 每个slot间隔时间
      */
     private final long duration;
@@ -38,7 +45,7 @@ public class TimerWheel<T> {
     private final List<Slot> wheel;
     private final ExecutorService worker;
     private int currentSlot;
-    /**
+    /*
      * 删除助手.
      */
     private final Map<T, Integer> removeHelp;
@@ -135,7 +142,9 @@ public class TimerWheel<T> {
         if (specialTimeout < this.duration) {
             specialTimeout = this.duration;
         }
-        int virtualSlotIndex, actuallySlotIndex, round;
+        int virtualSlotIndex;
+        int actuallySlotIndex;
+        int round;
         lock.lock();
         try {
             virtualSlotIndex = calculateVirtualSlot(specialTimeout);

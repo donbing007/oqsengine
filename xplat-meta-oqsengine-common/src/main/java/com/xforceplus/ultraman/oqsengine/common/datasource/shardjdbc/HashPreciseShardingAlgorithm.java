@@ -1,10 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc;
 
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import java.util.Collection;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
-
-import java.util.Collection;
 
 /**
  * hash分片算法.

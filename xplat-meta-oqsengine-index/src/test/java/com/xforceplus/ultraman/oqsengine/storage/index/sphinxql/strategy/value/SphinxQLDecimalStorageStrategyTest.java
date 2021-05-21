@@ -8,18 +8,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import java.math.BigDecimal;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.util.Collection;
-
 /**
  * DecimalStorageStrategy Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/05/2020
  * @since <pre>Mar 5, 2020</pre>
  */

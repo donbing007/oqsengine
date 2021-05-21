@@ -8,23 +8,26 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtEqNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * 查询条件构造器工厂.
+ *
  * @author dongbin
  * @version 0.1 2020/3/26 10:22
  * @since 1.8
  */
-public class SphinxQLConditionQueryBuilderFactory {
+public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
-    private ConcurrentMap<String, SphinxQLConditionBuilder> builders;
+    private ConcurrentMap<String, AbstractSphinxQLConditionBuilder> builders;
+    private TokenizerFactory tokenizerFactory;
 
     public SphinxQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
-        init();
     }
 
     private static String buildKey(FieldType fieldType, ConditionOperator operator, boolean match, boolean id) {
@@ -32,10 +35,9 @@ public class SphinxQLConditionQueryBuilderFactory {
     }
 
     /**
-     * @see FieldType
-     * @see ConditionOperator
+     * 初始化.
      */
-    private void init() {
+    public void init() {
         builders = new ConcurrentHashMap<>();
 
 
@@ -88,42 +90,55 @@ public class SphinxQLConditionQueryBuilderFactory {
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
-            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true)
+            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS,
+                true)
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
             new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, true)
         );
+
+        builders.values().stream().forEach(b -> {
+            if (TokenizerFactoryAble.class.isInstance(b)) {
+                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+        });
     }
 
-    public SphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {
+    /**
+     * 获取条件查询条件构造器实例.
+     *
+     * @param condition 条件.
+     * @param match true 全文,false非全文.
+     * @return 实例.
+     */
+    public AbstractSphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {
 
         String key = buildKey(
             condition.getField().type(), condition.getOperator(), match, condition.getField().config().isIdentifie());
 
-        SphinxQLConditionBuilder builder = builders.get(key);
-        if (builder == null) {
+        AbstractSphinxQLConditionBuilder builder = builders.computeIfAbsent(key, k -> {
+            AbstractSphinxQLConditionBuilder b;
+            if (match) {
+                b = new MatchConditionBuilder(
+                    storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
+            } else {
 
-            synchronized (key) {
-                builder = builders.get(key);
-
-                if (builder == null) {
-
-                    if (match) {
-                        builder = new MatchConditionBuilder(
-                            storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
-                    } else {
-
-                        builder = new NotMatchConditionBuilder(
-                            storageStrategyFactory, condition.getField().type(), condition.getOperator());
-                    }
-
-                    builders.put(key, builder);
-                }
+                b = new NotMatchConditionBuilder(
+                    storageStrategyFactory, condition.getField().type(), condition.getOperator());
             }
 
-        }
+            if (TokenizerFactoryAble.class.isInstance(b)) {
+                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+            return b;
+        });
 
         return builder;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 }

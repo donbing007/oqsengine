@@ -3,17 +3,17 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * desc :
+ * desc :.
  * name : MockRedisCallbackService
  *
- * @author : xujia
- * date : 2020/11/10
+ * @author : xujia 2020/11/10
  * @since : 1.8
  */
 public class MockRedisCallbackService implements CDCMetricsCallback {
@@ -24,9 +24,14 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private CDCMetrics cdcMetrics;
     private CDCAckMetrics ackMetrics;
+    private CommitIdStatusService commitIdStatusService;
+    private CDCStatusServiceImpl cdcStatusService;
     private long heartBeat;
     private long notReady;
 
+    /**
+     * 重置.
+     */
     public void reset() {
         cdcMetrics = null;
         ackMetrics = null;
@@ -39,17 +44,40 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
         return ackMetrics;
     }
 
+    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
+    }
+
+    public MockRedisCallbackService(CommitIdStatusService commitIdStatusService,
+                                    CDCStatusServiceImpl cdcStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
+        this.cdcStatusService = cdcStatusService;
+    }
+
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
         this.ackMetrics = ackMetrics;
 
-        if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED &&
-                this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
-            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
-            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+        if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED) {
+            if (null != commitIdStatusService) {
+                ackMetrics.getCommitList().forEach(
+                    id -> {
+                        commitIdStatusService.obsolete(id);
+                    }
+                );
+            }
+
+            addMetrics();
         }
 //
 //        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+    }
+
+    private synchronized void addMetrics() {
+        if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
+            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+        }
     }
 
     @Override

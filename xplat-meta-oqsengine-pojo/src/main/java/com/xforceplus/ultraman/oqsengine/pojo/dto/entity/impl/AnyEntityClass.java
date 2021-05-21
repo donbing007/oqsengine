@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +22,7 @@ public class AnyEntityClass implements IEntityClass {
 
     /**
      * 获取实例.
+     *
      * @return 实例.
      */
     public static IEntityClass getInstance() {
@@ -44,18 +45,38 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
+    public int version() {
+        return 0;
+    }
+
+    @Override
+    public int level() {
+        return 0;
+    }
+
+    @Override
     public Collection<Relation> relations() {
         return Collections.emptyList();
     }
 
     @Override
-    public Collection<IEntityClass> entityClasss() {
+    public Collection<OqsRelation> oqsRelations() {
+        return null;
+    }
+
+    @Override
+    public Collection<IEntityClass> relationsEntityClasss() {
         return Collections.emptyList();
     }
 
     @Override
-    public IEntityClass extendEntityClass() {
-        return null;
+    public Optional<IEntityClass> father() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Collection<IEntityClass> family() {
+        return Collections.emptyList();
     }
 
     @Override

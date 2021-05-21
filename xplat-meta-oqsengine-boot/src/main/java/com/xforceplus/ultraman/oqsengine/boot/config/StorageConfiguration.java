@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * 储存配置.
+ *
  * @author dongbin
  * @version 0.1 2020/2/24 17:02
  * @since 1.8
@@ -27,6 +29,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StorageConfiguration {
 
+    /**
+     * 主库存储存.
+     */
     @Bean
     public MasterStorage masterStorage(
         @Value("${storage.master.name:oqsbigentity}") String tableName,
@@ -37,19 +42,23 @@ public class StorageConfiguration {
         return storage;
     }
 
+    /**
+     * 索引存储存.
+     */
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
-        @Value("${storage.index.search.maxQueryTimeMs:0}") long maxQueryTimeMs,
-        @Value("${storage.index.search.maxBatchSize:20}") int maxBatchSize) {
+        @Value("${storage.index.search.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
 
-        SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
-        storage.setSearchIndexName(searchIndexName);
+        SphinxQLManticoreIndexStorage storage = new SphinxQLManticoreIndexStorage();
         storage.setMaxSearchTimeoutMs(maxQueryTimeMs);
-        storage.setMaxBatchSize(maxBatchSize);
+        storage.setSearchIndexName(searchIndexName);
         return storage;
     }
 
+    /**
+     * 主库存储存策略工厂.
+     */
     @Bean
     public StorageStrategyFactory masterStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -58,6 +67,9 @@ public class StorageConfiguration {
         return storageStrategyFactory;
     }
 
+    /**
+     * 索引储存策略工厂.
+     */
     @Bean
     public StorageStrategyFactory indexStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.value;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 
 /**
+ * 逻辑物理值转换策略工厂.
+ *
  * @author dongbin
  * @version 0.1 2020/2/19 22:16
  * @since 1.8

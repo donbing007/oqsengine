@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,66 +18,75 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<StorageEntity>> {
+public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<MasterStorageEntity>> {
 
     private boolean noDetail;
-    private boolean noMeta;
+    private IEntityClass entityClass;
 
     /**
      * 查询所有信息.
      *
-     * @param tableName
-     * @param resource
-     * @param timeoutMs
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param timeoutMs 超时毫秒.
+     * @return 执行器实例.
      */
-    public static Executor<Long, Optional<StorageEntity>> buildHaveAllDetail(
-        String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, false, timeoutMs);
+    public static Executor<Long, Optional<MasterStorageEntity>> buildHaveAllDetail(
+        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, entityClass, false, timeoutMs);
     }
 
     /**
-     * 查询包含详细信息
+     * 查询包含详细信息.
      *
-     * @param tableName
-     * @param resource
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @return 执行器实例.
      */
-    public static Executor<Long, Optional<StorageEntity>> buildHaveDetail(
-        String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, true, timeoutMs);
+    public static Executor<Long, Optional<MasterStorageEntity>> buildHaveDetail(
+        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, entityClass, false, timeoutMs);
     }
 
     /**
      * 查询不包含详细信息.只有版本和事务信息.
      *
-     * @param tableName
-     * @param resource
-     * @return
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @return 执行器实例.
      */
-    public static Executor<Long, Optional<StorageEntity>> buildNoDetail(
-        String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, true, true, timeoutMs);
+    public static Executor<Long, Optional<MasterStorageEntity>> buildNoDetail(
+        String tableName, TransactionResource resource, IEntityClass entityClass, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, entityClass, true, timeoutMs);
     }
 
-    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
-        super(tableName, resource);
-        this.noDetail = noDetail;
+    public QueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
+                         boolean noDetail) {
+        this(tableName, resource, entityClass, noDetail, 0);
     }
 
+    /**
+     * 构造实例.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param entityClass 元信息.
+     * @param noDetail true不需要详细信息, false需要详细信息.
+     * @param timeoutMs 超时毫秒.
+     */
     public QueryExecutor(
         String tableName,
         TransactionResource<Connection> resource,
+        IEntityClass entityClass,
         boolean noDetail,
-        boolean noMeta,
         long timeoutMs) {
         super(tableName, resource, timeoutMs);
         this.noDetail = noDetail;
-        this.noMeta = noMeta;
+        this.entityClass = entityClass;
     }
 
     @Override
-    public Optional<StorageEntity> execute(Long id) throws SQLException {
+    public Optional<MasterStorageEntity> execute(Long id) throws SQLException {
         String sql = buildSQL(id);
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
@@ -85,29 +94,31 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
             st.setFetchSize(Integer.MIN_VALUE);
             st.setLong(1, id);
             st.setBoolean(2, false);
+            st.setLong(3, entityClass.id());
 
             checkTimeout(st);
 
-            StorageEntity entity = null;
+            MasterStorageEntity entity = null;
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    entity = new StorageEntity();
-                    entity.setId(id);
-                    entity.setVersion(rs.getInt(FieldDefine.VERSION));
-                    entity.setTime(rs.getLong(FieldDefine.TIME));
-                    entity.setTx(rs.getLong(FieldDefine.TX));
-                    entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
-                    entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+                        .withId(id)
+                        .withVersion(rs.getInt(FieldDefine.VERSION))
+                        .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
+                        .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
+                        .withOp(rs.getInt(FieldDefine.OP));
+
+                    long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
+                    for (int i = 0; i < entityClassIds.length; i++) {
+                        entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
+                    }
+                    storageEntityBuilder.withEntityClasses(entityClassIds);
+
                     if (!noDetail) {
-                        entity.setEntity(rs.getLong(FieldDefine.ENTITY));
-                        entity.setPref(rs.getLong(FieldDefine.PREF));
-                        entity.setCref(rs.getLong(FieldDefine.CREF));
-                        entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                        storageEntityBuilder.withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                     }
-                    if (!noMeta) {
-                        entity.setMeta(rs.getString(FieldDefine.META));
-                    }
+                    entity = storageEntityBuilder.build();
                 }
 
                 return Optional.ofNullable(entity);
@@ -119,27 +130,24 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append(String.join(",",
+            FieldDefine.ENTITYCLASS_LEVEL_0,
+            FieldDefine.ENTITYCLASS_LEVEL_1,
+            FieldDefine.ENTITYCLASS_LEVEL_2,
+            FieldDefine.ENTITYCLASS_LEVEL_3,
+            FieldDefine.ENTITYCLASS_LEVEL_4,
             FieldDefine.VERSION,
-            FieldDefine.TIME,
-            FieldDefine.TX,
-            FieldDefine.COMMITID,
-            FieldDefine.OQS_MAJOR
+            FieldDefine.CREATE_TIME,
+            FieldDefine.UPDATE_TIME,
+            FieldDefine.OQS_MAJOR,
+            FieldDefine.OP
             )
         );
         if (!noDetail) {
             sql.append(",")
                 .append(String.join(",",
-                    FieldDefine.ENTITY,
-                    FieldDefine.PREF,
-                    FieldDefine.CREF,
                     FieldDefine.ATTRIBUTE
                     )
                 );
-        }
-
-        if (!noMeta) {
-            sql.append(",")
-                .append(FieldDefine.META);
         }
 
         sql.append(" FROM ")
@@ -147,7 +155,11 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
             .append(" WHERE ")
             .append(FieldDefine.ID).append("=").append("?")
             .append(" AND ")
-            .append(FieldDefine.DELETED).append("=").append("?");
+            .append(FieldDefine.DELETED).append("=").append("?")
+            .append(" AND ");
+
+        int level = entityClass.level();
+        sql.append(FieldDefine.ENTITYCLASS_LEVEL_LIST[level]).append("=?");
         return sql.toString();
     }
 }

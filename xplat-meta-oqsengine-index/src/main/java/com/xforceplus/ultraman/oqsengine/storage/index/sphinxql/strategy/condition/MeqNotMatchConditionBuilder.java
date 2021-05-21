@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -10,15 +11,16 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
 import java.util.Arrays;
 
 /**
+ * in 不等于.
+ *
  * @author dongbin
  * @version 0.1 2020/3/26 14:42
  * @since 1.8
  */
-public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
+public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
     public MeqNotMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType) {
         super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, false);
@@ -28,16 +30,32 @@ public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
     protected String doBuild(Condition condition) {
         IValue firstValue = condition.getFirstValue();
         StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(condition.getField().type());
-        StorageValue sValue = storageStrategy.toStorageValue(firstValue);
+        StorageValue storageValue = storageStrategy.toStorageValue(firstValue);
         StringBuilder buff = new StringBuilder();
 
-        if (condition.getField().config().isIdentifie()) {
+        FieldConfig fieldConfig = condition.getField().config();
+        if (fieldConfig.isIdentifie()) {
+
             buff.append(FieldDefine.ID);
+
         } else {
-            buff.append(FieldDefine.JSON_FIELDS).append(".").append(sValue.storageName());
+
+            switch (fieldConfig.getFieldSense()) {
+                case CREATE_TIME: {
+                    buff.append(FieldDefine.CREATE_TIME);
+                    break;
+                }
+                case UPDATE_TIME: {
+                    buff.append(FieldDefine.UPDATE_TIME);
+                    break;
+                }
+                default: {
+                    buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                }
+            }
         }
         buff.append(" IN (");
-        buff.append(buildConditionValue(sValue, storageStrategy));
+        buff.append(buildConditionValue(storageValue, storageStrategy));
 
         Arrays.stream(condition.getValues()).skip(1).map(v -> storageStrategy.toStorageValue(v)).forEach(s -> {
             buff.append(",").append(buildConditionValue(s, storageStrategy));
@@ -51,7 +69,7 @@ public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
     private String buildConditionValue(StorageValue storageValue, StorageStrategy storageStrategy) {
         String conditionValue;
         if (storageStrategy.storageType() == StorageType.STRING) {
-            conditionValue = "'" + SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()) + "'";
+            conditionValue = "'" + SphinxQLHelper.encodeJsonCharset((String) storageValue.value()) + "'";
         } else {
             conditionValue = storageValue.value().toString();
         }

@@ -2,24 +2,24 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
 /**
  * SphinxQLTransactionResource Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 12/02/2020
  * @since <pre>Dec 2, 2020</pre>
  */
@@ -54,7 +54,8 @@ public class SphinxQLTransactionResourceTest {
         Connection conn = ds.getConnection();
         SphinxQLTransactionResource sqtr = new SphinxQLTransactionResource("test", conn, false);
         try (Statement stat = conn.createStatement()) {
-            stat.executeUpdate("insert into oqsindex0 (id,entity,fullfields) values(1,100,'v1')");
+            stat.executeUpdate(String.format("insert into oqsindex0 (%s,%s,%s) values(1,'100','v1')",
+                FieldDefine.ID, FieldDefine.ENTITYCLASSF, FieldDefine.ATTRIBUTEF));
         }
         sqtr.commit();
         sqtr.destroy();

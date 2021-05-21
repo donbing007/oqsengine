@@ -9,17 +9,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.math.BigDecimal;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-
 /**
  * GtNotMatchDecimalConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -40,7 +39,8 @@ public class GtNotMatchDecimalConditionBuilderTest {
 
     @Test
     public void testBuild() throws Exception {
-        GtNotMatchDecimalConditionBuilder builder = new GtNotMatchDecimalConditionBuilder(storageStrategyFactory);
+        GtNotMatchDecimalConditionBuilder
+            builder = new GtNotMatchDecimalConditionBuilder(storageStrategyFactory);
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         String conditionSql = builder.build(
             new Condition(
@@ -50,9 +50,9 @@ public class GtNotMatchDecimalConditionBuilderTest {
                 )
             )
         );
-       
-        Assert.assertEquals("((" + FieldDefine.JSON_FIELDS + ".1L0 > 123) OR (" + FieldDefine.JSON_FIELDS
-            + ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 > 456000000000000000))", conditionSql);
+
+        Assert.assertEquals("((" + FieldDefine.ATTRIBUTE + ".1L0 > 123) OR (" + FieldDefine.ATTRIBUTE
+            + ".1L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".1L1 > 456000000000000000))", conditionSql);
 
     }
 

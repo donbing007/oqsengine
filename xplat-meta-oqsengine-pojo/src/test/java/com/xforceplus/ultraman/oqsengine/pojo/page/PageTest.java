@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * 分页对象的测试.
@@ -135,11 +140,13 @@ public class PageTest {
             page.getNextPage();
             Assert.fail("Not ready, but did not throw an exception.");
         } catch (IllegalStateException ex) {
+            ex.printStackTrace();
         }
         try {
             page.getAppointPage(1);
             Assert.fail("Not ready, but did not throw an exception.");
         } catch (IllegalStateException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -165,7 +172,7 @@ public class PageTest {
             page.setVisibleTotalCount(-200);
             Assert.fail("An exception was expected to be thrown, but it didn't.");
         } catch (Exception ex) {
-
+            ex.printStackTrace();
         }
 
         page = new Page(4, 199);
@@ -189,6 +196,31 @@ public class PageTest {
         Assert.assertFalse(page.hasNextPage());
         PageScope scope = page.getNextPage();
         Assert.assertNull(scope);
+    }
+
+    @Test
+    public void testEmptyPage() {
+        Page page = Page.emptyPage();
+        page.setTotalCount(1000);
+
+        Assert.assertEquals(0, page.getPageCount());
+        Assert.assertFalse(page.hasNextPage());
+        PageScope scope = page.getNextPage();
+        Assert.assertNull(scope);
+    }
+
+    @Test
+    public void testClone() throws CloneNotSupportedException {
+        Page sourcePage = Page.emptyPage();
+        sourcePage.setTotalCount(100);
+        Page clonePage = sourcePage.clone();
+
+        Assert.assertTrue(clonePage.isEmptyPage());
+        Assert.assertEquals(100, clonePage.getTotalCount());
+        clonePage.setVisibleTotalCount(2000);
+        Assert.assertEquals(2000, clonePage.getVisibleTotalCount());
+        Assert.assertEquals(-1, sourcePage.getVisibleTotalCount());
+
     }
 
     /**

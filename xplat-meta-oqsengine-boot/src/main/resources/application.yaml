@@ -5,15 +5,16 @@ instance:
 
 grpc:
   server:
-    port: 8081
+    port: 8090
 server:
   port: 8086
 
 logging:
   level:
-    root: debug
+    root: info
     io:
       lettuce: info
+    com.xforceplus.ultraman.oqsengine.changelog: debug
 
 transaction:
   timeoutMs: 3000
@@ -32,6 +33,9 @@ threadPool:
       queue: 1000
   cdc:
     worker: 0
+  event:
+    worker: 3
+    queue: 1000
 
 maxVisibleNumber: 10000
 
@@ -41,6 +45,11 @@ sync:
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
     showsql: true
   timeoutMs:
@@ -59,7 +68,7 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: true
+        enabled: false
         size: 3
   devOps:
     cdc:
@@ -129,3 +138,25 @@ cdc:
   consumer:
     checkCommitReady: true
     skipCommitId: -1
+
+meta:
+  grpc:
+    type: client
+    host: ultraman.xforcecloud.com
+    #    host: 120.55.249.44
+    #host: 169.254.106.127
+#    host: localhost
+#    port: 8081
+    #    port: 23111
+    port: 23120
+    seconds:
+      heartbeatTimeout: 30
+      delaytaskTimeout: 30
+      keepAliveDuration: 5
+      monitorDuration: 1
+      reconnectDuration: 5
+
+changelog:
+  enabled: false
+  queue: local
+

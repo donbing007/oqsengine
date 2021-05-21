@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.dto;
 
 /**
- * desc :
+ * desc :.
  * name : RawEntityValue
  *
- * @author : xujia
- * date : 2020/11/10
+ * @author : xujia 2020/11/10
  * @since : 1.8
  */
 public class RawEntityValue {

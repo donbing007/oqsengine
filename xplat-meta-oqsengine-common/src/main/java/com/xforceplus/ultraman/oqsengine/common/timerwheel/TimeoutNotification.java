@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
 /**
  * 时间轮转超时回调处理.
- * <p>
  * 通知器实现不得阻塞,不建议抛出异常.
  * 1.阻塞会造成时间轮的停止.
  * 2.抛出异常会被拦截.

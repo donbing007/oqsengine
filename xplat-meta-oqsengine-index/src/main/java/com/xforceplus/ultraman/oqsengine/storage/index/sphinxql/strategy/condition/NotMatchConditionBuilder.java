@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -19,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/3/26 10:07
  * @since 1.8
  */
-public class NotMatchConditionBuilder extends SphinxQLConditionBuilder {
+public class NotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
     public NotMatchConditionBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
@@ -45,16 +46,26 @@ public class NotMatchConditionBuilder extends SphinxQLConditionBuilder {
 
             } else {
 
-                buff.append(FieldDefine.JSON_FIELDS)
-                    .append(".")
-                    .append(storageValue.storageName());
-
+                FieldConfig fieldConfig = logicValue.getField().config();
+                switch (fieldConfig.getFieldSense()) {
+                    case CREATE_TIME: {
+                        buff.append(FieldDefine.CREATE_TIME);
+                        break;
+                    }
+                    case UPDATE_TIME: {
+                        buff.append(FieldDefine.UPDATE_TIME);
+                        break;
+                    }
+                    default: {
+                        buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                    }
+                }
             }
             buff.append(" ").append(this.operator().getSymbol());
 
             if (storageValue.type() == StorageType.STRING) {
                 buff.append(" '");
-                buff.append(SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()));
+                buff.append(SphinxQLHelper.encodeJsonCharset((String) storageValue.value()));
             } else {
                 buff.append(" ");
                 buff.append(storageValue.value());

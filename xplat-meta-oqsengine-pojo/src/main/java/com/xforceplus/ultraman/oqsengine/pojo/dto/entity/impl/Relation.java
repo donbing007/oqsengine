@@ -1,12 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-
 import java.util.Objects;
 
 /**
- * 关系对象
+ * 关系对象.
+ *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
@@ -14,12 +13,12 @@ public class Relation {
 
     private Long id;
 
-    /**
+    /*
      * 关系名称 - 目前采用关系ID来填入
      */
     private String name;
 
-    /**
+    /*
      * 关联对象Id
      */
     private long entityClassId;
@@ -30,27 +29,27 @@ public class Relation {
 
     private String relOwnerClassName;
 
-   /**
+    /*
      * 关系类型 - 使用关系的code填入
      */
     private String relationType;
 
-    /**
+    /*
      * 是否使用主键作为关系字段 - true代表是。- 目前只支持主键模式
      * false表示使用对象的其他唯一属性来定义
      */
     private boolean identity;
 
-    /**
+    /*
      * 关系表示使用
      * Key字段的id使用关系的id值
-     *
+     * <p>
      * 关系字段命名 :
      * 情况1：OTO类型下采用子对象的ref+code+id的方式命名
      * 例如：order -> address。在order中该keyName则为ref_address_id
      * 情况2：OTM类型下采用父对象的code+id的方式命名
      * 例如：order -> goods。在goods中该keyName则为ref_order_id
-     *
+     * <p>
      * 关系类型默认都是long
      */
     private IEntityField entityField;
@@ -58,6 +57,9 @@ public class Relation {
     public Relation() {
     }
 
+    /**
+     * 创建实列.
+     */
     public Relation(String name, long entityClassId, String relationType, boolean identity, IEntityField entityField) {
         this.name = name;
         this.entityClassId = entityClassId;
@@ -66,7 +68,11 @@ public class Relation {
         this.entityField = entityField;
     }
 
-    public Relation(Long id, String name, long entityClassId, String entityClassName, String ownerClassName, String relationType) {
+    /**
+     * 创建实列.
+     */
+    public Relation(Long id, String name, long entityClassId, String entityClassName, String ownerClassName,
+                    String relationType) {
         this.name = name;
         this.entityClassName = entityClassName;
         this.relOwnerClassName = ownerClassName;
@@ -149,14 +155,18 @@ public class Relation {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Relation)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Relation)) {
+            return false;
+        }
         Relation relation = (Relation) o;
-        return getEntityClassId() == relation.getEntityClassId() &&
-                isIdentity() == relation.isIdentity() &&
-                Objects.equals(getName(), relation.getName()) &&
-                Objects.equals(getRelationType(), relation.getRelationType()) &&
-                Objects.equals(getEntityField(), relation.getEntityField());
+        return getEntityClassId() == relation.getEntityClassId()
+            && isIdentity() == relation.isIdentity()
+            && Objects.equals(getName(), relation.getName())
+            && Objects.equals(getRelationType(), relation.getRelationType())
+            && Objects.equals(getEntityField(), relation.getEntityField());
     }
 
     @Override
@@ -166,12 +176,17 @@ public class Relation {
 
     @Override
     public String toString() {
-        return "Relation{" +
-                "name='" + name + '\'' +
-                ", entityClassId=" + entityClassId +
-                ", relationType='" + relationType + '\'' +
-                ", identity=" + identity +
-                ", entityField=" + entityField +
-                '}';
+        final StringBuffer sb = new StringBuffer("Relation{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", entityClassId=").append(entityClassId);
+        sb.append(", entityClassName='").append(entityClassName).append('\'');
+        sb.append(", relOwnerClassId=").append(relOwnerClassId);
+        sb.append(", relOwnerClassName='").append(relOwnerClassName).append('\'');
+        sb.append(", relationType='").append(relationType).append('\'');
+        sb.append(", identity=").append(identity);
+        sb.append(", entityField=").append(entityField);
+        sb.append('}');
+        return sb.toString();
     }
 }

@@ -3,19 +3,21 @@ package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import io.lettuce.core.RedisClient;
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
-import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 这是为了优雅关闭存在的,目标为第一个创建第一个销毁.
@@ -25,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.8
  */
 @Order(Integer.MIN_VALUE)
-@DependsOn("transactionManager")
+@DependsOn({"transactionManager"})
 @Component
 public class Shutdown {
 
@@ -43,6 +45,12 @@ public class Shutdown {
     @Resource(name = "callRebuildThreadPool")
     private ExecutorService callRebuildThreadPool;
 
+    @Resource(name = "eventWorker")
+    private ExecutorService eventWorker;
+
+    @Resource(name = "waitVersionExecutor")
+    private ExecutorService waitVersionExecutor;
+
     @Resource
     private CDCDaemonService cdcDaemonService;
 
@@ -50,8 +58,19 @@ public class Shutdown {
     private RedisClient redisClient;
 
     @Resource
+    private RedisClient redisClientChangeLog;
+
+    @Resource
+    private RedisClient redisClientCacheEvent;
+
+    @Resource
     private DataSourcePackage dataSourcePackage;
 
+    @Resource
+    private RebuildIndexExecutor rebuildIndexExecutor;
+
+    @Resource
+    private EventBus eventBus;
 
     @PreDestroy
     public void destroy() throws Exception {
@@ -75,7 +94,21 @@ public class Shutdown {
             }
         }
 
+        rebuildIndexExecutor.destroy();
+
+        if (DefaultEventBus.class.equals(eventBus.getClass())) {
+            ((DefaultEventBus) eventBus).destroy();
+        }
+
         // wait shutdown
+        logger.info("Start closing the eventWorker worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(eventWorker, 3600);
+        logger.info("Succeed closing the eventWorker worker thread...ok!");
+
+        logger.info("Start closing the waitVersionExecutor worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(waitVersionExecutor, 3600);
+        logger.info("Succeed closing the waitVersionExecutor worker thread...ok!");
+
         logger.info("Start closing the IO read worker thread...");
         ExecutorHelper.shutdownAndAwaitTermination(callReadThreadPool, 3600);
         logger.info("Succeed closing the IO read worker thread...ok!");
@@ -95,6 +128,14 @@ public class Shutdown {
         logger.info("Start closing the redis client...");
         redisClient.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
         logger.info("Succeed closing the redis client...ok!");
+
+        logger.info("Start closing the redis client for change-log...");
+        redisClientChangeLog.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
+        logger.info("Succeed closing the redis client for change-log...ok!");
+
+        logger.info("Start closing the redis client for cache-event...");
+        redisClientCacheEvent.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
+        logger.info("Succeed closing the redis client for cache-event...ok!");
 
         logger.info("Start closing the datasource...");
         dataSourcePackage.close();

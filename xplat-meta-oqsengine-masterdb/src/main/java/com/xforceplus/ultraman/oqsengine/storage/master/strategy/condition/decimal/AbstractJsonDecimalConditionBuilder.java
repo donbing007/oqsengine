@@ -6,11 +6,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.query.AbstractConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * 浮点数条件查询构造器抽像.
+ *
  * @author dongbin
  * @version 0.1 2020/11/4 17:28
  * @since 1.8
@@ -70,7 +73,7 @@ public abstract class AbstractJsonDecimalConditionBuilder extends AbstractCondit
         StringBuilder buff = new StringBuilder();
         buff.append("CAST(SUBSTRING_INDEX(")
             .append(FieldDefine.ATTRIBUTE).append("->>'$.")
-            .append(FieldDefine.ATTRIBUTE_PREFIX)
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX)
             .append(field).append("','.',")
             .append(integer ? "1" : "-1")
             .append(") AS SIGNED) ")

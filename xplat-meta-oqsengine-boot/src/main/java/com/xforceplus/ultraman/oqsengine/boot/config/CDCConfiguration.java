@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
+
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
+import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.ClusterCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
@@ -13,24 +16,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
-
 /**
- * desc :
- * name : CDCConfiguration
- *
- * @author : xujia
- * date : 2020/11/5
- * @since : 1.8
+ * CDC 配置.
  */
 @Configuration
 public class CDCConfiguration {
 
+    /**
+     * sphinxQL 数据消费服务.
+     */
     @Bean("sphinxConsumerService")
     public ConsumerService sphinxConsumerService(
-            @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady,
-            @Value("${cdc.consumer.skipCommitId:-1}") long skipCommitId) {
+        @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady,
+        @Value("${cdc.consumer.skipCommitId:-1}") long skipCommitId) {
         SphinxConsumerService consumerService = new SphinxConsumerService();
         consumerService.setCheckCommitReady(checkCommitReady);
         if (skipCommitId > INIT_ID) {
@@ -44,9 +42,12 @@ public class CDCConfiguration {
         return new SphinxSyncExecutor();
     }
 
+    /**
+     * CDC 集群的cannal连接器.
+     */
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")
     @Bean("clusterCDCConnector")
-    public CDCConnector clusterCDCConnector(
+    public AbstractCDCConnector clusterCDCConnector(
         @Value("${cdc.connect.host}") String host,
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
@@ -61,9 +62,12 @@ public class CDCConfiguration {
         return clusterCanalConnector;
     }
 
+    /**
+     * 非集群的cannal连接器.
+     */
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('single')")
     @Bean("singleCDCConnector")
-    public CDCConnector singleCDCConnector(
+    public AbstractCDCConnector singleCDCConnector(
         @Value("${cdc.connect.host}") String host,       //  general with ip
         @Value("${cdc.connect.port}") int port,
         @Value("${cdc.connect.destination:}") String destination,
@@ -79,18 +83,18 @@ public class CDCConfiguration {
     }
 
     @Bean(destroyMethod = "stopDaemon")
-    public CDCDaemonService cdcDaemonService(){
+    public CDCDaemonService cdcDaemonService() {
         return new CDCDaemonService();
     }
 
     @Bean
-    CDCMetricsService cdcMetricsService(){
+    CDCMetricsService cdcMetricsService() {
         return new CDCMetricsService();
     }
 
-    private void initProperties(CDCConnector cdcConnector, int batchSize) {
+    private void initProperties(AbstractCDCConnector abstractCdcConnector, int batchSize) {
         if (batchSize > EMPTY_BATCH_SIZE) {
-            cdcConnector.setBatchSize(batchSize);
+            abstractCdcConnector.setBatchSize(batchSize);
         }
     }
 }

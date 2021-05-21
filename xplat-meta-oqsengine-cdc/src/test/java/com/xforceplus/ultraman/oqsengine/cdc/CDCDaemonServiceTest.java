@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -25,7 +26,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class CDCDaemonServiceTest extends CDCAbstractContainer {
+public class CDCDaemonServiceTest extends AbstractCDCContainer {
 
     private CDCDaemonService cdcDaemonService;
 
@@ -46,16 +47,16 @@ public class CDCDaemonServiceTest extends CDCAbstractContainer {
     }
 
     private void initDaemonService() throws Exception {
-
+        ConsumerService consumerService = initAll(false);
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        testCallbackService = new MockRedisCallbackService();
+        testCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", consumerService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
-        ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
+        ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", singleCDCConnector);
     }
 
     @Test

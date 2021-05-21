@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 
 /**
+ * 布尔的条件校验器.
+ *
  * @author dongbin
  * @version 0.1 2020/2/29 16:34
  * @since 1.8

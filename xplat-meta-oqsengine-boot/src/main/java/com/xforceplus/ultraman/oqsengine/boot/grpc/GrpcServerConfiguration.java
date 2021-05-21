@@ -15,33 +15,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
-
- * server
+ * server.
  */
 @EnableConfigurationProperties(GrpcServerProperties.class)
 @Configuration
 public class GrpcServerConfiguration {
 
-    private Logger logger = LoggerFactory.getLogger(GrpcServerConfiguration.class);
+    private final Logger logger = LoggerFactory.getLogger(GrpcServerConfiguration.class);
 
     @Autowired
     private GrpcServerProperties properties;
 
+    /**
+     * grcp 服务端实例.
+     */
     @Bean(destroyMethod = "terminate")
-    public GrpcServer grpcServer(EntityServiceOqs oqs, EntityRebuildServiceOqs rebuildServiceOqs){
+    public GrpcServer grpcServer(EntityServiceOqs oqs, EntityRebuildServiceOqs rebuild) {
 
         ActorSystem actorSystem = ActorSystem.create();
         ActorMaterializer actorMaterializer = ActorMaterializer.create(actorSystem);
 
         GrpcServer grpcServer = new GrpcServer(actorSystem, actorMaterializer);
 
-
-        grpcServer.run(properties.getHost(), properties.getPort()
-                , EntityServicePowerApiHandlerFactory.create(oqs, actorSystem)
-                , EntityRebuildServicePowerApiHandlerFactory.create(rebuildServiceOqs, actorSystem))
-                .thenAccept(x -> {
-                    logger.info("EntityService is on {}", x.localAddress() );
-                });
+        grpcServer.run(
+            properties.getHost(),
+            properties.getPort(),
+                EntityServicePowerApiHandlerFactory.create(oqs, actorSystem),
+                EntityRebuildServicePowerApiHandlerFactory.create(rebuild, actorSystem)
+        ).thenAccept(x ->
+                logger.info("EntityService is on {}", x.localAddress())
+        );
         return grpcServer;
     }
 }

@@ -23,19 +23,41 @@ transaction:
 threadPool:
   # 0 or not exist use cpu core + 1
   call:
-    worker: 0
-    queue: 1000
+    read:
+      worker: 0
+      queue: 1000
+    write:
+      worker: 0
+      queue: 1000
+    rebuild:
+      worker: 0
+      queue: 1000
   cdc:
-    # 0 or not exist use cpu core + 1
     worker: 0
-
-maxVisibleNumber: 10000
+  event:
+    worker: 3
+    queue: 1000
 
 sync:
+  ignoreCDCStatusCheck: false
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
 
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
+
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
     showsql: true
   timeoutMs:
@@ -125,3 +147,7 @@ cdc:
     batchSize: 2048
   consumer:
     checkCommitReady: true
+
+meta:
+  grpc:
+    type: mock

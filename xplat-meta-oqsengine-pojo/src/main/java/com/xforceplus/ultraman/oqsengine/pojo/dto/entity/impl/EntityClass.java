@@ -2,8 +2,16 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
-import java.util.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * 关联对象的定义是由 relations 和 entityClass 共同承担的.
@@ -16,49 +24,77 @@ import java.util.*;
  */
 public class EntityClass implements IEntityClass {
 
-    /**
+    /*
      * 元数据boId
      */
     private long id;
 
-    /**
+    /*
      * 对象名称
      */
     private String name;
 
-    /**
+    /*
      * 对象code
      */
     private String code;
-    /**
+    /*
+     * 元数据版本.
+     */
+    private int version;
+
+    /*
+     * 元信息处于的继承层级
+     */
+    private int level;
+
+    /*
      * 关系信息
      */
     private List<Relation> relations;
-    /**
+    /*
      * 子对象结构信息
      */
-    private Set<IEntityClass> entityClasses;
+    private Set<IEntityClass> relationsEntityClasses;
 
-    /**
+    /*
      * 继承的对象类型.
      */
-    private IEntityClass extendEntityClass;
-    /**
+    private IEntityClass father;
+    /*
      * 对象属性信息
      */
     private Collection<IEntityField> fields = Collections.emptyList();
 
-    public EntityClass() {
+    private EntityClass() {
     }
 
+    /**
+     * 已经废弃.
+     *
+     * @deprecated 优先使用build模式生成.
+     */
+    @Deprecated
     public EntityClass(long id) {
         this.id = id;
     }
 
+    /**
+     * 已经废弃.
+     *
+     * @deprecated 优先使用build模式生成.
+     */
+    @Deprecated
     public EntityClass(long id, String code, Collection<IEntityField> fields) {
         this(id, code, null, null, null, fields);
     }
 
+    /**
+     * 已经废弃.
+     *
+     * @deprecated 优先使用build模式生成.
+     */
+    @Deprecated
     public EntityClass(long id, String code, IEntityField... fields) {
         this(id, code, null, null, null, Arrays.asList(fields));
     }
@@ -66,18 +102,20 @@ public class EntityClass implements IEntityClass {
     /**
      * 构造一个新的entity 类型信息.
      *
-     * @param id                类型 id.
-     * @param code              类型 code.
-     * @param relations         关联对象信息.
-     * @param entityClasses     类型关联对象类型信息.
-     * @param extendEntityClass 继承对象信息.
-     * @param fields            属性列表.
+     * @param id                     类型 id.
+     * @param code                   类型 code.
+     * @param relations              关联对象信息.
+     * @param relationsEntityClasses 类型关联对象类型信息.
+     * @param father                 继承对象信息.
+     * @param fields                 属性列表.
+     * @deprecated 优先使用build模式生成.
      */
+    @Deprecated
     public EntityClass(long id,
                        String code,
                        Collection<Relation> relations,
-                       Collection<IEntityClass> entityClasses,
-                       IEntityClass extendEntityClass,
+                       Collection<IEntityClass> relationsEntityClasses,
+                       IEntityClass father,
                        Collection<IEntityField> fields) {
         this.id = id;
         this.code = code;
@@ -86,37 +124,37 @@ public class EntityClass implements IEntityClass {
         } else {
             this.relations = new ArrayList<>(relations);
         }
-        if (entityClasses == null) {
-            this.entityClasses = Collections.emptySet();
+        if (relationsEntityClasses == null) {
+            this.relationsEntityClasses = Collections.emptySet();
         } else {
-            this.entityClasses = new HashSet<>(entityClasses);
+            this.relationsEntityClasses = new HashSet<>(relationsEntityClasses);
         }
         if (fields == null) {
             this.fields = Collections.emptyList();
         } else {
             this.fields = new ArrayList<>(fields);
         }
-        this.extendEntityClass = extendEntityClass;
+        this.father = father;
     }
 
     /**
      * 构造一个新的entity 类型信息.
      *
-     * @param id                类型 id.
-     * @param code              类型 code.
-     * @param relations         关联对象信息.
-     * @param entityClasss      类型关联对象类型信息.
-     * @param extendEntityClass 继承对象信息.
-     * @param fields            属性列表.
+     * @param id           类型 id.
+     * @param code         类型 code.
+     * @param relations    关联对象信息.
+     * @param entityClasss 类型关联对象类型信息.
+     * @param father       继承对象信息.
+     * @param fields       属性列表.
      */
     public EntityClass(Long id,
                        String code,
                        String name,
                        Collection<Relation> relations,
                        Collection<IEntityClass> entityClasss,
-                       IEntityClass extendEntityClass,
+                       IEntityClass father,
                        Collection<IEntityField> fields) {
-        this(id, code, relations, entityClasss, extendEntityClass, fields);
+        this(id, code, relations, entityClasss, father, fields);
         this.name = name;
     }
 
@@ -132,7 +170,17 @@ public class EntityClass implements IEntityClass {
 
     @Override
     public String name() {
-        return this.name;
+        return name;
+    }
+
+    @Override
+    public int version() {
+        return version;
+    }
+
+    @Override
+    public int level() {
+        return level;
     }
 
     @Override
@@ -141,18 +189,35 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public Set<IEntityClass> entityClasss() {
-        return Collections.unmodifiableSet(entityClasses);
+    public Collection<OqsRelation> oqsRelations() {
+        return null;
     }
 
     @Override
-    public IEntityClass extendEntityClass() {
-        return extendEntityClass;
+    public Collection<IEntityClass> relationsEntityClasss() {
+        return relationsEntityClasses;
     }
 
     @Override
-    public List<IEntityField> fields() {
-        return new ArrayList<>(fields);
+    public Optional<IEntityClass> father() {
+        return Optional.ofNullable(father);
+    }
+
+    @Override
+    public Collection<IEntityClass> family() {
+        List<IEntityClass> familyList = new ArrayList<>();
+        Optional<IEntityClass> current = Optional.of(this);
+        while (current.isPresent()) {
+            familyList.add(0, current.get());
+            current = current.get().father();
+        }
+
+        return familyList;
+    }
+
+    @Override
+    public Collection<IEntityField> fields() {
+        return fields;
     }
 
     @Override
@@ -166,19 +231,6 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public boolean isAny() {
-        return false;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -187,26 +239,135 @@ public class EntityClass implements IEntityClass {
             return false;
         }
         EntityClass that = (EntityClass) o;
-        return id == that.id &&
-                Objects.equals(relations, that.relations) &&
-                Objects.equals(entityClasses, that.entityClasses) &&
-                Objects.equals(extendEntityClass, that.extendEntityClass) &&
-                Objects.equals(fields, that.fields);
+        return id == that.id
+            && version == that.version
+            && level == that.level
+            && Objects.equals(name, that.name)
+            && Objects.equals(code, that.code)
+            && Objects.equals(relations, that.relations)
+            && Objects.equals(relationsEntityClasses, that.relationsEntityClasses)
+            && Objects.equals(father, that.father)
+            && Objects.equals(fields, that.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, relations, entityClasses, extendEntityClass, fields);
+        return Objects.hash(id, name, code, version, level, relations, relationsEntityClasses, father, fields);
     }
 
     @Override
     public String toString() {
-        return "EntityClass{" +
-                "id=" + id +
-                ", relations=" + relations +
-                ", entityClasss=" + entityClasses +
-                ", extendEntityClass=" + extendEntityClass +
-                ", fields=" + fields +
-                '}';
+        final StringBuffer sb = new StringBuffer("EntityClass{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", code='").append(code).append('\'');
+        sb.append(", version=").append(version);
+        sb.append(", level=").append(level);
+        sb.append(", relations=").append(relations);
+        sb.append(", relationsEntityClasses=").append(relationsEntityClasses);
+        sb.append(", father=").append(father);
+        sb.append(", fields=").append(fields);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    /**
+     * Builder.
+     */
+    public static final class Builder {
+        private long id;
+        private String name;
+        private String code;
+        private int version;
+        private int level;
+        private List<Relation> relations;
+        private Set<IEntityClass> relationsEntityClasses;
+        private IEntityClass father;
+        private Collection<IEntityField> fields = Collections.emptyList();
+
+        private Builder() {
+        }
+
+        public static Builder anEntityClass() {
+            return new Builder();
+        }
+
+        public Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder withName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder withCode(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder withVersion(int version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder withLevel(int level) {
+            this.level = level;
+            return this;
+        }
+
+        public Builder withRelations(List<Relation> relations) {
+            this.relations = relations;
+            return this;
+        }
+
+        public Builder withRelationsEntityClasses(Set<IEntityClass> relationsEntityClasses) {
+            this.relationsEntityClasses = relationsEntityClasses;
+            return this;
+        }
+
+        public Builder withFather(IEntityClass father) {
+            this.father = father;
+            return this;
+        }
+
+        public Builder withFields(Collection<IEntityField> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        /**
+         * 增加一个字段.
+         *
+         * @param field 字段.
+         * @return 当前构造器.
+         */
+        public Builder withField(IEntityField field) {
+            if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
+                this.fields = new ArrayList<>();
+            }
+            this.fields.add(field);
+            return this;
+        }
+
+        /**
+         * 构造一下 EntityClass 实例.
+         *
+         * @return 实例.
+         */
+        public EntityClass build() {
+            EntityClass entityClass = new EntityClass();
+            entityClass.id = id;
+            entityClass.code = code;
+            entityClass.name = this.name;
+            entityClass.level = this.level;
+            entityClass.version = this.version;
+            entityClass.father = father;
+            entityClass.fields = fields;
+            entityClass.relationsEntityClasses = this.relationsEntityClasses;
+            entityClass.relations = this.relations;
+            return entityClass;
+        }
     }
 }

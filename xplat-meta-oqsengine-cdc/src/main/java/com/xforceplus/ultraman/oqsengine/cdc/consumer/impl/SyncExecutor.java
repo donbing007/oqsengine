@@ -1,21 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 
 /**
- * desc :
- * name : SyncExecutor
+ * 同步执行器接口定义.
  *
- * @author : xujia
- * date : 2020/12/1
- * @since : 1.8
+ * @author xujia 2020/12/1
+ * @since 1.8
  */
 public interface SyncExecutor {
     int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException;
 
-    void errorRecord(long batchId, long id, long commitId, String message) throws SQLException;
+    boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId, String message) throws SQLException;
+
 }

@@ -1,19 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.READ_THREAD_POOL;
+import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.WRITE_THREAD_POOL;
+
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.kontainers.micrometer.akka.AkkaMetricRegistry;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
+import java.util.concurrent.ExecutorService;
+import javax.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.Resource;
-import java.util.concurrent.ExecutorService;
-
-import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.READ_THREAD_POOL;
-import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.WRITE_THREAD_POOL;
 
 /**
  * 指标配置.
@@ -31,16 +30,26 @@ public class MetricsConfiguration {
     @Resource(name = "callWriteThreadPool")
     private ExecutorService callWriteThreadPool;
 
+    /**
+     * 搜索线程池指标.
+     */
     @Bean
     public ExecutorServiceMetrics callReadExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callReadThreadPool, MetricsDefine.PREFIX + READ_THREAD_POOL, Tags.empty());
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callReadThreadPool,
+            MetricsDefine.PREFIX + READ_THREAD_POOL,
+            Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }
 
+    /**
+     * 写入事务执行线程池指标.
+     */
     @Bean
     public ExecutorServiceMetrics callWriteExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callWriteThreadPool, MetricsDefine.PREFIX + WRITE_THREAD_POOL, Tags.empty());
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callWriteThreadPool,
+            MetricsDefine.PREFIX + WRITE_THREAD_POOL,
+            Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }

@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -16,6 +15,14 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     public DecimalValue(IEntityField field, BigDecimal value) {
         super(field, value);
+    }
+
+    @Override
+    BigDecimal fromString(String value) {
+        if (value != null) {
+            return new BigDecimal(value);
+        }
+        return null;
     }
 
     @Override
@@ -50,15 +57,16 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
         DecimalValue that = (DecimalValue) o;
 
-        return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<BigDecimal> shallowClone() {
+        return new DecimalValue(this.getField(), getValue());
     }
 
     @Override
     public String toString() {
-        return "DecimalValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+        return "DecimalValue{" + "field=" + getField() + ", value=" + getValue() + '}';
     }
 }

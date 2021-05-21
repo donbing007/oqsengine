@@ -76,8 +76,42 @@ cdc:
     checkCommitReady: true
     skipCommitId: -1
 
+meta:
+  grpc:
+    type: client
+    host: localhost
+    port: 8082
+    seconds:
+      # 心跳超时
+      heartbeatTimeout: 30
+      # 重试间隔
+      delaytaskTimeout: 30
+      # 心跳间隔
+      keepAliveDuration: 5
+      # 指标监控
+      monitorDuration: 1
+      # 重连间隔
+      reconnectDuration: 5
+
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限.
+    maxJoinEntityNumber: 2
+    # join查询时的驱动表的数量最大上限,此值不能大于 maxVisibleTotalCount.
+    maxJoinDriverLineNumber: 1000
+changelog:
+  enabled: false
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
+    remote:
+      enabled: false
     showsql: false
   # Maximum amount of visible data.
   maxVisibleNumber: 10000
@@ -95,6 +129,9 @@ storage:
         queue: 1000
     cdc:
       worker: 1
+    event:
+      worker: 3
+      queue: 1000
   transaction:
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000
@@ -140,6 +177,7 @@ redis:
   maxReqQueue: 2147483647
 
 sync:
+  ignoreCDCStatusCheck: false
   # The heartbeat delay of data synchronization. Milliseconds.
   allowMaxLiveTimeMs: 3000
   # Acceptable number of unsynchronized commit Numbers.

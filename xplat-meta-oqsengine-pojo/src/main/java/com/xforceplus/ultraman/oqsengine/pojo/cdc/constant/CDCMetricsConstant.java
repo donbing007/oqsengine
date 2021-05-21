@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.constant;
 
 /**
- * desc :
+ * desc :.
  * name : CDCMetricsConstant
  *
- * @author : xujia
- * date : 2020/11/5
+ * @author : xujia 2020/11/5
  * @since : 1.8
  */
 public class CDCMetricsConstant {

@@ -1,13 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
-
+import java.sql.SQLException;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 /**
+ * JSON的条件查询构造器工厂.
+ *
  * @author dongbin
  * @version 0.1 2020/11/5 17:20
  * @since 1.8
@@ -23,6 +26,15 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
     public void init() {
         SQLJsonConditionsBuilder cb = new SQLJsonConditionsBuilder();
         cb.setStorageStrategy(storageStrategyFactory);
+
+        if (Lifecycle.class.isInstance(cb)) {
+            try {
+                ((Lifecycle) cb).init();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+        }
+
         conditionsBuilder = cb;
     }
 

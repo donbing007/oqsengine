@@ -1,12 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.resource;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 基于 java.sql.Connection 的资源.
@@ -21,6 +20,9 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
 
     private boolean autoCommit;
 
+    /**
+     * 初始化基于 java.sql.Connection的资源.
+     */
     public AbstractConnectionTransactionResource(String key, Connection value, boolean autoCommit) throws SQLException {
         super(key, value);
         this.autoCommit = autoCommit;

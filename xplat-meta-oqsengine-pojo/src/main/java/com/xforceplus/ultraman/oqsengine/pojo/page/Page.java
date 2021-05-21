@@ -21,11 +21,11 @@ public class Page implements Externalizable, Cloneable {
 
     private static final long UNSET = -1;
     /**
-     * 默认页面大小
+     * 默认页面大小.
      */
     private static final long DEFAULT_PAGE_SIZE = 10;
     /**
-     * 默认页面页数
+     * 默认页面页数.
      */
     private static final long DEFAULT_PAGE_INDEX = 1;
     /**
@@ -37,23 +37,23 @@ public class Page implements Externalizable, Cloneable {
      */
     private boolean emptyPage = false;
     /**
-     * 页面大小
+     * 页面大小.
      */
     private long pageSize;
     /**
-     * 页面页数
+     * 页面页数.
      */
     private long pageIndex;
     /**
-     * 数据总量
+     * 数据总量.
      */
     private long totalCount = UNSET;
     /**
-     * 数据剩余总量
+     * 数据剩余总量.
      */
     private long surplusCount;
     /**
-     * 页面总量
+     * 页面总量.
      */
     private long pageCount;
     /**
@@ -66,19 +66,19 @@ public class Page implements Externalizable, Cloneable {
     private boolean lastPage = false;
 
     /**
-     * 可见数据量
+     * 可见数据量.
      */
     private long visibleTotalCount = UNSET;
 
     /**
-     * 默认构造方法，以内定默认页面大小和当前页数构造。
+     * 默认构造方法，以内定默认页面大小和当前页数构造.
      */
     public Page() {
         this(Page.DEFAULT_PAGE_INDEX, Page.DEFAULT_PAGE_SIZE);
     }
 
     /**
-     * 以指定的页数和页面大小构造对象。
+     * 以指定的页数和页面大小构造对象.
      *
      * @param pageIndex 当前页面序号,如果指定数小于1则使用默认设置1。
      * @param pageSize  页面大小，如果指数数小于1，则使用默认设置1.
@@ -105,13 +105,12 @@ public class Page implements Externalizable, Cloneable {
      * @return 分页实例.
      */
     public static Page emptyPage() {
-        /**
+        /*
          * 因定取第1页的第一条,实际这些值没有意义.
          */
         final long fixOne = 1;
         Page page = new Page(fixOne, fixOne);
         page.emptyPage = true;
-        page.setTotalCount(0);
         return page;
     }
 
@@ -142,7 +141,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回当前的页的序号。
+     * 返回当前的页的序号.
      *
      * @return 当前面的序号。
      */
@@ -152,13 +151,17 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 获取当前总页数．
+     * 获取当前总页数.
      *
      * @return 总页数．
      */
     public long getPageCount() {
         if (ready) {
-            return pageCount;
+            if (isEmptyPage()) {
+                return 0;
+            } else {
+                return pageCount;
+            }
         } else {
             return 0;
         }
@@ -183,6 +186,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 得到当前可见数据量.
+     *
      * @return 可见数据量.
      */
     public long getVisibleTotalCount() {
@@ -191,6 +195,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 是否设置了可视数据早上限.
+     *
      * @return true 已经设置,false 没有设置.
      */
     public boolean hasVisibleTotalCountLimit() {
@@ -198,37 +203,39 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 设定数据总量，这个值必须在使用前设置。
+     * 设定数据总量，这个值必须在使用前设置.
      *
      * @param totalCount 数据总量
      */
     public void setTotalCount(long totalCount) {
         this.totalCount = totalCount;
 
-        long useTotalCount = this.totalCount;
+        if (!isEmptyPage()) {
 
-        if (visibleTotalCount != UNSET) {
-            if (this.totalCount > this.visibleTotalCount) {
-                useTotalCount = this.visibleTotalCount;
+            long useTotalCount = this.totalCount;
+
+            if (visibleTotalCount != UNSET) {
+                if (this.totalCount > this.visibleTotalCount) {
+                    useTotalCount = this.visibleTotalCount;
+                }
             }
-        }
 
-        pageCount = this.countPageCount(getPageSize(), useTotalCount);
-        if (lastPage) {
-            pageIndex = pageCount;
+            pageCount = this.countPageCount(getPageSize(), useTotalCount);
+            if (lastPage) {
+                pageIndex = pageCount;
+            }
+            surplusCount = countSurplus(pageIndex, getPageSize(), totalCount);
         }
-        surplusCount = countSurplus(pageIndex, getPageSize(), totalCount);
 
         ready = true;
     }
 
     /**
-     * 返回当前数据总量，初始为－１。
+     * 返回当前数据总量，初始为－１.
      *
      * @return 当前数据总量，如果为-1代表没有设置真实数据总量。
      */
     public long getTotalCount() {
-        checkReady();
         return this.totalCount;
     }
 
@@ -277,6 +284,10 @@ public class Page implements Externalizable, Cloneable {
     public PageScope getAppointPage(long appointPageIndex) {
         checkReady();
 
+        if (isEmptyPage()) {
+            return new PageScope(0, 0);
+        }
+
         long nowPointIndex = appointPageIndex;
         if (nowPointIndex <= 0) {
             return null;
@@ -299,13 +310,17 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 判断是否已经没有下一页。
+     * 判断是否已经没有下一页.
      *
      * @return 是否还有下一页, <tt>true</tt>还有可用页,<tt>false</tt>已经没有可用页了.
      */
     public boolean hasNextPage() {
         checkReady();
-        return pageIndex <= pageCount;
+        if (isEmptyPage()) {
+            return false;
+        } else {
+            return pageIndex <= pageCount;
+        }
     }
 
     /**
@@ -318,7 +333,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回此分页信息的字符串表示。
+     * 返回此分页信息的字符串表示.
      * 该字符串由分页信息的＂页面大小＂，＂当前页面序号＂，＂总记录数＂，＂是否准备好＂组成．
      *
      * @return 此分页信息的字符串表示。
@@ -401,16 +416,13 @@ public class Page implements Externalizable, Cloneable {
             return false;
         }
         final Page other = (Page) obj;
-        //是否都是准备好的.
-        if (isReady() != other.isReady()) {
+
+        //是否为单页
+        if (isEmptyPage() != other.isEmptyPage()) {
             return false;
         }
         //是否为单页
         if (isSinglePage() != other.isSinglePage()) {
-            return false;
-        }
-        //是否为单页
-        if (isEmptyPage() != other.isEmptyPage()) {
             return false;
         }
         //分页大小
@@ -421,8 +433,9 @@ public class Page implements Externalizable, Cloneable {
         if (getIndex() != other.getIndex()) {
             return false;
         }
-        //数据总量
-        if (getTotalCount() != other.getTotalCount()) {
+
+        //是否都是准备好的.
+        if (isReady() != other.isReady()) {
             return false;
         }
 
@@ -430,7 +443,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 获取当前页面大小
+     * 获取当前页面大小.
      *
      * @return 页面大小
      */
@@ -439,9 +452,9 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 返回当前分页建议。
+     * 返回当前分页建议.
      *
-     * @return <true>当前是单页，只是当前一页。<false>需要进行正常分页。
+     * @return true当前是单页，只是当前一页。false需要进行正常分页.
      */
     public boolean isSinglePage() {
         return singlePage;
@@ -468,7 +481,7 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
-     * 计算数据剩余量
+     * 计算数据剩余量.
      *
      * @param indexNumber 当前页面序号.
      * @param sizeNumber  每页最大数据量.

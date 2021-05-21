@@ -34,6 +34,16 @@ service EntityRebuildService {
     rpc removeCommitIds ( RepairRequest ) returns ( OperationResult );
 
     rpc initNewCommitId ( RepairRequest ) returns ( OperationResult );
+
+    rpc cdcSendErrorRecover ( CdcRecoverSubmit ) returns ( OperationResult );
+
+    rpc cdcRecoverOk ( CdcRecover ) returns ( OperationResult );
+
+    rpc queryCdcError ( CdcErrorCond ) returns ( stream CdcErrorTaskInfo );
+
+    rpc rangeOfCommits ( CommitIdUp ) returns ( CommitIdMaxMin );
+
+    rpc cleanLessThan ( CommitIdUp ) returns ( OperationResult );
 }
 
 message QueryPage {
@@ -72,4 +82,52 @@ message RebuildTaskInfo {
 
 message RepairRequest {
     repeated int64 rid = 1;
+}
+
+message CdcErrorTaskInfo {
+    int64 seqNo = 1;
+    int64 batchId = 2;
+    int64 id = 3;
+    int64 entity = 4;
+    int32 version = 5;
+    int32 op = 6;
+    int64 commitId = 7;
+    int32 errorType = 8;
+    int32 status = 9;
+    string operationObject = 10;
+    int64 executeTime = 11;
+    int64 fixedTime = 12;
+    string message = 13;
+}
+
+message CdcErrorCond {
+    int64 seqNo = 1;
+    int64 batchId = 2;
+    int64 id = 3;
+    int64 entity = 4;
+    int32 status = 5;
+    bool equalStatus = 7;
+    int32 type = 8;
+    int64 rangeLEExecuteTime = 9;
+    int64 rangeGeExecuteTime = 10;
+    int64 rangeLEFixedTime = 11;
+    int64 rangeGeFixedTime = 12;
+}
+
+message CdcRecover {
+    int64 seqNo = 1;
+}
+
+message CdcRecoverSubmit {
+    int64 seqNo = 1;
+    string recoverObjectString = 2;
+}
+
+message CommitIdUp {
+    int64 commitId = 1;
+}
+
+message CommitIdMaxMin {
+    int64 max = 1;
+    int64 min = 2;
 }

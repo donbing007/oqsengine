@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.enums;
 
 /**
- * desc :
+ * desc :.
  * name : RunningStatus
  *
- * @author : xujia
- * date : 2020/11/9
+ * @author : xujia 2020/11/9
  * @since : 1.8
  */
 public enum RunningStatus {

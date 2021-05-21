@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 
@@ -27,6 +26,6 @@ public class DateTimeStorageStrategy extends LongStorageStrategy {
     @Override
     public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
         Instant instant = Instant.ofEpochMilli((long) storageValue.value());
-        return new DateTimeValue(field, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
+        return new DateTimeValue(field, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
     }
 }

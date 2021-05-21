@@ -10,18 +10,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * MeqNotMatchConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -40,7 +39,7 @@ public class MeqNotMatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
@@ -57,45 +56,66 @@ public class MeqNotMatchConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         1L),
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         2L),
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         3L)
                 ),
                 "id IN (1,2,3)"
             ),
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         1L),
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         2L),
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         3L)
                 ),
-                FieldDefine.JSON_FIELDS + ".1L IN (1,2,3)"
+                FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7L IN (1,2,3)"
             ),
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new StringValue(
-                        new EntityField(1, "test", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + ".1S IN ('！＠#＄%＾&＊（）300')"
+                FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7S IN ('!@#$%^&*()300')"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 300L),
+                    new LongValue(EntityField.CREATE_TIME_FILED, 200L)
+                ),
+                FieldDefine.CREATE_TIME + " IN (300,200)"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 300L),
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
+                ),
+                FieldDefine.UPDATE_TIME + " IN (300,200)"
             )
         );
     }

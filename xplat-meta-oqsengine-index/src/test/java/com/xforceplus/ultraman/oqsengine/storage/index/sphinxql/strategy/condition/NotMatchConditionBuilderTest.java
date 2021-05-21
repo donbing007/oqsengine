@@ -11,19 +11,18 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * NotMatchConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -42,7 +41,7 @@ public class NotMatchConditionBuilderTest {
     }
 
     /**
-     * Method: build(Condition condition)
+     * Method: build(Condition condition).
      */
     @Test
     public void testBuild() throws Exception {
@@ -59,64 +58,82 @@ public class NotMatchConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.EQUALS,
-                    new StringValue(new EntityField(Long.MAX_VALUE, "test", FieldType.STRING), "test")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = 'test'"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S = 'test'"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.EQUALS,
-                    new LongValue(new EntityField(Long.MAX_VALUE, "test", FieldType.LONG), 200L)
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 200L)
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L = 200"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L = 200"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.DECIMAL),
+                    new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                     ConditionOperator.EQUALS,
-                    new DecimalValue(new EntityField(Long.MAX_VALUE, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
+                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
+                        new BigDecimal("123.246"))
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L0 = 123 AND " +
-                    FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L1 = 246000000000000000"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L0 = 123 AND "
+                    + FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L1 = 246000000000000000"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.NOT_EQUALS,
-                    new StringValue(new EntityField(Long.MAX_VALUE, "test", FieldType.STRING), "test")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S != 'test'"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S != 'test'"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.GREATER_THAN,
-                    new LongValue(new EntityField(Long.MAX_VALUE, "test", FieldType.LONG), 200L)
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 200L)
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L > 200"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "L > 200"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                     ConditionOperator.GREATER_THAN,
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         200L)
                 ),
                 "id > 200"
             ),
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.EQUALS,
                     new StringValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&＊（）300'"
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S = '!@#$%^&*()300'"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 1000L)
+                ),
+                FieldDefine.CREATE_TIME + " = 1000"
+            ),
+            new Case(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 1000L)
+                ),
+                FieldDefine.UPDATE_TIME + " = 1000"
             )
         );
     }

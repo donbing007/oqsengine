@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.devops;
 
 /**
- * desc :
+ * desc :.
  * name : DevOpsConstant
  *
- * @author : xujia
- * date : 2020/11/21
+ * @author : xujia 2020/11/21
  * @since : 1.8
  */
 public class DevOpsConstant {

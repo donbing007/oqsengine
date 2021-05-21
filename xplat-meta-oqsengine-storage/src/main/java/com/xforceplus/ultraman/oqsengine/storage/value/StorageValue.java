@@ -5,12 +5,12 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 /**
  * 储存值类型.支持多值类型.
  *
- * value0 --> value1.
+ * <p>value0 --> value1.
  *
- * StorageValue v1 = ...
+ * <p>StorageValue v1 = ...
  * StorageValue v2 = ...
  *
- * v2 = v1.stick(v2); //返回v2的实例.
+ * <p>v2 = v1.stick(v2); //返回v2的实例.
  *
  * @param <V> 实际值类型.
  * @author dongbin
@@ -26,18 +26,21 @@ public interface StorageValue<V> {
 
     /**
      * 判断是否还有下个值.
+     *
      * @return 下个值.
      */
     boolean haveNext();
 
     /**
      * 相关的下一个StorageValue.在逻辑上在上层表现为同一个值.
+     *
      * @return 按顺序的下一个 StorageValue.
      */
     StorageValue<V> next();
 
     /**
      * 设定当前的下一个值.
+     *
      * @param value 下一个值.
      */
     void next(StorageValue<V> value);
@@ -52,15 +55,24 @@ public interface StorageValue<V> {
 
     /**
      * 字段逻辑名称.
+     *
      * @return 名称.
      */
     String logicName();
 
     /**
      * 物理储存字段名称.
+     *
      * @return 名称.
      */
     String storageName();
+
+    /**
+     * 物理储存字段短名称.
+     *
+     * @return 短名称.
+     */
+    ShortStorageName shortStorageName();
 
     /**
      * 组名称,此名称表示单个逻辑名称对应的所有物理名称的前辍.
@@ -72,12 +84,14 @@ public interface StorageValue<V> {
 
     /**
      * 值所处于的位置.这个位置意为多个 StorageValue 才能组成一个 IValue 时的顺序定位.
+     *
      * @return 从0开始的位置.
      */
     int location();
 
     /**
      * 指定当前 value 所处于的位置序号.
+     *
      * @param location 目标序号,从0开始.
      * @return 定位后的位置.从0开始.
      */
@@ -85,12 +99,14 @@ public interface StorageValue<V> {
 
     /**
      * 储存的字段值.
-     * @return
+     *
+     * @return 实际值.
      */
     V value();
 
     /**
      * 当前的储存类型.
+     *
      * @return 类型.
      */
     StorageType type();

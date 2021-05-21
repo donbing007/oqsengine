@@ -1,723 +1,328 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * EntitySearchServiceImpl Tester.
  *
  * @author dongbin
- * @version 1.0 03/01/2020
- * @since <pre>Mar 1, 2020</pre>
+ * @version 1.0 03/18/2021
+ * @since <pre>Mar 18, 2021</pre>
  */
 public class EntitySearchServiceImplTest {
 
-    final Logger logger = LoggerFactory.getLogger(EntitySearchServiceImplTest.class);
-    private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator(1);
-    private ExecutorService threadPool;
-
-    private final Collection<IEntityField> childFields = Arrays.asList(
-        new EntityField(idGenerator.next(), "c4", FieldType.STRING, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "c5", FieldType.LONG, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "c6", FieldType.BOOLEAN)
-    );
-
-    private final Collection<IEntityField> parentFields = Arrays.asList(
-        new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "c3", FieldType.BOOLEAN, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "rel0.id", FieldType.LONG)
-    );
-
-    private final Collection<IEntityField> driverFields0 = Arrays.asList(
-        new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG, FieldConfig.build().searchable(true))
-    );
-
-    private final Collection<IEntityField> driverFields1 = Arrays.asList(
-        new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING, FieldConfig.build().searchable(true)),
-        new EntityField(idGenerator.next(), "rel1.age", FieldType.LONG, FieldConfig.build().searchable(true))
-    );
-
-    private IEntityClass parentEntityClass;
-    private IEntityClass childEntityClass;
-    private IEntityClass driverEntityClass0;
-    private IEntityClass driverEntityClass1;
-    private IEntityClass notExistDriverEntityClass;
-
-    private Map<Long, IEntity> masterEntities;
-    private Map<IEntityClass, Collection<EntityRef>> indexEntities;
-
+    private CommitIdStatusService commitIdStatusService;
     private MasterStorage masterStorage;
-    private MockSelectHistoryIndexStorage indexStorage;
-
-    private EntitySearchServiceImpl instance;
+    private IndexStorage indexStorage;
+    private ExecutorService threadPool;
+    private MetaManager metaManager;
+    private EntitySearchServiceImpl impl;
 
     @Before
     public void before() throws Exception {
-
-        parentEntityClass = buildIEntityClass(null, parentFields);
-        childEntityClass = buildIEntityClass(parentEntityClass, childFields);
-        driverEntityClass0 = buildIEntityClass(null, driverFields0);
-        driverEntityClass1 = buildIEntityClass(null, driverFields1);
-        notExistDriverEntityClass = buildIEntityClass(null, driverFields0);
-
-        masterEntities = buildMasterEntities();
-        indexEntities = buildIndexEntities();
-
-        masterStorage = new MockMasterStorage(masterEntities.values());
-
-        indexStorage = new MockSelectHistoryIndexStorage(indexEntities);
+        commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.getMin()).thenReturn((Optional.of(Long.valueOf("1"))));
 
         threadPool = Executors.newFixedThreadPool(3);
+        metaManager = new MockMetaManager();
 
-        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.getMin()).thenReturn(Optional.of(0L));
+        masterStorage = mock(MasterStorage.class);
+        indexStorage = mock(IndexStorage.class);
 
-        instance = new EntitySearchServiceImpl();
-        ReflectionTestUtils.setField(instance, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(instance, "indexStorage", indexStorage);
-        ReflectionTestUtils.setField(instance, "threadPool", threadPool);
-        ReflectionTestUtils.setField(instance, "commitIdStatusService", commitIdStatusService);
-
-        instance.init();
-    }
-
-    private Map<IEntityClass, Collection<EntityRef>> buildIndexEntities() {
-        Map<IEntityClass, Collection<EntityRef>> refs = new HashMap<>();
-        refs.put(
-            driverEntityClass0,
-            masterEntities.values().stream()
-                .filter(e -> e.entityClass().equals(driverEntityClass0))
-                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), OqsVersion.MAJOR))
-                .collect(Collectors.toList())
-        );
-
-        refs.put(
-            driverEntityClass1,
-            masterEntities.values().stream()
-                .filter(e -> e.entityClass().equals(driverEntityClass1))
-                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), OqsVersion.MAJOR))
-                .collect(Collectors.toList())
-        );
-
-        return refs;
-    }
-
-    private Map<Long, IEntity> buildMasterEntities() {
-        Map<Long, IEntity> entities = new HashMap();
-        IEntity[] newEntities;
-        for (int i = 0; i < 3; i++) {
-            newEntities = buildEntity(parentEntityClass);
-            for (IEntity e : newEntities) {
-                entities.put(e.id(), e);
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            newEntities = buildEntity(childEntityClass);
-            for (IEntity e : newEntities) {
-                entities.put(e.id(), e);
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            newEntities = buildEntity(driverEntityClass0);
-            for (IEntity e : newEntities) {
-                entities.put(e.id(), e);
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            newEntities = buildEntity(driverEntityClass1);
-            for (IEntity e : newEntities) {
-                entities.put(e.id(), e);
-            }
-        }
-
-        return entities;
+        impl = new EntitySearchServiceImpl();
+        ReflectionTestUtils.setField(impl, "metaManager", metaManager);
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(impl, "indexStorage", indexStorage);
+        ReflectionTestUtils.setField(impl, "threadPool", threadPool);
+        ReflectionTestUtils.setField(impl, "commitIdStatusService", commitIdStatusService);
+        impl.init();
     }
 
     @After
     public void after() throws Exception {
-        threadPool.shutdown();
+        ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    @Test
+    public void testCountSearch() throws Exception {
+
+        when(masterStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.anSelectConfig().withCommitId(1).withSort(
+                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
+            .thenReturn(Arrays.asList(
+                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR)
+            ));
+
+        Page indexPage = Page.emptyPage();
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withPage(indexPage)
+                .withExcludedIds(new HashSet())
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        )).thenAnswer((invocation) -> {
+            SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
+            selectConfig.getPage().setTotalCount(0);
+            return Collections.emptyList();
+        });
+
+        Page page = Page.emptyPage();
+        Collection<IEntity> entities = impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(MockMetaManager.l1EntityClass.id())
+                .withEntityClassCode(MockMetaManager.l1EntityClass.code())
+                .build(),
+            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+        );
+
+        Assert.assertEquals(0, entities.size());
+        Assert.assertEquals(2, page.getTotalCount());
     }
 
     /**
-     * Method: selectOne(long id, IEntityClass entityClass)
+     * 测试主库查询有需要过滤.
      */
     @Test
-    public void testSelectOne() throws Exception {
-        masterEntities.values().stream().forEach(e -> {
-            Optional<IEntity> selectEntityOp;
-            try {
-                selectEntityOp = instance.selectOne(e.id(), e.entityClass());
+    public void testFilter() throws Exception {
+        when(masterStorage.select(
+            Mockito.argThat(conditions -> {
+                boolean result = conditions.size() == 0;
+                return result;
+            }),
+            Mockito.argThat(entityClass -> {
+                boolean result = entityClass.id() == MockMetaManager.l2EntityClass.id();
+                return result;
+            }),
+            Mockito.argThat(selectConfig -> {
+                boolean result = selectConfig.equals(
+                    SelectConfig.Builder.anSelectConfig()
+                        .withCommitId(1)
+                        .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                        .build());
+                return result;
+            })
 
-
-                if (e.entityClass().extendEntityClass() == null) {
-                    Assert.assertEquals(e, selectEntityOp.get());
-                } else {
-
-                    IEntity child = masterEntities.get(e.id());
-                    IEntity parent = masterEntities.get(child.family().parent());
-
-                    Collection<IValue> childValues = child.entityValue().values();
-                    child.entityValue().clear()
-                        .addValues(parent.entityValue().values())
-                        .addValues(childValues);
-
-
-                    Assert.assertEquals(child, selectEntityOp.get());
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        });
-    }
-
-    @Test
-    public void testSelectNoSearchableField() throws Exception {
-        Conditions conditions = Conditions.buildEmtpyConditions()
-            .addAnd(
-                new Condition(
-                    childEntityClass.field("c6").get(),// c6 no searchable.
-                    ConditionOperator.EQUALS,
-                    new BooleanValue(childEntityClass.field("c6").get(), false)
-                )
-            ).addAnd(
-                new Condition(
-                    driverEntityClass0,
-                    driverEntityClass0.field("rel0.age").get(),
-                    ConditionOperator.EQUALS,
-                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
-                )
-            );
-
-        Collection<IEntity> results = instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
-        Assert.assertEquals(0, results.size());
-    }
-
-    @Test
-    public void testselectMultiple() throws Exception {
-
-        long[] requestIds = masterEntities.values().stream().filter(
-            e -> e.entityClass() == childEntityClass
-        ).mapToLong(e -> e.id()).toArray();
-        Collection<IEntity> entities = instance.selectMultiple(requestIds, childEntityClass);
-
-        for (IEntity entity : entities) {
-
-            IEntity child = masterEntities.get(entity.id());
-            IEntity parent = masterEntities.get(child.family().parent());
-
-            Collection<IValue> childValues = child.entityValue().values();
-            child.entityValue().clear()
-                .addValues(parent.entityValue().values())
-                .addValues(childValues);
-
-            Assert.assertEquals(child, entity);
-        }
-    }
-
-    @Test
-    public void testJoinOverTheMaximumDriver() throws Exception {
-        Conditions conditions = Conditions.buildEmtpyConditions()
-            .addAnd(
-                new Condition(
-                    childEntityClass.field("c4").get(),
-                    ConditionOperator.EQUALS,
-                    new StringValue(childEntityClass.field("c4").get(), "v1")
-                )
-            ).addAnd(
-                new Condition(
-                    driverEntityClass0,
-                    driverEntityClass0.field("rel0.age").get(),
-                    ConditionOperator.EQUALS,
-                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
-                )
-            ).addOr(
-                new Condition(
-                    driverEntityClass1,
-                    driverEntityClass1.field("rel1.name").get(),
-                    ConditionOperator.EQUALS,
-                    new StringValue(driverEntityClass1.field("rel1.name").get(), "v2")
-                )
-            );
-
-        try {
-            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
-            Assert.fail("An exception \"exceeding the maximum number of driver entities\" error was expected, but it did not.");
-        } catch (SQLException ex) {
-
-        }
-    }
-
-    @Test
-    public void testJoinOverTheMaximumDriverLen() throws Exception {
-        instance.setMaxJoinDriverLineNumber(2);
-        Conditions conditions = Conditions.buildEmtpyConditions()
-            .addAnd(
-                new Condition(
-                    childEntityClass.field("c4").get(),
-                    ConditionOperator.EQUALS,
-                    new StringValue(childEntityClass.field("c4").get(), "v1")
-                )
-            ).addAnd(
-                new Condition(
-                    driverEntityClass0,
-                    driverEntityClass0.field("rel0.age").get(),
-                    ConditionOperator.EQUALS,
-                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
-                )
-            );
-
-        try {
-            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
-            Assert.fail("The driver entity exceeded the maximum expected to throw an exception, but did not.");
-        } catch (SQLException ex) {
-
-        }
-    }
-
-    @Test
-    public void testJoinSelect() throws Exception {
-        buildJoinCase().stream().forEach(j -> {
-            try {
-                instance.selectByConditions(j.conditions, j.reusltEntityClass, j.sort, j.page);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-
-            List<SelectHistory> history = new ArrayList<>(indexStorage.getHistories());
-            List<String> expectedSelect = new ArrayList<>(j.expectedStrings);
-            Assert.assertEquals(expectedSelect.size(), history.size());
-            for (int i = 0; i < expectedSelect.size(); i++) {
-                logger.info(history.get(i).toString());
-                Assert.assertEquals(expectedSelect.get(i), history.get(i).toString());
-            }
-
-            indexStorage.reset();
-        });
-    }
-
-    /**
-     * 预期为查询条件的字符串表示.例如如下.
-     * class-13.rel0.name = "driver-v1".13.asc:false|des:true|outoforder:true.empty:true|single:false|ready:false
-     * 组成如下.
-     * {entityClassName}.{fieldName} = {conditionValue}.{entityClassId}.{sort:asc}|{sort:des}|{sort:outoforder}.{page:empty}|{page:single}|{page:ready}
-     */
-    private Collection<JoinCase> buildJoinCase() {
-        return Arrays.asList(
-            new JoinCase(
-                parentEntityClass,
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                            driverEntityClass0,
-                            driverEntityClass0.field("rel0.name").get(),
-                            ConditionOperator.EQUALS,
-                            new StringValue(driverEntityClass0.field("rel0.name").get(), "driver-v1")
-                        )
-                    )
-                ,
-                Page.newSinglePage(100),
-                Sort.buildOutOfSort(),
-                Arrays.asList(
-                    driverEntityClass0.code()
-                        + ".rel0.name = \"driver-v1\"."
-                        + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
-
-                    driverEntityClass0.code()
-                        + ".rel0.name = \"driver-v1\"."
-                        + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
-
-                    "rel0.id IN ("
-                        + masterEntities.values().stream()
-                        .filter(e -> e.entityClass().equals(driverEntityClass0))
-                        .map(e -> Long.toString(e.id()))
-                        .collect(Collectors.joining(", "))
-                        + ")."
-                        + parentEntityClass.id()
-                        + ".asc:true|des:false|outoforder:false.empty:false|single:false|ready:true"
-                )
-            )
-            ,
-            new JoinCase(
-                parentEntityClass,
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                            driverEntityClass0,
-                            driverEntityClass0.field("rel0.name").get(),
-                            ConditionOperator.EQUALS,
-                            new StringValue(driverEntityClass0.field("rel0.name").get(), "driver-v1")
-                        )
-                    )
-                    .addAnd(
-                        new Condition(
-                            driverEntityClass0,
-                            driverEntityClass0.field("rel0.age").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
-                        )
-                    ),
-                Page.newSinglePage(100),
-                Sort.buildOutOfSort(),
-                Arrays.asList(
-                    driverEntityClass0.code()
-                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
-                        + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
-
-                    driverEntityClass0.code()
-                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
-                        + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
-
-                    "rel0.id IN ("
-                        + masterEntities.values().stream()
-                        .filter(e -> e.entityClass().equals(driverEntityClass0))
-                        .map(e -> Long.toString(e.id()))
-                        .collect(Collectors.joining(", "))
-                        + ")."
-                        + parentEntityClass.id()
-                        + ".asc:true|des:false|outoforder:false.empty:false|single:false|ready:true"
-                )
-            )
-            ,
-            // 驱动 entity 没有数据.
-            new JoinCase(
-                parentEntityClass,
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            notExistDriverEntityClass,
-                            notExistDriverEntityClass.field("rel0.name").get(),
-                            ConditionOperator.EQUALS,
-                            new StringValue(notExistDriverEntityClass.field("rel0.name").get(), "driver-v1")
-                        )
-                    ),
-                Page.newSinglePage(100),
-                Sort.buildOutOfSort(),
-                Arrays.asList(
-                    notExistDriverEntityClass.code()
-                        + ".rel0.name = \"driver-v1\"."
-                        + notExistDriverEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
-                )
+        )).thenReturn(Arrays.asList(
+            new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(2, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(3, OperationType.DELETE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(4, OperationType.UPDATE.getValue(), OqsVersion.MAJOR)
+        ));
+        when(masterStorage.selectMultiple(new long[] {1, 2, 4}, MockMetaManager.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(4).build()
             )
         );
+
+        Page page = Page.newSinglePage(1000);
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withPage(page)
+                .withExcludedIds(new HashSet())
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .withExcludeId(3)
+                .withExcludeId(4)
+                .build()
+        )).thenAnswer(invocation -> {
+            SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
+            selectConfig.getPage().setTotalCount(0);
+            return Collections.emptyList();
+        });
+
+
+        Collection<IEntity> entities = impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+        );
+
+        Assert.assertEquals(3, entities.size());
+        Assert.assertEquals(3, page.getTotalCount());
     }
 
-    private class JoinCase {
-        private IEntityClass reusltEntityClass;
-        private Conditions conditions;
-        private Page page;
-        private Sort sort;
-        private Collection<String> expectedStrings;
+    @Test
+    public void testSelectOne() throws Exception {
+        when(masterStorage.selectOne(1, MockMetaManager.l0EntityClass)).thenReturn(
+            Optional.of(Entity.Builder.anEntity().withId(1).build())
+        );
+        Optional<IEntity> entityOp = impl.selectOne(1, MockMetaManager.l0EntityClass.ref());
 
-        public JoinCase(
-            IEntityClass reusltEntityClass,
-            Conditions conditions,
-            Page page, Sort sort, Collection<String> expectedStrings) {
-            this.reusltEntityClass = reusltEntityClass;
-            this.conditions = conditions;
-            this.page = page;
-            this.sort = sort;
-            this.expectedStrings = expectedStrings;
+        Assert.assertTrue(entityOp.isPresent());
+        Assert.assertEquals(1, entityOp.get().id());
+    }
+
+    @Test
+    public void testSelectMultiple() throws Exception {
+        long[] ids = new long[] {
+            1, 2, 3
+        };
+        when(masterStorage.selectMultiple(ids, MockMetaManager.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(3).build()
+            )
+        );
+
+        Collection<IEntity> entities = impl.selectMultiple(ids, MockMetaManager.l2EntityClass.ref());
+
+        Assert.assertEquals(ids.length, entities.size());
+        List<IEntity> entityList = new ArrayList<>(entities);
+        for (int i = 0; i < ids.length; i++) {
+            Assert.assertEquals(ids[i], entityList.get(i).id());
         }
     }
 
-    private IEntityClass buildIEntityClass(IEntityClass parentEntityClass, Collection<IEntityField> fields) {
+    @Test
+    public void testSelectByOndIdCondition() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(EntityField.ID_ENTITY_FIELD, ConditionOperator.EQUALS,
+                    new LongValue(EntityField.ID_ENTITY_FIELD, 100L)));
 
-        long classId = idGenerator.next();
-        if (parentEntityClass != null) {
-            return new EntityClass(
-                classId, "class-" + classId, null, null, parentEntityClass, fields);
-        } else {
-            return new EntityClass(classId, "class-" + classId, fields);
-        }
+        when(masterStorage.selectOne(100L, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(
+            Entity.Builder.anEntity().withId(100L).build()
+        ));
+
+        Collection<IEntity> entities = impl.selectByConditions(conditions,
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(100L, entities.stream().findFirst().get().id());
     }
 
-    private IEntity[] buildEntity(IEntityClass entityClass) {
-        if (entityClass.extendEntityClass() != null) {
-            long parentId = idGenerator.next();
-            long childId = idGenerator.next();
-
-            return new Entity[]{
-                new Entity(
-                    childId,
-                    entityClass,
-                    buildValues(entityClass),
-                    new EntityFamily(parentId, 0),
-                    0,
-                    OqsVersion.MAJOR
+    @Test
+    public void testSelectNormalFieldCondition() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    MockMetaManager.l0EntityClass.field("l0-string").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockMetaManager.l0EntityClass.field("l0-string").get(), "test")
                 )
-                ,
-                new Entity(
-                    parentId,
-                    entityClass.extendEntityClass(),
-                    buildValues(entityClass.extendEntityClass()),
-                    new EntityFamily(0, childId), 0, OqsVersion.MAJOR
-                )
-            };
+            );
+        Page page = Page.newSinglePage(100);
+        when(masterStorage.select(
+            conditions,
+            MockMetaManager.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        )).thenReturn(Arrays.asList(
+            new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+            new EntityRef(2, OperationType.DELETE.getValue(), OqsVersion.MAJOR)
+        ));
 
-        } else {
+        when(indexStorage.select(
+            conditions,
+            MockMetaManager.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .withExcludeId(2L)
+                .withPage(page)
+                .build()
+        )).thenReturn(
+            Arrays.asList(
+                new EntityRef(3, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(4, OperationType.CREATE.getValue(), OqsVersion.MAJOR)
+            )
+        );
 
-            return new Entity[]{new Entity(
-                idGenerator.next(),
-                entityClass,
-                buildValues(entityClass), OqsVersion.MAJOR)};
+        when(masterStorage.selectMultiple(new long[] {1, 3, 4}, MockMetaManager.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(3).build(),
+                Entity.Builder.anEntity().withId(4).build()
+            )
+        );
+
+        List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
+            conditions,
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig().withPage(page).build()
+        ));
+
+        Assert.assertEquals(3, entities.size());
+        long[] expectedIds = new long[] {
+            1, 3, 4
+        };
+        for (int i = 0; i < expectedIds.length; i++) {
+            Assert.assertEquals(expectedIds[i], entities.get(i).id());
         }
     }
 
-    private IEntityValue buildValues(IEntityClass entityClass) {
-        Collection<IValue> values = entityClass.fields().stream().map(f -> {
-            switch (f.type()) {
-                case STRING:
-                    return new StringValue(f, buildRandomString(10));
-                case LONG:
-                    return new LongValue(f, (long) buildRandomLong(0, 100));
-                case BOOLEAN:
-                    return new BooleanValue(f, buildRandomLong(0, 100) > 50 ? true : false);
-            }
-            return null;
-        }).collect(Collectors.toList());
-
-        return new EntityValue(entityClass.id()).addValues(values);
+    @Test(expected = SQLException.class)
+    public void testHaveFuzzyFilterConditions() throws Exception {
+        impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig()
+                .withFilter(
+                    Conditions.buildEmtpyConditions()
+                        .addAnd(
+                            new Condition(
+                                MockMetaManager.l2EntityClass.field("l0-string").get(),
+                                ConditionOperator.LIKE,
+                                new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "123")
+                            )
+                        )
+                ).build()
+        );
     }
-
-    private String buildRandomString(int size) {
-        StringBuilder buff = new StringBuilder();
-        Random rand = new Random(47);
-        for (int i = 0; i < size; i++) {
-            buff.append(rand.nextInt(26) + 'a');
-        }
-        return buff.toString();
-    }
-
-    private int buildRandomLong(int min, int max) {
-        Random random = new Random();
-
-        return random.nextInt(max) % (max - min + 1) + min;
-    }
-
-    private class MockMasterStorage implements MasterStorage {
-
-        private Collection<IEntity> entities;
-
-        public MockMasterStorage(Collection<IEntity> entities) {
-            this.entities = entities;
-        }
-
-        @Override
-        public DataQueryIterator newIterator(IEntityClass entityClass, long startTimeMs,
-                                             long endTimeMs, ExecutorService threadPool,
-                                             int queryTimeout, int pageSize, boolean searchable) throws SQLException {
-            return null;
-        }
-
-        @Override
-        public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-            return entities.stream().filter(e -> e.id() == id && e.entityClass().equals(entityClass)).findFirst();
-        }
-
-        @Override
-        public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
-            Optional<IEntity> entity =
-                entities.stream().filter(e -> e.id() == id).findFirst();
-
-            return entity.map(IEntity::entityValue);
-        }
-
-        @Override
-        public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
-            Collection<IEntity> results = new ArrayList(ids.size());
-            for (IEntity e : entities) {
-                if (ids.containsKey(e.id()) && e.entityClass().equals(ids.get(e.id()))) {
-                    results.add(e);
-                }
-            }
-            return results;
-        }
-
-        @Override
-        public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort) throws SQLException {
-            return null;
-        }
-
-        @Override
-        public int synchronize(long id, long child) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int synchronizeToChild(IEntity entity) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public Optional<Long> maxCommitId() throws SQLException {
-            return Optional.ofNullable(1L);
-        }
-
-        @Override
-        public int build(IEntity entity) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int replace(IEntity entity) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int delete(IEntity entity) throws SQLException {
-            return 0;
-        }
-    }
-
-    private class MockSelectHistoryIndexStorage implements IndexStorage {
-
-        private Collection<SelectHistory> histories = new ArrayList<>();
-
-        private Map<IEntityClass, Collection<EntityRef>> pool;
-
-        public MockSelectHistoryIndexStorage(Map<IEntityClass, Collection<EntityRef>> pool) {
-            this.pool = pool;
-        }
-
-        public Collection<SelectHistory> getHistories() {
-            return histories;
-        }
-
-        public void reset() {
-            histories.clear();
-        }
-
-        @Override
-        public Collection<EntityRef> select(
-            Conditions conditions, IEntityClass entityClass, Sort sort, Page page, Set<Long> filterIds, long commitId)
-            throws SQLException {
-            histories.add(new SelectHistory(conditions, entityClass, sort, page));
-
-            Collection<EntityRef> refs = pool.get(entityClass);
-            if (refs == null) {
-                page.setTotalCount(0);
-            } else {
-                page.setTotalCount(refs.size());
-            }
-            if (page.isEmptyPage()) {
-                refs = null;
-            }
-
-            return refs == null ? Collections.emptyList() : refs;
-        }
-
-        @Override
-        public void replaceAttribute(IEntityValue attribute) throws SQLException {
-
-        }
-
-        @Override
-        public int delete(long id) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue) {
-
-        }
-
-        @Override
-        public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
-            return false;
-        }
-
-        @Override
-        public int build(IEntity entity) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int replace(IEntity entity) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int delete(IEntity entity) throws SQLException {
-            return 0;
-        }
-    }
-
-    private class SelectHistory {
-        private Conditions conditions;
-        private IEntityClass entityClass;
-        private Sort sort;
-        private Page page;
-
-        public SelectHistory(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) {
-            this.conditions = conditions;
-            this.entityClass = entityClass;
-            this.sort = sort;
-            this.page = page;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder buff = new StringBuilder();
-            buff.append(conditions.toString())
-                .append(".")
-                .append(entityClass.id())
-                .append(".asc:")
-                .append(sort.isAsc()).append("|des:").append(sort.isDes()).append("|outoforder:").append(sort.isOutOfOrder())
-                .append(".empty:");
-            buff.append(page.isEmptyPage()).append("|single:").append(page.isSinglePage()).append("|ready:").append(page.isReady());
-            return buff.toString();
-        }
-    }
-} 
+}

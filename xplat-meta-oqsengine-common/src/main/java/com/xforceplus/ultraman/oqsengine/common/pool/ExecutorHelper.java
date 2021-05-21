@@ -7,8 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 线程管理者的方便工具
- * <p>
+ * 线程管理者的方便工具.
  *
  * @author donbing
  * @version 1.0 2014-9-21
@@ -20,8 +19,7 @@ public class ExecutorHelper {
     }
 
     /**
-     * 使用默认的等待时间1分钟，来关闭目标线程组。
-     * <p>
+     * 使用默认的等待时间1分钟，来关闭目标线程组.
      *
      * @param pool 需要关闭的线程组.
      */
@@ -30,8 +28,7 @@ public class ExecutorHelper {
     }
 
     /**
-     * 关闭ExecutorService的线程管理者
-     * <p>
+     * 关闭ExecutorService的线程管理者.
      *
      * @param pool    需要关闭的管理者
      * @param timeout 等待时间

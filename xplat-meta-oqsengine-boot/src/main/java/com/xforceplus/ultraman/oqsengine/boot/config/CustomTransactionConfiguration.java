@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -11,13 +13,17 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.Sphi
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
+import io.lettuce.core.RedisClient;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
-
 /**
+ * 自定义事务配置.
+ *
  * @author dongbin
  * @version 0.1 2020/2/24 17:08
  * @since 1.8
@@ -25,14 +31,26 @@ import javax.sql.DataSource;
 @Configuration
 public class CustomTransactionConfiguration {
 
+    /**
+     * 事务管理器.
+     */
     @Bean
     public TransactionManager transactionManager(
         LongIdGenerator snowflakeIdGenerator,
         LongIdGenerator redisIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
-        CommitIdStatusService commitIdStatusService) {
-        return new DefaultTransactionManager(
-            transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator, commitIdStatusService, true);
+        CommitIdStatusService commitIdStatusService,
+        EventBus eventBus,
+        CacheEventHandler cacheEventHandler) {
+        return DefaultTransactionManager.Builder.anDefaultTransactionManager()
+            .withSurvivalTimeMs(transactionTimeoutMs)
+            .withTxIdGenerator(snowflakeIdGenerator)
+            .withCommitIdGenerator(redisIdGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(true)
+            .withEventBus(eventBus)
+            .withCacheEventHandler(cacheEventHandler)
+            .build();
     }
 
     @Bean
@@ -40,6 +58,9 @@ public class CustomTransactionConfiguration {
         return new SphinxQLTransactionResourceFactory();
     }
 
+    /**
+     * 索引搜索执行器.
+     */
     @Bean
     public TransactionExecutor sphinxQLSearchTransactionExecutor(
         SphinxQLTransactionResourceFactory factory,
@@ -78,12 +99,20 @@ public class CustomTransactionConfiguration {
         TransactionManager tm,
         DataSource masterDataSource,
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
+        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource),
+            new NoSelector(tableName));
     }
 
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
+    }
+
+    @Bean
+    public CacheEventHandler cacheEventHandler(RedisClient redisClientCacheEvent,
+                                               ObjectMapper objectMapper,
+                                               @Value("${cache.event.expire:0}") long expire) {
+        return new RedisEventHandler(redisClientCacheEvent, objectMapper, expire);
     }
 
 }

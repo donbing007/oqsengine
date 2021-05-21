@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.util.Set;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * 事务累加器.
- *
  * 实现必须并发安全.
  *
  * @author dongbin
@@ -18,17 +16,17 @@ public interface TransactionAccumulator {
     /**
      * 事务中的创建次数累加1.
      */
-    public void accumulateBuild(long id);
+    public boolean accumulateBuild(IEntity entity);
 
     /**
      * 事务中更新次数累加1.
      */
-    public void accumulateReplace(long id);
+    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity);
 
     /**
      * 事务中删除次数累加1.
      */
-    public void accumulateDelete(long id);
+    public boolean accumulateDelete(IEntity entity);
 
     /**
      * 获取创建次数.
@@ -63,4 +61,11 @@ public interface TransactionAccumulator {
      * 重置累加器.
      */
     public void reset();
+
+    /**
+     * 当前操作序号,从0开始.保证有序且偏序.
+     *
+     * @return 当前最大序号.
+     */
+    public long operationNumber();
 }

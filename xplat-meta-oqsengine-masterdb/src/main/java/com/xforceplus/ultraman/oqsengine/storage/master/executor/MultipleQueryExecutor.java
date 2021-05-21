@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,51 +21,56 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Long>, Collection<StorageEntity>> {
+public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collection<MasterStorageEntity>> {
 
-    public static Executor<Collection<Long>, Collection<StorageEntity>> build(
-        String tableName, TransactionResource<Connection> resource, long timeout) {
-        return new MultipleQueryExecutor(tableName, resource, timeout);
+    private IEntityClass entityClass;
+
+    public static Executor<long[], Collection<MasterStorageEntity>> build(
+        String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, long timeout) {
+        return new MultipleQueryExecutor(tableName, resource, entityClass, timeout);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
         super(tableName, resource);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
+                                 long timeout) {
         super(tableName, resource, timeout);
+        this.entityClass = entityClass;
     }
 
     @Override
-    public Collection<StorageEntity> execute(Collection<Long> ids) throws SQLException {
-        String sql = buildSQL(ids.size());
+    public Collection<MasterStorageEntity> execute(long[] ids) throws SQLException {
+        String sql = buildSQL(ids.length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;
             for (long id : ids) {
                 st.setLong(index++, id);
             }
-            st.setBoolean(ids.size() + 1, false);
+            st.setBoolean(ids.length + 1, false);
+            st.setLong(ids.length + 2, entityClass.id());
 
             checkTimeout(st);
 
-            List<StorageEntity> entities = new ArrayList<>(ids.size());
-            StorageEntity entity;
+            List<MasterStorageEntity> entities = new ArrayList<>(ids.length);
             try (ResultSet rs = st.executeQuery()) {
-
                 while (rs.next()) {
-                    entity = new StorageEntity();
-                    entity.setId(rs.getLong(FieldDefine.ID));
-                    entity.setEntity(rs.getLong(FieldDefine.ENTITY));
-                    entity.setVersion(rs.getInt(FieldDefine.VERSION));
-                    entity.setOp(rs.getInt(FieldDefine.OP));
-                    entity.setTx(rs.getLong(FieldDefine.TX));
-                    entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
-                    entity.setTime(rs.getLong(FieldDefine.TIME));
-                    entity.setPref(rs.getLong(FieldDefine.PREF));
-                    entity.setCref(rs.getLong(FieldDefine.CREF));
-                    entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
-                    entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
-                    entities.add(entity);
+                    MasterStorageEntity.Builder builder = MasterStorageEntity.Builder.anStorageEntity()
+                        .withId(rs.getLong(FieldDefine.ID))
+                        .withVersion(rs.getInt(FieldDefine.VERSION))
+                        .withOp(rs.getInt(FieldDefine.OP))
+                        .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
+                        .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
+                        .withOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR))
+                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+
+                    long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
+                    for (int i = 0; i < entityClassIds.length; i++) {
+                        entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
+                    }
+                    builder.withEntityClasses(entityClassIds);
+                    entities.add(builder.build());
                 }
 
                 return entities;
@@ -79,14 +84,15 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
         sql.append("SELECT ");
         sql.append(String.join(",",
             FieldDefine.ID,
-            FieldDefine.ENTITY,
+            FieldDefine.ENTITYCLASS_LEVEL_0,
+            FieldDefine.ENTITYCLASS_LEVEL_1,
+            FieldDefine.ENTITYCLASS_LEVEL_2,
+            FieldDefine.ENTITYCLASS_LEVEL_3,
+            FieldDefine.ENTITYCLASS_LEVEL_4,
+            FieldDefine.CREATE_TIME,
+            FieldDefine.UPDATE_TIME,
             FieldDefine.VERSION,
             FieldDefine.OP,
-            FieldDefine.PREF,
-            FieldDefine.CREF,
-            FieldDefine.TIME,
-            FieldDefine.TX,
-            FieldDefine.COMMITID,
             FieldDefine.OQS_MAJOR,
             FieldDefine.ATTRIBUTE
             )
@@ -96,7 +102,10 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
             .append(" WHERE ")
             .append(FieldDefine.ID).append(" IN (").append(String.join(",", Collections.nCopies(size, "?")))
             .append(") AND ")
-            .append(FieldDefine.DELETED).append("=").append("?");
+            .append(FieldDefine.DELETED).append("=").append("?")
+            .append(" AND ");
+        int level = entityClass.level();
+        sql.append(FieldDefine.ENTITYCLASS_LEVEL_LIST[level]).append("=?");
         return sql.toString();
     }
 }

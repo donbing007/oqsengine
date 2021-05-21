@@ -7,13 +7,13 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.Metrics;
-
-import javax.sql.DataSource;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import javax.sql.DataSource;
 
 /**
  * {
@@ -61,6 +61,7 @@ public class DataSourceFactory {
     private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
     private static final String MASTER_PATH = "dataSources.master";
     private static final String DEV_OPS_PATH = MASTER_PATH;
+    private static final String CHANGE_LOG_PATH = MASTER_PATH;
 
     public static DataSourcePackage build() {
         return build(false);
@@ -120,7 +121,20 @@ public class DataSourceFactory {
             devOpsDataSource = null;
         }
 
-        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource);
+        DataSource changelogDataSource;
+        if (config.hasPath(CHANGE_LOG_PATH)) {
+            List<DataSource> devOps =
+                buildDataSources("master", (List<Config>) config.getConfigList(CHANGE_LOG_PATH), showSql);
+            if (devOps.size() > 0) {
+                changelogDataSource = devOps.get(0);
+            } else {
+                throw new RuntimeException("devOps dataSource was been configure, but not init success");
+            }
+        } else {
+            changelogDataSource = null;
+        }
+
+        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource, changelogDataSource);
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs, boolean showSql) {
@@ -143,7 +157,8 @@ public class DataSourceFactory {
             try {
                 invokeMethod(hikariConfig, e.getKey(), e.getValue());
             } catch (Exception ex) {
-                throw new RuntimeException(String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
+                throw new RuntimeException(
+                    String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
             }
         });
 
@@ -166,7 +181,7 @@ public class DataSourceFactory {
 
     private static void invokeMethod(HikariConfig hikariConfig, String attrName, ConfigValue value) throws Exception {
         Class clazz = hikariConfig.getClass();
-        String methodName = "set" + attrName.toUpperCase().substring(0, 1) + attrName.substring(1);
+        String methodName = "set" + attrName.toUpperCase(Locale.US).substring(0, 1) + attrName.substring(1);
         Method method = null;
         switch (value.valueType()) {
             case NUMBER: {

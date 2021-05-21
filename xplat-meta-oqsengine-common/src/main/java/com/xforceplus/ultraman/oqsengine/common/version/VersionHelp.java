@@ -17,7 +17,7 @@ public class VersionHelp {
     /**
      * 是否为万能版本号.
      *
-     * @param version
+     * @param version 待检测版本号.
      * @return true 是,false不是.
      */
     public static boolean isOmnipotence(int version) {

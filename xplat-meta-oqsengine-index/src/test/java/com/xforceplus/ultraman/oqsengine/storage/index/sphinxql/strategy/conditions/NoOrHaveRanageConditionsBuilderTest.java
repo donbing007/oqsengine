@@ -13,22 +13,20 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * NoOrHaveRanageConditionsBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/28/2020
  * @since <pre>Feb 28, 2020</pre>
  */
@@ -46,7 +44,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
     }
 
     /**
-     * Method: build(Conditions conditions)
+     * Method: build(Conditions conditions).
      */
     @Test
     public void testBuild() throws Exception {
@@ -56,9 +54,10 @@ public class NoOrHaveRanageConditionsBuilderTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         builder.setStorageStrategy(storageStrategyFactory);
+        builder.init();
 
         buildCase().stream().forEach(c -> {
-            String where = builder.build(entityClass, c.conditions);
+            String where = builder.build(entityClass, c.conditions).toString();
             Assert.assertEquals(c.expected, where);
         });
 
@@ -69,122 +68,182 @@ public class NoOrHaveRanageConditionsBuilderTest {
             new Case(
                 new Conditions(
                     new Condition(
-                        new EntityField(1, "c1", FieldType.LONG),
-                        ConditionOperator.GREATER_THAN,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
-                    )
-                ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 AND MATCH('@entityf =\"9223372036854775807\"')"
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(1, "c1", FieldType.LONG),
-                        ConditionOperator.GREATER_THAN,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
-                    )
-                ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 AND entity = 9223372036854775807 "
-                    + SqlKeywordDefine.AND + " MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
-            ),
-
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) AND MATCH('@entityf =\"9223372036854775807\"')"
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000))" +
-                    " AND entity = 9223372036854775807 AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
-            )
-            ,
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            new EntityField(1, "c1", FieldType.STRING),
-                            ConditionOperator.MULTIPLE_EQUALS,
-                            new StringValue(new EntityField(1, "c1", FieldType.STRING), "v1"),
-                            new StringValue(new EntityField(1, "c1", FieldType.STRING), "v2")
-                        )
-                    ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
-                    )
-                ),
-                "entity = 9223372036854775807 AND jsonfields.2S = 'v3' AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\")')"
-            )
-            ,
+                        new LongValue(new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 100L)))
+                    .addAnd(new Condition(
+                        new EntityField(9223372036854775806L, "c2", FieldType.STRING),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "test"))),
+                String.format("(id = 100) AND MATCH('((@%s -1y2p0ijtest32e8e6S))')", FieldDefine.ATTRIBUTEF)
+            ),
             new Case(
                 new Conditions(
                     new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
+                        new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 100L))
+                ).addAnd(
+                    new Condition(
+                        new EntityField(9223372036854775806L, "c2", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new EntityField(9223372036854775806L, "c2", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 200L))
+                ),
+                "(id = 100 AND id = 200)"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new EntityField(9223372036854775807L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 100L))),
+                "(id = 100)"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c1", FieldType.LONG),
                         ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 1L),
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 2L),
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
+                        new LongValue(new EntityField(9223372036854775807L, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND "
-                    + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) " + SqlKeywordDefine.AND + " entity = 9223372036854775807 AND id IN (1,2,3)" +
-                    " AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
-            )
-            ,
+                "(" + FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7L > 100)"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                        ConditionOperator.LIKE,
+                        new StringValue(new EntityField(9223372036854775807L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            "test")
+                    )
+                ).addAnd(
+                    new Condition(
+                        new EntityField(9223372036854775806L, "c1", FieldType.LONG),
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(new EntityField(9223372036854775806L, "c1", FieldType.LONG), 100L)
+                    )
+                ),
+                String.format(
+                    "(%s.1y2p0ij32e8e6L > 100) AND MATCH('((@%s 1y2p0ijtest32e8e7S))')",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF)
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                            new BigDecimal("123.56789"))
+                    )
+                ),
+                String.format(
+                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)))",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE)
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                            new BigDecimal("123.56789"))
+                    )
+                ).addAnd(
+                    new Condition(
+                        new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                        ConditionOperator.LIKE,
+                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            "test")
+                    )
+                ),
+                String.format(
+                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000))) AND MATCH('((@%s 1y2p0ijtest32e8e6S))')",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF)
+            ),
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            new EntityField(1, "c1", FieldType.LONG),
+                            new EntityField(9223372036854775807L, "c1", FieldType.STRING),
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING), "v1"),
+                            new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING), "v2")
+                        )
+                    )
+                    .addAnd(
+                        new Condition(
+                            new EntityField(9223372036854775806L, "c2", FieldType.STRING),
+                            ConditionOperator.EQUALS,
+                            new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "v3")
+                        )
+                    ),
+                String.format("MATCH('((@%s (1y2p0ijv132e8e7S | 1y2p0ijv232e8e7S)) (@%s 1y2p0ijv332e8e6S))')",
+                    FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF)
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(new EntityField(9223372036854775807L, "c3", FieldType.DECIMAL),
+                            new BigDecimal("123.56789"))
+                    )
+                ).addAnd(
+                    new Condition(
+                        new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                        ConditionOperator.LIKE,
+                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
+                            "test")
+                    )
+                ).addAnd(
+                    new Condition(
+                        new EntityField(9223372036854775805L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)),
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new LongValue(new EntityField(9223372036854775805L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 1L),
+                        new LongValue(new EntityField(9223372036854775805L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 2L),
+                        new LongValue(new EntityField(9223372036854775805L, "c1", FieldType.LONG,
+                            FieldConfig.build().identifie(true)), 3L)
+                    )
+                ),
+                String.format(
+                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND id IN (1,2,3)) AND MATCH('((@%s 1y2p0ijtest32e8e6S))')",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF
+                )
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new EntityField(9223372036854775807L, "c1", FieldType.LONG),
                             ConditionOperator.GREATER_THAN,
-                            new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                            new LongValue(new EntityField(9223372036854775807L, "c1", FieldType.LONG), 100L)
                         ))
                     .addAnd(
                         new Condition(
-                            new EntityField(2, "c2", FieldType.LONG),
+                            new EntityField(9223372036854775806L, "c2", FieldType.LONG),
                             ConditionOperator.NOT_EQUALS,
-                            new LongValue(new EntityField(2, "c1", FieldType.LONG), 200L)
+                            new LongValue(new EntityField(9223372036854775806L, "c1", FieldType.LONG), 200L)
                         )),
-                "jsonfields.1L > 100 AND jsonfields.2L != 200 AND MATCH('(@fullfields -\"200F2L\") (@entityf =\"9223372036854775807\")')"
+                String.format("(%s.1y2p0ij32e8e7L > 100) AND MATCH('((@%s -1y2p0ij20032e8e6L))')",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF)
             )
         );
     }

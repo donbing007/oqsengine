@@ -8,7 +8,7 @@ import org.junit.Test;
 /**
  * NoSelector Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/02/2020
  * @since <pre>Nov 2, 2020</pre>
  */

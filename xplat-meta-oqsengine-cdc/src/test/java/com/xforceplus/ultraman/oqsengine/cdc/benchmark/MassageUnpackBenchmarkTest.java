@@ -2,10 +2,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
@@ -13,7 +13,6 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -22,14 +21,13 @@ import java.util.List;
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
 
 /**
- * desc :
+ * desc :.
  * name : MassageUnpackBenchmarkTest
  *
- * @author : xujia
- * date : 2020/11/13
+ * @author : xujia 2020/11/13
  * @since : 1.8
  */
-public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
+public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
@@ -52,7 +50,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         build(preWarms, 1, Long.MAX_VALUE);
         build(entries, 1000, startId);
         cdcMetricsService = new CDCMetricsService();
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService());
+        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService(null));
     }
 
     @AfterClass
@@ -64,7 +62,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
 
     @Before
     public void before() throws Exception {
-        sphinxConsumerService = initAll();
+        sphinxConsumerService = initAll(false);
     }
 
     @After
@@ -78,15 +76,15 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         //  预热
         sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-        StopWatch stopWatch = new StopWatch();
+        for (int i = 0; i < 10; i++) {
+            long start = System.currentTimeMillis();
+            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
+            long duration = System.currentTimeMillis() - start;
 
-        stopWatch.start();
-        CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
-        stopWatch.stop();
-
-        Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
-        logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-                cdcMetrics.getCdcAckMetrics().getExecuteRows(), stopWatch.getTime());
+            Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            logger.info("end sphinxConsumerBenchmarkTest, loop : {} excuted-Rows : {}, use timeMs : {} ms",
+                i, cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
+        }
     }
 
     @Test
@@ -94,14 +92,13 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         //  预热
         parse(preWarms.get(0));
 
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+        long start = System.currentTimeMillis();
         for (CanalEntry.Entry entry : entries) {
             parse(entry);
         }
-        stopWatch.stop();
+        long duration = System.currentTimeMillis() - start;
 
-        logger.info("end parseBenchmarkTest loops : {}, use timeMs : {} ms", size, stopWatch.getTime());
+        logger.info("end parseBenchmarkTest loops : {}, use timeMs : {} ms", size, duration);
     }
 
     private void parse(CanalEntry.Entry entry) throws InvalidProtocolBufferException {
@@ -111,9 +108,11 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 = buildRow(start, true, 1, startId, "0", start,
-                    i % SphinxConsumerToolsTest.Prepared.metas.length, 0, 0, 1);
-            entries.add(fRanDom_1);
+            CanalEntry.Entry fatherRanDom1 =
+                buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1,
+                    false);
+
+            entries.add(fatherRanDom1);
         }
     }
 }

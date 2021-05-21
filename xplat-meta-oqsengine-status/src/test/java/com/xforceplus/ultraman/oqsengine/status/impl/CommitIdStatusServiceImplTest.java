@@ -6,6 +6,12 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainer
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.LongStream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,19 +19,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.LongStream;
-
 /**
  * CommitIdStatusServiceImpl Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/13/2020
  * @since <pre>Nov 13, 2020</pre>
  */
@@ -62,7 +59,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: save(long commitId)
+     * Method: save(long commitId).
      */
     @Test
     public void testSaveNotReady() throws Exception {
@@ -106,7 +103,7 @@ public class CommitIdStatusServiceImplTest {
 
         impl.ready(commitId);
 
-        /**
+        /*
          * 多次判断相等.
          */
         Assert.assertTrue(impl.isReady(commitId));
@@ -127,7 +124,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: getMin()
+     * Method: getMin().
      */
     @Test
     public void testGetMin() throws Exception {
@@ -142,7 +139,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: getMax()
+     * Method: getMax().
      */
     @Test
     public void testGetMax() throws Exception {
@@ -157,7 +154,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: getAll()
+     * Method: getAll().
      */
     @Test
     public void testGetAll() throws Exception {
@@ -174,7 +171,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: size()
+     * Method: size().
      */
     @Test
     public void testSize() throws Exception {
@@ -187,7 +184,7 @@ public class CommitIdStatusServiceImplTest {
     }
 
     /**
-     * Method: obsolete(long commitId)
+     * Method: obsolete(long commitId).
      */
     @Test
     public void testObsoleteCommitId() throws Exception {
@@ -228,14 +225,6 @@ public class CommitIdStatusServiceImplTest {
 
         Assert.assertEquals(10L, impl.getMin().get().longValue());
         Assert.assertEquals(99L, impl.getMax().get().longValue());
-
-        // 因为同步指标是异步的,所以等待成功.
-        TimeUnit.MILLISECONDS.sleep(300);
-
-        Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
-        unSyncCommitIdSizeField.setAccessible(true);
-        AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
-        Assert.assertEquals(89L, unSyncCommitIdSize.longValue());
     }
 
     @Test
@@ -261,8 +250,6 @@ public class CommitIdStatusServiceImplTest {
 
     /**
      * 测试如果状态为unknown,isReady在检查到一个阀值时会自动设置为就绪状态.
-     *
-     * @throws Exception
      */
     @Test
     public void testUnknownNumber() throws Exception {
@@ -283,13 +270,11 @@ public class CommitIdStatusServiceImplTest {
         Assert.assertTrue(impl.isObsolete(100));
         Assert.assertEquals(200, impl.getMin().get().longValue());
         Assert.assertEquals(1, impl.size());
-        Assert.assertTrue(Arrays.equals(new long[]{200L}, impl.getAll()));
+        Assert.assertTrue(Arrays.equals(new long[] {200L}, impl.getAll()));
     }
 
     /**
      * 测试并发保存和淘汰,查询状态是否正常.
-     *
-     * @throws Exception
      */
     @Test
     public void testConcurrentSaveObsolete() throws Exception {
@@ -322,7 +307,7 @@ public class CommitIdStatusServiceImplTest {
 
             latch.countDown();
             finishLatch.await();
-            /**
+            /*
              * 有两种可能,先淘汰那不应该保存,先保存应该状态为淘汰.
              */
             if (impl.isObsolete(i)) {

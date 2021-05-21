@@ -1,20 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +19,12 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * MultiLocalTransaction Tester.
@@ -36,6 +39,7 @@ public class MultiLocalTransactionTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
+    private RedisEventHandler redisEventHandler;
 
     @Before
     public void before() throws Exception {
@@ -46,6 +50,9 @@ public class MultiLocalTransactionTest {
         commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
+
+        redisEventHandler = new RedisEventHandler(redisClient, new ObjectMapper(), 10);
+        redisEventHandler.init();
     }
 
     @After
@@ -61,7 +68,13 @@ public class MultiLocalTransactionTest {
     public void testCommit() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .withMaxWaitCommitIdSyncMs(0)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -69,7 +82,8 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateBuild(1L);
+        tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(1)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build());
 
         tx.commit();
 
@@ -80,14 +94,17 @@ public class MultiLocalTransactionTest {
 
     /**
      * 提交时应该进行等等同步.
-     *
-     * @throws Exception
      */
     @Test
     public void testCommitWaitSync() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -95,7 +112,10 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateReplace(1L);
+        tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1).withVersion(1)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build(),
+            Entity.Builder.anEntity().withId(1).withVersion(0)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
         // 没有真实的操作,这里手动填入一个提交号.
         commitIdStatusService.save(1, true);
 
@@ -115,7 +135,12 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollback() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -132,7 +157,13 @@ public class MultiLocalTransactionTest {
     @Test
     public void testCommitEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .withMaxWaitCommitIdSyncMs(0)
+            .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -145,13 +176,14 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateDelete(3L);
+        tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(3L)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
 
         try {
             tx.commit();
             Assert.fail("No expected exception was thrown.");
         } catch (SQLException ex) {
-
+            ex.printStackTrace();
         }
 
         for (MockResource r : exResources) {
@@ -169,7 +201,12 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollbackEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -201,24 +238,49 @@ public class MultiLocalTransactionTest {
     @Test
     public void testIsReady() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
-        tx.getAccumulator().accumulateDelete(8);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .build();
+
+        tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(8)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(8L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateBuild(9);
+        tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(9)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(9L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateReplace(10);
+        tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(10)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build(),
+            Entity.Builder.anEntity().withId(10)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build());
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateReplace(1);
-        tx.getAccumulator().accumulateBuild(2);
-        tx.getAccumulator().accumulateDelete(3);
-        tx.getAccumulator().accumulateDelete(4);
-        tx.getAccumulator().accumulateDelete(5);
+        tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build(),
+            Entity.Builder.anEntity().withId(1)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build());
+
+        tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(2)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(2L).build()).build());
+
+        tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(3)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
+
+        tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(4)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(4L).build()).build());
+
+        tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(5)
+            .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(5L).build()).build());
+
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 

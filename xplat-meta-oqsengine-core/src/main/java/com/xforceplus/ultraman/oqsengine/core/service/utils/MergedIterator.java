@@ -4,9 +4,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 /**
- * merged iterator
+ * merged iterator.
  *
- * @param <T>
+ * @param <T> 元素.
  */
 public class MergedIterator<T> implements Iterator<T> {
 
@@ -17,6 +17,14 @@ public class MergedIterator<T> implements Iterator<T> {
     private Comparator<T> comparator;
     private boolean isAsc;
 
+    /**
+     * 实例化.
+     *
+     * @param s1         迭代器1.
+     * @param s2         迭代器2.
+     * @param comparator 比较器.
+     * @param isAsc      true降序,false升序.
+     */
     public MergedIterator(Iterator<T> s1, Iterator<T> s2, Comparator<T> comparator, boolean isAsc) {
         if (s1 == null || s2 == null || comparator == null) {
             throw new IllegalArgumentException("arguments can't be null");
@@ -38,8 +46,7 @@ public class MergedIterator<T> implements Iterator<T> {
 
     @Override
     public T next() {
-        boolean useStream1 = next1 != null && next2 == null ||
-                next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0));
+        boolean useStream1 = next1 != null && next2 == null || next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0));
 
         if (useStream1) {
             T returnObject = next1;

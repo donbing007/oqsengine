@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,12 +14,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 /**
  * EmptyConditionsBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 11/19/2020
  * @since <pre>Nov 19, 2020</pre>
  */
@@ -44,10 +43,9 @@ public class EmptyConditionsBuilderTest {
     public void testBuild() throws Exception {
 
         EmptyConditionsBuilder emptyConditionsBuilder = new EmptyConditionsBuilder();
-        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions());
+        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions()).toString();
 
-        logger.info("Actual where is {}", where);
-        Assert.assertEquals(String.format("MATCH('@entityf =\"%s\"')", Long.toString(entityClass.id())), where);
+        Assert.assertTrue(where.isEmpty());
     }
 
 

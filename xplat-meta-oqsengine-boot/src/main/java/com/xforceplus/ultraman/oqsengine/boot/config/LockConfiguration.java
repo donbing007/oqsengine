@@ -6,11 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * desc :
- * name : LockConfiguration
+ * 锁配置.
  *
- * @author : xujia
- * date : 2020/11/27
+ * @author xujia 2020/11/27
  * @since : 1.8
  */
 @Configuration

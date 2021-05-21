@@ -1,330 +1,418 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
+import java.sql.SQLException;
+import java.util.Optional;
+import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Optional;
-
-import static org.mockito.Mockito.*;
 
 /**
  * EntityManagementServiceImpl Tester.
  *
  * @author dongbin
- * @version 1.0 03/12/2020
- * @since <pre>Mar 12, 2020</pre>
+ * @version 1.0 03/18/2021
+ * @since <pre>Mar 18, 2021</pre>
  */
 public class EntityManagementServiceImplTest {
 
-    private EntityManagementServiceImpl service;
     private LongIdGenerator idGenerator;
+    private MetaManager metaManager;
+    private TransactionExecutor transactionExecutor;
 
-    private MasterStorage masterStorage;
-    private IndexStorage indexStorage;
-
-    private IEntityClass fatherEntityClass = new EntityClass(1, "father", Arrays.asList(
-        new EntityField(1, "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
-        new EntityField(2, "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-        new EntityField(3, "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
-    ));
-
-    private IEntityClass childEntityClass = new EntityClass(
-        2,
-        "chlid",
-        null,
-        null,
-        fatherEntityClass,
-        Arrays.asList(
-            new EntityField(4, "c1", FieldType.LONG, FieldConfig.build().searchable(true))
-        )
-    );
-
-    private IEntity noExtendEntity;
-    private IEntity fatherEntity;
-    private IEntity childEntity;
+    private EntityManagementServiceImpl impl;
 
     @Before
     public void before() throws Exception {
 
-        idGenerator = new IncreasingOrderLongIdGenerator();
-        noExtendEntity = new Entity(100, fatherEntityClass, new EntityValue(100).addValues(
-            Arrays.asList(
-                new LongValue(fatherEntityClass.field("f1").get(), 10000L),
-                new StringValue(fatherEntityClass.field("f2").get(), "v1"),
-                new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456"))
-            )
-        ));
+        idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
+        metaManager = new MockMetaManager();
+        transactionExecutor = new MockTransactionExecutor();
 
-        fatherEntity = new Entity(1000, fatherEntityClass, new EntityValue(1000).addValues(
-            Arrays.asList(
-                new LongValue(fatherEntityClass.field("f1").get(), 10000L),
-                new StringValue(fatherEntityClass.field("f2").get(), "v1"),
-                new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456"))
-            )
-        ), new EntityFamily(0, 2000), 0, OqsVersion.MAJOR);
+        impl = new EntityManagementServiceImpl(true);
+        ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
+        ReflectionTestUtils.setField(impl, "transactionExecutor", transactionExecutor);
+        ReflectionTestUtils.setField(impl, "metaManager", metaManager);
+        ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
+            @Override
+            public void watch(EventType type, Consumer<Event> listener) {
 
-        childEntity = new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
-            Arrays.asList(
-                new LongValue(fatherEntityClass.field("f1").get(), 10000L),
-                new StringValue(fatherEntityClass.field("f2").get(), "v1"),
-                new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456")),
-                new LongValue(childEntityClass.field("c1").get(), 20000L)
-            )
-        ), new EntityFamily(1000, 0), 0, OqsVersion.MAJOR);
+            }
 
+            @Override
+            public void notify(Event event) {
 
-        TransactionManager tm = new DefaultTransactionManager(idGenerator, new IncreasingOrderLongIdGenerator(0), null);
-        TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
-
-        masterStorage = mock(MasterStorage.class);
-        indexStorage = mock(IndexStorage.class);
-
-        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.getMin()).thenReturn(Optional.of(100L));
-
-        service = new EntityManagementServiceImpl(true);
-        ReflectionTestUtils.setField(service, "idGenerator", idGenerator);
-        ReflectionTestUtils.setField(service, "transactionExecutor", te);
-        ReflectionTestUtils.setField(service, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(service, "indexStorage", indexStorage);
-        ReflectionTestUtils.setField(service, "commitIdStatusService", commitIdStatusService);
-
+            }
+        });
+        impl.init();
     }
 
     @After
     public void after() throws Exception {
-    }
 
-    /**
-     * 测试删除没有继承关系.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testDeleteNoExtend() throws Exception {
-
-        when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)))).thenReturn(1);
-
-        Assert.assertEquals(ResultStatus.SUCCESS, service.delete(noExtendEntity));
-
-        verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)));
-    }
-
-    /**
-     * 删除一个父类.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testDeleteFather() throws Exception {
-
-        IEntity anyEntity = new Entity(
-            childEntity.id(),
-            AnyEntityClass.getInstance(),
-            new EntityValue(2000),
-            fatherEntity.version(),
-            OqsVersion.MAJOR
-        );
-
-        when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-
-        when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(anyEntity)))).thenReturn(1);
-
-        Assert.assertEquals(ResultStatus.SUCCESS, service.delete(fatherEntity));
-
-        verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
-        verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(anyEntity)));
-    }
-
-    /**
-     * 测试删除一个子类.
-     * @throws Exception
-     */
-    @Test
-    public void testDeleteChild() throws Exception {
-        when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(childEntity)))).thenReturn(1);
-
-        Assert.assertEquals(ResultStatus.SUCCESS, service.delete(childEntity));
-
-        verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
-        verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(childEntity)));
-    }
-
-    /**
-     * 更新一个不存在的对象.
-     *
-     * @throws Exception
-     */
-    @Test(expected = SQLException.class)
-    public void testReplaceNoExtendNotExist() throws Exception {
-        when(masterStorage.selectOne(noExtendEntity.id(), noExtendEntity.entityClass())).thenReturn(Optional.empty());
-        service.replace(noExtendEntity);
-    }
-
-    /**
-     * 更新一个已经存在的非继承对象.
-     */
-    @Test
-    public void testReplaceNoExtendExist() throws Exception {
-        when(masterStorage.selectOne(
-            noExtendEntity.id(), noExtendEntity.entityClass())).thenReturn(Optional.of(noExtendEntity));
-        when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)))).thenReturn(1);
-
-        Assert.assertEquals(ResultStatus.SUCCESS, service.replace(noExtendEntity));
-
-        verify(masterStorage).selectOne(noExtendEntity.id(), noExtendEntity.entityClass());
-        verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)));
-    }
-
-    /**
-     * 更新一个已经存在的父类.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testReplaceFather() throws Exception {
-        when(masterStorage.selectOne(fatherEntity.id(), fatherEntity.entityClass())).thenReturn(Optional.of(fatherEntity));
-        when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(masterStorage.synchronizeToChild(fatherEntity)).thenReturn(1);
-
-        Assert.assertEquals(ResultStatus.SUCCESS, service.replace(fatherEntity));
-
-        verify(masterStorage).selectOne(fatherEntity.id(), fatherEntityClass);
-        verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
-        verify(masterStorage).synchronizeToChild(fatherEntity);
     }
 
     @Test
-    public void testReplaceChild() throws Exception {
-        when(masterStorage.selectOne(childEntity.id(), childEntity.entityClass())).thenReturn(Optional.of(childEntity));
-        when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(childEntity)))).thenReturn(1);
+    public void testVerify() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()).build();
 
-        Assert.assertEquals(ResultStatus.SUCCESS, service.replace(childEntity));
-
-        verify(masterStorage).selectOne(childEntity.id(), childEntity.entityClass());
-        verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
-        verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(childEntity)));
-    }
-
-    @Test
-    public void testBuildNotExtend() throws Exception {
-        noExtendEntity.resetId(0);
-        when(masterStorage.build(argThat(IEntityMatcher.buildIgnoreIdAndTime(noExtendEntity)))).thenReturn(1);
-
-        noExtendEntity = service.build(noExtendEntity);
-
-        Assert.assertTrue(noExtendEntity.id() > 0);
-
-        verify(masterStorage).build(argThat(IEntityMatcher.buildIgnoreIdAndTime(noExtendEntity)));
-    }
-
-    @Test
-    public void testBuildChild() throws Exception {
-        fatherEntity.resetId(2);
-        childEntity.resetId(3);
-        fatherEntity.resetFamily(new EntityFamily(0, 3));
-        childEntity.resetFamily(new EntityFamily(2, 0));
-        when(masterStorage.build(argThat(IEntityMatcher.buildIgnoreTime(childEntity)))).thenReturn(1);
-        when(masterStorage.build(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-
-        childEntity = service.build(childEntity);
-
-        Assert.assertTrue(childEntity.id() > 0);
-
-        verify(masterStorage).build(argThat(IEntityMatcher.buildIgnoreIdAndTime(childEntity)));
-        verify(masterStorage).build(argThat(IEntityMatcher.buildIgnoreIdAndTime(fatherEntity)));
-    }
-
-    /**
-     * 参数比较器.
-     */
-    static class IEntityMatcher implements ArgumentMatcher<IEntity> {
-
-        private IEntity target;
-        private boolean ignoreId;
-        private boolean ignoreTime;
-
-        public static ArgumentMatcher<IEntity> buildIgnoreTime(IEntity target) {
-            return new IEntityMatcher(target, false, true);
+        try {
+            impl.build(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch (SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
-        public static ArgumentMatcher<IEntity> buildIgnoreIdAndTime(IEntity target) {
-            return new IEntityMatcher(target, true, true);
+        try {
+            impl.replace(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch (SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
-        public IEntityMatcher(IEntity target) {
-            this.target = target;
+        targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis()).build();
+        try {
+            impl.build(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch (SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
+        }
+        try {
+            impl.replace(targetEntity);
+            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+        } catch (SQLException ex) {
+            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
-        public IEntityMatcher(IEntity target, boolean ignoreId, boolean ignoreTime) {
-            this.target = target;
-            this.ignoreId = ignoreId;
-            this.ignoreTime = ignoreTime;
-        }
+    }
+
+    @Test
+    public void testBuildSuccess() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.build(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testBuildFail() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.build(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
+        Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testReplaceNotFound() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        when(masterStorage.selectOne(100, MockMetaManager.l2EntityClass)).thenReturn(Optional.empty());
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testReplaceFail() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+
+        // 这是请求的.
+        IEntity replaceEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L)))
+            .build();
+        // 这是实际被发送的
+        IEntity actualTargetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(replaceEntity.time())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        Assert.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
+    }
+
+    @Test
+    public void testReplaceSuccess() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+
+        // 这是请求的.
+        IEntity replaceEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L)))
+            .build();
+        // 这是实际被发送的
+        IEntity actualTargetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(replaceEntity.time())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
+    }
+
+    @Test
+    public void testDeleteSuccess() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testDeleteFail() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        Assert.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testDeleteNotFound() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+        when(masterStorage.exist(1)).thenReturn(false);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
+    }
+
+    static class MockTransactionExecutor implements TransactionExecutor {
 
         @Override
-        public boolean matches(IEntity argument) {
-            if (argument == null) {
-                return target == null;
-            }
-            if (!ignoreId) {
-                if (target.id() != argument.id()) {
-                    return false;
-                }
-            } else {
-                if (argument.id() <= 0) {
-                    return false;
-                }
-            }
-            if (!ignoreTime) {
-                if (target.time() != argument.time()) {
-                    return false;
-                }
-            }
-            if (target.version() != argument.version()) {
-                return false;
-            }
-            if (target.major() != argument.major()) {
-                return false;
-            }
-            if (!target.entityClass().equals(argument.entityClass())) {
-                return false;
-            }
-            if (!target.entityValue().equals(argument.entityValue())) {
-                return false;
-            }
-            if (!target.family().equals(argument.family())) {
-                return false;
-            }
-            return true;
+        public Object execute(ResourceTask storageTask) throws SQLException {
+            return storageTask.run(
+                MultiLocalTransaction.Builder.anMultiLocalTransaction()
+                    .withId(1)
+                    .withCacheEventHandler(new DoNothingCacheEventHandler())
+                    .withEventBus(
+                        new EventBus() {
+                            @Override
+                            public void watch(EventType type, Consumer<Event> listener) {
+                            }
+
+                            @Override
+                            public void notify(Event event) {
+                            }
+                        }
+                    )
+                    .build(),
+                null,
+                new DefaultExecutorHint());
         }
     }
+
 } 

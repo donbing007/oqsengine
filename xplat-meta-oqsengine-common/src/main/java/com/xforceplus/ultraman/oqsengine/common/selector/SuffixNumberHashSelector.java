@@ -2,13 +2,11 @@ package com.xforceplus.ultraman.oqsengine.common.selector;
 
 
 import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 数字后辍的字符串选择器.
- *
  * base = "table_"
  * size = 3
  * 那么结果将会是"table_0","table_1","table_2"范围之内.

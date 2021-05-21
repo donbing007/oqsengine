@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.parser.redis;
 
 import com.xforceplus.ultraman.oqsengine.common.parser.KeyValueParser;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,10 +21,10 @@ public class RedisInfoParser implements KeyValueParser<String, Map> {
 
     static final char SEGMENTATION_SYMBOLS = ':';
 
-    public static KeyValueParser<String, Map> instance = new RedisInfoParser();
+    public static final KeyValueParser<String, Map> INSTANCE = new RedisInfoParser();
 
     public static KeyValueParser<String, Map> getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     private RedisInfoParser() {
@@ -41,7 +40,7 @@ public class RedisInfoParser implements KeyValueParser<String, Map> {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                if (line != null && !line.isEmpty()) {
+                if (!line.isEmpty()) {
 
                     //忽略掉注解
                     if (line.startsWith("#")) {

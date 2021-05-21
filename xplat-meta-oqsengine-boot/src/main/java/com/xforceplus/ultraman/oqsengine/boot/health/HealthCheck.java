@@ -1,18 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.boot.health;
 
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import java.sql.SQLException;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
@@ -20,11 +15,9 @@ import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.Arrays;
-
 /**
+ * 健康检查.
+ *
  * @author dongbin
  * @version 0.1 2020/4/1 15:17
  * @since 1.8
@@ -38,43 +31,19 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private EntitySearchService entitySearchService;
 
-    @Resource
-    private CommitIdStatusService commitIdStatusService;
+    private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
 
-    private IEntityField notExistField = new EntityField(1, "test", FieldType.STRING);
-    private IEntityClass notExistClass = new EntityClass(1, "test", Arrays.asList(notExistField));
-    private IValue notExistValue = new StringValue(notExistField, "test");
+    private Conditions conditions = Conditions.buildEmtpyConditions();
+    private SearchConfig config = SearchConfig.Builder.anSearchConfig().withPage(Page.emptyPage()).build();
 
     @Override
     public Health health() {
 
         try {
-            entitySearchService.selectOne(1, notExistClass);
+            entitySearchService.selectByConditions(conditions, entityClassRef, config);
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             return Health.down(e).build();
-        }
-
-
-        Conditions conditions = Conditions.buildEmtpyConditions().addAnd(
-            new Condition(
-                notExistField,
-                ConditionOperator.EQUALS,
-                notExistValue
-            )
-        );
-
-        try {
-            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(1));
-        } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-            return Health.down(e).build();
-        }
-
-        try {
-            commitIdStatusService.getMin();
-        } catch (Exception ex) {
-            return Health.down(ex).build();
         }
 
         return Health.up().build();

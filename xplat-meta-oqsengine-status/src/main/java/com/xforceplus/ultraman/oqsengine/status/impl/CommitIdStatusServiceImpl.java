@@ -7,17 +7,16 @@ import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 提交号状态管理者.
@@ -37,7 +36,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private static final long DEFAULT_UNKNOWN_LIMIT_NUMBER = 30;
     private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
-    private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid.";
+    private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX =
+        "com.xforceplus.ultraman.oqsengine.status.commitid.";
     private static final String COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX =
         "com.xforceplus.ultraman.oqsengine.status.commitid.unknown.number.";
 
@@ -49,11 +49,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
      * ARGV:
      * 1 提交号,纯数字.
      * 2 需要设置的状态字符.
-     * <p>
      * 脚本会判断是否已经淘汰,不理将设置为指定的状态.
      * 返回1表示设置成功,0表示没有设置.
      * 相当于执行这样一个过程.
-     * <p>
      * long commitId = 123;
      * CommitStatus newStatus = CommitStatus.READY;
      * String value = command.get("com.xforceplus.ultraman.oqsengine.status.commitid." + commitId);
@@ -66,16 +64,16 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
      * }
      */
     private static String SAVE_LUA_SCRIPT = String.format(
-        "local statusKey = KEYS[2]..ARGV[1]" +
-            "local status = redis.call('get', statusKey);" +
-            "if status ~= '%s' " +
-            "then " +
-            "redis.call('set', statusKey, ARGV[2]);" +
-            "redis.call('zadd', KEYS[1], ARGV[1], ARGV[1]);" +
-            "return 1;" +
-            "else " +
-            "return 0;" +
-            "end;", CommitStatus.ELIMINATION.getSymbol());
+        "local statusKey = KEYS[2]..ARGV[1]"
+            + "local status = redis.call('get', statusKey);"
+            + "if status ~= '%s' "
+            + "then "
+            + "redis.call('set', statusKey, ARGV[2]);"
+            + "redis.call('zadd', KEYS[1], ARGV[1], ARGV[1]);"
+            + "return 1;"
+            + "else "
+            + "return 0;"
+            + "end;", CommitStatus.ELIMINATION.getSymbol());
 
     /**
      * 循环删除提交号的LUA脚本.
@@ -86,15 +84,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
      * ARGV: 数量不定,表示需要淘汰的提交号列表.
      */
     private static String OBSOLETE_LUA_SCRIPT = String.format(
-        "for i=1, #ARGV, 1 do " +
-            "local statusKey = KEYS[2]..ARGV[i];" +
-            "local unknownKey = KEYS[3]..ARGV[i];" +
-            "redis.call('del', unknownKey);" +
-            "redis.call('set', statusKey, '%s','EX', %d);" +
-            "redis.call('zrem', KEYS[1], ARGV[i]);" +
-            "end;return true"
-        ,
-        CommitStatus.ELIMINATION.getSymbol(), 60 * 60
+        "for i=1, #ARGV, 1 do "
+            + "local statusKey = KEYS[2]..ARGV[i];"
+            + "local unknownKey = KEYS[3]..ARGV[i];"
+            + "redis.call('del', unknownKey);"
+            + "redis.call('set', statusKey, '%s','EX', %d);"
+            + "redis.call('zrem', KEYS[1], ARGV[i]);"
+            + "end;return true", CommitStatus.ELIMINATION.getSymbol(), 60 * 60
     );
 
     /**
@@ -130,6 +126,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         this(commitidsKey, commitIdStatusKeyPreifx, DEFAULT_UNKNOWN_LIMIT_NUMBER);
     }
 
+    /**
+     * 实例化.
+     *
+     * @param commitidsKey            提交号key.
+     * @param commitIdStatusKeyPreifx 提交号状态key前辍.
+     * @param limitUnknownNumber      最大未知状态提交号数量.
+     */
     public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx, long limitUnknownNumber) {
         this.commitidsKey = commitidsKey;
         if (this.commitidsKey == null || this.commitidsKey.isEmpty()) {
@@ -230,7 +233,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         } else {
 
-            /**
+            /*
              * UNKNOWN的检查次数达到阀值后将被直接认定为ready.
              */
             if (CommitStatus.UNKNOWN == status) {
@@ -239,8 +242,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 long newNumber = syncCommands.incr(unknownNumberKey);
                 if (newNumber > limitUnknownNumber) {
                     if (logger.isWarnEnabled()) {
-                        logger.warn("The commit number {} check is always UNKNOWN, " +
-                                "the check number reaches the threshold {} and the ready state is automatically changed.",
+                        logger.warn(
+                            "The commit number {} check is always UNKNOWN, the check number reaches the threshold {} and the ready state is automatically changed.",
                             commitId, limitUnknownNumber);
                     }
                     return true;

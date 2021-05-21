@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * snowflake 的 ID 算法生成.
@@ -25,6 +27,11 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
 
     private int node;
 
+    /**
+     * 实例化.
+     *
+     * @param nodeIdGenerator 结点ID生成器实例.
+     */
     public SnowflakeLongIdGenerator(NodeIdGenerator nodeIdGenerator) {
         int nodeId = nodeIdGenerator.next();
         if (nodeId < 0 || nodeId > MAX_NODE) {
@@ -43,14 +50,10 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             if (currentTime < referenceTime) {
                 long offset = referenceTime - currentTime;
                 if (offset <= 5) {
-                    try {
-                        wait(offset << 1);
-                        currentTime = timeGen();
-                        if (currentTime < referenceTime) {
-                            throw new ClockBackwardsException(referenceTime, currentTime);
-                        }
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(offset << 1));
+                    currentTime = timeGen();
+                    if (currentTime < referenceTime) {
+                        throw new ClockBackwardsException(referenceTime, currentTime);
                     }
                 } else {
                     //throw
@@ -73,10 +76,10 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             referenceTime = currentTime;
         }
 
-        return (currentTime - twepoch ) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+        return (currentTime - twepoch) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
     }
 
-    private Long timeGen(){
+    private Long timeGen() {
         return System.currentTimeMillis();
     }
 

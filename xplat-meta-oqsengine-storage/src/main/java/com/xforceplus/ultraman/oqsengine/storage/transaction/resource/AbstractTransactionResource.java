@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.resource;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-
 import java.sql.SQLException;
 import java.util.Optional;
 

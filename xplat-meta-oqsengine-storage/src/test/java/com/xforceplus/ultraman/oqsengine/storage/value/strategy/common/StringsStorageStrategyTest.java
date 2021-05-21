@@ -14,7 +14,7 @@ import org.junit.Test;
 /**
  * EnumStorageStrategy Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/27/2020
  * @since <pre>Mar 27, 2020</pre>
  */

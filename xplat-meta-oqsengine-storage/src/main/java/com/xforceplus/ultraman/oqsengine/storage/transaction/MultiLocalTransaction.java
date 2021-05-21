@@ -2,20 +2,31 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.DoNothingEventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.transaction.RollbackPayload;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple multi-local transaction implementation ensures atomicity before the commit,
@@ -38,8 +49,11 @@ public class MultiLocalTransaction implements Transaction {
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
     private CommitIdStatusService commitIdStatusService;
+    private CacheEventHandler cacheEventHandler;
     private long maxWaitCommitIdSyncMs;
     private TransactionAccumulator accumulator;
+    private String msg;
+    private EventBus eventBus;
     // 每一次检查不通过的等待时间.
     private final long checkCommitIdSyncMs = 5;
     /**
@@ -49,22 +63,22 @@ public class MultiLocalTransaction implements Transaction {
 
     private long startMs;
 
-    public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
-        this(id, longIdGenerator, commitIdStatusService, TimeUnit.MINUTES.toMillis(1));
+    private MultiLocalTransaction() {
     }
 
-    public MultiLocalTransaction(
-        long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService, long maxWaitCommitIdSyncMs) {
-        transactionResourceHolder = new LinkedList<>();
-        committed = false;
-        rollback = false;
-        this.id = id;
-        this.longIdGenerator = longIdGenerator;
-        this.commitIdStatusService = commitIdStatusService;
-        this.maxWaitCommitIdSyncMs = maxWaitCommitIdSyncMs;
-        this.accumulator = new DefaultTransactionAccumulator();
-
+    private void init() {
         startMs = System.currentTimeMillis();
+        transactionResourceHolder = new LinkedList<>();
+        this.accumulator = new DefaultTransactionAccumulator(id, cacheEventHandler);
+
+        if (eventBus == null) {
+            eventBus = DoNothingEventBus.getInstance();
+        } else {
+            eventBus.notify(
+                new ActualEvent(
+                    EventType.TX_BEGIN,
+                    new BeginPayload(id, msg)));
+        }
     }
 
     @Override
@@ -73,10 +87,101 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
+    public Optional<String> message() {
+        return Optional.ofNullable(msg);
+    }
+
+    @Override
     public synchronized void commit() throws SQLException {
         check();
 
-        doEnd(true);
+        try {
+            long commitId = 0;
+            if (!isReadyOnly()) {
+                commitId = longIdGenerator.next();
+                if (!CommitHelper.isLegal(commitId)) {
+                    throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
+                }
+
+                eventBus.notify(
+                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                        new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
+
+                /*
+                 * 主库事务为主事务,成功与否决定了OQS事务是否成功.
+                 * 索引事务不会影响OQS事务的成功与否,如果索引事务发生错误最终由CDC来最终达成一致.
+                 */
+
+                // 主库提交.
+                for (TransactionResource tr : transactionResourceHolder) {
+                    if (tr.type() == TransactionResourceType.MASTER) {
+                        tr.commit(commitId);
+                    }
+                }
+
+                // ===========之后的操作不能影响最终OQS事务的成功返回事实.===================
+                try {
+                    // 索引提交,如果提交错误也不影响事务成功.
+                    for (TransactionResource tr : transactionResourceHolder) {
+                        if (tr.type() == TransactionResourceType.INDEX) {
+                            try {
+                                tr.commit(commitId);
+                            } catch (Exception ex) {
+                                logger.error(ex.getMessage(), ex);
+                            }
+                        }
+                    }
+
+                    commitIdStatusService.save(commitId, true);
+
+                    /*
+                     * 事务中存在更新操作,需要等待提交号同步.
+                     */
+                    if (accumulator.getReplaceNumbers() > 0 || accumulator.getDeleteNumbers() > 0) {
+                        waitedSync = true;
+                        long waitMs = awitCommitSync(commitId);
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(
+                                "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                                id, commitId, waitMs);
+                        }
+                    } else {
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(
+                                "Transaction {} has no update operation, no need to wait for the commit number {} to synchronize successfully.",
+                                id, commitId
+                            );
+                        }
+                    }
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+
+                eventBus.notify(
+                    new ActualEvent(EventType.TX_COMMITED,
+                        new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The transaction {} is a read-only transaction and does not require a commit.", id);
+                }
+
+                eventBus.notify(
+                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                        new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
+
+            }
+
+            cacheEventHandler.commit(id, this.getAccumulator().operationNumber());
+        } finally {
+            doEnd(true);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), commit.", id);
@@ -87,7 +192,30 @@ public class MultiLocalTransaction implements Transaction {
     public synchronized void rollback() throws SQLException {
         check();
 
-        doEnd(false);
+        eventBus.notify(
+            new ActualEvent(EventType.TX_PREPAREDNESS_ROLLBACK,
+                new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
+
+        try {
+            List<SQLException> exHolder = new ArrayList<>(transactionResourceHolder.size());
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                try {
+                    transactionResource.rollback();
+                } catch (SQLException ex) {
+                    exHolder.add(ex);
+                }
+            }
+
+            throwSQLExceptionIfNecessary(exHolder);
+
+            eventBus.notify(
+                new ActualEvent(EventType.TX_ROLLBACKED,
+                    new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
+
+            cacheEventHandler.rollback(id);
+        } finally {
+            doEnd(false);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), rollback.", id);
@@ -189,12 +317,15 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public String toString() {
-        return "MultiLocalTransaction{" +
-            "id=" + id +
-            ", attachment=" + attachment +
-            ", committed=" + committed +
-            ", rollback=" + rollback +
-            '}';
+        final StringBuffer sb = new StringBuffer("MultiLocalTransaction{");
+        sb.append("id=").append(id);
+        sb.append(", attachment=").append(attachment);
+        sb.append(", committed=").append(committed);
+        sb.append(", rollback=").append(rollback);
+        sb.append(", msg='").append(msg).append('\'');
+        sb.append(", startMs=").append(startMs);
+        sb.append('}');
+        return sb.toString();
     }
 
     private void check() throws SQLException {
@@ -205,6 +336,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     private void doEnd(boolean commit) throws SQLException {
+
         if (commit) {
 
             committed = true;
@@ -214,110 +346,19 @@ public class MultiLocalTransaction implements Transaction {
             rollback = true;
 
         }
-        try {
-            if (commit) {
-                long commitId = 0;
-                if (!isReadyOnly()) {
-                    commitId = longIdGenerator.next();
-                    if (!CommitHelper.isLegal(commitId)) {
-                        throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
-                    }
 
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
-                    }
-
-                    /**
-                     * 主库事务为主事务,成功与否决定了OQS事务是否成功.
-                     * 索引事务不会影响OQS事务的成功与否,如果索引事务发生错误最终由CDC来最终达成一致.
-                     */
-
-                    // 主库提交.
-                    for (TransactionResource tr : transactionResourceHolder) {
-                        if (tr.type() == TransactionResourceType.MASTER) {
-                            tr.commit(commitId);
-                        }
-                    }
-
-                    // ===========之后的操作不能影响最终OQS事务的成功返回事实.===================
-                    try {
-                        // 索引提交,如果提交错误也不影响事务成功.
-                        for (TransactionResource tr : transactionResourceHolder) {
-                            if (tr.type() == TransactionResourceType.INDEX) {
-                                try {
-                                    tr.commit(commitId);
-                                } catch (Exception ex) {
-                                    logger.error(ex.getMessage(), ex);
-                                }
-                            }
-                        }
-
-                        commitIdStatusService.save(commitId, true);
-
-                        /**
-                         * 事务中存在更新操作,需要等待提交号同步.
-                         */
-                        if (accumulator.getReplaceNumbers() > 0 || accumulator.getDeleteNumbers() > 0) {
-                            waitedSync = true;
-                            long waitMs = awitCommitSync(commitId);
-
-                            if (logger.isDebugEnabled()) {
-                                logger.debug(
-                                    "The transaction {} contains an update operation, the wait commit number {} " +
-                                        "synchronizes successfully. Wait {} milliseconds.",
-                                    id, commitId, waitMs);
-                            }
-                        } else {
-
-                            if (logger.isDebugEnabled()) {
-                                logger.debug(
-                                    "Transaction {} has no update operation, no need to wait for " +
-                                        "the commit number {} to synchronize successfully.",
-                                    id, commitId
-                                );
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.error(ex.getMessage(), ex);
-                    }
-                } else {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("The transaction {} is a read-only transaction and does not require a commit.", id);
-                    }
-
-                }
-
-            } else {
-
-                // 回滚
-                List<SQLException> exHolder = new ArrayList<>(transactionResourceHolder.size());
-                for (TransactionResource transactionResource : transactionResourceHolder) {
-                    try {
-                        transactionResource.rollback();
-                    } catch (SQLException ex) {
-                        exHolder.add(ex);
-                    }
-                }
-
-                throwSQLExceptionIfNecessary(exHolder);
+        for (TransactionResource tr : transactionResourceHolder) {
+            try {
+                tr.destroy();
+            } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
             }
-
-        } finally {
-
-            for (TransactionResource tr : transactionResourceHolder) {
-                try {
-                    tr.destroy();
-                } catch (Exception ex) {
-                    logger.error(ex.getMessage(), ex);
-                }
-            }
-
-            this.accumulator.reset();
-
-            Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
-                System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
+
+        this.accumulator.reset();
+
+        Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
+            System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
     }
 
     // 等待提交号被同步成功或者超时.
@@ -366,6 +407,93 @@ public class MultiLocalTransaction implements Transaction {
             committed = false;
 
             throw new SQLException(message.toString(), sqlStatue.toString());
+        }
+    }
+
+    /**
+     * builder.
+     */
+    public static final class Builder {
+        private long id;
+        private boolean committed = false;
+        private boolean rollback = false;
+        private LongIdGenerator longIdGenerator;
+        private CommitIdStatusService commitIdStatusService;
+        private CacheEventHandler cacheEventHandler;
+        private long maxWaitCommitIdSyncMs;
+        private String msg;
+        private EventBus eventBus = DoNothingEventBus.getInstance();
+
+        private Builder() {
+        }
+
+        public static Builder anMultiLocalTransaction() {
+            return new Builder();
+        }
+
+        public Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder withCommitted(boolean committed) {
+            this.committed = committed;
+            return this;
+        }
+
+        public Builder withRollback(boolean rollback) {
+            this.rollback = rollback;
+            return this;
+        }
+
+        public Builder withLongIdGenerator(LongIdGenerator longIdGenerator) {
+            this.longIdGenerator = longIdGenerator;
+            return this;
+        }
+
+        public Builder withCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
+            this.commitIdStatusService = commitIdStatusService;
+            return this;
+        }
+
+        public Builder withMaxWaitCommitIdSyncMs(long maxWaitCommitIdSyncMs) {
+            this.maxWaitCommitIdSyncMs = maxWaitCommitIdSyncMs;
+            return this;
+        }
+
+        public Builder withMsg(String msg) {
+            this.msg = msg;
+            return this;
+        }
+
+        public Builder withEventBus(EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        public Builder withCacheEventHandler(CacheEventHandler cacheEventHandler) {
+            this.cacheEventHandler = cacheEventHandler;
+            return this;
+        }
+
+        /**
+         * 构造实例.
+         *
+         * @return 实例.
+         */
+        public MultiLocalTransaction build() {
+            MultiLocalTransaction multiLocalTransaction = new MultiLocalTransaction();
+            multiLocalTransaction.committed = this.committed;
+            multiLocalTransaction.msg = this.msg;
+            multiLocalTransaction.rollback = this.rollback;
+            multiLocalTransaction.longIdGenerator = this.longIdGenerator;
+            multiLocalTransaction.id = this.id;
+            multiLocalTransaction.commitIdStatusService = this.commitIdStatusService;
+            multiLocalTransaction.eventBus = this.eventBus;
+            multiLocalTransaction.maxWaitCommitIdSyncMs = this.maxWaitCommitIdSyncMs;
+            multiLocalTransaction.cacheEventHandler = this.cacheEventHandler;
+            multiLocalTransaction.init();
+            return multiLocalTransaction;
         }
     }
 }

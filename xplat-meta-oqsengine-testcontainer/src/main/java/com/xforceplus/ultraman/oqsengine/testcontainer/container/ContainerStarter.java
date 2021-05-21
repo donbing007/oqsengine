@@ -1,28 +1,25 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
 /**
- * desc :
- * name : AbstractContainer
- *
- * @author : xujia
- * date : 2020/12/16
- * @since : 1.8
+ * 容器启动器.
  */
 @Ignore
 public final class ContainerStarter {
 
-    static final Logger logger = LoggerFactory.getLogger(ContainerStarter.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(ContainerStarter.class);
 
     private static GenericContainer redis;
     private static GenericContainer mysql;
@@ -39,10 +36,10 @@ public final class ContainerStarter {
     private static void waitStop(GenericContainer genericContainer) {
         while (genericContainer.isRunning()) {
             try {
-                logger.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
+                LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
                 TimeUnit.MILLISECONDS.sleep(5);
             } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                LOGGER.error(ex.getMessage(), ex);
             }
         }
     }
@@ -60,6 +57,9 @@ public final class ContainerStarter {
         stopRedis();
     }
 
+    /**
+     * 开始redis容器.
+     */
     public static synchronized void startRedis() {
         if (redis == null) {
             redis = new GenericContainer("redis:6.0.9-alpine3.12")
@@ -68,14 +68,20 @@ public final class ContainerStarter {
                 .withExposedPorts(6379)
                 .waitingFor(Wait.forListeningPort());
             redis.start();
+            redis.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
             System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
 
-            logger.info("Start Redis server.({}:{})", redis.getContainerIpAddress(), redis.getFirstMappedPort());
+            LOGGER.info("Start Redis server.({}:{})", redis.getContainerIpAddress(), redis.getFirstMappedPort());
         }
     }
 
+    /**
+     * 结束redis容器.
+     */
     public static synchronized void stopRedis() {
         if (redis != null) {
             redis.stop();
@@ -85,11 +91,14 @@ public final class ContainerStarter {
             System.clearProperty("REDIS_HOST");
             System.clearProperty("REDIS_PORT");
 
-            logger.info("Closed redis container!");
+            LOGGER.info("Closed redis container!");
         }
 
     }
 
+    /**
+     * 开始 mysql 容器.
+     */
     public static synchronized void startMysql() {
         if (mysql == null) {
             mysql = new GenericContainer("mysql:5.7")
@@ -103,19 +112,26 @@ public final class ContainerStarter {
                 .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(Wait.forListeningPort());
             mysql.start();
+            mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
             System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
 
             System.setProperty(
                 "MYSQL_JDBC",
-                String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                String.format(
+                    "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                     System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
 
-            logger.info("Start mysql server.({}:{})", mysql.getContainerIpAddress(), mysql.getFirstMappedPort());
+            LOGGER.info("Start mysql server.({}:{})", mysql.getContainerIpAddress(), mysql.getFirstMappedPort());
         }
     }
 
+    /**
+     * 结束mysql容器.
+     */
     public static synchronized void stopMysql() {
         if (mysql != null) {
             mysql.stop();
@@ -126,13 +142,16 @@ public final class ContainerStarter {
             System.clearProperty("MYSQL_PORT");
             System.clearProperty("MYSQL_JDBC");
 
-            logger.info("Closed mysql container!");
+            LOGGER.info("Closed mysql container!");
         }
     }
 
+    /**
+     * 开始 manticore 容器.
+     */
     public static synchronized void startManticore() {
         if (manticore0 == null) {
-            manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("manticore0")
@@ -140,20 +159,27 @@ public final class ContainerStarter {
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .waitingFor(Wait.forListeningPort());
             manticore0.start();
+            manticore0.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MANTICORE0_HOST", manticore0.getContainerIpAddress());
             System.setProperty("MANTICORE0_PORT", manticore0.getFirstMappedPort().toString());
 
             System.setProperty("MANTICORE0_JDBC",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format(
+                    "jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&"
+                        + "useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                     System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
 
 
-            logger.info("Start manticore server.({}:{})", manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
+            LOGGER
+                .info("Start manticore server.({}:{})", manticore0.getContainerIpAddress(),
+                    manticore0.getFirstMappedPort());
         }
 
         if (manticore1 == null) {
-            manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("manticore1")
@@ -161,20 +187,27 @@ public final class ContainerStarter {
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .waitingFor(Wait.forListeningPort());
             manticore1.start();
+            manticore1.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("MANTICORE1_HOST", manticore1.getContainerIpAddress());
             System.setProperty("MANTICORE1_PORT", manticore1.getFirstMappedPort().toString());
 
             System.setProperty("MANTICORE1_JDBC",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format(
+                    "jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false"
+                        + "&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                     System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
 
 
-            logger.info("Start manticore server.({}:{})", manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
+            LOGGER
+                .info("Start manticore server.({}:{})", manticore1.getContainerIpAddress(),
+                    manticore1.getFirstMappedPort());
         }
 
         if (searchManticore == null) {
-            searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("searchManticore")
@@ -183,18 +216,27 @@ public final class ContainerStarter {
                 .dependsOn(manticore0, manticore1)
                 .waitingFor(Wait.forListeningPort());
             searchManticore.start();
+            searchManticore.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("SEARCH_MANTICORE_HOST", searchManticore.getContainerIpAddress());
             System.setProperty("SEARCH_MANTICORE_PORT", searchManticore.getFirstMappedPort().toString());
 
             System.setProperty("SEARCH_MANTICORE_JDBC",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format(
+                    "jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false"
+                        + "&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                     System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
-            logger.info("Start search manticore server.({}:{})", searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
+            LOGGER.info("Start search manticore server.({}:{})", searchManticore.getContainerIpAddress(),
+                searchManticore.getFirstMappedPort());
         }
     }
 
+    /**
+     * 结束 manticore 容器.
+     */
     public static synchronized void stopManticore() {
         if (searchManticore != null) {
             searchManticore.stop();
@@ -205,7 +247,7 @@ public final class ContainerStarter {
             System.clearProperty("SEARCH_MANTICORE_PORT");
             System.clearProperty("SEARCH_MANTICORE_JDBC");
 
-            logger.info("Closed searchManticore container!");
+            LOGGER.info("Closed searchManticore container!");
         }
 
         if (manticore0 != null) {
@@ -217,7 +259,7 @@ public final class ContainerStarter {
             System.clearProperty("MANTICORE0_PORT");
             System.clearProperty("MANTICORE0_JDBC");
 
-            logger.info("Closed manticore0 container!");
+            LOGGER.info("Closed manticore0 container!");
         }
 
         if (manticore1 != null) {
@@ -229,10 +271,13 @@ public final class ContainerStarter {
             System.clearProperty("MANTICORE1_PORT");
             System.clearProperty("MANTICORE1_JDBC");
 
-            logger.info("Closed manticore1 container!");
+            LOGGER.info("Closed manticore1 container!");
         }
     }
 
+    /**
+     * 开始 cannal 容器.
+     */
     public static synchronized void startCannal() {
         if (cannal == null) {
             System.setProperty("CANAL_DESTINATION", getRandomString(6));
@@ -251,14 +296,20 @@ public final class ContainerStarter {
                 .dependsOn(mysql)
                 .waitingFor(Wait.forListeningPort());
             cannal.start();
+            cannal.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                LOGGER.info(outputFrame.getUtf8String());
+            });
 
             System.setProperty("CANAL_HOST", cannal.getContainerIpAddress());
             System.setProperty("CANAL_PORT", cannal.getFirstMappedPort().toString());
 
-            logger.info("Start cannal server.({}:{})", cannal.getContainerIpAddress(), cannal.getFirstMappedPort());
+            LOGGER.info("Start cannal server.({}:{})", cannal.getContainerIpAddress(), cannal.getFirstMappedPort());
         }
     }
 
+    /**
+     * 结束 cannal 容器.
+     */
     public static synchronized void stopCannal() {
         if (cannal != null) {
             cannal.stop();
@@ -269,7 +320,7 @@ public final class ContainerStarter {
             System.clearProperty("CANAL_HOST");
             System.clearProperty("CANAL_PORT");
 
-            logger.info("Closed cannal container!");
+            LOGGER.info("Closed cannal container!");
         }
     }
 

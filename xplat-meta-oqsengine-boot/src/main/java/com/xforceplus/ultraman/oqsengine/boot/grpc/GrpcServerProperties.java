@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * properties
+ * properties.
  */
 @ConfigurationProperties("grpc.server")
 public class GrpcServerProperties {

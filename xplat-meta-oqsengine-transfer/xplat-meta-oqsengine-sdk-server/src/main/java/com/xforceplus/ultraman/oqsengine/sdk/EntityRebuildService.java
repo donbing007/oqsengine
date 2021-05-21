@@ -55,19 +55,19 @@ public interface EntityRebuildService {
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUpList> EntityUpListSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUpList.class);
     
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest> RebuildRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest.class);
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RepairRequest> RepairRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.ShowTask> ShowTaskSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.ShowTask.class);
     
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.QueryPage> QueryPageSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.QueryPage.class);
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo> RebuildTaskInfoSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo.class);
     
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.class);
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RepairRequest> RepairRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest.class);
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.QueryPage> QueryPageSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.QueryPage.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> OperationResultSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.OperationResult.class);
+    
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest> RebuildRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest.class);
     
   }
 }

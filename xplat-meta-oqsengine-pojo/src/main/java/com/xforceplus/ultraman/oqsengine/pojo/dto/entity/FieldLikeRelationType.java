@@ -2,13 +2,12 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * field like Relation
+ * field like Relation.
  * relation name is the alias for the entity
  */
 public enum FieldLikeRelationType {
@@ -45,6 +44,10 @@ public enum FieldLikeRelationType {
         this.ownerSide = ownerSide;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public boolean isOwnerSide() {
         return ownerSide;
     }
@@ -65,12 +68,12 @@ public enum FieldLikeRelationType {
      * B A.id
      **/
     public static IEntityField toField(
-            Relation relation
-            , FieldType fieldType
-            , String defaultName
-            , boolean searchable
-            , boolean isIdentifier
-            , boolean ownerSide) {
+        Relation relation,
+        FieldType fieldType,
+        String defaultName,
+        boolean searchable,
+        boolean isIdentifier,
+        boolean ownerSide) {
 
 
         //determine which is the related field code
@@ -83,23 +86,29 @@ public enum FieldLikeRelationType {
         }
 
         String fieldName = (ownerSide ? relatedEntityName : relation.getRelOwnerClassName())
-                .concat(".").concat(defaultName);
+            .concat(".").concat(defaultName);
 
         Long fieldId = relation.getId();
 
         //TODO isIdentifier should always false
         //TODO searchable should always true
         FieldConfig fieldConfig = FieldConfig
-                .build()
-                .searchable(searchable)
-                .identifie(isIdentifier);
+            .build()
+            .searchable(searchable)
+            .identifie(isIdentifier);
 
         return new EntityField(fieldId, fieldName, fieldType, fieldConfig);
     }
 
+    /**
+     * 构造关系类型通过类型名称.
+     *
+     * @param name 名称.
+     * @return 实例.
+     */
     public static Optional<FieldLikeRelationType> from(String name) {
         return Stream.of(FieldLikeRelationType.values())
-                .filter(x -> x.name.equalsIgnoreCase(name))
-                .findFirst();
+            .filter(x -> x.name.equalsIgnoreCase(name))
+            .findFirst();
     }
 }

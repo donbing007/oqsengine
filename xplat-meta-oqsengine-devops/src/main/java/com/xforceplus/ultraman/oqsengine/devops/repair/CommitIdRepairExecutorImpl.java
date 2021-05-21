@@ -1,21 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.devops.repair;
 
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.Optional;
-
 import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
 
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Optional;
+import javax.annotation.Resource;
+
 /**
- * desc :
- * name : CommitIdRepairImpl
+ * 提交号修复执行器.
  *
- * @author : xujia
- * date : 2020/12/11
- * @since : 1.8
+ * @author xujia 2020/12/11
+ * @since 1.8
  */
 public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Resource
@@ -42,21 +40,29 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
         }
     }
 
+    @Override
+    public long[] rangeOfCommitId() {
+        long[] range = new long[2];
+        range[0] = commitIdStatusService.getMin().orElse(INVALID_COMMITID);
+        range[1] = commitIdStatusService.getMax().orElse(INVALID_COMMITID);
+        return range;
+    }
+
+    @Override
+    public void cleanLessThan(long id) {
+        long[] result = Arrays.stream(commitIdStatusService.getAll())
+            .filter(s -> {
+                return s > id;
+            })
+            .toArray();
+
+        commitIdStatusService.obsolete(result);
+    }
+
+
     @Deprecated
     @Override
     public void repair(Optional<Long> commitId) throws SQLException {
-//        Long repairId = 0L;
-//        if (!commitId.isPresent()) {
-//            //  获取主库最大的commitId
-//            Long dbMinCommitId = masterStorage.maxCommitId().orElseGet(() -> INIT_COMMIT_ID);
-//            //  获取redis最大的commitId
-//            Long redisMinCommitId = commitIdStatusService.getMax().orElseGet(() -> INIT_COMMIT_ID);
-//            //  两者取大
-//            repairId = dbMinCommitId > redisMinCommitId ? dbMinCommitId : redisMinCommitId;
-//        } else {
-//            repairId = commitId.get();
-//        }
-//
-//        commitIdStatusService.save(repairId, true);
+
     }
 }

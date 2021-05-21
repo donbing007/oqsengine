@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHi
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -41,10 +40,10 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
             localTx = false;
         }
 
-        ExecutorHint hint = new DefaultExecutorHint(tx.getAccumulator());
+        ExecutorHint hint = new DefaultExecutorHint();
         try {
 
-            Object res = resourceTask.run(null, hint);
+            Object res = resourceTask.run(tx, null, hint);
 
             if (localTx) {
 

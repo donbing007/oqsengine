@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 /**
  * LtNotMatchDecimalConditionQueryBuilder Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/26/2020
  * @since <pre>Mar 26, 2020</pre>
  */
@@ -40,7 +40,8 @@ public class LtNotMatchDecimalConditionBuilderTest {
 
     @Test
     public void testBuild() throws Exception {
-        LtNotMatchDecimalConditionBuilder builder = new LtNotMatchDecimalConditionBuilder(storageStrategyFactory);
+        LtNotMatchDecimalConditionBuilder
+            builder = new LtNotMatchDecimalConditionBuilder(storageStrategyFactory);
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         String conditionSql = builder.build(
             new Condition(
@@ -50,8 +51,8 @@ public class LtNotMatchDecimalConditionBuilderTest {
                 )
             )
         );
-        Assert.assertEquals("((" + FieldDefine.JSON_FIELDS + ".1L0 < 123) OR (" + FieldDefine.JSON_FIELDS
-            + ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 < 456000000000000000))", conditionSql);
+        Assert.assertEquals("((" + FieldDefine.ATTRIBUTE + ".1L0 < 123) OR (" + FieldDefine.ATTRIBUTE
+            + ".1L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".1L1 < 456000000000000000))", conditionSql);
 
     }
 

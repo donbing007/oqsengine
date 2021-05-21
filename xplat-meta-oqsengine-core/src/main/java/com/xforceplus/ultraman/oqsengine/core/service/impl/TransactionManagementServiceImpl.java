@@ -3,12 +3,11 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 事务管理.
@@ -31,16 +30,22 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public long begin(long timeoutMs) throws SQLException {
+        return begin(timeoutMs, null);
+    }
+
+    @Override
+    public long begin(long timeoutMs, String msg) throws SQLException {
         long txId;
 
         try {
             if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
-                txId = transactionManager.create().id();
+                txId = transactionManager.create(msg).id();
             } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
-                txId = transactionManager.create(timeoutMs).id();
+                txId = transactionManager.create(timeoutMs, msg).id();
             } else {
                 throw new SQLException(
-                    String.format("%d is an invalid transaction timeout and must be an integer greater than 0.", timeoutMs));
+                    String.format("%d is an invalid transaction timeout and must be an integer greater than 0.",
+                        timeoutMs));
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

@@ -2,11 +2,10 @@ package com.xforceplus.ultraman.oqsengine.core.service.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-
 import java.util.Comparator;
 
 /**
- * s
+ * entity ref 比较器.
  */
 public class EntityRefComparator implements Comparator<EntityRef> {
 

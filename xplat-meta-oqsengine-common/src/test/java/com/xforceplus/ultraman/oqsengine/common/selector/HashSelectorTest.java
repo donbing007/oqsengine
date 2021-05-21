@@ -1,22 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.common.selector;
 
+import static org.mockito.Mockito.mock;
+
 import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import static org.mockito.Mockito.mock;
-
 /**
  * DataSourceHashSelector Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
@@ -31,7 +30,7 @@ public class HashSelectorTest {
     }
 
     /**
-     * Method: select(String key)
+     * Method: select(String key).
      */
     @Test
     public void testSelect() throws Exception {

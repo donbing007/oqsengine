@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.Objects;
 
 /**
  * 表示一个整数.
+ *
  * @author wangzheng dongbin
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
@@ -18,6 +18,11 @@ public class LongValue extends AbstractValue<Long> {
 
     public LongValue(IEntityField field, long value) {
         super(field, value);
+    }
+
+    @Override
+    Long fromString(String value) {
+        return value == null ? null : Long.parseLong(value);
     }
 
     @Override
@@ -41,8 +46,12 @@ public class LongValue extends AbstractValue<Long> {
 
         LongValue that = (LongValue) o;
 
-        return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<Long> shallowClone() {
+        return new LongValue(this.getField(), getValue());
     }
 
     @Override
@@ -52,9 +61,6 @@ public class LongValue extends AbstractValue<Long> {
 
     @Override
     public String toString() {
-        return "LongValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+        return "LongValue{" + "field=" + getField() + ", value=" + getValue() + '}';
     }
 }

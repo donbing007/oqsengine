@@ -10,11 +10,13 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
+ * in 查询的全文方式.
+ *
  * @author dongbin
  * @version 0.1 2020/3/26 14:33
  * @since 1.8
  */
-public class MeqMatchConditionBuilder extends SphinxQLConditionBuilder {
+public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
     public MeqMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType, boolean useGroupName) {
         super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, true, useGroupName);
@@ -31,7 +33,7 @@ public class MeqMatchConditionBuilder extends SphinxQLConditionBuilder {
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
-            query = SphinxQLHelper.buildFullPreciseQuery(storageValue, isUseStorageGroupName());
+            query = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");

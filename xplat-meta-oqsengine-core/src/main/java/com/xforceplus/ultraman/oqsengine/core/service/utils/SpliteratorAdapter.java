@@ -5,8 +5,9 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 
 /**
- * spliter
- * @param <T>
+ * spliter.
+ *
+ * @param <T> 元素.
  */
 public class SpliteratorAdapter<T> extends Spliterators.AbstractSpliterator<T> {
 

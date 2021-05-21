@@ -2,12 +2,15 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 /**
  * 用于 match 函数中的匹配条件构造器.
@@ -16,7 +19,9 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/3/26 10:13
  * @since 1.8
  */
-public class MatchConditionBuilder extends SphinxQLConditionBuilder {
+public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder implements TokenizerFactoryAble {
+
+    private TokenizerFactory tokenizerFactory;
 
     public MatchConditionBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean useGroupName) {
@@ -32,19 +37,17 @@ public class MatchConditionBuilder extends SphinxQLConditionBuilder {
         StringBuilder buff = new StringBuilder();
 
         String symbol;
-        boolean fuzzy;
+        FieldConfig.FuzzyType fuzzyType = FieldConfig.FuzzyType.NOT;
         switch (operator()) {
             case NOT_EQUALS:
                 symbol = "-";
-                fuzzy = false;
                 break;
             case EQUALS:
                 symbol = "";
-                fuzzy = false;
                 break;
             case LIKE:
                 symbol = "";
-                fuzzy = true;
+                fuzzyType = logicValue.getField().config().getFuzzyType();
                 break;
             default:
                 throw new IllegalStateException(String.format("Unsupported operator.[%s]", operator().getSymbol()));
@@ -53,9 +56,25 @@ public class MatchConditionBuilder extends SphinxQLConditionBuilder {
         int conditonSize = 0;
         while (storageValue != null) {
 
-            String query = fuzzy ?
-                SphinxQLHelper.buildFullFuzzyQuery(storageValue, isUseStorageGroupName()) :
-                SphinxQLHelper.buildFullPreciseQuery(storageValue, isUseStorageGroupName());
+            String query = "";
+            switch (fuzzyType) {
+                case SEGMENTATION: {
+                    query = SphinxQLHelper.buildSegmentationQuery(
+                        storageValue, this.tokenizerFactory.getTokenizer(logicValue.getField()));
+                    break;
+                }
+                case WILDCARD: {
+                    query = SphinxQLHelper.buildWirdcardQuery(storageValue);
+                    break;
+                }
+                case NOT: {
+                    query = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+                    break;
+                }
+                default: {
+                    query = SphinxQLHelper.buildWirdcardQuery(storageValue);
+                }
+            }
 
             if (buff.length() > 0) {
                 buff.append(' ');
@@ -77,5 +96,10 @@ public class MatchConditionBuilder extends SphinxQLConditionBuilder {
         }
 
         return buff.toString();
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 }

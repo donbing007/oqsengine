@@ -3,40 +3,40 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
  * Entity实体值对象.
- * @author wangzheng
+ *
+ * @author wangzheng.
  * @version 1.0 2020/3/26 15:10
  */
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
-    /**
-     * 数据id
-     */
-    private long id;
 
-    /**
+    /*
      * Entity的值集合
      */
     private Map<Long, IValue> values;
 
-
-    public EntityValue(long id) {
-        this.id = id;
+    /**
+     * 获得值实例.
+     *
+     * @return 实例.
+     */
+    public static IEntityValue build() {
+        return new EntityValue();
     }
 
     @Override
-    public long id() {
-        return id;
-    }
-
-    @Override
-    public void restId(long id) {
-        this.id = id;
+    public int size() {
+        return values == null ? 0 : values.size();
     }
 
     @Override
@@ -57,8 +57,13 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Optional<IValue> getValue(long fieldId) {
+        if (values == null) {
+            return Optional.empty();
+
+        }
+
         return values.entrySet().stream().filter(x -> x.getKey() == fieldId)
-                .map(Map.Entry::getValue).findFirst();
+            .map(Map.Entry::getValue).findFirst();
     }
 
     @Override
@@ -82,16 +87,15 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         lazyInit();
         values.stream().forEach(v -> {
             this.values.put(v.getField().id(), v);
-
         });
         return this;
     }
 
     @Override
-    public IValue remove(IEntityField field) {
+    public Optional<IValue> remove(IEntityField field) {
         lazyInit();
 
-        return values.remove(field.id());
+        return Optional.ofNullable(values.remove(field.id()));
     }
 
     @Override
@@ -111,8 +115,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        EntityValue cloneValue = new EntityValue(id);
-        cloneValue.addValues(values());
+        EntityValue cloneValue = (EntityValue) EntityValue.build().addValues(values());
         return cloneValue;
     }
 
@@ -132,12 +135,12 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         }
         EntityValue that = (EntityValue) o;
-        return id == that.id && equalsValues(that);
+        return equalsValues(that);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, values);
+        return Objects.hash(values);
     }
 
     @Override

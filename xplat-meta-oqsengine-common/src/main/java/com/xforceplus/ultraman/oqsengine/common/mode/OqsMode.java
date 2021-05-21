@@ -22,6 +22,12 @@ public enum OqsMode {
         return value;
     }
 
+    /**
+     * 获取实例.
+     *
+     * @param value 字面值.
+     * @return 实例.
+     */
     public static OqsMode getInstance(int value) {
         for (OqsMode mode : OqsMode.values()) {
             if (mode.getValue() == value) {

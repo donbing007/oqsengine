@@ -1,79 +1,71 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
+ * SphinxQL帮助类.
+ *
  * @author dongbin
  * @version 0.1 2020/2/22 18:41
- * ` * @since 1.8
- * `
+ * @since 1.8
  */
 public class SphinxQLHelper {
 
     /**
-     * 全文搜索字段前辍.
+     * 半角空格不可过滤,只有全角空格需要过滤.
      */
-    public static final String ATTRIBUTE_FULL_FIELD_PREFIX = "F";
+    protected static final int[] IGNORE_SYMBOLS = {
+        '\'', '\\', '\"', '+', '#', '%', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
+        '<', '>', '≮', '≯', '≤', '≥', '‰', '∞', '∝', '√', '∵', '∴', '∷', '∠', '⌒', '⊙', '○', 'π', '△', '⊥', '∪', '∩',
+        '∫', '∑', '°', '′', '″', '℃', '{', '}', '(', ')', '[', ']', '|', '‖', '*', '/', ':', ';', '?', '!', '&', '～',
+        '§', '→', '^', '$', '@', '`', '❤', '❥', '︼', '﹄', '﹂', 'ˉ', '︾', '︺', '﹀', '︸', '︶', '︻', '﹃', '﹁',
+        // 全角
+        '！', '＂', '＃', '＄', '％', '＆', '＇', '（', '）', '＊', '＋', '－', '．', '／', '：', '；', '＜', '＝', '＞', '？',
+        '＠', '［', '＼', '］', '＾', '＿', '｀', '｛', '｜', '｝', '～', '　',
+    };
+
+    protected static final Map<Character, String> REPLACE_SYMBOLS;
+
+    static {
+        Arrays.sort(IGNORE_SYMBOLS);
+
+        /*
+         * 替换成英文表示,追加S表示Symbol缩写.
+         */
+        REPLACE_SYMBOLS = new HashMap<>();
+        REPLACE_SYMBOLS.put('-', "M");
+        REPLACE_SYMBOLS.put('.', "D");
+    }
 
     /**
-     * 表示系统字段的全文字段前辍.
-     */
-    public static final String SYSTEM_FULL_FIELD_PREFIX = "S";
-
-    /**
-     * 表示所有字段的全文查询字串.
-     */
-    public static final String ALL_DATA_FULL_TEXT = SYSTEM_FULL_FIELD_PREFIX + "g";
-
-    /**
-     * 处理以下字段.
-     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~ 空格 *
-     * 使用'\'转义.
+     * 过滤所有不合式的符号.替换需要的字符为合式的字符.
      *
      * @param value 目标字串.
      * @return 结果.
      */
-    public static String encodeSpecialCharset(String value) {
+    public static String filterSymbols(String value) {
+        value = StringUtils.filterCanSeeChar(value);
         if (value == null || value.isEmpty()) {
             return value;
         }
         StringBuilder buff = new StringBuilder();
+        String replaceString;
         for (char c : value.toCharArray()) {
-            switch (c) {
-                case '!':
-                case '$':
-                case '\'':
-                case '(':
-                case ')':
-                case '-':
-                case '/':
-                case '<':
-                case '@':
-                case '\\':
-                case '^':
-                case '|':
-                case '~':
-                case '*':
-                case '\"': {
-                    // 半角和全角差距为 65248.
-                    buff.append((char) (c + 65248));
-                    break;
+            if (Arrays.binarySearch(IGNORE_SYMBOLS, c) < 0) {
+                replaceString = REPLACE_SYMBOLS.get(c);
+                if (replaceString != null) {
+                    buff.append(replaceString);
+                } else {
+                    buff.append(c);
                 }
-                default: {
-                    if (c == ' ') {
-                        // 全角空格.
-                        buff.append((char) 12288);
-                    } else {
-                        buff.append(c);
-                    }
-                }
-
             }
         }
 
@@ -81,112 +73,104 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 处理成全文索引字符串.
+     * JSON储存字符编码处理.
+     *
+     * @param value 目标字符.
+     * @return 处理结果.
      */
-    public static String serializeStorageValueFull(StorageValue value) {
+    public static String encodeJsonCharset(String value) {
+        value = StringUtils.filterCanSeeChar(value);
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
         StringBuilder buff = new StringBuilder();
-        if (value.type() == StorageType.STRING) {
+        for (char c : value.toCharArray()) {
+            switch (c) {
+                case '\'': {
+                    buff.append('`');
+                    break;
+                }
+                case '"': {
+                    buff.append("``");
+                    break;
+                }
+                default: {
+                    buff.append(c);
+                }
+            }
 
-            buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
-            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
-            buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-
-        } else {
-
-            buff.append(value.value().toString());
-            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
         }
+
         return buff.toString();
-    }
-
-    private static ObjectMapper mapper = new ObjectMapper();
-
-    /**
-     * 将 Map 序列化成 json 字符串.
-     * 只关注处理 String 和非字符串,并且不会级联处理子对象.
-     *
-     * @param data 数据哈希.
-     * @return json.
-     */
-    public static String serializableJson(Map<String, Object> data) {
-        try {
-            return mapper.writeValueAsString(data);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 将 serializableJson 的结果还原成 Map 表示.
-     *
-     * @param json json 字符串.
-     * @return 数据.
-     */
-    public static Map<String, Object> deserializeJson(String json) {
-        if (!json.startsWith("{")) {
-            throw new IllegalStateException("Wrong JSON format.");
-        }
-        Map<String, Object> data;
-        if ("{}".equals(json)) {
-            data = new HashMap<>(1, 1.0F);
-            return data;
-        }
-
-        try {
-            data = mapper.readValue(json, Map.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        return data;
     }
 
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
-     * {value}F{field name}
      *
      * @param value 目标字段.
      * @return 结果.
      */
-    public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
+    public static String buildPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
+        ShortStorageName shortStorageName = value.shortStorageName();
 
-        buff.append('\"');
-        if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
-        }
-        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
+        buff.append(shortStorageName.getPrefix())
+            .append(filterSymbols(value.value().toString()));
+        /*
+         * 如果使用组名的话,忽略尾部定位序号.
+         */
         if (useGroupName) {
-            buff.append(value.groupStorageName()).append("*");
+            buff.append(shortStorageName.getNoLocationSuffix());
         } else {
-            buff.append(value.storageName());
+            buff.append(shortStorageName.getSuffix());
         }
-        buff.append("\"");
+
         return buff.toString();
     }
 
     /**
-     * 构造 sphinxQL 全文索引中的模糊查询语句.
-     * (ZONESPAN:{字段组名}F{字段组名} *value*)
+     * 构造 sphinxQL 全文索引中的分词模糊查询语法构造.
+     * 只能处理StorageValue.STRING类型.
      *
-     * @param value
-     * @return
+     * @param tokenizer 分词器.
+     * @return 查询语法.
+     * @see StorageType
      */
-    public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
+    public static String buildSegmentationQuery(StorageValue value, Tokenizer tokenizer) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
+        ShortStorageName shortStorageName = value.shortStorageName();
 
-        buff.append("\"*");
-        if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
+        String strValue = filterSymbols(value.value().toString());
+        Iterator<String> words = tokenizer.tokenize(strValue);
+        buff.append('(');
+        int emptyLen = buff.length();
+        while (words.hasNext()) {
+            if (buff.length() > emptyLen) {
+                buff.append(" << ");
+            }
+            buff.append(shortStorageName.getPrefix())
+                .append(words.next())
+                .append(shortStorageName.getSuffix());
         }
-        buff.append('*');
-        buff.append("\")");
+        // 无法分词,使用原始字符.
+        if (buff.length() == emptyLen) {
+            buff.append(shortStorageName.getPrefix())
+                .append(value.value().toString())
+                .append(shortStorageName.getSuffix());
+        }
+
+        buff.append(')');
+
         return buff.toString();
+    }
+
+    /**
+     * 通配符查询.
+     *
+     * @param value 查询目标值.
+     * @return 查询语法.
+     */
+    public static String buildWirdcardQuery(StorageValue value) {
+        return buildPreciseQuery(value, false);
     }
 }

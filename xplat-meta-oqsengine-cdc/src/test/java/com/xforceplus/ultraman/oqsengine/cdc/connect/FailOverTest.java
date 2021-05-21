@@ -1,8 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -11,36 +15,36 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import java.sql.SQLException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.SQLException;
-import java.util.concurrent.*;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
-
 
 /**
- * desc :
+ * desc :.
  * name : FailOverTest
  *
- * @author : xujia
- * date : 2020/11/11
+ * @author : xujia 2020/11/11
  * @since : 1.8
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class FailOverTest extends CDCAbstractContainer {
+public class FailOverTest extends AbstractCDCContainer {
     private MockRedisCallbackService mockRedisCallbackService;
 
     private CDCDaemonService cdcDaemonService;
 
-    private static final int partition = 2000000;
+    private static final int PARTITION = 2000000;
 
-    private static final int max = 100;
+    private static final int MAX = 100;
 
     private volatile boolean isTetOver = false;
 
@@ -56,15 +60,18 @@ public class FailOverTest extends CDCAbstractContainer {
     }
 
     private void initDaemonService() throws Exception {
+
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService();
+        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
+
+        ConsumerService consumerService = initAll(false);
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", consumerService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
-        ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
+        ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", singleCDCConnector);
     }
 
     @Test
@@ -84,7 +91,7 @@ public class FailOverTest extends CDCAbstractContainer {
     }
 
     //  模拟5秒宕机, 5秒后恢复
-    public class CDCDamonServiceCall implements Callable {
+    private class CDCDamonServiceCall implements Callable {
         @Override
         public Object call() throws Exception {
             System.out.println("start CDCDamonServiceCall thread.");
@@ -102,23 +109,23 @@ public class FailOverTest extends CDCAbstractContainer {
         }
     }
 
-    public class MysqlInitCall implements Callable {
+    private class MysqlInitCall implements Callable {
 
         @Override
         public Object call() throws Exception {
             System.out.println("start MysqlInitCall thread.");
-            int i = partition;
+            int i = PARTITION;
             while (!isTetOver) {
                 Transaction tx = transactionManager.create();
                 transactionManager.bind(tx.id());
                 try {
                     int j = 0;
-                    while (j < max) {
+                    while (j < MAX) {
                         initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 0), false);
                         j++;
                     }
                     j = 0;
-                    while (j < max) {
+                    while (j < MAX) {
                         initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 1), true);
                         j++;
                     }
@@ -141,9 +148,9 @@ public class FailOverTest extends CDCAbstractContainer {
     private void initData(IEntity[] datas, boolean replacement) throws SQLException {
         for (IEntity entity : datas) {
             if (!replacement) {
-                masterStorage.build(entity);
+                masterStorage.build(entity, getEntityClass(entity.id()));
             } else {
-                masterStorage.replace(entity);
+                masterStorage.replace(entity, getEntityClass(entity.id()));
             }
         }
     }

@@ -23,17 +23,20 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
 
     @Override
     public String build(IEntityClass entityClass, Conditions conditions) {
-        StringBuilder sql = new StringBuilder();
-        ConditionBuilder<String> cb;
-        for (Condition condition : conditions.collectCondition()) {
-            cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
-
-            if (sql.length() > 0) {
-                sql.append(" AND ");
-            }
-
-            sql.append(cb.build(condition));
+        if (conditions.isEmtpy()) {
+            return "";
         }
+
+        StringBuilder sql = new StringBuilder();
+        conditions.scan(
+            link -> sql.append(" ").append(link.getLink().name()).append(" "),
+            value -> {
+                Condition condition = value.getCondition();
+                ConditionBuilder<String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
+                sql.append(cb.build(condition));
+            },
+            parenthese -> sql.append(parenthese.toString())
+        );
 
         return sql.toString();
     }
@@ -42,6 +45,6 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
 
-        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(storageStrategyFactory);
+        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(this.storageStrategyFactory);
     }
 }
