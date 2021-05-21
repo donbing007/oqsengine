@@ -138,7 +138,7 @@ public class ConsumerRunner extends Thread {
 
     private boolean checkForStop() {
         if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
-            cdcConnector.shutdown();
+            abstractCdcConnector.shutdown();
             runningStatus = RunningStatus.STOP_SUCCESS;
             return true;
         }

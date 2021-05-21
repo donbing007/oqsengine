@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
+
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.Message;
 import java.sql.SQLException;
