@@ -1,19 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.generator;
 
 import com.hazelcast.com.google.common.collect.Maps;
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.DistributeCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.LocalCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
-import com.xforceplus.ultraman.oqsengine.idgenerator.util.HazelcastUtil;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
-import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.GENERATORS;
 
 /**
  * 项目名称: 票易通
@@ -28,6 +27,8 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
     @Autowired
     private SegmentService segmentService;
 
+    private ExecutorService executorService;
+
     private Map<String,IDGenerator> generators;
     private Map<String,IDGenerator> distributeGenerators;
 
@@ -35,6 +36,7 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
 
         this.generators = Maps.newConcurrentMap();
         this.distributeGenerators = Maps.newConcurrentMap();
+        this.executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("oqs-id-generator"));
     }
 
     @Override
@@ -52,10 +54,10 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
     }
 
     protected IDGenerator createIdGenerator(String bizType) {
-        return new LocalCacheGenerator(bizType, segmentService);
+        return new LocalCacheGenerator(bizType, segmentService,executorService);
     }
 
     protected IDGenerator createDistributeGenerator(String bizType) {
-        return new DistributeCacheGenerator(bizType,segmentService);
+        return new DistributeCacheGenerator(bizType,segmentService,executorService);
     }
 }

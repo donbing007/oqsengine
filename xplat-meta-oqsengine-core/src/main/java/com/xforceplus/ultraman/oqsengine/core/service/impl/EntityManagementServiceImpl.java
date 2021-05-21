@@ -231,6 +231,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
+            prepareBuild(entityClass, entity);
+        } catch (Exception e) {
+            String message = e.toString();
+            logger.warn("prepare build error, message [{}]", message);
+            return new OperationResult(
+                0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                ResultStatus.ELEVATEFAILED, message);
+        }
+
+        try {
             return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
@@ -243,15 +253,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 /*
                     执行自动编号、公式字段计算
                  */
-                try {
-                    prepareBuild(entityClass, entity);
-                } catch (Exception e) {
-                    String message = e.toString();
-                    logger.warn("prepare build error, message [{}]", message);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
-                        ResultStatus.ELEVATEFAILED, message);
-                }
+
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),

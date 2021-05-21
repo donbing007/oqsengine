@@ -15,12 +15,12 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.oqsengine.idgenerator.transaction.SegmentTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
@@ -77,7 +77,7 @@ public class SegmentServiceImplTest {
             .withWaitCommitSync(false)
             .build();
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SegmentTransactionResourceFactory("segment"),
+            transactionManager, new SqlConnectionTransactionResourceFactory("segment"),
             new NoSelector<>(dataSource), new NoSelector<>("segment"));
 
 

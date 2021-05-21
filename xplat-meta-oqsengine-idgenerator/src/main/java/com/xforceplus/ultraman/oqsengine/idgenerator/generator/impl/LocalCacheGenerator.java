@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl;
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.IDResult;
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.ResultCode;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
@@ -12,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 项目名称: 票易通
@@ -30,11 +27,12 @@ public class LocalCacheGenerator implements IDGenerator {
     protected volatile SegmentId next;
     private volatile boolean isLoadingNext;
     private Object lock = new Object();
-    private ExecutorService executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("oqs-id-generator"));
+    private ExecutorService executorService;
 
-    public LocalCacheGenerator(String bizType, SegmentService segmentService) {
+    public LocalCacheGenerator(String bizType, SegmentService segmentService,ExecutorService executorService) {
         this.bizType = bizType;
         this.segmentService = segmentService;
+        this.executorService = executorService;
         loadCurrent();
     }
 

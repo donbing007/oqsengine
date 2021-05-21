@@ -2,12 +2,13 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.SegmentFieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 /**
  * desc :
@@ -19,20 +20,21 @@ import java.util.Optional;
  */
 public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Optional<SegmentInfo>> {
 
-    public SegmentQueryExecutor(String tableName, TransactionResource resource, long timeoutMs) {
-        super(tableName, resource, timeoutMs);
+    public SegmentQueryExecutor(String tableName, DataSource dataSource, long timeoutMs) {
+        super(tableName, dataSource, timeoutMs);
     }
 
     public static AbstractSegmentExecutor<String, Optional<SegmentInfo>>
-    build(String tableName, TransactionResource resource, long timeout) {
-        return new SegmentQueryExecutor(tableName, resource, timeout);
+    build(String tableName, DataSource dataSource, long timeout) {
+        return new SegmentQueryExecutor(tableName, dataSource, timeout);
     }
 
     @Override
     public Optional<SegmentInfo> execute(String bizType) throws SQLException {
         String sql = buildSQL();
         SegmentInfo entity = null;
-        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+        try (Connection connection = getDataSource().getConnection();
+             PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, bizType);
             checkTimeout(st);
             if (logger.isDebugEnabled()) {
