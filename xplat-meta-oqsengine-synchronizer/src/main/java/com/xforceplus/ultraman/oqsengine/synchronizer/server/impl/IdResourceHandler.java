@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.synchronizer.server.impl;
 
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResourceHandler;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.ThreadNode;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,12 +9,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * id resource handler.
+ * id resource handler. not using now
  */
 public class IdResourceHandler implements CriticalResourceHandler<IdCriticalResource> {
 
     /**
-     * TODO redis
+     * TODO redis.
      */
     Map<Long, ThreadNode> exclusiveUUID = new ConcurrentHashMap<>();
     Map<ThreadNode, List<Long>> resourceOwner = new HashMap<>();

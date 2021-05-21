@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.synchronizer.server.dto;
 
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResource;
-
 import java.util.List;
 
 /**
@@ -18,25 +17,28 @@ public class LockStateResponse {
         this.criticalResources = criticalResources;
     }
 
+    /**
+     * Lock state.
+     */
     public enum LockState {
 
         /**
-         * start
+         * start.
          */
         INITED,
         /**
-         * request is locked
+         * request is locked.
          */
         LOCKED,
 
         /**
-         * request is in queue
+         * request is in queue.
          */
         IN_QUEUE,
 
         /**
          * TODO
-         * token expired
+         * token expired.
          */
         EXPIRED,
 
@@ -55,9 +57,9 @@ public class LockStateResponse {
 
     @Override
     public String toString() {
-        return "LockStateResponse{" +
-                "lockState=" + lockState +
-                ", criticalResources=" + criticalResources +
-                '}';
+        return "LockStateResponse{"
+            + "lockState=" + lockState
+            + ", criticalResources=" + criticalResources
+            + '}';
     }
 }

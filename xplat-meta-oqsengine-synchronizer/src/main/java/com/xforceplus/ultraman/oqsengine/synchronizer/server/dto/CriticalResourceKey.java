@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.synchronizer.server.dto;
 
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResource;
 
-import java.util.Objects;
-
 /**
  * a pojo represent a critical resource.
  */

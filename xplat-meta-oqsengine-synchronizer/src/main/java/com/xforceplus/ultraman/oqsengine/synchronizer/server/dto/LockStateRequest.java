@@ -34,11 +34,15 @@ public class LockStateRequest {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         LockStateRequest that = (LockStateRequest) o;
-        return Objects.equals(uuid, that.uuid) &&
-                Objects.equals(token, that.token);
+        return Objects.equals(uuid, that.uuid)
+            && Objects.equals(token, that.token);
     }
 
     @Override

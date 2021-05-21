@@ -8,19 +8,22 @@ import akka.stream.javadsl.Source;
 import com.xforceplus.ultraman.oqsengine.sdk.CriticalRes;
 import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.LockResponse;
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResource;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.RemoteAbstractQueuedSynchronizer;
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.LockStateRequest;
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.LockStateResponse;
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.ThreadNode;
 import com.xforceplus.xplat.galaxy.grpc.MessageSource;
 import com.xforceplus.xplat.galaxy.grpc.actor.ChannelActor;
-import io.vavr.control.Either;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import org.redisson.OqsLock;
 import org.redisson.OqsMultiLock;
 import org.redisson.PubSubMessageListener;
-import org.redisson.api.listener.MessageListener;
 import org.redisson.client.ChannelName;
 import org.redisson.client.codec.LongCodec;
 import org.redisson.command.CommandSyncService;
@@ -28,28 +31,18 @@ import org.redisson.misc.RPromise;
 import org.redisson.misc.RedissonPromise;
 import org.redisson.pubsub.AsyncSemaphore;
 import org.redisson.pubsub.LockPubSub;
-import org.redisson.pubsub.PubSubConnectionEntry;
 import org.redisson.pubsub.PublishSubscribeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 /**
  * Lock state Service implemention.
  */
 public class LockStateServiceImpl implements LockStateService {
 
-    private Logger logger = LoggerFactory.getLogger(LockStateService.class);
-
     @Resource
     private ActorSystem system;
+
 
     private Map<String, ActorRef> channelMapping = new ConcurrentHashMap<>();
 
@@ -57,8 +50,10 @@ public class LockStateServiceImpl implements LockStateService {
 
     private PublishSubscribeService pubsub;
 
+    private Logger logger = LoggerFactory.getLogger(LockStateService.class);
+
     /**
-     * listened topic
+     * listened topic.
      */
     private Set<String> channels = new ConcurrentSkipListSet<>();
 
@@ -68,15 +63,16 @@ public class LockStateServiceImpl implements LockStateService {
     }
 
     /**
-     * @param in
-     * @param node
+     * setup node communication.
+     *
+     * @param in   user input
+     * @param node node name
      */
     @Override
     public Source<LockResponse, NotUsed> setupCommunication(Source<LockRequest, NotUsed> in, String node) {
         logger.debug("Setup communication with {}", node);
 
         ActorRef channel = system.actorOf(Props.create(ChannelActor.class, LockResponse.class));
-
         channelMapping.put(node, channel);
         MessageSource<LockResponse> source = new MessageSource<>(channel, LockResponse.class);
 
@@ -85,8 +81,8 @@ public class LockStateServiceImpl implements LockStateService {
 
     @Override
     public CompletionStage<LockResponse> tryAcquire(LockRequest in, String node) {
-        List<CriticalRes> cResList = in.getCResList();
-        List<OqsLock> locks = cResList.stream().map(x -> {
+        List<CriticalRes> criticalResList = in.getCResList();
+        List<OqsLock> locks = criticalResList.stream().map(x -> {
             return Long.parseLong(x.getId());
         }).sorted().map(x -> new OqsLock(commandSyncService, x.toString())).collect(Collectors.toList());
 
@@ -103,35 +99,36 @@ public class LockStateServiceImpl implements LockStateService {
         if (gotLock) {
             logger.debug("got lock {}", in);
             return CompletableFuture.completedFuture(LockResponse.newBuilder()
-                    .setUuid(in.getUuid())
-                    .setRespType(LockResponse.ResponseType.LOCKED).build());
+                .setUuid(in.getUuid())
+                .setRespType(LockResponse.ResponseType.LOCKED).build());
         } else {
             logger.debug("failed to get lock {}", in);
             return CompletableFuture.completedFuture(LockResponse.newBuilder()
-                    .setUuid(in.getUuid())
-                    .setRespType(LockResponse.ResponseType.ERR).setMessage("lock not acquired").build());
+                .setUuid(in.getUuid())
+                .setRespType(LockResponse.ResponseType.ERR).setMessage("lock not acquired").build());
         }
     }
 
     @Override
     public CompletionStage<LockResponse> tryRelease(LockRequest in, String node) {
 
-        List<CriticalRes> cResList = in.getCResList();
-        List<OqsLock> locks = cResList.stream().map(x -> {
+        List<CriticalRes> criticalResList = in.getCResList();
+        List<OqsLock> locks = criticalResList.stream().map(x -> {
             return new OqsLock(commandSyncService, x.getId());
         }).collect(Collectors.toList());
 
         return new OqsMultiLock(locks).unlockAsync(in.getUuid()).toCompletableFuture().thenApply(x -> {
-            return LockResponse.newBuilder().setRespType(LockResponse.ResponseType.RELEASED).setUuid(in.getUuid()).build();
+            return LockResponse.newBuilder().setRespType(LockResponse.ResponseType.RELEASED).setUuid(in.getUuid())
+                .build();
         });
     }
 
     @Override
     public CompletionStage<LockResponse> addWaiter(LockRequest in, String node) {
 
-        List<CriticalRes> cResList = in.getCResList();
+        List<CriticalRes> criticalResList = in.getCResList();
 
-        List<OqsLock> locks = cResList.stream().map(x -> {
+        List<OqsLock> locks = criticalResList.stream().map(x -> {
             return new OqsLock(commandSyncService, x.getId());
         }).collect(Collectors.toList());
 
@@ -145,10 +142,11 @@ public class LockStateServiceImpl implements LockStateService {
         }
         if (b) {
             return CompletableFuture.completedFuture(LockResponse.newBuilder()
-                    .setRespType(LockResponse.ResponseType.LOCKED).setUuid(in.getUuid()).build());
+                .setRespType(LockResponse.ResponseType.LOCKED).setUuid(in.getUuid()).build());
         } else {
             subscribe(locks);
-            return CompletableFuture.completedFuture(LockResponse.newBuilder().setRespType(LockResponse.ResponseType.ERR).build());
+            return CompletableFuture
+                .completedFuture(LockResponse.newBuilder().setRespType(LockResponse.ResponseType.ERR).build());
         }
     }
 
@@ -164,19 +162,17 @@ public class LockStateServiceImpl implements LockStateService {
                 ChannelName channelNameTyped = new ChannelName(channelName);
                 AsyncSemaphore semaphore = pubsub.getSemaphore(channelNameTyped);
 
-                pubsub.subscribe(LongCodec.INSTANCE, channelName, semaphore, new PubSubMessageListener<Long>(Long.class
-                        , (channel, msg) -> {
+                pubsub.subscribe(LongCodec.INSTANCE, channelName, semaphore, new PubSubMessageListener<Long>(Long.class,
+                    (channel, msg) -> {
 
-                    if (msg.equals(LockPubSub.UNLOCK_MESSAGE)) {
-
-                        LockResponse response = LockResponse.newBuilder().setRespType(
-                                LockResponse.ResponseType.RELEASED).setCRes(CriticalRes.newBuilder().setType(CriticalRes.ResourceType.ID)
-                                .setId(lock.getName()).build()).build();
-
-                        broadcast(response);
-
-                    }
-                }, channelName));
+                        if (msg.equals(LockPubSub.UNLOCK_MESSAGE)) {
+                            LockResponse response = LockResponse.newBuilder().setRespType(
+                                LockResponse.ResponseType.RELEASED)
+                                .setCRes(CriticalRes.newBuilder().setType(CriticalRes.ResourceType.ID)
+                                    .setId(lock.getName()).build()).build();
+                            broadcast(response);
+                        }
+                    }, channelName));
                 channels.add(channelName);
             }
         });

@@ -1,5 +1,14 @@
 package org.redisson;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import org.redisson.api.RFuture;
 import org.redisson.api.RLock;
 import org.redisson.client.RedisResponseTimeoutException;
@@ -7,14 +16,8 @@ import org.redisson.misc.RPromise;
 import org.redisson.misc.RedissonPromise;
 import org.redisson.misc.TransferListener;
 
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-
 /**
- * oqs multi lock
+ * oqs multi lock.
  */
 public class OqsMultiLock {
 
@@ -68,11 +71,11 @@ public class OqsMultiLock {
             RPromise<Boolean> lockAcquiredFuture = new RedissonPromise<Boolean>();
             if (waitTime == -1 && leaseTime == -1) {
                 lock.tryLockAsync(threadId)
-                        .onComplete(new TransferListener<Boolean>(lockAcquiredFuture));
+                    .onComplete(new TransferListener<Boolean>(lockAcquiredFuture));
             } else {
                 long awaitTime = Math.min(lockWaitTime, remainTime);
                 lock.tryLockAsync(awaitTime, newLeaseTime, TimeUnit.MILLISECONDS, threadId)
-                        .onComplete(new TransferListener<Boolean>(lockAcquiredFuture));
+                    .onComplete(new TransferListener<Boolean>(lockAcquiredFuture));
             }
 
             lockAcquiredFuture.onComplete((res, e) -> {
@@ -127,8 +130,8 @@ public class OqsMultiLock {
         private void checkLeaseTimeAsync(RPromise<Boolean> result) {
             if (leaseTime != -1) {
                 AtomicInteger counter = new AtomicInteger(acquiredLocks.size());
-                for (OqsLock rLock : acquiredLocks) {
-                    RFuture<Boolean> future = rLock.expireAsync(unit.toMillis(leaseTime), TimeUnit.MILLISECONDS);
+                for (OqsLock oqsLock : acquiredLocks) {
+                    RFuture<Boolean> future = oqsLock.expireAsync(unit.toMillis(leaseTime), TimeUnit.MILLISECONDS);
                     future.onComplete((res, e) -> {
                         if (e != null) {
                             result.tryFailure(e);
@@ -171,7 +174,7 @@ public class OqsMultiLock {
     final List<OqsLock> locks = new ArrayList<>();
 
     /**
-     * Creates instance with multiple {@link RLock} objects.
+     * Creates instance with multiple OqsLock objects.
      * Each RLock object could be created by own Redisson instance.
      *
      * @param locks - array of locks
@@ -183,6 +186,11 @@ public class OqsMultiLock {
         this.locks.addAll(Arrays.asList(locks));
     }
 
+    /**
+     * constructor with multi oqsLock.
+     *
+     * @param locks multi oqs locks
+     */
     public OqsMultiLock(List<OqsLock> locks) {
         if (locks.size() == 0) {
             throw new IllegalArgumentException("Lock objects are not defined");
@@ -190,6 +198,11 @@ public class OqsMultiLock {
         this.locks.addAll(locks);
     }
 
+    /**
+     * lock.
+     *
+     * @param threadId threadId
+     */
     public void lock(String threadId) {
         try {
             lockInterruptibly(threadId);
@@ -198,6 +211,13 @@ public class OqsMultiLock {
         }
     }
 
+    /**
+     * threadId.
+     *
+     * @param threadId  threadId
+     * @param leaseTime leaseTime
+     * @param unit      timeUnit
+     */
     public void lock(String threadId, long leaseTime, TimeUnit unit) {
         try {
             lockInterruptibly(threadId, leaseTime, unit);
@@ -206,6 +226,14 @@ public class OqsMultiLock {
         }
     }
 
+    /**
+     * lock Async.
+     *
+     * @param leaseTime leaseTime
+     * @param unit      unit
+     * @param threadId  threadId
+     * @return null
+     */
     public RFuture<Void> lockAsync(long leaseTime, TimeUnit unit, String threadId) {
         long baseWaitTime = locks.size() * 1500;
         long waitTime = -1;
@@ -228,25 +256,18 @@ public class OqsMultiLock {
         return result;
     }
 
-    protected void tryLockAsync(String threadId, long leaseTime, TimeUnit unit, long waitTime, RPromise<Void> result) {
-        tryLockAsync(waitTime, leaseTime, unit, threadId).onComplete((res, e) -> {
-            if (e != null) {
-                result.tryFailure(e);
-                return;
-            }
-
-            if (res) {
-                result.trySuccess(null);
-            } else {
-                tryLockAsync(threadId, leaseTime, unit, waitTime, result);
-            }
-        });
-    }
-
     public void lockInterruptibly(String threadId) throws InterruptedException {
         lockInterruptibly(threadId, -1, null);
     }
 
+    /**
+     * lock. not used
+     *
+     * @param threadId  threadId
+     * @param leaseTime leaseTime
+     * @param unit      unit
+     * @throws InterruptedException exception
+     */
     public void lockInterruptibly(String threadId, long leaseTime, TimeUnit unit) throws InterruptedException {
         long baseWaitTime = locks.size() * 1500;
         long waitTime = -1;
@@ -274,7 +295,7 @@ public class OqsMultiLock {
     protected void unlockInner(Collection<OqsLock> locks, String theadId) {
         System.out.println("unlock!!!!!");
         locks.stream()
-                .forEach(x -> x.unlock(theadId));
+            .forEach(x -> x.unlock(theadId));
     }
 
     protected RFuture<Void> unlockInnerAsync(Collection<OqsLock> locks, String threadId) {
@@ -299,14 +320,24 @@ public class OqsMultiLock {
         return result;
     }
 
-    public boolean tryLock(String threadId, long waitTime, TimeUnit unit) throws InterruptedException {
-        return tryLock(threadId, waitTime, -1, unit);
-    }
-
     protected int failedLocksLimit() {
         return 0;
     }
 
+    public boolean tryLock(String threadId, long waitTime, TimeUnit unit) throws InterruptedException {
+        return tryLock(threadId, waitTime, -1, unit);
+    }
+
+    /**
+     * try lock.
+     *
+     * @param threadId  threadid
+     * @param waitTime  waitTime
+     * @param leaseTime leaseTime
+     * @param unit      TimeUnit
+     * @return boolean true
+     * @throws InterruptedException exception
+     */
     public boolean tryLock(String threadId, long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException {
         long newLeaseTime = -1;
         if (leaseTime != -1) {
@@ -380,13 +411,37 @@ public class OqsMultiLock {
         if (leaseTime != -1) {
             //TODO set timeout
             acquiredLocks.stream()
-                    .map(l -> l.expireAsync(unit.toMillis(leaseTime), TimeUnit.MILLISECONDS))
-                    .forEach(f -> f.syncUninterruptibly());
+                .map(l -> l.expireAsync(unit.toMillis(leaseTime), TimeUnit.MILLISECONDS))
+                .forEach(f -> f.syncUninterruptibly());
         }
 
         return true;
     }
 
+    protected void tryLockAsync(String threadId, long leaseTime, TimeUnit unit, long waitTime, RPromise<Void> result) {
+        tryLockAsync(waitTime, leaseTime, unit, threadId).onComplete((res, e) -> {
+            if (e != null) {
+                result.tryFailure(e);
+                return;
+            }
+
+            if (res) {
+                result.trySuccess(null);
+            } else {
+                tryLockAsync(threadId, leaseTime, unit, waitTime, result);
+            }
+        });
+    }
+
+    /**
+     * tryLockAsync.
+     *
+     * @param waitTime  waitTime
+     * @param leaseTime leaseTime
+     * @param unit      TimeUnit
+     * @param threadId  threadId
+     * @return boolean if success
+     */
     public RFuture<Boolean> tryLockAsync(long waitTime, long leaseTime, TimeUnit unit, String threadId) {
         RPromise<Boolean> result = new RedissonPromise<Boolean>();
         OqsMultiLock.LockState state = new OqsMultiLock.LockState(waitTime, leaseTime, unit, threadId);
@@ -402,6 +457,11 @@ public class OqsMultiLock {
         return unlockInnerAsync(locks, threadId);
     }
 
+    /**
+     * unlock.
+     *
+     * @param threadId threadId
+     */
     public void unlock(String threadId) {
         List<RFuture<Void>> futures = new ArrayList<>(locks.size());
 
@@ -412,22 +472,6 @@ public class OqsMultiLock {
         for (RFuture<Void> future : futures) {
             future.syncUninterruptibly();
         }
-    }
-
-    public Condition newCondition() {
-        throw new UnsupportedOperationException();
-    }
-
-    public RFuture<Boolean> forceUnlockAsync() {
-        throw new UnsupportedOperationException();
-    }
-
-    public RFuture<Void> lockAsync(String threadId) {
-        return lockAsync(-1, null, threadId);
-    }
-
-    public RFuture<Boolean> tryLockAsync(String threadId) {
-        return tryLockAsync(-1, -1, null, threadId);
     }
 }
 

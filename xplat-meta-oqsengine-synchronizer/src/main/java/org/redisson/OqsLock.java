@@ -2,6 +2,13 @@ package org.redisson;
 
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.redisson.api.RFuture;
 import org.redisson.client.RedisException;
 import org.redisson.client.codec.LongCodec;
@@ -12,18 +19,10 @@ import org.redisson.misc.RPromise;
 import org.redisson.misc.RedissonPromise;
 import org.redisson.pubsub.LockPubSub;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
 /**
  * oqs lock.
  */
-public class OqsLock extends OqsBaseLock {
+public class OqsLock extends AbstractOqsBaseLock {
 
     protected long internalLockLeaseTime;
 
@@ -31,6 +30,12 @@ public class OqsLock extends OqsBaseLock {
 
     final CommandAsyncExecutor commandExecutor;
 
+    /**
+     * constructor.
+     *
+     * @param commandExecutor commandExecutor
+     * @param name            resource name
+     */
     public OqsLock(CommandAsyncExecutor commandExecutor, String name) {
         super(commandExecutor, name);
         this.commandExecutor = commandExecutor;
@@ -42,7 +47,8 @@ public class OqsLock extends OqsBaseLock {
         return prefixName("oqsengine_lock__channel", getRawName());
     }
 
-    private void lock(long leaseTime, TimeUnit unit, boolean interruptibly, String threadId) throws InterruptedException {
+    private void lock(long leaseTime, TimeUnit unit, boolean interruptibly, String threadId)
+        throws InterruptedException {
         Long ttl = tryAcquire(-1, leaseTime, unit, threadId);
         // lock acquired
         if (ttl == null) {
@@ -85,7 +91,6 @@ public class OqsLock extends OqsBaseLock {
         } finally {
             unsubscribe(future);
         }
-//        get(lockAsync(leaseTime, unit));
     }
 
     private Long tryAcquire(long waitTime, long leaseTime, TimeUnit unit, String threadId) {
@@ -95,10 +100,11 @@ public class OqsLock extends OqsBaseLock {
     private RFuture<Boolean> tryAcquireOnceAsync(long waitTime, long leaseTime, TimeUnit unit, String threadId) {
         RFuture<Boolean> ttlRemainingFuture;
         if (leaseTime != -1) {
-            ttlRemainingFuture = tryLockInnerAsync(waitTime, leaseTime, unit, threadId, RedisCommands.EVAL_NULL_BOOLEAN);
+            ttlRemainingFuture =
+                tryLockInnerAsync(waitTime, leaseTime, unit, threadId, RedisCommands.EVAL_NULL_BOOLEAN);
         } else {
             ttlRemainingFuture = tryLockInnerAsync(waitTime, internalLockLeaseTime,
-                    TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_NULL_BOOLEAN);
+                TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_NULL_BOOLEAN);
         }
 
         ttlRemainingFuture.onComplete((ttlRemaining, e) -> {
@@ -124,7 +130,7 @@ public class OqsLock extends OqsBaseLock {
             ttlRemainingFuture = tryLockInnerAsync(waitTime, leaseTime, unit, threadId, RedisCommands.EVAL_LONG);
         } else {
             ttlRemainingFuture = tryLockInnerAsync(waitTime, internalLockLeaseTime,
-                    TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_LONG);
+                TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_LONG);
         }
         ttlRemainingFuture.onComplete((ttlRemaining, e) -> {
             if (e != null) {
@@ -143,25 +149,26 @@ public class OqsLock extends OqsBaseLock {
         return ttlRemainingFuture;
     }
 
-    //    @Override
-    public boolean tryLock(String threadId) {
-        return get(tryLockAsync(threadId));
+
+    <T> RFuture<T> tryLockInnerAsync(long waitTime, long leaseTime, TimeUnit unit, String threadId,
+                                     RedisStrictCommand<T> command) {
+        return evalWriteAsync(getRawName(), LongCodec.INSTANCE, command,
+            "if (redis.call('exists', KEYS[1]) == 0) then "
+                + "redis.call('hincrby', KEYS[1], ARGV[2], 1); "
+                + "redis.call('pexpire', KEYS[1], ARGV[1]); "
+                + "return nil; "
+                + "end; "
+                + "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then "
+                + "redis.call('hincrby', KEYS[1], ARGV[2], 1); "
+                + "redis.call('pexpire', KEYS[1], ARGV[1]); "
+                + "return nil; "
+                + "end; "
+                + "return redis.call('pttl', KEYS[1]);",
+            Collections.singletonList(getRawName()), unit.toMillis(leaseTime), getLockName(threadId));
     }
 
-    <T> RFuture<T> tryLockInnerAsync(long waitTime, long leaseTime, TimeUnit unit, String threadId, RedisStrictCommand<T> command) {
-        return evalWriteAsync(getRawName(), LongCodec.INSTANCE, command,
-                "if (redis.call('exists', KEYS[1]) == 0) then " +
-                        "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
-                        "redis.call('pexpire', KEYS[1], ARGV[1]); " +
-                        "return nil; " +
-                        "end; " +
-                        "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then " +
-                        "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
-                        "redis.call('pexpire', KEYS[1], ARGV[1]); " +
-                        "return nil; " +
-                        "end; " +
-                        "return redis.call('pttl', KEYS[1]);",
-                Collections.singletonList(getRawName()), unit.toMillis(leaseTime), getLockName(threadId));
+    public boolean tryLock(String threadId) {
+        return get(tryLockAsync(threadId));
     }
 
     @Override
@@ -268,35 +275,36 @@ public class OqsLock extends OqsBaseLock {
     public RFuture<Boolean> forceUnlockAsync() {
         cancelExpirationRenewal(null);
         return evalWriteAsync(getRawName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,
-                "if (redis.call('del', KEYS[1]) == 1) then "
-                        + "redis.call('publish', KEYS[2], ARGV[1]); "
-                        + "return 1 "
-                        + "else "
-                        + "return 0 "
-                        + "end",
-                Arrays.asList(getRawName(), getChannelName()), LockPubSub.UNLOCK_MESSAGE);
+            "if (redis.call('del', KEYS[1]) == 1) then "
+                + "redis.call('publish', KEYS[2], ARGV[1]); "
+                + "return 1 "
+                + "else "
+                + "return 0 "
+                + "end",
+            Arrays.asList(getRawName(), getChannelName()), LockPubSub.UNLOCK_MESSAGE);
     }
 
     @Override
     protected RFuture<Boolean> unlockInnerAsync(String threadId) {
         return evalWriteAsync(getRawName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,
-                "if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then " +
-                        "return nil;" +
-                        "end; " +
-                        "local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1); " +
-                        "if (counter > 0) then " +
-                        "redis.call('pexpire', KEYS[1], ARGV[2]); " +
-                        "return 0; " +
-                        "else " +
-                        "redis.call('del', KEYS[1]); " +
-                        "redis.log(2, 'do publish'); " +
-                        "redis.log(2, KEYS[2]); " +
-                        "redis.log(2, ARGV[1]); " +
-                        "redis.call('publish', KEYS[2], ARGV[1]); " +
-                        "return 1; " +
-                        "end; " +
-                        "return nil;",
-                Arrays.asList(getRawName(), getChannelName()), LockPubSub.UNLOCK_MESSAGE, internalLockLeaseTime, getLockName(threadId));
+            "if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then "
+                + "return nil;"
+                + "end; "
+                + "local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1); "
+                + "if (counter > 0) then "
+                + "redis.call('pexpire', KEYS[1], ARGV[2]); "
+                + "return 0; "
+                + "else "
+                + "redis.call('del', KEYS[1]); "
+                + "redis.log(2, 'do publish'); "
+                + "redis.log(2, KEYS[2]); "
+                + "redis.log(2, ARGV[1]); "
+                + "redis.call('publish', KEYS[2], ARGV[1]); "
+                + "return 1; "
+                + "end; "
+                + "return nil;",
+            Arrays.asList(getRawName(), getChannelName()), LockPubSub.UNLOCK_MESSAGE, internalLockLeaseTime,
+            getLockName(threadId));
     }
 
     //    @Override
@@ -304,54 +312,15 @@ public class OqsLock extends OqsBaseLock {
         return lockAsync(-1, null, currentThreadId);
     }
 
-    //    @Override
-    public RFuture<Void> lockAsync(long leaseTime, TimeUnit unit, String currentThreadId) {
-        RPromise<Void> result = new RedissonPromise<Void>();
-        RFuture<Long> ttlFuture = tryAcquireAsync(-1, leaseTime, unit, currentThreadId);
-        ttlFuture.onComplete((ttl, e) -> {
-            if (e != null) {
-                result.tryFailure(e);
-                return;
-            }
-
-            // lock acquired
-            if (ttl == null) {
-                if (!result.trySuccess(null)) {
-                    unlockAsync(currentThreadId);
-                }
-                return;
-            }
-
-            RFuture<RedissonLockEntry> subscribeFuture = subscribe();
-            subscribeFuture.onComplete((res, ex) -> {
-                if (ex != null) {
-                    result.tryFailure(ex);
-                    return;
-                }
-
-                System.out.println("Retry:" + currentThreadId);
-
-                lockAsync(leaseTime, unit, subscribeFuture, result, currentThreadId);
-            });
-        });
-
-        return result;
-    }
-
-    public RFuture<Void> lockAsyncPipeTo(String currentThreadId, Consumer<String> consumer) {
-        return lockAsyncPipeTo(-1, null, currentThreadId, consumer);
-    }
-
     /**
-     * TODO
+     * lock async.
      *
-     * @param leaseTime
-     * @param unit
-     * @param currentThreadId
-     * @param consumer
-     * @return
+     * @param leaseTime       leaseTime
+     * @param unit            time unit
+     * @param currentThreadId currentThreadId
+     * @return void
      */
-    public RFuture<Void> lockAsyncPipeTo(long leaseTime, TimeUnit unit, String currentThreadId, Consumer<String> consumer) {
+    public RFuture<Void> lockAsync(long leaseTime, TimeUnit unit, String currentThreadId) {
         RPromise<Void> result = new RedissonPromise<Void>();
         RFuture<Long> ttlFuture = tryAcquireAsync(-1, leaseTime, unit, currentThreadId);
         ttlFuture.onComplete((ttl, e) -> {
@@ -503,18 +472,9 @@ public class OqsLock extends OqsBaseLock {
         return result;
     }
 
-    private void trySuccessFalse(String currentThreadId, RPromise<Boolean> result) {
-        acquireFailedAsync(-1, null, currentThreadId).onComplete((res, e) -> {
-            if (e == null) {
-                result.trySuccess(false);
-            } else {
-                result.tryFailure(e);
-            }
-        });
-    }
-
     private void tryLockAsync(AtomicLong time, long waitTime, long leaseTime, TimeUnit unit,
-                              RFuture<RedissonLockEntry> subscribeFuture, RPromise<Boolean> result, String currentThreadId) {
+                              RFuture<RedissonLockEntry> subscribeFuture, RPromise<Boolean> result,
+                              String currentThreadId) {
         if (result.isDone()) {
             unsubscribe(subscribeFuture);
             return;
@@ -592,6 +552,16 @@ public class OqsLock extends OqsBaseLock {
                     }, t, TimeUnit.MILLISECONDS);
                     futureRef.set(scheduledFuture);
                 }
+            }
+        });
+    }
+
+    private void trySuccessFalse(String currentThreadId, RPromise<Boolean> result) {
+        acquireFailedAsync(-1, null, currentThreadId).onComplete((res, e) -> {
+            if (e == null) {
+                result.trySuccess(false);
+            } else {
+                result.tryFailure(e);
             }
         });
     }

@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.synchronizer.server.dto;
 
 import akka.actor.ActorRef;
-
 import java.util.Objects;
 
 /**
@@ -28,8 +27,12 @@ public class ThreadNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ThreadNode that = (ThreadNode) o;
         return Objects.equals(uuid, that.uuid);
     }

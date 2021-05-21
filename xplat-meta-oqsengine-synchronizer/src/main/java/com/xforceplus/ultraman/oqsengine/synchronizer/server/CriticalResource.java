@@ -14,6 +14,9 @@ public interface CriticalResource<T> extends Comparable<CriticalResource<T>> {
 
     T getRes();
 
+    /**
+     * ResType current is ID.
+     */
     enum ResType {
         ID;
     }

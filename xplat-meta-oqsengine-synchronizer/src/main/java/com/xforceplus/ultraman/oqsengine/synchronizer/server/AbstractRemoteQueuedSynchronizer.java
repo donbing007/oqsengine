@@ -3,14 +3,13 @@ package com.xforceplus.ultraman.oqsengine.synchronizer.server;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.CriticalResourceStateResponse;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.ThreadNode;
 import io.vavr.control.Either;
-
 import java.util.List;
 
 /**
  * something like abstract queued synchronizer
  * a complicated state manager.
  */
-public abstract class RemoteAbstractQueuedSynchronizer {
+public abstract class AbstractRemoteQueuedSynchronizer {
 
     public abstract CriticalResourceStateResponse checkResourceState(CriticalResource criticalResource);
 

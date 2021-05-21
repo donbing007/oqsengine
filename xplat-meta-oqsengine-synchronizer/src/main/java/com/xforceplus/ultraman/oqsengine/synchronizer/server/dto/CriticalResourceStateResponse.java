@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResource;
 public class CriticalResourceStateResponse {
 
     /**
-     * requested critical resource
+     * requested critical resource.
      */
     private CriticalResource criticalResource;
 
@@ -19,18 +19,17 @@ public class CriticalResourceStateResponse {
 
     enum CriticalResourceState {
         /**
-         * locked
+         * locked.
          */
         LOCKED,
 
         /**
-         * idle
+         * idle.
          */
         IDLE;
     }
 
-    public CriticalResourceStateResponse(CriticalResource criticalResource
-            , CriticalResourceState state) {
+    public CriticalResourceStateResponse(CriticalResource criticalResource, CriticalResourceState state) {
         this.criticalResource = criticalResource;
         this.state = state;
     }

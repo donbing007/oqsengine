@@ -2,11 +2,10 @@ package com.xforceplus.ultraman.oqsengine.synchronizer.server.impl;
 
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.CriticalResource;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.dto.CriticalResourceKey;
-
 import java.util.Objects;
 
 /**
- * id critical resource
+ * id critical resource.
  */
 public class IdCriticalResource implements CriticalResource<Long> {
 
@@ -41,11 +40,15 @@ public class IdCriticalResource implements CriticalResource<Long> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         IdCriticalResource that = (IdCriticalResource) o;
-        return id == that.id &&
-                Objects.equals(criticalResourceKey, that.criticalResourceKey);
+        return id == that.id
+            && Objects.equals(criticalResourceKey, that.criticalResourceKey);
     }
 
     @Override

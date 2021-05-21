@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sync;
+package com.xforceplus.ultraman.oqsengine.synchronizer.server.heartbeat;
 
 /**
  * TODO a heart beat Manager.
