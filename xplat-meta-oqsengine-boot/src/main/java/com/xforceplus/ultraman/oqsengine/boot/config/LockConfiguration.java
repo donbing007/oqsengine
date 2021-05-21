@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import akka.actor.ActorSystem;
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
 import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
@@ -25,6 +26,11 @@ public class LockConfiguration {
     @Bean
     public ResourceLocker locker() {
         return new LocalResourceLocker();
+    }
+
+    @Bean
+    public ActorSystem actorSystem() {
+        return ActorSystem.create();
     }
 
     @Bean
