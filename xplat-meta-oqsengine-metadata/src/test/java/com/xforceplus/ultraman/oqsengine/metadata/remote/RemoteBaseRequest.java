@@ -51,7 +51,7 @@ public class RemoteBaseRequest {
 
         ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-        ReflectionTestUtils.setField(requestHandler, "gRpcParams", grpcParams);
+        ReflectionTestUtils.setField(requestHandler, "grpcParams", grpcParams);
         ReflectionTestUtils.setField(requestHandler, "executorService", executorService);
 
         return requestHandler;
