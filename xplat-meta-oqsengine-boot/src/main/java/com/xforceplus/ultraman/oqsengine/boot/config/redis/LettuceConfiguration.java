@@ -19,6 +19,7 @@ public class LettuceConfiguration {
 
     private int changeLogDb = 14;
     private int cacheEventDb = 15;
+    private int generator = 16;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
@@ -42,5 +43,9 @@ public class LettuceConfiguration {
 
     public String uriWithCacheEventDb() {
         return String.format("%s/%d", uri, cacheEventDb);
+    }
+
+    public String uriWithIDGenerator() {
+        return String.format("%s/%d",uri,generator);
     }
 }
