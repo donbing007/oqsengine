@@ -404,6 +404,7 @@ public class SQLMasterStorage implements MasterStorage {
                 }
 
             } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
                 throw new SQLException(ex.getMessage(), ex);
             }
         }
