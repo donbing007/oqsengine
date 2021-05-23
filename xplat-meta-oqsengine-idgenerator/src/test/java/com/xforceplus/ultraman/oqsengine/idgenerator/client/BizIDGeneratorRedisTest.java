@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
@@ -32,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.redisson.Redisson;
-import org.redisson.RedissonList;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -140,6 +140,10 @@ public class BizIDGeneratorRedisTest {
         }
         String expected1 = LocalDateTime.now().format(formatter) + ":00110";
         Assert.assertEquals(expected1, bizId);
+        bizId = bizIDGenerator1.nextId(linearBizType);
+        String expected2 =  LocalDateTime.now().format(formatter) + ":00111";
+        Assert.assertEquals(expected2, bizId);
+
     }
 
     private DataSource buildDataSource(String file) throws SQLException {
@@ -151,19 +155,25 @@ public class BizIDGeneratorRedisTest {
     @Test
     public void testMutliThreadCount() throws InterruptedException {
 
-        for(int j =0;j<5;j++) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < 100; i++) {
-                        bizIDGenerator1.nextId(linearBizType);
+        CountDownLatch latch = new CountDownLatch(1);
+        for(int j =0;j<10;j++) {
+            executorService.submit(() -> {
+                for (int i = 0; i < 50; i++) {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+                    System.out.println(bizIDGenerator1.nextId(linearBizType));
                 }
             });
         }
-       String bizID =  bizIDGenerator1.nextId(linearBizType);
-        Thread.sleep(20000);
-       Assert.assertEquals("2021-05-21:00501",bizID);
+        System.out.println("prepare execute nextID.....");
+        latch.countDown();
+        latch.wait();
+        String bizID =  bizIDGenerator1.nextId(linearBizType);
+        System.out.println("last bizID : " + bizID);
+       Assert.assertEquals("2021-05-23:00501",bizID);
 
     }
 
