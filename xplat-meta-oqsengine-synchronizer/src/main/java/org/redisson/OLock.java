@@ -22,7 +22,7 @@ public interface OLock extends OLockAsync {
      * @param leaseTime lease time
      * @param unit      time unit
      * @return <code>true</code> if lock is successfully acquired,
-     * otherwise <code>false</code> if lock is already set.
+     *     otherwise <code>false</code> if lock is already set.
      * @throws InterruptedException - if the thread is interrupted
      */
     boolean tryLock(long waitTime, long leaseTime, TimeUnit unit, String threadId) throws InterruptedException;
@@ -38,7 +38,7 @@ public interface OLock extends OLockAsync {
      * Unlocks the lock independently of its state.
      *
      * @return <code>true</code> if lock existed and now unlocked
-     * otherwise <code>false</code>
+     *     otherwise <code>false</code>
      */
     boolean forceUnlock();
 

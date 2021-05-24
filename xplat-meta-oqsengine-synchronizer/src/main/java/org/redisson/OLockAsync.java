@@ -12,7 +12,7 @@ public interface OLockAsync {
      * Unlocks the lock independently of its state.
      *
      * @return <code>true</code> if lock existed and now unlocked
-     * <code>false</code>
+     *     <code>false</code>
      */
     RFuture<Boolean> forceUnlockAsync();
 
