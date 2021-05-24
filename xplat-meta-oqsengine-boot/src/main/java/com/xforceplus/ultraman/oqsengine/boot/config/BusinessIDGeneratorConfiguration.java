@@ -16,6 +16,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class BusinessIDGeneratorConfiguration {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * segment storage.
@@ -144,9 +148,6 @@ public class BusinessIDGeneratorConfiguration {
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     public RedissonClient redissonClient(LettuceConfiguration lettuceConfiguration) {
-        if (lettuceConfiguration.getUri().indexOf("@") != -1) {
-            lettuceConfiguration.getUri().substring(lettuceConfiguration.getUri().indexOf("@"));
-        }
         Config config = new Config();
         config.useSingleServer()
             .setAddress(lettuceConfiguration.uriWithIDGenerator());
@@ -154,6 +155,7 @@ public class BusinessIDGeneratorConfiguration {
         if (url.indexOf("@") != -1
             && url.indexOf("://") != -1) {
             String password = url.substring(url.indexOf("://") + 3, url.indexOf("@"));
+            logger.info("Url is : {} password is {}",url,password);
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);
