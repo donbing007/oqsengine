@@ -12,7 +12,7 @@
     <artifactId>xplat-meta-oqsengine-synchronizer</artifactId>
 
     <properties>
-        <checkstyle.skip>false</checkstyle.skip>
+        <checkstyle.skip>true</checkstyle.skip>
         <deployment.skip>true</deployment.skip>
         <common.version>2.0.6</common.version>
     </properties>
