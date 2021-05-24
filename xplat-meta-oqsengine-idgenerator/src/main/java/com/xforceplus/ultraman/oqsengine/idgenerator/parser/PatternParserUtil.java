@@ -30,7 +30,7 @@ public class PatternParserUtil implements ApplicationContextAware {
     }
 
     public static PattenParserManager getInstance() {
-        return (PattenParserManager)applicationContext.getBean(PattenParserManager.class);
+        return applicationContext.getBean(PattenParserManager.class);
     }
 
     public static String parse(String patten,Long id) {

@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 作者(@author): liwei
  * 创建时间: 5/7/21 5:33 PM
  */
-public class SegmentId implements Serializable {
+public class SegmentId implements Serializable,Cloneable {
 
     private static final long serialVersionUID = -5222792505264340312L;
     private long maxId;
@@ -24,6 +24,21 @@ public class SegmentId implements Serializable {
     private AtomicReference<PatternValue> currentId = new AtomicReference<>();
     private String pattern;
     private int resetable;
+
+    @Override
+    public SegmentId clone()  {
+        SegmentId cloneObj = null;
+        try {
+            cloneObj = (SegmentId) super.clone();
+            cloneObj.currentId = new AtomicReference<>();
+            cloneObj.currentId.set((PatternValue) this.currentId.get().clone());
+            return cloneObj;
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Clone failed!");
+        }
+    }
+
 
 
     String convert(Long id) {
@@ -99,6 +114,6 @@ public class SegmentId implements Serializable {
 
     @Override
     public String toString() {
-        return "[maxId=" + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId + ",patten=" + pattern + "]";
+        return "[maxId=" + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId.toString() + ",patten=" + pattern + "]";
     }
 }

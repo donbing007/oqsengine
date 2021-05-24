@@ -6,9 +6,11 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.DistributeCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.LocalCacheGenerator;
+import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.RedisCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
@@ -31,6 +33,9 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
 
     private Map<String,IDGenerator> generators;
     private Map<String,IDGenerator> distributeGenerators;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     public IDGeneratorFactoryImpl() {
 
@@ -58,6 +63,6 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
     }
 
     protected IDGenerator createDistributeGenerator(String bizType) {
-        return new DistributeCacheGenerator(bizType,segmentService,executorService);
+        return new RedisCacheGenerator(bizType,segmentService,executorService,redissonClient);
     }
 }

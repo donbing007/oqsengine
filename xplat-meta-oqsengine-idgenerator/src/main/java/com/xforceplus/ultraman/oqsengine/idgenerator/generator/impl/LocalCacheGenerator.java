@@ -105,7 +105,7 @@ public class LocalCacheGenerator implements IDGenerator {
     }
 
     @Override
-    public String nextId() {
+    public  String nextId() {
         while (true) {
             if (current == null) {
                 loadCurrent();
