@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
@@ -13,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenPar
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import org.apache.commons.lang.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -152,10 +154,8 @@ public class BusinessIDGeneratorConfiguration {
         config.useSingleServer()
             .setAddress(lettuceConfiguration.uriWithIDGenerator());
         String url = lettuceConfiguration.uriWithIDGenerator();
-        if (url.indexOf("@") != -1
-            && url.indexOf("://") != -1) {
-            String password = url.substring(url.indexOf("://") + 3, url.indexOf("@"));
-            logger.info("Url is : {} password is {}", url, password);
+        String password = RedisConfigUtil.getRedisUrlPassword(url);
+        if (!StringUtils.isBlank(password)) {
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);
