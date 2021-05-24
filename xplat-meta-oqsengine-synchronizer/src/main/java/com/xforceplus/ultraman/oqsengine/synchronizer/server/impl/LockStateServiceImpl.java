@@ -145,7 +145,8 @@ public class LockStateServiceImpl implements LockStateService {
         } else {
             subscribe(locks);
             return CompletableFuture
-                .completedFuture(LockResponse.newBuilder().setRespType(LockResponse.ResponseType.ERR).build());
+                .completedFuture(
+                    LockResponse.newBuilder().setRespType(LockResponse.ResponseType.ERR).setUuid(in.getUuid()).build());
         }
     }
 

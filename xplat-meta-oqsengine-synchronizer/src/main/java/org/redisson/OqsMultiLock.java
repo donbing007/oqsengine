@@ -293,7 +293,6 @@ public class OqsMultiLock {
     }
 
     protected void unlockInner(Collection<OqsLock> locks, String theadId) {
-        System.out.println("unlock!!!!!");
         locks.stream()
             .forEach(x -> x.unlock(theadId));
     }
