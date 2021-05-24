@@ -37,16 +37,7 @@ public class PatternParserUtil implements ApplicationContextAware {
         return getInstance().parse(patten,id);
     }
 
-    public static boolean isResetPatten(String pattern) {
-        return pattern.contains(Pattern.YEAR) ||
-            pattern.contains(Pattern.MONTH) ||
-            pattern.contains(Pattern.DAY);
-    }
-
     public static boolean needReset(String pattern, PatternValue current, PatternValue next) {
-        if(!isResetPatten(pattern)) {
-            return false;
-        }
         return !getPatternKey(current).equals(getPatternKey(next));
     }
 
