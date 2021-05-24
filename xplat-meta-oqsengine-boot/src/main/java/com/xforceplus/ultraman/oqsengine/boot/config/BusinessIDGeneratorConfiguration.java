@@ -137,6 +137,7 @@ public class BusinessIDGeneratorConfiguration {
 
     /**
      * redissonClient.
+     *
      * @param lettuceConfiguration
      *
      * @return RedissonClient
