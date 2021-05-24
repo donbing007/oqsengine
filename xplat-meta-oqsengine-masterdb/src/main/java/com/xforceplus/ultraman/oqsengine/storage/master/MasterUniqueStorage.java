@@ -72,7 +72,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
             (tx, resource, hint) -> {
                 StorageUniqueEntity storageUniqueEntity = StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
                     .entityClasses(getEntityClasses(entityClass)).build();
-                logger.info("entityClasses length : {}, Unique entity : {}",storageUniqueEntity.getEntityClasses().length,storageUniqueEntity);
+                logger.info("entityClasses length : {}, Unique entity : {}", storageUniqueEntity.getEntityClasses().length, storageUniqueEntity);
                 //fullTransactionInformation(storageEntityBuilder, resource);
                 return BuildUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageUniqueEntity);
             });
