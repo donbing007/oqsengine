@@ -100,7 +100,8 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
-  uri: "redis://q1w2e3r4@127.0.0.1:6379"
+#  uri: "redis://q1w2e3r4@127.0.0.1:6379"
+  uri: "redis://127.0.0.1:6379"/
   maxReqQueue: 10000
 
 management:

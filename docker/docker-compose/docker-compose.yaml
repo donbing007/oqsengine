@@ -30,7 +30,7 @@ services:
       - canal.instance.filter.regex=.*\.oqsbigentity.*
 
   redis:
-    command: redis-server --requirepass q1w2e3r4
+#    command: redis-server --requirepass q1w2e3r4
     image: redis:6.0.9-alpine3.12
     ports:
       - 6379:6379
