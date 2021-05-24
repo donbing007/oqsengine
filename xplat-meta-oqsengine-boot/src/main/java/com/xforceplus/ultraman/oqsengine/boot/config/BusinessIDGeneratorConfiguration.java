@@ -145,9 +145,18 @@ public class BusinessIDGeneratorConfiguration {
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     public RedissonClient redissonClient(LettuceConfiguration lettuceConfiguration) {
+        if(lettuceConfiguration.getUri().indexOf("@") != -1) {
+            lettuceConfiguration.getUri().substring(lettuceConfiguration.getUri().indexOf("@"));
+        }
         Config config = new Config();
         config.useSingleServer()
-            .setAddress(lettuceConfiguration.uriWithIDGenerator());
+        .setAddress(lettuceConfiguration.uriWithIDGenerator());
+        String url = lettuceConfiguration.uriWithIDGenerator();
+        if(url.indexOf("@") != -1 &&
+            url.indexOf("://") != -1) {
+           String password =  url.substring(url.indexOf("://") + 3 , url.indexOf("@"));
+           config.useSingleServer().setPassword(password);
+        }
         return Redisson.create(config);
     }
 
