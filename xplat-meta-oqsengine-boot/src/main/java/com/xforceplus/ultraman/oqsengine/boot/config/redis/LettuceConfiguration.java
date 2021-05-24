@@ -19,7 +19,7 @@ public class LettuceConfiguration {
 
     private int changeLogDb = 14;
     private int cacheEventDb = 15;
-    private int generator = 16;
+    private int generator = 13;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
