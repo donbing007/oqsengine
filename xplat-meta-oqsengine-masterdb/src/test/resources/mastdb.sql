@@ -33,7 +33,7 @@ CREATE TABLE oqsunique
     `entityclassl2` bigint(20)                                             NOT NULL DEFAULT 0 COMMENT '数据家族中在0层的entityclass标识',
     `entityclassl3` bigint(20)                                             NOT NULL DEFAULT 0 COMMENT '数据家族中在0层的entityclass标识',
     `entityclassl4` bigint(20)                                             NOT NULL DEFAULT 0 COMMENT '数据家族中在0层的entityclass标识',
-    `unique_key`    varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '业务主键1',
+    `unique_key`    varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '业务主键1',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `IDX_U1` (`unique_key`, `entityclassl0`, `entityclassl1`, `entityclassl2`, `entityclassl3`,
                            `entityclassl4`) USING BTREE
