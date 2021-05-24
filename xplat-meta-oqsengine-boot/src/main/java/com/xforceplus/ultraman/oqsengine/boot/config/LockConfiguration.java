@@ -33,6 +33,12 @@ public class LockConfiguration {
         return ActorSystem.create();
     }
 
+    /**
+     * lockstate service init.
+     *
+     * @param configuration configuration
+     * @return lock state service
+     */
     @Bean
     public LockStateService lockStateService(LettuceConfiguration configuration) {
 
