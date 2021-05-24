@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>xplat-meta-oqsengine</artifactId>
+        <groupId>com.xforceplus.ultraman</groupId>
+        <version>1.2.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>xplat-meta-oqsengine-synchronizer</artifactId>
+
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+        <deployment.skip>true</deployment.skip>
+        <common.version>2.0.1-SNAPSHOT</common.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.15.4</version>
+        </dependency>
+        <dependency>
+            <artifactId>reactive-grpc-server</artifactId>
+            <groupId>com.xforceplus.xplat-galaxy</groupId>
+            <version>6.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+            <version>0.10.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xforceplus.ultraman.common</groupId>
+            <artifactId>oqsengine-sdk-server</artifactId>
+            <version>${common.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>
