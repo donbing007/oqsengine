@@ -155,7 +155,7 @@ public class BusinessIDGeneratorConfiguration {
         if (url.indexOf("@") != -1
             && url.indexOf("://") != -1) {
             String password = url.substring(url.indexOf("://") + 3, url.indexOf("@"));
-            logger.info("Url is : {} password is {}",url,password);
+            logger.info("Url is : {} password is {}", url, password);
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);
