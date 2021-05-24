@@ -46,6 +46,6 @@ public class LettuceConfiguration {
     }
 
     public String uriWithIDGenerator() {
-        return String.format("%s/%d",uri,generator);
+        return String.format("%s/%d", uri, generator);
     }
 }

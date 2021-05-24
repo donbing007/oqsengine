@@ -24,10 +24,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.sql.DataSource;
+import org.apache.commons.compress.utils.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -170,11 +173,42 @@ public class BizIDGeneratorRedisTest {
         }
         System.out.println("prepare execute nextID.....");
         latch.countDown();
-        latch.wait();
+        Thread.sleep(3000);
         String bizID =  bizIDGenerator1.nextId(linearBizType);
         System.out.println("last bizID : " + bizID);
-       Assert.assertEquals("2021-05-23:00501",bizID);
+        LocalDateTime localDateTime = LocalDateTime.now();
+       String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+       Assert.assertEquals(date+":00501",bizID);
+    }
 
+
+    @Test
+    public void testMutliThreadOver() throws InterruptedException {
+
+        CountDownLatch latch = new CountDownLatch(1);
+        List<Future> futures = Lists.newArrayList();
+        for(int j =0;j<10;j++) {
+           Future future =  executorService.submit(() -> {
+                for (int i = 0; i < 300; i++) {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(bizIDGenerator1.nextId(linearBizType));
+                }
+            });
+           futures.add(future);
+        }
+        System.out.println("prepare execute nextID.....");
+        long start = System.currentTimeMillis();
+        latch.countDown();
+        Thread.sleep(10000);
+        String bizID =  bizIDGenerator1.nextId(linearBizType);
+        System.out.println("last bizID : " + bizID);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Assert.assertEquals(date+":03001",bizID);
     }
 
 }

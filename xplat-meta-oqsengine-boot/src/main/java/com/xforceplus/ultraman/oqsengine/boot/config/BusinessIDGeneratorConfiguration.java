@@ -135,6 +135,12 @@ public class BusinessIDGeneratorConfiguration {
         return new NumberPattenParser();
     }
 
+    /**
+     * redissonClient.
+     * @param lettuceConfiguration
+     *
+     * @return RedissonClient
+     */
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     public RedissonClient redissonClient(LettuceConfiguration lettuceConfiguration) {
