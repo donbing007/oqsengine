@@ -43,7 +43,6 @@ public class LockStateServiceImpl implements LockStateService {
     @Resource
     private ActorSystem system;
 
-
     private Map<String, ActorRef> channelMapping = new ConcurrentHashMap<>();
 
     private CommandSyncService commandSyncService;
@@ -148,6 +147,11 @@ public class LockStateServiceImpl implements LockStateService {
             return CompletableFuture
                 .completedFuture(LockResponse.newBuilder().setRespType(LockResponse.ResponseType.ERR).build());
         }
+    }
+
+    @Override
+    public OqsLock createLock(String name) {
+        return new OqsLock(commandSyncService, name);
     }
 
     private void subscribe(List<OqsLock> locks) {

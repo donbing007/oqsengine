@@ -474,5 +474,3 @@ public class OqsMultiLock {
         }
     }
 }
-
-

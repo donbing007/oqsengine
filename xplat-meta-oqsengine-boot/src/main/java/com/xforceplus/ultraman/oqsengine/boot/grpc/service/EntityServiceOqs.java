@@ -38,9 +38,31 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountResponse;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountSingle;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponse;
+import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponseList;
+import com.xforceplus.ultraman.oqsengine.sdk.CompatibleRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
+import com.xforceplus.ultraman.oqsengine.sdk.Filters;
+import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.LockResponse;
+import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
+import com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
+import com.xforceplus.ultraman.oqsengine.sdk.SelectByTree;
+import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,9 +78,8 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
-
-import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +104,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private CacheEventHandler cacheEventHandler;
 
     private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
+
+    private static final String RESOURCE_IS_LOCKED = "Current Resource is locked";
+
+    private static final String LOCK_HEADER = "lock-header";
+    private static final String LOCK_TOKEN = "lock-token";
 
     @Autowired
     private MetaManager metaManager;
@@ -122,6 +148,37 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private <T> CompletableFuture<T> asyncChangelog(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncChangelogDispatcher);
+    }
+
+    /**
+     * check if the resource is locked.
+     *
+     * @param id resource id
+     */
+    private void checkLock(Long id, Metadata metadata) {
+
+        if (lockStateService == null) {
+            return;
+        }
+
+        OqsLock oqsLock = lockStateService.createLock(id.toString());
+
+        if (!oqsLock.isLocked()) {
+            return;
+        }
+
+        Optional<String> uuid = metadata.getText(LOCK_HEADER);
+        //TODO optimize token
+        Optional<String> token = metadata.getText(LOCK_TOKEN);
+
+        if (uuid.isPresent()) {
+            boolean heldByThread = oqsLock.isHeldByThread(uuid.get());
+            if (heldByThread) {
+                return;
+            }
+        }
+
+        throw new RuntimeException(RESOURCE_IS_LOCKED);
     }
 
     @Override
@@ -259,6 +316,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
+
+            checkLock(in.getObjId(), metadata);
 
             String profile = extractProfile(metadata).orElse("");
 
@@ -492,6 +551,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
+
+            checkLock(in.getObjId(), metadata);
 
             String profile = extractProfile(metadata).orElse("");
 
@@ -779,7 +840,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (consOp.isPresent()) {
 
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
+                    entities =
+                        entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
                 } else {
                     entities = entitySearchService.selectByConditions(
                         Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);

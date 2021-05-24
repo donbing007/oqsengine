@@ -5,6 +5,7 @@ import akka.stream.javadsl.Source;
 import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.LockResponse;
 import java.util.concurrent.CompletionStage;
+import org.redisson.OqsLock;
 
 /**
  * a lock state server interface.
@@ -18,4 +19,6 @@ public interface LockStateService {
     CompletionStage<LockResponse> tryRelease(LockRequest in, String node);
 
     CompletionStage<LockResponse> addWaiter(LockRequest in, String node);
+
+    OqsLock createLock(String name);
 }
