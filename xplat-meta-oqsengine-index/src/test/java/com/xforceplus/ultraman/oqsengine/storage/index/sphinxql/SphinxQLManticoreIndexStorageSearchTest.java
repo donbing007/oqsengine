@@ -30,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExe
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -77,12 +78,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
 public class SphinxQLManticoreIndexStorageSearchTest {
-    private static StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-    static {
-        // 浮点数转换处理.
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
 
     private TransactionManager transactionManager;
     private RedisClient redisClient;
@@ -94,6 +89,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
     private TokenizerFactory tokenizerFactory;
+    private StorageStrategyFactory storageStrategyFactory;
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -221,6 +217,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             new AutoJoinTransactionExecutor(
                 transactionManager, new SphinxQLTransactionResourceFactory(),
                 writeDataSourceSelector, indexWriteIndexNameSelector);
+
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        // 浮点数转换处理.
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        // 多值字符串
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
 
 
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
