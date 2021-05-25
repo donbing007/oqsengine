@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config.redis;
 
+import io.lettuce.core.RedisURI;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -37,10 +38,14 @@ public class LettuceConfiguration {
     }
 
     public String uriWithChangeLogDb() {
-        return String.format("%s/%d", uri, changeLogDb);
+        RedisURI redisUri = RedisURI.create(uri);
+        redisUri.setDatabase(changeLogDb);
+        return redisUri.toString();
     }
 
     public String uriWithCacheEventDb() {
-        return String.format("%s/%d", uri, cacheEventDb);
+        RedisURI redisUri = RedisURI.create(uri);
+        redisUri.setDatabase(cacheEventDb);
+        return redisUri.toString();
     }
 }
