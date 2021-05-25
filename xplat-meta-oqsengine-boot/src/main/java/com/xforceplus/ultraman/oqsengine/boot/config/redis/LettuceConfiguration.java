@@ -37,12 +37,18 @@ public class LettuceConfiguration {
         this.uri = uri;
     }
 
+    /**
+     * changelog db config.
+     */
     public String uriWithChangeLogDb() {
         RedisURI redisUri = RedisURI.create(uri);
         redisUri.setDatabase(changeLogDb);
         return redisUri.toString();
     }
 
+    /**
+     * cache event config.
+     */
     public String uriWithCacheEventDb() {
         RedisURI redisUri = RedisURI.create(uri);
         redisUri.setDatabase(cacheEventDb);
