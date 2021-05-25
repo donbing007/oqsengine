@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -83,8 +84,43 @@ public class StreamMergerTest {
             .collect(toList());
 
         System.out.println(collect);
-
     }
 
+    @Test
+    public void sortedTest() {
 
-} 
+        List<EntityRef> masterRefs = new ArrayList<>();
+
+        EntityRef entityRefA = new EntityRef();
+        EntityRef entityRefB = new EntityRef();
+        EntityRef entityRefC = new EntityRef();
+        EntityRef entityRefD = new EntityRef();
+        EntityRef entityRefE = new EntityRef();
+        EntityRef entityRefF = new EntityRef();
+
+        entityRefA.setOrderValue("12");
+        entityRefB.setOrderValue("200");
+        entityRefC.setOrderValue("201");
+        entityRefD.setOrderValue("120");
+        entityRefE.setOrderValue("10");
+        entityRefF.setOrderValue("192");
+
+        masterRefs.add(entityRefA);
+        masterRefs.add(entityRefB);
+        masterRefs.add(entityRefC);
+        masterRefs.add(entityRefD);
+        masterRefs.add(entityRefE);
+        masterRefs.add(entityRefF);
+
+        EntityRefComparator entityRefComparator = new EntityRefComparator(FieldType.STRING);
+
+        List<EntityRef> sortedMasterRefs =
+            masterRefs.stream()
+                .sorted(entityRefComparator)
+                .collect(toList());
+
+
+        sortedMasterRefs.forEach(System.out::println);
+    }
+
+}
