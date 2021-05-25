@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -48,6 +50,37 @@ public interface StorageStrategy {
      * @return 储存类型.
      */
     StorageValue toStorageValue(IValue value);
+
+    /**
+     * 通过离散的物理储存来构造本地的StorageValue.
+     *
+     * @param storageName  物理储存名称.
+     * @param storageValue 物理储存值.
+     * @return 实例.
+     */
+    default StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+        StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
+        switch (anyStorageValue.type()) {
+            case STRING:
+                return new StringStorageValue(storageName, (String) storageValue, false);
+            case LONG: {
+                long value = 0;
+                if (Integer.class.isInstance(storageValue)) {
+                    value = ((Integer) storageValue).longValue();
+                } else if (Long.class.isInstance(storageValue)) {
+                    value = ((Long) storageValue).longValue();
+                } else {
+                    throw new IllegalArgumentException(
+                        String.format("The expectation is an int or a long, but the actual type is %s.",
+                            storageValue.getClass().toString()));
+                }
+                return new LongStorageValue(storageName, value, false);
+            }
+            default:
+                throw new IllegalArgumentException(
+                    String.format("Unrecognized physical storage type.[%d]", storageName));
+        }
+    }
 
     /**
      * 根据逻辑类型得到物理储存名称.

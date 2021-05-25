@@ -366,32 +366,40 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         Map<String, Object> attributeMap = new HashMap(MapUtils.calculateInitSize(attrSize, 0.75F));
         for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
 
-            /*
-             * key = 字段物理储存名称.
-             * value = 字段物理值.
-             */
-            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
-
             IEntityClass entityClass = originalEntity.getEntityClass();
-            if (!needField(entityClass, anyStorageValue, true)) {
+            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
+            Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
+
+            if (!needField(fieldOp, true)) {
                 continue;
             }
 
-            ShortStorageName shortStorageName = anyStorageValue.shortStorageName();
 
-            /*
-             * 字符串需要处理特殊字符.
-             */
-            if (StorageType.STRING == anyStorageValue.type()) {
+            IEntityField field = fieldOp.get();
+            StorageValue storageValue =
+                storageStrategyFactory.getStrategy(field.type())
+                    .convertIndexStorageValue(attr.getKey(), attr.getValue());
 
-                attributeMap.put(shortStorageName.toString(),
-                    SphinxQLHelper.encodeJsonCharset(attr.getValue().toString()));
+            while (storageValue != null) {
 
-            } else {
+                ShortStorageName shortStorageName = storageValue.shortStorageName();
+                /*
+                 * 字符串需要处理特殊字符.
+                 */
+                if (StorageType.STRING == storageValue.type()) {
 
-                attributeMap.put(shortStorageName.toString(), attr.getValue());
+                    attributeMap.put(shortStorageName.toString(),
+                        SphinxQLHelper.encodeJsonCharset(storageValue.value().toString()));
 
+                } else {
+
+                    attributeMap.put(shortStorageName.toString(), storageValue.value());
+
+                }
+
+                storageValue = storageValue.next();
             }
+
         }
 
         try {
@@ -407,8 +415,14 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
             IEntityClass entityClass = originalEntity.getEntityClass();
             StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
-
             Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
+            if (!needField(fieldOp, false)) {
+                continue;
+            }
+            IEntityField field = fieldOp.get();
+            StorageValue storageValue =
+                storageStrategyFactory.getStrategy(field.type())
+                    .convertIndexStorageValue(attr.getKey(), attr.getValue());
 
             if (StorageType.UNKNOWN == anyStorageValue.type()) {
                 if (fieldOp.isPresent()) {
@@ -423,17 +437,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            if (!needField(entityClass, anyStorageValue, false)) {
-                continue;
-            }
-
-            buff.append(
-                wrapperAttribute(
-                    anyStorageValue.shortStorageName(),
-                    attr.getValue(),
-                    anyStorageValue.type(),
-                    fieldOp.get()))
-                .append(' ');
+            buff.append(wrapperAttribute(field, storageValue)).append(' ');
         }
         return buff.toString();
     }
@@ -451,62 +455,75 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * StorageType.Long
      * aZl8N0123y58M7S
      */
-    private String wrapperAttribute(
-        ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
+    private String wrapperAttribute(IEntityField field, StorageValue storageValue) {
 
         StringBuilder buff = new StringBuilder();
+        StorageValue current = storageValue;
+        while (current != null) {
 
-        /*
-         * 字符串需要处理特殊字符.
-         * fuzzyType只有字符串才会处理.
-         */
-        if (StorageType.STRING == storageType) {
-            String strValue = SphinxQLHelper.filterSymbols(value.toString());
+            ShortStorageName shortStorageName = current.shortStorageName();
+            /*
+             * 字符串需要处理特殊字符.
+             * fuzzyType只有字符串才会处理.
+             */
+            if (StorageType.STRING == current.type()) {
+                String strValue = SphinxQLHelper.filterSymbols(current.value().toString());
 
-            if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
-                || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
-                /*
-                 * 硬编码字符串长度超过30的将只分词前30个字符.
-                 */
-                String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
+                if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
+                    || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
+                    /*
+                     * 硬编码字符串长度超过30的将只分词前30个字符.
+                     */
+                    String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
-                Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-                Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
-                /*
-                 * 处理当前字段分词结果.
-                 */
-                String word;
-                while (words.hasNext()) {
+                    Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
+                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
+                    /*
+                     * 处理当前字段分词结果.
+                     */
+                    String word;
+                    while (words.hasNext()) {
+                        if (buff.length() > 0) {
+                            buff.append(' ');
+                        }
+                        word = words.next();
+                        // 防止和原始字符相同的分词结果.
+                        if (!word.equals(strValue)) {
+                            buff.append(shortStorageName.getPrefix())
+                                .append(word)
+                                .append(shortStorageName.getSuffix());
+                        }
+                    }
                     if (buff.length() > 0) {
                         buff.append(' ');
                     }
-                    word = words.next();
-                    // 防止和原始字符相同的分词结果.
-                    if (!word.equals(strValue)) {
-                        buff.append(shortStorageName.getPrefix())
-                            .append(word)
-                            .append(shortStorageName.getSuffix());
-                    }
                 }
+
+                /*
+                 * 如果是多值,这里会忽略掉字段定位序号.
+                 * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
+                 * 最终在储存时将会去除尾部的定位序号,变成如下.
+                 * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
+                 */
                 if (buff.length() > 0) {
                     buff.append(' ');
                 }
+
+                buff.append(shortStorageName.getPrefix())
+                    .append(strValue)
+                    .append(shortStorageName.getNoLocationSuffix());
+            } else {
+
+                if (buff.length() > 0) {
+                    buff.append(' ');
+                }
+
+                buff.append(shortStorageName.getPrefix())
+                    .append(current.value())
+                    .append(shortStorageName.getSuffix());
             }
 
-            /*
-             * 如果是多值,这里会忽略掉字段定位序号.
-             * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
-             * 最终在储存时将会去除尾部的定位序号,变成如下.
-             * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
-             */
-            buff.append(shortStorageName.getPrefix())
-                .append(strValue)
-                .append(shortStorageName.getNoLocationSuffix());
-        } else {
-
-            buff.append(shortStorageName.getPrefix())
-                .append(value.toString())
-                .append(shortStorageName.getSuffix());
+            current = current.next();
         }
 
         return buff.toString();
@@ -621,8 +638,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * 1. 可搜索字段.
      * 2. 字段存在.
      */
-    private boolean needField(IEntityClass entityClass, StorageValue storageValue, boolean attr) {
-        Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(storageValue.logicName()));
+    private boolean needField(Optional<IEntityField> fieldOp, boolean attr) {
         boolean result;
         if (!fieldOp.isPresent()) {
             return false;
