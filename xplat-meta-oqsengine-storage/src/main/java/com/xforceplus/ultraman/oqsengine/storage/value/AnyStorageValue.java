@@ -29,7 +29,12 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
         return new AnyStorageValue(compatibleStorageName(storageName), null, false);
     }
 
-    // 兼容老版本数据.
+    /**
+     * 兼容老版本数据.
+     *
+     * @param name name
+     * @return string string
+     */
     public static String compatibleStorageName(String name) {
         if (name.startsWith(ATTRIBUTE_PREFIX)) {
             //去除开头的F.
