@@ -422,7 +422,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             IEntityField field = fieldOp.get();
             StorageValue storageValue =
                 storageStrategyFactory.getStrategy(field.type())
-                    .convertIndexStorageValue(attr.getKey(), attr.getValue());
+                    .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue());
 
             if (StorageType.UNKNOWN == anyStorageValue.type()) {
                 if (fieldOp.isPresent()) {
