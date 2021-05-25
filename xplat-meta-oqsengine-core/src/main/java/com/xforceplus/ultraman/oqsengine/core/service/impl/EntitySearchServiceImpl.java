@@ -24,7 +24,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -57,6 +59,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -115,6 +118,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private long maxJoinDriverLineNumber;
+    private boolean useFullSort = false;
     private boolean showResult = false;
     private CombinedStorage combinedStorage;
 
@@ -137,7 +141,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             maxJoinDriverLineNumber = maxVisibleTotalCount;
         }
 
-        combinedStorage = new CombinedStorage(masterStorage, indexStorage);
+        combinedStorage = new CombinedStorage(masterStorage, indexStorage, useFullSort);
 
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
             maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
@@ -167,6 +171,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     public void setMaxVisibleTotalCount(long maxVisibleTotalCount) {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
+    }
+
+    public void setUseFullSort(boolean useFullSort) {
+        this.useFullSort = useFullSort;
     }
 
     public boolean isShowResult() {
@@ -523,6 +531,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entities;
     }
 
+    private IValue buildValue(IEntityField field, Long id) {
+
+        FieldType type = field.type();
+
+        switch (type) {
+            case LONG:
+                return new LongValue(field, id);
+            case STRINGS:
+                return new StringsValue(field, id.toString());
+            default:
+                throw new RuntimeException("Cannot join field type like this " + type);
+        }
+    }
+
     /**
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
@@ -584,7 +606,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         driverQueryResult.getKey().mainEntityClassField,
                         ConditionOperator.MULTIPLE_EQUALS,
                         driverQueryResult.getValue().stream()
-                            .map(ref -> new LongValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
+                            .map(ref -> buildValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
                             .toArray(LongValue[]::new)
                     ));
             } catch (Exception e) {
@@ -769,13 +791,16 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         private IndexStorage indexStorage;
 
+        private boolean useFullSort = false;
+
         private final Map<FieldType, EntityRefComparator> refMapping;
 
         private final Map<FieldType, String> sortDefaultValue;
 
-        public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
+        public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage, boolean useFullSort) {
             this.masterStorage = masterStorage;
             this.indexStorage = indexStorage;
+            this.useFullSort = useFullSort;
 
             refMapping = new HashMap<>();
             refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
@@ -907,17 +932,27 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 entityRefComparator = new EntityRefComparator(FieldType.STRING);
             }
 
-            //sort masterRefs first
-            List<EntityRef> sortedMasterRefs =
-                masterRefs.stream()
+
+            if (useFullSort) {
+                Stream<EntityRef> masterRefStream = masterRefs.stream();
+                Stream<EntityRef> indexRefStream = indexRefs.stream();
+
+                return Stream.concat(masterRefStream, indexRefStream)
                     .sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed())
                     .collect(toList());
-            return streamMerger.merge(
-                sortedMasterRefs.stream(),
-                indexRefs.stream(),
-                refMapping.get(type),
-                sort.isAsc()).collect(toList());
 
+            } else {
+                //sort masterRefs first
+                List<EntityRef> sortedMasterRefs =
+                    masterRefs.stream()
+                        .sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed())
+                        .collect(toList());
+                return streamMerger.merge(
+                    sortedMasterRefs.stream(),
+                    indexRefs.stream(),
+                    refMapping.get(type),
+                    sort.isAsc()).collect(toList());
+            }
         }
 
         // 如果排序,但是查询结果没有值.

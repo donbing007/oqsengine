@@ -23,19 +23,21 @@ import org.springframework.context.annotation.Configuration;
 public class ServiceConfiguration {
 
     /**
-     * 实体搜索服务.
+     * 实体搜索服务, 暂时使用全内存排序.
      */
     @Bean
     public EntitySearchService entitySearchService(
         @Value("${query.maxVisibleTotalCount:10000}") long maxVisibleTotalCount,
         @Value("${query.join.maxJoinEntityNumber:2}") int maxJoinEntityNumber,
         @Value("${query.join.maxJoinDriverLineNumber:1000}") long maxJoinDriverLineNumber,
-        @Value("${debug.showsql:false}") boolean showSql) {
+        @Value("${debug.showsql:false}") boolean showSql,
+        @Value("{query.useFullSort:true}") boolean useFullSort) {
         EntitySearchServiceImpl impl = new EntitySearchServiceImpl();
         impl.setMaxJoinEntityNumber(maxJoinEntityNumber);
         impl.setMaxJoinDriverLineNumber(maxJoinDriverLineNumber);
         impl.setMaxVisibleTotalCount(maxVisibleTotalCount);
         impl.setShowResult(showSql);
+        impl.setUseFullSort(useFullSort);
 
         return impl;
     }
