@@ -607,7 +607,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         ConditionOperator.MULTIPLE_EQUALS,
                         driverQueryResult.getValue().stream()
                             .map(ref -> buildValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
-                            .toArray(LongValue[]::new)
+                            .toArray(IValue[]::new)
                     ));
             } catch (Exception e) {
 
