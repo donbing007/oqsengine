@@ -2,11 +2,20 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * SphinxQL帮助类.
@@ -175,11 +184,11 @@ public class SphinxQLHelper {
     /**
      * 构造字段的搜索.
      *
-     * @author dongbin
-     * @param value 目标字段值.
-     * @param code 字段代码.
+     * @param value     目标字段值.
+     * @param code      字段代码.
      * @param tokenizer 分词器.
      * @return java.lang.String 结果.
+     * @author dongbin
      */
     public static String buildSearch(String value, String code, Tokenizer tokenizer) {
 

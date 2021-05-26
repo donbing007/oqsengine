@@ -106,6 +106,25 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>io.github.phillipuniverse</groupId>
+                <artifactId>githook-maven-plugin</artifactId>
+                <version>1.0.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>install</goal>
+                        </goals>
+                        <configuration>
+                            <hooks>
+                                <pre-commit>
+                                    exec mvn checkstyle:check
+                                </pre-commit>
+                            </hooks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -113,6 +132,7 @@
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-tokenizer</module>
+        <module>xplat-meta-oqsengine-synchronizer</module>
         <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
@@ -214,7 +234,7 @@
             <dependency>
                 <groupId>io.vavr</groupId>
                 <artifactId>vavr</artifactId>
-                <version>0.9.3</version>
+                <version>0.10.3</version>
             </dependency>
 
             <dependency>
@@ -243,12 +263,6 @@
                 <artifactId>mockito-core</artifactId>
                 <version>3.1.0</version>
                 <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson-spring-boot-starter</artifactId>
-                <version>3.12.3</version>
             </dependency>
 
             <dependency>
@@ -328,6 +342,25 @@
                 <groupId>org.lionsoul</groupId>
                 <artifactId>jcseg-core</artifactId>
                 <version>2.6.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>3.15.5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>2.0.7</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito2</artifactId>
+                <version>2.0.7</version>
+                <scope>test</scope>
             </dependency>
 
         </dependencies>

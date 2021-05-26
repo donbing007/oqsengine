@@ -25,11 +25,23 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
         super(name, value, logicName);
     }
 
+    /**
+     * 根据物理储存名称获得一个通用的物理储存实例.
+     * 其不含有任何值,只作为解析使用.
+     *
+     * @param storageName 物理储存名称.
+     * @return 实例.
+     */
     public static StorageValue getInstance(String storageName) {
         return new AnyStorageValue(compatibleStorageName(storageName), null, false);
     }
 
-    // 兼容老版本数据.
+    /**
+     * 为了兼容老的主库存中的字段定义.
+     *
+     * @param name 主库存字段标识.
+     * @return 兼容处理后的结果.
+     */
     public static String compatibleStorageName(String name) {
         if (name.startsWith(ATTRIBUTE_PREFIX)) {
             //去除开头的F.
