@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @version 1.0 2020-03-10 11:53:19
  * @since 1.5
  */
-public class TimerWheel<T> {
+public class TimerWheel<T> implements ITimerWheel<T>{
 
     private static final int DEFAULT_SLOT_NUMBER = 512;
     private static final int DEFAULT_DURATION = 100;
@@ -131,6 +131,7 @@ public class TimerWheel<T> {
      * @param target  需要过期的对象.
      * @param timeout 存活的持续时间.
      */
+    @Override
     public void add(T target, long timeout) {
         if (target == null) {
             throw new NullPointerException("Target object is null!");
@@ -186,6 +187,7 @@ public class TimerWheel<T> {
      *
      * @param target 目标.
      */
+    @Override
     public void remove(T target) {
         if (target == null) {
             return;
