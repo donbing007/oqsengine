@@ -6,7 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * .
+ * metaManager 的mock测试.
  *
  * @author dongbin
  * @version 0.1 2021/04/14 16:09

@@ -12,6 +12,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 /**
  * 项目名称: 票易通
@@ -23,14 +24,13 @@ import java.util.Optional;
 public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
 
+    @Resource(name = "segmentDataSource")
+    private DataSource dataSource;
 
     private String table;
 
     private long queryTimeout;
 
-
-    @Resource(name = "segmentJDBCTransactionExecutor")
-    private TransactionExecutor transactionExecutor;
 
     @Override
     @PostConstruct
@@ -52,24 +52,20 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
     @Override
     public int build(SegmentInfo segmentInfo) throws SQLException {
-        return (int)transactionExecutor.execute((transaction, resource, hint)
-                -> new SegmentBuildExecutor(table,resource,queryTimeout).execute(segmentInfo));
+        return SegmentBuildExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
     }
 
     @Override
     public int udpate(SegmentInfo segmentInfo) throws SQLException {
-        return (int)transactionExecutor.execute((transaction, resource, hint)
-                -> new SegmentUpdateExecutor(table,resource,queryTimeout).execute(segmentInfo));
+       return SegmentUpdateExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
     }
 
     public int reset(SegmentInfo segmentInfo) throws SQLException {
-        return (int)transactionExecutor.execute((transaction,resource,hint)
-            -> new SegmentResetExecutor(table,resource,queryTimeout).execute(segmentInfo));
+        return SegmentResetExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
     }
 
     @Override
     public Optional<SegmentInfo> query(String bizType) throws SQLException {
-        return (Optional<SegmentInfo>) transactionExecutor.execute((transaction, resource, hint)
-                -> new SegmentQueryExecutor(table,resource,queryTimeout).execute(bizType));
+        return SegmentQueryExecutor.build(table,dataSource,queryTimeout).execute(bizType);
     }
 }

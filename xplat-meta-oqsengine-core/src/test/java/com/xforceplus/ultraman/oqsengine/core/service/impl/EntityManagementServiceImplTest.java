@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -33,7 +33,7 @@ public class EntityManagementServiceImplTest {
 
     @Before
     public void before() throws Exception {
-        impl = BaseInit.entityManagementService(new MockMetaManager());
+        impl = BaseInit.entityManagementService(EntityClassDefine.getMockMetaManager());
 
         impl.init();
     }
@@ -47,7 +47,7 @@ public class EntityManagementServiceImplTest {
     public void testVerify() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()).build();
@@ -70,7 +70,7 @@ public class EntityManagementServiceImplTest {
 
         targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis()).build();
         try {
@@ -96,20 +96,20 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.build(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
@@ -122,20 +122,20 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.build(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
@@ -146,22 +146,22 @@ public class EntityManagementServiceImplTest {
     public void testReplaceNotFound() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
-        when(masterStorage.selectOne(100, MockMetaManager.l2EntityClass)).thenReturn(Optional.empty());
+        when(masterStorage.selectOne(100, EntityClassDefine.l2EntityClass)).thenReturn(Optional.empty());
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
@@ -175,48 +175,48 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
 
         // 这是请求的.
         IEntity replaceEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L)))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
         IEntity actualTargetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
@@ -228,48 +228,48 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
 
         // 这是请求的.
         IEntity replaceEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L)))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
         IEntity actualTargetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 20000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
-        when(masterStorage.replace(actualTargetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
@@ -282,22 +282,22 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
 
-        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
@@ -309,22 +309,22 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();
 
-        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(0);
+        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
@@ -337,16 +337,16 @@ public class EntityManagementServiceImplTest {
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
-                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
                 .addValue(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
                 .addValue(
-                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
                 )
             )
             .build();

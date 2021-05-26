@@ -19,6 +19,8 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 项目名称: 票易通
@@ -28,6 +30,8 @@ import org.apache.commons.lang3.StringUtils;
  * 创建时间: 2020/10/22 5:58 PM
  */
 public class MasterUniqueStorage implements UniqueMasterStorage {
+
+    private Logger logger = LoggerFactory.getLogger(MasterUniqueStorage.class);
 
     @Resource
     UniqueKeyGenerator keyGenerator;
@@ -68,6 +72,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
             (tx, resource, hint) -> {
                 StorageUniqueEntity storageUniqueEntity = StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
                     .entityClasses(getEntityClasses(entityClass)).build();
+                logger.info("entityClasses length : {}, Unique entity : {}", storageUniqueEntity.getEntityClasses().length, storageUniqueEntity);
                 //fullTransactionInformation(storageEntityBuilder, resource);
                 return BuildUniqueExecutor.build(tableName, resource, queryTimeout).execute(storageUniqueEntity);
             });

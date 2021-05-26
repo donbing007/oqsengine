@@ -1,13 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.client;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.DATE_PATTEN_PARSER;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
@@ -17,18 +17,22 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenPar
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.sql.DataSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -38,8 +42,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * 作者(@author): liwei
  * 创建时间: 5/9/21 11:57 PM
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PatternParserUtil.class)
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.MYSQL})
 public class BizIDGeneratorTest {
 
     private IDGeneratorFactoryImpl idGeneratorFactory;
@@ -49,144 +53,97 @@ public class BizIDGeneratorTest {
     private static final String bizType = "bizTest";
 
 
-
-
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
     private BizIDGenerator bizIDGenerator1;
-    private static final String linearBizType = "bizLinear";
+
+    private ExecutorService executorService;
+    private DataSource dataSource;
+
 
 
     @Before
     public void before() throws SQLException {
-        storage = mock(SqlSegmentStorage.class);
-        SegmentInfo segmentInfo = SegmentInfo.builder().withId(1l)
-                .withBeginId(1l).withBizType(bizType).withMaxId(0l).withMode(1)
-                .withPatten("{yyyy}-{MM}-{dd}:{0000}").withStep(1000).withResetable(0)
-                .withPatternKey("").
-                withCreateTime(new Timestamp(System.currentTimeMillis()))
-                .withUpdateTime(new Timestamp(System.currentTimeMillis())).withVersion(1l).build();
-        when(storage.query(any())).thenReturn(Optional.of(segmentInfo));
-        when(storage.udpate(any())).thenReturn(1);
 
-        this.segmentService = new SegmentServiceImpl();
-        this.idGeneratorFactory = new IDGeneratorFactoryImpl();
-        this.bizIDGenerator = new BizIDGenerator();
-        ReflectionTestUtils.setField(segmentService, "sqlSegmentStorage",storage);
-        ReflectionTestUtils.setField(idGeneratorFactory, "segmentService",segmentService);
-        ReflectionTestUtils.setField(bizIDGenerator, "idGeneratorFactory",idGeneratorFactory);
+        executorService = Executors.newFixedThreadPool(30);
 
+        dataSource = buildDataSource("./src/test/resources/generator.conf");
 
-
-        storage1 = mock(SqlSegmentStorage.class);
-        SegmentInfo segmentInfo1 = SegmentInfo.builder().withId(2l)
-                .withBeginId(1l).withBizType(linearBizType).withMaxId(2000l).withMode(2)
-                .withPatternKey("").withResetable(0)
-                .withPatten("{yyyy}-{MM}-{dd}:{0000}").withStep(1000).withCreateTime(new Timestamp(System.currentTimeMillis()))
-                .withUpdateTime(new Timestamp(System.currentTimeMillis())).withVersion(1l).build();
-        when(storage1.query(any())).thenReturn(Optional.of(segmentInfo1));
-        when(storage1.udpate(any())).thenReturn(1);
+        storage1 = new SqlSegmentStorage();
+        storage1.setTable("segment");
+        storage1.init();
+        ReflectionTestUtils.setField(storage1,"dataSource",dataSource);
 
         this.segmentService1 = new SegmentServiceImpl();
         this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         this.bizIDGenerator1 = new BizIDGenerator();
-        ReflectionTestUtils.setField(segmentService1, "sqlSegmentStorage",storage1);
-        ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService",segmentService1);
-        ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory",idGeneratorFactory1);
+        ReflectionTestUtils.setField(segmentService1, "sqlSegmentStorage", storage1);
+        ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService", segmentService1);
+        ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory", idGeneratorFactory1);
 
-        PattenParserManager manager = new PattenParserManager();
-        NumberPattenParser parser = new NumberPattenParser();
-        DatePattenParser datePattenParser = new DatePattenParser();
-        manager.registVariableParser(parser);
-        manager.registVariableParser(datePattenParser);
-        PowerMockito.mockStatic(PatternParserUtil.class);
-        when(PatternParserUtil.getInstance()).thenReturn(manager);
-
-
-
+        SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType(bizType)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1l)
+            .withResetable(1)
+            .withPatternKey("")
+            .build();
+        int ret =  storage1.build(info);
+        Assert.assertEquals(ret,1);
     }
 
     @Test
     public void testBizIDGenerator() {
         String bizId = "";
-        for(int i=0;i<10;i++) {
-             bizId = bizIDGenerator.nextId(bizType);
-             System.out.println(bizId);
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String expected = LocalDateTime.now().format(formatter)+":0010";
-        Assert.assertEquals(bizId,expected);
-        for(int i=0; i<1000; i++) {
-            bizId = bizIDGenerator.nextId(bizType);
+        for (int i = 0; i < 10; i++) {
+            bizId = bizIDGenerator1.nextId(bizType);
             System.out.println(bizId);
         }
-        String expected1 = LocalDateTime.now().format(formatter)+":1010";
-        Assert.assertEquals(expected1,bizId);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String expected = LocalDateTime.now().format(formatter) + ":0010";
+        Assert.assertEquals(bizId, expected);
+        for (int i = 0; i < 1000; i++) {
+            bizId = bizIDGenerator1.nextId(bizType);
+            System.out.println(bizId);
+        }
+        String expected1 = LocalDateTime.now().format(formatter) + ":1010";
+        Assert.assertEquals(expected1, bizId);
     }
 
     @Test
     public void testResetIDGenerator() throws SQLException {
         PattenParserManager manager = new PattenParserManager();
         NumberPattenParser parser = new NumberPattenParser();
-        DatePattenParser datePattenParser = mock(DatePattenParser.class);
-        when(datePattenParser.parse(anyString(),eq(0L))).thenReturn("2020-01-01:0000");
-        when(datePattenParser.parse(anyString(),eq(1L))).thenReturn("2020-01-01:0001");
-        when(datePattenParser.parse(anyString(),eq(2L))).thenReturn("2020-01-01:0002");
-        when(datePattenParser.parse(anyString(),eq(3L))).thenReturn("2020-01-02:0003");
-        when(datePattenParser.parse(anyString(),eq(4L))).thenReturn("2020-01-01:0002");
-        when(datePattenParser.getName()).thenReturn("demo-date-parser");
-        when(datePattenParser.needHandle(anyString())).thenReturn(true);
+        DatePattenParser datePattenParser = new DatePattenParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
-        PowerMockito.mockStatic(PatternParserUtil.class);
-        when(PatternParserUtil.getInstance()).thenReturn(manager);
-
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(PattenParserManager.class)).thenReturn(manager);
+        ReflectionTestUtils.setField(PatternParserUtil.class,"applicationContext",applicationContext);
         String bizId = "";
-        for(int i=0;i<3;i++) {
+        for (int i = 0; i < 3; i++) {
             if(i == 2) {
-                when(PatternParserUtil.needReset(anyString(),any(PatternValue.class),any(PatternValue.class)))
-                    .thenReturn(true).thenReturn(false);
-                SegmentInfo segmentInfo = SegmentInfo.builder().withId(1l)
-                    .withBeginId(1l).withBizType(bizType).withMaxId(0l).withMode(1)
-                    .withPatten("{yyyy}-{MM}-{dd}:{0000}").withStep(1000).withResetable(0)
-                    .withPatternKey("2020-01-02").
-                        withCreateTime(new Timestamp(System.currentTimeMillis()))
-                    .withUpdateTime(new Timestamp(System.currentTimeMillis())).withVersion(1l).build();
-                when(storage.query(any())).thenReturn(Optional.of(segmentInfo));
+                LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
+                DatePattenParser spy = Mockito.spy(datePattenParser);
+                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                manager.unRegist(DATE_PATTEN_PARSER);
+                manager.registVariableParser(spy);
             }
-            else {
-                when(PatternParserUtil.needReset(anyString(),any(PatternValue.class),any(PatternValue.class)))
-                    .thenReturn(false);
-            }
-            bizId = bizIDGenerator.nextId(bizType);
-            if(i == 0) {
-                Assert.assertEquals("2020-01-01:0001", bizId);
-            }
-            if(i == 1) {
-                Assert.assertEquals("2020-01-01:0002",bizId);
-            }
-            if(i == 2) {
-                Assert.assertEquals("2020-01-01:0001",bizId);
-            }
-            System.out.println(bizId);
+            bizId = bizIDGenerator1.nextId(bizType);
         }
+        System.out.println(bizId);
+        Assert.assertEquals(LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))+":00001",bizId);
     }
 
-    @Test
-    public void testDistributeBizIDGenerator() throws InterruptedException {
-        String bizId = "";
-        for(int i=0;i<10;i++) {
-            bizId = bizIDGenerator1.nextId(linearBizType);
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String expected = LocalDateTime.now().format(formatter)+":2010";
-        Assert.assertEquals(expected,bizId);
-        for(int i=0; i<100; i++) {
-            bizId = bizIDGenerator1.nextId(linearBizType);
-            System.out.println(bizId);
-        }
-        String expected1 = LocalDateTime.now().format(formatter)+":2110";
-        Assert.assertEquals(expected1,bizId);
+
+    private DataSource buildDataSource(String file) throws SQLException {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
+        return dataSourcePackage.getMaster().get(0);
     }
+
+
 }
+

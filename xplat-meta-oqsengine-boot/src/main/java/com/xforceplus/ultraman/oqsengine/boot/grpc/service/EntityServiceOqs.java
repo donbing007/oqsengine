@@ -11,7 +11,9 @@ import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.other;
 import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
 
+import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
+import akka.stream.javadsl.Source;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
@@ -48,6 +50,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
 import com.xforceplus.ultraman.oqsengine.sdk.Filters;
+import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.LockResponse;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp;
 import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
@@ -58,6 +62,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,6 +79,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +105,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
 
+    private static final String RESOURCE_IS_LOCKED = "Current Resource is locked";
+
+    private static final String LOCK_HEADER = "lock-header";
+    private static final String LOCK_TOKEN = "lock-token";
+
     @Autowired
     private MetaManager metaManager;
 
@@ -117,6 +128,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Autowired(required = false)
     private ReplayService replayService;
 
+    @Autowired(required = false)
+    private LockStateService lockStateService;
+
     @Autowired
     private TransactionManager transactionManager;
 
@@ -134,6 +148,37 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private <T> CompletableFuture<T> asyncChangelog(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncChangelogDispatcher);
+    }
+
+    /**
+     * check if the resource is locked.
+     *
+     * @param id resource id
+     */
+    private void checkLock(Long id, Metadata metadata) {
+
+        if (lockStateService == null) {
+            return;
+        }
+
+        OqsLock oqsLock = lockStateService.createLock(id.toString());
+
+        if (!oqsLock.isLocked()) {
+            return;
+        }
+
+        Optional<String> uuid = metadata.getText(LOCK_HEADER);
+        //TODO optimize token
+        Optional<String> token = metadata.getText(LOCK_TOKEN);
+
+        if (uuid.isPresent()) {
+            boolean heldByThread = oqsLock.isHeldByThread(uuid.get());
+            if (heldByThread) {
+                return;
+            }
+        }
+
+        throw new RuntimeException(RESOURCE_IS_LOCKED);
     }
 
     @Override
@@ -175,7 +220,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * checkout the entityClassRef.
      */
     private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId(), entityClassRef.getProfile());
         if (entityClassOp.isPresent()) {
             IEntityClass entityClass = entityClassOp.get();
             return entityClass;
@@ -271,6 +316,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
+
+            checkLock(in.getObjId(), metadata);
 
             String profile = extractProfile(metadata).orElse("");
 
@@ -504,6 +551,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
+
+            checkLock(in.getObjId(), metadata);
 
             String profile = extractProfile(metadata).orElse("");
 
@@ -791,7 +840,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (consOp.isPresent()) {
 
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
+                    entities =
+                        entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
                 } else {
                     entities = entitySearchService.selectByConditions(
                         Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
@@ -1033,6 +1083,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+
     private Optional<Long> extractTransaction(Metadata metadata) {
         Optional<String> transactionId = metadata.getText("transaction-id");
         return transactionId.map(Long::valueOf);
@@ -1048,5 +1099,35 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         String userName = metadata.getText("username").orElse("noname");
 
         logger.info(template.apply(displayName, userName));
+    }
+
+
+    @Override
+    public Source<LockResponse, NotUsed> communicate(Source<LockRequest, NotUsed> in, Metadata metadata) {
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.setupCommunication(in, node);
+    }
+
+    @Override
+    public CompletionStage<LockResponse> test(LockRequest in, Metadata metadata) {
+        throw new RuntimeException("Not Supported");
+    }
+
+    @Override
+    public CompletionStage<LockResponse> tryAcquire(LockRequest in, Metadata metadata) {
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.tryAcquire(in, node);
+    }
+
+    @Override
+    public CompletionStage<LockResponse> tryRelease(LockRequest in, Metadata metadata) {
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.tryRelease(in, node);
+    }
+
+    @Override
+    public CompletionStage<LockResponse> addWaiter(LockRequest in, Metadata metadata) {
+        String node = metadata.getText("node").orElse("dummy");
+        return lockStateService.addWaiter(in, node);
     }
 }

@@ -20,6 +20,10 @@ public class SphinxQLStorageEntity implements Serializable {
      */
     private String attributeF;
     /**
+     * 全文搜索字段,只会记录字符串属性.
+     */
+    private String searchAttributeF;
+    /**
      * 事务号.
      */
     private long tx;
@@ -91,6 +95,10 @@ public class SphinxQLStorageEntity implements Serializable {
         return attribute;
     }
 
+    public String getSearchAttributeF() {
+        return searchAttributeF;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -133,6 +141,7 @@ public class SphinxQLStorageEntity implements Serializable {
         sb.append("id=").append(id);
         sb.append(", entityClassF='").append(entityClassF).append('\'');
         sb.append(", attributeF='").append(attributeF).append('\'');
+        sb.append(", searchAttributeF='").append(searchAttributeF).append('\'');
         sb.append(", tx=").append(tx);
         sb.append(", commitId=").append(commitId);
         sb.append(", createTime=").append(createTime);
@@ -239,6 +248,7 @@ public class SphinxQLStorageEntity implements Serializable {
             sphinxQLStorageEntity.commitId = this.commitId;
             sphinxQLStorageEntity.oqsmajor = this.oqsmajor;
             sphinxQLStorageEntity.attributeF = this.attributeF;
+            sphinxQLStorageEntity.searchAttributeF = this.searchAttributeF;
             return sphinxQLStorageEntity;
         }
     }

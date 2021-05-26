@@ -2,11 +2,11 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.SegmentFieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 /**
  * desc :
@@ -18,20 +18,20 @@ import java.sql.SQLException;
  */
 public class SegmentUpdateExecutor extends AbstractSegmentExecutor<SegmentInfo, Integer> {
 
-    public SegmentUpdateExecutor(String tableName, TransactionResource resource, long timeoutMs) {
-        super(tableName, resource, timeoutMs);
+    public SegmentUpdateExecutor(String tableName, DataSource dataSource, long timeoutMs) {
+        super(tableName, dataSource, timeoutMs);
     }
 
     public static SegmentUpdateExecutor
-                                build(String tableName, TransactionResource resource, long timeout) {
-        return new SegmentUpdateExecutor(tableName, resource, timeout);
+                                build(String tableName, DataSource dataSource, long timeout) {
+        return new SegmentUpdateExecutor(tableName, dataSource, timeout);
     }
 
     @Override
     public Integer execute(SegmentInfo segmentInfo) throws SQLException {
         String sql = buildSQL();
 
-        try (Connection connection = getResource().value();
+        try (Connection connection = getDataSource().getConnection();
              PreparedStatement st = connection.prepareStatement(sql)) {
             st.setLong(1, segmentInfo.getId());
             st.setLong(2,segmentInfo.getMaxId());

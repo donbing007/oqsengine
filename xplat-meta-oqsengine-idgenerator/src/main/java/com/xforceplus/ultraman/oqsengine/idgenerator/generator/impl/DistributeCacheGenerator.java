@@ -33,13 +33,13 @@ public class DistributeCacheGenerator implements IDGenerator {
     private IAtomicReference<Boolean>  isLoadingNext;
     private ExecutorService executorService;
 
-    public DistributeCacheGenerator(String bizType, SegmentService segmentService) {
+    public DistributeCacheGenerator(String bizType, SegmentService segmentService,ExecutorService executorService) {
         this.bizType = bizType;
         this.segmentService = segmentService;
         this.current = HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("current");
         this.next = HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("next");
         this.isLoadingNext =  HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("isLoadingNext");
-        this.executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("oqs-id-generator"));
+        this.executorService = executorService;
         loadCurrent();
     }
 
@@ -70,8 +70,9 @@ public class DistributeCacheGenerator implements IDGenerator {
             }
         } catch (Exception e) {
             message = e.getMessage();
+            throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
         }
-        throw new IDGeneratorException("error query segment: " + message);
+        throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
     }
 
     public void loadNext() {

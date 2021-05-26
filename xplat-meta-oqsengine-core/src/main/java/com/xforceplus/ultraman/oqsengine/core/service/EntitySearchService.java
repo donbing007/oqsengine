@@ -96,5 +96,3 @@ public interface EntitySearchService {
      */
     Collection<IEntity> search(ServiceSearchConfig config) throws SQLException;
 }
-
-

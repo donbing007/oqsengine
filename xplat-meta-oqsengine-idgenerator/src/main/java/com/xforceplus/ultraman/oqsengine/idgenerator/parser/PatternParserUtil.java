@@ -25,28 +25,19 @@ public class PatternParserUtil implements ApplicationContextAware {
 
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        applicationContext = applicationContext;
+    public void setApplicationContext(ApplicationContext context) throws BeansException {
+        applicationContext = context;
     }
 
     public static PattenParserManager getInstance() {
-        return (PattenParserManager)applicationContext.getBean(PattenParserManager.class);
+        return applicationContext.getBean(PattenParserManager.class);
     }
 
     public static String parse(String patten,Long id) {
         return getInstance().parse(patten,id);
     }
 
-    public static boolean isResetPatten(String pattern) {
-        return pattern.contains(Pattern.YEAR) ||
-            pattern.contains(Pattern.MONTH) ||
-            pattern.contains(Pattern.DAY);
-    }
-
     public static boolean needReset(String pattern, PatternValue current, PatternValue next) {
-        if(!isResetPatten(pattern)) {
-            return false;
-        }
         return !getPatternKey(current).equals(getPatternKey(next));
     }
 

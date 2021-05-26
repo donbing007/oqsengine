@@ -25,6 +25,10 @@ public class PattenParserManager implements InitializingBean, ApplicationContext
         registedParser.put(parser.getName(), parser);
     }
 
+    public void unRegist(String name) {
+        registedParser.remove(name);
+    }
+
 
     public String parse(String patten,Long id) {
         String newValue = patten;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition;
+package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;

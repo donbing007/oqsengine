@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
@@ -12,7 +14,14 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenPar
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import org.apache.commons.lang.StringUtils;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,6 +34,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class BusinessIDGeneratorConfiguration {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * segment storage.
@@ -129,4 +140,25 @@ public class BusinessIDGeneratorConfiguration {
     public PattenParser numberPattenParser() {
         return new NumberPattenParser();
     }
+
+    /**
+     * redissonClient.
+     *
+     * @param lettuceConfiguration lettuceConfiguration
+     * @return RedissonClient
+     */
+    @Bean(destroyMethod = "shutdown")
+    @ConditionalOnMissingBean(RedissonClient.class)
+    public RedissonClient redissonClient(LettuceConfiguration lettuceConfiguration) {
+        Config config = new Config();
+        config.useSingleServer()
+            .setAddress(lettuceConfiguration.uriWithIDGenerator());
+        String url = lettuceConfiguration.uriWithIDGenerator();
+        String password = RedisConfigUtil.getRedisUrlPassword(url);
+        if (!StringUtils.isBlank(password)) {
+            config.useSingleServer().setPassword(password);
+        }
+        return Redisson.create(config);
+    }
+
 }

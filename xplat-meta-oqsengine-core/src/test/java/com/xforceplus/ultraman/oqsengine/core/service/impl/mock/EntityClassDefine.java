@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -20,7 +21,7 @@ import org.junit.Ignore;
  * @since 1.8
  */
 @Ignore
-public class MockMetaManager implements MetaManager {
+public class EntityClassDefine {
 
 
     //-------------level 0--------------------
@@ -59,7 +60,7 @@ public class MockMetaManager implements MetaManager {
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-            .withConfig(FieldConfig.Builder.anFieldConfig()
+                .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
@@ -94,36 +95,9 @@ public class MockMetaManager implements MetaManager {
         .withFather(l1EntityClass)
         .build();
 
-    private Collection<IEntityClass> entities;
-
-    public MockMetaManager() {
-        entities = Arrays.asList(
-            l0EntityClass, l1EntityClass, l2EntityClass
-        );
-    }
-
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        return entities.stream().filter(e -> e.id() == id).findFirst();
-    }
-
-    @Override
-    public Optional<IEntityClass> load(long id, String profile) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
-        return Optional.empty();
-    }
-
-    @Override
-    public int need(String appId, String env) {
-        return 0;
-    }
-
-    @Override
-    public void invalidateLocal() {
-
+    public static MetaManager getMockMetaManager() {
+        MockMetaManager metaManager = new MockMetaManager();
+        metaManager.addEntityClass(l2EntityClass);
+        return metaManager;
     }
 }

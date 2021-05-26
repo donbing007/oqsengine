@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -23,16 +21,16 @@ public abstract class AbstractSegmentExecutor<RES, REQ> implements Executor<RES,
 
     final Logger logger = LoggerFactory.getLogger(AbstractSegmentExecutor.class);
     private String tableName;
-    private TransactionResource<Connection> resource;
+    private DataSource dataSource;
     private long timeoutMs;
 
-    public AbstractSegmentExecutor(String tableName, TransactionResource<Connection> resource) {
+    public AbstractSegmentExecutor(String tableName, DataSource resource) {
         this(tableName, resource, 0);
     }
 
-    public AbstractSegmentExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public AbstractSegmentExecutor(String tableName, DataSource resource, long timeoutMs) {
         this.tableName = tableName;
-        this.resource = resource;
+        this.dataSource = resource;
         this.timeoutMs = timeoutMs;
     }
 
@@ -59,8 +57,8 @@ public abstract class AbstractSegmentExecutor<RES, REQ> implements Executor<RES,
      *
      * @return 事务资源.
      */
-    public TransactionResource<Connection> getResource() {
-        return resource;
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
     /**

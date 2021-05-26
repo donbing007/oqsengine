@@ -218,4 +218,22 @@ public class SegmentInfo {
             return segmentInfo;
         }
     }
+
+    @Override
+    public String toString() {
+        return "SegmentInfo{" +
+            "id=" + id +
+            ", bizType='" + bizType + '\'' +
+            ", beginId=" + beginId +
+            ", maxId=" + maxId +
+            ", step=" + step +
+            ", mode=" + mode +
+            ", pattern='" + pattern + '\'' +
+            ", patternKey='" + patternKey + '\'' +
+            ", resetable=" + resetable +
+            ", createTime=" + createTime +
+            ", updateTime=" + updateTime +
+            ", version=" + version +
+            '}';
+    }
 }

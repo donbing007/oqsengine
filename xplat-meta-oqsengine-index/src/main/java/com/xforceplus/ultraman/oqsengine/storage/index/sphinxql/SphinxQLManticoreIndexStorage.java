@@ -132,8 +132,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action",
-        "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "index", "action", "condition"})
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
@@ -362,10 +363,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             .withUpdateTime(originalEntity.getUpdateTime())
             .withMaintainId(originalEntity.getMaintainid())
             .withOqsmajor(originalEntity.getOqsMajor())
+            .withAttributeF(toAttributesF(originalEntity))
             .withEntityClassF(toEntityClassF(originalEntity))
-            .withAttribute(toAttribute(originalEntity))
-            .withAttributeF(toAttributeF(originalEntity));
-
+            .withAttribute(toAttribute(originalEntity));
         return builder.build();
     }
 

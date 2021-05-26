@@ -21,9 +21,13 @@ public class DatePattenParser implements PattenParser {
         return DATE_PATTEN_PARSER;
     }
 
+    public LocalDate getLocalDate() {
+       return LocalDateTime.now().toLocalDate();
+    }
+
     @Override
     public String parse(String patten, Long id) {
-        LocalDate date =  LocalDateTime.now().toLocalDate();
+        LocalDate date =  getLocalDate();
         String year = String.valueOf(date.getYear());
         String month = String.format("%02d",date.getMonthValue());
         String day = String.format("%02d",date.getDayOfMonth());

@@ -2,20 +2,11 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * SphinxQL帮助类.
@@ -195,7 +186,7 @@ public class SphinxQLHelper {
         String strValue = filterSymbols(value);
         Iterator<String> words = tokenizer.tokenize(strValue);
         StringBuilder buff = new StringBuilder();
-        buff.append("@").append(FieldDefine.ATTRIBUTEF).append(' ');
+        buff.append("@").append(FieldDefine.SEARCH_ATTRIBUTEF).append(' ');
         int emptyLen = buff.length();
         while (words.hasNext()) {
             if (buff.length() > emptyLen) {
