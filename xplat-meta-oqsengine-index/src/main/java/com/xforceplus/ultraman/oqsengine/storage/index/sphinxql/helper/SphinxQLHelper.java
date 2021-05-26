@@ -195,7 +195,7 @@ public class SphinxQLHelper {
         String strValue = filterSymbols(value);
         Iterator<String> words = tokenizer.tokenize(strValue);
         StringBuilder buff = new StringBuilder();
-        buff.append("@").append(FieldDefine.SEARCH_ATTRIBUTEF).append(' ');
+        buff.append("@").append(FieldDefine.ATTRIBUTEF).append(' ');
         int emptyLen = buff.length();
         while (words.hasNext()) {
             if (buff.length() > emptyLen) {

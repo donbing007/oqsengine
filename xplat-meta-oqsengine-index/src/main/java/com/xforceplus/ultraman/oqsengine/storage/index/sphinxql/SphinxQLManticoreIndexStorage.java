@@ -42,6 +42,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -169,10 +170,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     @Override
-    public Collection<EntityRef> search(SearchConfig config, IEntityClass ...entityClasses)
+    public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses)
         throws SQLException {
         return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
-            return SearchExecutor.build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getMaxSearchTimeoutMs())
+            return SearchExecutor
+                .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getMaxSearchTimeoutMs())
                 .execute(Tuple.of(config, entityClasses));
         });
     }
@@ -482,6 +484,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         StringBuilder buff = new StringBuilder();
         StorageValue current = storageValue;
+        List<Map.Entry<String, String>> crossAttributes = new LinkedList<>();
         while (current != null) {
 
             ShortStorageName shortStorageName = current.shortStorageName();
@@ -516,7 +519,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                                 .append(word)
                                 .append(shortStorageName.getSuffix());
 
-
+                            if (field.config().isCrossSearch()) {
+                                crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
+                            }
                         }
                     }
                     if (buff.length() > 0) {
@@ -537,6 +542,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(shortStorageName.getPrefix())
                     .append(strValue)
                     .append(shortStorageName.getNoLocationSuffix());
+
+                if (field.config().isCrossSearch()) {
+                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
+                }
             } else {
 
                 if (buff.length() > 0) {
@@ -546,9 +555,26 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(shortStorageName.getPrefix())
                     .append(current.value())
                     .append(shortStorageName.getSuffix());
+
+                if (field.config().isCrossSearch()) {
+                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), current.value().toString()));
+                }
             }
 
             current = current.next();
+        }
+
+        // 如果有需要跨元信息.
+        if (!crossAttributes.isEmpty()) {
+            for (Map.Entry<String, String> attr : crossAttributes) {
+                if (buff.length() > 0) {
+                    buff.append(' ');
+                }
+
+                buff.append(attr.getKey())
+                    .append(attr.getValue())
+                    .append(attr.getKey());
+            }
         }
 
         return buff.toString();

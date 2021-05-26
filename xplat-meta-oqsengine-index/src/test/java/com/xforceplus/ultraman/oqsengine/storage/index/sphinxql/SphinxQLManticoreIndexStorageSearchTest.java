@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import com.alibaba.fastjson.JSONArray;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -86,7 +85,14 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("name")
-        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+            .withSearchable(true)
+            .withCrossSearch(true)
+            .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+            .build()
+        )
+        .build();
     private IEntityClass firstEntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
@@ -100,7 +106,13 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 2)
         .withFieldType(FieldType.STRING)
         .withName("name")
-        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.WILDCARD)).build();
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withSearchable(true)
+                .withCrossSearch(true)
+                .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+                .build()
+        ).build();
     private IEntityClass secondEntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(1)
@@ -145,8 +157,9 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
 
         tokenizerFactory = new DefaultTokenizerFactory();
 

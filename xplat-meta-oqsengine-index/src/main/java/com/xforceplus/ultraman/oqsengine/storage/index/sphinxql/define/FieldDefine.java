@@ -44,10 +44,6 @@ public class FieldDefine {
      */
     public static final String ATTRIBUTEF = "attrf";
     /**
-     * 全文搜索属性.
-     */
-    public static final String SEARCH_ATTRIBUTEF = "searchattrf";
-    /**
      * 类型全文搜索属性.
      */
     public static final String ENTITYCLASSF = "entityclassf";
