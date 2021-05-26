@@ -11,10 +11,10 @@ import java.util.Iterator;
  */
 public class EmptyWorkdsIterator implements Iterator<String> {
 
-    private static final EmptyWorkdsIterator instance = new EmptyWorkdsIterator();
+    private static final EmptyWorkdsIterator INSTANCE = new EmptyWorkdsIterator();
 
     public static EmptyWorkdsIterator getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     @Override

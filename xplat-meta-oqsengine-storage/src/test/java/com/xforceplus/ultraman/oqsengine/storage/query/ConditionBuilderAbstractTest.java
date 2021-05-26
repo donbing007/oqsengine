@@ -17,7 +17,7 @@ import org.junit.Test;
  * @version 1.0 01/12/2021
  * @since <pre>Jan 12, 2021</pre>
  */
-public class AbstractConditionBuilderTest {
+public class ConditionBuilderAbstractTest {
 
     @Before
     public void before() throws Exception {

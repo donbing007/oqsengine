@@ -18,6 +18,15 @@ public class CommitPayload implements Serializable {
     private boolean readonly;
     private long maxOpNumber;
 
+    /**
+     * 构造一个提交事件负载实例.
+     *
+     * @param txId        事务号.
+     * @param commitId    提交号.
+     * @param msg         事务消息.
+     * @param readonly    是否只读事务.
+     * @param maxOpNumber 最大操作数量.
+     */
     public CommitPayload(long txId, long commitId, String msg, boolean readonly, long maxOpNumber) {
         this.txId = txId;
         this.commitId = commitId;
@@ -48,14 +57,18 @@ public class CommitPayload implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         CommitPayload that = (CommitPayload) o;
         return txId == that.txId
-                && commitId == that.commitId
-                && readonly == that.readonly
-                && maxOpNumber == that.maxOpNumber
-                && Objects.equals(msg, that.msg);
+            && commitId == that.commitId
+            && readonly == that.readonly
+            && maxOpNumber == that.maxOpNumber
+            && Objects.equals(msg, that.msg);
     }
 
     @Override

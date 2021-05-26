@@ -25,9 +25,9 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
     /**
      * 实例化.
      *
-     * @param type 事件类型.
+     * @param type    事件类型.
      * @param payload 负载.
-     * @param time 事件时间.
+     * @param time    事件时间.
      */
     public ActualEvent(EventType type, T payload, long time) {
         this.type = type;
@@ -56,10 +56,10 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
 
     @Override
     public String toString() {
-        return "ActualEvent{" +
-            "type=" + type +
-            ", payload=" + payload +
-            ", time=" + time +
-            '}';
+        return "ActualEvent{"
+            + "type=" + type
+            + ", payload=" + payload
+            + ", time=" + time
+            + '}';
     }
 }

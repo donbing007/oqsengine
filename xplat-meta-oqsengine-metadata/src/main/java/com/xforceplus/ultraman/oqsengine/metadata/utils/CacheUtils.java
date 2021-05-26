@@ -25,11 +25,12 @@ public class CacheUtils {
     public static String generateEntityCacheKey(long entityId, int version) {
         return ENTITY_STORAGE_LOCAL_CACHE_KEY + "." + entityId + "." + version;
     }
+
     /**
      * 生成ProfileEntity.
      */
     public static String generateProfileEntity(String code, long id) {
-        return ELEMENT_PROFILES + "." +  ELEMENT_FIELDS + "." +  code + "." + id;
+        return ELEMENT_PROFILES + "." + ELEMENT_FIELDS + "." + code + "." + id;
     }
 
     /**
@@ -38,16 +39,18 @@ public class CacheUtils {
     public static String parseOneKeyFromProfileEntity(String key) {
         String[] parts = key.split("\\.");
         if (parts.length != PROFILE_ENTITY_KEY_PARTS) {
-            throw new MetaSyncClientException(String.format("profileEntity key's length should be %d", PROFILE_ENTITY_KEY_PARTS), false);
+            throw new MetaSyncClientException(
+                String.format("profileEntity key's length should be %d", PROFILE_ENTITY_KEY_PARTS), false);
         }
 
         return parts[PROFILE_CODE_POS];
     }
+
     /**
      * 生成ProfileRelations.
      */
     public static String generateProfileRelations(String code) {
-        return ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS + "." +  code;
+        return ELEMENT_PROFILES + "." + ELEMENT_RELATIONS + "." + code;
     }
 
     /**

@@ -35,6 +35,12 @@ public enum EventPriority {
         return value;
     }
 
+    /**
+     * 根据字面量查询实例.
+     *
+     * @param value 字面量.
+     * @return 实例.
+     */
     public static EventPriority getInstance(int value) {
         for (EventPriority t : EventPriority.values()) {
             if (t.getValue() == value) {
