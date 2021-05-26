@@ -152,6 +152,11 @@ public class FieldConfig implements Serializable {
     private FieldSense fieldSense = FieldSense.NORMAL;
 
     /**
+     * 是否支持跨元信息查询.
+     */
+    private boolean crossSearch = false;
+
+    /**
      * 校验正则.
      */
     @JsonProperty(value = "validateRegexString")
@@ -272,6 +277,15 @@ public class FieldConfig implements Serializable {
      */
     public boolean isSearchable() {
         return searchable;
+    }
+
+    /**
+     * 是否可以跨元信息搜索.
+     *
+     * @return true 可以跨元信息,false不可跨元信息.
+     */
+    public boolean isCrossSearch() {
+        return crossSearch;
     }
 
     /**
@@ -437,6 +451,7 @@ public class FieldConfig implements Serializable {
      */
     public static final class Builder {
         private boolean searchable = false;
+        private boolean crossSearch = false;
         private long max = Long.MAX_VALUE;
         private long min = Long.MIN_VALUE;
         private int precision = 0;
@@ -461,6 +476,11 @@ public class FieldConfig implements Serializable {
 
         public Builder withSearchable(boolean searchable) {
             this.searchable = searchable;
+            return this;
+        }
+
+        public Builder withCrossSearch(boolean crossSearch) {
+            this.crossSearch = crossSearch;
             return this;
         }
 
@@ -551,6 +571,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;
             fieldConfig.searchable = this.searchable;
+            fieldConfig.crossSearch = this.crossSearch;
             fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;

@@ -30,7 +30,7 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
     }
 
     // 兼容老版本数据.
-    private static String compatibleStorageName(String name) {
+    public static String compatibleStorageName(String name) {
         if (name.startsWith(ATTRIBUTE_PREFIX)) {
             //去除开头的F.
             return name.substring(1);

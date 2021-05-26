@@ -18,7 +18,7 @@ import java.util.Collections;
  */
 public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQLStorageEntity>, Integer> {
 
-    private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?)";
 
     public static SaveIndexExecutor buildCreate(String indexName, TransactionResource transactionResource) {
         return new SaveIndexExecutor(true, indexName, transactionResource);
@@ -47,7 +47,6 @@ public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQL
             for (SphinxQLStorageEntity entity : manticoreStorageEntities) {
                 st.setLong(point++, entity.getId());
                 st.setString(point++, entity.getAttributeF());
-                st.setString(point++, entity.getSearchAttributeF());
                 st.setString(point++, entity.getEntityClassF());
                 st.setLong(point++, entity.getTx());
                 st.setLong(point++, entity.getCommitId());
@@ -77,7 +76,6 @@ public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQL
             .append(String.join(",",
                 FieldDefine.ID,
                 FieldDefine.ATTRIBUTEF,
-                FieldDefine.SEARCH_ATTRIBUTEF,
                 FieldDefine.ENTITYCLASSF,
                 FieldDefine.TX,
                 FieldDefine.COMMITID,

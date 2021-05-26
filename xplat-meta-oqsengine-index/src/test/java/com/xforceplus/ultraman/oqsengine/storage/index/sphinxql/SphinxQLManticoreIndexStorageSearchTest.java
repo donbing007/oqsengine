@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExe
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
@@ -107,13 +108,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withFather(baseEntityClass)
         .build();
 
-    private static StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-    static {
-        // 浮点数转换处理.
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
-
     private TransactionManager transactionManager;
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
@@ -124,6 +118,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
     private TokenizerFactory tokenizerFactory;
+    private StorageStrategyFactory storageStrategyFactory;
 
     @Before
     public void before() throws Exception {
@@ -153,6 +148,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
 
         tokenizerFactory = new DefaultTokenizerFactory();
+
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
 
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);

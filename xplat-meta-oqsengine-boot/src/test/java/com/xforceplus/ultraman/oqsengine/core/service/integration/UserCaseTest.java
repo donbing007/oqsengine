@@ -16,14 +16,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Arrays;
@@ -611,6 +614,89 @@ public class UserCaseTest {
 
             Assert.assertEquals(0, page.getTotalCount());
         }
+    }
 
+    /**
+     * 测试浮点数是否正确写入并可以正确查询.
+     */
+    @Test
+    public void testDecimal() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new DecimalValue(MockMetaManager.l2EntityClass.field("l2-dec").get(), new BigDecimal("123.789"))
+                ))
+            ).build();
+
+        // 新创建
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+
+        entity.entityValue().addValue(
+            new DecimalValue(MockMetaManager.l2EntityClass.field("l2-dec").get(), new BigDecimal("789.123"))
+        );
+        // 更新保证进入索引中.
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    MockMetaManager.l2EntityClass.field("l2-dec").get(),
+                    ConditionOperator.EQUALS,
+                    new DecimalValue(MockMetaManager.l2EntityClass.field("l2-dec").get(), new BigDecimal("789.123"))
+                )
+            ),
+            MockMetaManager.l2EntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
+        entity = entities.stream().findFirst().get();
+        Assert.assertEquals("789.123", entity.entityValue().getValue("l2-dec").get().valueToString());
+    }
+
+    /**
+     * 测试多值字符串的写入后查询.
+     */
+    @Test
+    public void testStrings() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new StringsValue(MockMetaManager.l2EntityClass.field("l0-strings").get(),
+                        "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
+                ))
+            ).build();
+
+        // 新创建
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+
+        entity.entityValue().addValue(
+            new StringsValue(MockMetaManager.l2EntityClass.field("l0-strings").get(),
+                "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
+        );
+        // 更新保证进入索引中.
+        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    MockMetaManager.l2EntityClass.field("l0-strings").get(),
+                    ConditionOperator.EQUALS,
+                    new StringsValue(MockMetaManager.l2EntityClass.field("l0-strings").get(), "PURPLE")
+                )
+            ),
+            MockMetaManager.l2EntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
     }
 }
