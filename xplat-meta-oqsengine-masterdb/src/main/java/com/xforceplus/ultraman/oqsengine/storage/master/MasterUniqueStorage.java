@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.google.common.collect.Lists;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
@@ -82,7 +83,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
     private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
         Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
         Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
-        return indexValue.isPresent() ? indexValue.get().getValue() : "";
+        return indexValue.isPresent() ? MD5Utils.encrypt(indexValue.get().getValue()) : "";
     }
 
     @Override
@@ -179,7 +180,7 @@ public class MasterUniqueStorage implements UniqueMasterStorage {
         if (!containUniqueConfig(businessKeys, entityClass)) {
             return Optional.empty();
         }
-        String uniqueKey = buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass);
+        String uniqueKey = MD5Utils.encrypt(buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass));
         return (Optional<StorageUniqueEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<StorageUniqueEntity> seOP =
                 new QueryUniqueExecutor(tableName, resource, entityClass, queryTimeout).execute(uniqueKey);
