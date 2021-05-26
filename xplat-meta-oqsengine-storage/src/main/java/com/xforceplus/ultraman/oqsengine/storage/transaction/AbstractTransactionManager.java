@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.timerwheel.ITimerWheel;
+import com.xforceplus.ultraman.oqsengine.common.timerwheel.MultipleTimerWheel;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
 import io.micrometer.core.instrument.Metrics;
@@ -76,7 +78,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     /**
      * 时间轮.处理事务超时.
      */
-    private TimerWheel<Transaction> timerWheel;
+    private ITimerWheel<Transaction> timerWheel;
 
     public AbstractTransactionManager() {
         this(3000);
@@ -95,7 +97,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         survival = new ConcurrentHashMap<>();
         using = new ConcurrentHashMap<>();
 
-        timerWheel = new TimerWheel(new TransaxtionTimeoutNotification());
+        timerWheel = new MultipleTimerWheel(new TransaxtionTimeoutNotification());
     }
 
     @Override

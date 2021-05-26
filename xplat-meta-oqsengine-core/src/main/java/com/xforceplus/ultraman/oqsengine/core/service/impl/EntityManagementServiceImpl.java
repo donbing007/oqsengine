@@ -229,6 +229,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         markTime(entity);
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+        //临时调试加入，后续删除
+        logger.info("Entity class info : {}", entityClass.toString());
 
         try {
             prepareBuild(entityClass, entity);
@@ -267,6 +269,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
                 if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
                     uniqueStorage.build(entity, entityClass);
+                } else {
+                    // 临时调试加入，后续删除
+                    logger.info("Can not find any Unique config!");
                 }
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
