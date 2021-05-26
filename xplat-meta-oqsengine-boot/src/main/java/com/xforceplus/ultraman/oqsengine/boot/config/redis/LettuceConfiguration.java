@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot.config.redis;
 
-import io.lettuce.core.RedisURI;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +16,7 @@ public class LettuceConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
+    private String dbSeparator = "/";
 
     private int changeLogDb = 14;
     private int cacheEventDb = 15;
@@ -41,17 +41,27 @@ public class LettuceConfiguration {
      * changelog db config.
      */
     public String uriWithChangeLogDb() {
-        RedisURI redisUri = RedisURI.create(uri);
-        redisUri.setDatabase(changeLogDb);
-        return redisUri.toString();
+        if (hasDB()) {
+            return String.format("%s/%d", uri.substring(0, uri.lastIndexOf(dbSeparator)), changeLogDb);
+        } else {
+            return String.format("%s/%d", uri, changeLogDb);
+        }
     }
 
     /**
      * cache event config.
      */
     public String uriWithCacheEventDb() {
-        RedisURI redisUri = RedisURI.create(uri);
-        redisUri.setDatabase(cacheEventDb);
-        return redisUri.toString();
+        if (hasDB()) {
+            return String.format("%s/%d", uri.substring(0, uri.lastIndexOf(dbSeparator)), cacheEventDb);
+        } else {
+            return String.format("%s/%d", uri, cacheEventDb);
+        }
+    }
+
+    private boolean hasDB() {
+        int sepLast = uri.lastIndexOf(dbSeparator);
+        int sepFirst = uri.indexOf(dbSeparator);
+        return sepLast - sepFirst > 1;
     }
 }
