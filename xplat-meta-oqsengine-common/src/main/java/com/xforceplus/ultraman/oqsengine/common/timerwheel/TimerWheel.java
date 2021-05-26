@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @version 1.0 2020-03-10 11:53:19
  * @since 1.5
  */
-public class TimerWheel<T> implements ITimerWheel<T>{
+public class TimerWheel<T> implements ITimerWheel<T> {
 
     private static final int DEFAULT_SLOT_NUMBER = 512;
     private static final int DEFAULT_DURATION = 100;
@@ -114,12 +114,12 @@ public class TimerWheel<T> implements ITimerWheel<T>{
         this.removeHelp = new ConcurrentHashMap<>(16);
 
         worker = new ThreadPoolExecutor(
-            1,
-            1,
-            0L,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>(1000),
-            ExecutorHelper.buildNameThreadFactory("time-wheel", true)
+                1,
+                1,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1000),
+                ExecutorHelper.buildNameThreadFactory("time-wheel", true)
         );
 
         worker.submit(new PointTask());

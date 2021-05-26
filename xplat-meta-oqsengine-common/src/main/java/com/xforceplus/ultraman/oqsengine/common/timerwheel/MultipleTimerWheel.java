@@ -1,17 +1,31 @@
 package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+
 /**
- * @author weikai
- * @data 2021/5/21 9:56
- * @mail weikai@xforceplus.com
+ * 时间轮转算法实现.
+ * 所有的时间单位都以毫秒为单位.
+ * 默认分隔为512个槽位,每一个槽位时间区间为100毫秒.
+ *
+ * @author weikai 2021/5/21 9:56
+ * @version 1.0 2021/5/21 9:56
+ * @since 1.5
  */
+
 public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     //DEFAULT_SLOT_NUMBER对应工作轮，槽位数512
     private static final int DEFAULT_SLOT_NUMBER = 512;
@@ -25,12 +39,12 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     //工作轮每个Slot默认间隔时间
     private static final int DEFAULT_DURATION = 100;
 
-    private final TimeUnit timeUnit =TimeUnit.MILLISECONDS;
+    private final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     private boolean initTick = true;
 
     /**
-     * 每个slot间隔时间
+     * 每个slot间隔时间.
      */
     private final long duration;
     private final long secondDuration;
@@ -65,10 +79,11 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
     /**
+     * 初始化时间轮.
      *
-     * @param slotNumber
-     * @param duration
-     * @param notification
+     * @param slotNumber 工作轮槽位数.
+     * @param duration 间隔时间.
+     * @param notification  失效通知器.
      */
     public MultipleTimerWheel(int slotNumber, long duration, TimeoutNotification<T> notification) {
 
@@ -95,8 +110,8 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
             this.notification = notification;
         }
         //初始化多级时间轮时间间隔
-        this.secondDuration = this.duration*this.slotNumber;
-        this.thirdDuration = this.secondDuration* DEFAULT_SECOND_SLOT_NUMBER;
+        this.secondDuration = this.duration * this.slotNumber;
+        this.thirdDuration = this.secondDuration * DEFAULT_SECOND_SLOT_NUMBER;
         this.fourthDuration = this.thirdDuration * DEFAULT_THIRD_SLOT_NUMBER;
 
         this.currentSlot = 0;
@@ -163,26 +178,26 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
         }
         long specialTimeout = timeout;
         if (specialTimeout <= this.duration) {
-            specialTimeout = this.duration*2;
+            specialTimeout = this.duration * 2;
         }
-        int actuallyWheel, actuallySlotIndex, round,current;
-        round = -1;
-        current = this.currentSlot;
-        long remainingTime;
-        actuallyWheel = calculateActuallyWheel(specialTimeout,current);
-        actuallySlotIndex = calculateActuallySlot(specialTimeout,actuallyWheel,current);
-        if (actuallyWheel < 3){
+        int round = -1;
+        int current = this.currentSlot;
+        int actuallyWheel;
+        actuallyWheel = calculateActuallyWheel(specialTimeout, current);
+        int actuallySlotIndex;
+        actuallySlotIndex = calculateActuallySlot(specialTimeout, actuallyWheel, current);
+        if (actuallyWheel < 3) {
             //前三级轮无次轮概念
             round = 0;
-        }else if (actuallyWheel == 3){
-            round = (int) (specialTimeout/(fourthDuration* DEFAULT_FOURTH_SLOT_NUMBER));
+        } else if (actuallyWheel == 3) {
+            round = (int) (specialTimeout / (fourthDuration * DEFAULT_FOURTH_SLOT_NUMBER));
         }
-        remainingTime = calculateRemainingTime(specialTimeout,current);
+        long remainingTime = calculateRemainingTime(specialTimeout, current);
 
         Slot slot = wheelList.get(actuallyWheel).get(actuallySlotIndex);  //获取应该加入的槽位
-        slot.addElement(target, round,remainingTime);
+        slot.addElement(target, round, remainingTime);
 
-        removeHelp.put(target,new int[]{actuallyWheel,actuallySlotIndex});
+        removeHelp.put(target, new int[]{actuallyWheel, actuallySlotIndex});
     }
 
     /**
@@ -218,7 +233,7 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
         //获取value数组，包含轮位、槽位
         int[] value = removeHelp.remove(target);
 
-        if (value != null){
+        if (value != null) {
             wheelList.get(value[0]).get(value[1]).remove(target);
         }
     }
@@ -233,23 +248,23 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
 
-
     /**
-     * 计算任务添加时应该放到几级时间轮
+     * 计算任务添加时应该放到几级时间轮.
+     *
      * @param specialTimeout 超时时间
-     * @param current 当前工作轮指针位置
-     * @return  返回实际轮
+     * @param current        当前工作轮指针位置
+     * @return 返回实际轮
      */
-    private int calculateActuallyWheel(long specialTimeout,int current) {
-        if (specialTimeout < this.secondDuration - current * this.duration){
+    private int calculateActuallyWheel(long specialTimeout, int current) {
+        if (specialTimeout < this.secondDuration - current * this.duration) {
             return 0;
-        }else if (secondDuration - current * this.duration <= specialTimeout && specialTimeout < thirdDuration - current * this.duration){
+        } else if (secondDuration - current * this.duration <= specialTimeout && specialTimeout < thirdDuration - current * this.duration) {
             return 1;
-        }else if (thirdDuration - current * this.duration <= specialTimeout && specialTimeout < fourthDuration - current * this.duration){
+        } else if (thirdDuration - current * this.duration <= specialTimeout && specialTimeout < fourthDuration - current * this.duration) {
             return 2;
-        }else if (specialTimeout >= fourthDuration){
+        } else if (specialTimeout >= fourthDuration) {
             return 3;
-        }else {
+        } else {
             return -1;
         }
     }
@@ -257,73 +272,75 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
 
     /**
      * 计算实际slot.
-     * @param timeout  超时时间
-     * @param actuallyWheel  添加的实际轮
-     * @param current 工作轮当前指针位置
+     *
+     * @param timeout       超时时间
+     * @param actuallyWheel 添加的实际轮
+     * @param current       工作轮当前指针位置
      * @return 返回实际槽位
      */
-    private int calculateActuallySlot(long timeout,int actuallyWheel,int current) {
+    private int calculateActuallySlot(long timeout, int actuallyWheel, int current) {
         int actuallySlot;
-        if (actuallyWheel == 0){
-            if (timeout % duration == 0){
-                actuallySlot = (int)((current + timeout / duration)%this.slotNumber);
-            }else {
-                actuallySlot = (int)((current + timeout / duration + 1)%this.slotNumber);
+        if (actuallyWheel == 0) {
+            if (timeout % duration == 0) {
+                actuallySlot = (int) ((current + timeout / duration) % this.slotNumber);
+            } else {
+                actuallySlot = (int) ((current + timeout / duration + 1) % this.slotNumber);
             }
-        }else if (actuallyWheel == 1){
-            actuallySlot = (int)((secondCurrentSlot + (timeout + current * this.duration) / secondDuration)%DEFAULT_SECOND_SLOT_NUMBER);
-        }else if (actuallyWheel == 2){
-            actuallySlot = (int)((thirdCurrentSlot + (timeout + current * this.duration) / thirdDuration)%DEFAULT_THIRD_SLOT_NUMBER);
-        }else if (actuallyWheel == 3){
-            actuallySlot = (int)((fourthCurrentSlot + (timeout + current * this.duration) / fourthDuration)%DEFAULT_FOURTH_SLOT_NUMBER);
-        }else {
+        } else if (actuallyWheel == 1) {
+            actuallySlot = (int) ((secondCurrentSlot + (timeout + current * this.duration) / secondDuration) % DEFAULT_SECOND_SLOT_NUMBER);
+        } else if (actuallyWheel == 2) {
+            actuallySlot = (int) ((thirdCurrentSlot + (timeout + current * this.duration) / thirdDuration) % DEFAULT_THIRD_SLOT_NUMBER);
+        } else if (actuallyWheel == 3) {
+            actuallySlot = (int) ((fourthCurrentSlot + (timeout + current * this.duration) / fourthDuration) % DEFAULT_FOURTH_SLOT_NUMBER);
+        } else {
             actuallySlot = -1;
         }
         return actuallySlot;
     }
 
 
-
     /**
-     * 计算2,3,4级时间轮中任务剩余时长
+     * 计算2,3,4级时间轮中任务剩余时长.
+     *
      * @param specialTimeout 超时时间
-     * @param current  工作轮当前指针位置
+     * @param current        工作轮当前指针位置
      * @return 返回剩余时间
      */
-    private long calculateRemainingTime(long specialTimeout,int current) {
+    private long calculateRemainingTime(long specialTimeout, int current) {
         long remainingTime = 0;
-        if (specialTimeout < this.secondDuration-current*this.duration){
+        if (specialTimeout < this.secondDuration - current * this.duration) {
             remainingTime = 0;
-        }else if (secondDuration - current*this.duration < specialTimeout && specialTimeout < thirdDuration - current*this.duration){
-            remainingTime = (specialTimeout + current*this.duration) % secondDuration;
-        }else if (thirdDuration  - current*this.duration < specialTimeout && specialTimeout < fourthDuration - current*this.duration){
-            remainingTime = (specialTimeout + current*this.duration) % thirdDuration;
-        }else if (specialTimeout  - current*this.duration > fourthDuration){
-            remainingTime = (specialTimeout + current*this.duration) % fourthDuration;
+        } else if (secondDuration - current * this.duration < specialTimeout && specialTimeout < thirdDuration - current * this.duration) {
+            remainingTime = (specialTimeout + current * this.duration) % secondDuration;
+        } else if (thirdDuration - current * this.duration < specialTimeout && specialTimeout < fourthDuration - current * this.duration) {
+            remainingTime = (specialTimeout + current * this.duration) % thirdDuration;
+        } else if (specialTimeout - current * this.duration > fourthDuration) {
+            remainingTime = (specialTimeout + current * this.duration) % fourthDuration;
         }
         return remainingTime;
     }
 
     /**
-     * 拨动指针，若高级轮指针发生拨动则转移高级轮任务至低级轮
+     * 拨动指针，若高级轮指针发生拨动则转移高级轮任务至低级轮.
+     *
      * @return 返回工作轮拨动后的槽slot
      */
     private Slot getWorkWheelSlotAndTickWheel() {
         Slot slot;
-        if (initTick){
+        if (initTick) {
             initTick = false;
             currentSlot = (currentSlot + 1) % slotNumber;
             slot = workWheel.get(0);
-        }else if (currentSlot != 0){
+        } else if (currentSlot != 0) {
             slot = tickWorkWheel();
-        }else if ((++secondCurrentSlot) % DEFAULT_SECOND_SLOT_NUMBER != 0){
+        } else if ((++secondCurrentSlot) % DEFAULT_SECOND_SLOT_NUMBER != 0) {
             secondCurrentSlot %= DEFAULT_SECOND_SLOT_NUMBER;
             slot = tickSecondWheel();
-        }else if ((++thirdCurrentSlot) % DEFAULT_THIRD_SLOT_NUMBER != 0){
+        } else if ((++thirdCurrentSlot) % DEFAULT_THIRD_SLOT_NUMBER != 0) {
             thirdCurrentSlot %= DEFAULT_SECOND_SLOT_NUMBER;
             secondCurrentSlot %= DEFAULT_SECOND_SLOT_NUMBER;
             slot = tickThirdWheel();
-        }else {
+        } else {
             thirdCurrentSlot %= DEFAULT_SECOND_SLOT_NUMBER;
             secondCurrentSlot %= DEFAULT_SECOND_SLOT_NUMBER;
             slot = tickFourthWheel();
@@ -332,23 +349,25 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
     /**
-     * 拨动工作轮
+     * 拨动工作轮.
+     *
      * @return 返回工作轮拨动后的槽slot
      */
-    private Slot tickWorkWheel(){
+    private Slot tickWorkWheel() {
         Slot slot = workWheel.get(currentSlot);
         currentSlot = (currentSlot + 1) % slotNumber;
         return slot;
     }
 
     /**
-     * 拨动工作轮、二极轮
+     * 拨动工作轮、二极轮.
+     *
      * @return 返回工作轮拨动后的槽slot
      */
-    private Slot tickSecondWheel(){
+    private Slot tickSecondWheel() {
 
         Slot secondSlot = secondWheel.get(secondCurrentSlot);
-        wheelDeliver(secondSlot,removeHelp);
+        wheelDeliver(secondSlot, removeHelp);
 
         Slot slot = workWheel.get(currentSlot);
         currentSlot = (currentSlot + 1) % slotNumber;
@@ -356,15 +375,16 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
     /**
-     * 拨动工作轮、二极轮、三级轮
+     * 拨动工作轮、二极轮、三级轮.
+     *
      * @return 返回工作轮拨动后的槽slot
      */
-    private Slot tickThirdWheel(){
+    private Slot tickThirdWheel() {
         Slot secondSlot = secondWheel.get(secondCurrentSlot);
-        wheelDeliver(secondSlot,removeHelp);
+        wheelDeliver(secondSlot, removeHelp);
 
         Slot thirdSlot = thirdWheel.get(thirdCurrentSlot);
-        wheelDeliver(thirdSlot,removeHelp);
+        wheelDeliver(thirdSlot, removeHelp);
 
         Slot slot = workWheel.get(currentSlot);
         currentSlot = (currentSlot + 1) % slotNumber;
@@ -372,39 +392,40 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
     /**
-     * 拨动工作轮、二极轮、三级轮、四级轮
+     * 拨动工作轮、二极轮、三级轮、四级轮.
+     *
      * @return 返回工作轮拨动后的槽slot
      */
-    private Slot tickFourthWheel(){
+    private Slot tickFourthWheel() {
         Slot secondSlot = secondWheel.get(secondCurrentSlot);
-        wheelDeliver(secondSlot,removeHelp);
+        wheelDeliver(secondSlot, removeHelp);
 
         Slot thirdSlot = thirdWheel.get(thirdCurrentSlot);
-        wheelDeliver(thirdSlot,removeHelp);
+        wheelDeliver(thirdSlot, removeHelp);
 
         fourthCurrentSlot = (fourthCurrentSlot + 1) % DEFAULT_FOURTH_SLOT_NUMBER;
         Slot fourthSlot = fourthWheel.get(fourthCurrentSlot);
-        if (fourthSlot.elements.size() > 0){
+        if (fourthSlot.elements.size() > 0) {
             fourthSlot.lock.lock();
-            try{
+            try {
                 Iterator<Element> iterator = fourthSlot.elements.iterator();
                 Element element;
-                while (iterator.hasNext()){
+                while (iterator.hasNext()) {
                     element = iterator.next();
-                    if (element.getRound() <= 0){
+                    if (element.getRound() <= 0) {
                         T target = element.getTarget();
                         long timeout = element.getRemainingTime();
                         removeHelp.remove(target);
-                        if (timeout == 0){
+                        if (timeout == 0) {
                             timeout = this.duration;
                         }
-                        add(target,timeout);
+                        add(target, timeout);
                         iterator.remove();
-                    }else {
+                    } else {
                         element.reduceRound();
                     }
                 }
-            }finally {
+            } finally {
                 fourthSlot.lock.unlock();
             }
 
@@ -416,42 +437,43 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     }
 
     /**
-     * 转移助手
-     * @param slot 待转移槽位
-     * @param removeHelp  删除助手
+     * 转移助手.
+     *
+     * @param slot       待转移槽位
+     * @param removeHelp 删除助手
      */
-    private void wheelDeliver(Slot slot, Map<T, int[]> removeHelp){
-        if (slot.elements.size() > 0){
+    private void wheelDeliver(Slot slot, Map<T, int[]> removeHelp) {
+        if (slot.elements.size() > 0) {
             slot.lock.lock();
-            try{
-                for (Element element : slot.elements){
+            try {
+                for (Element element : slot.elements) {
                     removeHelp.remove(element.getTarget());
-                    if (element.getRemainingTime() > 0){
-                        add(element.getTarget(),element.getRemainingTime());
-                    }else {
-                        add(element.getTarget(),this.duration);
+                    if (element.getRemainingTime() > 0) {
+                        add(element.getTarget(), element.getRemainingTime());
+                    } else {
+                        add(element.getTarget(), this.duration);
                     }
                 }
                 slot.elements.clear();
-            }finally {
+            } finally {
                 slot.lock.unlock();
             }
         }
     }
 
-    private class Element{
+    private class Element {
 
         private final T target;
         private int round;
         private long remainingTime;
 
-        public Element(T target, int round,long remainingTime) {
+        public Element(T target, int round, long remainingTime) {
             this.target = target;
             this.round = round;
             this.remainingTime = remainingTime;
         }
 
-        public long getRemainingTime(){
+        public long getRemainingTime() {
             return remainingTime;
         }
 
@@ -478,21 +500,21 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
         private final Lock lock = new ReentrantLock();
 
         public void addElement(T obj, int round, long remainingTime) {
-            Element element = new Element(obj, round,remainingTime);
+            Element element = new Element(obj, round, remainingTime);
             lock.lock();
             try {
                 elements.add(element);
-            }finally {
+            } finally {
                 lock.unlock();
             }
         }
 
         /**
-         * 淘汰过期任务，添加任务不会加入工作轮当前槽位，不加锁
+         * 淘汰过期任务，添加任务不会加入工作轮当前槽位，不加锁.
          */
         public void expire() {
             long resultTime;
-            for (Element element : elements){
+            for (Element element : elements) {
                 resultTime = notification.notice(element.getTarget());
                 if (resultTime > 0) {
                     add(element.getTarget(), resultTime);
@@ -507,7 +529,7 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
             final int notFound = -1;
             int index = notFound;
             lock.lock();
-            try{
+            try {
                 for (int i = 0; i < elements.size(); i++) {
                     if (elements.get(i).getTarget().equals(target)) {
                         index = i;
@@ -517,7 +539,7 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
                 if (index > notFound) {
                     elements.remove(index);
                 }
-            }finally {
+            } finally {
                 lock.unlock();
             }
         }
@@ -531,7 +553,7 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
     private class PointTask implements Runnable {
 
         @Override
-        public void run(){
+        public void run() {
             Slot slot;
             long startTime;
             long endTime;
@@ -541,8 +563,8 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
                 slot.expire();
                 try {
                     endTime = System.currentTimeMillis();
-                    long sleepTime = duration -(endTime - startTime);
-                    if (sleepTime > 0){
+                    long sleepTime = duration - (endTime - startTime);
+                    if (sleepTime > 0) {
                         timeUnit.sleep(sleepTime);
                     }
                 } catch (InterruptedException ex) {
