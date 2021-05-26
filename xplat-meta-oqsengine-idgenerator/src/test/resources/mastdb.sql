@@ -32,7 +32,7 @@ CREATE TABLE `oqsunique`
     `entityclassl2` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
     `entityclassl3` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
     `entityclassl4` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
-    `unique_key`    varchar(64) NOT NULL COMMENT '业务主键1',
+    `unique_key`    varchar(128) NOT NULL COMMENT '业务主键1',
     constraint IDX_T1 primary key (id),
     constraint IDX_U1 unique key (`unique_key`, `entityclassl0`, `entityclassl1`, `entityclassl2`, `entityclassl3`,
                                   `entityclassl4`)

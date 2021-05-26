@@ -100,7 +100,8 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
-  uri: "redis://127.0.0.1:6379"
+#  uri: "redis://q1w2e3r4@127.0.0.1:6379"
+  uri: "redis://127.0.0.1:6379"/
   maxReqQueue: 10000
 
 management:
@@ -143,11 +144,11 @@ meta:
   grpc:
     type: client
     #    host: ultraman.xforcecloud.com
-    #    host: 120.55.249.44
+    host: 120.55.249.44
     #host: 169.254.106.127
-    host: localhost
-    port: 8081
-    #    port: 23111
+#    host: localhost
+#    port: 8081
+    port: 23111
     #    port: 23120
     seconds:
       heartbeatTimeout: 30
