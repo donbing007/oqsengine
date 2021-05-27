@@ -4,12 +4,10 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSIN
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.CONNECTION_ERROR;
 
 /**
- * desc :
- * name : MetaSyncServerException
+ * server exception.
  *
- * @author : xujia
- * date : 2021/2/3
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class MetaSyncServerException extends RuntimeException {
     private int code;

@@ -1,38 +1,35 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
-
 
 /**
- * desc :
- * name : GRpcClient
+ * grpc client implements.
  *
- * @author : xujia
- * date : 2021/2/2
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class MetaSyncGRpcClient implements GRpcClient {
 
-    private Logger logger = LoggerFactory.getLogger(MetaSyncGRpcClient.class);
+    private final Logger logger = LoggerFactory.getLogger(MetaSyncGRpcClient.class);
 
     @Resource
-    private GRpcParams gRpcParams;
+    private GRpcParams grpcParams;
 
     private ManagedChannel channel;
     private EntityClassSyncGrpc.EntityClassSyncStub stub;
 
-    private String host;
-    private int port;
+    private final String host;
+    private final int port;
     private boolean isClientOpen;
 
     public MetaSyncGRpcClient(String host, int port) {
@@ -44,9 +41,9 @@ public class MetaSyncGRpcClient implements GRpcClient {
     public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
-                .usePlaintext()
-                .keepAliveTime(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
-                .keepAliveTimeout(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+            .usePlaintext()
+            .keepAliveTime(grpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+            .keepAliveTimeout(grpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                 .build();
 
         stub = EntityClassSyncGrpc.newStub(channel);

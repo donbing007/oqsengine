@@ -3,12 +3,10 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import java.security.MessageDigest;
 
 /**
- * desc :
- * name : MD5Utils
+ * md5工具类.
  *
- * @author : xujia
- * date : 2021/2/3
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class MD5Utils {
 
@@ -19,7 +17,7 @@ public class MD5Utils {
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");
             m.update(bytes);
-            byte s[] = m.digest();
+            byte[] s = m.digest();
             String result = "";
             for (int i = 0; i < s.length; i++) {
                 result += Integer.toHexString((0x000000FF & s[i]) | 0xFFFFFF00).substring(6);

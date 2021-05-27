@@ -1,50 +1,53 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
 /**
- * desc :
- * name : CommonConfiguration
+ * 公共配置.
  *
- * @author : xujia
- * date : 2021/3/3
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 @Configuration
 @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
 public class CommonConfiguration {
+    /**
+     * 初始化配置.
+     */
     @Bean
-    public GRpcParams gRpcParamsConfig(
-            @Value("${meta.grpc.seconds.heartbeatTimeout:30}") long heartbeatTimeoutSec,
-            @Value("${meta.grpc.seconds.delaytaskTimeout:30}") long delayTaskDurationSec,
-            @Value("${meta.grpc.seconds.monitorDuration:1}") long sleepMonitorSec,
-            @Value("${meta.grpc.seconds.reconnectDuration:5}") long sleepReconnectSec,
-            @Value("${meta.grpc.seconds.keepAliveDuration:5}") long keepAliveSendDuration) {
-        GRpcParams gRpcParamsConfig = new GRpcParams();
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
-        gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
-        gRpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
-        gRpcParamsConfig.setReconnectDuration(TimeUnit.SECONDS.toMillis(sleepReconnectSec));
-        gRpcParamsConfig.setKeepAliveSendDuration(TimeUnit.SECONDS.toMillis(keepAliveSendDuration));
+    public GRpcParams grpcParamsConfig(
+        @Value("${meta.grpc.seconds.heartbeatTimeout:30}") long heartbeatTimeoutSec,
+        @Value("${meta.grpc.seconds.delaytaskTimeout:30}") long delayTaskDurationSec,
+        @Value("${meta.grpc.seconds.monitorDuration:1}") long sleepMonitorSec,
+        @Value("${meta.grpc.seconds.reconnectDuration:5}") long sleepReconnectSec,
+        @Value("${meta.grpc.seconds.keepAliveDuration:5}") long keepAliveSendDuration) {
+        GRpcParams grpcParamsConfig = new GRpcParams();
+        grpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
+        grpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
+        grpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
+        grpcParamsConfig.setReconnectDuration(TimeUnit.SECONDS.toMillis(sleepReconnectSec));
+        grpcParamsConfig.setKeepAliveSendDuration(TimeUnit.SECONDS.toMillis(keepAliveSendDuration));
 
-        return gRpcParamsConfig;
+        return grpcParamsConfig;
     }
 
-
+    /**
+     * 初始化线程池.
+     */
     @Bean("grpcTaskExecutor")
     public ExecutorService metaSyncThreadPool(
-            @Value("${threadPool.call.grpc.worker:0}") int worker,
-            @Value("${threadPool.call.grpc.queue:500}") int queue) {
+        @Value("${threadPool.call.grpc.worker:0}") int worker,
+        @Value("${threadPool.call.grpc.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {

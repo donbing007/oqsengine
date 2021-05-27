@@ -45,16 +45,14 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * desc :
- * name : EntityClassSyncResponseHandler
+ * sync response handler, implement.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class SyncResponseHandler implements IResponseHandler {
 
-    private Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
 
     @Resource
     private IResponseWatchExecutor responseWatchExecutor;
@@ -69,68 +67,52 @@ public class SyncResponseHandler implements IResponseHandler {
     private ExecutorService taskExecutor;
 
     @Resource
-    private GRpcParams gRpcParams;
+    private GRpcParams grpcParams;
 
-    private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
+    private final List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
 
-    private AtomicInteger dataHandleFailedCounter =
-            Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_HANDLE_FAILED_ERROR, new AtomicInteger(0));
+    private final AtomicInteger dataHandleFailedCounter =
+        Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_HANDLE_FAILED_ERROR, new AtomicInteger(0));
 
-    private AtomicInteger dataFormatErrorCounter =
-            Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_DATA_FORMAT_ERROR, new AtomicInteger(0));
+    private final AtomicInteger dataFormatErrorCounter =
+        Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_DATA_FORMAT_ERROR, new AtomicInteger(0));
 
     @Override
     public void start() {
 
-        /**
-         * 设置服务状态为启用
-         */
+        //  设置服务状态为启用
         isShutdown = false;
-        /**
-         * 启动retryExecutor
-         */
+
+        //  启动retryExecutor
         retryExecutor.start();
-        /**
-         * 启动responseWatchExecutor
-         */
+
+        //  启动responseWatchExecutor
         responseWatchExecutor.start();
 
-        /**
-         * 1.添加watchElementCheck任务线程
-         */
+        //  添加watchElementCheck任务线程
         longRunTasks.add(ThreadUtils.create(this::watchElementCheck));
-        /**
-         * 2.添加keepAlive任务线程
-         */
+
+        //  添加keepAlive任务线程
         longRunTasks.add(ThreadUtils.create(this::keepAlive));
 
-        /**
-         * 启动当前Task线程
-         */
+        //  启动当前Task线程
         longRunTasks.forEach(Thread::start);
 
         logger.debug("syncResponseHandler start.");
     }
 
-
     /**
-     * 关闭
+     * 关闭.
      */
     @Override
     public void stop() {
-        /**
-         * 设置服务状态为禁用
-         */
+        //  设置服务状态为禁用
         isShutdown = true;
-        /**
-         * 关闭retryExecutor
-         */
+        //  关闭retryExecutor
         retryExecutor.stop();
-        /**
-         * 关闭responseWatchExecutor
-         */
+        //  关闭responseWatchExecutor
         responseWatchExecutor.stop();
 
         ThreadUtils.shutdown(null, SHUT_DOWN_WAIT_TIME_OUT);
@@ -139,25 +121,19 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
     /**
-     * 执行对于request的处理
-     * @param entityClassSyncRequest
-     * @param responseStreamObserver
+     * 执行对于request的处理.
      */
     @Override
     public void invoke(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
         if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
-            /**
-             * 处理心跳
-             */
+            //  处理心跳
             String uid = entityClassSyncRequest.getUid();
-            if (null != uid) {
+            if (!uid.isEmpty()) {
                 confirmHeartBeat(uid, responseStreamObserver);
             }
         } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
-            /**
-             * 处理注册
-             */
+            //  处理注册
             WatchElement w =
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                             entityClassSyncRequest.getVersion(), Register);
@@ -173,20 +149,21 @@ public class SyncResponseHandler implements IResponseHandler {
             } else if (confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                     entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid())) {
 
-                /**
+                /*
                  * 客户端版本为-1或者
                  * 当前的服务端版本不存在
                  * 当前的服务端记录版本与 appId + env 对应的版本不一致时，
                  * 将从元数据获取一次数据、异步推出
                  */
-                Integer currentVersion = responseWatchExecutor.version(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv());
-                if (null == currentVersion ||
-                        NOT_EXIST_VERSION == entityClassSyncRequest.getVersion() ||
-                        entityClassSyncRequest.getVersion() != currentVersion) {
+                Integer currentVersion =
+                    responseWatchExecutor.version(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv());
+                if (null == currentVersion
+                    || NOT_EXIST_VERSION == entityClassSyncRequest.getVersion()
+                    || entityClassSyncRequest.getVersion() != currentVersion) {
                     pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
                     logger.debug("pull data success on SYNC_OK, uid [{}], appId [{}], env [{}], version [{}]",
-                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                        entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
                 }
             }
             logger.debug("register uid [{}], appId [{}], env [{}], version [{}] success.",
@@ -194,9 +171,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
             try {
-                /**
-                 * 处理返回结果成功
-                 */
+                //  处理返回结果成功
                 WatchElement w =
                         new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                                 entityClassSyncRequest.getVersion(), Confirmed);
@@ -234,18 +209,11 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
     /**
-     * 主动拉取EntityClass(用于推送失败或超时)
-     * <p>
-     * String uid
-     * WatchElement watchElement
-     *
-     * @return
+     * 主动拉取EntityClass(用于推送失败或超时).
      */
     @Override
     public void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
-        /**
-         * 这里异步执行
-         */
+
         taskExecutor.submit(() -> {
             internalPull(uid, force, watchElement, requestStatus);
         });
@@ -253,17 +221,12 @@ public class SyncResponseHandler implements IResponseHandler {
 
 
     /**
-     * 接收外部推送
-     *
-     * @param event
-     * @return
+     * 接收外部推送.
      */
     @Override
     public boolean push(AppUpdateEvent event) {
 
-        /**
-         * 更新版本成功、则推送给外部
-         */
+        //  更新版本成功、则推送给外部
         if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
             List<ResponseWatcher> needList = null;
             try {
@@ -282,7 +245,8 @@ public class SyncResponseHandler implements IResponseHandler {
                                     RequestStatus.SYNC, event.getEntityClassSyncRspProto(), false);
                             responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, r, false);
                         } catch (Exception e) {
-                            logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event.toString(), e.getMessage());
+                            logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event,
+                                e.getMessage());
                         }
                     });
                 }
@@ -290,11 +254,10 @@ public class SyncResponseHandler implements IResponseHandler {
                 logger.warn("need list is empty, no watch on event [{}-{}-{}]", event.getAppId(), event.getEnv(), event.getVersion());
             }
         } else {
-            /**
-             * 元数据推送的AppId版本小于当前关注版本，忽略...
-             */
-            logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore..."
-                    , event.getAppId(), event.getEnv(), event.getVersion(), responseWatchExecutor.version(event.getAppId(), event.getEnv()));
+            //  元数据推送的AppId版本小于当前关注版本，忽略...
+            logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore...",
+                event.getAppId(), event.getEnv(), event.getVersion(),
+                responseWatchExecutor.version(event.getAppId(), event.getEnv()));
         }
         return true;
     }
@@ -302,69 +265,56 @@ public class SyncResponseHandler implements IResponseHandler {
     private boolean internalPull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-        /**
-         * 判断watcher的可用性
-         */
+        //  判断watcher的可用性
         if (null != watcher && watcher.isActive()) {
             try {
                 AppUpdateEvent appUpdateEvent =
-                        entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
+                    entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
                 if (force || isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
 
-                    /**
-                     * 主动拉取不会更新当前的appVersion
-                     */
+                    //  主动拉取不会更新当前的appVersion
                     EntityClassSyncResponse response =
-                            generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
-                                    RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto(), force);
+                        generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
+                            appUpdateEvent.getVersion(),
+                            RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto(), force);
                     return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                            appUpdateEvent.getVersion(), response, watcher, force);
+                        appUpdateEvent.getVersion(), response, watcher, force);
                 }
-                logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore..."
-                        , watchElement.getVersion(), appUpdateEvent.getVersion());
+                logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore...",
+                    watchElement.getVersion(), appUpdateEvent.getVersion());
                 return true;
             } catch (Exception e) {
-                /**
-                 * 当元数据告知失败将在一分钟后进行重试
-                 */
-                if (e instanceof MetaSyncServerException &&
-                        e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
+                //  当元数据告知失败将在一分钟后进行重试
+                if (e instanceof MetaSyncServerException
+                    && e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
                     retryExecutor.offer(
-                            new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
-                                    new RetryExecutor.Element(
-                                            new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
-                                                    watchElement.getVersion(), watchElement.getStatus()),
-                                            watcher.uid())));
+                        new RetryExecutor.DelayTask(grpcParams.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.Element(
+                                new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+                                    watchElement.getVersion(), watchElement.getStatus()),
+                                watcher.uid())));
                 }
                 logger.warn(e.getMessage());
                 return false;
             }
         } else {
-            logger.warn("not exist watcher to handle data sync response, appId [{}], version [{}], uid [{}]..."
-                    , watchElement.getAppId(), watchElement.getVersion(), uid);
+            logger.warn("not exist watcher to handle data sync response, appId [{}], version [{}], uid [{}]...",
+                watchElement.getAppId(), watchElement.getVersion(), uid);
         }
         return false;
     }
 
     /**
-     * 实现SyncHandler中的registerConfirm功能
-     *
-     * @param appId
-     * @param version
-     * @param uid
+     * 实现SyncHandler中的registerConfirm功能.
      */
     private boolean confirmRegister(String appId, String env, int version, String uid) {
         return confirmResponse(appId, env, version, uid, REGISTER_OK);
     }
 
     /**
-     * 实现SyncHandler中的heartBeatConfirm功能
-     *
-     * @param uid
+     * 实现SyncHandler中的heartBeatConfirm功能.
      */
     private void confirmHeartBeat(String uid, StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
-
-
         ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
         if (null != responseWatcher) {
             if (responseWatcher.isActive()) {
@@ -380,16 +330,10 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
 
-
     /**
      * 比较期望版本和元数据返回版本
      * 如果是requestStatus是sync_ok，表示只关注大于当前expected的版本
-     * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本
-     *
-     * @param expected
-     * @param actual
-     * @param requestStatus
-     * @return
+     * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本.
      */
     private boolean isNeedEvent(int expected, int actual, RequestStatus requestStatus) {
         switch (requestStatus) {
@@ -397,19 +341,13 @@ public class SyncResponseHandler implements IResponseHandler {
                 return expected < actual;
             case SYNC_FAIL:
                 return expected <= actual;
+            default:
+                return false;
         }
-
-        return false;
     }
 
     /**
-     * confirmResponse(发送服务器注册确认、心跳的回包)
-     *
-     * @param appId
-     * @param env
-     * @param version
-     * @param uid
-     * @param requestStatus
+     * confirmResponse(发送服务器注册确认、心跳的回包).
      */
     private boolean confirmResponse(String appId, String env, int version, String uid, RequestStatus requestStatus) {
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
@@ -426,46 +364,35 @@ public class SyncResponseHandler implements IResponseHandler {
 
             return responseByWatch(appId, env, version, builder.build(), watcher, true);
         } else {
-            logger.warn("watch not exist to handle confirm : {} response, appId: {}, version : {}, uid :{}..."
-                    , requestStatus.name(), appId, version, uid);
+            logger.warn("watch not exist to handle confirm : {} response, appId: {}, version : {}, uid :{}...",
+                requestStatus.name(), appId, version, uid);
         }
         return false;
     }
 
     /**
-     * 发送Response、如果当前不是注册或心跳，且发送成功，则加入重试观察队列
-     *
-     * @param response
-     * @param watcher
-     * @return
+     * 发送Response、如果当前不是注册或心跳，且发送成功，则加入重试观察队列.
      */
     private boolean responseByWatch(String appId, String env, int version, EntityClassSyncResponse response,
                                     ResponseWatcher watcher, boolean registerOrHeartBeat) {
 
-        /**
-         * 发送
-         */
+        //  发送.
         boolean ret = observerOnNext(response, watcher);
 
-        /**
-         * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
-         */
+        //  成功且不是注册确认，则加入到DelayTaskQueue中进行监听.
         if (ret && !registerOrHeartBeat) {
-            logger.info("send app-pack ok, response [{}, {}, {}, {}]"
-                    , "RSP APP_ID:" + response.getAppId(), "ENV:" + response.getEnv(), "VER:" + response.getVersion(), "UID:" + response.getUid());
+            logger.info("send app-pack ok, response [{}, {}, {}, {}]",
+                "RSP APP_ID:" + response.getAppId(), "ENV:" + response.getEnv(), "VER:" + response.getVersion(),
+                "UID:" + response.getUid());
             retryExecutor.offer(
-                    new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
-                            new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
+                new RetryExecutor.DelayTask(grpcParams.getDefaultDelayTaskDuration(),
+                    new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
         }
         return ret;
     }
 
     /**
-     * 发送Response,如果发送失败，会直接release当前的watcher，并返回false
-     *
-     * @param response
-     * @param watcher
-     * @return
+     * 发送Response,如果发送失败，会直接release当前的watcher，并返回false.
      */
     private boolean observerOnNext(EntityClassSyncResponse response, ResponseWatcher watcher) {
         if (null != watcher) {
@@ -475,9 +402,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     return true;
                 } catch (Exception e) {
                     logger.warn("response to observer[{}] failed.", watcher.uid());
-                    /**
-                     *  抛出异常将等待1ms后进行清理
-                     */
+                    //  抛出异常将等待1ms后进行清理.
                     TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
 
                     responseWatchExecutor.release(watcher.uid());
@@ -490,30 +415,24 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
     /**
-     * 生成Response
-     *
-     * @param appId
-     * @param env
-     * @param version
-     * @param result
-     * @return
+     * 生成Response.
      */
     private EntityClassSyncResponse generateResponse(String uid, String appId, String env, int version,
                                                      RequestStatus requestStatus, EntityClassSyncRspProto result, boolean force) {
         return EntityClassSyncResponse.newBuilder()
-                .setMd5(MD5Utils.getMD5(result.toByteArray()))
-                .setUid(uid)
-                .setAppId(appId)
-                .setEnv(env)
-                .setVersion(version)
-                .setStatus(requestStatus.ordinal())
-                .setEntityClassSyncRspProto(result)
-                .setForce(force)
-                .build();
+            .setMd5(MD5Utils.getMD5(result.toByteArray()))
+            .setUid(uid)
+            .setAppId(appId)
+            .setEnv(env)
+            .setVersion(version)
+            .setStatus(requestStatus.ordinal())
+            .setEntityClassSyncRspProto(result)
+            .setForce(force)
+            .build();
     }
 
-    /***
-     * 检查下发版本是否更新成功
+    /**
+     * 检查下发版本是否更新成功.
      */
     private boolean watchElementCheck() {
         while (!isShutdown) {
@@ -529,12 +448,10 @@ public class SyncResponseHandler implements IResponseHandler {
             if (null != watcher) {
                 WatchElement w = task.element().getElement();
                 if (watcher.isActive() && watcher.onWatch(w)) {
-                    /**
-                     * 直接拉取
-                     */
+                    //  直接拉取
                     pull(task.element().getUid(), false, w, SYNC_FAIL);
                     logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                            watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
+                        watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
                 }
             }
         }
@@ -543,17 +460,14 @@ public class SyncResponseHandler implements IResponseHandler {
         return true;
     }
 
-    /***
-     * 检查当前的存活状况
-     * @return
+    /**
+     * 检查当前的存活状况.
      */
     private boolean keepAlive() {
         while (!isShutdown) {
-            responseWatchExecutor.keepAliveCheck(gRpcParams.getDefaultHeartbeatTimeout());
-            /**
-             * 等待一秒进入下一次循环
-             */
-            TimeWaitUtils.wakeupAfter(gRpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+            responseWatchExecutor.keepAliveCheck(grpcParams.getDefaultHeartbeatTimeout());
+            //  等待一秒进入下一次循环
+            TimeWaitUtils.wakeupAfter(grpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
 
         logger.info("keepAlive check has quited due to server shutdown...");

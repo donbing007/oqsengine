@@ -61,7 +61,7 @@ public class BaseResponse {
         grpcServer = new GRpcServer(port);
         ReflectionTestUtils.setField(grpcServer, "entityClassSyncServer", entityClassSyncServer);
         ReflectionTestUtils.setField(grpcServer, "configuration", grpcParamsConfig);
-        ReflectionTestUtils.setField(grpcServer, "gRpcExecutor", grpcExecutor);
+        ReflectionTestUtils.setField(grpcServer, "grpcExecutor", grpcExecutor);
 
         grpcServer.start();
     }
@@ -89,7 +89,7 @@ public class BaseResponse {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", mockEntityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", taskExecutor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", grpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "grpcParams", grpcParamsConfig);
 
         return syncResponseHandler;
     }

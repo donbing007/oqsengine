@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 缓存的EntityClass raw.
+ * 缓存的EntityClass storage.
  *
- * @author : j.xu
- * @version 0.1
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class EntityClassStorage {
 
@@ -129,6 +128,9 @@ public class EntityClassStorage {
         this.ancestors = ancestors;
     }
 
+    /**
+     * add ancestors.
+     */
     public void addAncestors(Long ancestor) {
         if (null == this.ancestors) {
             this.ancestors = new ArrayList<>();

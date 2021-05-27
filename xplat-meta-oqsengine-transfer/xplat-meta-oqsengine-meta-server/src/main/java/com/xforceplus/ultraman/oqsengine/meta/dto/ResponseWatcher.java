@@ -11,16 +11,14 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * desc :
- * name : ResponseWatcher
+ * response watcher.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
 
-    private Logger logger = LoggerFactory.getLogger(ResponseWatcher.class);
+    private final Logger logger = LoggerFactory.getLogger(ResponseWatcher.class);
 
     public ResponseWatcher(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         super(uid, streamObserver);
@@ -45,6 +43,6 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
     @Override
     public void release() {
         logger.warn("release response watcher uid [{}]", uid);
-        super.release();
+        releaseStreamObserver();
     }
 }

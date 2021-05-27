@@ -4,24 +4,22 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import org.springframework.context.ApplicationEvent;
 
 /**
- * desc :
- * name : AppUpdateEvent
+ * event.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class AppUpdateEvent extends ApplicationEvent {
-    private String appId;
-    private String env;
-    private int version;
+    private final String appId;
+    private final String env;
+    private final int version;
     /**
-     * standard
+     * standard.
      */
-    private EntityClassSyncRspProto entityClassSyncRspProto;
+    private final EntityClassSyncRspProto entityClassSyncRspProto;
 
     /**
-     * extend
+     * extend.
      */
     //  todo not implements now
 

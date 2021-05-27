@@ -1,16 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-
 import java.util.Objects;
 
 /**
- * desc :
- * name : RelationStorage
+ * 关系 storage.
  *
- * @author : xujia
- * date : 2021/2/26
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class RelationStorage {
 
@@ -110,19 +107,23 @@ public class RelationStorage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         RelationStorage that = (RelationStorage) o;
-        return id == that.id &&
-                rightEntityClassId == that.rightEntityClassId &&
-                leftEntityClassId == that.leftEntityClassId &&
-                relationType == that.relationType &&
-                identity == that.identity &&
-                belongToOwner == that.belongToOwner &&
-                strong == that.strong &&
-                Objects.equals(code, that.code) &&
-                Objects.equals(leftEntityClassCode, that.leftEntityClassCode) &&
-                Objects.equals(entityField.id(), that.entityField.id());
+        return id == that.id
+            && rightEntityClassId == that.rightEntityClassId
+            && leftEntityClassId == that.leftEntityClassId
+            && relationType == that.relationType
+            && identity == that.identity
+            && belongToOwner == that.belongToOwner
+            && strong == that.strong
+            && Objects.equals(code, that.code)
+            && Objects.equals(leftEntityClassCode, that.leftEntityClassCode)
+            && Objects.equals(entityField.id(), that.entityField.id());
     }
 
     @Override

@@ -60,13 +60,13 @@ public class RemoteBaseRequest {
     protected EntityClassSyncClient entityClassSyncClient() {
 
         MetaSyncGRpcClient metaSyncGrpcClient = new MetaSyncGRpcClient(RemoteConstant.HOST, RemoteConstant.PORT);
-        ReflectionTestUtils.setField(metaSyncGrpcClient, "gRpcParams", grpcParams);
+        ReflectionTestUtils.setField(metaSyncGrpcClient, "grpcParams", grpcParams);
 
         EntityClassSyncClient entityClassSyncClient = new EntityClassSyncClient();
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", metaSyncGrpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", grpcParams);
+        ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", grpcParams);
 
         return entityClassSyncClient;
     }

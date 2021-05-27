@@ -28,7 +28,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  */
 public class EntityClassSyncClientTest extends BaseTest {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassSyncClientTest.class);
+    private final Logger logger = LoggerFactory.getLogger(EntityClassSyncClientTest.class);
 
     private EntityClassSyncClient entityClassSyncClient;
 
@@ -44,7 +44,7 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParams);
+        ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", gRpcParams);
     }
 
     @After

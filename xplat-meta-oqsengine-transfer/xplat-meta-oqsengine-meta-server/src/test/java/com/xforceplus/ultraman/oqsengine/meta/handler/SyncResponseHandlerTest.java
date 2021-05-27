@@ -43,7 +43,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncReq
  */
 public class SyncResponseHandlerTest {
 
-    private Logger logger = LoggerFactory.getLogger(SyncResponseHandlerTest.class);
+    private final Logger logger = LoggerFactory.getLogger(SyncResponseHandlerTest.class);
 
     private ResponseWatchExecutor responseWatchExecutor;
     private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
@@ -71,7 +71,7 @@ public class SyncResponseHandlerTest {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", executor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "grpcParams", gRpcParamsConfig);
 
         syncResponseHandler.start();
     }
@@ -261,15 +261,16 @@ public class SyncResponseHandlerTest {
 
 
     public static class Case {
-        private String uid;
-        private String appId;
-        private String env;
-        private int version;
+        private final String uid;
+        private final String appId;
+        private final String env;
+        private final int version;
         private int status;
 
-        private StreamObserver<EntityClassSyncResponse> streamObserver;
+        private final StreamObserver<EntityClassSyncResponse> streamObserver;
 
-        public Case(String uid, String appId, String env, int version, int status, StreamObserver<EntityClassSyncResponse> streamObserver) {
+        public Case(String uid, String appId, String env, int version, int status,
+                    StreamObserver<EntityClassSyncResponse> streamObserver) {
             this.uid = uid;
             this.appId = appId;
             this.env = env;

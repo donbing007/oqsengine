@@ -7,28 +7,21 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * desc :
- * name : SendUtils
+ * interface, provider to outer.
  *
- * @author : xujia
- * date : 2021/2/7
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class SendUtils {
 
-    private static Logger logger = LoggerFactory.getLogger(SendUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(SendUtils.class);
 
     /**
-     * 响应response处理结果，需要进行check-requestWatcher的可用性
-     * @param requestWatcher
-     * @param entityClassSyncRequest
+     * 响应response处理结果，需要进行check-requestWatcher的可用性.
      */
     public static void sendRequestWithALiveCheck(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
-        /**
-         * 这里由于异步执行了OQS的缓存更新，等待后可能出现新的流始化了，所以必须进行doubleCheck判断uid是否相同
-         */
+        //  这里由于异步执行了OQS的缓存更新，等待后可能出现新的流始化了，所以必须进行doubleCheck判断uid是否相同
         if (null == requestWatcher || !requestWatcher.isActive()) {
             logger.warn("stream observer not exists.");
             throw new MetaSyncClientException("stream observer not exists or was expired.", true);
@@ -37,9 +30,7 @@ public class SendUtils {
     }
 
     /**
-     * 响应response处理结果
-     * @param requestWatcher
-     * @param entityClassSyncRequest
+     * 响应response处理结果.
      */
     public static void sendRequest(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
         try {
@@ -55,18 +46,18 @@ public class SendUtils {
         try {
             RequestStatus requestStatus = RequestStatus.getInstance(entityClassSyncRequest.getStatus());
             if (entityClassSyncRequest.getStatus() == RequestStatus.HEARTBEAT.ordinal()) {
-                logger.debug("send request success, request [{}, {}, {}]"
-                        , "HEARTBEAT"
-                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
-                        , "UID:" + entityClassSyncRequest.getUid());
+                logger.debug("send request success, request [{}, {}, {}]",
+                    "HEARTBEAT",
+                    "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name()),
+                    "UID:" + entityClassSyncRequest.getUid());
             } else {
                 String appId = entityClassSyncRequest.getAppId();
-                logger.info("send request success, request [{}, {}, {}, {}, {}]"
-                        , "REQ APP_ID:" + appId
-                        , "ENV:" + entityClassSyncRequest.getEnv()
-                        , "VER:" + entityClassSyncRequest.getVersion()
-                        , "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name())
-                        , "UID:" + entityClassSyncRequest.getUid());
+                logger.info("send request success, request [{}, {}, {}, {}, {}]",
+                    "REQ APP_ID:" + appId,
+                    "ENV:" + entityClassSyncRequest.getEnv(),
+                    "VER:" + entityClassSyncRequest.getVersion(),
+                    "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name()),
+                    "UID:" + entityClassSyncRequest.getUid());
             }
 
         } catch (Exception e) {
