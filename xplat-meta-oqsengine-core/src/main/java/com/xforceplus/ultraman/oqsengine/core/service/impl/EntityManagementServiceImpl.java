@@ -103,8 +103,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private CalculateStorage calculateStorage;
 
-    @Resource
-    private UniqueMasterStorage uniqueStorage;
 
     @Resource
     private BizIDGenerator bizIDGenerator;
@@ -260,10 +258,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
-                if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
-                    uniqueStorage.build(entity, entityClass);
-                }
-
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -335,9 +329,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 // 操作时间
                 targetEntity.markTime(entity.time());
 
-                if (uniqueStorage.containUniqueConfig(targetEntity, entityClass)) {
-                    uniqueStorage.replace(targetEntity, entityClass);
-                }
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
@@ -403,9 +394,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
-                if (uniqueStorage.containUniqueConfig(targetEntityOp.orElse(entity), entityClass)) {
-                    uniqueStorage.delete(targetEntityOp.orElse(entity), entityClass);
-                }
+
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
                 return new OperationResult(
@@ -434,9 +423,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
-            uniqueStorage.delete(entity, entityClass);
-        }
         return delete(entity);
     }
 

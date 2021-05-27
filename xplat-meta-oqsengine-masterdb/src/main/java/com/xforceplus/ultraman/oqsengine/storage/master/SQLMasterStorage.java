@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
+import com.alibaba.google.common.collect.Lists;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -11,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -19,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
@@ -28,13 +30,18 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecu
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueIndexValue;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -59,6 +66,7 @@ import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +93,12 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource
     private MetaManager metaManager;
 
+    @Resource
+    UniqueKeyGenerator keyGenerator;
+
     private String tableName;
+
+    private String uniqueTableName;
 
     private long queryTimeout;
 
@@ -95,6 +108,10 @@ public class SQLMasterStorage implements MasterStorage {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    public void setUniqueTableName(String uniqueTableName) {
+        this.uniqueTableName = uniqueTableName;
     }
 
     @Override
@@ -110,6 +127,20 @@ public class SQLMasterStorage implements MasterStorage {
     public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart)
         throws SQLException {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
+    }
+
+    @Override
+    public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
+        throws SQLException {
+        if (!containUniqueConfig(businessKeys, entityClass)) {
+            return Optional.empty();
+        }
+        String uniqueKey = buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass);
+        return (Optional<StorageUniqueEntity>) transactionExecutor.execute((tx, resource, hint) -> {
+            Optional<StorageUniqueEntity> seOP =
+                new QueryUniqueExecutor(uniqueTableName, resource, entityClass, queryTimeout).execute(uniqueKey);
+            return seOP;
+        });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action",
@@ -212,7 +243,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
         Collection<IEntity> entities = selectMultiple(ids);
-        return entities.stream().filter(e ->  {
+        return entities.stream().filter(e -> {
 
             Optional<IEntityClass> actualEntityClassOp =
                 metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
@@ -257,11 +288,68 @@ public class SQLMasterStorage implements MasterStorage {
                 }
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
-                int ret = BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-
-                return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                MasterStorageEntity entityForBuild = storageEntityBuilder.build();
+                int ret = BuildExecutor.build(tableName, resource, queryTimeout).execute(entityForBuild);
+                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
+                if (!StringUtils.isBlank(uniqueKey)) {
+                    buildUnique(entity, uniqueKey, entityClass, resource);
+                }
+                return ret;
             });
+    }
 
+    private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass) {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
+        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
+        return indexValue.isPresent() ? MD5Utils.encrypt(indexValue.get().getValue()) : "";
+    }
+
+    private boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass) {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
+        return matchUniqueConfig(entityClass, values).isPresent();
+    }
+
+    private int buildUnique(IEntity entity, String uniqueKey, IEntityClass entityClass, TransactionResource resource)
+        throws SQLException {
+        StorageUniqueEntity storageUniqueEntity =
+            StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
+                .entityClasses(getEntityClasses(entityClass)).build();
+        logger.debug("entityClasses length : {}, Unique entity : {}",
+            storageUniqueEntity.getEntityClasses().length, storageUniqueEntity);
+        int result = BuildUniqueExecutor.build(uniqueTableName, resource, queryTimeout)
+            .execute(storageUniqueEntity);
+        if (result < 1) {
+            logger.warn("Failed to build unique index record!");
+        }
+        return result;
+    }
+
+    private long[] getEntityClasses(IEntityClass entityClass) {
+        Collection<IEntityClass> family = entityClass.family();
+        long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
+        return tileEntityClassesIds;
+    }
+
+    private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
+        Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
+        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
+        return indexValue.isPresent() ? MD5Utils.encrypt(indexValue.get().getValue()) : "";
+    }
+
+    private Optional<UniqueIndexValue> matchUniqueConfig(IEntityClass entityClass, Map<String, UniqueIndexValue> keys) {
+        List<String> codes = getAncestorCode(entityClass);
+        return keys.values().stream()
+            .filter(item -> codes.contains(item.getCode()))
+            .findAny();
+    }
+
+    private List<String> getAncestorCode(IEntityClass entityClass) {
+        List<String> codes = Lists.newArrayList(entityClass.code());
+        while (entityClass.father().isPresent()) {
+            codes.add(entityClass.father().get().code());
+            entityClass = entityClass.father().get();
+        }
+        return codes;
     }
 
     private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
@@ -308,11 +396,32 @@ public class SQLMasterStorage implements MasterStorage {
 
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
-
-                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-
+                MasterStorageEntity entityForBuild = storageEntityBuilder.build();
+                int ret = UpdateExecutor.build(tableName, resource, queryTimeout).execute(entityForBuild);
+                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
+                if (!StringUtils.isBlank(uniqueKey)) {
+                    //涉及到分片键的更新这里采用先删除后插入的方式
+                    int del = deleteUnique(entity, resource);
+                    int buildResult = 0;
+                    if (del > 0) {
+                        buildResult = buildUnique(entity, uniqueKey, entityClass, resource);
+                        if (buildResult < 0) {
+                            logger.warn("Failed to build unique index record! id: {}", entity.id());
+                        }
+                    } else {
+                        logger.warn("Failed to delete unique index record! id: {}", entity.id());
+                    }
+                }
+                return ret;
             });
 
+    }
+
+    private int deleteUnique(IEntity entity, TransactionResource resource) throws SQLException {
+        StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
+        storageEntityBuilder.id(entity.id());
+        return DeleteUniqueExecutor.build(uniqueTableName, resource, queryTimeout)
+            .execute(storageEntityBuilder.build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
@@ -335,8 +444,15 @@ public class SQLMasterStorage implements MasterStorage {
 
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
-
-                return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                int del = DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
+                if (!StringUtils.isBlank(uniqueKey)) {
+                    int delUnique = deleteUnique(entity, resource);
+                    if (delUnique < 1) {
+                        logger.warn("Failed to delete the unique index record ! id : {}", entity.id());
+                    }
+                }
+                return del;
             });
     }
 
