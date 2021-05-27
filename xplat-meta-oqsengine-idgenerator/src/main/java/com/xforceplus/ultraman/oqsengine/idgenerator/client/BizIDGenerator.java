@@ -20,34 +20,34 @@ public class BizIDGenerator {
     IDGeneratorFactory idGeneratorFactory;
 
     /**
-     * Get next id by bizType.
+     * Get next id by fieldId.
      *
-     * @param bizType bizType
+     * @param fieldId fieldId
      * @return next id
      */
-    public String nextId(String bizType) {
-        if (bizType == null) {
+    public String nextId(String fieldId) {
+        if (fieldId == null) {
             throw new IllegalArgumentException("type is null");
         }
-        IDGenerator idGenerator = idGeneratorFactory.getIdGenerator(bizType);
+        IDGenerator idGenerator = idGeneratorFactory.getIdGenerator(fieldId);
         return idGenerator.nextId();
     }
 
     /**
      * get next ids.
      *
-     * @param bizType   bizType
+     * @param fieldId   fieldId
      * @param batchSize batch size
      * @return id list
      */
-    public List<String> nextId(String bizType, Integer batchSize) {
+    public List<String> nextId(String fieldId, Integer batchSize) {
         if (batchSize == null) {
-            String id = nextId(bizType);
+            String id = nextId(fieldId);
             List<String> list = new ArrayList<>();
             list.add(id);
             return list;
         }
-        IDGenerator idGenerator = idGeneratorFactory.getIdGenerator(bizType);
+        IDGenerator idGenerator = idGeneratorFactory.getIdGenerator(fieldId);
         return idGenerator.nextIds(batchSize);
     }
 
