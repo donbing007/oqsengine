@@ -10,9 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterUniqueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
@@ -40,25 +38,27 @@ public class StorageConfiguration {
     @Bean
     public MasterStorage masterStorage(
         @Value("${storage.master.name:oqsbigentity}") String tableName,
+        @Value("${storage.master.unique.name:oqsunique}") String uniqueTableName,
         @Value("${storage.timeoutMs.query:3000}") long masterQueryTimeout) {
         SQLMasterStorage storage = new SQLMasterStorage();
         storage.setTableName(tableName);
+        storage.setUniqueTableName(uniqueTableName);
         storage.setQueryTimeout(masterQueryTimeout);
         return storage;
     }
 
-    /**
-     * 业务主键储存.
-     */
-    @Bean
-    public UniqueMasterStorage masterUniqueStorage(
-        @Value("${storage.master.unique.name:oqsunique}") String tableName,
-        @Value("${storage.timeoutMs.query:3000}") long queryTimeout) {
-        MasterUniqueStorage storage = new MasterUniqueStorage();
-        storage.setTableName(tableName);
-        storage.setQueryTimeout(queryTimeout);
-        return storage;
-    }
+    ///**
+    // * 业务主键储存.
+    // */
+    //@Bean
+    //public UniqueMasterStorage masterUniqueStorage(
+    //    @Value("${storage.master.unique.name:oqsunique}") String tableName,
+    //    @Value("${storage.timeoutMs.query:3000}") long queryTimeout) {
+    //    MasterUniqueStorage storage = new MasterUniqueStorage();
+    //    storage.setTableName(tableName);
+    //    storage.setQueryTimeout(queryTimeout);
+    //    return storage;
+    //}
 
     /**
      * 索引存储存.
