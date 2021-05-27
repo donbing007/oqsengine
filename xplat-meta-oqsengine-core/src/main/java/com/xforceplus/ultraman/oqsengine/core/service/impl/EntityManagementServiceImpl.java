@@ -229,8 +229,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         markTime(entity);
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        //临时调试加入，后续删除
-        logger.info("Entity class info : {}", entityClass.toString());
 
         try {
             prepareBuild(entityClass, entity);
@@ -252,11 +250,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
 
-                /*
-                    执行自动编号、公式字段计算
-                 */
-
-
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNCREATED);
@@ -269,10 +262,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
                 if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
                     uniqueStorage.build(entity, entityClass);
-                } else {
-                    // 临时调试加入，后续删除
-                    logger.info("Can not find any Unique config!");
                 }
+
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -573,15 +564,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         );
 
-        logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
-            entity.id(),
-            context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
+                entity.id(),
+                context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+        }
 
         //  计算公式字段
         formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
 
-        logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
-            entity.id(), entityValue.values().toArray());
+        if (logger.isDebugEnabled()) {
+            logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
+                entity.id(), entityValue.values().toArray());
+        }
 
         //  将entityValue加入到目标中
         entity.resetEntityValue(entityValue);
