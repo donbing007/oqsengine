@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl;
 
 import com.hazelcast.cp.IAtomicReference;
 import com.hazelcast.cp.lock.FencedLock;
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.IDResult;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.ResultCode;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
@@ -10,18 +9,16 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorExcept
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.util.HazelcastUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * 项目名称: 票易通
- * JDK 版本: JDK1.8
- * 说明:
- * 作者(@author): liwei
- * 创建时间: 5/8/21 10:01 PM
+ * Generator Hazelcast 号段缓存实现.
+ *
+ * @author leo
+ * @version 0.1 2021/5/13 11:59
+ * @since 1.8
  */
 public class DistributeCacheGenerator implements IDGenerator {
 
@@ -30,19 +27,29 @@ public class DistributeCacheGenerator implements IDGenerator {
     protected SegmentService segmentService;
     protected IAtomicReference<SegmentId> current;
     protected IAtomicReference<SegmentId> next;
-    private IAtomicReference<Boolean>  isLoadingNext;
+    private IAtomicReference<Boolean> isLoadingNext;
     private ExecutorService executorService;
 
-    public DistributeCacheGenerator(String bizType, SegmentService segmentService,ExecutorService executorService) {
+    /**
+     * Constructor.
+     *
+     * @param bizType bizType
+     * @param segmentService segmentService
+     * @param executorService executorService
+     */
+    public DistributeCacheGenerator(String bizType, SegmentService segmentService, ExecutorService executorService) {
         this.bizType = bizType;
         this.segmentService = segmentService;
         this.current = HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("current");
         this.next = HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("next");
-        this.isLoadingNext =  HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("isLoadingNext");
+        this.isLoadingNext = HazelcastUtil.getInstance().getCPSubsystem().getAtomicReference("isLoadingNext");
         this.executorService = executorService;
         loadCurrent();
     }
 
+    /**
+     * Get the current segment.
+     */
     public synchronized void loadCurrent() {
         FencedLock lock = HazelcastUtil.getInstance().getCPSubsystem().getLock(this.bizType);
         lock.lock();
@@ -70,11 +77,16 @@ public class DistributeCacheGenerator implements IDGenerator {
             }
         } catch (Exception e) {
             message = e.getMessage();
-            throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
+            throw new IDGeneratorException(
+                String.format("error query segment: bizType: %s error message :%s ", bizType, message));
         }
-        throw new IDGeneratorException(String.format("error query segment: bizType: %s error message :%s ",bizType,message));
+        throw new IDGeneratorException(
+            String.format("error query segment: bizType: %s error message :%s ", bizType, message));
     }
 
+    /**
+     * Load the next segment.
+     */
     public void loadNext() {
         if (next.get() == null && (isLoadingNext.get() == null || !isLoadingNext.get())) {
             FencedLock lock = HazelcastUtil.getInstance().getCPSubsystem().getLock(this.bizType);
@@ -93,8 +105,7 @@ public class DistributeCacheGenerator implements IDGenerator {
                         }
                     });
                 }
-            }
-            finally {
+            } finally {
                 lock.unlock();
             }
 
@@ -102,6 +113,11 @@ public class DistributeCacheGenerator implements IDGenerator {
     }
 
 
+    /**
+     * Reset the segment.
+     *
+     * @param result result of nexId
+     */
     public synchronized void resetBizType(IDResult result) {
         FencedLock lock = HazelcastUtil.getInstance().getCPSubsystem().getLock(this.bizType);
         lock.lock();
@@ -141,17 +157,14 @@ public class DistributeCacheGenerator implements IDGenerator {
                 SegmentId val = current.get();
                 result = val.nextId();
                 current.set(val);
-            }
-            finally {
+            } finally {
                 lock.unlock();
             }
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent();
-            }
-            else if(result.getCode() == ResultCode.RESET) {
+            } else if (result.getCode() == ResultCode.RESET) {
                 resetBizType(result);
-            }
-            else {
+            } else {
                 if (result.getCode() == ResultCode.LOADING) {
                     loadNext();
                 }

@@ -26,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
@@ -160,7 +161,7 @@ public class SQLMasterStorage implements MasterStorage {
             Optional<IEntityClass> actualEntityClassOp =
                 metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
             if (actualEntityClassOp.isPresent()) {
-                
+
                 if (actualEntityClassOp.get().isCompatibility(entityClass.id())) {
                     return entityOptional;
                 } else {
@@ -256,6 +257,7 @@ public class SQLMasterStorage implements MasterStorage {
                 }
                 fullEntityClassInformation(storageEntityBuilder, entityClass);
                 fullTransactionInformation(storageEntityBuilder, resource);
+                int ret = BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
 
                 return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
             });

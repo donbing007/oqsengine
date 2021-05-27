@@ -6,11 +6,11 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
@@ -61,9 +61,9 @@ public class BusinessIDGeneratorConfiguration {
      * @return PattenParserManager
      */
     @Bean
-    public PattenParserManager pattenParserManager() {
-        PattenParserManager pattenParserManager = new PattenParserManager();
-        return pattenParserManager;
+    public PatternParserManager pattenParserManager() {
+        PatternParserManager patternParserManager = new PatternParserManager();
+        return patternParserManager;
     }
 
     /**
@@ -127,8 +127,8 @@ public class BusinessIDGeneratorConfiguration {
      * @return datePattenParser
      */
     @Bean
-    public PattenParser datePattenParser() {
-        return new DatePattenParser();
+    public PatternParser datePattenParser() {
+        return new DatePatternParser();
     }
 
     /**
@@ -137,8 +137,8 @@ public class BusinessIDGeneratorConfiguration {
      * @return numberPattenParser
      */
     @Bean
-    public PattenParser numberPattenParser() {
-        return new NumberPattenParser();
+    public PatternParser numberPattenParser() {
+        return new NumberPatternParser();
     }
 
     /**

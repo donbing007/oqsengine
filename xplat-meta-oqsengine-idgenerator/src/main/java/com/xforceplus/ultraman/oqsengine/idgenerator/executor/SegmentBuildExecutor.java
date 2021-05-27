@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.executor;
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.SegmentFieldDefine;
-
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -10,12 +9,11 @@ import java.util.Collections;
 import javax.sql.DataSource;
 
 /**
- * desc :
- * name : SegmentBuildExecutor
- *
- * @author : leo
- * date : 2021/05/08
- * @since : 1.8
+ * 项目名称: 票易通
+ * JDK 版本: JDK1.8
+ * 说明:
+ * 作者(@author): liwei
+ * 创建时间: 5/7/21 6:25 PM
  */
 public class SegmentBuildExecutor extends AbstractSegmentExecutor<SegmentInfo, Integer> {
 

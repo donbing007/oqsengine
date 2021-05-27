@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.util;
 
+import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.INSTANCE_NAME;
+
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-
-import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.INSTANCE_NAME;
 
 /**
  * 项目名称: 票易通

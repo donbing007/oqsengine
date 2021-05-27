@@ -6,20 +6,18 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentBuildExecut
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentResetExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentUpdateExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 /**
- * 项目名称: 票易通
- * JDK 版本: JDK1.8
- * 说明:
- * 作者(@author): liwei
- * 创建时间: 5/9/21 11:54 AM
+ * SqlSegmentStorage.
+ *
+ * @author leo
+ * @version 0.1 2021/5/16 22:11
+ * @since 1.8
  */
 public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
@@ -52,20 +50,20 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
     @Override
     public int build(SegmentInfo segmentInfo) throws SQLException {
-        return SegmentBuildExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
+        return SegmentBuildExecutor.build(table, dataSource, queryTimeout).execute(segmentInfo);
     }
 
     @Override
     public int udpate(SegmentInfo segmentInfo) throws SQLException {
-       return SegmentUpdateExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
+        return SegmentUpdateExecutor.build(table, dataSource, queryTimeout).execute(segmentInfo);
     }
 
     public int reset(SegmentInfo segmentInfo) throws SQLException {
-        return SegmentResetExecutor.build(table,dataSource,queryTimeout).execute(segmentInfo);
+        return SegmentResetExecutor.build(table, dataSource, queryTimeout).execute(segmentInfo);
     }
 
     @Override
     public Optional<SegmentInfo> query(String bizType) throws SQLException {
-        return SegmentQueryExecutor.build(table,dataSource,queryTimeout).execute(bizType);
+        return SegmentQueryExecutor.build(table, dataSource, queryTimeout).execute(bizType);
     }
 }

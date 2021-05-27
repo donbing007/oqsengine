@@ -2,10 +2,9 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.client;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
-
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Resource;
 
 /**
  * 项目名称: 票易通
@@ -20,16 +19,29 @@ public class BizIDGenerator {
     @Resource
     IDGeneratorFactory idGeneratorFactory;
 
-    public  String nextId(String bizType) {
-        if(bizType == null) {
+    /**
+     * Get next id by bizType.
+     *
+     * @param bizType bizType
+     * @return next id
+     */
+    public String nextId(String bizType) {
+        if (bizType == null) {
             throw new IllegalArgumentException("type is null");
         }
         IDGenerator idGenerator = idGeneratorFactory.getIdGenerator(bizType);
         return idGenerator.nextId();
     }
 
-    public  List<String> nextId(String bizType, Integer batchSize) {
-        if(batchSize == null) {
+    /**
+     * get next ids.
+     *
+     * @param bizType   bizType
+     * @param batchSize batch size
+     * @return id list
+     */
+    public List<String> nextId(String bizType, Integer batchSize) {
+        if (batchSize == null) {
             String id = nextId(bizType);
             List<String> list = new ArrayList<>();
             list.add(id);

@@ -6,17 +6,16 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 项目名称: 票易通
- * JDK 版本: JDK1.8
- * 说明:
- * 作者(@author): liwei
- * 创建时间: 5/8/21 10:01 PM
+ * Generator 本地号段缓存实现.
+ *
+ * @author leo
+ * @version 0.1 2021/5/13 11:59
+ * @since 1.8
  */
 public class LocalCacheGenerator implements IDGenerator {
 
@@ -29,13 +28,23 @@ public class LocalCacheGenerator implements IDGenerator {
     private Object lock = new Object();
     private ExecutorService executorService;
 
-    public LocalCacheGenerator(String bizType, SegmentService segmentService,ExecutorService executorService) {
+    /**
+     * constructor.
+     *
+     * @param bizType         bizType
+     * @param segmentService  segmentService
+     * @param executorService executorService
+     */
+    public LocalCacheGenerator(String bizType, SegmentService segmentService, ExecutorService executorService) {
         this.bizType = bizType;
         this.segmentService = segmentService;
         this.executorService = executorService;
         loadCurrent();
     }
 
+    /**
+     * Load current segment.
+     */
     public synchronized void loadCurrent() {
         if (current == null || !current.useful()) {
             if (next == null) {
@@ -48,23 +57,27 @@ public class LocalCacheGenerator implements IDGenerator {
         }
     }
 
+    /**
+     * Reset the segment.
+     *
+     * @param result result of next Id
+     */
     public synchronized void resetBizType(IDResult result) {
         String message = null;
-        if(current != null) {
+        if (current != null) {
             current = null;
         }
-        if(next != null) {
+        if (next != null) {
             next = null;
         }
         String patternKey = result.getPatternKey();
         try {
             segmentService.resetSegment(bizType, patternKey);
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             message = throwable.getMessage();
         }
-        if(message != null) {
-            throw new IDGeneratorException("Error reset the segment: "+ message);
+        if (message != null) {
+            throw new IDGeneratorException("Error reset the segment: " + message);
         }
 
     }
@@ -83,6 +96,9 @@ public class LocalCacheGenerator implements IDGenerator {
         throw new IDGeneratorException("error query segment: " + message);
     }
 
+    /**
+     * Load the next segment.
+     */
     public void loadNext() {
         if (next == null && !isLoadingNext) {
             synchronized (lock) {
@@ -105,7 +121,7 @@ public class LocalCacheGenerator implements IDGenerator {
     }
 
     @Override
-    public  String nextId() {
+    public String nextId() {
         while (true) {
             if (current == null) {
                 loadCurrent();
@@ -114,11 +130,9 @@ public class LocalCacheGenerator implements IDGenerator {
             IDResult result = current.nextId();
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent();
-            }
-            else if(result.getCode() == ResultCode.RESET) {
+            } else if (result.getCode() == ResultCode.RESET) {
                 resetBizType(result);
-            }
-            else {
+            } else {
                 if (result.getCode() == ResultCode.LOADING) {
                     loadNext();
                 }

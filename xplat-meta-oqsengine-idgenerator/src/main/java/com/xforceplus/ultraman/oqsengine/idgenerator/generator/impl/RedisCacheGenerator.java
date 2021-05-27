@@ -15,11 +15,11 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
 /**
- * 项目名称: 票易通
- * JDK 版本: JDK1.8
- * 说明:
- * 作者(@author): liwei
- * 创建时间: 5/8/21 10:01 PM
+ * Generator redis号段缓存实现.
+ *
+ * @author leo
+ * @version 0.1 2021/5/13 11:59
+ * @since 1.8
  */
 public class RedisCacheGenerator implements IDGenerator {
 
@@ -32,6 +32,14 @@ public class RedisCacheGenerator implements IDGenerator {
     private String bizType;
     private ExecutorService executorService;
 
+    /**
+     * constructor.
+     *
+     * @param bizType         bizType
+     * @param segmentService  segmentService
+     * @param executorService executorService
+     * @param redissonClient  redissonClient
+     */
     public RedisCacheGenerator(String bizType, SegmentService segmentService, ExecutorService executorService,
                                RedissonClient redissonClient) {
         this.segmentService = segmentService;
@@ -44,6 +52,11 @@ public class RedisCacheGenerator implements IDGenerator {
         loadCurrent(bizType);
     }
 
+    /**
+     * Get the current segment by bizType.
+     *
+     * @param bizType bizType
+     */
     public synchronized void loadCurrent(String bizType) {
         RLock lock = redissonClient.getLock(bizType);
         lock.lock();
@@ -78,6 +91,9 @@ public class RedisCacheGenerator implements IDGenerator {
             String.format("error query segment: bizType: %s error message :%s ", bizType, message));
     }
 
+    /**
+     * Load the next segment.
+     */
     public void loadNext() {
         if (next.get() == null && isLoadingNext.get() == 0) {
             RLock lock = redissonClient.getLock(this.bizType);
@@ -102,7 +118,11 @@ public class RedisCacheGenerator implements IDGenerator {
         }
     }
 
-
+    /**
+     * Reset the segment.
+     *
+     * @param result result if next Id
+     */
     public synchronized void resetBizType(IDResult result) {
         RLock lock = redissonClient.getLock(this.bizType);
         lock.lock();
@@ -142,8 +162,7 @@ public class RedisCacheGenerator implements IDGenerator {
                 currentValue = current.get();
                 nextValue = currentValue.clone();
                 result = nextValue.nextId();
-            }
-            while (!current.compareAndSet(currentValue, nextValue));
+            } while (!current.compareAndSet(currentValue, nextValue));
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent(bizType);
             } else if (result.getCode() == ResultCode.RESET) {

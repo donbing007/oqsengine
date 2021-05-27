@@ -10,10 +10,10 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
@@ -114,19 +114,19 @@ public class BizIDGeneratorTest {
 
     @Test
     public void testResetIDGenerator() throws SQLException {
-        PattenParserManager manager = new PattenParserManager();
-        NumberPattenParser parser = new NumberPattenParser();
-        DatePattenParser datePattenParser = new DatePattenParser();
+        PatternParserManager manager = new PatternParserManager();
+        NumberPatternParser parser = new NumberPatternParser();
+        DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
         ApplicationContext applicationContext = mock(ApplicationContext.class);
-        when(applicationContext.getBean(PattenParserManager.class)).thenReturn(manager);
+        when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
         ReflectionTestUtils.setField(PatternParserUtil.class,"applicationContext",applicationContext);
         String bizId = "";
         for (int i = 0; i < 3; i++) {
             if(i == 2) {
                 LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
-                DatePattenParser spy = Mockito.spy(datePattenParser);
+                DatePatternParser spy = Mockito.spy(datePattenParser);
                 doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
