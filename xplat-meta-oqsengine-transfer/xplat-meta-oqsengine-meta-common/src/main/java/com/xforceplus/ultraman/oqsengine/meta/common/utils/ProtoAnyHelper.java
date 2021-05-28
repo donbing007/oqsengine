@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -46,25 +47,29 @@ public class ProtoAnyHelper {
         if (any.isInitialized()) {
             switch (fieldType) {
                 case DATETIME: {
-                    Int64Value value = any.unpack(Int64Value.class);
-                    return Optional.of(DateTimeValue.toLocalDateTime(value.getValue()));
+                    LocalDateTime value = DateTimeValue.toLocalDateTime(any.unpack(Int64Value.class).getValue());
+                    return Optional.of(value);
                 }
                 case LONG: {
-                    return Optional.of(any.unpack(Int64Value.class).getValue());
+                    Long value = any.unpack(Int64Value.class).getValue();
+                    return Optional.of(value);
                 }
                 case DECIMAL: {
-                    return Optional.of(BigDecimal.valueOf(any.unpack(DoubleValue.class).getValue()));
+                    BigDecimal value = BigDecimal.valueOf(any.unpack(DoubleValue.class).getValue());
+                    return Optional.of(value);
                 }
                 case STRING:
                 case ENUM: {
-                    return Optional.of(any.unpack(StringValue.class).getValue());
+                    String value = any.unpack(StringValue.class).getValue();
+                    return Optional.of(value);
                 }
                 case BOOLEAN: {
-                    return Optional.of(any.unpack(BoolValue.class).getValue());
+                    Boolean value = any.unpack(BoolValue.class).getValue();
+                    return Optional.of(value);
                 }
                 case STRINGS: {
-                    String[] valueSplits = StringsValue.toStrings(any.unpack(StringValue.class).getValue());
-                    return Optional.of(valueSplits);
+                    String[] value = StringsValue.toStrings(any.unpack(StringValue.class).getValue());
+                    return Optional.of(value);
                 }
                 default: {
                     throw new IllegalArgumentException(
