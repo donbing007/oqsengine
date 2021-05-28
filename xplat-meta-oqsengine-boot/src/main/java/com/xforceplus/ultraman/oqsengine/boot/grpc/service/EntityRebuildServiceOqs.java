@@ -68,7 +68,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Autowired
     private EntitySearchService entitySearchService;
 
-    @Resource(name = "callRebuildThreadPool")
+    @Resource(name = "ioThreadPool")
     private ExecutorService asyncDispatcher;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

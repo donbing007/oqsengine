@@ -103,7 +103,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Resource(name = "callWriteThreadPool")
+    @Resource(name = "taskThreadPool")
     private ExecutorService threadPool;
 
     @Resource(name = "tokenizerFactory")
