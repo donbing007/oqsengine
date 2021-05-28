@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.utlis;
 
-import com.google.common.cache.LoadingCache;
 import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
