@@ -118,6 +118,24 @@ public class UserCaseTest {
 
         Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), ""))
+            .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), ""))
+            .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), ""))
+            .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), null))
+            .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), null))
+            .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), null))
+            .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
     }
 
     @After
