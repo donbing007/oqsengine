@@ -169,7 +169,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
         String message,
         List<OriginalEntity> entities) throws SQLException {
         logger.warn(
-            "[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}",
+            "[cdc-sync-executor] batchId : {}, cdc-consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}",
             batchId, id, commitId, null == message ? "unKnow" : message);
 
         try {
