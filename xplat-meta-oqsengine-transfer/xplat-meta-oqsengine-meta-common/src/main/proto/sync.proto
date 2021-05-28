@@ -6,6 +6,7 @@ option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto.sync"
 
 option java_outer_classname = "EntityClassSyncProto";
 
+import "google/protobuf/any.proto";
 
 service EntityClassSync {
     rpc register (stream EntityClassSyncRequest) returns (stream EntityClassSyncResponse) {}
@@ -113,6 +114,9 @@ message Calculator {
 	string model = 9;
 	int32 step = 10;
 	int32 level = 11;
+	repeated string args = 12;
+	int32 failedPolicy = 13;
+	google.protobuf.Any failedDefaultValue = 14;
 }
 
 message ProfileInfo {

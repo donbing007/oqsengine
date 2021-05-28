@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -80,5 +82,12 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
+    }
+
+    /**
+     * 将字符串拆分为字符串数组.
+     */
+    public static String[] toStrings(String stringValues) {
+        return stringValues.split(DELIMITER);
     }
 }
