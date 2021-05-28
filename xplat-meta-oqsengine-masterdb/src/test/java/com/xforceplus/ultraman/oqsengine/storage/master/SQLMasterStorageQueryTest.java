@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -224,8 +225,12 @@ public class SQLMasterStorageQueryTest {
 
         MockMetaManager metaManager = new MockMetaManager();
         metaManager.addEntityClass(l2EntityClass);
+        SimpleFieldKeyGenerator keyGenerator = new SimpleFieldKeyGenerator();
+        ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);
 
         ReflectionTestUtils.setField(storage, "metaManager", metaManager);
+        ReflectionTestUtils.setField(storage, "keyGenerator", keyGenerator);
+
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
