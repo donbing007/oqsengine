@@ -24,18 +24,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MetricsConfiguration {
 
-    @Resource(name = "callReadThreadPool")
-    private ExecutorService callReadThreadPool;
+    @Resource(name = "ioThreadPool")
+    private ExecutorService ioThreadPool;
 
-    @Resource(name = "callWriteThreadPool")
-    private ExecutorService callWriteThreadPool;
+    @Resource(name = "taskThreadPool")
+    private ExecutorService taskThreadPool;
 
     /**
      * 搜索线程池指标.
      */
     @Bean
-    public ExecutorServiceMetrics callReadExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callReadThreadPool,
+    public ExecutorServiceMetrics ioExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool,
             MetricsDefine.PREFIX + READ_THREAD_POOL,
             Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
@@ -46,8 +46,8 @@ public class MetricsConfiguration {
      * 写入事务执行线程池指标.
      */
     @Bean
-    public ExecutorServiceMetrics callWriteExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callWriteThreadPool,
+    public ExecutorServiceMetrics taskExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(taskThreadPool,
             MetricsDefine.PREFIX + WRITE_THREAD_POOL,
             Tags.empty());
         esm.bindTo(Metrics.globalRegistry);

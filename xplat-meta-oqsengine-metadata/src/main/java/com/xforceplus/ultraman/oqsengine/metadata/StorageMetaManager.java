@@ -55,7 +55,7 @@ public class StorageMetaManager implements MetaManager {
     @Resource
     private IRequestHandler requestHandler;
 
-    @Resource(name = "waitVersionExecutor")
+    @Resource(name = "taskThreadPool")
     private ExecutorService asyncDispatcher;
 
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
