@@ -113,14 +113,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Autowired
     private MetaManager metaManager;
 
-    @Resource(name = "callReadThreadPool")
-    private ExecutorService asyncReadDispatcher;
+    @Resource(name = "ioThreadPool")
+    private ExecutorService asyncDispatcher;
 
-    @Resource(name = "callWriteThreadPool")
-    private ExecutorService asyncWriteDispatcher;
-
-    @Resource(name = "callChangelogThreadPool")
-    private ExecutorService asyncChangelogDispatcher;
 
     @Autowired(required = false)
     private QueryStorage queryStorage;
@@ -139,15 +134,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Logger logger = LoggerFactory.getLogger(EntityServiceOqs.class);
 
     private <T> CompletableFuture<T> asyncRead(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncReadDispatcher);
+        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
     private <T> CompletableFuture<T> asyncWrite(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncWriteDispatcher);
+        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
     private <T> CompletableFuture<T> asyncChangelog(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncChangelogDispatcher);
+        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
     /**
