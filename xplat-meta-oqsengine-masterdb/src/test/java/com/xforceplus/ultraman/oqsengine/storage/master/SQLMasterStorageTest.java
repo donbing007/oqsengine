@@ -29,6 +29,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExe
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -198,11 +199,15 @@ public class SQLMasterStorageTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
+        SimpleFieldKeyGenerator keyGenerator = new SimpleFieldKeyGenerator();
+        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
+
 
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "metaManager", metaManager);
+        ReflectionTestUtils.setField(storage, "keyGenerator", keyGenerator);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
