@@ -137,6 +137,7 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_unsync_commitid_count_total | | 提交但未同步的提交号数量 |
 | oqs_cdc_sync_delay_latency | | CDC 同步的延时 |
 | oqs_mode | | 当前工作模式(1 正常, 2 只读) |
+| oqs_readonly_rease | | 如果进入了只读模式,此值表示原因. (取值 1 非只读,2 CDC心跳失败,3 未提交号过多,4 CDC服务离线)|
 | oqs_now_commitid | | 当前最大提交号 |
 
 # META同步工具(Meta/Client/Server)

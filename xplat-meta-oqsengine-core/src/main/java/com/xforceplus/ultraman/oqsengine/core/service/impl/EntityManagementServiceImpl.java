@@ -107,6 +107,42 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private BizIDGenerator bizIDGenerator;
 
+    /*
+    只读的原因.
+     */
+    static enum ReadOnleyModeRease {
+        // 未知,不应该产生.
+        UNKNOWN(0),
+        // 非只读,正常状态.
+        NOT(1),
+        // CDC心跳失败.
+        CDC_HEARTBEAT(2),
+        // 未同步的提交号过多.
+        UNCOMMIT_TOO_MUCH(3),
+        // CDC离线.
+        CDC_UNCONNECTED(4);
+
+        private int symbol;
+
+        private ReadOnleyModeRease(int symbol) {
+            this.symbol = symbol;
+        }
+
+        public int getSymbol() {
+            return symbol;
+        }
+
+        public static ReadOnleyModeRease getInstance(int value) {
+            for (ReadOnleyModeRease rease : ReadOnleyModeRease.values()) {
+                if (rease.getSymbol() == value) {
+                    return rease;
+                }
+            }
+
+            return UNKNOWN;
+        }
+    }
+
     private static final int UN_KNOW_VERSION = -1;
     private static final int BUILD_VERSION = 0;
     private static final int INCREMENT_POS = 1;
@@ -130,6 +166,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
     private AtomicInteger readOnly = Metrics.gauge(MetricsDefine.MODE, new AtomicInteger(0));
+    private AtomicInteger readOnlyRease = Metrics.gauge(MetricsDefine.READ_ONLEY_MODE_REASE, new AtomicInteger(0));
 
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
@@ -173,14 +210,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 3. 未同步提交号达到阀值.
                  */
                 if (!cdcStatusService.isAlive()) {
-                    setReadOnlyMode("CDC heartbeat test failed.");
+                    setReadOnlyMode(ReadOnleyModeRease.CDC_HEARTBEAT);
                     return;
                 }
 
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
-                    setReadOnlyMode(
-                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                    setReadOnlyMode(ReadOnleyModeRease.UNCOMMIT_TOO_MUCH);
                     return;
                 }
 
@@ -192,7 +228,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     CDCAckMetrics ackMetrics = ackOp.get();
                     CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
                     if (CDCStatus.CONNECTED != cdcStatus) {
-                        setReadOnlyMode(String.format("CDC status is %s.", cdcStatus.name()));
+                        setReadOnlyMode(ReadOnleyModeRease.CDC_UNCONNECTED);
                         return;
                     }
 
@@ -452,16 +488,37 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private void setNormalMode() {
         blockMessage = null;
         readOnly.set(OqsMode.NORMAL.getValue());
+        readOnlyRease.set(ReadOnleyModeRease.NOT.getSymbol());
         ready = true;
     }
 
-    private void setReadOnlyMode(String msg) {
-        blockMessage = msg;
+    private void setReadOnlyMode(ReadOnleyModeRease rease) {
+        switch (rease) {
+            case CDC_HEARTBEAT: {
+                blockMessage = "CDC heartbeat failure.";
+                break;
+            }
+            case CDC_UNCONNECTED: {
+                blockMessage = "The CDC is offline.";
+                break;
+            }
+            case UNCOMMIT_TOO_MUCH: {
+                blockMessage = String.format(
+                    "Too many unsynchronized commit numbers. The maximum allowable value is %d.",
+                    allowMaxUnSyncCommitIdSize);
+                break;
+            }
+            default: {
+                return;
+            }
+        }
+
         readOnly.set(OqsMode.READ_ONLY.getValue());
+        readOnlyRease.set(rease.getSymbol());
         ready = false;
 
         if (logger.isWarnEnabled()) {
-            logger.warn("Set to read-only mode because [{}].", msg);
+            logger.warn("Set to read-only mode because [{}].", blockMessage);
         }
     }
 
