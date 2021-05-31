@@ -9,26 +9,19 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import io.grpc.stub.StreamObserver;
 
 /**
- * desc :
- * name : ResponseHandler
+ * response handler interface.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public interface IResponseHandler extends IObserverHandler<EntityClassSyncRequest, StreamObserver<EntityClassSyncResponse>> {
     /**
-     * 拉取
-     * @param uid
-     * @param watchElement
-     * @param requestStatus
+     * 拉取.
      */
     void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus);
 
     /**
-     * 推送
-     * @param event
-     * @return
+     * 推送.
      */
     boolean push(AppUpdateEvent event);
 }

@@ -14,25 +14,20 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.PostConstruct;
-
-
 /**
- * desc :
- * name : ClientConfiguration
+ * 客户端配置.
  *
- * @author : xujia
- * date : 2021/2/25
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 @Configuration
 @ConditionalOnProperty(name = "meta.grpc.type", havingValue = "client")
 public class ClientConfiguration {
 
     @Bean
-    public GRpcClient gRpcClient(
-            @Value("${meta.grpc.host}") String host,
-            @Value("${meta.grpc.port}") int port
+    public GRpcClient grpcClient(
+        @Value("${meta.grpc.host}") String host,
+        @Value("${meta.grpc.port}") int port
     ) {
         return new MetaSyncGRpcClient(host, port);
     }
@@ -49,9 +44,7 @@ public class ClientConfiguration {
 
     @Bean
     public EntityClassSyncClient entityClassSyncClient() {
-        EntityClassSyncClient entityClassSyncClient = new EntityClassSyncClient();
-
-        return entityClassSyncClient;
+        return new EntityClassSyncClient();
     }
 
     @Bean(name = "grpcShutdown")

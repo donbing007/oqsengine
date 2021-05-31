@@ -4,12 +4,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 线程管理者的方便工具
- * <p>
- *
- * @author donbing
- * @version 1.0 2014-9-21
- * @since 1.5
+ * 线程管理者的方便工具.
  */
 public class ExecutorHelper {
 
@@ -17,21 +12,14 @@ public class ExecutorHelper {
     }
 
     /**
-     * 使用默认的等待时间1分钟，来关闭目标线程组。
-     * <p>
-     *
-     * @param pool 需要关闭的线程组.
+     * 使用默认的等待时间1分钟，来关闭目标线程组.
      */
     public static void shutdownAndAwaitTermination(ExecutorService pool) {
         shutdownAndAwaitTermination(pool, 60L);
     }
 
     /**
-     * 关闭ExecutorService的线程管理者
-     * <p>
-     *
-     * @param pool    需要关闭的管理者
-     * @param timeout 等待时间
+     * 关闭ExecutorService的线程管理者.
      */
     public static void shutdownAndAwaitTermination(ExecutorService pool,
                                                    long timeout) {
@@ -83,12 +71,15 @@ public class ExecutorHelper {
         };
     }
 
+    /**
+     * 构造一个线程池.
+     */
     public static ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
         return new ThreadPoolExecutor(worker, worker,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(queue),
-                buildNameThreadFactory(namePrefix, daemon),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(queue),
+            buildNameThreadFactory(namePrefix, daemon),
+            new ThreadPoolExecutor.AbortPolicy()
         );
     }
 }

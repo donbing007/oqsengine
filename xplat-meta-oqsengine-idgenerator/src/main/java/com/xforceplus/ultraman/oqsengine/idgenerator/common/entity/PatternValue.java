@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.common.entity;
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Pattern;
 import java.io.Serializable;
 
 /**
@@ -10,7 +9,7 @@ import java.io.Serializable;
  * 作者(@author): liwei
  * 创建时间: 5/13/21 4:40 PM
  */
-public class PatternValue implements Serializable,Cloneable {
+public class PatternValue implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -8015203769645869019L;
 
@@ -30,12 +29,12 @@ public class PatternValue implements Serializable,Cloneable {
     }
 
     /**
-     * 自增序列中的ID
+     * 自增序列中的ID.
      */
     private long id;
 
     /**
-     * 根据自增编号模式处理后自增编号
+     * 根据自增编号模式处理后自增编号.
      */
     private String value;
 
@@ -57,9 +56,9 @@ public class PatternValue implements Serializable,Cloneable {
 
     @Override
     public String toString() {
-        return "PatternValue{" +
-            "id=" + id +
-            ", value='" + value + '\'' +
-            '}';
+        return "PatternValue{"
+            + "id=" + id
+            + ", value='" + value + '\''
+            + '}';
     }
 }

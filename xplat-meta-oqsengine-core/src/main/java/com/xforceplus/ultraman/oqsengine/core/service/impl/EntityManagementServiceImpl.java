@@ -103,8 +103,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private CalculateStorage calculateStorage;
 
-    @Resource
-    private UniqueMasterStorage uniqueStorage;
 
     @Resource
     private BizIDGenerator bizIDGenerator;
@@ -250,11 +248,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
 
-                /*
-                    执行自动编号、公式字段计算
-                 */
-
-
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNCREATED);
@@ -264,9 +257,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     hint.setRollback(true);
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNACCUMULATE);
-                }
-                if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
-                    uniqueStorage.build(entity, entityClass);
                 }
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
@@ -339,9 +329,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 // 操作时间
                 targetEntity.markTime(entity.time());
 
-                if (uniqueStorage.containUniqueConfig(targetEntity, entityClass)) {
-                    uniqueStorage.replace(targetEntity, entityClass);
-                }
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
@@ -407,9 +394,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
-                if (uniqueStorage.containUniqueConfig(targetEntityOp.orElse(entity), entityClass)) {
-                    uniqueStorage.delete(targetEntityOp.orElse(entity), entityClass);
-                }
+
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
                 return new OperationResult(
@@ -438,9 +423,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
-        if (uniqueStorage.containUniqueConfig(entity, entityClass)) {
-            uniqueStorage.delete(entity, entityClass);
-        }
         return delete(entity);
     }
 
@@ -568,15 +550,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         );
 
-        logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
-            entity.id(),
-            context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
+                entity.id(),
+                context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
+        }
 
         //  计算公式字段
         formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
 
-        logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
-            entity.id(), entityValue.values().toArray());
+        if (logger.isDebugEnabled()) {
+            logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
+                entity.id(), entityValue.values().toArray());
+        }
 
         //  将entityValue加入到目标中
         entity.resetEntityValue(entityValue);

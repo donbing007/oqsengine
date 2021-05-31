@@ -28,6 +28,12 @@ public class DefaultEventBus implements EventBus, Lifecycle {
     private ExecutorService worker;
     private volatile boolean closed;
 
+    /**
+     * 构造默认事务总线实例.
+     *
+     * @param eventStorage 事件储存器.
+     * @param worker       工作者线程组.
+     */
     public DefaultEventBus(EventStorage eventStorage, ExecutorService worker) {
         this.listeners = new ConcurrentHashMap<>();
         this.eventStorage = eventStorage;

@@ -106,9 +106,9 @@ public class DataSourceConfiguration {
             TableRuleConfiguration uniqueTableRuleConfiguration = new TableRuleConfiguration(OQS_UNIQUE_TABLE_NAME,
                     String.format("ds${0..%d}.%s${0..%d}", dsSize - 1, OQS_UNIQUE_TABLE_NAME, shardSize - 1));
             uniqueTableRuleConfiguration.setDatabaseShardingStrategyConfig(
-                    new StandardShardingStrategyConfiguration("key", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
+                    new StandardShardingStrategyConfiguration("unique_key", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
             uniqueTableRuleConfiguration.setTableShardingStrategyConfig(
-                    new StandardShardingStrategyConfiguration("key", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
+                    new StandardShardingStrategyConfiguration("unique_key", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
             ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
             shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
             shardingRuleConfig.getTableRuleConfigs().add(uniqueTableRuleConfiguration);

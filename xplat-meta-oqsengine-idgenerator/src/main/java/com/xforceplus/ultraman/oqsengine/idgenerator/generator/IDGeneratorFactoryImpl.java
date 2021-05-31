@@ -4,26 +4,22 @@ import com.hazelcast.com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
-import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.DistributeCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.LocalCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.RedisCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Map;
-
 
 /**
- * 项目名称: 票易通
- * JDK 版本: JDK1.8
- * 说明:
- * 作者(@author): liwei
- * 创建时间: 5/7/21 5:22 PM
+ * 业务编号生成器工厂类.
+ *
+ * @author leo
  */
-public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
+public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
 
 
     @Autowired
@@ -31,14 +27,16 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
 
     private ExecutorService executorService;
 
-    private Map<String,IDGenerator> generators;
-    private Map<String,IDGenerator> distributeGenerators;
+    private Map<String, IDGenerator> generators;
+    private Map<String, IDGenerator> distributeGenerators;
 
     @Autowired
     private RedissonClient redissonClient;
 
+    /**
+     * Constructor.
+     */
     public IDGeneratorFactoryImpl() {
-
         this.generators = Maps.newConcurrentMap();
         this.distributeGenerators = Maps.newConcurrentMap();
         this.executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("oqs-id-generator"));
@@ -47,22 +45,20 @@ public  class IDGeneratorFactoryImpl implements IDGeneratorFactory{
     @Override
     public IDGenerator getIdGenerator(String bizType) {
         IDModel model = segmentService.getIDModel(bizType);
-        if(model.equals(IDModel.TREND_INC)) {
+        if (model.equals(IDModel.TREND_INC)) {
             return generators.computeIfAbsent(bizType, s -> createIdGenerator(s));
-        }
-        else if(model.equals(IDModel.LINEAR_INC)) {
-            return distributeGenerators.computeIfAbsent(bizType,s->createDistributeGenerator(s));
-        }
-        else {
+        } else if (model.equals(IDModel.LINEAR_INC)) {
+            return distributeGenerators.computeIfAbsent(bizType, s -> createDistributeGenerator(s));
+        } else {
             throw new IDGeneratorException("不支持的计数类型!");
         }
     }
 
     protected IDGenerator createIdGenerator(String bizType) {
-        return new LocalCacheGenerator(bizType, segmentService,executorService);
+        return new LocalCacheGenerator(bizType, segmentService, executorService);
     }
 
     protected IDGenerator createDistributeGenerator(String bizType) {
-        return new RedisCacheGenerator(bizType,segmentService,executorService,redissonClient);
+        return new RedisCacheGenerator(bizType, segmentService, executorService, redissonClient);
     }
 }

@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExe
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
@@ -84,7 +85,14 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("name")
-        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+            .withSearchable(true)
+            .withCrossSearch(true)
+            .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+            .build()
+        )
+        .build();
     private IEntityClass firstEntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
@@ -98,7 +106,13 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 2)
         .withFieldType(FieldType.STRING)
         .withName("name")
-        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.WILDCARD)).build();
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withSearchable(true)
+                .withCrossSearch(true)
+                .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+                .build()
+        ).build();
     private IEntityClass secondEntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(1)
@@ -106,13 +120,6 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withField(secondNameField)
         .withFather(baseEntityClass)
         .build();
-
-    private static StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-    static {
-        // 浮点数转换处理.
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
 
     private TransactionManager transactionManager;
     private RedisClient redisClient;
@@ -124,6 +131,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
     private TokenizerFactory tokenizerFactory;
+    private StorageStrategyFactory storageStrategyFactory;
 
     @Before
     public void before() throws Exception {
@@ -149,10 +157,15 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
 
         tokenizerFactory = new DefaultTokenizerFactory();
+
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
 
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);

@@ -1,15 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl;
 
-import com.google.common.collect.Maps;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 /**
  * 项目名称: 票易通
@@ -23,7 +19,7 @@ public class DatePatternParserTest {
     @Test
     public void testNotNeedParse() {
         String expression = "yyyy:mm:dd{}";
-        DatePattenParser parser = new DatePattenParser();
+        DatePatternParser parser = new DatePatternParser();
         boolean need =  parser.needHandle(expression);
         Assert.assertEquals(need,false);
     }
@@ -31,7 +27,7 @@ public class DatePatternParserTest {
     @Test
     public void testNeedParse() {
         String expression = "{yyyy}:mm:dd{}";
-        DatePattenParser parser = new DatePattenParser();
+        DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
         Assert.assertEquals(need,true);
         String formatStr = parser.parse(expression,1001l);
@@ -41,7 +37,7 @@ public class DatePatternParserTest {
     @Test
     public void testDateParse() {
         String expression = "{yyyy}-{MM}-{dd}";
-        DatePattenParser parser = new DatePattenParser();
+        DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
         Assert.assertEquals(need,true);
         String formatStr = parser.parse(expression,1001l);
@@ -53,7 +49,7 @@ public class DatePatternParserTest {
     @Test
     public void testNumberParse() {
         String expression = "AP-SAP-{00000}";
-        NumberPattenParser parser = new NumberPattenParser();
+        NumberPatternParser parser = new NumberPatternParser();
         boolean need = parser.needHandle(expression);
         Assert.assertEquals(need,true);
         String ret = parser.parse(expression,1234l);
@@ -69,10 +65,10 @@ public class DatePatternParserTest {
 
     @Test
     public void testNumberAndDateParse() {
-        PattenParserManager manager = new PattenParserManager();
+        PatternParserManager manager = new PatternParserManager();
         String expression = "{yyyy}-{MM}-{dd}-{00000}";
-        NumberPattenParser parser = new NumberPattenParser();
-        DatePattenParser datePattenParser = new DatePattenParser();
+        NumberPatternParser parser = new NumberPatternParser();
+        DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
         String ret = manager.parse(expression,123l);

@@ -6,23 +6,19 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IResponseHandler;
 import io.grpc.stub.StreamObserver;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import javax.annotation.Resource;
-
 /**
- * desc :
- * name : EntityClassSyncServer
+ * entity sync server.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncImplBase implements IBasicSyncExecutor {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
+    private final Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
 
     @Resource
     private IResponseHandler responseHandler;

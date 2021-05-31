@@ -3,16 +3,14 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import java.util.concurrent.TimeUnit;
 
 /**
- * desc :
- * name : TimeWaitUtils
+ * 时间工具类.
  *
- * @author : xujia
- * date : 2021/2/5
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class TimeWaitUtils {
     /**
-     * 等待timeSeconds秒后进行重试
+     * 等待timeSeconds秒后进行重试.
      */
     public static void wakeupAfter(long duration, TimeUnit timeUnit) {
         try {

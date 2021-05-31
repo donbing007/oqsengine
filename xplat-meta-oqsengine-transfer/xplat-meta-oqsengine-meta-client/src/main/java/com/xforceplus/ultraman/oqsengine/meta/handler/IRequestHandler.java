@@ -7,48 +7,41 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import io.grpc.stub.StreamObserver;
 
-import java.util.List;
-
 /**
- * desc :
- * name : EntityClassExecutor
+ * request handler interface.
  *
- * @author : xujia
- * date : 2021/2/3
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public interface IRequestHandler extends IObserverHandler<EntityClassSyncResponse, Void> {
 
     /**
-     * 注册一个appId，并开始监听
-     * @return boolean
+     * 注册一个appId，并开始监听.
      */
     boolean register(WatchElement watchElement);
 
     /**
-     * 断流自动重新注册
-     * @return boolean
+     * 断流自动重新注册.
      */
     boolean reRegister();
 
     /**
-     *
+     * 初始化.
      */
     void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver);
 
     /**
-     * 获得当前IRequestWatchExecutor
-     * @return
+     * 获得当前IRequestWatchExecutor.
      */
     IRequestWatchExecutor watchExecutor();
 
     /**
-     * 服务未准备就绪
+     * 服务未准备就绪.
      */
     void notReady();
 
     /**
-     * 服务准备就绪
+     * 服务准备就绪.
      */
     void ready();
 

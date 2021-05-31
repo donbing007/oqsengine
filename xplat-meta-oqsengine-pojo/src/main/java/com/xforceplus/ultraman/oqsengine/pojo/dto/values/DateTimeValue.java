@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
-    private Logger logger = LoggerFactory.getLogger(DateTimeValue.class);
+    private final Logger logger = LoggerFactory.getLogger(DateTimeValue.class);
 
     /**
      * 格式化时使用的时区.
@@ -35,10 +35,8 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
         }
         try {
             long timestamp = Long.parseLong(value);
-            LocalDateTime time =
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
 
-            return time;
+            return toLocalDateTime(timestamp);
         } catch (Exception ex) {
             logger.error("{}", ex);
             return null;
@@ -83,5 +81,13 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     @Override
     public String toString() {
         return "DateTimeValue{" + "field=" + getField() + ", value=" + getValue() + '}';
+    }
+
+    /**
+     * 默认的timestamp转LocalDateTime.
+     */
+    public static LocalDateTime toLocalDateTime(long timestamp) {
+        return
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
     }
 }

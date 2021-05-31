@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 搜索配置.
+ * 查询配置.
  *
  * @author dongbin
  * @version 0.1 2021/03/31 16:14

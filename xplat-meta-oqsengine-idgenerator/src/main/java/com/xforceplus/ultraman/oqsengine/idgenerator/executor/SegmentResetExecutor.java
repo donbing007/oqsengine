@@ -7,13 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
+
 /**
- * desc :
- * name : SegmentResetExecutor
+ * SegmentResetExecutor.
  *
- * @author : leo
- * date : 2020/11/22
- * @since : 1.8
+ * @author leo
  */
 public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, Integer> {
 
@@ -21,8 +19,7 @@ public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, I
         super(tableName, dataSource, timeoutMs);
     }
 
-    public static SegmentResetExecutor
-                                build(String tableName, DataSource dataSource, long timeout) {
+    public static SegmentResetExecutor build(String tableName, DataSource dataSource, long timeout) {
         return new SegmentResetExecutor(tableName, dataSource, timeout);
     }
 
@@ -31,12 +28,12 @@ public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, I
         String sql = buildSQL();
         try (Connection connection = getDataSource().getConnection();
              PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1,segmentInfo.getPatternKey());
+            st.setString(1, segmentInfo.getPatternKey());
             st.setLong(2, segmentInfo.getId());
-            st.setLong(3,segmentInfo.getMaxId());
+            st.setLong(3, segmentInfo.getMaxId());
             st.setLong(4, segmentInfo.getVersion());
             st.setString(5, segmentInfo.getBizType());
-            st.setString(6,segmentInfo.getPatternKey());
+            st.setString(6, segmentInfo.getPatternKey());
             checkTimeout(st);
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -45,21 +42,21 @@ public class SegmentResetExecutor extends AbstractSegmentExecutor<SegmentInfo, I
         }
     }
 
-    private  String buildSQL() {
+    private String buildSQL() {
         StringBuilder buff = new StringBuilder();
         buff.append("UPDATE ")
-                .append(getTableName())
-                .append(" SET ").append(SegmentFieldDefine.VERSION).append(" = " )
-                .append(String.format("%s + %s",SegmentFieldDefine.VERSION,"1"))
-                .append(" , ")
-                .append(SegmentFieldDefine.PATTERN_KEY).append(" = ").append("?")
-                .append(" , ")
-                .append(SegmentFieldDefine.MAX_ID).append(" = ").append(" 0 ")
-                .append(" WHERE ").append(SegmentFieldDefine.ID).append(" = ").append("?")
-                .append(" AND ").append(SegmentFieldDefine.MAX_ID).append(" = ").append("?")
-                .append(" AND ").append(SegmentFieldDefine.VERSION).append(" = ").append("?")
-                .append(" AND ").append(SegmentFieldDefine.BIZ_TYPE).append(" = ").append("?")
-                .append(" AND ").append(SegmentFieldDefine.PATTERN_KEY).append(" != ").append("?");
+            .append(getTableName())
+            .append(" SET ").append(SegmentFieldDefine.VERSION).append(" = ")
+            .append(String.format("%s + %s", SegmentFieldDefine.VERSION, "1"))
+            .append(" , ")
+            .append(SegmentFieldDefine.PATTERN_KEY).append(" = ").append("?")
+            .append(" , ")
+            .append(SegmentFieldDefine.MAX_ID).append(" = ").append(" 0 ")
+            .append(" WHERE ").append(SegmentFieldDefine.ID).append(" = ").append("?")
+            .append(" AND ").append(SegmentFieldDefine.MAX_ID).append(" = ").append("?")
+            .append(" AND ").append(SegmentFieldDefine.VERSION).append(" = ").append("?")
+            .append(" AND ").append(SegmentFieldDefine.BIZ_TYPE).append(" = ").append("?")
+            .append(" AND ").append(SegmentFieldDefine.PATTERN_KEY).append(" != ").append("?");
         return buff.toString();
     }
 }

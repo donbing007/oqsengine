@@ -20,21 +20,13 @@ transaction:
   timeoutMs: 3000
 
 threadPool:
-  # 0 or not exist use cpu core + 1
-  call:
-    read:
-      worker: 0
-      queue: 1000
-    write:
-      worker: 0
-      queue: 1000
-    rebuild:
-      worker: 0
-      queue: 1000
-  cdc:
+  io:
+    # 服务响应线程池.
     worker: 0
-  event:
-    worker: 3
+    queue: 1000
+  task:
+    # 后端任务,或者IO线程池中放入的任务执行线程池.
+    worker: 0
     queue: 1000
 
 maxVisibleNumber: 10000
@@ -100,7 +92,8 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
-  uri: "redis://127.0.0.1:6379"
+#  uri: "redis://q1w2e3r4@127.0.0.1:6379"
+  uri: "redis://127.0.0.1:6379"/
   maxReqQueue: 10000
 
 management:

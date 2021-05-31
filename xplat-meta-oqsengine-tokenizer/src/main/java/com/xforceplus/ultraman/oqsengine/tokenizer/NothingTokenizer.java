@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import java.util.Iterator;
 
 /**
- * 实际进行任何分词的实现,只为了占位.
+ * 实际不进行任何分词的实现,只为了占位.
  *
  * @author dongbin
  * @version 0.1 2021/3/16 11:58

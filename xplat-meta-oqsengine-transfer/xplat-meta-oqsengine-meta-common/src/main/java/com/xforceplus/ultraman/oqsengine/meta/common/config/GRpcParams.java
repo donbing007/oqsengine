@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.config;
 
 /**
- * desc :
- * name : GRpcParams
+ * grpc params.
  *
- * @author : xujia
- * date : 2021/2/7
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class GRpcParams {
 

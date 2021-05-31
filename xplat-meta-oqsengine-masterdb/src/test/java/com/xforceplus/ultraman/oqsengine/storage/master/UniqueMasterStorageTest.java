@@ -457,6 +457,7 @@ public class UniqueMasterStorageTest {
      */
     @Test
     public void testBuildFatherChildAllBuild() throws SQLException {
+        thrown.expect(SQLIntegrityConstraintViolationException.class);
         IEntityField l0LongField = EntityField.Builder.anEntityField()
             .withId(1000)
             .withFieldType(FieldType.LONG)
@@ -554,8 +555,8 @@ public class UniqueMasterStorageTest {
         when(metaManager.load(1)).thenReturn(Optional.of(l0EntityClass));
         int ret = storage.build(entity0, l0EntityClass);
         int ret1 = storage.build(entity00, l0EntityClass);
-        Assert.assertEquals(ret, 1);
-        Assert.assertEquals(ret1, 1);
+        Assert.assertEquals(ret, 0);
+        Assert.assertEquals(ret1, 0);
         int ret2 = storage.build(entity, l1EntityClass);
         Assert.assertEquals(ret2, 1);
         storage.build(entity1, l1EntityClass);

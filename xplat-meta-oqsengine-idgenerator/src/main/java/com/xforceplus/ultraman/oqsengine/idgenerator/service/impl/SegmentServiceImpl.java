@@ -3,30 +3,21 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.service.impl;
 import com.alibaba.google.common.cache.CacheBuilder;
 import com.alibaba.google.common.cache.CacheLoader;
 import com.alibaba.google.common.cache.LoadingCache;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
-import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 项目名称: 票易通
@@ -42,20 +33,20 @@ public class SegmentServiceImpl implements SegmentService {
     SqlSegmentStorage sqlSegmentStorage;
 
 
-    private static final Logger logger = LoggerFactory.getLogger(SegmentServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SegmentServiceImpl.class);
 
     private static final Long MAX_CACHE_TIME_IN_SECONDS = 600L;
 
     private static final Long MAX_SIZE = 10000L;
 
     protected LoadingCache<String, IDModel> cache = CacheBuilder.newBuilder().maximumSize(MAX_SIZE)
-            .expireAfterWrite(MAX_CACHE_TIME_IN_SECONDS, TimeUnit.SECONDS)
-            .build(new CacheLoader<String, IDModel>() {
-                @Override
-                public IDModel load(String key) throws SQLException {
-                   return innerGetIDModel(key);
-                }
-            });
+        .expireAfterWrite(MAX_CACHE_TIME_IN_SECONDS, TimeUnit.SECONDS)
+        .build(new CacheLoader<String, IDModel>() {
+            @Override
+            public IDModel load(String key) throws SQLException {
+                return innerGetIDModel(key);
+            }
+        });
 
     @Override
     public SegmentId getNextSegmentId(String bizType) throws SQLException {
@@ -68,17 +59,17 @@ public class SegmentServiceImpl implements SegmentService {
             if (row == 1) {
                 segmentInfo.setMaxId(newMaxId);
                 SegmentId segmentId = convert(segmentInfo);
-                logger.info("getNextSegmentId success tinyIdInfo:{} current:{}", segmentInfo, segmentId);
+                LOGGER.info("getNextSegmentId success tinyIdInfo:{} current:{}", segmentInfo, segmentId);
                 return segmentId;
             } else {
-                logger.info("getNextSegmentId conflict tinyIdInfo:{}", segmentInfo);
+                LOGGER.info("getNextSegmentId conflict tinyIdInfo:{}", segmentInfo);
             }
         }
         throw new IDGeneratorException("get next segment conflict");
     }
 
     @Override
-    public boolean resetSegment(String bizType,String patternKey) throws SQLException {
+    public boolean resetSegment(String bizType, String patternKey) throws SQLException {
         Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
         SegmentInfo segmentInfo = targetSegmentInfo.get();
         segmentInfo.setPatternKey(patternKey);
@@ -95,19 +86,16 @@ public class SegmentServiceImpl implements SegmentService {
     }
 
 
-
     @Override
     public IDModel getIDModel(String bizType) {
         IDModel model = null;
         try {
-            model =  cache.get(bizType);
-        }
-        catch (CacheLoader.InvalidCacheLoadException e) {
-            logger.warn(String.format("Get invalidCache : %s",bizType));
-        }
-        catch (Exception e) {
-            String errorMsg = String.format("Get IdModel : %s failed!",bizType);
-            logger.error(errorMsg, e);
+            model = cache.get(bizType);
+        } catch (CacheLoader.InvalidCacheLoadException e) {
+            LOGGER.warn(String.format("Get invalidCache : %s", bizType));
+        } catch (Exception e) {
+            String errorMsg = String.format("Get IdModel : %s failed!", bizType);
+            LOGGER.error(errorMsg, e);
             throw new IDGeneratorException(errorMsg);
         }
         return model;
@@ -120,11 +108,17 @@ public class SegmentServiceImpl implements SegmentService {
         return IDModel.fromValue(segmentInfo.getMode());
     }
 
+    /**
+     * convert segmentInfo to segmentId.
+     *
+     * @param idInfo segmentInfo entity
+     * @return SegmentId
+     */
     public SegmentId convert(SegmentInfo idInfo) {
         SegmentId segmentId = new SegmentId();
         long id = idInfo.getMaxId() - idInfo.getStep();
-        String value = PatternParserUtil.getInstance().parse(idInfo.getPattern(),id);
-        PatternValue pattenValue = new PatternValue(id,value);
+        String value = PatternParserUtil.getInstance().parse(idInfo.getPattern(), id);
+        PatternValue pattenValue = new PatternValue(id, value);
         segmentId.setCurrentId(pattenValue);
         segmentId.setMaxId(idInfo.getMaxId());
         segmentId.setPattern(idInfo.getPattern());

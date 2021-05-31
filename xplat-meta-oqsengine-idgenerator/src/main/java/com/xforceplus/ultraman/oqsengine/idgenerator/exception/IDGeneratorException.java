@@ -7,7 +7,7 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.exception;
  * 作者(@author): liwei
  * 创建时间: 5/9/21 10:19 PM
  */
-public class IDGeneratorException extends RuntimeException{
+public class IDGeneratorException extends RuntimeException {
 
     public IDGeneratorException() {
         super();

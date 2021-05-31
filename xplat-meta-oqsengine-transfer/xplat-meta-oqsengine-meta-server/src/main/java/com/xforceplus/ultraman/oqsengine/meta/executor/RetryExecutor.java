@@ -1,32 +1,32 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * desc :
- * name : RetryExecutor
+ * RetryExecutor.
  *
- * @author : xujia
- * date : 2021/2/5
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask> {
 
     final Logger logger = LoggerFactory.getLogger(RetryExecutor.class);
 
-    private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
+    private static final DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
 
     private volatile boolean isActive = true;
 
+    /**
+     * 获取.
+     */
     public DelayTask take() {
         if (isActive) {
             try {
@@ -38,6 +38,9 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         return null;
     }
 
+    /**
+     * 放入.
+     */
     public void offer(DelayTask task) {
         if (isActive) {
             try {
@@ -58,20 +61,25 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         isActive = true;
     }
 
-
+    /**
+     * delayTask.
+     */
     public static class DelayTask implements Delayed {
-        private Element e;
-        private long start;
-        private long expireTime;
+        private final Element element;
+        private final long start;
+        private final long expireTime;
 
+        /**
+         * delayTask定义.
+         */
         public DelayTask(long delayInMillis, Element e) {
-            this.e = e;
+            this.element = e;
             start = System.currentTimeMillis();
             expireTime = delayInMillis;
         }
 
         public Element element() {
-            return e;
+            return element;
         }
 
         @Override
@@ -85,14 +93,17 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         }
     }
 
+    /**
+     * element.
+     */
     public static class Element {
-        private WatchElement w;
-        private String uid;
+        private final WatchElement watch;
+        private final String uid;
 
 
         public Element(WatchElement w, String uid) {
             this.uid = uid;
-            this.w = w;
+            this.watch = w;
         }
 
         public String getUid() {
@@ -100,7 +111,7 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         }
 
         public WatchElement getElement() {
-            return w;
+            return watch;
         }
     }
 

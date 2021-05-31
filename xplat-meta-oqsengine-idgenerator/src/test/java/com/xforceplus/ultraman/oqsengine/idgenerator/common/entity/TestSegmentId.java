@@ -4,10 +4,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternParser;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,13 +38,13 @@ public class TestSegmentId {
     public void before() {
         executorService = Executors.newFixedThreadPool(30);
 
-        PattenParserManager manager = new PattenParserManager();
-        NumberPattenParser parser = new NumberPattenParser();
-        DatePattenParser datePattenParser = new DatePattenParser();
+        PatternParserManager manager = new PatternParserManager();
+        NumberPatternParser parser = new NumberPatternParser();
+        DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
         applicationContext = mock(ApplicationContext.class);
-        when(applicationContext.getBean(PattenParserManager.class)).thenReturn(manager);
+        when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
         ReflectionTestUtils.setField(PatternParserUtil.class,"applicationContext",applicationContext);
 
     }

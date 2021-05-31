@@ -27,52 +27,25 @@ import org.springframework.context.annotation.Configuration;
 public class CommonConfiguration {
 
     /**
-     * reuse the read thread.
+     * IO响应线程池.
+     * 此线程池主要用以服务响应任务.
      */
-    @Bean("callChangelogThreadPool")
-    public ExecutorService callChangelogThreadPool(
-        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
+    @Bean("ioThreadPool")
+    public ExecutorService ioThreadPool(
+        @Value("${threadPool.io.worker:0}") int worker, @Value("${threadPool.io.queue:500}") int queue) {
 
-        return buildThreadPool(worker, queue, "oqsengine-call-changelog", false);
+        return buildThreadPool(worker, queue, "oqsengine-io", false);
     }
 
+    /**
+     * 任务线程池,注意任务线程池中的任务不允许往 ioThreadPool 中创建任务.
+     * 此线程主要用以处理需要异步执行的任务.
+     */
+    @Bean("taskThreadPool")
+    public ExecutorService taskThreadPool(
+        @Value("${threadPool.task.worker:0}") int worker, @Value("${threadPool.task.queue:500}") int queue) {
 
-    @Bean("callReadThreadPool")
-    public ExecutorService callReadThreadPool(
-        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
-
-        return buildThreadPool(worker, queue, "oqsengine-call-read", false);
-    }
-
-    @Bean("callWriteThreadPool")
-    public ExecutorService callWriteThreadPool(
-        @Value("${threadPool.call.write.worker:0}") int worker,
-        @Value("${threadPool.call.write.queue:500}") int queue) {
-
-        return buildThreadPool(worker, queue, "oqsengine-call-write", false);
-    }
-
-    @Bean("callRebuildThreadPool")
-    public ExecutorService callRebuildThreadPool(
-        @Value("${threadPool.call.rebuild.worker:0}") int worker,
-        @Value("${threadPool.call.rebuild.queue:500}") int queue) {
-
-        return buildThreadPool(worker, queue, "oqsengine-call-rebuild", false);
-    }
-
-    @Bean("eventWorker")
-    public ExecutorService eventWorker(
-        @Value("${threadPool.event.worker:0}") int worker,
-        @Value("${threadPool.event.queue:500}") int queue) {
-
-        return buildThreadPool(worker, queue, "oqsengine-event", false);
-    }
-
-    @Bean("waitVersionExecutor")
-    public ExecutorService waitVersionExecutor(
-        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
-
-        return buildThreadPool(worker, queue, "oqsengine-meta-version", false);
+        return buildThreadPool(worker, queue, "oqsengine-task", false);
     }
 
     /**

@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
+
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.annotation.BindGRpcService;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
@@ -13,6 +16,10 @@ import com.xforceplus.ultraman.oqsengine.meta.listener.EntityClassListener;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ServerShutDown;
 import io.grpc.BindableService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,24 +28,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Lazy;
 
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
 /**
- * desc :
- * name : ServerConfiguration
+ * 服务端配置.
  *
- * @author : xujia
- * date : 2021/2/25
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 @Configuration
 @ConditionalOnProperty(name = "meta.grpc.type", havingValue = "server")
@@ -48,8 +44,8 @@ public class ServerConfiguration implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @Bean
-    public GRpcServer gRpcServer(
-            @Value("${meta.grpc.port}") Integer port
+    public GRpcServer grpcServer(
+        @Value("${meta.grpc.port}") Integer port
     ) {
         return new GRpcServer(port);
     }
@@ -74,10 +70,13 @@ public class ServerConfiguration implements ApplicationContextAware {
         return new EntityClassSyncServer();
     }
 
+    /**
+     * 初始化线程池.
+     */
     @Bean("grpcServerExecutor")
     public ExecutorService callGRpcThreadPool(
-            @Value("${threadPool.call.grpc.server.worker:0}") int worker,
-            @Value("${threadPool.call.grpc.server.queue:500}") int queue) {
+        @Value("${threadPool.call.grpc.server.worker:0}") int worker,
+        @Value("${threadPool.call.grpc.server.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -101,18 +100,21 @@ public class ServerConfiguration implements ApplicationContextAware {
         return new ServerShutDown();
     }
 
+    /**
+     * 初始化外部服务.
+     */
     @Bean(name = "outerBindingService")
-    public List<BindableService> bindalbeServices() {
+    public List<BindableService> bindAbleServices() {
         Map<String, Object> beans = applicationContext.getBeansWithAnnotation(BindGRpcService.class);
-        List<BindableService> bindableServices = new ArrayList<>();
+        List<BindableService> bindAbleServices = new ArrayList<>();
         beans.forEach(
-                (k, v) -> {
-                    if (v instanceof BindableService) {
-                        bindableServices.add((BindableService)v);
-                    }
+            (k, v) -> {
+                if (v instanceof BindableService) {
+                    bindAbleServices.add((BindableService) v);
                 }
+            }
         );
-        return bindableServices;
+        return bindAbleServices;
     }
 
     @Override

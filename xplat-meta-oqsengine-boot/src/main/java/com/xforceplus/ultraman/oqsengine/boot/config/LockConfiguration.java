@@ -2,10 +2,12 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import akka.actor.ActorSystem;
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.impl.LockStateServiceImpl;
+import org.apache.commons.lang.StringUtils;
 import org.redisson.command.CommandSyncService;
 import org.redisson.config.Config;
 import org.redisson.config.ConfigSupport;
@@ -45,6 +47,10 @@ public class LockConfiguration {
         Config config = new Config();
         config.useSingleServer().setAddress(configuration.getUri());
         Config configCopy = new Config(config);
+        String password = RedisConfigUtil.getRedisUrlPassword(configuration.getUri());
+        if (!StringUtils.isBlank(password)) {
+            configCopy.useSingleServer().setPassword(password);
+        }
         ConnectionManager connectionManager = ConfigSupport.createConnectionManager(configCopy);
         RedissonObjectBuilder objectBuilder = null;
         CommandSyncService commandExecutor = new CommandSyncService(connectionManager, objectBuilder);

@@ -184,18 +184,18 @@ public class SphinxQLHelper {
     /**
      * 构造字段的搜索.
      *
-     * @author dongbin
-     * @param value 目标字段值.
-     * @param code 字段代码.
+     * @param value     目标字段值.
+     * @param code      字段代码.
      * @param tokenizer 分词器.
      * @return java.lang.String 结果.
+     * @author dongbin
      */
     public static String buildSearch(String value, String code, Tokenizer tokenizer) {
 
         String strValue = filterSymbols(value);
         Iterator<String> words = tokenizer.tokenize(strValue);
         StringBuilder buff = new StringBuilder();
-        buff.append("@").append(FieldDefine.SEARCH_ATTRIBUTEF).append(' ');
+        buff.append("@").append(FieldDefine.ATTRIBUTEF).append(' ');
         int emptyLen = buff.length();
         while (words.hasNext()) {
             if (buff.length() > emptyLen) {

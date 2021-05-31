@@ -80,4 +80,26 @@ public class SphinxQLDecimalStorageStrategyTest {
         Assert.assertArrayEquals(new String[] {"1L0", "1L1"}, storageNames.toArray(new String[0]));
     }
 
-} 
+    /**
+     * 测试转换来自主库的数据.
+     */
+    @Test
+    public void testConvert() throws Exception {
+        SphinxQLDecimalStorageStrategy storageStrategy = new SphinxQLDecimalStorageStrategy();
+        StorageValue storageValue = storageStrategy.convertIndexStorageValue("123456S", "789.123");
+        StorageValue intStorageValue = storageValue;
+        StorageValue decStorageValue = storageValue.next();
+        Assert.assertNotNull(intStorageValue);
+        Assert.assertNotNull(decStorageValue);
+
+        Assert.assertEquals(789L, intStorageValue.value());
+        Assert.assertEquals(123000000000000000L, decStorageValue.value());
+
+        Assert.assertEquals(StorageType.LONG, intStorageValue.type());
+        Assert.assertEquals(StorageType.LONG, decStorageValue.type());
+
+        Assert.assertEquals(0, intStorageValue.location());
+        Assert.assertEquals(1, decStorageValue.location());
+    }
+
+}

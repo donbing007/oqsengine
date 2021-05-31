@@ -2,10 +2,8 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.common.entity;
 
 import static com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil.getPatternKey;
 
-
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.ResetModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 作者(@author): liwei
  * 创建时间: 5/7/21 5:33 PM
  */
-public class SegmentId implements Serializable,Cloneable {
+public class SegmentId implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -5222792505264340312L;
     private long maxId;
@@ -26,7 +24,7 @@ public class SegmentId implements Serializable,Cloneable {
     private int resetable;
 
     @Override
-    public SegmentId clone()  {
+    public SegmentId clone() {
         SegmentId cloneObj = null;
         try {
             cloneObj = (SegmentId) super.clone();
@@ -40,12 +38,16 @@ public class SegmentId implements Serializable,Cloneable {
     }
 
 
-
     String convert(Long id) {
         return PatternParserUtil.getInstance().parse(pattern, id);
     }
 
 
+    /**
+     * Get next id.
+     *
+     * @return IDResult
+     */
     public IDResult nextId() {
         PatternValue currentValue;
         PatternValue nextValue;
@@ -53,17 +55,16 @@ public class SegmentId implements Serializable,Cloneable {
             currentValue = currentId.get();
             nextValue = new PatternValue(currentValue.getId() + 1,
                 PatternParserUtil.getInstance().parse(pattern, currentValue.getId() + 1));
-        }
-        while (!currentId.compareAndSet(currentValue, nextValue));
+        } while (!currentId.compareAndSet(currentValue, nextValue));
         if (nextValue.getId() > maxId) {
             return new IDResult(ResultCode.OVER, convert(nextValue.getId()));
         }
         if (nextValue.getId() >= loadingId) {
             return new IDResult(ResultCode.LOADING, convert(nextValue.getId()));
         }
-        if(PatternParserUtil.needReset(pattern,currentValue,nextValue)
+        if (PatternParserUtil.needReset(pattern, currentValue, nextValue)
             && ResetModel.fromValue(resetable).equals(ResetModel.RESETABLE)) {
-            return new IDResult((ResultCode.RESET),convert(nextValue.getId()),getPatternKey(nextValue));
+            return new IDResult((ResultCode.RESET), convert(nextValue.getId()), getPatternKey(nextValue));
         }
         return new IDResult(ResultCode.NORMAL, convert(nextValue.getId()));
     }
@@ -114,6 +115,8 @@ public class SegmentId implements Serializable,Cloneable {
 
     @Override
     public String toString() {
-        return "[maxId=" + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId.toString() + ",patten=" + pattern + "]";
+        return "[maxId="
+            + maxId + ",loadingId=" + loadingId + ",currentId=" + currentId.toString() + ",patten="
+            + pattern + "]";
     }
 }

@@ -3,13 +3,12 @@ package com.xforceplus.ultraman.oqsengine.meta.common.exception;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.CONNECTION_ERROR;
 
+
 /**
- * desc :
- * name : MetaSyncClientException
+ * client exception.
  *
- * @author : xujia
- * date : 2021/2/2
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class MetaSyncClientException extends RuntimeException {
     private int code;

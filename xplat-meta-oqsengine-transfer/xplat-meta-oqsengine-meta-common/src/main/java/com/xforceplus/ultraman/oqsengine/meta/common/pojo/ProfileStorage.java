@@ -1,18 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by justin.xu on 05/2021
+ * 替身 storage.
+ *
+ * @author xujia
+ * @since 1.8
  */
 public class ProfileStorage {
-    private String code;
-    private List<IEntityField> entityFieldList;
+    private final String code;
+    private final List<IEntityField> entityFieldList;
     private List<RelationStorage> relationStorageList;
 
+    /**
+     * 构造函数.
+     */
     public ProfileStorage(String code, List<IEntityField> entityFieldList, List<RelationStorage> relationStorageList) {
         this.code = code;
         this.entityFieldList = entityFieldList;

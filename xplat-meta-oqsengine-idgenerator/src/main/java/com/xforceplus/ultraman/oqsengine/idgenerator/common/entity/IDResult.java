@@ -13,12 +13,19 @@ public class IDResult {
     private String id;
     private String patternKey;
 
-    public IDResult(ResultCode code,String id) {
+    public IDResult(ResultCode code, String id) {
         this.code = code;
         this.id = id;
     }
 
-    public IDResult(ResultCode code,String id,String patternKey) {
+    /**
+     * Constructor.
+     *
+     * @param code       code
+     * @param id         id
+     * @param patternKey patternKey
+     */
+    public IDResult(ResultCode code, String id, String patternKey) {
         this.code = code;
         this.id = id;
         this.patternKey = patternKey;

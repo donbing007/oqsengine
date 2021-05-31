@@ -4,12 +4,10 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 /**
- * desc :
- * name : ShutDownExecutor
+ * 执行器-关闭.
  *
- * @author : xujia
- * date : 2021/2/25
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ShutDownExecutor {
 

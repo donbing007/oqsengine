@@ -1,21 +1,25 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PattenParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePattenParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPattenParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import org.apache.commons.lang.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +34,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class BusinessIDGeneratorConfiguration {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * segment storage.
@@ -55,9 +61,9 @@ public class BusinessIDGeneratorConfiguration {
      * @return PattenParserManager
      */
     @Bean
-    public PattenParserManager pattenParserManager() {
-        PattenParserManager pattenParserManager = new PattenParserManager();
-        return pattenParserManager;
+    public PatternParserManager pattenParserManager() {
+        PatternParserManager patternParserManager = new PatternParserManager();
+        return patternParserManager;
     }
 
     /**
@@ -121,8 +127,8 @@ public class BusinessIDGeneratorConfiguration {
      * @return datePattenParser
      */
     @Bean
-    public PattenParser datePattenParser() {
-        return new DatePattenParser();
+    public PatternParser datePattenParser() {
+        return new DatePatternParser();
     }
 
     /**
@@ -131,8 +137,8 @@ public class BusinessIDGeneratorConfiguration {
      * @return numberPattenParser
      */
     @Bean
-    public PattenParser numberPattenParser() {
-        return new NumberPattenParser();
+    public PatternParser numberPattenParser() {
+        return new NumberPatternParser();
     }
 
     /**
@@ -144,16 +150,12 @@ public class BusinessIDGeneratorConfiguration {
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     public RedissonClient redissonClient(LettuceConfiguration lettuceConfiguration) {
-        if (lettuceConfiguration.getUri().indexOf("@") != -1) {
-            lettuceConfiguration.getUri().substring(lettuceConfiguration.getUri().indexOf("@"));
-        }
         Config config = new Config();
         config.useSingleServer()
             .setAddress(lettuceConfiguration.uriWithIDGenerator());
         String url = lettuceConfiguration.uriWithIDGenerator();
-        if (url.indexOf("@") != -1
-            && url.indexOf("://") != -1) {
-            String password = url.substring(url.indexOf("://") + 3, url.indexOf("@"));
+        String password = RedisConfigUtil.getRedisUrlPassword(url);
+        if (!StringUtils.isBlank(password)) {
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);

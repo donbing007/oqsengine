@@ -21,7 +21,7 @@ import org.junit.Ignore;
  * @since 1.8
  */
 @Ignore
-public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager{
+public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager {
 
 
     //-------------level 0--------------------
@@ -60,7 +60,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-                .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
@@ -106,7 +106,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                 .withId(Long.MAX_VALUE - 9)
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
-                    .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                 .build())
             .withRelations(
                 Arrays.asList(
@@ -123,7 +123,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                                 .withId(Long.MAX_VALUE - 9)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
-                                    .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
                         .withRightEntityClassId(l2EntityClassId)
@@ -142,7 +142,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                                 .withId(Long.MAX_VALUE - 9)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
-                                    .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
                         .withRightEntityClassId(driverEntityClassId)
@@ -163,7 +163,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                     .withFieldType(FieldType.LONG)
                     .withName("driver-long")
                     .withConfig(
-                            FieldConfig.Builder.anFieldConfig()
+                        FieldConfig.Builder.anFieldConfig()
                             .withSearchable(true)
                             .build()
                     ).build()

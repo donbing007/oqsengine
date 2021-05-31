@@ -126,6 +126,11 @@ public class SegmentInfo {
     }
 
 
+    /**
+     * inner build class.
+     *
+     * @author leo
+     */
     public static class SegmentBuilder {
         private Long id;
         private String bizType;
@@ -172,7 +177,7 @@ public class SegmentInfo {
 
         public SegmentBuilder withPatten(String patten) {
             this.pattern = patten;
-            return  this;
+            return this;
         }
 
         public SegmentBuilder withVersion(Long version) {
@@ -195,12 +200,23 @@ public class SegmentInfo {
             return this;
         }
 
+        /**
+         * Set resetable property.
+         *
+         * @param resetable resetable
+         * @return SegmentBuilder
+         */
         public SegmentBuilder withResetable(Integer resetable) {
             this.resetable = resetable;
             return this;
         }
 
 
+        /**
+         * build segmentInfo entity.
+         *
+         * @return SegmentInfo
+         */
         public SegmentInfo build() {
             SegmentInfo segmentInfo = new SegmentInfo();
             segmentInfo.id = this.id;
@@ -217,5 +233,38 @@ public class SegmentInfo {
             segmentInfo.resetable = this.resetable;
             return segmentInfo;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "SegmentInfo{"
+            + "id="
+            + id
+            + ", bizType='"
+            + bizType
+            + '\''
+            + ", beginId="
+            + beginId
+            + ", maxId="
+            + maxId
+            + ", step="
+            + step
+            + ", mode="
+            + mode
+            + ", pattern='"
+            + pattern
+            + '\''
+            + ", patternKey='"
+            + patternKey
+            + '\''
+            + ", resetable="
+            + resetable
+            + ", createTime="
+            + createTime
+            + ", updateTime="
+            + updateTime
+            + ", version="
+            + version
+            + '}';
     }
 }

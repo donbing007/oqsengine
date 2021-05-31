@@ -36,20 +36,11 @@ public class Shutdown {
     @Resource
     private TransactionManager tm;
 
-    @Resource(name = "callReadThreadPool")
-    private ExecutorService callReadThreadPool;
+    @Resource(name = "ioThreadPool")
+    private ExecutorService ioThreadPool;
 
-    @Resource(name = "callWriteThreadPool")
-    private ExecutorService callWriteThreadPool;
-
-    @Resource(name = "callRebuildThreadPool")
-    private ExecutorService callRebuildThreadPool;
-
-    @Resource(name = "eventWorker")
-    private ExecutorService eventWorker;
-
-    @Resource(name = "waitVersionExecutor")
-    private ExecutorService waitVersionExecutor;
+    @Resource(name = "taskThreadPool")
+    private ExecutorService taskThreadPool;
 
     @Resource
     private CDCDaemonService cdcDaemonService;
@@ -101,25 +92,13 @@ public class Shutdown {
         }
 
         // wait shutdown
-        logger.info("Start closing the eventWorker worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(eventWorker, 3600);
-        logger.info("Succeed closing the eventWorker worker thread...ok!");
+        logger.info("Start closing the io worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 3600);
+        logger.info("Succeed closing the io worker thread...ok!");
 
-        logger.info("Start closing the waitVersionExecutor worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(waitVersionExecutor, 3600);
-        logger.info("Succeed closing the waitVersionExecutor worker thread...ok!");
-
-        logger.info("Start closing the IO read worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(callReadThreadPool, 3600);
-        logger.info("Succeed closing the IO read worker thread...ok!");
-
-        logger.info("Start closing the IO write worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(callWriteThreadPool, 3600);
-        logger.info("Succeed closing the IO write worker thread...ok!");
-
-        logger.info("Start closing the callRebuild worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(callRebuildThreadPool, 3600);
-        logger.info("Succeed closing the callRebuild worker thread...ok!");
+        logger.info("Start closing the task worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(taskThreadPool, 3600);
+        logger.info("Succeed closing the task worker thread...ok!");
 
         logger.info("Start closing the cdc consumer service...");
         cdcDaemonService.stopDaemon();

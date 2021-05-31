@@ -102,13 +102,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private MasterStorage masterStorage;
 
-    @Resource
-    private UniqueMasterStorage uniqueMasterStorage;
 
     @Resource
     private IndexStorage indexStorage;
 
-    @Resource(name = "callReadThreadPool")
+    @Resource(name = "taskThreadPool")
     private ExecutorService threadPool;
 
     @Resource
@@ -218,7 +216,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             throw new RuntimeException(
                 String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
         }
-        Optional<StorageUniqueEntity> uniqueStorage = uniqueMasterStorage.select(key, entityClass.get());
+        Optional<StorageUniqueEntity> uniqueStorage = masterStorage.select(key, entityClass.get());
         if (!uniqueStorage.isPresent()) {
             return Optional.empty();
         }
