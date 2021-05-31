@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 
 import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager.L1_ENTITY_CLASS;
 
-import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.BaseInit;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockC
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -21,6 +21,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -96,8 +98,9 @@ public class ManagementWithCalculatorTest {
             return false;
         }
     }
-    private long expectedId = 2;
-    private Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
+
+    private final long expectedId = 2;
+    private final Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
     private String expectedAutoFill = null;
     private static Long idGeneratorLocal = 0L;
 
@@ -171,7 +174,7 @@ public class ManagementWithCalculatorTest {
             Optional<IValue> vOp = entity.entityValue().getValue(key);
             Assert.assertTrue(vOp.isPresent());
             Assert.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
-            if (vOp.get().getField().calculateType().equals(CalculateType.AUTO_FILL)) {
+            if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
                 Assert.assertEquals(expectedAutoFill, vOp.get().getValue());
             }
         });
@@ -186,7 +189,7 @@ public class ManagementWithCalculatorTest {
     }
 
     public static class MockMasterStorage implements MasterStorage {
-        private Map<Long, IEntity> entityMap = new HashMap<>();
+        private final Map<Long, IEntity> entityMap = new HashMap<>();
         public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
             entityMap.put(entity.id(), entity);
             return 1;
@@ -212,6 +215,17 @@ public class ManagementWithCalculatorTest {
         public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
             throws SQLException {
             return Optional.empty();
+        }
+
+        @Override
+        public void writeError(ErrorStorageEntity errorStorageEntity) {
+
+        }
+
+        @Override
+        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
+            throws SQLException {
+            return null;
         }
 
         @Override

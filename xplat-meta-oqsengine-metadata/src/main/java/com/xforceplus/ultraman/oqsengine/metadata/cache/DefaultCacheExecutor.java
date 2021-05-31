@@ -38,7 +38,7 @@ import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgrad
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
@@ -72,7 +72,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Resource
     private ObjectMapper objectMapper;
 
-    private Cache<String, EntityClassStorage> entityClassStorageCache;
+    private final Cache<String, EntityClassStorage> entityClassStorageCache;
 
     private StatefulRedisConnection<String, String> syncConnect;
 
@@ -120,7 +120,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-appId
      * value-env
      */
-    private String appEnvKeys;
+    private final String appEnvKeys;
 
     /*
      * version key (版本信息)
@@ -129,7 +129,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-appId
      * value-version
      */
-    private String appVersionKeys;
+    private final String appVersionKeys;
 
     /*
      * prepare key prefix with appId (当前正在进行更新中的Key)
@@ -137,7 +137,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * key-appPrepareKeyPrefix..appId
      * value-version
      */
-    private String appPrepareKeyPrefix;
+    private final String appPrepareKeyPrefix;
 
     /*
      * entityId-appId mapping key (当前的entityId与appId的mapping Key)
@@ -146,7 +146,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-entityId
      * value-appId
      */
-    private String appEntityMappingKey;
+    private final String appEntityMappingKey;
 
     /*
      * all entityIds in one appId with version key (当前的appId + version下所有的entityId列表)
@@ -155,7 +155,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-(appId + version)
      * value-appIds
      */
-    private String appEntityCollectionsKey;
+    private final String appEntityCollectionsKey;
 
 
     /*
@@ -165,7 +165,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field - entityStroage elements name
      * value - entityStroage elements value
      */
-    private String entityStorageKeys;
+    private final String entityStorageKeys;
 
     /**
      * 默认实例化.
@@ -360,7 +360,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
                     }
-                    if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                    if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
                         payLoads.add(
                             new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
                         );
@@ -380,9 +380,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 throw new MetaSyncClientException("parse profile-entityFields failed.", false);
                             }
 
-                            if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                            if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
                                 payLoads.add(
-                                    new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
+                                    new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
+                                        new AutoFillUpgradePayload(entityField))
                                 );
                             }
                         }
@@ -702,7 +703,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         /*
          * 获取当前的Key.
          */
-        String keys = String.format("%s.%s.%s", entityStorageKeys, Integer.toString(version), Long.toString(entityId));
+        String keys = String.format("%s.%s.%s", entityStorageKeys, version, entityId);
 
         try {
             List<String> entityClassKeys = syncCommands.hkeys(keys);

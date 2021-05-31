@@ -82,15 +82,16 @@ public interface CalculatorOrBuilder extends
   com.google.protobuf.ByteString
       getPattenBytes();
 
-  /**
-   * <code>string model = 9;</code>
-   */
-  java.lang.String getModel();
-  /**
-   * <code>string model = 9;</code>
-   */
-  com.google.protobuf.ByteString
-      getModelBytes();
+    /**
+     * <code>string model = 9;</code>
+     */
+    java.lang.String getModel();
+
+    /**
+     * <code>string model = 9;</code>
+     */
+    com.google.protobuf.ByteString
+    getModelBytes();
 
     /**
      * <code>int32 step = 10;</code>

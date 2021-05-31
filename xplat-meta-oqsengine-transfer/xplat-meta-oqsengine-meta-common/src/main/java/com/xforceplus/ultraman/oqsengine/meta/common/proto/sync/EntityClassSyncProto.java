@@ -173,9 +173,11 @@ public final class EntityClassSyncProto {
     internal_static_FieldConfig_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_FieldConfig_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConfig_descriptor,
-        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "DisplayType", "MetaFieldSense", "FuzzyType", "WildcardMinWidth", "WildcardMaxWidth", "UniqueName", });
+        new java.lang.String[] {"Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired",
+            "ValidateRegexString", "DisplayType", "MetaFieldSense", "FuzzyType", "WildcardMinWidth", "WildcardMaxWidth",
+            "UniqueName",});
     internal_static_Calculator_descriptor =
         getDescriptor().getMessageTypes().get(6);
     internal_static_Calculator_fieldAccessorTable = new
@@ -186,11 +188,11 @@ public final class EntityClassSyncProto {
     internal_static_ProfileInfo_descriptor =
         getDescriptor().getMessageTypes().get(7);
     internal_static_ProfileInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ProfileInfo_descriptor,
-        new java.lang.String[] { "Code", "EntityFieldInfo", "RelationInfo", });
+        new java.lang.String[] {"Code", "EntityFieldInfo", "RelationInfo",});
     internal_static_RelationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+        getDescriptor().getMessageTypes().get(8);
     internal_static_RelationInfo_fieldAccessorTable = new
         com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationInfo_descriptor,

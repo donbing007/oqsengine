@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -32,7 +30,7 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withName("longValue0")
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
-                .withCalculateType(CalculateType.NORMAL)
+                .withCalculateType(Calculator.Type.NORMAL)
                 .build())
             .build())
         .withField(EntityField.Builder.anEntityField()
@@ -41,7 +39,7 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withName("longValue1")
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
-                                .withCalculateType(CalculateType.FORMULA)
+                .withCalculateType(Calculator.Type.FORMULA)
                                 .withLevel(1)
                                 .withExpression("${longValue0} * 3")
                                 .build())
@@ -52,7 +50,7 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withName("longValue2")
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
-                .withCalculateType(CalculateType.FORMULA)
+                .withCalculateType(Calculator.Type.FORMULA)
                 .withLevel(2)
                 .withExpression("${longValue1} / 2")
                 .build())
@@ -70,7 +68,7 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withName("dateValue0")
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
-                .withCalculateType(CalculateType.FORMULA)
+                .withCalculateType(Calculator.Type.FORMULA)
                 .withLevel(1)
                 .withExpression("now()")
                 .build())
@@ -81,7 +79,7 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withName("stringAutoFill")
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(CalculateType.AUTO_FILL)
+                .withCalculateType(Calculator.Type.AUTO_FILL)
             .build())
             .build())
         .withField(EntityField.Builder.anEntityField()
@@ -90,7 +88,7 @@ public class MockCalculatorMetaManager implements MetaManager {
                 .withName("stringValueMix")
                 .withConfig(FieldConfig.build().searchable(true))
                 .withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(CalculateType.FORMULA)
+                    .withCalculateType(Calculator.Type.FORMULA)
                     .withLevel(2)
                     .withExpression("string.join(seq.list(${longValue0}, ${stringAutoFill}), '-')")
                     .build())
@@ -98,7 +96,7 @@ public class MockCalculatorMetaManager implements MetaManager {
         .withFather(L0_ENTITY_CLASS)
         .build();
 
-    private Collection<IEntityClass> entities;
+    private final Collection<IEntityClass> entities;
 
     public MockCalculatorMetaManager() {
         entities = Arrays.asList(

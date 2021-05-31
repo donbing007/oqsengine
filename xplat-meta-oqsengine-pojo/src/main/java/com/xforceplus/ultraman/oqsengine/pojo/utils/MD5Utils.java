@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculate.utils;
+package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -10,11 +11,12 @@ import java.util.Objects;
  * @since 1.8
  */
 public class OperationResult {
-    private long txId;
-    private long entityId;
-    private int version;
-    private int eventType;
+    private final long txId;
+    private final long entityId;
+    private final int version;
+    private final int eventType;
     private ResultStatus resultStatus;
+    private Map<String, String> failedMap;
     private String message;
 
     /**
@@ -41,6 +43,29 @@ public class OperationResult {
         this.message = message;
     }
 
+    /**
+     * 实例化.
+     */
+    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
+                           Map<String, String> failedMap, String message) {
+        this.txId = txId;
+        this.version = version;
+        this.resultStatus = resultStatus;
+        this.entityId = entityId;
+        this.eventType = eventType;
+        this.failedMap = failedMap;
+        this.message = message;
+    }
+
+    /**
+     * 半成功状态.
+     */
+    public void resetStatus(Map<String, String> failedMap) {
+        this.resultStatus = ResultStatus.HALF_SUCCESS;
+        this.failedMap = failedMap;
+        this.message = ResultStatus.HALF_SUCCESS.name();
+    }
+
     public int getVersion() {
         return version;
     }
@@ -63,6 +88,10 @@ public class OperationResult {
 
     public String getMessage() {
         return message;
+    }
+
+    public Map<String, String> getFailedMap() {
+        return failedMap;
     }
 
     @Override

@@ -275,7 +275,7 @@ public class StorageMetaManager implements MetaManager {
                 .withId(entityField.id())
                 .withDefaultValue(entityField.defaultValue())
                 .withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(entityField.calculator().getCalculateType())
+                    .withCalculateType(entityField.calculator().getType())
                     .withExpression(entityField.calculator().getExpression())
                     .withMin(entityField.calculator().getMin())
                     .withMax(entityField.calculator().getMax())

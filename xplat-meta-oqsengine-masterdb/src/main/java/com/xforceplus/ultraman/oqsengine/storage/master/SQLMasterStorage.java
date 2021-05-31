@@ -4,7 +4,6 @@ import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEnt
 
 import com.alibaba.google.common.collect.Lists;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -23,8 +22,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
@@ -37,6 +38,9 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.QueryErrorExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.ReplaceErrorExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
@@ -63,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -96,9 +101,14 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource
     UniqueKeyGenerator keyGenerator;
 
+    @Resource(name = "taskThreadPool")
+    private ExecutorService asyncErrorExecutor;
+
     private String tableName;
 
     private String uniqueTableName;
+
+    private String errorTable;
 
     private long queryTimeout;
 
@@ -112,6 +122,10 @@ public class SQLMasterStorage implements MasterStorage {
 
     public void setUniqueTableName(String uniqueTableName) {
         this.uniqueTableName = uniqueTableName;
+    }
+
+    public void setErrorTable(String errorTable) {
+        this.errorTable = errorTable;
     }
 
     @Override
@@ -296,6 +310,26 @@ public class SQLMasterStorage implements MasterStorage {
                 }
                 return ret;
             });
+    }
+
+    @Override
+    public void writeError(ErrorStorageEntity errorStorageEntity) {
+        asyncErrorExecutor.submit(() -> {
+            try {
+                transactionExecutor.execute((tx, resource, hint) -> {
+                    return new ReplaceErrorExecutor(errorTable, resource, queryTimeout).execute(errorStorageEntity);
+                });
+            } catch (Exception e) {
+                logger.warn("write error record failed, errorStorageEntity [{}]", errorStorageEntity.toString());
+            }
+        });
+    }
+
+    @Override
+    public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition) throws SQLException {
+        return (Collection<ErrorStorageEntity>) transactionExecutor.execute((tx, resource, hint) -> {
+            return new QueryErrorExecutor(errorTable, resource, queryTimeout).execute(queryErrorCondition);
+        });
     }
 
     private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass) {
@@ -544,7 +578,7 @@ public class SQLMasterStorage implements MasterStorage {
         StorageValue storageValue;
         for (IValue logicValue : value.values()) {
 
-            if (logicValue != null && EmptyTypedValue.class.isInstance(logicValue)) {
+            if (logicValue != null && logicValue instanceof EmptyTypedValue) {
                 continue;
             }
 
@@ -619,12 +653,12 @@ public class SQLMasterStorage implements MasterStorage {
     private class EntityIterator implements DataIterator<OriginalEntity> {
         private static final int DEFAULT_PAGE_SIZE = 100;
 
-        private IEntityClass entityClass;
+        private final IEntityClass entityClass;
         private long startId;
-        private long startTime;
-        private long endTime;
-        private int pageSize;
-        private List<OriginalEntity> buffer;
+        private final long startTime;
+        private final long endTime;
+        private final int pageSize;
+        private final List<OriginalEntity> buffer;
 
         public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
@@ -730,9 +764,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     // 临时解析结果.
     static class EntityValuePack {
-        private IEntityField logicField;
-        private StorageValue storageValue;
-        private StorageStrategy strategy;
+        private final IEntityField logicField;
+        private final StorageValue storageValue;
+        private final StorageStrategy strategy;
 
         public EntityValuePack(IEntityField logicField, StorageValue storageValue, StorageStrategy strategy) {
             this.logicField = logicField;

@@ -58,13 +58,13 @@ public class ProtoAnyHelper {
                     value = BigDecimal.valueOf(any.unpack(DoubleValue.class).getValue());
                     break;
                 }
+                case BOOLEAN: {
+                    value = any.unpack(BoolValue.class).getValue();
+                    break;
+                }
                 case STRING:
                 case ENUM: {
                     value = any.unpack(StringValue.class).getValue();
-                    break;
-                }
-                case BOOLEAN: {
-                    value = any.unpack(BoolValue.class).getValue();
                     break;
                 }
                 case STRINGS: {

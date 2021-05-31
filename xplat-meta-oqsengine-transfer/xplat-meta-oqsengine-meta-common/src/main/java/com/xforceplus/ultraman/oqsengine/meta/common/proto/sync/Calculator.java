@@ -472,7 +472,6 @@ private static final long serialVersionUID = 0L;
 
   public static final int LEVEL_FIELD_NUMBER = 11;
   private int level_;
-
   /**
    * <code>int32 level = 11;</code>
    */
@@ -482,7 +481,6 @@ private static final long serialVersionUID = 0L;
 
   public static final int ARGS_FIELD_NUMBER = 12;
   private com.google.protobuf.LazyStringList args_;
-
   /**
    * <code>repeated string args = 12;</code>
    */
@@ -515,7 +513,6 @@ private static final long serialVersionUID = 0L;
 
   public static final int FAILEDPOLICY_FIELD_NUMBER = 13;
   private int failedPolicy_;
-
   /**
    * <code>int32 failedPolicy = 13;</code>
    */
@@ -525,21 +522,18 @@ private static final long serialVersionUID = 0L;
 
   public static final int FAILEDDEFAULTVALUE_FIELD_NUMBER = 14;
   private com.google.protobuf.Any failedDefaultValue_;
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
   public boolean hasFailedDefaultValue() {
     return failedDefaultValue_ != null;
   }
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
   public com.google.protobuf.Any getFailedDefaultValue() {
     return failedDefaultValue_ == null ? com.google.protobuf.Any.getDefaultInstance() : failedDefaultValue_;
   }
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
@@ -548,7 +542,6 @@ private static final long serialVersionUID = 0L;
   }
 
   private byte memoizedIsInitialized = -1;
-
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) {
@@ -1711,12 +1704,11 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 level = 11;</code>
      */
     public Builder clearLevel() {
-
+      
       level_ = 0;
       onChanged();
       return this;
@@ -1774,7 +1766,6 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -1788,7 +1779,6 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -1800,7 +1790,6 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -1810,7 +1799,6 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -1826,30 +1814,27 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int failedPolicy_;
-
+    private int failedPolicy_ ;
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public int getFailedPolicy() {
       return failedPolicy_;
     }
-
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public Builder setFailedPolicy(int value) {
-
+      
       failedPolicy_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public Builder clearFailedPolicy() {
-
+      
       failedPolicy_ = 0;
       onChanged();
       return this;
@@ -1857,16 +1842,13 @@ private static final long serialVersionUID = 0L;
 
     private com.google.protobuf.Any failedDefaultValue_ = null;
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>
-        failedDefaultValueBuilder_;
-
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> failedDefaultValueBuilder_;
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     public boolean hasFailedDefaultValue() {
       return failedDefaultValueBuilder_ != null || failedDefaultValue_ != null;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1877,7 +1859,6 @@ private static final long serialVersionUID = 0L;
         return failedDefaultValueBuilder_.getMessage();
       }
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1894,7 +1875,6 @@ private static final long serialVersionUID = 0L;
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1909,7 +1889,6 @@ private static final long serialVersionUID = 0L;
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1928,7 +1907,6 @@ private static final long serialVersionUID = 0L;
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1943,16 +1921,14 @@ private static final long serialVersionUID = 0L;
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     public com.google.protobuf.Any.Builder getFailedDefaultValueBuilder() {
-
+      
       onChanged();
       return getFailedDefaultValueFieldBuilder().getBuilder();
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -1981,7 +1957,6 @@ private static final long serialVersionUID = 0L;
       }
       return failedDefaultValueBuilder_;
     }
-
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFieldsProto3(unknownFields);

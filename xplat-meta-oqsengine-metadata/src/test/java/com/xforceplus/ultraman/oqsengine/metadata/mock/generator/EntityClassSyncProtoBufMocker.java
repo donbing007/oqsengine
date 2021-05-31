@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,16 +19,23 @@ import java.util.List;
  * @since 1.8
  */
 public class EntityClassSyncProtoBufMocker {
-    public static List<GeneralConstant.FourTa<Integer, String, CalculateType, Boolean>> EXPECTED_ENTITY_INFO_LIST =
+    public static List<GeneralConstant.FourTa<Integer, String, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean>>
+        EXPECTED_ENTITY_INFO_LIST =
         Arrays.asList(
-            new GeneralConstant.FourTa<>(1, FieldType.LONG.name(), CalculateType.NORMAL, false),
-            new GeneralConstant.FourTa<>(2, FieldType.STRING.name(), CalculateType.NORMAL, false),
-            new GeneralConstant.FourTa<>(3, FieldType.LONG.name(), CalculateType.FORMULA, false),
-            new GeneralConstant.FourTa<>(4, FieldType.STRING.name(), CalculateType.AUTO_FILL, false)
+            new GeneralConstant.FourTa<>(1, FieldType.LONG.name(),
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL, false),
+            new GeneralConstant.FourTa<>(2, FieldType.STRING.name(),
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL, false),
+            new GeneralConstant.FourTa<>(3, FieldType.LONG.name(),
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA, false),
+            new GeneralConstant.FourTa<>(4, FieldType.STRING.name(),
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.AUTO_FILL, false)
         );
 
-    public static GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> EXPECTED_PROFILE_FOUR_TA =
-        new GeneralConstant.FourTa<>(10, FieldType.LONG.name(), CalculateType.FORMULA, true);
+    public static GeneralConstant.FourTa<Integer, String, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean>
+        EXPECTED_PROFILE_FOUR_TA =
+        new GeneralConstant.FourTa<>(10, FieldType.LONG.name(),
+            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA, true);
 
     public static class Response {
         /**
@@ -38,7 +44,7 @@ public class EntityClassSyncProtoBufMocker {
          * 每层存在2条关系
          */
         public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
-                                    List<ExpectedEntityStorage> expectedEntityStorages) {
+                                                                               List<ExpectedEntityStorage> expectedEntityStorages) {
             return EntityClassSyncResponse.newBuilder()
                 .setAppId(appId)
                 .setVersion(version + 1)
@@ -109,9 +115,11 @@ public class EntityClassSyncProtoBufMocker {
     /**
      * 生成profileInfo.
      */
-    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
+    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String,
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean> fourTa) {
         return ProfileInfo.newBuilder().setCode(code)
-            .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id, GeneralConstant.DEFAULT_RELATION_TYPE, id))
+            .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id,
+                GeneralConstant.DEFAULT_RELATION_TYPE, id))
             .addEntityFieldInfo(
                 entityFieldInfo(id, fourTa)
             ).build();
@@ -121,14 +129,17 @@ public class EntityClassSyncProtoBufMocker {
      * 生成通用calculator
      */
     public static Calculator genericCalculator() {
-        return Calculator.newBuilder().setCalculateType(CalculateType.NORMAL.getType()).build();
+        return Calculator.newBuilder()
+            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL.getType())
+            .build();
     }
 
     /**
      * 生成formula-calculator
      */
     public static Calculator formulaCalculator(String expression, int level) {
-        return Calculator.newBuilder().setCalculateType(CalculateType.FORMULA.getType())
+        return Calculator.newBuilder()
+            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA.getType())
             .setExpression(expression).setLevel(level).build();
     }
 
@@ -136,7 +147,8 @@ public class EntityClassSyncProtoBufMocker {
      * 生成autoFill-calculator
      */
     public static Calculator autoFillCalculator(String patten, String model, String min, int step) {
-        return Calculator.newBuilder().setCalculateType(CalculateType.AUTO_FILL.getType())
+        return Calculator.newBuilder()
+            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.AUTO_FILL.getType())
             .setPatten(patten).setModel(model).setMin(min).setStep(step).build();
     }
 
@@ -148,11 +160,13 @@ public class EntityClassSyncProtoBufMocker {
         }
         return EntityFieldInfo.FieldType.UNKNOWN;
     }
+
     /**
      * 生成entityFieldInfo.
      */
     public static EntityFieldInfo entityFieldInfo(long id,
-                                                  GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
+                                                  GeneralConstant.FourTa<Integer, String,
+                                                      com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean> fourTa) {
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()
             .setId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .setName(GeneralEntityUtils.EntityFieldHelper.name(id))

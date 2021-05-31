@@ -8,7 +8,6 @@ import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralC
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -72,12 +71,12 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static Calculator defaultCalculator() {
-        return Calculator.Builder.anCalculator().withCalculateType(CalculateType.NORMAL).build();
+        return Calculator.Builder.anCalculator().withCalculateType(Calculator.Type.NORMAL).build();
     }
 
     public static Calculator formulaCalculator(String expression, int level) {
         return Calculator.Builder.anCalculator()
-            .withCalculateType(CalculateType.FORMULA)
+            .withCalculateType(Calculator.Type.FORMULA)
             .withExpression(expression)
             .withLevel(level)
             .build();
@@ -85,7 +84,7 @@ public class GeneralEntityClassStorageBuilder {
 
     public static Calculator autoFillCalculator(String patten, String model, String min, int step) {
         return Calculator.Builder.anCalculator()
-            .withCalculateType(CalculateType.AUTO_FILL)
+            .withCalculateType(Calculator.Type.AUTO_FILL)
             .withStep(step)
             .withMin(min)
             .withPatten(patten)
@@ -94,7 +93,7 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static EntityField genericEntityField(long id,
-                                                 GeneralConstant.FourTa<Integer, String, CalculateType, Boolean> fourTa) {
+                                                 GeneralConstant.FourTa<Integer, String, Calculator.Type, Boolean> fourTa) {
         EntityField.Builder builder = EntityField.Builder.anEntityField()
             .withCalculator(defaultCalculator())
             .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))

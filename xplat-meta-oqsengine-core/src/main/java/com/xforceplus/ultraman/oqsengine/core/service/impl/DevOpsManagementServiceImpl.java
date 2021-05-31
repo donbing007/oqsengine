@@ -19,6 +19,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,6 +56,9 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Resource
     private CdcErrorStorage cdcErrorStorage;
+
+    @Resource
+    private MasterStorage masterStorage;
 
     /*
      * 默认查询为7天内的CDC ERROR记录
@@ -177,5 +183,10 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public void cleanLessThan(long id) {
         commitIdRepairExecutor.cleanLessThan(id);
+    }
+
+    @Override
+    public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition errorCondition) throws SQLException {
+        return masterStorage.selectErrors(errorCondition);
     }
 }

@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -192,41 +191,79 @@ public class EntityClassStorageBuilderUtils {
         if (eid < MIN_ID) {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
-
+        FieldType fieldType = FieldType.fromRawType(e.getFieldType().name());
         EntityField.Builder builder = EntityField.Builder.anEntityField()
             .withId(eid)
             .withName(e.getName())
             .withCnName(e.getCname())
-            .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
+            .withFieldType(fieldType)
             .withDictId(e.getDictId())
             .withDefaultValue(e.getDefaultValue())
             .withConfig(toFieldConfig(e.getFieldConfig()));
 
-        builder.withCalculator(toCalculator(e.getCalculator()));
+        builder.withCalculator(toCalculator(fieldType, e.getCalculator()));
 
         return builder.build();
     }
 
-    private static Calculator toCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static Calculator toCalculator(FieldType fieldType,
+                                           com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         if (null == calculator || !calculator.isInitialized()) {
             throw new MetaSyncClientException("calculator is null or not init.", false);
         }
 
-        CalculateType calculateType = CalculateType.instance(calculator.getCalculateType());
+        Calculator.Type calculateType = Calculator.Type.instance(calculator.getCalculateType());
         /*
             初始化
          */
 
         //  check
+        Object failedDefaultValue = null;
+        Calculator.FailedPolicy policy = Calculator.FailedPolicy.UNKNOWN;
+        List<String> args = new ArrayList<>();
         switch (calculateType) {
             case FORMULA: {
+                //  判断表达式不能为空
                 if (calculator.getExpression().isEmpty()) {
-                    throw new MetaSyncClientException("calculator [expression] could not be null with type [formula].", false);
+                    throw new MetaSyncClientException("calculator [expression] could not be null with type [formula].",
+                        false);
                 }
+                //  判断表达式层级逻辑是否允许
                 if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
                     throw new MetaSyncClientException(
-                        String.format("calculator [level] could not be less than %d with type [formula].", MIN_FORMULA_LEVEL), false);
+                        String.format("calculator [level] could not be less than %d with type [formula].",
+                            MIN_FORMULA_LEVEL), false);
                 }
+
+                //  判断失败策略是否为空
+                policy = Calculator.FailedPolicy.instance(calculator.getFailedPolicy());
+                if (policy.equals(Calculator.FailedPolicy.UNKNOWN)) {
+                    throw new MetaSyncClientException(
+                        "calculator [failedPolicy] could not be unknown with type [formula].", false);
+                } else if (policy.equals((Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE))) {
+                    //  当失败策略为RECORD_ERROR_RESUME时,失败默认值不能为空
+                    if (!calculator.getFailedDefaultValue().isInitialized()) {
+                        throw new MetaSyncClientException(
+                            "calculator [failedDefaultValueCould] could not be null when policy [USE_FAILED_DEFAULT_VALUE] with type [formula].",
+                            false);
+                    }
+                    //  当失败策略为RECORD_ERROR_RESUME时,需要对默认值进行计算
+                    try {
+                        failedDefaultValue =
+                            ProtoAnyHelper.toFieldTypeValue(fieldType, calculator.getFailedDefaultValue());
+                    } catch (Exception e) {
+                        throw new MetaSyncClientException(
+                            String.format(
+                                "calculator convert failedDefaultValue failed with type [formula], message : %s",
+                                e.getMessage()), false);
+                    }
+                }
+
+                //  判断公式所使用的参数
+                if (!calculator.getArgsList().isEmpty()) {
+                    args.addAll(calculator.getArgsList());
+                }
+
                 break;
             }
             case AUTO_FILL: {
@@ -239,7 +276,7 @@ public class EntityClassStorageBuilderUtils {
                 break;
         }
 
-        return Calculator.Builder.anCalculator()
+        Calculator.Builder builder = Calculator.Builder.anCalculator()
             .withCalculateType(calculateType)
             .withExpression(calculator.getExpression())
             .withMax(calculator.getMax())
@@ -251,7 +288,13 @@ public class EntityClassStorageBuilderUtils {
             .withModel(calculator.getModel())
             .withStep(calculator.getStep())
             .withLevel(calculator.getLevel())
-            .build();
+            .withFailedPolicy(policy)
+            .withArgs(args);
+
+        if (null != failedDefaultValue) {
+            builder.withFailedDefaultValue(failedDefaultValue);
+        }
+        return builder.build();
     }
 
     /**

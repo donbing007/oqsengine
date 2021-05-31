@@ -7,9 +7,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.PreciseSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
+import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +47,14 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @return StorageUniqueEntity
      */
     Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException;
+
+    /**
+     * 写入errorEntityInfo相关记录.
+     */
+    void writeError(ErrorStorageEntity errorStorageEntity);
+
+    /**
+     * 查询错误列表.
+     */
+    Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition) throws SQLException;
 }
