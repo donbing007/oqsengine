@@ -99,6 +99,11 @@ public class MetricsDefine {
     public static final String MODE = PREFIX + ".mode";
 
     /**
+     * 只读状态的原因.
+     */
+    public static final String READ_ONLEY_MODE_REASE = PREFIX + ".readonly.rease";
+
+    /**
      * 当前未进入消费流的.
      */
     public static final String CHANGELOG_IN_QUEUE = PREFIX + ".changelog.in-queue";
