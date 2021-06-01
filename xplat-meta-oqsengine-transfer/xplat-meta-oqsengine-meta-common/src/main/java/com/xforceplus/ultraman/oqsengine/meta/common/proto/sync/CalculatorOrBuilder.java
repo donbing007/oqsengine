@@ -76,72 +76,73 @@ public interface CalculatorOrBuilder extends
    * <code>string patten = 8;</code>
    */
   java.lang.String getPatten();
+
   /**
    * <code>string patten = 8;</code>
    */
   com.google.protobuf.ByteString
-      getPattenBytes();
+  getPattenBytes();
 
-    /**
-     * <code>string model = 9;</code>
-     */
-    java.lang.String getModel();
+  /**
+   * <code>string model = 9;</code>
+   */
+  java.lang.String getModel();
 
-    /**
-     * <code>string model = 9;</code>
-     */
-    com.google.protobuf.ByteString
-    getModelBytes();
+  /**
+   * <code>string model = 9;</code>
+   */
+  com.google.protobuf.ByteString
+  getModelBytes();
 
-    /**
-     * <code>int32 step = 10;</code>
-     */
-    int getStep();
+  /**
+   * <code>int32 step = 10;</code>
+   */
+  int getStep();
 
-    /**
-     * <code>int32 level = 11;</code>
-     */
-    int getLevel();
+  /**
+   * <code>int32 level = 11;</code>
+   */
+  int getLevel();
 
-    /**
-     * <code>repeated string args = 12;</code>
-     */
-    java.util.List<java.lang.String>
-    getArgsList();
+  /**
+   * <code>repeated string args = 12;</code>
+   */
+  java.util.List<java.lang.String>
+  getArgsList();
 
-    /**
-     * <code>repeated string args = 12;</code>
-     */
-    int getArgsCount();
+  /**
+   * <code>repeated string args = 12;</code>
+   */
+  int getArgsCount();
 
-    /**
-     * <code>repeated string args = 12;</code>
-     */
-    java.lang.String getArgs(int index);
+  /**
+   * <code>repeated string args = 12;</code>
+   */
+  java.lang.String getArgs(int index);
 
-    /**
-     * <code>repeated string args = 12;</code>
-     */
-    com.google.protobuf.ByteString
-    getArgsBytes(int index);
+  /**
+   * <code>repeated string args = 12;</code>
+   */
+  com.google.protobuf.ByteString
+  getArgsBytes(int index);
 
-    /**
-     * <code>int32 failedPolicy = 13;</code>
-     */
-    int getFailedPolicy();
+  /**
+   * <code>int32 failedPolicy = 13;</code>
+   */
+  int getFailedPolicy();
 
-    /**
-     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-     */
-    boolean hasFailedDefaultValue();
+  /**
+   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+   */
+  boolean hasFailedDefaultValue();
 
-    /**
-     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-     */
-    com.google.protobuf.Any getFailedDefaultValue();
+  /**
+   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+   */
+  com.google.protobuf.Any getFailedDefaultValue();
 
-    /**
-     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-     */
-    com.google.protobuf.AnyOrBuilder getFailedDefaultValueOrBuilder();
+  /**
+   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+   */
+  com.google.protobuf.AnyOrBuilder getFailedDefaultValueOrBuilder();
 }

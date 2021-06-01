@@ -90,16 +90,17 @@ message FieldConfig {
 			CREATE_TIME = 4;
 			UPDATE_TIME = 5;
 			CREATE_USER_ID = 6;
-			UPDATE_USER_ID = 7;
-			CREATE_USER_NAME = 8;
-			UPDATE_USER_NAME = 9;
-			DELETE_FLAG = 10;
+		UPDATE_USER_ID = 7;
+		CREATE_USER_NAME = 8;
+		UPDATE_USER_NAME = 9;
+		DELETE_FLAG = 10;
 	}
 
 	int32 fuzzyType = 10;
 	int32 wildcardMinWidth = 11;
 	int32 wildcardMaxWidth = 12;
 	string uniqueName = 13;
+	bool crossSearch = 14;
 }
 
 message Calculator {

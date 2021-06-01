@@ -318,6 +318,7 @@ public class EntityClassStorageBuilderUtils {
             .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
             .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
             .withUniqueName(fieldConfig.getUniqueName())
+            .withCrossSearch(fieldConfig.getCrossSearch())
             .build();
     }
 }

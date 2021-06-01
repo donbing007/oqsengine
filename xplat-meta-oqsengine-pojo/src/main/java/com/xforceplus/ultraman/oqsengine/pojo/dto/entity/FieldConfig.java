@@ -32,9 +32,9 @@ public class FieldConfig implements Serializable {
         UPDATE_USER_NAME(9),
         DELETE_FLAG(10);
 
-        private int symbol;
+        private final int symbol;
 
-        private FieldSense(int symbol) {
+        FieldSense(int symbol) {
             this.symbol = symbol;
         }
 
@@ -78,9 +78,9 @@ public class FieldConfig implements Serializable {
          */
         SEGMENTATION(3);
 
-        private int symbol;
+        private final int symbol;
 
-        private FuzzyType(int symbol) {
+        FuzzyType(int symbol) {
             this.symbol = symbol;
         }
 
@@ -154,6 +154,7 @@ public class FieldConfig implements Serializable {
     /**
      * 是否支持跨元信息查询.
      */
+    @JsonProperty(value = "fieldSense")
     private boolean crossSearch = false;
 
     /**
