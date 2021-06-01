@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -47,9 +47,9 @@ import org.slf4j.LoggerFactory;
  */
 public class EntityClassHelper {
 
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static Logger logger = LoggerFactory.getLogger(EntityClassHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityClassHelper.class);
 
     /**
      * convert entityUp to EntityRef.
@@ -137,18 +137,18 @@ public class EntityClassHelper {
                 return entityFieldOp
                     .map(x -> {
 
-                        if (x.calculateType() == CalculateType.FORMULA) {
+                        if (Calculator.Type.FORMULA.equals(x.calculateType())) {
                             String contextStr = y.getContextStr();
                             Map<String, Object> contextMap = Collections.emptyMap();
                             if (!StringUtils.isEmpty(contextStr)) {
                                 try {
-                                    contextMap = mapper.readValue(contextStr, new TypeReference<Map<String, Object>>() {
+                                    contextMap = MAPPER.readValue(contextStr, new TypeReference<Map<String, Object>>() {
                                     });
 
                                     contextMap = toTypedContextMap(contextMap, entityClass);
                                 } catch (JsonProcessingException e) {
                                     //error
-                                    logger.error("{}", e);
+                                    LOGGER.error("{}", e);
                                 }
                             }
                             FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
@@ -164,7 +164,7 @@ public class EntityClassHelper {
 
         //  add auto_fill.
         List<IValue> autoFilled =
-            entityClass.fields().stream().filter(x -> x.calculateType() == CalculateType.AUTO_FILL).map(x -> {
+            entityClass.fields().stream().filter(x -> x.calculateType() == Calculator.Type.AUTO_FILL).map(x -> {
                 return x.type().toTypedValue(x, "");
             }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 

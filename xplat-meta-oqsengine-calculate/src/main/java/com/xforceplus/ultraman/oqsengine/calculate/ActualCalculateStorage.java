@@ -4,6 +4,10 @@ import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +22,9 @@ import java.util.Map;
  */
 public class ActualCalculateStorage implements CalculateStorage {
 
+    private static final int MIN_LEVEL = 1;
+    private static final int MAX_ERROR_MESSAGE_LENGTH = 256;
+
     @Override
     public Expression compile(String expression) {
         return ExpressionUtils.compile(ExpressionWrapper.Builder.anExpression()
@@ -25,7 +32,8 @@ public class ActualCalculateStorage implements CalculateStorage {
     }
 
     @Override
-    public Map<String, Object> execute(List<ExecutionWrapper<?>> expressionWrappers, Map<String, Object> params) {
+    public AbstractMap.SimpleEntry<List<IValue>, Map<String, String>>
+    execute(List<ExecutionWrapper<?>> expressionWrappers, Map<String, Object> params) {
         Map<String, Object> result = new HashMap<>(params);
 
         Map<Integer, List<ExecutionWrapper<?>>> partitionExpressionWraps = new HashMap<>();
@@ -42,22 +50,63 @@ public class ActualCalculateStorage implements CalculateStorage {
                 .add(expressionWrapper);
         }
 
+        List<IValue> finalValues = new ArrayList<>();
+        Map<String, String> failedMaps = new HashMap<>();
+
         /*
             从1-N的顺序执行每一层中的所有表达式
          */
-        for (int i = 1; i <= maxLevel; i++) {
+        for (int i = MIN_LEVEL; i <= maxLevel; i++) {
             List<ExecutionWrapper<?>> needExecutions = partitionExpressionWraps.get(i);
             if (null != needExecutions) {
                 for (ExecutionWrapper<?> executionWrapper : needExecutions) {
-                    //  将执行结果写入context中
-                    result.put(executionWrapper.getCode(),
-                        ExpressionUtils.execute(executionWrapper.getExpressionWrapper(), result));
+                    try {
+                        //  已存在于计算错误中，则不再进行计算二直接进入出错处理
+                        if (i > MIN_LEVEL
+                            && !checkArgs(executionWrapper.getEntityField().calculator().getArgs(), failedMaps)) {
+                            throw new IllegalArgumentException(
+                                String.format("formula [%s-%s] at level [%d] has unexpected arg-result.",
+                                    executionWrapper.getCode(), executionWrapper.getExpressionWrapper().getExpression(),
+                                    i));
+                        }
+                        //  执行公式
+                        Object object =
+                            ExpressionUtils.execute(executionWrapper.getExpressionWrapper(), result);
+                        //  公式计算结果不能为空
+                        if (null == object) {
+                            throw new IllegalStateException(String.format("formula [%s-%s] result could not be null",
+                                executionWrapper.getCode(), executionWrapper.getExpressionWrapper().getExpression()));
+                        }
+                        finalValues.add(IValueUtils.toIValue(executionWrapper.getEntityField(), object));
+                        result.put(executionWrapper.getCode(), object);
+                    } catch (Exception e) {
+                        if (executionWrapper.getEntityField().calculator().getFailedPolicy().equals(
+                            Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
+
+                            finalValues.add(IValueUtils.toIValue(executionWrapper.getEntityField(),
+                                executionWrapper.getEntityField().calculator().getFailedDefaultValue()));
+                        } else {
+                            throw e;
+                        }
+                        //  将错误写入failedMaps中
+                        failedMaps.put(executionWrapper.getEntityField().name(),
+                            e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
+                    }
                 }
             }
         }
-
-        return result;
+        return new AbstractMap.SimpleEntry(finalValues, failedMaps);
     }
 
+    private boolean checkArgs(List<String> args, Map<String, String> failedMaps) {
+        if (null != args) {
+            for (String arg : args) {
+                if (failedMaps.containsKey(arg)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
 }

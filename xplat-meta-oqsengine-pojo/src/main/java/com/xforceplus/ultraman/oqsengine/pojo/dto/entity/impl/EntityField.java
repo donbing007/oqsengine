@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -196,15 +195,14 @@ public class EntityField implements IEntityField, Serializable {
     }
 
     @Override
-    public CalculateType calculateType() {
-        return null == this.calculator ? CalculateType.UNKNOWN : this.calculator.getCalculateType();
+    public Calculator.Type calculateType() {
+        return null == this.calculator ? Calculator.Type.UNKNOWN : this.calculator.getType();
     }
 
     @Override
     public Calculator calculator() {
         return this.calculator;
     }
-
 
     public String getDictId() {
         return dictId;

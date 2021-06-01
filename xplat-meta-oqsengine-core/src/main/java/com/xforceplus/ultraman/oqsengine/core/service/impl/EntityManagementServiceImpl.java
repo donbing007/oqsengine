@@ -3,11 +3,11 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -23,35 +23,28 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculateType;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
-import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +103,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /*
     只读的原因.
      */
-    static enum ReadOnleyModeRease {
+    enum ReadOnleyModeRease {
         // 未知,不应该产生.
         UNKNOWN(0),
         // 非只读,正常状态.
@@ -122,9 +115,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         // CDC离线.
         CDC_UNCONNECTED(4);
 
-        private int symbol;
+        private final int symbol;
 
-        private ReadOnleyModeRease(int symbol) {
+        ReadOnleyModeRease(int symbol) {
             this.symbol = symbol;
         }
 
@@ -159,14 +152,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 忽略CDC状态检查.
      */
-    private boolean ignoreCDCStatus;
+    private final boolean ignoreCDCStatus;
 
-    private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
-    private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
-    private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
-    private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
-    private AtomicInteger readOnly = Metrics.gauge(MetricsDefine.MODE, new AtomicInteger(0));
-    private AtomicInteger readOnlyRease = Metrics.gauge(MetricsDefine.READ_ONLEY_MODE_REASE, new AtomicInteger(0));
+    private final Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
+    private final Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
+    private final Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
+    private final Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
+    private final AtomicInteger readOnly = Metrics.gauge(MetricsDefine.MODE, new AtomicInteger(0));
+    private final AtomicInteger readOnlyRease =
+        Metrics.gauge(MetricsDefine.READ_ONLEY_MODE_REASE, new AtomicInteger(0));
 
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
@@ -264,8 +258,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        Map<String, String> failedMap = null;
         try {
-            prepareBuild(entityClass, entity);
+            failedMap = prepareBuild(entityClass, entity);
         } catch (Exception e) {
             String message = e.toString();
             logger.warn("prepare build error, message [{}]", message);
@@ -274,8 +269,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 ResultStatus.ELEVATEFAILED, message);
         }
 
+        OperationResult operationResult = null;
         try {
-            return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
+            operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
                     long newId = idGenerator.next();
@@ -299,6 +295,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
                     ResultStatus.SUCCESS);
             });
+
+            if (null != failedMap && !failedMap.isEmpty()) {
+                operationResult.resetStatus(failedMap);
+            }
+
+            return operationResult;
         } catch (Exception ex) {
 
             logger.error(ex.getMessage(), ex);
@@ -308,6 +310,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         } finally {
             inserCountTotal.increment();
+            //  处理半成功，将插入一条失败的Message
+            handleHalfSuccessOrRecover(0, entityClass.id(), operationResult);
         }
     }
 
@@ -322,8 +326,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        OperationResult operationResult = null;
         try {
-            return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
+            operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 /*
                  * 获取当前的原始版本.
@@ -352,8 +357,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 /*
                     执行自动编号、公式字段计算
                  */
+                Map<String, String> failedMap = null;
                 try {
-                    prepareReplace(entityClass, targetEntity, entity);
+                    failedMap = prepareReplace(entityClass, targetEntity, entity);
                 } catch (Exception e) {
                     String message = e.toString();
                     logger.warn("prepare replace error, message [{}]", message);
@@ -384,9 +390,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
+                //  半成功
+                if (null != failedMap && !failedMap.isEmpty()) {
+                    return new OperationResult(tx.id(), entity.id(), targetEntity.version(),
+                        EventType.ENTITY_REPLACE.getValue(), ResultStatus.HALF_SUCCESS, failedMap,
+                        ResultStatus.HALF_SUCCESS.name());
+                }
                 return new OperationResult(tx.id(), entity.id(), targetEntity.version(),
                     EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
             });
+
+            return operationResult;
         } catch (Exception ex) {
 
             logger.error(ex.getMessage(), ex);
@@ -395,6 +409,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw ex;
         } finally {
             replaceCountTotal.increment();
+            //  处理半成功，将插入一条失败的Message
+            handleHalfSuccessOrRecover(entity.maintainId(), entityClass.id(), operationResult);
         }
     }
 
@@ -576,13 +592,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     //  build前的准备
-    private void prepareBuild(IEntityClass entityClass, IEntity entity) {
+    private Map<String, String> prepareBuild(IEntityClass entityClass, IEntity entity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
 
         //  context
-        Map<String, Object> context = new HashMap<>();
+        Map<String, Object> context = toContext(entityClass, entity);
 
         //  需要进行计算的公式字段
         List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
@@ -591,13 +607,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             v -> {
                 IEntityField entityField = v.getField();
                 //  自动填充
-                if (entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
                     Object result = bizIDGenerator.nextId(String.valueOf(entityField.id()));
                     if (null != result) {
                         context.put(entityField.name(), result);
-                        entityValue.addValue(toIValue(entityField, result));
+                        entityValue.addValue(IValueUtils.toIValue(entityField, result));
                     }
-                } else if (entityField.calculateType().equals(CalculateType.FORMULA)) {
+                } else if (entityField.calculateType().equals(Calculator.Type.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
                 } else {
                     //  将没有置入context中的常量加入到计算中
@@ -614,7 +630,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         //  计算公式字段
-        formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
+        Map<String, String> failedMaps
+            = formulaElevator(entityValue, context, executionWrappers);
 
         if (logger.isDebugEnabled()) {
             logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
@@ -623,16 +640,18 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         //  将entityValue加入到目标中
         entity.resetEntityValue(entityValue);
+
+        return failedMaps;
     }
 
     //  replace前的准备
-    private void prepareReplace(IEntityClass entityClass, IEntity targetEntity, IEntity updateEntity) {
+    private Map<String, String> prepareReplace(IEntityClass entityClass, IEntity targetEntity, IEntity updateEntity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
 
         //  context
-        Map<String, Object> context = new HashMap<>();
+        Map<String, Object> context = toContext(entityClass, updateEntity);
 
         //  需要进行计算的公式字段
         List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
@@ -642,9 +661,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             v -> {
                 IEntityField entityField = v.getField();
                 //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
-                if (entityField.calculateType().equals(CalculateType.FORMULA)) {
+                if (entityField.calculateType().equals(Calculator.Type.FORMULA)) {
                     addContextWrappers(v, context, executionWrappers);
-                } else if (!entityField.calculateType().equals(CalculateType.AUTO_FILL)) {
+                } else if (!entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
                     //  加入新的entityValue中
                     entityValue.addValue(v);
                 }
@@ -677,10 +696,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         );
 
         //  计算公式字段
-        formulaElevator(entityClass.fields(), entityValue, context, executionWrappers);
+        Map<String, String> failedMaps =
+            formulaElevator(entityValue, context, executionWrappers);
 
         //  将entityValue加入到目标中
         targetEntity.resetEntityValue(entityValue);
+
+        return failedMaps;
     }
 
     private void addContextWrappers(IValue<?> v, Map<String, Object> context,
@@ -694,61 +716,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
         Map<String, Object> local = (Map<String, Object>) v.getValue();
         if (null != local) {
-            context.putAll(local);
+            local.forEach(context::putIfAbsent);
         }
     }
 
-    private void formulaElevator(Collection<IEntityField> entityFields, IEntityValue entityValue,
-                                 Map<String, Object> context, List<ExecutionWrapper<?>> executionWrappers) {
-        Map<String, Object> result = calculateStorage.execute(executionWrappers, context);
-        if (null != result
-            && (null != entityFields && !entityFields.isEmpty())) {
-            entityFields.forEach(
-                e -> {
-                    if (e.calculateType().equals(CalculateType.FORMULA)) {
-                        Object o = result.get(e.name());
-
-                        if (null == o) {
-                            logger.warn("entityField-[{}-{}] in formula get null value.", e.id(), e.name());
-                        } else {
-                            entityValue.addValue(toIValue(e, o));
-                        }
-                    }
-                }
-            );
+    private Map<String, String> formulaElevator(IEntityValue entityValue,
+                                                Map<String, Object> context,
+                                                List<ExecutionWrapper<?>> executionWrappers) {
+        AbstractMap.SimpleEntry<List<IValue>, Map<String, String>> result =
+            calculateStorage.execute(executionWrappers, context);
+        if (null != result && null != result.getKey()) {
+            result.getKey().forEach(entityValue::addValue);
         }
-    }
 
-    private IValue<?> toIValue(IEntityField field, Object result) {
-        switch (field.type()) {
-            case BOOLEAN: {
-                return new BooleanValue(field, (Boolean) result);
-            }
-            case ENUM: {
-                return new EnumValue(field, (String) result);
-            }
-            case DATETIME: {
-                if (result instanceof Date) {
-                    return new DateTimeValue(field, TimeUtils.convert((Date) result));
-                }
-                return new DateTimeValue(field, TimeUtils.convert((Long) result));
-            }
-            case LONG: {
-                return new LongValue(field, (Long) result);
-            }
-            case STRING: {
-                return new StringValue(field, (String) result);
-            }
-            case STRINGS: {
-                return new StringsValue(field, (String[]) result);
-            }
-            case DECIMAL: {
-                return new DecimalValue(field, (BigDecimal) result);
-            }
-            default: {
-                throw new IllegalArgumentException("unknown field type.");
-            }
-        }
+        return result.getValue();
     }
 
     private ExecutionWrapper<?> initExecutionWrapper(IEntityField entityField) {
@@ -756,6 +737,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withCode(entityField.name())
             .withRetClass(entityField.type().getJavaType())
             .witLevel(entityField.calculator().getLevel())
+            .withIEntityField(entityField)
             .withExpressionWrapper(
                 ExpressionWrapper.Builder.anExpression()
                     .withExpression(entityField.calculator().getExpression())
@@ -764,4 +746,42 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             ).build();
     }
 
+    private Map<String, Object> toContext(IEntityClass entityClass, IEntity entity) {
+        Map<String, Object> context = new HashMap<>();
+        entityClass.fields().forEach(
+            entityField -> {
+                if (entityField.calculateType().equals(Calculator.Type.NORMAL)) {
+                    entity.entityValue().getValue(entityField.id())
+                        .ifPresent(value -> context.putIfAbsent(entityField.name(), value.getValue()));
+                }
+            }
+        );
+
+        return context;
+    }
+
+    private void handleHalfSuccessOrRecover(long maintainId, long entityClassId, OperationResult operationResult) {
+        if (null != operationResult && (maintainId > 0 && operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
+            || operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS))) {
+
+            String errors = "serialize errors failed.";
+            try {
+                errors = SerializeUtils.OBJECT_MAPPER.writeValueAsString(operationResult.getFailedMap());
+            } catch (Exception e) {
+                //  ignore
+            }
+            //  将entityId设置为maintainId
+            ErrorStorageEntity errorStorageEntity = ErrorStorageEntity.Builder.anErrorStorageEntity()
+                .withMaintainId(maintainId > 0 ? maintainId : operationResult.getEntityId())
+                .withEntity(entityClassId)
+                .withId(operationResult.getEntityId())
+                .withErrors(errors)
+                .withFixedStatus(
+                    operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
+                        ? FixedStatus.FIXED.getStatus() : FixedStatus.NOT_FIXED.getStatus()
+                ).build();
+
+            masterStorage.writeError(errorStorageEntity);
+        }
+    }
 }

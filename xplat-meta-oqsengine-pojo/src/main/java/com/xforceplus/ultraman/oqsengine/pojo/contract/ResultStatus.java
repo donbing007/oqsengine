@@ -36,11 +36,15 @@ public enum ResultStatus {
     /**
      * 转换公式、自增编号失败.
      */
-    ELEVATEFAILED(6);
+    ELEVATEFAILED(6),
+    /**
+     * 公式字段存在部分计算失败，使用默认值的情况.
+     */
+    HALF_SUCCESS(7);
 
-    private int value;
+    private final int value;
 
-    private ResultStatus(int value) {
+    ResultStatus(int value) {
         this.value = value;
     }
 

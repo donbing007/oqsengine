@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.google.common.collect.Lists;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteUniqueExecutor;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MasterUniqueStorage implements UniqueMasterStorage {
 
-    private Logger logger = LoggerFactory.getLogger(MasterUniqueStorage.class);
+    private final Logger logger = LoggerFactory.getLogger(MasterUniqueStorage.class);
 
     @Resource
     UniqueKeyGenerator keyGenerator;

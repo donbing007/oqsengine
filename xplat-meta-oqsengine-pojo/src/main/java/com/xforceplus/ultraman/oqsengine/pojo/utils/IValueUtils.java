@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * desc :.
@@ -86,5 +87,46 @@ public class IValueUtils {
         }
 
         return retValue;
+    }
+
+    /**
+     * 根据field与object转换IValue.
+     */
+    public static IValue<?> toIValue(IEntityField field, Object result) {
+        try {
+            switch (field.type()) {
+                case BOOLEAN: {
+                    return new BooleanValue(field, (Boolean) result);
+                }
+                case ENUM: {
+                    return new EnumValue(field, (String) result);
+                }
+                case DATETIME: {
+                    if (result instanceof Date) {
+                        return new DateTimeValue(field, TimeUtils.convert((Date) result));
+                    } else if (result instanceof LocalDateTime) {
+                        return new DateTimeValue(field, (LocalDateTime) result);
+                    }
+                    return new DateTimeValue(field, TimeUtils.convert((Long) result));
+                }
+                case LONG: {
+                    return new LongValue(field, (Long) result);
+                }
+                case STRING: {
+                    return new StringValue(field, (String) result);
+                }
+                case STRINGS: {
+                    return new StringsValue(field, (String[]) result);
+                }
+                case DECIMAL: {
+                    return new DecimalValue(field, (BigDecimal) result);
+                }
+                default: {
+                    throw new IllegalArgumentException("unknown field type.");
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("toIValue failed, message [%s]", e.getMessage()));
+        }
     }
 }

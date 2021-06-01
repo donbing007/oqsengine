@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculate.dto;
 
 import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  *  执行一个表达式的对象表示.
@@ -25,6 +27,12 @@ public class ExecutionWrapper<T> {
      * 返回值类型.
      */
     private Class<T> retClazz;
+
+
+    /**
+     * entityField.
+     */
+    private IEntityField entityField;
 
     /**
      * 表达式.
@@ -51,17 +59,20 @@ public class ExecutionWrapper<T> {
         return retClazz;
     }
 
+    public IEntityField getEntityField() {
+        return entityField;
+    }
+
     /**
      * builder.
      */
     public static final class Builder<T> {
 
-        public static final int DEFAULT_FORMULA_LEVEL = 1;
-
         private String code;
         private Integer level;
         private Class<T> retClazz;
         private ExpressionWrapper expressionWrapper;
+        private IEntityField entityField;
 
         private Builder() {
         }
@@ -90,6 +101,11 @@ public class ExecutionWrapper<T> {
             return this;
         }
 
+        public ExecutionWrapper.Builder withIEntityField(IEntityField entityField) {
+            this.entityField = entityField;
+            return this;
+        }
+
 
         /**
          * build.
@@ -113,9 +129,32 @@ public class ExecutionWrapper<T> {
 
             if (null == this.expressionWrapper) {
                 throw new CalculateExecutionException(
-                    String.format("build ExecutionWrapper error, expressionWrapper couldn't be null, code-[%s].", this.code));
+                    String.format("build ExecutionWrapper error, expressionWrapper couldn't be null, code-[%s].",
+                        this.code));
             }
             executionWrapper.expressionWrapper = this.expressionWrapper;
+
+            if (null == this.entityField) {
+                throw new CalculateExecutionException(
+                    String.format("build ExecutionWrapper error, entityField couldn't be null, code-[%s].", this.code));
+            }
+
+            if (null == this.entityField.calculator().getFailedPolicy()) {
+                throw new CalculateExecutionException(
+                    String.format("failedPolicy can't be null in build function, code-[%s].", this.code));
+            }
+            if (this.entityField.calculator().getFailedPolicy()
+                .equals(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
+                if (null == this.entityField.calculator().getFailedDefaultValue()) {
+                    throw new CalculateExecutionException(
+                        String.format(
+                            "failedDefaultValue can't be null when failedPolicy [USE_FAILED_DEFAULT_VALUE] in build function, code-[%s].",
+                            this.code)
+                    );
+                }
+            }
+
+            executionWrapper.entityField = this.entityField;
 
             return executionWrapper;
         }

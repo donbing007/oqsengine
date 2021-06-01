@@ -29,6 +29,7 @@ private static final long serialVersionUID = 0L;
     wildcardMinWidth_ = 0;
     wildcardMaxWidth_ = 0;
     uniqueName_ = "";
+    crossSearch_ = false;
   }
 
   @java.lang.Override
@@ -129,6 +130,11 @@ private static final long serialVersionUID = 0L;
             java.lang.String s = input.readStringRequireUtf8();
 
             uniqueName_ = s;
+            break;
+          }
+          case 112: {
+
+            crossSearch_ = input.readBool();
             break;
           }
         }
@@ -327,7 +333,7 @@ private static final long serialVersionUID = 0L;
 
     private final int value;
 
-    private MetaFieldSense(int value) {
+    MetaFieldSense(int value) {
       this.value = value;
     }
 
@@ -523,7 +529,7 @@ private static final long serialVersionUID = 0L;
       getUniqueNameBytes() {
     java.lang.Object ref = uniqueName_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       uniqueName_ = b;
@@ -533,11 +539,26 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int CROSSSEARCH_FIELD_NUMBER = 14;
+  private boolean crossSearch_;
+
+  /**
+   * <code>bool crossSearch = 14;</code>
+   */
+  public boolean getCrossSearch() {
+    return crossSearch_;
+  }
+
   private byte memoizedIsInitialized = -1;
+
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized == 1) return true;
-    if (isInitialized == 0) return false;
+    if (isInitialized == 1) {
+      return true;
+    }
+    if (isInitialized == 0) {
+      return false;
+    }
 
     memoizedIsInitialized = 1;
     return true;
@@ -583,6 +604,9 @@ private static final long serialVersionUID = 0L;
     }
     if (!getUniqueNameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 13, uniqueName_);
+    }
+    if (crossSearch_ != false) {
+      output.writeBool(14, crossSearch_);
     }
     unknownFields.writeTo(output);
   }
@@ -632,14 +656,18 @@ private static final long serialVersionUID = 0L;
     }
     if (wildcardMinWidth_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(11, wildcardMinWidth_);
+          .computeInt32Size(11, wildcardMinWidth_);
     }
     if (wildcardMaxWidth_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(12, wildcardMaxWidth_);
+          .computeInt32Size(12, wildcardMaxWidth_);
     }
     if (!getUniqueNameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, uniqueName_);
+    }
+    if (crossSearch_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(14, crossSearch_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -682,6 +710,8 @@ private static final long serialVersionUID = 0L;
         == other.getWildcardMaxWidth());
     result = result && getUniqueName()
         .equals(other.getUniqueName());
+    result = result && (getCrossSearch()
+        == other.getCrossSearch());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -724,6 +754,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getWildcardMaxWidth();
     hash = (37 * hash) + UNIQUENAME_FIELD_NUMBER;
     hash = (53 * hash) + getUniqueName().hashCode();
+    hash = (37 * hash) + CROSSSEARCH_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getCrossSearch());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -879,6 +912,8 @@ private static final long serialVersionUID = 0L;
 
       uniqueName_ = "";
 
+      crossSearch_ = false;
+
       return this;
     }
 
@@ -914,35 +949,36 @@ private static final long serialVersionUID = 0L;
       result.wildcardMinWidth_ = wildcardMinWidth_;
       result.wildcardMaxWidth_ = wildcardMaxWidth_;
       result.uniqueName_ = uniqueName_;
+      result.crossSearch_ = crossSearch_;
       onBuilt();
       return result;
     }
 
     public Builder clone() {
-      return (Builder) super.clone();
+      return super.clone();
     }
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return (Builder) super.setField(field, value);
+      return super.setField(field, value);
     }
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
+      return super.clearField(field);
     }
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
+      return super.clearOneof(oneof);
     }
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         int index, java.lang.Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
+      return super.setRepeatedField(field, index, value);
     }
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return (Builder) super.addRepeatedField(field, value);
+      return super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig) {
@@ -996,6 +1032,9 @@ private static final long serialVersionUID = 0L;
       if (!other.getUniqueName().isEmpty()) {
         uniqueName_ = other.uniqueName_;
         onChanged();
+      }
+      if (other.getCrossSearch() != false) {
+        setCrossSearch(other.getCrossSearch());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1500,14 +1539,44 @@ private static final long serialVersionUID = 0L;
     public Builder setUniqueNameBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
+        throw new NullPointerException();
+      }
+      checkByteStringIsUtf8(value);
+
       uniqueName_ = value;
       onChanged();
       return this;
     }
+
+    private boolean crossSearch_;
+
+    /**
+     * <code>bool crossSearch = 14;</code>
+     */
+    public boolean getCrossSearch() {
+      return crossSearch_;
+    }
+
+    /**
+     * <code>bool crossSearch = 14;</code>
+     */
+    public Builder setCrossSearch(boolean value) {
+
+      crossSearch_ = value;
+      onChanged();
+      return this;
+    }
+
+    /**
+     * <code>bool crossSearch = 14;</code>
+     */
+    public Builder clearCrossSearch() {
+
+      crossSearch_ = false;
+      onChanged();
+      return this;
+    }
+
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFieldsProto3(unknownFields);

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculate.dto;
 
 import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
-import com.xforceplus.ultraman.oqsengine.calculate.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 
 /**
  *  表达式.

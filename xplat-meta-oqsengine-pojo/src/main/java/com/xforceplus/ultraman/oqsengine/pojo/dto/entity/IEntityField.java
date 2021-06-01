@@ -63,7 +63,7 @@ public interface IEntityField extends Comparable<IEntityField> {
      *
      * @return 计算类型
      */
-    CalculateType calculateType();
+    Calculator.Type calculateType();
 
     /**
      * 获取计算对象.

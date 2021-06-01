@@ -1,6 +1,5 @@
-package com.xforceplus.ultraman.oqsengine.calculate.utils;
+package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
-import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -19,7 +18,7 @@ public class TimeUtils {
         try {
             return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
         } catch (Exception ex) {
-            throw new CalculateExecutionException("convert timestamp to localDateTime failed.");
+            throw new IllegalArgumentException("convert timestamp to localDateTime failed.");
         }
     }
 
@@ -30,7 +29,7 @@ public class TimeUtils {
         try {
             return date.toInstant().atZone(ZONE_ID).toLocalDateTime();
         } catch (Exception ex) {
-            throw new CalculateExecutionException("convert date to localDateTime failed.");
+            throw new IllegalArgumentException("convert date to localDateTime failed.");
         }
     }
 }
