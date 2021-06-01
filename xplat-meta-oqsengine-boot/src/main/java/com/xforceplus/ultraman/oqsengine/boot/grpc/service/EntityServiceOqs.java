@@ -935,20 +935,28 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> prepare(EntityUp entityUp, Metadata metadata) {
         return asyncRead(() -> {
 
-            Optional<String> appId = metadata.getText("appid");
-            Optional<String> env = metadata.getText("env");
-            if (appId.isPresent() && env.isPresent()) {
-                int need = metaManager.need(appId.get(), env.get());
-                return OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("OK:" + need)
-                    .build();
-            } else {
+            try {
+                Optional<String> appId = metadata.getText("appid");
+                Optional<String> env = metadata.getText("env");
+                if (appId.isPresent() && env.isPresent()) {
+                    int need = metaManager.need(appId.get(), env.get());
+                    return OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.OK)
+                        .setMessage("OK:" + need)
+                        .build();
+                } else {
+                    return OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.FAILED)
+                        .setMessage("FAILED: not registered")
+                        .build();
+                }
+            } catch (Exception ex) {
                 return OperationResult
                     .newBuilder()
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage("FAILED: not registered")
+                    .setMessage(ex.getMessage())
                     .build();
             }
         });
