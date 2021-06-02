@@ -15,6 +15,11 @@ import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
+import java.util.Iterator;
 
 /**
  * json的条件查询语句构造器.
@@ -23,27 +28,28 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/11/4 15:56
  * @since 1.8
  */
-public class SQLJsonConditionBuilder implements ConditionBuilder<Condition, String> {
+public class SQLJsonConditionBuilder
+    implements ConditionBuilder<Condition, String>, TokenizerFactoryAble, StorageStrategyFactoryAble {
 
+    private static final String CONSTANT_INEQUALITY = "2 = 1";
     private FieldType fieldType;
     private ConditionOperator operator;
     /*
      * 物理逻辑转换策略工厂.
      */
     private StorageStrategyFactory storageStrategyFactory;
+    private TokenizerFactory tokenizerFactory;
 
     /**
      * 构造基于JSON的条件查询构造器实例.
      *
-     * @param fieldType              字段逻辑类型.
-     * @param operator               操作符.
-     * @param storageStrategyFactory 逻辑物理字段转换策略工厂实例.
+     * @param fieldType 字段逻辑类型.
+     * @param operator  操作符.
      */
     public SQLJsonConditionBuilder(
-        FieldType fieldType, ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
+        FieldType fieldType, ConditionOperator operator) {
         this.fieldType = fieldType;
         this.operator = operator;
-        this.storageStrategyFactory = storageStrategyFactory;
     }
 
     @Override
@@ -54,6 +60,16 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<Condition, Stri
     @Override
     public ConditionOperator operator() {
         return operator;
+    }
+
+    @Override
+    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 
     @Override
@@ -127,19 +143,49 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<Condition, Stri
 
             // 如果模糊模式为NOT,那表示不能进行模糊搜索.输出恒否的表达式.
             if (FieldConfig.FuzzyType.NOT == condition.getField().config().getFuzzyType()) {
-                return "2 = 1";
+                return CONSTANT_INEQUALITY;
             }
 
             // 如果是通配符模糊类型,那么查询字串不能小于最小值大于最大值.
             if (FieldConfig.FuzzyType.WILDCARD == condition.getField().config().getFuzzyType()
-                && likeValue.length() < condition.getField().config().getWildcardMinWidth()
-                || likeValue.length() > condition.getField().config().getWildcardMaxWidth()) {
+                && (likeValue.length() < condition.getField().config().getWildcardMinWidth()
+                || likeValue.length() > condition.getField().config().getWildcardMaxWidth())) {
 
                 // 返回恒不为真的表达式.
-                return "2 = 1";
+                return CONSTANT_INEQUALITY;
             } else {
-                sql.append("\"%").append(likeValue).append("%\"");
+
+                switch (condition.getField().config().getFuzzyType()) {
+                    case WILDCARD: {
+                        sql.append("\"%").append(likeValue).append("%\"");
+                        break;
+                    }
+                    case SEGMENTATION: {
+                        int emptyLen = sql.length();
+                        int firstIndex = sql.length();
+                        Tokenizer tokenizer = tokenizerFactory.getTokenizer(condition.getField());
+                        Iterator<String> words = tokenizer.tokenize(likeValue);
+                        while (words.hasNext()) {
+                            if (sql.length() > emptyLen) {
+                                sql.append('%');
+                            }
+                            sql.append(words.next());
+                        }
+
+                        if (sql.length() > emptyLen) {
+                            sql.insert(firstIndex, "\"%");
+                            sql.append("%\"");
+                        } else {
+                            return CONSTANT_INEQUALITY;
+                        }
+                        break;
+                    }
+                    default: {
+                        throw new IllegalArgumentException("Unsupported fuzzy mode.");
+                    }
+                }
             }
+
         } else {
             storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
             appendValue(sql, storageValue);

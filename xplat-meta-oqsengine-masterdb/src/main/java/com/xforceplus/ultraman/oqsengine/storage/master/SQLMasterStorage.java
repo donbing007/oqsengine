@@ -143,6 +143,10 @@ public class SQLMasterStorage implements MasterStorage {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "bussinessKey"}
+    )
     @Override
     public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
         throws SQLException {
@@ -157,8 +161,10 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action",
-        "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "condition"}
+    )
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {

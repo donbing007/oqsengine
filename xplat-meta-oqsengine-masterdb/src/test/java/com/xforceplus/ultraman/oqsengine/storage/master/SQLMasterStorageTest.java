@@ -191,17 +191,16 @@ public class SQLMasterStorageTest {
             .withWaitCommitSync(false)
             .build();
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(dataSource), new NoSelector<>("oqsbigentity"));
-
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
         SimpleFieldKeyGenerator keyGenerator = new SimpleFieldKeyGenerator();
-        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
+        ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);
 
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
+            new NoSelector<>(dataSource), new NoSelector<>("oqsbigentity"));
 
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);

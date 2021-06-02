@@ -363,6 +363,11 @@
                 <version>2.0.7</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>com.googlecode.aviator</groupId>
+                <artifactId>aviator</artifactId>
+                <version>5.0.0</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>

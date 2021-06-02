@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -8,6 +9,9 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
+import java.sql.SQLException;
 
 /**
  * 基于json的搜索构造器.
@@ -16,10 +20,20 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/11/4 15:49
  * @since 1.8
  */
-public class SQLJsonConditionsBuilder implements ConditionsBuilder<Conditions, String>, StorageStrategyFactoryAble {
+public class SQLJsonConditionsBuilder
+    implements ConditionsBuilder<Conditions, String>, StorageStrategyFactoryAble, TokenizerFactoryAble, Lifecycle {
 
     private StorageStrategyFactory storageStrategyFactory;
+    private TokenizerFactory tokenizerFactory;
     private SQLConditionQueryBuilderFactory sqlConditionQueryBuilderFactory;
+
+    @Override
+    public void init() throws Exception {
+        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory();
+        this.sqlConditionQueryBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        this.sqlConditionQueryBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        this.sqlConditionQueryBuilderFactory.init();
+    }
 
     @Override
     public String build(Conditions conditions, IEntityClass ...entityClasses) {
@@ -44,7 +58,10 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<Conditions, S
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+    }
 
-        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(this.storageStrategyFactory);
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 }

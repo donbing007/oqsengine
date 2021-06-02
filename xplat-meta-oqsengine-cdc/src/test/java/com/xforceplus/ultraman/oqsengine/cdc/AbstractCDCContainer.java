@@ -39,6 +39,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import io.lettuce.core.RedisClient;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -130,7 +131,7 @@ public abstract class AbstractCDCContainer {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    private void initIndex() throws SQLException, InterruptedException {
+    private void initIndex() throws Exception {
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -140,6 +141,7 @@ public abstract class AbstractCDCContainer {
 
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
         sphinxQLConditionsBuilderFactory.init();
 
         executorService = new ThreadPoolExecutor(5, 5, 0,
@@ -171,6 +173,7 @@ public abstract class AbstractCDCContainer {
     private void initDevOps() throws Exception {
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
         sqlJsonConditionsBuilderFactory.init();
 
         DataSource devOpsDataSource = buildDevOpsDataSource();

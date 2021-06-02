@@ -24,7 +24,6 @@
         <dependency>
             <groupId>com.googlecode.aviator</groupId>
             <artifactId>aviator</artifactId>
-            <version>${aviator.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

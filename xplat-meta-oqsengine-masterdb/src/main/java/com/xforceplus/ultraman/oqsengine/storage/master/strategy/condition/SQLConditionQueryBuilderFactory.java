@@ -12,8 +12,12 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strin
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strings.NotEqJsonStringsConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PostConstruct;
 
 /**
  * 单条件构造器工厂.
@@ -22,19 +26,25 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 0.1 2020/11/5 10:45
  * @since 1.8
  */
-public class SQLConditionQueryBuilderFactory {
+public class SQLConditionQueryBuilderFactory implements TokenizerFactoryAble, StorageStrategyFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
+    private TokenizerFactory tokenizerFactory;
     private Map<String, ConditionBuilder> builders;
 
-    /**
-     * 实例化.
-     *
-     * @param storageStrategyFactory 逻辑物理字段转换工厂实例.
-     */
-    public SQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
-        this.storageStrategyFactory = storageStrategyFactory;
 
+    @Override
+    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
+    }
+
+    @PostConstruct
+    public void init() throws Exception {
         builders = new ConcurrentHashMap();
 
         builders.put(
@@ -72,7 +82,6 @@ public class SQLConditionQueryBuilderFactory {
             buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS),
             new MeqJsonStringsConditionBuilder(storageStrategyFactory)
         );
-
     }
 
     /**
@@ -89,7 +98,10 @@ public class SQLConditionQueryBuilderFactory {
             synchronized (key) {
                 builder =
                     new SQLJsonConditionBuilder(
-                        condition.getField().type(), condition.getOperator(), storageStrategyFactory);
+                        condition.getField().type(), condition.getOperator());
+
+                ((SQLJsonConditionBuilder) builder).setStorageStrategy(storageStrategyFactory);
+                ((SQLJsonConditionBuilder) builder).setTokenizerFacotry(tokenizerFactory);
 
                 builders.put(key, builder);
             }

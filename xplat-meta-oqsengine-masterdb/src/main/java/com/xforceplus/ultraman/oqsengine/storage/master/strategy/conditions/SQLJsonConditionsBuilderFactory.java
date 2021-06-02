@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 import java.sql.SQLException;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -16,32 +18,33 @@ import javax.annotation.Resource;
  * @version 0.1 2020/11/5 17:20
  * @since 1.8
  */
-public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAble {
+public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAble, TokenizerFactoryAble, Lifecycle {
 
-
-    @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
+    private TokenizerFactory tokenizerFactory;
+
     private ConditionsBuilder<Conditions, String> conditionsBuilder;
 
     @PostConstruct
-    public void init() {
+    public void init() throws Exception {
         SQLJsonConditionsBuilder cb = new SQLJsonConditionsBuilder();
         cb.setStorageStrategy(storageStrategyFactory);
-
-        if (Lifecycle.class.isInstance(cb)) {
-            try {
-                ((Lifecycle) cb).init();
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        }
+        cb.setTokenizerFacotry(tokenizerFactory);
+        cb.init();
 
         conditionsBuilder = cb;
     }
 
+    @Resource(name = "masterStorageStrategy")
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    @Resource(name = "tokenizerFactory")
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 
     public ConditionsBuilder<Conditions, String> getBuilder() {

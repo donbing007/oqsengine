@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.After;
@@ -34,6 +36,11 @@ public class SQLJsonConditionBuilderTest {
         .withName("wildcard-string")
         .withFieldType(FieldType.STRING)
         .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()).build();
+    private static IEntityField segmentationStringField = EntityField.Builder.anEntityField()
+        .withId(4)
+        .withName("segmentation-string")
+        .withFieldType(FieldType.STRING)
+        .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).build()).build();
 
     @Before
     public void before() throws Exception {
@@ -47,8 +54,14 @@ public class SQLJsonConditionBuilderTest {
     public void testBuildCondition() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            SQLJsonConditionBuilder builder = new SQLJsonConditionBuilder(
-                c.condition.getField().type(), c.condition.getOperator(), StorageStrategyFactory.getDefaultFactory());
+            SQLJsonConditionBuilder builder = new SQLJsonConditionBuilder(c.condition.getField().type(), c.condition.getOperator());
+            builder.setStorageStrategy(StorageStrategyFactory.getDefaultFactory());
+
+            try {
+                builder.setTokenizerFacotry(new DefaultTokenizerFactory());
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
 
             Assert.assertEquals(c.expectedSql, builder.build(c.condition));
         });
@@ -157,6 +170,30 @@ public class SQLJsonConditionBuilderTest {
                     new StringValue(wildCardStringField, "18")
                 ),
                 "2 = 1"
+            ),
+            new Case(
+                new Condition(
+                    segmentationStringField,
+                    ConditionOperator.LIKE,
+                    new StringValue(segmentationStringField, "-")
+                ),
+                "2 = 1"
+            ),
+            new Case(
+                new Condition(
+                    segmentationStringField,
+                    ConditionOperator.LIKE,
+                    new StringValue(segmentationStringField, "这是一个测试")
+                ),
+                "attribute->>'$.F4S' LIKE \"%这是%一个%测试%\""
+            ),
+            new Case(
+                new Condition(
+                    segmentationStringField,
+                    ConditionOperator.LIKE,
+                    new StringValue(segmentationStringField, "-这是一个测试")
+                ),
+                "attribute->>'$.F4S' LIKE \"%这是%一个%测试%\""
             )
         );
     }

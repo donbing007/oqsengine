@@ -43,6 +43,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.zaxxer.hikari.HikariDataSource;
 import io.lettuce.core.RedisClient;
 import java.math.BigDecimal;
@@ -170,6 +171,13 @@ public class SQLMasterStorageQueryTest {
         .withFieldType(FieldType.LONG)
         .withName("l2-bigint")
         .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2StringSegmentationField = EntityField.Builder.anEntityField()
+        .withId(3003)
+        .withFieldType(FieldType.STRING)
+        .withName("l2-string-segmentation")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).withSearchable(true).build()).build();
     private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(3)
         .withLevel(2)
@@ -177,6 +185,7 @@ public class SQLMasterStorageQueryTest {
         .withField(l2LongField)
         .withField(l2StringField)
         .withField(l2bigintField)
+        .withField(l2StringSegmentationField)
         .withFather(l1EntityClass)
         .build();
 
@@ -210,6 +219,7 @@ public class SQLMasterStorageQueryTest {
 
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
         sqlJsonConditionsBuilderFactory.init();
 
         storage = new SQLMasterStorage();
@@ -570,7 +580,7 @@ public class SQLMasterStorageQueryTest {
                     assertSelect(expectedIds, result, false);
                 }
             ),
-            // string like
+            // string like WILDCARD
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(l2EntityClass.field("l1-string").get(),
@@ -582,6 +592,21 @@ public class SQLMasterStorageQueryTest {
                     long[] expectedIds = {
                         1000, 1002
                     };
+                    assertSelect(expectedIds, result, false);
+                }
+            ),
+            // string like SEGMENTATION
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-string-segmentation").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "市东城区东")
+                    )
+                ),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {1003};
                     assertSelect(expectedIds, result, false);
                 }
             ),
@@ -903,7 +928,8 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l1-string").get(), "Emely_Dickson1490@jiman.org"),
                     new LongValue(l2EntityClass.field("l2-long").get(), -2037817147),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Belize"),
-                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524950L)
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524950L),
+                    new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "甘肃省兰州市安宁区兰州航空职工大学北校区旧教学楼101号")
                 )
             )).build());
 
@@ -929,7 +955,8 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l1-string").get(), "Manuel_Vincent2662@naiker.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), -251454086),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Montenegro"),
-                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524949L)
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524949L),
+                    new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "太原市尖草坪区学院路3号182幢6612室B区")
                 )
             )).build());
 
@@ -955,7 +982,8 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l1-string").get(), "Maxwell_Richardson4862@twace.org"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 1457704562),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Lithuania"),
-                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524948L)
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524948L),
+                    new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "北京市丰台区南四环西路188号9区2号楼7层")
                 )
             )).build());
 
@@ -981,7 +1009,8 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l1-string").get(), "Sebastian_Smith3123@sveldo.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 2032249908),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Trinidad"),
-                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524947L)
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524947L),
+                    new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "北京市东城区东中街29号南写字楼第四层D-E号")
                 )
             )).build());
 
@@ -1007,7 +1036,9 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l1-string").get(), "Alexia_Dillon5194@bauros.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), 622028442),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Mozambique"),
-                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L)
+                    new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524951L),
+                    new StringValue(l2EntityClass.field("l2-string-segmentation").get(),
+                        "昆山市开发区柏庐南路1001号博悦万品大厦2号楼1208室")
                 )
             )).build());
     }
