@@ -53,7 +53,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
         emptyConditionsBuilder = new EmptyConditionsBuilder();
 
-        builderMap.values().stream().forEach(b -> {
+        builderMap.values().forEach(b -> {
             if (StorageStrategyFactoryAble.class.isInstance(b)) {
                 ((StorageStrategyFactoryAble) b).setStorageStrategy(storageStrategyFactory);
             }
@@ -64,7 +64,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
             if (Lifecycle.class.isInstance(b)) {
                 try {
                     ((Lifecycle) b).init();
-                } catch (SQLException ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
             }
