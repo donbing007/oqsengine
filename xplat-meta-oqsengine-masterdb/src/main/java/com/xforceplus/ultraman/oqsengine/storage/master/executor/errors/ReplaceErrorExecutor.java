@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Collections;
 
 /**
  * Created by justin.xu on 05/2021.
@@ -33,13 +34,12 @@ public class ReplaceErrorExecutor extends AbstractMasterExecutor<ErrorStorageEnt
     public Integer execute(ErrorStorageEntity errorStorageEntity) throws SQLException {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-            st.setLong(1, errorStorageEntity.getMaintainId());
-            st.setLong(2, errorStorageEntity.getId());
-            st.setLong(3, errorStorageEntity.getEntity());
-            st.setString(4, errorStorageEntity.getErrors());
-            st.setLong(5, errorStorageEntity.getExecuteTime());
-            st.setLong(6, errorStorageEntity.getFixedTime());
-            st.setInt(7, errorStorageEntity.getStatus());
+            st.setLong(1, errorStorageEntity.getId());
+            st.setLong(2, errorStorageEntity.getEntity());
+            st.setString(3, errorStorageEntity.getErrors());
+            st.setLong(4, errorStorageEntity.getExecuteTime());
+            st.setLong(5, errorStorageEntity.getFixedTime());
+            st.setInt(6, errorStorageEntity.getStatus());
 
             checkTimeout(st);
 
@@ -49,22 +49,13 @@ public class ReplaceErrorExecutor extends AbstractMasterExecutor<ErrorStorageEnt
 
 
     private String buildSQL() {
-        //"replace %s set maintainid = ?, id = ?, entity = ?, errors = ?, executetime = ?, fixedtime = ?, status = ? where id = ?";
         StringBuilder sql = new StringBuilder();
-        sql.append("REPLACE ").append(getTableName())
-            .append(" SET ")
-            .append(ErrorDefine.MAINTAIN_ID).append("=?, ")
-            .append(ErrorDefine.ID).append("=?, ")
-            .append(ErrorDefine.ENTITY).append("=?, ")
-            .append(ErrorDefine.ERRORS).append("=?, ")
-            .append(ErrorDefine.EXECUTE_TIME).append("=?, ")
-            .append(ErrorDefine.FIXED_TIME).append("=?, ")
-            .append(ErrorDefine.STATUS).append("=? ")
-            .append(" WHERE ")
-            .append(ErrorDefine.ID).append("=").append("?");
+        sql.append("REPLACE INTO ").append(getTableName())
+            .append(" VALUES (")
+            .append(String.join(",", Collections.nCopies(6, "?")))
+            .append(")");
+
         return sql.toString();
     }
-
-
 }
 

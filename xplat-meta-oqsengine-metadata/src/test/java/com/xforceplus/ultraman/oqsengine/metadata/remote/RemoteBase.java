@@ -54,7 +54,6 @@ public class RemoteBase {
         cacheExecutor = new DefaultCacheExecutor();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        ReflectionTestUtils.setField(cacheExecutor, "objectMapper", new ObjectMapper());
         cacheExecutor.init();
 
         /*

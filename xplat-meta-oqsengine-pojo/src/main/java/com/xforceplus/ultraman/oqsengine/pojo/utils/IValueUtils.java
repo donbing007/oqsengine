@@ -110,6 +110,9 @@ public class IValueUtils {
                     return new DateTimeValue(field, TimeUtils.convert((Long) result));
                 }
                 case LONG: {
+                    if (result instanceof Integer) {
+                        result = ((Integer) result).longValue();
+                    }
                     return new LongValue(field, (Long) result);
                 }
                 case STRING: {

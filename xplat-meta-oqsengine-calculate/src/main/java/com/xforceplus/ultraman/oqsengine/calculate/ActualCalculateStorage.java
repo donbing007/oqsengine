@@ -33,7 +33,7 @@ public class ActualCalculateStorage implements CalculateStorage {
 
     @Override
     public AbstractMap.SimpleEntry<List<IValue>, Map<String, String>>
-    execute(List<ExecutionWrapper<?>> expressionWrappers, Map<String, Object> params) {
+        execute(List<ExecutionWrapper<?>> expressionWrappers, Map<String, Object> params) {
         Map<String, Object> result = new HashMap<>(params);
 
         Map<Integer, List<ExecutionWrapper<?>>> partitionExpressionWraps = new HashMap<>();
@@ -63,7 +63,8 @@ public class ActualCalculateStorage implements CalculateStorage {
                     try {
                         //  已存在于计算错误中，则不再进行计算二直接进入出错处理
                         if (i > MIN_LEVEL
-                            && !checkArgs(executionWrapper.getEntityField().calculator().getArgs(), failedMaps)) {
+                            &&
+                            !checkArgs(executionWrapper.getEntityField().calculator().getArgs(), result, failedMaps)) {
                             throw new IllegalArgumentException(
                                 String.format("formula [%s-%s] at level [%d] has unexpected arg-result.",
                                     executionWrapper.getCode(), executionWrapper.getExpressionWrapper().getExpression(),
@@ -98,10 +99,11 @@ public class ActualCalculateStorage implements CalculateStorage {
         return new AbstractMap.SimpleEntry(finalValues, failedMaps);
     }
 
-    private boolean checkArgs(List<String> args, Map<String, String> failedMaps) {
+    private boolean checkArgs(List<String> args, Map<String, Object> result, Map<String, String> failedMaps) {
         if (null != args) {
             for (String arg : args) {
-                if (failedMaps.containsKey(arg)) {
+                //  存在于失败列表或者不存在于结果集中,返回失败
+                if (failedMaps.containsKey(arg) || !result.containsKey(arg)) {
                     return false;
                 }
             }

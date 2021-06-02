@@ -154,7 +154,7 @@ public class FieldConfig implements Serializable {
     /**
      * 是否支持跨元信息查询.
      */
-    @JsonProperty(value = "fieldSense")
+    @JsonProperty(value = "crossSearch")
     private boolean crossSearch = false;
 
     /**

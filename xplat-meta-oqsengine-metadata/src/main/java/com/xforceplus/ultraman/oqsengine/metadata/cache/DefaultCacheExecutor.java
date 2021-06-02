@@ -28,7 +28,10 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.genera
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
@@ -69,8 +72,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Resource
     private RedisClient redisClient;
 
-    @Resource
-    private ObjectMapper objectMapper;
+    public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+        .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+        .build();
 
     private final Cache<String, EntityClassStorage> entityClassStorageCache;
 
@@ -333,7 +338,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 syncCommands.hset(key, ELEMENT_FATHER, Long.toString(storage.getFatherId()));
                 if (null != storage.getAncestors() && storage.getAncestors().size() > 0) {
                     try {
-                        String ancestorStr = objectMapper.writeValueAsString(storage.getAncestors());
+                        String ancestorStr = OBJECT_MAPPER.writeValueAsString(storage.getAncestors());
                         syncCommands.hset(key, ELEMENT_ANCESTORS, ancestorStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse ancestors failed.", false);
@@ -344,7 +349,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             //  relations
             if (null != storage.getRelations() && storage.getRelations().size() > 0) {
                 try {
-                    String relationStr = objectMapper.writeValueAsString(storage.getRelations());
+                    String relationStr = OBJECT_MAPPER.writeValueAsString(storage.getRelations());
                     syncCommands.hset(key, ELEMENT_RELATIONS, relationStr);
                 } catch (JsonProcessingException e) {
                     throw new MetaSyncClientException("parse relations failed.", false);
@@ -355,7 +360,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             if (null != storage.getFields()) {
                 for (IEntityField entityField : storage.getFields()) {
                     try {
-                        String entityFieldStr = objectMapper.writeValueAsString(entityField);
+                        String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
                         syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
@@ -374,7 +379,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     if (null != ps.getEntityFieldList() && !ps.getEntityFieldList().isEmpty()) {
                         for (IEntityField entityField : ps.getEntityFieldList()) {
                             try {
-                                String entityFieldStr = objectMapper.writeValueAsString(entityField);
+                                String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
                                 syncCommands.hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
                             } catch (JsonProcessingException e) {
                                 throw new MetaSyncClientException("parse profile-entityFields failed.", false);
@@ -391,7 +396,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
                     if (null != ps.getRelationStorageList() && !ps.getRelationStorageList().isEmpty()) {
                         try {
-                            String relationStr = objectMapper.writeValueAsString(ps.getRelationStorageList());
+                            String relationStr = OBJECT_MAPPER.writeValueAsString(ps.getRelationStorageList());
                             syncCommands.hset(key, generateProfileRelations(ps.getCode()), relationStr);
                         } catch (JsonProcessingException e) {
                             throw new MetaSyncClientException("parse profile-relations failed.", false);
@@ -563,7 +568,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             try {
                 String fieldName = String.format("%s.%s", appId, version);
                 syncCommands.hset(appEntityCollectionsKey,
-                    fieldName, objectMapper.writeValueAsString(ids));
+                    fieldName, OBJECT_MAPPER.writeValueAsString(ids));
             } catch (Exception e) {
                 //  ignore
             }
@@ -655,8 +660,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         if (null != v && !v.isEmpty()) {
             try {
-                List<Long> ids = objectMapper.readValue(v,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
+                List<Long> ids = OBJECT_MAPPER.readValue(v,
+                    OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
                 for (Long id : ids) {
                     doClean(id, version);
                 }
@@ -750,9 +755,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
             keys, version + "", Long.toString(entityClassId));
 
         //  get self
-        Map<String, String> keyValues = objectMapper.readValue(redisValue, Map.class);
+        Map<String, String> keyValues = OBJECT_MAPPER.readValue(redisValue, Map.class);
 
-        return redisValuesToLocalStorage(objectMapper, keyValues);
+        return redisValuesToLocalStorage(OBJECT_MAPPER, keyValues);
     }
 
     private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap)
@@ -780,7 +785,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             ScriptOutputType.VALUE,
             keys, extraEntityIds);
 
-        Map<String, Map<String, String>> valuePairs = objectMapper.readValue(redisValue, Map.class);
+        Map<String, Map<String, String>> valuePairs = OBJECT_MAPPER.readValue(redisValue, Map.class);
         /*
          * check size
          */
@@ -792,7 +797,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
             EntityClassStorage storage =
-                redisValuesToLocalStorage(objectMapper, value.getValue());
+                redisValuesToLocalStorage(OBJECT_MAPPER, value.getValue());
 
             entityClassStorageMap.put(storage.getId(), storage);
         }

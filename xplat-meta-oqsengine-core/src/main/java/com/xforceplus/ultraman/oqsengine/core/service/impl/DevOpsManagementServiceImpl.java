@@ -187,6 +187,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Override
     public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition errorCondition) throws SQLException {
+
         return masterStorage.selectErrors(errorCondition);
     }
 }

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -40,8 +41,11 @@ public class MockCalculatorMetaManager implements MetaManager {
             .withConfig(FieldConfig.build().searchable(true))
             .withCalculator(Calculator.Builder.anCalculator()
                 .withCalculateType(Calculator.Type.FORMULA)
-                                .withLevel(1)
-                                .withExpression("${longValue0} * 3")
+                .withLevel(1)
+                .withExpression("${longValue0} * 3")
+                .withFailedDefaultValue(0)
+                .withFailedPolicy(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                .withArgs(Collections.singletonList("longValue0"))
                                 .build())
             .build())
         .withField(EntityField.Builder.anEntityField()
@@ -53,6 +57,9 @@ public class MockCalculatorMetaManager implements MetaManager {
                 .withCalculateType(Calculator.Type.FORMULA)
                 .withLevel(2)
                 .withExpression("${longValue1} / 2")
+                .withFailedDefaultValue(1)
+                .withFailedPolicy(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                .withArgs(Collections.singletonList("longValue1"))
                 .build())
             .build())
         .build();
@@ -71,6 +78,7 @@ public class MockCalculatorMetaManager implements MetaManager {
                 .withCalculateType(Calculator.Type.FORMULA)
                 .withLevel(1)
                 .withExpression("now()")
+                .withFailedPolicy(Calculator.FailedPolicy.THROW_EXCEPTION)
                 .build())
             .build())
         .withField(EntityField.Builder.anEntityField()
@@ -89,6 +97,9 @@ public class MockCalculatorMetaManager implements MetaManager {
                 .withConfig(FieldConfig.build().searchable(true))
                 .withCalculator(Calculator.Builder.anCalculator()
                     .withCalculateType(Calculator.Type.FORMULA)
+                    .withFailedDefaultValue("0")
+                    .withFailedPolicy(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                    .withArgs(Arrays.asList("longValue0", "stringAutoFill"))
                     .withLevel(2)
                     .withExpression("string.join(seq.list(${longValue0}, ${stringAutoFill}), '-')")
                     .build())

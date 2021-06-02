@@ -43,4 +43,6 @@ public class ErrorDefine {
      * status.
      */
     public static final String STATUS = "status";
+
+    public static final Long DEFAULT_LIMITS = 1000L;
 }

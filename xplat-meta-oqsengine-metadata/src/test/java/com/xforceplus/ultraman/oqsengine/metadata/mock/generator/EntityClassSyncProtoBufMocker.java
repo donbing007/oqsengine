@@ -1,5 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
+
+import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
@@ -7,11 +11,13 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author j.xu
@@ -137,10 +143,17 @@ public class EntityClassSyncProtoBufMocker {
     /**
      * 生成formula-calculator
      */
-    public static Calculator formulaCalculator(String expression, int level) {
-        return Calculator.newBuilder()
+    public static Calculator formulaCalculator(String expression, int level, FieldType fieldType) {
+        Optional<Any> result = ProtoAnyHelper.toAnyValue(defaultValue(fieldType));
+        Calculator.Builder builder = Calculator.newBuilder()
             .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA.getType())
-            .setExpression(expression).setLevel(level).build();
+            .setExpression(expression)
+            .setLevel(level)
+            .setFailedPolicy(com.xforceplus.ultraman.oqsengine.pojo.dto.entity
+                .Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE.getPolicy())
+            .addAllArgs(DEFAULT_ARGS);
+        result.ifPresent(builder::setFailedDefaultValue);
+        return builder.build();
     }
 
     /**
@@ -167,11 +180,13 @@ public class EntityClassSyncProtoBufMocker {
     public static EntityFieldInfo entityFieldInfo(long id,
                                                   GeneralConstant.FourTa<Integer, String,
                                                       com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean> fourTa) {
+        EntityFieldInfo.FieldType protoType = toFieldType(fourTa.getB());
+        FieldType fieldType = FieldType.fromRawType(protoType.name());
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()
             .setId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .setName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .setCname(GeneralEntityUtils.EntityFieldHelper.cname(id))
-            .setFieldType(toFieldType(fourTa.getB()))
+            .setFieldType(protoType)
             .setDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
             .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
 
@@ -181,7 +196,8 @@ public class EntityClassSyncProtoBufMocker {
                 break;
             }
             case FORMULA: {
-                builder.setCalculator(formulaCalculator(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL));
+                builder.setCalculator(
+                    formulaCalculator(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType));
                 break;
             }
             case AUTO_FILL: {

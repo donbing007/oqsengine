@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author j.xu
@@ -38,6 +41,10 @@ public class GeneralConstant {
     public static final String CODE_SUFFIX = "_codeSuffix";
     public static final Integer DEFAULT_RIGHT_ID_DISTANCE = 1000;
 
+
+    public static final Long DEFAULT_LONG_VALUE = 0L;
+    public static final String DEFAULT_STRING_VALUE = "default";
+
     public static final AbstractMap.SimpleEntry<String, Long> PROFILE_CODE_1 =
         new AbstractMap.SimpleEntry<>("PROFILE_CODE_1", 2L);
     public static final AbstractMap.SimpleEntry<String, Long> PROFILE_CODE_2 =
@@ -51,7 +58,7 @@ public class GeneralConstant {
      * @param <D>
      */
     public static class FourTa<A, B, C, D> {
-        private Object[] fourTa;
+        private final Object[] fourTa;
 
         public FourTa(A a, B b, C c, D d) {
             this.fourTa = new Object[4];
@@ -77,4 +84,21 @@ public class GeneralConstant {
             return (D) this.fourTa[3];
         }
     }
+
+    public static Object defaultValue(FieldType fieldType) {
+        switch (fieldType) {
+            case LONG: {
+                return DEFAULT_LONG_VALUE;
+            }
+            case STRING: {
+                return DEFAULT_STRING_VALUE;
+            }
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("un-support test fieldType [%s]", fieldType.getType()));
+            }
+        }
+    }
+
+    public static final List<String> DEFAULT_ARGS = Arrays.asList("code", "name", "paper");
 }

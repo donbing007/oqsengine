@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 
 import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager.L1_ENTITY_CLASS;
 
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.BaseInit;
@@ -28,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.sql.SQLException;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +50,7 @@ public class ManagementWithCalculatorTest {
 
     private EntityManagementServiceImpl impl;
     private MockMasterStorage masterStorage;
+
     @Before
     public void before() throws Exception {
         impl = BaseInit.entityManagementService(new MockCalculatorMetaManager());
@@ -68,14 +72,17 @@ public class ManagementWithCalculatorTest {
         NOTHING;
 
         public static boolean compareTwoValue(Object a, Object b, COMPARE compare) {
+            a = a instanceof Integer ? ((Integer) a).longValue() : a;
+            b = b instanceof Integer ? ((Integer) b).longValue() : b;
+
             switch (compare) {
-                case LT : {
+                case LT: {
                     return (Long) a < (Long) b;
                 }
-                case GT : {
+                case GT: {
                     return (Long) a > (Long) b;
                 }
-                case EQ : {
+                case EQ: {
                     return a.equals(b);
                 }
                 case LE : {
@@ -100,6 +107,7 @@ public class ManagementWithCalculatorTest {
     }
 
     private final long expectedId = 2;
+    private final long expectedFailedId = 20;
     private final Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
     private String expectedAutoFill = null;
     private static Long idGeneratorLocal = 0L;
@@ -113,9 +121,8 @@ public class ManagementWithCalculatorTest {
         params.put("longValue0", expectedValue);
         setExpectedResult(expectedValue);
 
-        initAndAssert(expectedValue, params, true);
+        initAndAssert(expectedId, expectedValue, params, true);
     }
-
 
     @Test
     public void replaceTest() throws SQLException {
@@ -132,38 +139,68 @@ public class ManagementWithCalculatorTest {
         params.put("stringAutoFill", "111");
         params.put("stringValueMix", "222");
 
-        initAndAssert(expectedValue, params, false);
+        initAndAssert(expectedId, expectedValue, params, false);
     }
 
-    private void initAndAssert(Long expectedValue, Map<String, Object> params, boolean insert) throws SQLException {
+    List<String> expectedFailed = Arrays.asList("longValue1", "longValue2", "stringValueMix");
+
+    @Test
+    public void buildHalfSuccessTest() throws SQLException {
+        expectedAutoFill = (Long.MAX_VALUE - 4) + "-" + (idGeneratorLocal++);
+        Map<String, Object> params = new HashMap<>();
+
+        expectedResult.clear();
+
+        initAndAssert(expectedFailedId, null, params, true);
+
+        initAndAssert(expectedFailedId, null, params, false);
+    }
+
+
+    private void initAndAssert(long id, Long expectedValue, Map<String, Object> params, boolean insert)
+        throws SQLException {
         setExpectedResult(expectedValue);
+
+        IEntityValue entityValue = EntityValue.build()
+            .addValue(
+                new FormulaTypedValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue1").get(), params))
+            .addValue(
+                new FormulaTypedValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue2").get(), params)
+            )
+            .addValue(
+                new FormulaTypedValue(L1_ENTITY_CLASS.field("dateValue0").get(), params)
+            )
+            .addValue(
+                new FormulaTypedValue(L1_ENTITY_CLASS.field("stringAutoFill").get(), params)
+            )
+            .addValue(
+                new FormulaTypedValue(L1_ENTITY_CLASS.field("stringValueMix").get(), params)
+            );
+
+        if (null != expectedValue) {
+            entityValue.addValue(
+                new LongValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue0").get(), expectedValue));
+        }
 
         IEntity replaceEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
                 new EntityClassRef(L1_ENTITY_CLASS.id(), L1_ENTITY_CLASS.code()))
-            .withId(expectedId)
+            .withId(id)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue0").get(), expectedValue))
-                .addValue(
-                    new FormulaTypedValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue1").get(), params))
-                .addValue(
-                    new FormulaTypedValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue2").get(), params)
-                )
-                .addValue(
-                    new FormulaTypedValue(L1_ENTITY_CLASS.field("dateValue0").get(), params)
-                )
-                .addValue(
-                    new FormulaTypedValue(L1_ENTITY_CLASS.field("stringAutoFill").get(), params)
-                )
-                .addValue(
-                    new FormulaTypedValue(L1_ENTITY_CLASS.field("stringValueMix").get(), params)
-                )
-            ).build();
-
-        Assert.assertEquals(ResultStatus.SUCCESS, insert ? impl.build(replaceEntity).getResultStatus()
-                            : impl.replace(replaceEntity).getResultStatus());
+            .withEntityValue(entityValue)
+            .build();
+        OperationResult operationResult = insert ? impl.build(replaceEntity) : impl.replace(replaceEntity);
+        if (null == expectedValue) {
+            Assert.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus());
+            Assert.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
+            expectedFailed.forEach(
+                failed -> {
+                    Assert.assertTrue(operationResult.getFailedMap().containsKey(failed));
+                }
+            );
+        } else {
+            Assert.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
+        }
 
 
         Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
@@ -181,11 +218,21 @@ public class ManagementWithCalculatorTest {
     }
 
     private void setExpectedResult(Long expectedValue) {
-        expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(expectedValue * 3, COMPARE.EQ));
-        expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(expectedValue * 3 / 2, COMPARE.EQ));
-        expectedResult.put(Long.MAX_VALUE - 3, new AbstractMap.SimpleEntry<>(TimeUtils.convert(System.currentTimeMillis()), COMPARE.NOTHING));
+        if (expectedValue != null) {
+            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(expectedValue * 3, COMPARE.EQ));
+            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(expectedValue * 3 / 2, COMPARE.EQ));
+            expectedResult
+                .put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>(expectedValue + "-", COMPARE.START_WITH));
+        } else {
+            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(0, COMPARE.EQ));
+            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(1, COMPARE.EQ));
+            expectedResult.put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>("0", COMPARE.EQ));
+        }
+
+        expectedResult.put(Long.MAX_VALUE - 3,
+            new AbstractMap.SimpleEntry<>(TimeUtils.convert(System.currentTimeMillis()), COMPARE.NOTHING));
         expectedResult.put(Long.MAX_VALUE - 4, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
-        expectedResult.put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>(expectedValue + "-", COMPARE.START_WITH));
+
     }
 
     public static class MockMasterStorage implements MasterStorage {

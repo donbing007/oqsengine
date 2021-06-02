@@ -286,6 +286,9 @@ public class StorageMetaManager implements MetaManager {
                     .withStep(entityField.calculator().getStep())
                     .withLevel(entityField.calculator().getLevel())
                     .withPatten(entityField.calculator().getPatten())
+                    .withArgs(entityField.calculator().getArgs())
+                    .withFailedPolicy(entityField.calculator().getFailedPolicy())
+                    .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
                     .build());
 
             if (null != entityField.config()) {
@@ -306,6 +309,7 @@ public class StorageMetaManager implements MetaManager {
                     .withValidateRegexString(config.getValidateRegexString())
                     .withWildcardMaxWidth(config.getWildcardMaxWidth())
                     .withWildcardMinWidth(config.getWildcardMinWidth())
+                    .withCrossSearch(config.isCrossSearch())
                     .build()
                 );
             }

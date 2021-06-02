@@ -79,6 +79,4 @@ public class GeneralEntityUtils {
             return id + GeneralConstant.R + GeneralConstant.CODE_SUFFIX;
         }
     }
-
-
 }

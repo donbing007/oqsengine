@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -218,7 +219,7 @@ public class EntityClassStorageBuilderUtils {
          */
 
         //  check
-        Object failedDefaultValue = null;
+        Optional<?> failedValueOp = Optional.empty();
         Calculator.FailedPolicy policy = Calculator.FailedPolicy.UNKNOWN;
         List<String> args = new ArrayList<>();
         switch (calculateType) {
@@ -249,7 +250,7 @@ public class EntityClassStorageBuilderUtils {
                     }
                     //  当失败策略为RECORD_ERROR_RESUME时,需要对默认值进行计算
                     try {
-                        failedDefaultValue =
+                        failedValueOp =
                             ProtoAnyHelper.toFieldTypeValue(fieldType, calculator.getFailedDefaultValue());
                     } catch (Exception e) {
                         throw new MetaSyncClientException(
@@ -291,9 +292,8 @@ public class EntityClassStorageBuilderUtils {
             .withFailedPolicy(policy)
             .withArgs(args);
 
-        if (null != failedDefaultValue) {
-            builder.withFailedDefaultValue(failedDefaultValue);
-        }
+        failedValueOp.ifPresent(builder::withFailedDefaultValue);
+
         return builder.build();
     }
 
