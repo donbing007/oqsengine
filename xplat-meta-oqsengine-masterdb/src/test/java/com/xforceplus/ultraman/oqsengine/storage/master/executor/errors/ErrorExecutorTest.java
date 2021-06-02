@@ -69,7 +69,7 @@ public class ErrorExecutorTest {
     }
 
     @Before
-    public void before() throws SQLException {
+    public void before() throws Exception {
 
         transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
