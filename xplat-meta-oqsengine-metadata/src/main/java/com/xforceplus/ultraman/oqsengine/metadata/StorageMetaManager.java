@@ -199,7 +199,7 @@ public class StorageMetaManager implements MetaManager {
         }
 
         //  加载profile
-        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)) {
+        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE) && null != entityClassStorage.getProfileStorageMap()) {
             ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
             if (null != profileStorage) {
                 if (null != profileStorage.getEntityFieldList()) {
