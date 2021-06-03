@@ -273,8 +273,16 @@ public class StorageMetaManager implements MetaManager {
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue())
-                .withCalculator(Calculator.Builder.anCalculator()
+                .withDefaultValue(entityField.defaultValue());
+
+            if (null == entityField.calculator()) {
+                builder.withCalculator(Calculator.Builder.anCalculator()
+                    .withCalculateType(Calculator.Type.NORMAL)
+                    .withFailedPolicy(Calculator.FailedPolicy.UNKNOWN)
+                    .build()
+                );
+            } else {
+                builder.withCalculator(Calculator.Builder.anCalculator()
                     .withCalculateType(entityField.calculator().getType())
                     .withExpression(entityField.calculator().getExpression())
                     .withMin(entityField.calculator().getMin())
@@ -290,6 +298,7 @@ public class StorageMetaManager implements MetaManager {
                     .withFailedPolicy(entityField.calculator().getFailedPolicy())
                     .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
                     .build());
+            }
 
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();

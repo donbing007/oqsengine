@@ -12,7 +12,7 @@ public class Calculator {
     public static final int DEFAULT_FORMULA_LEVEL = 1;
 
     @JsonProperty(value = "type")
-    private Type type;
+    private Type type = Type.UNKNOWN;
 
     @JsonProperty(value = "code")
     private String code;
@@ -51,7 +51,7 @@ public class Calculator {
     private List<String> args;
 
     @JsonProperty(value = "failedPolicy")
-    private FailedPolicy failedPolicy;
+    private FailedPolicy failedPolicy = FailedPolicy.UNKNOWN;
 
     @JsonProperty(value = "failedDefaultValue")
     private Object failedDefaultValue;
