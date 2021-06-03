@@ -716,7 +716,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
         Map<String, Object> local = (Map<String, Object>) v.getValue();
         if (null != local) {
-            local.forEach(context::putIfAbsent);
+            local.entrySet().stream().filter(
+                entry -> {
+                    return null != entry.getValue();
+                }
+            ).forEach(
+                    entry -> {
+                        context.putIfAbsent(entry.getKey(), entry.getValue());
+                    }
+            );
         }
     }
 
