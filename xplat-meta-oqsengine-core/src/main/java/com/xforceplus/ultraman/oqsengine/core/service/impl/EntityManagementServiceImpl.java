@@ -30,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
@@ -721,9 +722,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return null != entry.getValue();
                 }
             ).forEach(
-                    entry -> {
-                        context.putIfAbsent(entry.getKey(), entry.getValue());
-                    }
+                entry -> {
+                    context.putIfAbsent(entry.getKey(), entry.getValue());
+                }
             );
         }
     }
@@ -760,7 +761,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             entityField -> {
                 if (entityField.calculateType().equals(Calculator.Type.NORMAL)) {
                     entity.entityValue().getValue(entityField.id())
-                        .ifPresent(value -> context.putIfAbsent(entityField.name(), value.getValue()));
+                        .ifPresent(
+                            value -> {
+                                //  context只加入有值的数据
+                                if (!(value instanceof EmptyTypedValue) && null != value.getValue()) {
+                                    context.putIfAbsent(entityField.name(), value.getValue());
+                                }
+                            });
                 }
             }
         );
