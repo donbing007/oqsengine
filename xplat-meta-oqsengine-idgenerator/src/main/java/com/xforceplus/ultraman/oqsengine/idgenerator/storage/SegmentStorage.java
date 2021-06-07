@@ -42,4 +42,15 @@ public interface SegmentStorage {
      */
     Optional<SegmentInfo> query(String bizType) throws SQLException;
 
+
+    /**
+     * Delete a segment by bizType.
+     *
+     * @param segmentInfo
+     *
+     * @return 1: success 0: failed
+     * @throws SQLException throw if sql failed
+     */
+    int delete(SegmentInfo segmentInfo) throws SQLException;
+
 }
