@@ -142,7 +142,7 @@ public abstract class AbstractDevOpsContainer {
         masterStorage.init();
     }
 
-    private void initIndex() throws SQLException, InterruptedException {
+    private void initIndex() throws Exception {
         final Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         final DataSource searchDataSource = buildSearchDataSource();
 
