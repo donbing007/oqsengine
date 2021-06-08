@@ -60,8 +60,7 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         try {
             return newId;
         } finally {
-            Long finalNewId = newId;
-            CompletableFuture.runAsync(() -> commitIdNumber.set(finalNewId));
+            commitIdNumber.set(newId);
         }
     }
 
@@ -71,7 +70,7 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         if (key == null || key.isEmpty()) {
             key = DEFAULT_KEY;
         }
-        initializeId();
+        initializeIdIfNotHave();
     }
 
     @PreDestroy
@@ -89,8 +88,11 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         return true;
     }
 
-    private synchronized void initializeId() {
+    // 如果不存在,就初始化.
+    private void initializeIdIfNotHave() {
         RedisStringCommands<String, String> sync = connection.sync();
-        sync.setnx(key, supplier.get().toString());
+        if (sync.get(key) == null) {
+            sync.setnx(key, supplier.get().toString());
+        }
     }
 }
