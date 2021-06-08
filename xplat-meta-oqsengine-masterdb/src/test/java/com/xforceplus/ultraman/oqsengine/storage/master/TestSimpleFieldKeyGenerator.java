@@ -1,5 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -21,8 +25,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 项目名称: 票易通
@@ -33,18 +40,29 @@ import org.junit.Test;
  */
 public class TestSimpleFieldKeyGenerator {
 
+    private SimpleFieldKeyGenerator keyGenerator;
+    private MetaManager metaManager;
+
+    @BeforeEach
+    public void before() {
+        keyGenerator = new SimpleFieldKeyGenerator();
+        metaManager = mock(MetaManager.class);
+        IEntityClass entityClass = buildEntityClass(1008);
+        when(metaManager.load(1008)).thenReturn(Optional.of(entityClass));
+        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
+
+    }
+
     @Test
     public void testKeyGenerator() throws SQLException {
         IEntity entity = buildEntity(1008);
-        SimpleFieldKeyGenerator generator = new SimpleFieldKeyGenerator();
-        Map<String, UniqueIndexValue> keys = generator.generator(entity);
+        Map<String, UniqueIndexValue> keys = keyGenerator.generator(entity);
         Assert.assertEquals(((UniqueIndexValue) keys.values().toArray()[0]).getValue(), "f2Value-f1Value");
     }
 
     @Test
     public void testKeyGenerator1() {
         IEntity entity = buildEntity(1008);
-        SimpleFieldKeyGenerator generator = new SimpleFieldKeyGenerator();
         BusinessKey key1 = new BusinessKey();
         key1.setFieldName("f1");
         key1.setValue("f1Value");
@@ -54,9 +72,11 @@ public class TestSimpleFieldKeyGenerator {
         List<BusinessKey> keys = new ArrayList<>();
         keys.add(key1);
         keys.add(key2);
-        Map<String, UniqueIndexValue> resultKeys = generator.generator(keys, buildEntityClass(1008));
+        Map<String, UniqueIndexValue> resultKeys = keyGenerator.generator(keys, buildEntityClass(1008));
         Assert.assertEquals(((UniqueIndexValue) resultKeys.values().toArray()[0]).getValue(), "f2Value-f1Value");
     }
+
+
 
     private IEntity buildEntity(long baseId) {
         FieldConfig config = FieldConfig.Builder.anFieldConfig().withUniqueName("test:IDX_U1:2,test:IDX_U2:1").build();

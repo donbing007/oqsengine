@@ -100,7 +100,7 @@ public class SimpleFieldKeyGenerator implements UniqueKeyGenerator {
         Map<String, UniqueIndex> uniqueMap = new LinkedHashMap<>();
         List<IEntityField> totalFields = new ArrayList<>(entityClass.fields());
         totalFields.stream()
-            .filter(item -> !StringUtils.isBlank(item.config().getUniqueName()))
+            .filter(item -> item.config() != null && !StringUtils.isBlank(item.config().getUniqueName()))
             .forEach(item -> {
                 // uniqueName format : "code:name:sort,code:name:sort"
                 String uniqueName = item.config().getUniqueName();
