@@ -46,11 +46,9 @@ public class CacheExecutorTest {
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
-        ObjectMapper objectMapper = new ObjectMapper();
         cacheExecutor = new DefaultCacheExecutor();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
         cacheExecutor.init();
     }
 

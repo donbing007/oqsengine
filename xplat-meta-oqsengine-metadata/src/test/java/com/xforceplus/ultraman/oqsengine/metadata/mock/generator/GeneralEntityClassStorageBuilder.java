@@ -2,8 +2,10 @@ package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_ENTITY_INFO_LIST;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_1;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_2;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
@@ -24,6 +26,7 @@ import java.util.Map;
  * @since 1.8
  */
 public class GeneralEntityClassStorageBuilder {
+
 
     /**
      * 生成.
@@ -74,11 +77,14 @@ public class GeneralEntityClassStorageBuilder {
         return Calculator.Builder.anCalculator().withCalculateType(Calculator.Type.NORMAL).build();
     }
 
-    public static Calculator formulaCalculator(String expression, int level) {
+    public static Calculator formulaCalculator(String expression, int level, FieldType fieldType) {
         return Calculator.Builder.anCalculator()
             .withCalculateType(Calculator.Type.FORMULA)
             .withExpression(expression)
             .withLevel(level)
+            .withFailedPolicy(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+            .withFailedDefaultValue(defaultValue(fieldType))
+            .withArgs(DEFAULT_ARGS)
             .build();
     }
 
@@ -94,13 +100,15 @@ public class GeneralEntityClassStorageBuilder {
 
     public static EntityField genericEntityField(long id,
                                                  GeneralConstant.FourTa<Integer, String, Calculator.Type, Boolean> fourTa) {
+
+        FieldType fieldType = FieldType.fromRawType(fourTa.getB());
         EntityField.Builder builder = EntityField.Builder.anEntityField()
             .withCalculator(defaultCalculator())
             .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .withName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .withCnName(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .withDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .withFieldType(FieldType.fromRawType(fourTa.getB()))
+            .withFieldType(fieldType)
             .withConfig(defaultFieldConfig());
 
         switch (fourTa.getC()) {
@@ -109,7 +117,8 @@ public class GeneralEntityClassStorageBuilder {
                 break;
             }
             case FORMULA: {
-                builder.withCalculator(formulaCalculator(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL));
+                builder.withCalculator(
+                    formulaCalculator(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType));
                 break;
             }
             case AUTO_FILL: {

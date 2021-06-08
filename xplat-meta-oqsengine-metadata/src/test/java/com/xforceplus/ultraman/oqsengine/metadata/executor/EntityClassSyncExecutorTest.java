@@ -67,10 +67,7 @@ public class EntityClassSyncExecutorTest {
          * init cacheExecutor
          */
         cacheExecutor = new DefaultCacheExecutor();
-        ObjectMapper objectMapper = new ObjectMapper();
-
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
         cacheExecutor.init();
 
         /*
@@ -139,11 +136,11 @@ public class EntityClassSyncExecutorTest {
         Thread.sleep(70_000);
 
         Method m0 = cacheExecutor.getClass()
-            .getDeclaredMethod("getFromLocal", new Class[] {long.class, int.class});
+            .getDeclaredMethod("getFromLocal", long.class, int.class);
         m0.setAccessible(true);
 
         Method m1 = cacheExecutor.getClass()
-            .getDeclaredMethod("getOneFromRemote", new Class[] {long.class, int.class});
+            .getDeclaredMethod("getOneFromRemote", long.class, int.class);
         m1.setAccessible(true);
 
 
@@ -161,7 +158,7 @@ public class EntityClassSyncExecutorTest {
              * Remote缓存中也不存在
              */
             try {
-                m1.invoke(cacheExecutor, new Object[] {e.getSelf(), expectedVersion});
+                m1.invoke(cacheExecutor, e.getSelf(), expectedVersion);
             } catch (Exception ex) {
                 //  ignore
             }

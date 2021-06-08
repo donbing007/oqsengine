@@ -21,7 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @since 1.8
  */
 public class RemoteTest {
-    private boolean isTestOpen = false;
+    private final boolean isTestOpen = false;
     private RedisClient redisClient;
     private DefaultCacheExecutor cacheExecutor;
 
@@ -35,11 +35,9 @@ public class RemoteTest {
             redisClient =
                 RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).withPassword("8eSf4M97VLhP6hq9").build());
 
-            ObjectMapper objectMapper = new ObjectMapper();
             cacheExecutor = new DefaultCacheExecutor();
 
             ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-            ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
             cacheExecutor.init();
 
             storageMetaManager = new StorageMetaManager();

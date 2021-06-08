@@ -44,9 +44,9 @@ public class RedisCacheGenerator implements IDGenerator {
                                RedissonClient redissonClient) {
         this.segmentService = segmentService;
         this.redissonClient = redissonClient;
-        this.current = redissonClient.getBucket("current");
-        this.next = redissonClient.getBucket("next");
-        this.isLoadingNext = redissonClient.getAtomicLong("loadingNext");
+        this.current = redissonClient.getBucket(String.format("%s:%s", bizType, "current"));
+        this.next = redissonClient.getBucket(String.format("%s:%s", bizType, "next"));
+        this.isLoadingNext = redissonClient.getAtomicLong(String.format("%s:%s", bizType, "loadingNext"));
         this.executorService = executorService;
         this.bizType = bizType;
         loadCurrent(bizType);

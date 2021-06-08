@@ -38,7 +38,7 @@ public class InitBase {
 
     public ExecutorService executorService;
 
-    private IRequestHandler requestHandler;
+    private final IRequestHandler requestHandler;
 
     public InitBase(IRequestHandler requestHandler) {
         this.requestHandler = requestHandler;
@@ -61,7 +61,6 @@ public class InitBase {
         cacheExecutor = new DefaultCacheExecutor();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        ReflectionTestUtils.setField(cacheExecutor, "objectMapper", new ObjectMapper());
         cacheExecutor.init();
 
         /*

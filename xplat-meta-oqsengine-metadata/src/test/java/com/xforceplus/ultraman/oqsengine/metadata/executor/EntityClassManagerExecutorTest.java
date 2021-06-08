@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
@@ -83,10 +84,8 @@ public class EntityClassManagerExecutorTest {
          * init cacheExecutor
          */
         cacheExecutor = new DefaultCacheExecutor();
-        ObjectMapper objectMapper = new ObjectMapper();
 
         ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        ReflectionTestUtils.setField(cacheExecutor, "objectMapper", objectMapper);
         cacheExecutor.init();
 
 
@@ -327,7 +326,7 @@ public class EntityClassManagerExecutorTest {
             return entityClass;
         }
 
-        if (null != entityClass.father()) {
+        if (entityClass.father().isPresent()) {
             return getEntityClass(expectedId, entityClass.father().get());
         }
         return null;
@@ -348,7 +347,7 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(expected.getLevel(), actual.level());
 
         //  relations
-        if (null != expected.getRelationsList()) {
+        if (!expected.getRelationsList().isEmpty()) {
             Assert.assertNotNull(actual.oqsRelations());
             Map<Long, OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
                 .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
@@ -398,6 +397,16 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.FORMULA.getType());
             Assert.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
             Assert.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
+            Optional<?> opObject;
+            try {
+                opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("toFieldTypeValue failed, message : ", e.getMessage()));
+            }
+            Assert.assertTrue(opObject.isPresent());
+            Assert.assertEquals(opObject.get(), act.calculator().getFailedDefaultValue());
+            Assert.assertEquals(exp.getCalculator().getArgsList().size(), act.calculator().getArgs().size());
+            Assert.assertEquals(exp.getCalculator().getFailedPolicy(), act.calculator().getFailedPolicy().getPolicy());
         } else if (act.calculateType().equals(Calculator.Type.AUTO_FILL)) {
             Assert.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.AUTO_FILL.getType());
             Assert.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());

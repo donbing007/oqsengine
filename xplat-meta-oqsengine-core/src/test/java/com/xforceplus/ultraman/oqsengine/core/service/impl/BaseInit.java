@@ -43,7 +43,6 @@ public class BaseInit {
         ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "calculateStorage", new ActualCalculateStorage());
-        ReflectionTestUtils.setField(impl, "uniqueStorage", new MockUniqueMasterStorage());
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
             @Override
             public void watch(EventType type, Consumer<Event> listener) {

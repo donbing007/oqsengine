@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
+import java.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,8 +43,7 @@ public class DatePatternParserTest {
         Assert.assertEquals(need,true);
         String formatStr = parser.parse(expression,1001l);
         LocalDate date = LocalDateTime.now().toLocalDate();
-        Assert.assertEquals(date.getYear()+"-"+date.getMonth()
-                +"-"+date.getDayOfMonth(),formatStr);
+        Assert.assertEquals(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),formatStr);
     }
 
     @Test

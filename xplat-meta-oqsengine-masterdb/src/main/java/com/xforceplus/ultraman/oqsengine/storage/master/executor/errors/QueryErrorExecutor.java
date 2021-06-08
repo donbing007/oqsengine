@@ -37,10 +37,6 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;
 
-            if (null != queryErrorCondition.getMaintainId()) {
-                st.setLong(index++, queryErrorCondition.getMaintainId());
-            }
-
             if (null != queryErrorCondition.getId()) {
                 st.setLong(index++, queryErrorCondition.getId());
             }
@@ -58,8 +54,11 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
             }
 
             if (null != queryErrorCondition.getEndTime()) {
-                st.setLong(index, queryErrorCondition.getEndTime());
+                st.setLong(index++, queryErrorCondition.getEndTime());
             }
+
+            st.setLong(index++, queryErrorCondition.getStartPos());
+            st.setLong(index, queryErrorCondition.getSize());
 
             checkTimeout(st);
 
@@ -68,7 +67,7 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
 
                 while (rs.next()) {
                     ErrorStorageEntity.Builder builder = ErrorStorageEntity.Builder.anErrorStorageEntity()
-                        .withMaintainId(rs.getLong(ErrorDefine.MAINTAIN_ID))
+                        .withMaintainId(rs.getLong(ErrorDefine.ID))
                         .withId(rs.getLong(ErrorDefine.ID))
                         .withEntity(rs.getLong(ErrorDefine.ENTITY))
                         .withErrors(rs.getString(ErrorDefine.ERRORS))
@@ -88,7 +87,6 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append(String.join(",",
-            ErrorDefine.MAINTAIN_ID,
             ErrorDefine.ID,
             ErrorDefine.ENTITY,
             ErrorDefine.ERRORS,
@@ -105,15 +103,7 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
 
         boolean isAnd = false;
 
-        if (null != condition.getMaintainId()) {
-            sql.append(ErrorDefine.MAINTAIN_ID).append("=").append("?");
-            isAnd = true;
-        }
-
         if (null != condition.getId()) {
-            if (isAnd) {
-                sql.append(" AND ");
-            }
             sql.append(ErrorDefine.ID).append("=").append("?");
             isAnd = true;
         }
@@ -150,7 +140,7 @@ public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorConditi
         }
 
         sql.append(" ORDER BY ").append(ErrorDefine.EXECUTE_TIME).append(" DESC ");
-
+        sql.append("LIMIT ").append("?,?");
         return sql.toString();
     }
 }

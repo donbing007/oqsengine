@@ -199,7 +199,7 @@ public class StorageMetaManager implements MetaManager {
         }
 
         //  加载profile
-        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)) {
+        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE) && null != entityClassStorage.getProfileStorageMap()) {
             ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
             if (null != profileStorage) {
                 if (null != profileStorage.getEntityFieldList()) {
@@ -273,8 +273,16 @@ public class StorageMetaManager implements MetaManager {
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue())
-                .withCalculator(Calculator.Builder.anCalculator()
+                .withDefaultValue(entityField.defaultValue());
+
+            if (null == entityField.calculator()) {
+                builder.withCalculator(Calculator.Builder.anCalculator()
+                    .withCalculateType(Calculator.Type.NORMAL)
+                    .withFailedPolicy(Calculator.FailedPolicy.UNKNOWN)
+                    .build()
+                );
+            } else {
+                builder.withCalculator(Calculator.Builder.anCalculator()
                     .withCalculateType(entityField.calculator().getType())
                     .withExpression(entityField.calculator().getExpression())
                     .withMin(entityField.calculator().getMin())
@@ -286,7 +294,11 @@ public class StorageMetaManager implements MetaManager {
                     .withStep(entityField.calculator().getStep())
                     .withLevel(entityField.calculator().getLevel())
                     .withPatten(entityField.calculator().getPatten())
+                    .withArgs(entityField.calculator().getArgs())
+                    .withFailedPolicy(entityField.calculator().getFailedPolicy())
+                    .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
                     .build());
+            }
 
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();
@@ -306,6 +318,7 @@ public class StorageMetaManager implements MetaManager {
                     .withValidateRegexString(config.getValidateRegexString())
                     .withWildcardMaxWidth(config.getWildcardMaxWidth())
                     .withWildcardMinWidth(config.getWildcardMinWidth())
+                    .withCrossSearch(config.isCrossSearch())
                     .build()
                 );
             }

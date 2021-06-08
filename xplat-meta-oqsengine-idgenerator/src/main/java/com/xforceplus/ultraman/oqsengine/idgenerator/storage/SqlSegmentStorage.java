@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.storage;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentBuildExecutor;
+import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentDeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentResetExecutor;
 import com.xforceplus.ultraman.oqsengine.idgenerator.executor.SegmentUpdateExecutor;
@@ -60,6 +61,11 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
     public int reset(SegmentInfo segmentInfo) throws SQLException {
         return SegmentResetExecutor.build(table, dataSource, queryTimeout).execute(segmentInfo);
+    }
+
+    @Override
+    public int delete(SegmentInfo segmentInfo) throws SQLException {
+        return SegmentDeleteExecutor.build(table, dataSource, queryTimeout).execute(segmentInfo);
     }
 
     @Override

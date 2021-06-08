@@ -86,14 +86,13 @@ public class SegmentServiceImplTest {
 
 
         storage = new SqlSegmentStorage();
-        ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         storage.setTable("segment");
         storage.setQueryTimeout(100000000);
         storage.init();
 
         service = new SegmentServiceImpl();
         ReflectionTestUtils.setField(service,"sqlSegmentStorage",storage);
-        ReflectionTestUtils.setField(service,"transactionManager",transactionManager);
+        ReflectionTestUtils.setField(storage,"dataSource",dataSource);
 
         SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
             .withCreateTime(new Timestamp(System.currentTimeMillis()))

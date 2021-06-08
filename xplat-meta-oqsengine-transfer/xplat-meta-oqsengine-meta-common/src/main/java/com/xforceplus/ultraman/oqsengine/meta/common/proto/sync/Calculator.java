@@ -485,29 +485,26 @@ private static final long serialVersionUID = 0L;
    * <code>repeated string args = 12;</code>
    */
   public com.google.protobuf.ProtocolStringList
-  getArgsList() {
+      getArgsList() {
     return args_;
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public int getArgsCount() {
     return args_.size();
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public java.lang.String getArgs(int index) {
     return args_.get(index);
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public com.google.protobuf.ByteString
-  getArgsBytes(int index) {
+      getArgsBytes(int index) {
     return args_.getByteString(index);
   }
 
@@ -544,12 +541,8 @@ private static final long serialVersionUID = 0L;
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized == 1) {
-      return true;
-    }
-    if (isInitialized == 0) {
-      return false;
-    }
+    if (isInitialized == 1) return true;
+    if (isInitialized == 0) return false;
 
     memoizedIsInitialized = 1;
     return true;
@@ -637,11 +630,11 @@ private static final long serialVersionUID = 0L;
     }
     if (step_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(10, step_);
+        .computeInt32Size(10, step_);
     }
     if (level_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(11, level_);
+        .computeInt32Size(11, level_);
     }
     {
       int dataSize = 0;
@@ -653,11 +646,11 @@ private static final long serialVersionUID = 0L;
     }
     if (failedPolicy_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(13, failedPolicy_);
+        .computeInt32Size(13, failedPolicy_);
     }
     if (failedDefaultValue_ != null) {
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(14, getFailedDefaultValue());
+        .computeMessageSize(14, getFailedDefaultValue());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -931,8 +924,7 @@ private static final long serialVersionUID = 0L;
     }
 
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator buildPartial() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result =
-          new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator(this);
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       result.calculateType_ = calculateType_;
@@ -1715,53 +1707,47 @@ private static final long serialVersionUID = 0L;
     }
 
     private com.google.protobuf.LazyStringList args_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-
     private void ensureArgsIsMutable() {
       if (!((bitField0_ & 0x00000800) == 0x00000800)) {
         args_ = new com.google.protobuf.LazyStringArrayList(args_);
         bitField0_ |= 0x00000800;
-      }
+       }
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public com.google.protobuf.ProtocolStringList
-    getArgsList() {
+        getArgsList() {
       return args_.getUnmodifiableView();
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public java.lang.String getArgs(int index) {
       return args_.get(index);
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public com.google.protobuf.ByteString
-    getArgsBytes(int index) {
+        getArgsBytes(int index) {
       return args_.getByteString(index);
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public Builder setArgs(
         int index, java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      ensureArgsIsMutable();
+    throw new NullPointerException();
+  }
+  ensureArgsIsMutable();
       args_.set(index, value);
       onChanged();
       return this;
@@ -1772,9 +1758,9 @@ private static final long serialVersionUID = 0L;
     public Builder addArgs(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      ensureArgsIsMutable();
+    throw new NullPointerException();
+  }
+  ensureArgsIsMutable();
       args_.add(value);
       onChanged();
       return this;
@@ -1805,9 +1791,9 @@ private static final long serialVersionUID = 0L;
     public Builder addArgsBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
       ensureArgsIsMutable();
       args_.add(value);
       onChanged();
@@ -1896,7 +1882,7 @@ private static final long serialVersionUID = 0L;
       if (failedDefaultValueBuilder_ == null) {
         if (failedDefaultValue_ != null) {
           failedDefaultValue_ =
-              com.google.protobuf.Any.newBuilder(failedDefaultValue_).mergeFrom(value).buildPartial();
+            com.google.protobuf.Any.newBuilder(failedDefaultValue_).mergeFrom(value).buildPartial();
         } else {
           failedDefaultValue_ = value;
         }
@@ -1940,19 +1926,18 @@ private static final long serialVersionUID = 0L;
             com.google.protobuf.Any.getDefaultInstance() : failedDefaultValue_;
       }
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>
-    getFailedDefaultValueFieldBuilder() {
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
+        getFailedDefaultValueFieldBuilder() {
       if (failedDefaultValueBuilder_ == null) {
         failedDefaultValueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
-            getFailedDefaultValue(),
-            getParentForChildren(),
-            isClean());
+                getFailedDefaultValue(),
+                getParentForChildren(),
+                isClean());
         failedDefaultValue_ = null;
       }
       return failedDefaultValueBuilder_;

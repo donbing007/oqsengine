@@ -81,19 +81,18 @@ public interface FieldConfigOrBuilder extends
    */
   int getWildcardMaxWidth();
 
-    /**
-     * <code>string uniqueName = 13;</code>
-     */
-    java.lang.String getUniqueName();
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  java.lang.String getUniqueName();
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  com.google.protobuf.ByteString
+      getUniqueNameBytes();
 
-    /**
-     * <code>string uniqueName = 13;</code>
-     */
-    com.google.protobuf.ByteString
-    getUniqueNameBytes();
-
-    /**
-     * <code>bool crossSearch = 14;</code>
-     */
-    boolean getCrossSearch();
+  /**
+   * <code>bool crossSearch = 14;</code>
+   */
+  boolean getCrossSearch();
 }

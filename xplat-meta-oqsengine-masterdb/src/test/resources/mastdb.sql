@@ -38,4 +38,18 @@ CREATE TABLE oqsunique
     UNIQUE INDEX `IDX_U1` (`unique_key`, `entityclassl0`, `entityclassl1`, `entityclassl2`, `entityclassl3`,
                            `entityclassl4`) USING BTREE
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8
+  DEFAULT CHARSET = utf8;
+
+create table entityfaileds
+(
+    id          bigint                      not null comment '业务主键ID',
+    entity      bigint                      not null comment 'entity 的类型 id.',
+    errors      text                                 comment '错误字段摘要',
+    executetime bigint default 0            not null comment '出错时间戳',
+    fixedtime   bigint default 0            not null comment '修复时间.',
+    status      tinyint default 1           not null comment '处理状态,1(未处理),2(已提交处理),3(处理成功),4(处理失败)',
+    primary key (id),
+    key entityfaileds_k1 (entity),
+    key entityfaileds_k2 (executetime)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
