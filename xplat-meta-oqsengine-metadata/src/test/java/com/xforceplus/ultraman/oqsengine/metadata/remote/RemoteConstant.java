@@ -32,7 +32,8 @@ public class RemoteConstant {
 
     public static final String TEST_APP_ID = "7";
     public static final String TEST_ENV = "0";
+    public static final long TEST_ENTITY_CLASS_ID = 1275678539314814978L;
     public static final int TEST_START_VERSION = -1;
-    public static final long TEST_ENTITY_CLASS_ID = 1263391796170928130L;
+
 
 }
