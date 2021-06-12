@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -337,6 +338,55 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testDeleteForce() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        // 已经存在的
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withVersion(200)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        when(masterStorage.selectOne(1, MockMetaManager.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, MockMetaManager.l2EntityClass)).thenReturn(1);
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
+        // 删除目标
+        IEntity deletedEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()))
+            .withId(1)
+            .withVersion(200)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(MockMetaManager.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(MockMetaManager.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
+        Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
+
     }
 
     @Test
