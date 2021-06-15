@@ -434,24 +434,27 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         ResultStatus.NOT_FOUND);
                 }
 
-                if (isConflict(masterStorage.delete(targetEntityOp.orElse(entity), entityClass))) {
+                IEntity targetEntity = targetEntityOp.get();
+                targetEntity.resetVersion(entity.version());
+
+                if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.CONFLICT);
                 }
 
-                if (!tx.getAccumulator().accumulateDelete(targetEntityOp.get())) {
+                if (!tx.getAccumulator().accumulateDelete(targetEntity)) {
                     hint.setRollback(true);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
 
-                noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
+                noticeEvent(tx, EventType.ENTITY_DELETE, targetEntity);
 
                 return new OperationResult(
-                    tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(),
+                    tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_DELETE.getValue(),
                     ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
