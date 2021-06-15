@@ -43,7 +43,6 @@
             <artifactId>slf4j-api</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -53,6 +52,7 @@
             <groupId>com.xforceplus</groupId>
             <artifactId>ultraman-test-tools</artifactId>
             <version>1.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
