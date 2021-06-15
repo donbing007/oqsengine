@@ -38,7 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * 作者(@author): liwei
  * 创建时间: 2020/10/19 8:05 PM
  */
-public class TestSimpleFieldKeyGenerator {
+public class SimpleFieldKeyGeneratorTest {
 
     private SimpleFieldKeyGenerator keyGenerator;
     private MetaManager metaManager;
