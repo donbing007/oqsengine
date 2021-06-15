@@ -16,6 +16,7 @@ public class LettuceConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
+    private String dbSeparator = "/";
 
     private int changeLogDb = 14;
     private int cacheEventDb = 15;
@@ -36,11 +37,31 @@ public class LettuceConfiguration {
         this.uri = uri;
     }
 
+    /**
+     * changelog db config.
+     */
     public String uriWithChangeLogDb() {
-        return String.format("%s/%d", uri, changeLogDb);
+        if (hasDB()) {
+            return String.format("%s/%d", uri.substring(0, uri.lastIndexOf(dbSeparator)), changeLogDb);
+        } else {
+            return String.format("%s/%d", uri, changeLogDb);
+        }
     }
 
+    /**
+     * cache event config.
+     */
     public String uriWithCacheEventDb() {
-        return String.format("%s/%d", uri, cacheEventDb);
+        if (hasDB()) {
+            return String.format("%s/%d", uri.substring(0, uri.lastIndexOf(dbSeparator)), cacheEventDb);
+        } else {
+            return String.format("%s/%d", uri, cacheEventDb);
+        }
+    }
+
+    private boolean hasDB() {
+        int sepLast = uri.lastIndexOf(dbSeparator);
+        int sepFirst = uri.indexOf(dbSeparator);
+        return sepLast - sepFirst > 1;
     }
 }
