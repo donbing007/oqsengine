@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.integration.EnhancedSyncExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class MetaManagerConfiguration {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Bean("metaManager")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
@@ -41,8 +45,10 @@ public class MetaManagerConfiguration {
     public SyncExecutor grpcSyncExecutor(
         @Value("${metadata.enhanced:false}") boolean enhanced) {
         if (enhanced) {
+            logger.info("init EnhancedSyncExecutor success.");
             return new EnhancedSyncExecutor();
         }
+        logger.info("init EntityClassSyncExecutor success.");
         return new EntityClassSyncExecutor();
     }
 
