@@ -63,6 +63,70 @@ public class CacheExecutorTest {
     }
 
     @Test
+    public void prepare9to13Test() {
+        /*
+         * 设置prepare appId = 1 version = 9，预期返回true
+         */
+        boolean ret = cacheExecutor.prepare("1", 9);
+        Assert.assertTrue(ret);
+
+        /*
+         * 重置当前的版本version = 9，预期返回true
+         */
+        ret = cacheExecutor.resetVersion("1", 9, null);
+        Assert.assertTrue(ret);
+
+        /*
+         * 结束当前的appId prepare，预期返回true
+         */
+        ret = cacheExecutor.endPrepare("1");
+        Assert.assertTrue(ret);
+
+        /*
+         * 设置prepare appId = 1 version = 13，预期返回true
+         */
+        ret = cacheExecutor.prepare("1", 13);
+        Assert.assertTrue(ret);
+
+        /*
+         * 重置当前的版本version = 13，预期返回true
+         */
+        ret = cacheExecutor.resetVersion("1", 13, null);
+        Assert.assertTrue(ret);
+
+        /*
+         * 结束当前的appId prepare，预期返回true
+         */
+        ret = cacheExecutor.endPrepare("1");
+        Assert.assertTrue(ret);
+
+        /*
+         * 设置prepare appId = 1 version = 9，预期返回true
+         */
+        ret = cacheExecutor.prepare("1", 9);
+        Assert.assertFalse(ret);
+
+
+        /*
+         * 设置prepare appId = 1 version = 13，预期返回true
+         */
+        ret = cacheExecutor.prepare("1", 101);
+        Assert.assertTrue(ret);
+
+        /*
+         * 重置当前的版本version = 13，预期返回true
+         */
+        ret = cacheExecutor.resetVersion("1", 101, null);
+        Assert.assertTrue(ret);
+
+        /*
+         * 结束当前的appId prepare，预期返回true
+         */
+        ret = cacheExecutor.endPrepare("1");
+        Assert.assertTrue(ret);
+    }
+
+    @Test
     public void prepareTest() throws InterruptedException {
         /*
          * 设置prepare appId = 1 version = 1，预期返回true
