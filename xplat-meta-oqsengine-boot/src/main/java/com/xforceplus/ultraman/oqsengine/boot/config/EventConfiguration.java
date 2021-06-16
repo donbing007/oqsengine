@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Configuration;
 public class EventConfiguration {
 
     @Bean("eventBus")
-    public EventBus eventBus(EventStorage eventStorage, ExecutorService eventWorker) {
-        return new DefaultEventBus(eventStorage, eventWorker);
+    public EventBus eventBus(EventStorage eventStorage, ExecutorService taskThreadPool) {
+        return new DefaultEventBus(eventStorage, taskThreadPool);
     }
 
     @Bean("eventStorage")

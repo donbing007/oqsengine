@@ -15,8 +15,6 @@ import java.util.Objects;
  */
 public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
-    static final int EMPTY_LOCATION = -1;
-
     private StorageValue<V> next;
     private String logicName;
     private int location;
@@ -33,7 +31,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     public AbstractStorageValue(String name, V value, boolean logicName) {
         if (logicName) {
             this.logicName = name;
-            this.location = EMPTY_LOCATION;
+            this.location = StorageValue.NOT_LOCATION;
             this.type = parseValueType(value);
         } else {
             this.logicName = parseLocigName(name);
@@ -45,13 +43,13 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
     @Override
     public StorageValue<V> stick(StorageValue<V> nextValue) {
-        if (this.location() == EMPTY_LOCATION) {
+        if (this.location() == StorageValue.NOT_LOCATION) {
             throw new IllegalStateException("The current node has no specified order.");
         }
 
         // 表示追加到尾部
         int loc;
-        if (nextValue.location() == EMPTY_LOCATION) {
+        if (nextValue.location() == StorageValue.NOT_LOCATION) {
             // 表示最后一个位置.
             loc = Integer.MAX_VALUE;
         } else {
@@ -68,10 +66,9 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         } else {
 
             StorageValue point = this;
-            while (true) {
-
+            while (point.location() <= loc) {
                 if (point.haveNext()) {
-                    if (point.location() > loc) {
+                    if (point.next().location() > loc) {
                         break;
                     } else {
                         point = point.next();
@@ -84,7 +81,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
             point.next(nextValue);
             nextValue.next(temp);
 
-            if (nextValue.location() == EMPTY_LOCATION) {
+            if (nextValue.location() == StorageValue.NOT_LOCATION) {
                 nextValue.locate(point.location() + 1);
             }
         }
@@ -136,7 +133,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         StringBuilder buff = new StringBuilder();
         buff.append(base)
             .append(this.type().getType());
-        if (location != EMPTY_LOCATION) {
+        if (location != StorageValue.NOT_LOCATION) {
             buff.append(location);
         }
 

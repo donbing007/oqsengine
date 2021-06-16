@@ -35,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -44,6 +45,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
@@ -91,13 +93,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
 public class SphinxQLManticoreIndexStorageTest {
 
-    private static StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-    static {
-        // 浮点数转换处理.
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
-
     private Faker faker = new Faker(Locale.CHINA);
 
     private TransactionManager transactionManager;
@@ -109,6 +104,7 @@ public class SphinxQLManticoreIndexStorageTest {
     private ExecutorService threadPool;
     private SphinxQLManticoreIndexStorage storage;
     private TokenizerFactory tokenizerFactory;
+    private StorageStrategyFactory storageStrategyFactory;
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -216,11 +212,6 @@ public class SphinxQLManticoreIndexStorageTest {
 
         tokenizerFactory = new DefaultTokenizerFactory();
 
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
-
         threadPool = Executors.newFixedThreadPool(3);
 
         storage = new SphinxQLManticoreIndexStorage();
@@ -233,6 +224,17 @@ public class SphinxQLManticoreIndexStorageTest {
             new AutoJoinTransactionExecutor(
                 transactionManager, new SphinxQLTransactionResourceFactory(),
                 writeDataSourceSelector, indexWriteIndexNameSelector);
+
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        // 浮点数转换处理.
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        // 多值字符串
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
+
+        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
+        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        sphinxQLConditionsBuilderFactory.init();
 
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
@@ -269,6 +271,90 @@ public class SphinxQLManticoreIndexStorageTest {
         redisClient.shutdown();
 
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    /**
+     * 测试主库物理储存类型转换到索引储存时的转换是否正确.
+     * 比如浮点数,在主库是以字符串非多值存在,但是索引需要以数字型的多值形式存在.
+     */
+    @Test
+    public void testPhysicalStorageCorrect() throws Exception {
+
+        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 300)
+            .withAttribute(l2DecField.id() + "S", "123.789")
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-dec").get(),
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("123.789"))
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(Long.MAX_VALUE - 300, refs.stream().findFirst().get().getId());
+
+        refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-dec").get(),
+                        ConditionOperator.GREATER_THAN_EQUALS,
+                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("123.789"))
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(Long.MAX_VALUE - 300, refs.stream().findFirst().get().getId());
+
+        target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 600)
+            .withAttribute(l0StringsField.id() + "S", "[RMB][JPY][USD]")
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(Long.MAX_VALUE - 600, refs.stream().findFirst().get().getId());
     }
 
     /**
@@ -580,8 +666,15 @@ public class SphinxQLManticoreIndexStorageTest {
                     break;
                 }
                 case "l0-strings": {
-                    storageValue = storageStrategy.toStorageValue(
-                        new StringsValue(f, faker.color().name(), faker.color().name(), faker.color().name()));
+                    StringBuilder buff = new StringBuilder();
+                    buff.append("[").append(faker.color().name()).append("]");
+                    buff.append("[").append(faker.color().name()).append("]");
+                    buff.append("[").append(faker.color().name()).append("]");
+                    storageValue = new StringStorageValue(
+                        Long.toString(f.id()),
+                        buff.toString(),
+                        true
+                    );
                     break;
                 }
                 case "l1-long": {
@@ -610,9 +703,12 @@ public class SphinxQLManticoreIndexStorageTest {
                     break;
                 }
                 case "l2-dec": {
-                    storageValue = storageStrategy.toStorageValue(new DecimalValue(f,
-                        new BigDecimal(
-                            Double.toString(faker.number().randomDouble(10, 100, 100000)))));
+                    storageValue = new StringStorageValue(
+                        Long.toString(f.id()),
+                        Double.toString(faker.number().randomDouble(10, 100, 100000)),
+                        true
+                    );
+
                     break;
                 }
                 default: {

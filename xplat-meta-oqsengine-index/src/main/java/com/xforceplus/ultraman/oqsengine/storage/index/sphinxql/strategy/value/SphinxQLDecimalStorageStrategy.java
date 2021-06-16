@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -63,6 +64,80 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         return new DecimalValue(field, new BigDecimal(value));
     }
 
+    @Override
+    public StorageValue toStorageValue(IValue value) {
+        return doBuildStorageValue(Long.toString(value.getField().id()), value.valueToString());
+    }
+
+    @Override
+    public Collection<String> toStorageNames(IEntityField field) {
+        String logicName = Long.toString(field.id());
+
+        return Arrays.asList(
+            logicName + storageType().getType() + "0",
+            logicName + storageType().getType() + "1"
+        );
+    }
+
+    @Override
+    public Collection<String> toStorageNames(IEntityField field, boolean shortName) {
+        String logicName = shortName ? Long.toString(field.id(), 36) : Long.toString(field.id());
+
+        return Arrays.asList(
+            logicName + storageType().getType() + "0",
+            logicName + storageType().getType() + "1"
+        );
+    }
+
+    @Override
+    public boolean isMultipleStorageValue() {
+        return true;
+    }
+
+    /**
+     * 预期是一个浮点数的字符串.
+     */
+    @Override
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+        String logicName = AnyStorageValue.getInstance(storageName).logicName();
+        return doBuildStorageValue(logicName, (String) storageValue);
+    }
+
+    private StorageValue doBuildStorageValue(String logicName, String value) {
+        String number = value;
+
+        String[] numberArr = number.split("\\" + DIVIDE);
+
+
+        String firstNumStr = numberArr[0];
+
+        boolean isNeg = false;
+        if (firstNumStr.trim().startsWith("-")) {
+            isNeg = true;
+        }
+
+        /*
+         * 14.0303503943
+         * 0303503943
+         * 030450303400000
+         */
+        String secondStr = numberArr[1];
+
+        int i = bitLength(secondStr);
+
+        long first = Long.parseLong(numberArr[0]);
+        long second = Long.parseLong(paddingZero(secondStr.substring(0, i), FIXED - i));
+
+        if (first < 0 || isNeg) {
+            second = 0 - second;
+        }
+
+        StorageValue<Long> storageValue = new LongStorageValue(logicName, first, true);
+        storageValue.locate(0);
+        storageValue.stick(new LongStorageValue(logicName, second, true));
+
+        return storageValue;
+    }
 
     private int bitLength(String longStr) {
         int bitLength = longStr.length();
@@ -104,67 +179,5 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
             sb.append(0);
         }
         return sb.toString();
-    }
-
-    @Override
-    public StorageValue toStorageValue(IValue value) {
-        String number = value.valueToString();
-
-        String[] numberArr = number.split("\\" + DIVIDE);
-
-
-        String firstNumStr = numberArr[0];
-
-        boolean isNeg = false;
-        if (firstNumStr.trim().startsWith("-")) {
-            isNeg = true;
-        }
-
-        /*
-         * 14.0303503943
-         * 0303503943
-         * 030450303400000
-         */
-        String secondStr = numberArr[1];
-
-        int i = bitLength(secondStr);
-
-        long first = Long.parseLong(numberArr[0]);
-        long second = Long.parseLong(paddingZero(secondStr.substring(0, i), FIXED - i));
-
-        if (first < 0 || isNeg) {
-            second = 0 - second;
-        }
-
-        StorageValue<Long> storageValue = new LongStorageValue(Long.toString(value.getField().id()), first, true);
-        storageValue.locate(0);
-        storageValue.stick(new LongStorageValue(Long.toString(value.getField().id()), second, true));
-
-        return storageValue;
-    }
-
-    @Override
-    public Collection<String> toStorageNames(IEntityField field) {
-        String logicName = Long.toString(field.id());
-
-        return Arrays.asList(
-            logicName + storageType().getType() + "0",
-            logicName + storageType().getType() + "1"
-        );
-    }
-
-    @Override
-    public Collection<String> toStorageNames(IEntityField field, boolean shortName) {
-        String logicName = shortName ? Long.toString(field.id(), 36) : Long.toString(field.id());
-
-        return Arrays.asList(
-            logicName + storageType().getType() + "0",
-            logicName + storageType().getType() + "1"
-        );
-    }
-
-    @Override
-    public boolean isMultipleStorageValue() {
-        return true;
     }
 }

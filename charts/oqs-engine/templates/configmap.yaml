@@ -51,21 +51,12 @@ data:
         transaction:
           timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
-          call:
-            read:
-              worker: {{ .Values.storage.threadPool.call.read.worker | default "0" }}
-              queue: {{ .Values.storage.threadPool.call.read.queue | default "500" }}
-            write:
-              worker: {{ .Values.storage.threadPool.call.write.worker | default "0" }}
-              queue: {{ .Values.storage.threadPool.call.write.queue | default "500" }}
-            rebuild:
-              worker: {{ .Values.storage.threadPool.call.rebuild.worker | default "0" }}
-              queue: {{ .Values.storage.threadPool.call.rebuild.queue | default "500" }}
-          cdc:
-            worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
-          event:
-            worker: {{ .Values.storage.threadPool.event.worker | default "0" }}
-            queue: {{ .Values.storage.threadPool.event.queue | default "1000" }}
+          io:
+            worker: {{ .Values.storage.threadPool.io.worker | default "0" }}
+            queue: {{ .Values.storage.threadPool.io.queue | default "500" }}
+          task:
+            worker: {{ .Values.storage.threadPool.task.worker | default "0" }}
+            queue: {{ .Values.storage.threadPool.task.queue | default "500" }}
         meta:
           grpc:
             type: client

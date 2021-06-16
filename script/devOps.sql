@@ -33,7 +33,5 @@ create table cdcerrors
     executetime     bigint                      not null comment '出错时间戳',
     fixedtime       bigint                      not null comment '修复时间.',
     constraint cdcerror_pk primary key (seqno),
-    unique key unikey_upk (unikey),
-    key cdcerrors_k0 (batchid)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;

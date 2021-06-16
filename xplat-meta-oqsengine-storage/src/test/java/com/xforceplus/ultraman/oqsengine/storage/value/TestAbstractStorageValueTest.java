@@ -48,6 +48,36 @@ public class TestAbstractStorageValueTest {
     }
 
     @Test
+    public void testOutOfOrderStick() {
+        MockLongStorageValue v1 = new MockLongStorageValue("111", 0L, true);
+        v1.locate(10);
+        MockLongStorageValue v2 = new MockLongStorageValue("222", 0L, true);
+        v2.locate(0);
+        StorageValue point = v1.stick(v2);
+        MockLongStorageValue v3 = new MockLongStorageValue("333", 0L, true);
+        v3.locate(7);
+        point = point.stick(v3);
+
+        Assert.assertTrue(point.haveNext());
+        Assert.assertEquals("222", point.logicName());
+        Assert.assertEquals("222L0", point.storageName());
+        Assert.assertEquals(0, point.location());
+
+        point = point.next();
+        Assert.assertTrue(point.haveNext());
+        Assert.assertEquals("333", point.logicName());
+        Assert.assertEquals("333L7", point.storageName());
+        Assert.assertEquals(7, point.location());
+
+        point = point.next();
+        Assert.assertFalse(point.haveNext());
+        Assert.assertEquals("111", point.logicName());
+        Assert.assertEquals("111L10", point.storageName());
+        Assert.assertEquals(10, point.location());
+
+    }
+
+    @Test
     public void testStick() throws Exception {
         MockLongStorageValue v1 = new MockLongStorageValue("111", 0L, true);
         v1.locate(0);

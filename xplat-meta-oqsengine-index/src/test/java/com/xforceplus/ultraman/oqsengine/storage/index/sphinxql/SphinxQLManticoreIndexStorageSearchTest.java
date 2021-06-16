@@ -20,16 +20,19 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -51,6 +54,8 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -77,12 +82,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
 public class SphinxQLManticoreIndexStorageSearchTest {
-    private static StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-    static {
-        // 浮点数转换处理.
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
 
     private TransactionManager transactionManager;
     private RedisClient redisClient;
@@ -94,6 +93,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
     private TokenizerFactory tokenizerFactory;
+    private StorageStrategyFactory storageStrategyFactory;
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -199,15 +199,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-
         tokenizerFactory = new DefaultTokenizerFactory();
-
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
 
         threadPool = Executors.newFixedThreadPool(3);
 
@@ -221,6 +213,17 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             new AutoJoinTransactionExecutor(
                 transactionManager, new SphinxQLTransactionResourceFactory(),
                 writeDataSourceSelector, indexWriteIndexNameSelector);
+
+        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        // 浮点数转换处理.
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        // 多值字符串
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
+
+        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
+        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        sphinxQLConditionsBuilderFactory.init();
 
 
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -278,6 +281,46 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                 .build()
         );
         Assert.assertEquals(page.getTotalCount(), expectedDatas.size());
+    }
+
+    @Test
+    public void testNegativeNumber() throws Exception {
+        OriginalEntity entity = OriginalEntity.Builder.anOriginalEntity()
+            .withId(123L)
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withUpdateTime(System.currentTimeMillis())
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withAttributes(
+                Arrays.asList(
+                    l2TimeField.id() + "L",
+                    LocalDateTime.of(1970, 1, 1, 0, 0, 0)
+                        .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli()
+                )
+            ).build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(entity));
+
+
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2TimeField,
+                        ConditionOperator.EQUALS,
+                        new DateTimeValue(l2TimeField, LocalDateTime.of(1970, 1, 1, 0, 0, 0))
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildOutOfSort())
+                .build()
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(123, refs.stream().findFirst().get().getId());
     }
 
     @Test
