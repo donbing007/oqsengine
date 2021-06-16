@@ -199,15 +199,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-
         tokenizerFactory = new DefaultTokenizerFactory();
-
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
 
         threadPool = Executors.newFixedThreadPool(3);
 
@@ -227,6 +219,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         // 多值字符串
         storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
+
+        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
+        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        sphinxQLConditionsBuilderFactory.init();
 
 
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
