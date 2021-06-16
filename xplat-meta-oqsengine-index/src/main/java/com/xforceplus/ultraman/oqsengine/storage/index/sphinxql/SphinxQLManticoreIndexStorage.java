@@ -518,8 +518,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     buff.append(' ');
                 }
 
+                String strValue = current.value().toString();
+                strValue = SphinxQLHelper.filterSymbols(strValue);
+
                 buff.append(shortStorageName.getPrefix())
-                    .append(current.value())
+                    .append(strValue)
                     .append(shortStorageName.getSuffix());
             }
 
