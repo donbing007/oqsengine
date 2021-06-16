@@ -103,6 +103,8 @@ query:
     maxJoinDriverLineNumber: 1000
 changelog:
   enabled: false
+metadata:
+  enhanced: false
 storage:
   tokenizer:
     segmentation:

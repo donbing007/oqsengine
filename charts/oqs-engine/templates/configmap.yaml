@@ -137,6 +137,8 @@ data:
           consumer:
             checkCommitReady: {{ .Values.cdc.consumer.checkCommitReady | default "true" }}
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
+        metadata:
+          enhanced: {{ .Values.metadata.enhanced | default "false" }}
 
     oqsengine-ds.conf: |
         {

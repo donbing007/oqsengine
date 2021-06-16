@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.integration.EnhancedSyncExecutor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +32,17 @@ public class MetaManagerConfiguration {
         return new DefaultCacheExecutor();
     }
 
+    /**
+     * 跟据metadata.enhanced生产是否带增强功能的SyncExecutor,默认false
+     * 增加的SyncExecutor会记录bocp同步过来的原始数据内容，供测试项目进行assert比较.
+     */
     @Bean
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
-    public SyncExecutor grpcSyncExecutor() {
+    public SyncExecutor grpcSyncExecutor(
+        @Value("${metadata.enhanced:false}") boolean enhanced) {
+        if (enhanced) {
+            return new EnhancedSyncExecutor();
+        }
         return new EntityClassSyncExecutor();
     }
 

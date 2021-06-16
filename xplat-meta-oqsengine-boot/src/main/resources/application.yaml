@@ -153,3 +153,5 @@ changelog:
   enabled: false
   queue: local
 
+metadata:
+  enhanced: false
