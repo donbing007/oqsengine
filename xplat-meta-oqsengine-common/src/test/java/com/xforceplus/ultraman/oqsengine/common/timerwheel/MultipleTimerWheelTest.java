@@ -52,7 +52,7 @@ public class MultipleTimerWheelTest {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         final CountDownLatch latch = new CountDownLatch(500000);
         final AtomicInteger result = new AtomicInteger(0);
-        MultipleTimerWheel wheel = new MultipleTimerWheel(500,100,new TimeoutNotification<Object>() {
+        MultipleTimerWheel wheel = new MultipleTimerWheel(500, 100, new TimeoutNotification<Object>() {
             @Override
             public long notice(Object addTime) {
                 try {
@@ -70,14 +70,14 @@ public class MultipleTimerWheelTest {
             int finalI1 = i;
             executorService.submit(() -> {
                 Random random = new Random();
-                wheel.add(new Object(), 100+random.nextInt(5000));
+                wheel.add(new Object(), 100 + random.nextInt(5000));
             });
         }
 
         TimeUnit.SECONDS.sleep(6);
-        System.out.println("startTime: "+l);
+        System.out.println("startTime: " + l);
         int size = wheel.size();
-        System.out.println("remove.size"+size);
+        System.out.println("remove.size" + size);
         Assert.assertEquals(500000, result.get());
         Assert.assertEquals(0, size);
     }
@@ -216,6 +216,7 @@ public class MultipleTimerWheelTest {
         wheel.add(System.currentTimeMillis(), 5000);
 //        wheel.add("test", 5000);
         latch.await();
+        TimeUnit.SECONDS.sleep(1L);
         wheel.size();
         Assert.assertEquals(2, result.get());
         Assert.assertEquals(0, wheel.size());
