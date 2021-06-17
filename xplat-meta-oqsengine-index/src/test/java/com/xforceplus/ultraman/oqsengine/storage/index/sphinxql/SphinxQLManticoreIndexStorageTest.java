@@ -498,7 +498,7 @@ public class SphinxQLManticoreIndexStorageTest {
         while (words.hasNext()) {
             Assert.assertTrue(
                 attrs.contains(
-                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+                    String.format("%s%sw%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
         }
         Assert.assertTrue(
             attrs.contains(
@@ -511,7 +511,7 @@ public class SphinxQLManticoreIndexStorageTest {
         while (words.hasNext()) {
             Assert.assertTrue(
                 attrs.contains(
-                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+                    String.format("%s%sw%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
         }
         Assert.assertTrue(
             attrs.contains(
