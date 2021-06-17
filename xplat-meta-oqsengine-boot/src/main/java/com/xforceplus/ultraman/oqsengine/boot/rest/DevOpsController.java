@@ -22,7 +22,7 @@ public class DevOpsController {
     /**
      * 手动导入BOCP EntityClassSyncRsp配置.
      */
-    @PutMapping("/apis/import/meta/{appId}/{version}")
+    @PutMapping("/oqs/devops/import-meta/{appId}/{version}")
     public ResponseEntity<String> metaImport(@PathVariable String appId,
                                               @PathVariable Integer version,
                                               @RequestBody String data) {

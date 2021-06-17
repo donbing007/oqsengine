@@ -35,34 +35,13 @@ public class DevOpsControllerTest {
 
     @Before
     public void setup() {
-        syncExecutor = new SyncExecutor() {
-            @Override
-            public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-                return true;
-            }
-
-            @Override
-            public boolean dataImport(String appId, int version, String content) {
-                try {
-                    EntityClassStorageHelper.toEntityClassSyncRspProto(content);
-                    return true;
-                } catch (InvalidProtocolBufferException e) {
-                    return false;
-                }
-            }
-
-            @Override
-            public int version(String appId) {
-                return 0;
-            }
-        };
         MockitoAnnotations.initMocks(this);
 
         this.mockMvc = MockMvcBuilders.standaloneSetup(devOpsController).build();
     }
     @Test
     public void testMetaImport() throws Exception {
-        this.mockMvc.perform(put("/apis/import/meta/{appId}/{version}", "1", 1)
+        this.mockMvc.perform(put("/oqs/devops/import-meta/{appId}/{version}", "1", 1)
             .accept(MediaType.APPLICATION_JSON)
             .content("test")
         ).andDo(print())
