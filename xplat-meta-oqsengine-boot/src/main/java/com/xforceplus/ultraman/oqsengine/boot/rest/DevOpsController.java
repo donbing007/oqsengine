@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.rest;
 
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +20,7 @@ public class DevOpsController {
     private SyncExecutor syncExecutor;
 
     /**
-     * 手动倒入bocp EntityClassSyncRsp配置.
+     * 手动导入BOCP EntityClassSyncRsp配置.
      */
     @PutMapping("/apis/import/meta/{appId}/{version}")
     public ResponseEntity<String> metaImport(@PathVariable String appId,

@@ -24,7 +24,7 @@ public class EntityClassStorageHelper {
     /**
      * 使用 initData初始化数据.
      */
-    public static EntityClassSyncRspProto initDataFromFile(String appId, String env, Integer version) {
+    public static String initDataFromFile(String appId, String env, Integer version) {
         String fileName = fileName(appId, version, env);
         InputStream in = EntityClassStorageHelper.class.getResourceAsStream(fileName);
 
@@ -37,16 +37,12 @@ public class EntityClassStorageHelper {
             throw new RuntimeException(String.format("read [%s] error, message [%s]", fileName, e.getMessage()));
         }
 
-        try {
-            return toEntityClassSyncRspProto(sb.toString());
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(String.format("merge content to entityClassSyncRspProto error, fileName [%s], message [%s]", fileName, e.getMessage()));
-        }
+        return sb.toString();
     }
 
 
     private static String fileName(String appId, Integer version, String env) {
-        return String.format("meta/%s_%d_%s.json", appId, version, env);
+        return String.format("/%s_%d_%s.json", appId, version, env);
     }
 
     /**

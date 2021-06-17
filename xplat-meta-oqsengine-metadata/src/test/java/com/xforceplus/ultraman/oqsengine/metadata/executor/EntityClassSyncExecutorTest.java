@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.metadata.RequestBodyInit;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
@@ -113,10 +113,12 @@ public class EntityClassSyncExecutorTest {
     @Test
     public void dataImportTest() {
         String defaultTestAppId = "5";
+        String env = "0";
         int defaultTestVersion = 2;
         Boolean result = false;
         try {
-            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion, RequestBodyInit.initToString());
+            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion,
+                            EntityClassStorageHelper.initDataFromFile(defaultTestAppId, env, defaultTestVersion));
             Assert.assertTrue(result);
         } catch (Exception e) {
             Assert.fail();
