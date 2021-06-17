@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.metadata.RequestBodyInit;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -16,10 +18,12 @@ import io.lettuce.core.RedisURI;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,6 +96,35 @@ public class EntityClassSyncExecutorTest {
         ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
+    }
+
+    @After
+    public void after() {
+        cacheExecutor.destroy();
+        cacheExecutor = null;
+
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+        redisClient = null;
+
+        entityClassSyncExecutor.stop();
+    }
+
+    @Test
+    public void dataImportTest() {
+        String defaultTestAppId = "5";
+        int defaultTestVersion = 2;
+        Boolean result = false;
+        try {
+            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion, RequestBodyInit.initToString());
+            Assert.assertTrue(result);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+
+        Optional<IEntityClass> op =  storageMetaManager.load(1251658380868685825L);
+
+        Assert.assertTrue(op.isPresent());
     }
 
     @Test
