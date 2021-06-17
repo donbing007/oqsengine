@@ -134,7 +134,7 @@ public class MatchConditionBuilderTest {
                         "工作状态有限公司")
                 ),
                 r -> {
-                    Assert.assertEquals("(1y2p0ij工作32e8e7S << 1y2p0ij状态32e8e7S << 1y2p0ij有限公司32e8e7S)", r);
+                    Assert.assertEquals("(1y2p0ij工作w32e8e7S << 1y2p0ij状态w32e8e7S << 1y2p0ij有限公司w32e8e7S)", r);
                 }
             ),
             new Case(
