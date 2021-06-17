@@ -84,13 +84,13 @@ public class SphinxQLHelperTest {
         Assert.assertEquals("(1y2p0ijtest32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
 
         storageValue = new StringStorageValue("9223372036854775807", "测试test", true);
-        Assert.assertEquals("(1y2p0ij测试32e8e7S << 1y2p0ijtest32e8e7S)",
+        Assert.assertEquals("(1y2p0ij测试w32e8e7S << 1y2p0ijtestw32e8e7S)",
             SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
     }
 
     @Test
     public void testBuildWirdcardQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
+        Assert.assertEquals("1y2p0ijtestw32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
     }
 } 
