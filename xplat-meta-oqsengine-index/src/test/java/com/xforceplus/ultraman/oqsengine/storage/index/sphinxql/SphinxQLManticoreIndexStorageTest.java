@@ -496,27 +496,26 @@ public class SphinxQLManticoreIndexStorageTest {
         Tokenizer tokenizer = tokenizerFactory.getTokenizer(l2EntityClass.field("l0-string").get());
         Iterator<String> words = tokenizer.tokenize(l0StorageValue.value().toString());
         while (words.hasNext()) {
-            Assert.assertTrue(
-                attrs.contains(
-                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+            String word = words.next();
+            String expected =
+                String.format("%s%sw%s", shortStorageName.getPrefix(), word, shortStorageName.getSuffix());
+            Assert.assertTrue(attrs.contains(expected));
         }
-        Assert.assertTrue(
-            attrs.contains(
-                String.format("%s%s%s",
-                    shortStorageName.getPrefix(), l0StorageValue.value().toString(), shortStorageName.getSuffix())));
+        String value = l0StorageValue.value().toString();
+        String expected = String.format("%s%s%s", shortStorageName.getPrefix(), value, shortStorageName.getSuffix());
+        Assert.assertTrue(attrs.contains(expected));
 
         shortStorageName = l1StorageValue.shortStorageName();
         tokenizer = tokenizerFactory.getTokenizer(l2EntityClass.field("l1-string").get());
         words = tokenizer.tokenize(l1StorageValue.value().toString());
         while (words.hasNext()) {
-            Assert.assertTrue(
-                attrs.contains(
-                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+            String word = words.next();
+            expected = String.format("%s%sw%s", shortStorageName.getPrefix(), word, shortStorageName.getSuffix());
+            Assert.assertTrue(attrs.contains(expected));
         }
-        Assert.assertTrue(
-            attrs.contains(
-                String.format("%s%s%s",
-                    shortStorageName.getPrefix(), l1StorageValue.value().toString(), shortStorageName.getSuffix())));
+        value = l1StorageValue.value().toString();
+        expected = String.format("%s%s%s", shortStorageName.getPrefix(), value, shortStorageName.getSuffix());
+        Assert.assertTrue(attrs.contains(expected));
     }
 
     @Test

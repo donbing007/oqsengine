@@ -56,7 +56,7 @@ public class WildcardTokenizerTest {
             ),
             new Case(
                 "abc",
-                Arrays.asList()
+                Arrays.asList("abc")
             ),
             new Case(
                 "abcd",

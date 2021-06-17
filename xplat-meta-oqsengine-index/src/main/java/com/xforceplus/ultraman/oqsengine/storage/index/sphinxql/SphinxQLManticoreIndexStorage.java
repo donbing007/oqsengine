@@ -513,15 +513,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                             buff.append(' ');
                         }
                         word = words.next();
-                        // 防止和原始字符相同的分词结果.
-                        if (!word.equals(strValue)) {
-                            buff.append(shortStorageName.getPrefix())
-                                .append(word)
-                                .append(shortStorageName.getSuffix());
+                        buff.append(SphinxQLHelper.encodeFuzzyWord(shortStorageName, word));
 
-                            if (field.config().isCrossSearch()) {
-                                crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
-                            }
+                        if (field.config().isCrossSearch()) {
+                            crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
                         }
                     }
                     if (buff.length() > 0) {
@@ -552,12 +547,15 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     buff.append(' ');
                 }
 
+                String strValue = current.value().toString();
+                strValue = SphinxQLHelper.filterSymbols(strValue);
+
                 buff.append(shortStorageName.getPrefix())
-                    .append(current.value())
+                    .append(strValue)
                     .append(shortStorageName.getSuffix());
 
                 if (field.config().isCrossSearch()) {
-                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), current.value().toString()));
+                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
                 }
             }
 
