@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
@@ -50,6 +53,36 @@ public class MetaManagerConfiguration {
         }
         logger.info("init EntityClassSyncExecutor success.");
         return new EntityClassSyncExecutor();
+    }
+
+    /**
+     * 产生一个mock的syncExecutor.
+     */
+    @Bean
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('mock')")
+    public SyncExecutor mockSyncExecutor() {
+        return new SyncExecutor() {
+            @Override
+            public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+                return true;
+            }
+
+            @Override
+            public boolean dataImport(String appId, int version, String content) {
+                try {
+                    EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+                    return true;
+                } catch (InvalidProtocolBufferException e) {
+                    logger.error("toEntityClassSyncRspProto error, message {}", e.getMessage());
+                    return false;
+                }
+            }
+
+            @Override
+            public int version(String appId) {
+                return 0;
+            }
+        };
     }
 
     @Bean
