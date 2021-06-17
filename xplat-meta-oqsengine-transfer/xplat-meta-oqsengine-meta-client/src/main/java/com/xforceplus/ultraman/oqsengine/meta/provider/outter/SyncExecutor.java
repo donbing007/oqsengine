@@ -15,6 +15,8 @@ public interface SyncExecutor {
      */
     boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto);
 
+    boolean dataImport(String appId, int version, String content);
+
     /**
      * 外部实现获取版本.
      */

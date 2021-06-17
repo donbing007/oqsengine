@@ -2,9 +2,11 @@ package com.xforceplus.ultraman.oqsengine.metadata.recover;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MetaSyncGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
@@ -76,6 +78,16 @@ public class BaseRequest {
             public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
                 stringIntegerMap.put(appId, version);
                 return true;
+            }
+
+            @Override
+            public boolean dataImport(String appId, int version, String content) {
+                try {
+                    EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+                    return true;
+                } catch (InvalidProtocolBufferException e) {
+                    return false;
+                }
             }
 
             @Override

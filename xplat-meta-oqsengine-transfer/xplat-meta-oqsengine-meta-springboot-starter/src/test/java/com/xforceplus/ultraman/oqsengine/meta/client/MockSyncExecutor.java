@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassSto
  */
 @Component("grpcSyncExecutor")
 public class MockSyncExecutor implements SyncExecutor {
-    private Logger logger = LoggerFactory.getLogger(MockSyncExecutor.class);
+    private final Logger logger = LoggerFactory.getLogger(MockSyncExecutor.class);
 
     public volatile RequestStatus status = RequestStatus.SYNC_OK;
 
@@ -46,7 +48,7 @@ public class MockSyncExecutor implements SyncExecutor {
                     Assert.assertTrue(version > requestStatusVersion.getVersion());
                 }
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
-                logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto.toString());
+                logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto);
             }
             return status.equals(RequestStatus.SYNC_OK);
         } catch (Exception e) {
@@ -54,6 +56,17 @@ public class MockSyncExecutor implements SyncExecutor {
           throw e;
         } finally {
             status = RequestStatus.SYNC_OK;
+        }
+    }
+
+    @Override
+    public boolean dataImport(String appId, int version, String content) {
+        try {
+            EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            return true;
+        } catch (InvalidProtocolBufferException e) {
+            logger.warn("message : {}", e.getMessage());
+            return false;
         }
     }
 

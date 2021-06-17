@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
@@ -62,12 +64,22 @@ public class BaseTest {
         IRequestHandler requestHandler = new SyncRequestHandler();
 
         SyncExecutor syncExecutor = new SyncExecutor() {
-            Map<String, Integer> stringIntegerMap = new HashMap<>();
+            final Map<String, Integer> stringIntegerMap = new HashMap<>();
 
             @Override
             public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
                 stringIntegerMap.put(appId, version);
                 return true;
+            }
+
+            @Override
+            public boolean dataImport(String appId, int version, String content) {
+                try {
+                    EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+                    return true;
+                } catch (InvalidProtocolBufferException e) {
+                    return false;
+                }
             }
 
             @Override

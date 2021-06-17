@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientExc
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
@@ -124,6 +125,29 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             appId, version);
 
         return false;
+    }
+
+    @Override
+    public boolean dataImport(String appId, int version, String content) {
+        int currentVersion = version(appId);
+
+        if (version > currentVersion) {
+            EntityClassSyncRspProto entityClassSyncRspProto;
+            try {
+                entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
+            }
+
+            if (!sync(appId, version, entityClassSyncRspProto)) {
+                throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
+            }
+            return true;
+        } else {
+            String message = String.format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId, currentVersion, version);
+            logger.warn(message);
+            throw new RuntimeException(message);
+        }
     }
 
     /**
