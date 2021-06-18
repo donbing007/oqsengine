@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.mock.integration;
+package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;

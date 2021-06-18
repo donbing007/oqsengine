@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.mock.integration;
+package com.xforceplus.ultraman.oqsengine.metadata.integration.integration;
 
 import java.lang.reflect.Field;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.mock.integration;
+package com.xforceplus.ultraman.oqsengine.metadata.integration.integration;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.EnhancedSyncExecutor;
 import com.xforceplus.ultraman.test.tools.constant.ContainerEnvKeys;
 import com.xforceplus.ultraman.test.tools.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;

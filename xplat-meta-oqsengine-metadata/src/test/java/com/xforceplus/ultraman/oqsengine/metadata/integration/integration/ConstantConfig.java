@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.mock.integration;
+package com.xforceplus.ultraman.oqsengine.metadata.integration.integration;
 
 /**
  * Created by justin.xu on 06/2021.

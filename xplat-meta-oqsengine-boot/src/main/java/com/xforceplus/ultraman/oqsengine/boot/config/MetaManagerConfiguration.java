@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.integration.EnhancedSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.EnhancedSyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

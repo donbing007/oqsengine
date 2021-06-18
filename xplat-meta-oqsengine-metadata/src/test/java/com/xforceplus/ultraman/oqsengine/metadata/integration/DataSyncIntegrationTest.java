@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.metadata.integration;
 
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.integration.AbstractIntegrationConfig;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.integration.ConstantConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.integration.integration.AbstractIntegrationConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.integration.integration.ConstantConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.test.tools.annotation.BocpExtension;
 import java.util.List;
