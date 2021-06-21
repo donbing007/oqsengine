@@ -887,18 +887,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 List<BusinessKey> businessKeys = getBusinessKeys(entityClass, in.getConditions().getFieldsList());
 
-                /**
-                 * when the condition has only businessKeys
-                 */
+
                 if (!businessKeys.isEmpty() && businessKeys.size() == in.getConditions().getFieldsList().size()) {
-
-                    Optional<IEntity> iEntity = entitySearchService.selectOneByKey(businessKeys, entityClassRef);
-
-                    if (iEntity.isPresent()) {
-                        entities = Collections.singletonList(iEntity.get());
-                    } else {
-                        entities = Collections.emptyList();
-                    }
+                    // when the condition has only businessKeys
+                    Optional<IEntity> entity = entitySearchService.selectOneByKey(businessKeys, entityClassRef);
+                    entities =
+                        entity.<Collection<IEntity>>map(Collections::singletonList).orElse(Collections.emptyList());
                 } else {
 
                     if (sort == null || sort.isEmpty()) {
