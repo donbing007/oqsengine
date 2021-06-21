@@ -14,6 +14,7 @@ import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManageme
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
@@ -110,12 +111,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private static final String LOCK_HEADER = "lock-header";
     private static final String LOCK_TOKEN = "lock-token";
 
+    private ObjectMapper mapper = new ObjectMapper();
+
     @Autowired
     private MetaManager metaManager;
 
     @Resource(name = "ioThreadPool")
     private ExecutorService asyncDispatcher;
-
 
     @Autowired(required = false)
     private QueryStorage queryStorage;
@@ -276,6 +278,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .addIds(version);
 
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
+                } else if (resultStatus == ResultStatus.HALF_SUCCESS) {
+
+                    Map<String, String> failedMap = operationResult.getFailedMap();
+                    String failedValues = "";
+                    try {
+                        failedValues = mapper.writeValueAsString(failedMap);
+                    } catch (Exception ex) {
+                        logger.error("{}", ex);
+                    }
+
+                    OperationResult.Builder builder = OperationResult.newBuilder()
+                        .addIds(entity.id())
+                        .addIds(txId)
+                        .addIds(version);
+
+                    result = builder.setCode(OperationResult.Code.OTHER)
+                        .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                        .buildPartial();
                 } else {
                     throw new RuntimeException(resultStatus.name() + ":" + operationResult.getMessage());
                 }
@@ -359,6 +379,23 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(1)
                             .setCode(OperationResult.Code.OK)
+                            .addIds(txId)
+                            .addIds(version)
+                            .buildPartial();
+                        break;
+                    case HALF_SUCCESS:
+                        Map<String, String> failedMap = operationResult.getFailedMap();
+                        String failedValues = "";
+                        try {
+                            failedValues = mapper.writeValueAsString(failedMap);
+                        } catch (Exception ex) {
+                            logger.error("{}", ex);
+                        }
+
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OTHER)
+                            .setMessage(ResultStatus.HALF_SUCCESS.name() + ":" + failedValues)
                             .addIds(txId)
                             .addIds(version)
                             .buildPartial();
@@ -636,7 +673,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 } else {
                     com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
-                        entityManagementService.delete(targetEntity);
+                        entityManagementService.deleteForce(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();
