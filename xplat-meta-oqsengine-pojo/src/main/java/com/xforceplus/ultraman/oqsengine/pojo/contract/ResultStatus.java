@@ -48,7 +48,24 @@ public enum ResultStatus {
         this.value = value;
     }
 
-    public int getValue() {
+    public int getSymbol() {
         return value;
     }
+
+    /**
+     * 根据字面量获得实例.
+     *
+     * @param symbol 字面量.
+     * @return 实例.
+     */
+    public static ResultStatus getInstance(int symbol) {
+        for (ResultStatus r : ResultStatus.values()) {
+            if (r.getSymbol() == symbol) {
+                return r;
+            }
+        }
+
+        return UNKNOWN;
+    }
+
 }

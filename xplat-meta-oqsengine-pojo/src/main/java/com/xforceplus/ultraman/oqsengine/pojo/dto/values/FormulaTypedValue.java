@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -18,7 +19,7 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
 
     @Override
     Map<String, Object> fromString(String value) {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
@@ -28,6 +29,6 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
 
     @Override
     public IValue<Map<String, Object>> shallowClone() {
-        return null;
+        return this;
     }
 }

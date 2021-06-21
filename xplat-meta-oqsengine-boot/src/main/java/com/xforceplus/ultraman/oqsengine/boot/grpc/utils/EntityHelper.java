@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
@@ -78,7 +78,7 @@ public class EntityHelper {
      * to typed value.
      */
     public static List<IValue> toTypedValue(IEntityField entityField, String value) {
-        if (value != null && EmptyValue.isEmpty(value)) {
+        if (value != null && ValueWithEmpty.isEmpty(value)) {
             return Collections.singletonList(new EmptyTypedValue(entityField));
         } else {
             return entityField.type().toTypedValue(entityField, value)

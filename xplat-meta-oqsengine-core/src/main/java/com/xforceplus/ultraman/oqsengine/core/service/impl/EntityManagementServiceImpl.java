@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -100,6 +101,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private BizIDGenerator bizIDGenerator;
+
+
+    private VerifierFactory verifierFactory;
 
     /*
     只读的原因.
@@ -237,6 +241,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } else {
             logger.info("Ignore CDC status checks.");
         }
+
+        verifierFactory = new VerifierFactory();
     }
 
     @PreDestroy
@@ -253,7 +259,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
-        verify(entity);
+        preview(entity);
 
         markTime(entity);
 
@@ -321,7 +327,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
 
-        verify(entity);
+        preview(entity);
 
         markTime(entity);
 
@@ -577,8 +583,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    // 校验
-    private void verify(IEntity entity) throws SQLException {
+    // 预检
+    private void preview(IEntity entity) throws SQLException {
         if (entity == null) {
             throw new SQLException("Invalid object entity.");
         }
@@ -594,6 +600,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.id(), entity.entityClassRef().getCode()));
         }
     }
+
+
 
     //  build前的准备
     private Map<String, String> prepareBuild(IEntityClass entityClass, IEntity entity) {

@@ -8,12 +8,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 public class EmptyTypedValue extends AbstractValue {
 
     public EmptyTypedValue(IEntityField field) {
-        super(field, EmptyValue.EMPTY_VALUE);
+        super(field, ValueWithEmpty.EMPTY_VALUE);
     }
 
     @Override
     Object fromString(String value) {
-        return EmptyValue.EMPTY_VALUE;
+        return ValueWithEmpty.EMPTY_VALUE;
     }
 
     @Override
