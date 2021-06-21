@@ -37,7 +37,7 @@ public class MetaManagerConfiguration {
         return new DefaultCacheExecutor();
     }
 
-    @Bean
+    @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
     public SyncExecutor grpcSyncExecutor() {
         return new EntityClassSyncExecutor();
@@ -46,7 +46,7 @@ public class MetaManagerConfiguration {
     /**
      * 产生一个mock的syncExecutor.
      */
-    @Bean
+    @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('mock')")
     public SyncExecutor mockSyncExecutor() {
         return new SyncExecutor() {

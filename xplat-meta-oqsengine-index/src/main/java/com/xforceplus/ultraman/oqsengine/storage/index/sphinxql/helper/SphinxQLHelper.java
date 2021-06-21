@@ -171,16 +171,11 @@ public class SphinxQLHelper {
             if (buff.length() > emptyLen) {
                 buff.append(" << ");
             }
-            buff.append(shortStorageName.getPrefix())
-                .append(words.next())
-                .append(FUZZY_WORD_FLAG)
-                .append(shortStorageName.getSuffix());
+            buff.append(encodeFuzzyWord(shortStorageName, words.next()));
         }
         // 无法分词,使用原始字符.
         if (buff.length() == emptyLen) {
-            buff.append(shortStorageName.getPrefix())
-                .append(value.value().toString())
-                .append(shortStorageName.getSuffix());
+            buff.append(encodeFuzzyWord(shortStorageName, value.value().toString()));
         }
 
         buff.append(')');
@@ -195,14 +190,9 @@ public class SphinxQLHelper {
      * @return 查询语法.
      */
     public static String buildWirdcardQuery(StorageValue value) {
-        StringBuilder buff = new StringBuilder();
         ShortStorageName shortStorageName = value.shortStorageName();
 
-        buff.append(shortStorageName.getPrefix())
-            .append(filterSymbols(value.value().toString()))
-            .append(FUZZY_WORD_FLAG)
-            .append(shortStorageName.getSuffix());
+        return encodeFuzzyWord(shortStorageName, filterSymbols(value.value().toString()));
 
-        return buff.toString();
     }
 }
