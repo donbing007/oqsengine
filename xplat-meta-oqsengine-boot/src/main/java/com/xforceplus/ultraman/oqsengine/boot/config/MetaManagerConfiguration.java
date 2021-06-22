@@ -44,9 +44,10 @@ public class MetaManagerConfiguration {
     public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type) {
         StorageMetaManager storageMetaManager = new StorageMetaManager();
         if (type.equals("offline")) {
+            logger.info("init storageMetaManager, use offline model.");
             storageMetaManager.isOffLineUse();
         }
-
+        logger.info("init storageMetaManager success.");
         return storageMetaManager;
     }
 
