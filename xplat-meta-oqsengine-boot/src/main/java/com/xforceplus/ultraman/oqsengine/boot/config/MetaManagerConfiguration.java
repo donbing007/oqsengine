@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecut
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,10 +38,18 @@ public class MetaManagerConfiguration {
         return new DefaultCacheExecutor();
     }
 
+    /**
+     * grpc同步执行器.
+     */
     @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
-    public SyncExecutor grpcSyncExecutor() {
-        return new EntityClassSyncExecutor();
+    public SyncExecutor grpcSyncExecutor(@Value("${meta.load.path:}") String loadPath) {
+        EntityClassSyncExecutor entityClassSyncExecutor = new EntityClassSyncExecutor();
+        if (null != loadPath && !loadPath.isEmpty()) {
+            logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
+            entityClassSyncExecutor.setLoadPath(loadPath);
+        }
+        return entityClassSyncExecutor;
     }
 
     /**
