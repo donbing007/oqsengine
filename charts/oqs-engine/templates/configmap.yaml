@@ -68,6 +68,8 @@ data:
               keepAliveDuration: {{ .Values.meta.grpc.seconds.keepAliveDuration | default "5"}}
               monitorDuration: {{ .Values.meta.grpc.seconds.monitorDuration | default "1"}}
               reconnectDuration: {{ .Values.meta.grpc.seconds.reconnectDuration | default "5"}}
+          load:
+            path: {{ .Values.meta.load.path | default "-"}}
         query:
           maxVisibleTotalCount: {{ .Values.query.maxVisibleTotalCount | default "10000" }}
           join:
