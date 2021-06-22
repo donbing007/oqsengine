@@ -42,7 +42,7 @@ public class EntityClassStorageHelper {
 
 
     private static String fileName(String appId, Integer version, String env) {
-        return String.format("%s_%d_%s.json", appId, version, env);
+        return String.format("/%s_%d_%s.json", appId, version, env);
     }
 
     /**
