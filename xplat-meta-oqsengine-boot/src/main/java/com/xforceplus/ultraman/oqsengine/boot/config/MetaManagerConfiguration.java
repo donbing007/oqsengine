@@ -54,6 +54,7 @@ public class MetaManagerConfiguration {
     @Bean
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public CacheExecutor cacheExecutor() {
+        logger.info("init cacheExecutor success.");
         return new DefaultCacheExecutor();
     }
 
