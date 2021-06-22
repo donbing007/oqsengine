@@ -35,7 +35,7 @@ public class EntityClassStorageHelper {
      */
     public static String initDataFromInputStream(String appId, String env, Integer version, InputStream in) {
         StringBuilder sb = new StringBuilder();
-        try (Scanner scanner = new Scanner(in)) {
+        try (Scanner scanner = new Scanner(in,  "UTF-8")) {
             while (scanner.hasNextLine()) {
                 sb.append(scanner.nextLine());
             }
