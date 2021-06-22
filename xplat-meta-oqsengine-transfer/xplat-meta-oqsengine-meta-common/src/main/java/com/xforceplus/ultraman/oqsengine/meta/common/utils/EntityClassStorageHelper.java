@@ -40,7 +40,7 @@ public class EntityClassStorageHelper {
                 sb.append(scanner.nextLine());
             }
         } catch (Exception e) {
-            throw new RuntimeException(String.format("read [/%s_%d_%s.json] error, message [%s]", appId, version, env, e.getMessage()));
+            throw new RuntimeException(String.format("read [$path/%s_%d_%s.json] error, message [%s]", appId, version, env, e.getMessage()));
         }
 
         return sb.toString();

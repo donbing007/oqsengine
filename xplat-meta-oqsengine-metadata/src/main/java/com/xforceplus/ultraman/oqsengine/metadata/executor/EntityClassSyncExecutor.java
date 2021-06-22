@@ -219,13 +219,15 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             try {
                 String[] splitter = EntityClassStorageHelper.splitMetaFromFileName(file);
 
+                String appId = splitter[0];
                 int version = Integer.parseInt(splitter[1]);
                 String fullPath = path + file;
+
                 String v =
-                    EntityClassStorageHelper.initDataFromFilePath(splitter[0], splitter[2], version, fullPath);
+                    EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
 
                 if (dataImport(splitter[0], version, v)) {
-                    logger.info("init meta from local path success, path : {}", fullPath);
+                    logger.info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId, version);
                 } else {
                     logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);
                 }
