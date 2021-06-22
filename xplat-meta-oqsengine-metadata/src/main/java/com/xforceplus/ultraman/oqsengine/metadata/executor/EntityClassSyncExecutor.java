@@ -147,7 +147,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         int currentVersion = version(appId);
 
         if (version > currentVersion) {
-            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion, appId);
+            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion, version);
 
             EntityClassSyncRspProto entityClassSyncRspProto;
             try {

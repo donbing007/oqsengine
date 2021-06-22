@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 /**
  * meta manager.
@@ -40,6 +41,7 @@ public class MetaManagerConfiguration {
      * 增加isOffLineUse.
      */
     @Bean("metaManager")
+    @DependsOn("cacheExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type) {
         StorageMetaManager storageMetaManager = new StorageMetaManager();
@@ -51,7 +53,8 @@ public class MetaManagerConfiguration {
         return storageMetaManager;
     }
 
-    @Bean
+    @Bean("cacheExecutor")
+    @DependsOn("redisClient")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public CacheExecutor cacheExecutor() {
         logger.info("init cacheExecutor success.");
