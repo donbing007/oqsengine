@@ -146,6 +146,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     public boolean dataImport(String appId, int version, String content) {
         int currentVersion = version(appId);
 
+        logger.debug("appId {}, currentVersion {}, update version {}", appId, currentVersion, appId);
+
         if (version > currentVersion) {
             EntityClassSyncRspProto entityClassSyncRspProto;
             try {
