@@ -58,6 +58,12 @@ public class StorageMetaManager implements MetaManager {
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncDispatcher;
 
+    private boolean isOffLineUse = false;
+
+    public void isOffLineUse() {
+        this.isOffLineUse = true;
+    }
+
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
@@ -115,39 +121,46 @@ public class StorageMetaManager implements MetaManager {
 
             int version = cacheExecutor.version(appId);
 
-            requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register));
+            if (!isOffLineUse) {
+                requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register));
 
-            if (version < 0) {
-                CompletableFuture<Integer> future = async(() -> {
-                    int ver;
-                    /*
-                     * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
-                     */
-                    while (true) {
-                        ver = cacheExecutor.version(appId);
-                        if (ver < 0) {
-                            try {
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                break;
+                if (version < 0) {
+                    CompletableFuture<Integer> future = async(() -> {
+                        int ver;
+                        /*
+                         * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
+                         */
+                        while (true) {
+                            ver = cacheExecutor.version(appId);
+                            if (ver < 0) {
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException e) {
+                                    break;
+                                }
+                            } else {
+                                return ver;
                             }
-                        } else {
-                            return ver;
                         }
+                        return NOT_EXIST_VERSION;
+                    });
+
+                    try {
+                        version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e.getMessage());
                     }
-                    return NOT_EXIST_VERSION;
-                });
 
-                try {
-                    version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e.getMessage());
+                    if (version == NOT_EXIST_VERSION) {
+                        throw new RuntimeException(
+                            String.format("get version of appId [%s] failed, reach max wait time", appId));
+                    }
                 }
-
-                if (version == NOT_EXIST_VERSION) {
+            } else {
+                if (version < 0) {
                     throw new RuntimeException(
-                        String.format("get version of appId [%s] failed, reach max wait time", appId));
+                        String.format("local cache has not init this version of appId [%s].", appId));
                 }
             }
             return version;

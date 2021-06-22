@@ -18,6 +18,8 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -91,6 +93,7 @@ public class EntityClassSyncExecutorTest {
             }
         });
 
+        entityClassSyncExecutor.setLoadPath("src/test/resources/local/");
         entityClassSyncExecutor.start();
 
         /*
@@ -111,22 +114,46 @@ public class EntityClassSyncExecutorTest {
     }
 
     @Test
-    public void dataImportTest() {
+    public void dataImportTest() throws IOException {
         String defaultTestAppId = "5";
         String env = "0";
         int defaultTestVersion = 2;
         Boolean result = false;
+        InputStream in = null;
         try {
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
             result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromFile(defaultTestAppId, env, defaultTestVersion));
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
             Assert.assertTrue(result);
         } catch (Exception e) {
             Assert.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
         }
 
         Optional<IEntityClass> op =  storageMetaManager.load(1251658380868685825L);
 
         Assert.assertTrue(op.isPresent());
+
+        //  重新导入老版本，结果为失败
+        try {
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
+            defaultTestVersion = 1;
+
+            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            Assert.assertFalse(result);
+        } catch (Exception e) {
+            Assert.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+        }
     }
 
     @Test
@@ -197,6 +224,15 @@ public class EntityClassSyncExecutorTest {
                 (EntityClassStorage) m0.invoke(cacheExecutor, new Object[] {e.getSelf(), newVersion});
             Assert.assertNotNull(exists);
         }
+    }
+
+
+    /**
+     * 从resource目录中生成InputStream.
+     */
+    private InputStream initInputStreamByResource(String appId, Integer version, String env) {
+        String path = String.format("/%s_%d_%s.json", appId, version, env);
+        return EntityClassStorageHelper.class.getResourceAsStream(path);
     }
 
 }

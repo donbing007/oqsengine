@@ -28,8 +28,8 @@ public class DevOpsController {
                                               @PathVariable Integer version,
                                               @RequestBody String data) {
         try {
-            syncExecutor.dataImport(appId, version, data);
-            return ResponseEntity.ok("success");
+            boolean result = syncExecutor.dataImport(appId, version, data);
+            return ResponseEntity.ok(result ? "success" : "less version than current use.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -4,6 +4,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.meta.handler.DoNothingRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
@@ -27,14 +29,29 @@ public class MetaManagerConfiguration {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Bean
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('offline')")
+    public IRequestHandler requestHandler() {
+        return new DoNothingRequestHandler();
+    }
+
+    /**
+     * 初始化MetaManager.
+     * 增加isOffLineUse.
+     */
     @Bean("metaManager")
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
-    public MetaManager productMetaManager() {
-        return new StorageMetaManager();
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
+    public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type) {
+        StorageMetaManager storageMetaManager = new StorageMetaManager();
+        if (type.equals("offline")) {
+            storageMetaManager.isOffLineUse();
+        }
+
+        return storageMetaManager;
     }
 
     @Bean
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public CacheExecutor cacheExecutor() {
         return new DefaultCacheExecutor();
     }
@@ -44,15 +61,21 @@ public class MetaManagerConfiguration {
      * 增加的SyncExecutor会记录bocp同步过来的原始数据内容，供测试项目进行assert比较.
      */
     @Bean("grpcSyncExecutor")
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public SyncExecutor grpcSyncExecutor(
+        @Value("${meta.load.path:}") String loadPath,
         @Value("${metadata.enhanced:false}") boolean enhanced) {
         if (enhanced) {
             logger.info("init EnhancedSyncExecutor success.");
             return new EnhancedSyncExecutor();
         }
         logger.info("init EntityClassSyncExecutor success.");
-        return new EntityClassSyncExecutor();
+        EntityClassSyncExecutor entityClassSyncExecutor = new EntityClassSyncExecutor();
+        if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
+            logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
+            entityClassSyncExecutor.setLoadPath(loadPath);
+        }
+        return entityClassSyncExecutor;
     }
 
     /**
@@ -86,7 +109,7 @@ public class MetaManagerConfiguration {
     }
 
     @Bean
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public IDelayTaskExecutor delayTaskExecutor() {
         return new ExpireExecutor();
     }
