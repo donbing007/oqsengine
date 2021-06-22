@@ -25,12 +25,15 @@ public interface ValueVerifier {
             return VerifierResult.REQUIRED;
         }
 
-        if (!isTooLong(field, value)) {
-            return VerifierResult.TOO_LONG;
-        }
+        if (value != null) {
 
-        if (!isHighPrecision(field, value)) {
-            return VerifierResult.HIGH_PRECISION;
+            if (!isTooLong(field, value)) {
+                return VerifierResult.TOO_LONG;
+            }
+
+            if (!isHighPrecision(field, value)) {
+                return VerifierResult.HIGH_PRECISION;
+            }
         }
 
         return VerifierResult.OK;

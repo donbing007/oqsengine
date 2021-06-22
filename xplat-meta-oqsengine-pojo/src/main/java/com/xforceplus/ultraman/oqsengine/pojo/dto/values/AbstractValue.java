@@ -16,6 +16,12 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     private IEntityField field;
     private V value;
 
+    /**
+     * 构造一个新的逻辑值.
+     *
+     * @param field 目标字段元信息.
+     * @param value 实际值.
+     */
     public AbstractValue(IEntityField field, V value) {
         this.field = field;
         this.value = value;

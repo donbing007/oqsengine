@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.rest;
 
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DevOpsController {
 
-    @Autowired
+    @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
 
     /**

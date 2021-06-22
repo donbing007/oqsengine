@@ -43,7 +43,7 @@ public class MetaManagerConfiguration {
      * 跟据metadata.enhanced生产是否带增强功能的SyncExecutor,默认false
      * 增加的SyncExecutor会记录bocp同步过来的原始数据内容，供测试项目进行assert比较.
      */
-    @Bean
+    @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server')")
     public SyncExecutor grpcSyncExecutor(
         @Value("${metadata.enhanced:false}") boolean enhanced) {
@@ -58,7 +58,7 @@ public class MetaManagerConfiguration {
     /**
      * 产生一个mock的syncExecutor.
      */
-    @Bean
+    @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('mock')")
     public SyncExecutor mockSyncExecutor() {
         return new SyncExecutor() {

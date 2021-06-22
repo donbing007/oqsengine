@@ -47,7 +47,7 @@ public class EntityManagementServiceImplTest {
     }
 
     @Test
-    public void testVerify() throws Exception {
+    public void testPreview() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
@@ -143,6 +143,36 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
         Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testBuildFieldCheckFailure() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(EntityClassDefine.l2EntityClass.ref())
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 10000L)
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.FIELD_TOO_LONG, impl.build(targetEntity).getResultStatus());
+
+
+        targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(EntityClassDefine.mustEntityClass.ref())
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new StringValue(EntityClassDefine.mustEntityClass.field("not-must-field").get(), "test")
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.FIELD_MUST, impl.build(targetEntity).getResultStatus());
     }
 
     @Test

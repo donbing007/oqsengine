@@ -33,7 +33,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -276,6 +278,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 ResultStatus.ELEVATEFAILED, message);
         }
 
+        Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, entity);
+        if (VerifierResult.OK != verifyResult.getKey()) {
+            // 表示有些校验不通过.
+            return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                transformVerifierResultToReusltStatus(verifyResult.getKey()),
+                instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
+        }
+
         OperationResult operationResult = null;
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
@@ -377,6 +387,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 操作时间
                 targetEntity.markTime(entity.time());
+
+                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, entity);
+                if (VerifierResult.OK != verifyResult.getKey()) {
+                    hint.setRollback(true);
+                    // 表示有些校验不通过.
+                    return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                        transformVerifierResultToReusltStatus(verifyResult.getKey()),
+                        instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
+                }
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -601,6 +620,49 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
+    // 校验字段.
+    private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
+        VerifierResult result;
+        for (IEntityField field : entityClass.fields()) {
+            ValueVerifier verifier = verifierFactory.getVerifier(field.type());
+            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
+            result = verifier.verify(field, valueOp.orElse(null));
+            if (VerifierResult.OK != result) {
+                return new AbstractMap.SimpleEntry(result, field);
+            }
+
+        }
+
+        return new AbstractMap.SimpleEntry(VerifierResult.OK, null);
+    }
+
+    private ResultStatus transformVerifierResultToReusltStatus(VerifierResult verifierResult) {
+        switch (verifierResult) {
+            case REQUIRED:
+                return ResultStatus.FIELD_MUST;
+            case TOO_LONG:
+                return ResultStatus.FIELD_TOO_LONG;
+            case HIGH_PRECISION:
+                return ResultStatus.FIELD_HIGH_PRECISION;
+            default:
+                return ResultStatus.UNKNOWN;
+        }
+    }
+
+    private String instantiateMessage(VerifierResult verifierResult, IEntityField field) {
+        switch (verifierResult) {
+            case REQUIRED:
+                return String.format("The field %s is required.", field.name());
+            case TOO_LONG:
+                return String.format("The value of field %s is too long. The maximum acceptable length is %d.",
+                    field.name(), field.config().getLen());
+            case HIGH_PRECISION:
+                return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.",
+                    field.name(), field.config().getPrecision());
+            default:
+                return "Unknown validation failed.";
+        }
+    }
 
 
     //  build前的准备
