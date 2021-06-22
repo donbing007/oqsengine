@@ -150,6 +150,6 @@ cdc:
 
 meta:
   grpc:
-    type: offline
+    type: mock
   load:
     path: "-"
