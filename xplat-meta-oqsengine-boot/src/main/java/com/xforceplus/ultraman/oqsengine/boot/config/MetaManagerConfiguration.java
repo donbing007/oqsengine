@@ -39,7 +39,7 @@ public class MetaManagerConfiguration {
      * 增加isOffLineUse.
      */
     @Bean("metaManager")
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server') || '${meta.grpc.type}'.equals('offline')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type) {
         StorageMetaManager storageMetaManager = new StorageMetaManager();
         if (type.equals("offline")) {
@@ -50,7 +50,7 @@ public class MetaManagerConfiguration {
     }
 
     @Bean
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server') || '${meta.grpc.type}'.equals('offline')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public CacheExecutor cacheExecutor() {
         return new DefaultCacheExecutor();
     }
@@ -59,7 +59,7 @@ public class MetaManagerConfiguration {
      * grpc同步执行器.
      */
     @Bean("grpcSyncExecutor")
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server') || '${meta.grpc.type}'.equals('offline')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public SyncExecutor grpcSyncExecutor(@Value("${meta.load.path:-}") String loadPath) {
         EntityClassSyncExecutor entityClassSyncExecutor = new EntityClassSyncExecutor();
         if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
@@ -100,7 +100,7 @@ public class MetaManagerConfiguration {
     }
 
     @Bean
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('server') || '${meta.grpc.type}'.equals('offline')")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public IDelayTaskExecutor delayTaskExecutor() {
         return new ExpireExecutor();
     }
