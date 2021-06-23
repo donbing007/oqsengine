@@ -31,14 +31,14 @@ public class TestClientRemote {
     @Autowired
     private IRequestHandler requestHandler;
 
-    boolean ifTest = false;
+    boolean ifTest = true;
 
     @Test
     public void test() throws InterruptedException {
         if (ifTest) {
-            Thread.sleep(100_000);
+            Thread.sleep(1_000);
             boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, Register));
+                    requestHandler.register(new WatchElement("1372845247803756545", "0", -1, Register));
 
             Assert.assertTrue(ret);
 //

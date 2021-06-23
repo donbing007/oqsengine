@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 /**
- * an emptyValue means to set null or clean the origin.
+ * 表示一个IValue的值为ValueWithEmtpy.
  */
-public class EmptyValue {
+public class ValueWithEmpty {
 
-    public static final EmptyValue EMPTY_VALUE = new EmptyValue();
+    public static final ValueWithEmpty EMPTY_VALUE = new ValueWithEmpty();
 
     private static final String NULL_VALUE = "$NULL$";
 

@@ -122,7 +122,13 @@ public class IValueUtils {
                     return new StringsValue(field, (String[]) result);
                 }
                 case DECIMAL: {
-                    return new DecimalValue(field, (BigDecimal) result);
+                    BigDecimal r;
+                    if (field.config().getPrecision() > 0) {
+                        r = ((BigDecimal) result).setScale(field.config().getPrecision(), BigDecimal.ROUND_DOWN);
+                    } else {
+                        r = (BigDecimal) result;
+                    }
+                    return new DecimalValue(field, r);
                 }
                 default: {
                     throw new IllegalArgumentException("unknown field type.");
