@@ -14,6 +14,7 @@ import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManageme
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
@@ -34,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -48,6 +50,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.CompatibleRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
 import com.xforceplus.ultraman.oqsengine.sdk.Filters;
 import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
@@ -110,12 +113,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private static final String LOCK_HEADER = "lock-header";
     private static final String LOCK_TOKEN = "lock-token";
 
+    private ObjectMapper mapper = new ObjectMapper();
+
     @Autowired
     private MetaManager metaManager;
 
     @Resource(name = "ioThreadPool")
     private ExecutorService asyncDispatcher;
-
 
     @Autowired(required = false)
     private QueryStorage queryStorage;
@@ -276,6 +280,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .addIds(version);
 
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
+                } else if (resultStatus == ResultStatus.HALF_SUCCESS) {
+
+                    Map<String, String> failedMap = operationResult.getFailedMap();
+                    String failedValues = "";
+                    try {
+                        failedValues = mapper.writeValueAsString(failedMap);
+                    } catch (Exception ex) {
+                        logger.error("{}", ex);
+                    }
+
+                    OperationResult.Builder builder = OperationResult.newBuilder()
+                        .addIds(entity.id())
+                        .addIds(txId)
+                        .addIds(version);
+
+                    result = builder.setCode(OperationResult.Code.OTHER)
+                        .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                        .buildPartial();
                 } else {
                     throw new RuntimeException(resultStatus.name() + ":" + operationResult.getMessage());
                 }
@@ -359,6 +381,23 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(1)
                             .setCode(OperationResult.Code.OK)
+                            .addIds(txId)
+                            .addIds(version)
+                            .buildPartial();
+                        break;
+                    case HALF_SUCCESS:
+                        Map<String, String> failedMap = operationResult.getFailedMap();
+                        String failedValues = "";
+                        try {
+                            failedValues = mapper.writeValueAsString(failedMap);
+                        } catch (Exception ex) {
+                            logger.error("{}", ex);
+                        }
+
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OTHER)
+                            .setMessage(ResultStatus.HALF_SUCCESS.name() + ":" + failedValues)
                             .addIds(txId)
                             .addIds(version)
                             .buildPartial();
@@ -636,7 +675,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 } else {
                     com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
-                        entityManagementService.delete(targetEntity);
+                        entityManagementService.deleteForce(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus resultStatus = operationResult.getResultStatus();
@@ -748,6 +787,54 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+
+    private List<BusinessKey> getRawBusinessKeys(IEntityClass entityClass, List<FieldConditionUp> fieldConditionUps) {
+        String code = entityClass.code();
+        Collection<IEntityField> fields = entityClass.fields();
+        List<IEntityField> uniqueFields = fields.stream()
+            .filter(x -> {
+                String uniqueName = x.config().getUniqueName();
+                String[] split = uniqueName.split(":");
+                if (split.length > 1) {
+                    return code.equals(split[0]);
+                }
+
+                return false;
+            })
+            .collect(Collectors.toList());
+
+        List<BusinessKey> collect = uniqueFields.stream().map(x -> {
+            Optional<FieldConditionUp> first = fieldConditionUps.stream()
+                .filter(f -> f.getOperation().equals(FieldConditionUp.Op.eq) && f.getValuesList().size() == 1)
+                .filter(f -> f.getCode().equals(x.name()))
+                .findFirst();
+
+            return first.map(unique -> {
+                BusinessKey businessKey = new BusinessKey();
+                businessKey.setFieldName(unique.getCode());
+                businessKey.setValue(unique.getValuesList().get(0));
+                return businessKey;
+            });
+        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (collect.size() == uniqueFields.size()) {
+            return collect;
+        }
+
+        return Collections.emptyList();
+    }
+
+    private List<BusinessKey> getBusinessKeys(IEntityClass entityClass, List<FieldConditionUp> fieldConditionUps) {
+
+        List<BusinessKey> businessKeys = Collections.emptyList();
+
+        while (entityClass != null && businessKeys.isEmpty()) {
+            businessKeys = getRawBusinessKeys(entityClass, fieldConditionUps);
+        }
+
+        return businessKeys;
+    }
+
     /**
      * modify to use IEntityReader.
      */
@@ -797,49 +884,61 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 Optional<? extends IEntityField> sortField;
 
-                if (sort == null || sort.isEmpty()) {
-                    sortField = Optional.empty();
-                } else {
-                    FieldSortUp sortUp = sort.get(0);
-                    //get related field
-                    sortField = toEntityField(entityClass, sortUp.getField());
-                }
 
-                Optional<Conditions> extraCondition = Optional.empty();
-                if (in.hasTree()) {
-                    SelectByTree tree = in.getTree();
-                    Filters filters = tree.getFilters();
-                    extraCondition = toConditions(entityClass, filters, metaManager);
-                }
+                List<BusinessKey> businessKeys = getBusinessKeys(entityClass, in.getConditions().getFieldsList());
 
-                Sort sortParam = Sort.buildOutOfSort();
-                if (sortField.isPresent()) {
-                    FieldSortUp sortUp = sort.get(0);
 
-                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
-                        sortParam = Sort.buildAscSort(sortField.get());
-                    } else {
-                        sortParam = Sort.buildDescSort(sortField.get());
-                    }
-                }
-
-                ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig
-                    .Builder.anSearchConfig()
-                    .withSort(sortParam)
-                    .withPage(page)
-                    .withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions))
-                    .build();
-
-                Optional<Conditions> consOp = toConditions(
-                    entityClass, in.getConditions(), in.getIdsList(), metaManager);
-
-                if (consOp.isPresent()) {
-
+                if (!businessKeys.isEmpty() && businessKeys.size() == in.getConditions().getFieldsList().size()) {
+                    // when the condition has only businessKeys
+                    Optional<IEntity> entity = entitySearchService.selectOneByKey(businessKeys, entityClassRef);
                     entities =
-                        entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
+                        entity.<Collection<IEntity>>map(Collections::singletonList).orElse(Collections.emptyList());
                 } else {
-                    entities = entitySearchService.selectByConditions(
-                        Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
+
+                    if (sort == null || sort.isEmpty()) {
+                        sortField = Optional.empty();
+                    } else {
+                        FieldSortUp sortUp = sort.get(0);
+                        //get related field
+                        sortField = toEntityField(entityClass, sortUp.getField());
+                    }
+
+                    Optional<Conditions> extraCondition = Optional.empty();
+                    if (in.hasTree()) {
+                        SelectByTree tree = in.getTree();
+                        Filters filters = tree.getFilters();
+                        extraCondition = toConditions(entityClass, filters, metaManager);
+                    }
+
+                    Sort sortParam = Sort.buildOutOfSort();
+                    if (sortField.isPresent()) {
+                        FieldSortUp sortUp = sort.get(0);
+
+                        if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+                            sortParam = Sort.buildAscSort(sortField.get());
+                        } else {
+                            sortParam = Sort.buildDescSort(sortField.get());
+                        }
+                    }
+
+                    ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig
+                        .Builder.anSearchConfig()
+                        .withSort(sortParam)
+                        .withPage(page)
+                        .withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions))
+                        .build();
+
+                    Optional<Conditions> consOp = toConditions(
+                        entityClass, in.getConditions(), in.getIdsList(), metaManager);
+
+                    if (consOp.isPresent()) {
+
+                        entities =
+                            entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
+                    } else {
+                        entities = entitySearchService.selectByConditions(
+                            Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
+                    }
                 }
 
                 result = OperationResult.newBuilder()

@@ -40,7 +40,7 @@ public class WildcardTokenizer implements Tokenizer {
 
     @Override
     public Iterator<String> tokenize(String value) {
-        if (value == null || value.length() <= width) {
+        if (value == null || value.length() < width) {
 
             return EmptyWorkdsIterator.getInstance();
 

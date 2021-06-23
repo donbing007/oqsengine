@@ -134,6 +134,7 @@ cdc:
 
 meta:
   grpc:
+    # client 启动客户端、server 启动服务端、offline 离线模式、mock
     type: client
     host: ultraman.xforcecloud.com
     #    host: 120.55.249.44
@@ -148,8 +149,12 @@ meta:
       keepAliveDuration: 5
       monitorDuration: 1
       reconnectDuration: 5
+  load:
+    path: "-"
 
 changelog:
   enabled: false
   queue: local
 
+metadata:
+  enhanced: false

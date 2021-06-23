@@ -9,132 +9,132 @@ option java_outer_classname = "EntityClassSyncProto";
 import "google/protobuf/any.proto";
 
 service EntityClassSync {
-    rpc register (stream EntityClassSyncRequest) returns (stream EntityClassSyncResponse) {}
+  rpc register (stream EntityClassSyncRequest) returns (stream EntityClassSyncResponse) {}
 }
 
 message EntityClassSyncRequest {
-	string uid = 1;
-	string appId = 2;
-	int32 version = 3;
-	int32 status = 4;
-	string env = 5;
-	bool force = 6;
+  string uid = 1;
+  string appId = 2;
+  int32 version = 3;
+  int32 status = 4;
+  string env = 5;
+  bool force = 6;
 }
 
 message EntityClassSyncResponse {
-	string appId = 1;
-	int32 version = 2;
-	string uid = 3;
-	int32 status = 4;
-	string env = 5;
-	string md5 = 6;
-	EntityClassSyncRspProto entityClassSyncRspProto = 7;
-	bool force = 8;
+  string appId = 1;
+  int32 version = 2;
+  string uid = 3;
+  int32 status = 4;
+  string env = 5;
+  string md5 = 6;
+  EntityClassSyncRspProto entityClassSyncRspProto = 7;
+  bool force = 8;
 }
 
 message EntityClassSyncRspProto {
-	repeated EntityClassInfo entityClasses = 1;
+  repeated EntityClassInfo entityClasses = 1;
 }
 
 message EntityClassInfo {
-	string code = 1;
-	int64 id = 2;
-	string name = 3;
-	int64 father = 4;
-	int32 level = 5;
-	int32 version = 6;
-	repeated EntityFieldInfo entityFields = 7;
-	repeated RelationInfo relations = 8;
-	repeated ProfileInfo profiles = 9;
+  string code = 1;
+  int64 id = 2;
+  string name = 3;
+  int64 father = 4;
+  int32 level = 5;
+  int32 version = 6;
+  repeated EntityFieldInfo entityFields = 7;
+  repeated RelationInfo relations = 8;
+  repeated ProfileInfo profiles = 9;
 }
 
 message EntityFieldInfo {
-	int64 id = 1;
-	string name = 2;
-	string cname = 3;
+  int64 id = 1;
+  string name = 2;
+  string cname = 3;
 
-	enum FieldType {
-		UNKNOWN = 0;
-		BOOLEAN = 1;
-		ENUM = 2;
-		DATETIME = 3;
-		LONG = 4;
-		STRING = 5;
-		STRINGS = 6;
-		DECIMAL = 7;
-	}
+  enum FieldType {
+    UNKNOWN = 0;
+    BOOLEAN = 1;
+    ENUM = 2;
+    DATETIME = 3;
+    LONG = 4;
+    STRING = 5;
+    STRINGS = 6;
+    DECIMAL = 7;
+  }
 
-	FieldType fieldType = 4;
-	string dictId = 5;
-	string defaultValue = 6;
-	FieldConfig fieldConfig = 7;
-	Calculator calculator = 9;
+  FieldType fieldType = 4;
+  string dictId = 5;
+  string defaultValue = 6;
+  FieldConfig fieldConfig = 7;
+  Calculator calculator = 9;
 }
 
 message FieldConfig {
-	bool searchable = 1;
-	int64 max = 2;
-	int64 min = 3;
-	int32 precision = 4;
-	bool identifier = 5;
-	bool isRequired = 6;
-	string validateRegexString = 7;
-	string displayType = 8;
-	MetaFieldSense metaFieldSense = 9;
+  bool searchable = 1;
+  int64 max = 2;
+  int64 min = 3;
+  int32 precision = 4;
+  bool identifier = 5;
+  bool isRequired = 6;
+  string validateRegexString = 7;
+  string displayType = 8;
+  MetaFieldSense metaFieldSense = 9;
 
-	enum MetaFieldSense {
-			UNKNOWN = 0;
-			NORMAL = 1;
-			TENANT_ID = 2;
-			TENANT_CODE = 3;
-			CREATE_TIME = 4;
-			UPDATE_TIME = 5;
-			CREATE_USER_ID = 6;
-		UPDATE_USER_ID = 7;
-		CREATE_USER_NAME = 8;
-		UPDATE_USER_NAME = 9;
-		DELETE_FLAG = 10;
-	}
+  enum MetaFieldSense {
+    UNKNOWN = 0;
+    NORMAL = 1;
+    TENANT_ID = 2;
+    TENANT_CODE = 3;
+    CREATE_TIME = 4;
+    UPDATE_TIME = 5;
+    CREATE_USER_ID = 6;
+    UPDATE_USER_ID = 7;
+    CREATE_USER_NAME = 8;
+    UPDATE_USER_NAME = 9;
+    DELETE_FLAG = 10;
+  }
 
-	int32 fuzzyType = 10;
-	int32 wildcardMinWidth = 11;
-	int32 wildcardMaxWidth = 12;
-	string uniqueName = 13;
-	bool crossSearch = 14;
+  int32 fuzzyType = 10;
+  int32 wildcardMinWidth = 11;
+  int32 wildcardMaxWidth = 12;
+  string uniqueName = 13;
+  bool crossSearch = 14;
 }
 
 message Calculator {
-	int32 calculateType = 1;
-	string expression = 2;
-	string validator = 3;
-	string min = 4;
-	string max = 5;
-	string condition = 6;
-	string emptyValueTransfer = 7;
-	string patten = 8;
-	string model = 9;
-	int32 step = 10;
-	int32 level = 11;
-	repeated string args = 12;
-	int32 failedPolicy = 13;
-	google.protobuf.Any failedDefaultValue = 14;
+  int32 calculateType = 1;
+  string expression = 2;
+  string validator = 3;
+  string min = 4;
+  string max = 5;
+  string condition = 6;
+  string emptyValueTransfer = 7;
+  string patten = 8;
+  string model = 9;
+  int32 step = 10;
+  int32 level = 11;
+  repeated string args = 12;
+  int32 failedPolicy = 13;
+  google.protobuf.Any failedDefaultValue = 14;
 }
 
 message ProfileInfo {
-	string code = 1;
-	repeated EntityFieldInfo entityFieldInfo = 2;
-	repeated RelationInfo relationInfo = 3;
+  string code = 1;
+  repeated EntityFieldInfo entityFieldInfo = 2;
+  repeated RelationInfo relationInfo = 3;
 }
 
 message RelationInfo {
-	int64 id = 1;
-	string code = 2;
-	int64 rightEntityClassId = 3;
-	int64 leftEntityClassId = 4;
-	string leftEntityClassCode = 5;
-	int32 relationType = 6;
-	bool identity = 7;
-	EntityFieldInfo entityField = 8;
-	bool belongToOwner = 9;
-	bool strong = 10;
+  int64 id = 1;
+  string code = 2;
+  int64 rightEntityClassId = 3;
+  int64 leftEntityClassId = 4;
+  string leftEntityClassCode = 5;
+  int32 relationType = 6;
+  bool identity = 7;
+  EntityFieldInfo entityField = 8;
+  bool belongToOwner = 9;
+  bool strong = 10;
 }

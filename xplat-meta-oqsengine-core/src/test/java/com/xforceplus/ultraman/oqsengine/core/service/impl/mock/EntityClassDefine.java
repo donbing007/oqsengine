@@ -2,15 +2,11 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
 import org.junit.Ignore;
 
 /**
@@ -55,12 +51,16 @@ public class EntityClassDefine {
             .withId(Long.MAX_VALUE - 3)
             .withFieldType(FieldType.LONG)
             .withName("l1-long")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(3)
+                    .withSearchable(true).build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 4)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-                .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
@@ -95,9 +95,39 @@ public class EntityClassDefine {
         .withFather(l1EntityClass)
         .build();
 
+    public static IEntityClass mustEntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(Long.MAX_VALUE - 3)
+        .withCode("must")
+        .withField(
+            EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 9)
+                .withFieldType(FieldType.STRING)
+                .withName("not-must-field")
+                .withConfig(
+                    FieldConfig.Builder.anFieldConfig()
+                        .withRequired(false).build()
+                ).build()
+        )
+        .withField(
+            EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 10)
+            .withFieldType(FieldType.STRING)
+            .withName("must-field")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                .withRequired(true).build()
+            ).build()
+        ).build();
+
+    /**
+     * 获取mock的metamanager.
+     *
+     * @return metamanager实例.
+     */
     public static MetaManager getMockMetaManager() {
         MockMetaManager metaManager = new MockMetaManager();
         metaManager.addEntityClass(l2EntityClass);
+        metaManager.addEntityClass(mustEntityClass);
         return metaManager;
     }
 }

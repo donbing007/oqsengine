@@ -36,21 +36,21 @@ public class DefaultTokenizerFactoryTest {
 
         IEntityField field = EntityField.Builder.anEntityField()
             .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(7).build()).build();
 
         Tokenizer tokenizer = factory.getTokenizer(field);
         Iterator<String> words = tokenizer.tokenize("abc");
-        Assert.assertFalse(words.hasNext());
+        Assert.assertTrue(words.hasNext());
 
         Assert.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
             factory.getWildcardTokenizerCache().size());
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();
@@ -61,7 +61,7 @@ public class DefaultTokenizerFactoryTest {
             wordList.add(words.next());
         }
         Collections.sort(wordList);
-        List<String> expectedList = Arrays.asList("abc", "bcd");
+        List<String> expectedList = Arrays.asList("abc", "bcd", "abcd");
         Collections.sort(expectedList);
         Assert.assertEquals(expectedList, wordList);
 
@@ -70,7 +70,7 @@ public class DefaultTokenizerFactoryTest {
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
+                FieldConfig.Builder.anFieldConfig()
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3)
                     .withWildcardMaxWidth(9).build()).build();

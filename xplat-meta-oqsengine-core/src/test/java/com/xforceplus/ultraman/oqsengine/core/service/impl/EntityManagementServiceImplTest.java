@@ -2,7 +2,10 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -44,7 +47,7 @@ public class EntityManagementServiceImplTest {
     }
 
     @Test
-    public void testVerify() throws Exception {
+    public void testPreview() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
@@ -140,6 +143,36 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
         Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
+    }
+
+    @Test
+    public void testBuildFieldCheckFailure() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(EntityClassDefine.l2EntityClass.ref())
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 10000L)
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.FIELD_TOO_LONG, impl.build(targetEntity).getResultStatus());
+
+
+        targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(EntityClassDefine.mustEntityClass.ref())
+            .withId(1)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new StringValue(EntityClassDefine.mustEntityClass.field("not-must-field").get(), "test")
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.FIELD_MUST, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -302,6 +335,56 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
     }
+
+    @Test
+    public void testDeleteForce() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        // 已经存在的
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
+            .withId(1)
+            .withVersion(200)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
+        // 删除目标
+        IEntity deletedEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(
+                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
+            .withId(1)
+            .withVersion(200)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(EntityValue.build()
+                .addValue(
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
+                .addValue(
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
+                .addValue(
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
+                )
+            )
+            .build();
+
+        Assert.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
+        Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
+
+    }
+
 
     @Test
     public void testDeleteFail() throws Exception {

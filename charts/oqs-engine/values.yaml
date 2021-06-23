@@ -92,6 +92,9 @@ meta:
       monitorDuration: 1
       # 重连间隔
       reconnectDuration: 5
+  # 启动导入本地meta信息(属地不连接metadata使用)
+  load:
+    path: "-"
 
 query:
   # 查询的最大匹配数量.
@@ -103,6 +106,8 @@ query:
     maxJoinDriverLineNumber: 1000
 changelog:
   enabled: false
+metadata:
+  enhanced: false
 storage:
   tokenizer:
     segmentation:

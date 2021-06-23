@@ -112,26 +112,35 @@ public class FieldConfig implements Serializable {
     private boolean searchable = false;
 
     /**
-     * 字符串:     最大字符个数.
-     * 数字:       最大的数字.
-     * 日期/时间:   离现在最近的时间日期.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
     @JsonProperty(value = "max")
+    @Deprecated
     private long max = Long.MAX_VALUE;
 
     /**
-     * 字符串:     最小字符个数.
-     * 数字:       最小的数字.
-     * 日期/时间:   离现在最远的时间日期.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
     @JsonProperty(value = "min")
     private long min = Long.MIN_VALUE;
 
     /**
+     * 最大允许长度.
+     * 字符串表示字符数量.
+     * 数字表示位数.
+     */
+    @JsonProperty(value = "len")
+    private int len = 19;
+
+    /**
      * 字段精度.
      */
     @JsonProperty(value = "precision")
-    private int precision = 0;
+    private int precision = 6;
 
     /**
      * 是否为数据标识.
@@ -227,7 +236,9 @@ public class FieldConfig implements Serializable {
      *
      * @param max 值.
      * @return 当前实例.
+     * @deprecated 已经废弃.
      */
+    @Deprecated
     public FieldConfig max(long max) {
         this.max = max;
         return this;
@@ -240,7 +251,9 @@ public class FieldConfig implements Serializable {
      *
      * @param min 值.
      * @return 当前实例.
+     * @deprecated 已经废弃.
      */
+    @Deprecated
     public FieldConfig min(long min) {
         this.min = min;
         return this;
@@ -293,7 +306,9 @@ public class FieldConfig implements Serializable {
      * 获取最大值.
      *
      * @return 最大值.
+     * @deprecated see getLen
      */
+    @Deprecated
     public long getMax() {
         return max;
     }
@@ -302,10 +317,14 @@ public class FieldConfig implements Serializable {
      * 获取最小值.
      *
      * @return 最小值.
+     * @deprecated see getLen
      */
+    @Deprecated
     public long getMin() {
         return min;
     }
+
+
 
     public String getDisplayType() {
         return this.displayType;
@@ -388,6 +407,10 @@ public class FieldConfig implements Serializable {
         return uniqueName;
     }
 
+    public int getLen() {
+        return len;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -398,8 +421,6 @@ public class FieldConfig implements Serializable {
         }
         FieldConfig that = (FieldConfig) o;
         return isSearchable() == that.isSearchable()
-            && getMax() == that.getMax()
-            && getMin() == that.getMin()
             && precision() == that.precision()
             && isIdentifie() == that.isIdentifie()
             && isRequired() == that.isRequired()
@@ -410,15 +431,15 @@ public class FieldConfig implements Serializable {
             && Objects.equals(getValidateRegexString(), that.getValidateRegexString())
             && Objects.equals(getDelimiter(), that.getDelimiter())
             && Objects.equals(getDisplayType(), that.getDisplayType())
-            && getFuzzyType() == that.getFuzzyType();
+            && getFuzzyType() == that.getFuzzyType()
+            && getLen() == that.getLen();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
             isSearchable(),
-            getMax(),
-            getMin(),
+            getLen(),
             precision(),
             isIdentifie(),
             isRequired(),
@@ -433,8 +454,7 @@ public class FieldConfig implements Serializable {
     public String toString() {
         final StringBuffer sb = new StringBuffer("FieldConfig{");
         sb.append("searchable=").append(searchable);
-        sb.append(", max=").append(max);
-        sb.append(", min=").append(min);
+        sb.append(", len=").append(len);
         sb.append(", precision=").append(precision);
         sb.append(", identifie=").append(identifie);
         sb.append(", required=").append(required);
@@ -453,6 +473,7 @@ public class FieldConfig implements Serializable {
     public static final class Builder {
         private boolean searchable = false;
         private boolean crossSearch = false;
+        private int len = 19;
         private long max = Long.MAX_VALUE;
         private long min = Long.MIN_VALUE;
         private int precision = 0;
@@ -485,13 +506,28 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        /**
+         * 已经淘汰.
+         *
+         * @deprecated 现在由len属性替代.
+         */
+        @Deprecated
         public Builder withMax(long max) {
-            this.max = max;
             return this;
         }
 
+        /**
+         * 已经淘汰.
+         *
+         * @deprecated 不再使用.
+         */
+        @Deprecated
         public Builder withMin(long min) {
-            this.min = min;
+            return this;
+        }
+
+        public Builder withLen(int len) {
+            this.len = len;
             return this;
         }
 
@@ -563,11 +599,12 @@ public class FieldConfig implements Serializable {
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
             fieldConfig.validateRegexString = this.validateRegexString;
+            fieldConfig.len = this.len;
             fieldConfig.min = this.min;
+            fieldConfig.max = this.max;
             fieldConfig.fieldSense = this.fieldSense;
             fieldConfig.precision = this.precision;
             fieldConfig.delimiter = this.delimiter;
-            fieldConfig.max = this.max;
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;

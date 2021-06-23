@@ -33,6 +33,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -100,6 +103,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private BizIDGenerator bizIDGenerator;
+
+
+    private VerifierFactory verifierFactory;
 
     /*
     只读的原因.
@@ -237,6 +243,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } else {
             logger.info("Ignore CDC status checks.");
         }
+
+        verifierFactory = new VerifierFactory();
     }
 
     @PreDestroy
@@ -253,7 +261,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
-        verify(entity);
+        preview(entity);
 
         markTime(entity);
 
@@ -268,6 +276,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return new OperationResult(
                 0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                 ResultStatus.ELEVATEFAILED, message);
+        }
+
+        Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, entity);
+        if (VerifierResult.OK != verifyResult.getKey()) {
+            // 表示有些校验不通过.
+            return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                transformVerifierResultToReusltStatus(verifyResult.getKey()),
+                instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
         }
 
         OperationResult operationResult = null;
@@ -321,7 +337,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
 
-        verify(entity);
+        preview(entity);
 
         markTime(entity);
 
@@ -371,6 +387,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 操作时间
                 targetEntity.markTime(entity.time());
+
+                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, entity);
+                if (VerifierResult.OK != verifyResult.getKey()) {
+                    hint.setRollback(true);
+                    // 表示有些校验不通过.
+                    return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                        transformVerifierResultToReusltStatus(verifyResult.getKey()),
+                        instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
+                }
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -434,24 +459,27 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         ResultStatus.NOT_FOUND);
                 }
 
-                if (isConflict(masterStorage.delete(targetEntityOp.orElse(entity), entityClass))) {
+                IEntity targetEntity = targetEntityOp.get();
+                targetEntity.resetVersion(entity.version());
+
+                if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.CONFLICT);
                 }
 
-                if (!tx.getAccumulator().accumulateDelete(targetEntityOp.get())) {
+                if (!tx.getAccumulator().accumulateDelete(targetEntity)) {
                     hint.setRollback(true);
                     return new OperationResult(
                         tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
 
-                noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
+                noticeEvent(tx, EventType.ENTITY_DELETE, targetEntity);
 
                 return new OperationResult(
-                    tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(),
+                    tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_DELETE.getValue(),
                     ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
@@ -574,8 +602,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    // 校验
-    private void verify(IEntity entity) throws SQLException {
+    // 预检
+    private void preview(IEntity entity) throws SQLException {
         if (entity == null) {
             throw new SQLException("Invalid object entity.");
         }
@@ -591,6 +619,51 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.id(), entity.entityClassRef().getCode()));
         }
     }
+
+    // 校验字段.
+    private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
+        VerifierResult result;
+        for (IEntityField field : entityClass.fields()) {
+            ValueVerifier verifier = verifierFactory.getVerifier(field.type());
+            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
+            result = verifier.verify(field, valueOp.orElse(null));
+            if (VerifierResult.OK != result) {
+                return new AbstractMap.SimpleEntry(result, field);
+            }
+
+        }
+
+        return new AbstractMap.SimpleEntry(VerifierResult.OK, null);
+    }
+
+    private ResultStatus transformVerifierResultToReusltStatus(VerifierResult verifierResult) {
+        switch (verifierResult) {
+            case REQUIRED:
+                return ResultStatus.FIELD_MUST;
+            case TOO_LONG:
+                return ResultStatus.FIELD_TOO_LONG;
+            case HIGH_PRECISION:
+                return ResultStatus.FIELD_HIGH_PRECISION;
+            default:
+                return ResultStatus.UNKNOWN;
+        }
+    }
+
+    private String instantiateMessage(VerifierResult verifierResult, IEntityField field) {
+        switch (verifierResult) {
+            case REQUIRED:
+                return String.format("The field %s is required.", field.name());
+            case TOO_LONG:
+                return String.format("The value of field %s is too long. The maximum acceptable length is %d.",
+                    field.name(), field.config().getLen());
+            case HIGH_PRECISION:
+                return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.",
+                    field.name(), field.config().getPrecision());
+            default:
+                return "Unknown validation failed.";
+        }
+    }
+
 
     //  build前的准备
     private Map<String, String> prepareBuild(IEntityClass entityClass, IEntity entity) {

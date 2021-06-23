@@ -173,10 +173,12 @@ public class SQLJsonConditionBuilder
                         }
 
                         if (sql.length() > emptyLen) {
+                            // 表示分词成功.
                             sql.insert(firstIndex, "\"%");
                             sql.append("%\"");
                         } else {
-                            return CONSTANT_INEQUALITY;
+                            // 表示没有分词成功,使用原始词.
+                            sql.append("\"%").append(likeValue).append("%\"");
                         }
                         break;
                     }

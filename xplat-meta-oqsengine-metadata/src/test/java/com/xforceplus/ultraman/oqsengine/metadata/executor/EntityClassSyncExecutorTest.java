@@ -1,25 +1,29 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -89,6 +93,7 @@ public class EntityClassSyncExecutorTest {
             }
         });
 
+        entityClassSyncExecutor.setLoadPath("src/test/resources/local/");
         entityClassSyncExecutor.start();
 
         /*
@@ -106,6 +111,49 @@ public class EntityClassSyncExecutorTest {
         ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
+    }
+
+    @Test
+    public void dataImportTest() throws IOException {
+        String defaultTestAppId = "5";
+        String env = "0";
+        int defaultTestVersion = 2;
+        Boolean result = false;
+        InputStream in = null;
+        try {
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
+            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            Assert.assertTrue(result);
+        } catch (Exception e) {
+            Assert.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+        }
+
+        Optional<IEntityClass> op =  storageMetaManager.load(1251658380868685825L);
+
+        Assert.assertTrue(op.isPresent());
+
+        //  重新导入老版本，结果为失败
+        try {
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
+            defaultTestVersion = 1;
+
+            result = entityClassSyncExecutor.dataImport(defaultTestAppId, defaultTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            Assert.assertFalse(result);
+        } catch (Exception e) {
+            Assert.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+        }
     }
 
     @Test
@@ -176,6 +224,15 @@ public class EntityClassSyncExecutorTest {
                 (EntityClassStorage) m0.invoke(cacheExecutor, new Object[] {e.getSelf(), newVersion});
             Assert.assertNotNull(exists);
         }
+    }
+
+
+    /**
+     * 从resource目录中生成InputStream.
+     */
+    private InputStream initInputStreamByResource(String appId, Integer version, String env) {
+        String path = String.format("/%s_%d_%s.json", appId, version, env);
+        return EntityClassStorageHelper.class.getResourceAsStream(path);
     }
 
 }
