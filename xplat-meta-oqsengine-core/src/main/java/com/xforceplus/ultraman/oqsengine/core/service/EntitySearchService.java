@@ -44,7 +44,7 @@ public interface EntitySearchService {
     /**
      * 根据多个 id 搜索 entity 实例.
      *
-     * @param ids            目标 id 列表.
+     * @param ids            目标 id 列表.      `````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
      * @param entityClassRef 目标 entity 类型.
      * @return 实体列表.
      */
@@ -73,7 +73,7 @@ public interface EntitySearchService {
      * @deprecated 请使用带有searchconfig的方法.
      */
     @Deprecated
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
+                                                                                                                                                                                                                                                                            Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
         throws SQLException;
 
     /**
