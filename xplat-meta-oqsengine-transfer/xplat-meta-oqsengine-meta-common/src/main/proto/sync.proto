@@ -101,6 +101,7 @@ message FieldConfig {
   int32 wildcardMaxWidth = 12;
   string uniqueName = 13;
   bool crossSearch = 14;
+  int32 length = 15;
 }
 
 message Calculator {

@@ -69,7 +69,7 @@ data:
               monitorDuration: {{ .Values.meta.grpc.seconds.monitorDuration | default "1"}}
               reconnectDuration: {{ .Values.meta.grpc.seconds.reconnectDuration | default "5"}}
           load:
-            path: {{ .Values.meta.load.path | default "-"}}
+            path: {{ .Values.meta.load.path | default "-" | quote}}
         query:
           maxVisibleTotalCount: {{ .Values.query.maxVisibleTotalCount | default "10000" }}
           join:
