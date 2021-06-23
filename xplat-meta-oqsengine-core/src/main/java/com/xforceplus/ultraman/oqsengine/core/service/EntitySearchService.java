@@ -73,7 +73,7 @@ public interface EntitySearchService {
      * @deprecated 请使用带有searchconfig的方法.
      */
     @Deprecated
-                                                                                                                                                                                                                                                                            Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
+    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
         throws SQLException;
 
     /**
