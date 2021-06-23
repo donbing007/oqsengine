@@ -361,17 +361,17 @@ public class SQLMasterStorageTest {
         Assert.assertFalse(storage.exist(targetEntity.id()));
     }
 
-    //@Test
-    //public void testDeleteWithoutVersion() throws Exception {
-    //    IEntity targetEntity = expectedEntitys.get(2);
-    //    storage.replace(targetEntity, l2EntityClass);
-    //    targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
-    //    targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-    //
-    //    Assert.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
-    //    Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
-    //    Assert.assertFalse(storage.exist(targetEntity.id()));
-    //}
+    @Test
+    public void testDeleteWithoutVersion() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(2);
+        storage.replace(targetEntity, l2EntityClass);
+        targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
+        targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
+
+        Assert.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
+        Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
+        Assert.assertFalse(storage.exist(targetEntity.id()));
+    }
 
     @Test
     public void testExist() throws Exception {
