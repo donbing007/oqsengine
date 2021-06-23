@@ -95,4 +95,9 @@ public interface FieldConfigOrBuilder extends
    * <code>bool crossSearch = 14;</code>
    */
   boolean getCrossSearch();
+
+  /**
+   * <code>int32 length = 15;</code>
+   */
+  int getLength();
 }

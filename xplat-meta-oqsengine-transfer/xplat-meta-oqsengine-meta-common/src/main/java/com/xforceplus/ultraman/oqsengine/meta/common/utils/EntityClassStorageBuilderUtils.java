@@ -320,6 +320,8 @@ public class EntityClassStorageBuilderUtils {
             .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
             .withUniqueName(fieldConfig.getUniqueName())
             .withCrossSearch(fieldConfig.getCrossSearch())
+            //  bocp-length对应oqs-fieldConfig中的len
+            .withLen(fieldConfig.getLength())
             .build();
     }
 }

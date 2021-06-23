@@ -13,9 +13,9 @@ public class FileReaderUtilsTest {
 
     @Test
     public void getFileNamesInOneDirTest() {
-        String path = "src/test/resources/";
+        String path = "src/test/resources/local/";
         List<String> files = FileReaderUtils.getFileNamesInOneDir(path);
 
-        Assert.assertEquals(1, files.size());
+        Assert.assertTrue(files.size() > 0);
     }
 }
