@@ -20,6 +20,11 @@ import java.util.Map;
 public class SphinxQLHelper {
 
     /**
+     * 标记这是一个支持模糊搜索的拆分词.
+     */
+    private static char FUZZY_WORD_FLAG = 'w';
+
+    /**
      * 半角空格不可过滤,只有全角空格需要过滤.
      */
     protected static final int[] IGNORE_SYMBOLS = {
@@ -105,6 +110,24 @@ public class SphinxQLHelper {
     }
 
     /**
+     * 编码分词结果的词.
+     *
+     * @param shortStorageName 字段短名称.
+     * @param word             词.
+     * @return 编码后的结果.
+     */
+    public static String encodeFuzzyWord(ShortStorageName shortStorageName, String word) {
+        StringBuilder buff = new StringBuilder();
+
+        buff.append(shortStorageName.getPrefix())
+            .append(word)
+            .append(FUZZY_WORD_FLAG)
+            .append(shortStorageName.getSuffix());
+
+        return buff.toString();
+    }
+
+    /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
      * @param value 目标字段.
@@ -148,15 +171,11 @@ public class SphinxQLHelper {
             if (buff.length() > emptyLen) {
                 buff.append(" << ");
             }
-            buff.append(shortStorageName.getPrefix())
-                .append(words.next())
-                .append(shortStorageName.getSuffix());
+            buff.append(encodeFuzzyWord(shortStorageName, words.next()));
         }
         // 无法分词,使用原始字符.
         if (buff.length() == emptyLen) {
-            buff.append(shortStorageName.getPrefix())
-                .append(value.value().toString())
-                .append(shortStorageName.getSuffix());
+            buff.append(encodeFuzzyWord(shortStorageName, value.value().toString()));
         }
 
         buff.append(')');
@@ -171,6 +190,9 @@ public class SphinxQLHelper {
      * @return 查询语法.
      */
     public static String buildWirdcardQuery(StorageValue value) {
-        return buildPreciseQuery(value, false);
+        ShortStorageName shortStorageName = value.shortStorageName();
+
+        return encodeFuzzyWord(shortStorageName, filterSymbols(value.value().toString()));
+
     }
 }

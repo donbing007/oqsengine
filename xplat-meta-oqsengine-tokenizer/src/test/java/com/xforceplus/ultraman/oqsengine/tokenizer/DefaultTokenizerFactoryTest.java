@@ -43,7 +43,7 @@ public class DefaultTokenizerFactoryTest {
 
         Tokenizer tokenizer = factory.getTokenizer(field);
         Iterator<String> words = tokenizer.tokenize("abc");
-        Assert.assertFalse(words.hasNext());
+        Assert.assertTrue(words.hasNext());
 
         Assert.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
             factory.getWildcardTokenizerCache().size());
@@ -61,7 +61,7 @@ public class DefaultTokenizerFactoryTest {
             wordList.add(words.next());
         }
         Collections.sort(wordList);
-        List<String> expectedList = Arrays.asList("abc", "bcd");
+        List<String> expectedList = Arrays.asList("abc", "bcd", "abcd");
         Collections.sort(expectedList);
         Assert.assertEquals(expectedList, wordList);
 

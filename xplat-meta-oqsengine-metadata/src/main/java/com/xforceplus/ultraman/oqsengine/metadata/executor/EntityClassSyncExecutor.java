@@ -10,10 +10,13 @@ import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientExc
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.FileReaderUtils;
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -42,6 +45,12 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
     private Thread thread;
 
+    private String loadPath;
+
+    public void setLoadPath(String loadPath) {
+        this.loadPath = loadPath;
+    }
+
     /**
      * 创建监听delayTask的线程.
      */
@@ -54,6 +63,13 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         });
 
         thread.start();
+
+        //  sync data from file
+        if (null != loadPath && !loadPath.isEmpty()) {
+            logger.info("start load from local path : {}", loadPath);
+            loadFromLocal(loadPath);
+            logger.info("success load from local path : {}", loadPath);
+        }
     }
 
     /**
@@ -114,6 +130,29 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         return false;
     }
 
+    @Override
+    public boolean dataImport(String appId, int version, String content) {
+        int currentVersion = version(appId);
+
+        if (version > currentVersion) {
+            EntityClassSyncRspProto entityClassSyncRspProto;
+            try {
+                entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
+            }
+
+            if (!sync(appId, version, entityClassSyncRspProto)) {
+                throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
+            }
+            return true;
+        } else {
+            String message = String.format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId, currentVersion, version);
+            logger.warn(message);
+            return false;
+        }
+    }
+
     /**
      * 获取当前meta的版本信息.
      */
@@ -144,6 +183,33 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 //  ignore
                 logger.warn("clean app : {}, version : {} catch exception, message : {} , but will ignore...",
                     task.element().getAppId(), task.element().getVersion(), e.getMessage());
+            }
+        }
+    }
+
+    private void loadFromLocal(String path) {
+        if (!path.endsWith(File.separator)) {
+            path = path + File.separator;
+        }
+        List<String> files = FileReaderUtils.getFileNamesInOneDir(path);
+        for (String file : files) {
+            try {
+                String[] splitter = EntityClassStorageHelper.splitMetaFromFileName(file);
+
+                int version = Integer.parseInt(splitter[1]);
+                String fullPath = path + file;
+                String v =
+                    EntityClassStorageHelper.initDataFromFilePath(splitter[0], splitter[2], version, fullPath);
+
+                if (dataImport(splitter[0], version, v)) {
+                    logger.info("init meta from local path success, path : {}", fullPath);
+                } else {
+                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);
+                }
+            } catch (Exception e) {
+                logger.warn("load from local-file failed, path : {}, message : {}", path + file, e.getMessage());
+
+                //  ignore current file
             }
         }
     }

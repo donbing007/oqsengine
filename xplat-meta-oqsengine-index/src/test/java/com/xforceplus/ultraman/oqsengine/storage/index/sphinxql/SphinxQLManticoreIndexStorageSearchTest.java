@@ -20,12 +20,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
@@ -52,8 +54,12 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -195,15 +201,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-
         tokenizerFactory = new DefaultTokenizerFactory();
-
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
 
         threadPool = Executors.newFixedThreadPool(3);
 
@@ -223,6 +221,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         // 多值字符串
         storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
+
+        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
+        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        sphinxQLConditionsBuilderFactory.init();
 
 
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -283,6 +286,132 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     }
 
     @Test
+    public void testNegativeNumber() throws Exception {
+        OriginalEntity entity = OriginalEntity.Builder.anOriginalEntity()
+            .withId(123L)
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withUpdateTime(System.currentTimeMillis())
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withAttributes(
+                Arrays.asList(
+                    l2TimeField.id() + "L",
+                    LocalDateTime.of(1970, 1, 1, 0, 0, 0)
+                        .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli()
+                )
+            ).build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(entity));
+
+
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2TimeField,
+                        ConditionOperator.EQUALS,
+                        new DateTimeValue(l2TimeField, LocalDateTime.of(1970, 1, 1, 0, 0, 0))
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildOutOfSort())
+                .build()
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(123, refs.stream().findFirst().get().getId());
+    }
+
+    /**
+     * 测试模糊和精确是否会互相影响.
+     * 预期两者不会相互影响.分词字段对于除like以外都应该是不可见的.
+     */
+    @Test
+    public void testFuzzyAndEqInfluence() throws Exception {
+        List<OriginalEntity> entities = new ArrayList(3);
+        long baseId = 1000;
+        for (int i = 0; i < 3; i++) {
+
+            entities.add(OriginalEntity.Builder.anOriginalEntity()
+                .withId(baseId++)
+                .withEntityClass(l2EntityClass)
+                .withCreateTime(System.currentTimeMillis())
+                .withUpdateTime(System.currentTimeMillis())
+                .withDeleted(false)
+                .withOp(OperationType.CREATE.getValue())
+                .withAttributes(
+                    Arrays.asList(
+                        l1StringField.id() + "S", "scan" + i
+                    )
+                ).build());
+        }
+
+        OriginalEntity scanEntity = OriginalEntity.Builder.anOriginalEntity()
+            .withId(baseId++)
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withUpdateTime(System.currentTimeMillis())
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withAttributes(
+                Arrays.asList(
+                    l1StringField.id() + "S", "scan"
+                )
+            ).build();
+        entities.add(scanEntity);
+
+        storage.saveOrDeleteOriginalEntities(entities);
+
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l1StringField,
+                        ConditionOperator.EQUALS,
+                        new StringValue(l1StringField, "scan")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(scanEntity.getId(), refs.stream().findFirst().get().getId());
+
+        // 查询所有包含scan的,应该包含所有新加入的记录.
+        refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l1StringField,
+                        ConditionOperator.LIKE,
+                        new StringValue(l1StringField, "scan")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        );
+
+        Assert.assertEquals(4, refs.size());
+        List<Long> expecteIds = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            expecteIds.add((long) (1000 + i));
+        }
+
+        for (EntityRef ref : refs) {
+            expecteIds.remove(ref.getId());
+        }
+        Assert.assertEquals(0, expecteIds.size());
+    }
+
+    @Test
     public void testSelect() throws Exception {
         Collection<EntityRef> refs;
         for (Case c : buildSelectCases()) {
@@ -326,13 +455,13 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             new Case(
                 "string .- symbol",
                 Conditions.buildEmtpyConditions()
-                .addAnd(
-                    new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.EQUALS,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "15796500901.-12")
-                    )
-                ),
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l1-string").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(l2EntityClass.field("l1-string").get(), "15796500901.-12")
+                        )
+                    ),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig().build(),
                 new long[] {

@@ -611,6 +611,70 @@ public class UserCaseTest {
 
             Assert.assertEquals(0, page.getTotalCount());
         }
+    }
 
+    @Test
+    public void testLikeWithSegmentation() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new StringValue(
+                        MockMetaManager.l2EntityClass.field("l0-string").get(), "上海票易通股份有限公司分词查询")
+                ))
+            ).build();
+
+        entityManagementService.build(entity);
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "上海")
+                    )
+                ),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
+
+        // 更新会等等CDC同步结束才返回,这里是为了保证查询落在索引中.
+        entityManagementService.replace(entity);
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "上海")
+                    )
+                ),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "股份有限公司")
+                    )
+                ),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assert.assertEquals(1, entities.size());
     }
 }

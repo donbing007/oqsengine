@@ -1,25 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
-
 /**
  * desc :
- * name : RequestWatchExecutor
- *
- * @author : xujia
- * date : 2021/2/7
- * @since : 1.8
+ * name : RequestWatchExecutor.
  */
 public class RequestWatchExecutor implements IRequestWatchExecutor {
 
@@ -100,9 +94,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     @Override
     public void stop() {
         if (null != requestWatcher) {
-            /**
-             * 这里分开设置、等待3S如果有正在进行中的任务
-             */
+            // 这里分开设置、等待3S如果有正在进行中的任务
             requestWatcher.inActive();
 
             TimeWaitUtils.wakeupAfter(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.SECONDS);

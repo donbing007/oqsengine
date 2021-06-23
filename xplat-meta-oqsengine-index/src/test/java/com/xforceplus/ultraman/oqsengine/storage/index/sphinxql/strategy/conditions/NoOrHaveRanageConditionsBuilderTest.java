@@ -135,7 +135,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 String.format(
-                    "(%s.1y2p0ij32e8e6L > 100) AND MATCH('((@%s 1y2p0ijtest32e8e7S))')",
+                    "(%s.1y2p0ij32e8e6L > 100) AND MATCH('((@%s 1y2p0ijtestw32e8e7S))')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF)
             ),
             new Case(
@@ -170,7 +170,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 String.format(
-                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000))) AND MATCH('((@%s 1y2p0ijtest32e8e6S))')",
+                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000))) AND MATCH('((@%s 1y2p0ijtestw32e8e6S))')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF)
             ),
             new Case(
@@ -224,7 +224,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 String.format(
-                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND id IN (1,2,3)) AND MATCH('((@%s 1y2p0ijtest32e8e6S))')",
+                    "(((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND id IN (1,2,3)) AND MATCH('((@%s 1y2p0ijtestw32e8e6S))')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF
                 )
             ),
