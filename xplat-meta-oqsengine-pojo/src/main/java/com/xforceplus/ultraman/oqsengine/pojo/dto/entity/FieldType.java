@@ -149,14 +149,19 @@ public enum FieldType {
     /**
      * 构造实例.
      *
-     * @param type           field raw type.
-     * @param tester         test if a string value can be considered as this type
-     * @param accepts        alias for this type
-     * @param valueConverter converter ivalue
-     * @param javaType       type used by calcite
+     * @param type           字段类型的字面量表示.
+     * @param javaType       字段的值实际JAVA类型.
+     * @param tester         测试判断是否可以通过字符串构造.
+     * @param accepts        接受的元数据定义名称.
+     * @param valueConverter 转换为IValue实例.
+     * @param comparator     比较器.
      */
-    FieldType(String type, Class javaType, Predicate<String> tester, String[] accepts,
-              BiFunction<IEntityField, String, IValue> valueConverter, BiFunction<IValue, IValue, Integer> comparator) {
+    FieldType(String type,
+              Class javaType,
+              Predicate<String> tester,
+              String[] accepts,
+              BiFunction<IEntityField, String, IValue> valueConverter,
+              BiFunction<IValue, IValue, Integer> comparator) {
         this.type = type;
         this.tester = tester;
         this.accepts = accepts;
