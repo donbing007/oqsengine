@@ -57,14 +57,15 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
     @Before
     public void before() throws Exception {
         start();
+        metaManager.addEntityClass(LONG_STRING_ENTITY_CLASS);
+        metaManager.addEntityClass(SUR_PLUS_ENTITY_CLASS);
+        metaManager.addEntityClass(PREPARE_PAUSE_RESUME_ENTITY_CLASS);
     }
 
     @After
     public void after() throws SQLException {
         startPos = 1;
         clear();
-        // 确认没有事务.
-        //Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         close();
     }
@@ -216,6 +217,7 @@ public class RebuildIndexTest extends AbstractDevOpsContainer {
 
     // 初始化数据
     private boolean initData(IEntity[] entities, IEntityClass entityClass) throws Exception {
+
         List<OriginalEntity> originalEntities = new ArrayList<>();
         for (IEntity entity : entities) {
             masterStorage.build(entity, entityClass);

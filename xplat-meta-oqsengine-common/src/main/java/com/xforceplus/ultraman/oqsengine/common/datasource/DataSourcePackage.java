@@ -13,12 +13,16 @@ import javax.sql.DataSource;
  */
 public class DataSourcePackage {
 
+    /**
+     * 主库连接池的获取序号.
+     * 兼容老版本的主库连接获取逻辑,所以主库仍然接受列表类型的DataSource实例.
+     * 实际只有第一个元素有效.
+     */
+    private static final int MASTER_DATASOURCE_INDEX = 0;
+
     private List<DataSource> master;
     private List<DataSource> indexWriter;
     private List<DataSource> indexSearch;
-    private DataSource devOps;
-    private DataSource changelog;
-    private DataSource segment;
 
     /**
      * 数据源包装实例.
@@ -26,21 +30,22 @@ public class DataSourcePackage {
      * @param master 主库存数据源列表.
      * @param indexWriter 索引写数据源列表.
      * @param indexSearch 索引搜索数据源列表.
-     * @param devOps devops数据源.
-     * @param changelog changelog数据源.
+     //* @param devOps devops数据源.
+     //* @param changelog changelog数据源.
      */
     public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter,
-                             List<DataSource> indexSearch, DataSource devOps, DataSource changelog, DataSource segment) {
+                             List<DataSource> indexSearch) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
-        this.devOps = devOps;
-        this.changelog = changelog;
-        this.segment = segment;
     }
 
     public List<DataSource> getMaster() {
         return master;
+    }
+
+    public DataSource getFirstMaster() {
+        return this.master.get(MASTER_DATASOURCE_INDEX);
     }
 
     public List<DataSource> getIndexWriter() {
@@ -52,15 +57,15 @@ public class DataSourcePackage {
     }
 
     public DataSource getDevOps() {
-        return devOps;
+        return getFirstMaster();
     }
 
     public DataSource getChangelog() {
-        return changelog;
+        return getFirstMaster();
     }
 
     public DataSource getSegment() {
-        return segment;
+        return getFirstMaster();
     }
 
     /**
@@ -77,14 +82,6 @@ public class DataSourcePackage {
 
         if (indexSearch != null) {
             doClose(indexSearch);
-        }
-
-        if (null != devOps) {
-            ((HikariDataSource) devOps).close();
-        }
-
-        if (changelog != null) {
-            ((HikariDataSource) changelog).close();
         }
     }
 

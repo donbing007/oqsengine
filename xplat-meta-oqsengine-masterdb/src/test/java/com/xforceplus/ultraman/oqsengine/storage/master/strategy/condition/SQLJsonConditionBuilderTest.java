@@ -40,7 +40,8 @@ public class SQLJsonConditionBuilderTest {
         .withId(4)
         .withName("segmentation-string")
         .withFieldType(FieldType.STRING)
-        .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).build()).build();
+        .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).build())
+        .build();
 
     @Before
     public void before() throws Exception {
@@ -54,7 +55,8 @@ public class SQLJsonConditionBuilderTest {
     public void testBuildCondition() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            SQLJsonConditionBuilder builder = new SQLJsonConditionBuilder(c.condition.getField().type(), c.condition.getOperator());
+            SQLJsonConditionBuilder builder =
+                new SQLJsonConditionBuilder(c.condition.getField().type(), c.condition.getOperator());
             builder.setStorageStrategy(StorageStrategyFactory.getDefaultFactory());
 
             try {
@@ -63,15 +65,17 @@ public class SQLJsonConditionBuilderTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            Assert.assertEquals(c.expectedSql, builder.build(c.condition));
+            Assert.assertEquals(c.desc, c.expectedSql, builder.build(c.condition));
         });
     }
 
     static class Case {
+        private String desc;
         private Condition condition;
         private String expectedSql;
 
-        public Case(Condition condition, String expectedSql) {
+        public Case(String desc, Condition condition, String expectedSql) {
+            this.desc = desc;
             this.condition = condition;
             this.expectedSql = expectedSql;
         }
@@ -80,6 +84,7 @@ public class SQLJsonConditionBuilderTest {
     private Collection<Case> buildCases() {
         return Arrays.asList(
             new Case(
+                "id eq 100",
                 new Condition(
                     idField,
                     ConditionOperator.EQUALS,
@@ -88,6 +93,7 @@ public class SQLJsonConditionBuilderTest {
                 "id = 100"
             ),
             new Case(
+                "id in 100",
                 new Condition(
                     idField,
                     ConditionOperator.MULTIPLE_EQUALS,
@@ -96,6 +102,7 @@ public class SQLJsonConditionBuilderTest {
                 "id IN (100)"
             ),
             new Case(
+                "in 100 200",
                 new Condition(
                     idField,
                     ConditionOperator.MULTIPLE_EQUALS,
@@ -106,6 +113,7 @@ public class SQLJsonConditionBuilderTest {
                 "id IN (100,200)"
             ),
             new Case(
+                "long eq 200",
                 new Condition(
                     longField,
                     ConditionOperator.EQUALS,
@@ -114,6 +122,7 @@ public class SQLJsonConditionBuilderTest {
                 "CAST(attribute->>'$.F1L' AS SIGNED) = 200"
             ),
             new Case(
+                "long in 200 300",
                 new Condition(
                     longField,
                     ConditionOperator.MULTIPLE_EQUALS,
@@ -123,6 +132,7 @@ public class SQLJsonConditionBuilderTest {
                 "CAST(attribute->>'$.F1L' AS SIGNED) IN (200,300)"
             ),
             new Case(
+                "string in 200 300",
                 new Condition(
                     stringField,
                     ConditionOperator.MULTIPLE_EQUALS,
@@ -132,6 +142,7 @@ public class SQLJsonConditionBuilderTest {
                 "attribute->>'$.F2S' IN (\"200L\",\"300L\")"
             ),
             new Case(
+                "long <= 200",
                 new Condition(
                     longField,
                     ConditionOperator.LESS_THAN_EQUALS,
@@ -140,6 +151,7 @@ public class SQLJsonConditionBuilderTest {
                 "CAST(attribute->>'$.F1L' AS SIGNED) <= 200"
             ),
             new Case(
+                "long >= 200",
                 new Condition(
                     longField,
                     ConditionOperator.GREATER_THAN_EQUALS,
@@ -148,6 +160,7 @@ public class SQLJsonConditionBuilderTest {
                 "CAST(attribute->>'$.F1L' AS SIGNED) >= 200"
             ),
             new Case(
+                "string like 200",
                 new Condition(
                     stringField,
                     ConditionOperator.LIKE,
@@ -156,6 +169,7 @@ public class SQLJsonConditionBuilderTest {
                 "2 = 1"
             ),
             new Case(
+                "wildcard string like 186213",
                 new Condition(
                     wildCardStringField,
                     ConditionOperator.LIKE,
@@ -164,6 +178,7 @@ public class SQLJsonConditionBuilderTest {
                 "attribute->>'$.F3S' LIKE \"%186213%\""
             ),
             new Case(
+                "wildcard string like 18",
                 new Condition(
                     wildCardStringField,
                     ConditionOperator.LIKE,
@@ -172,14 +187,16 @@ public class SQLJsonConditionBuilderTest {
                 "2 = 1"
             ),
             new Case(
+                "segmentation string like -",
                 new Condition(
                     segmentationStringField,
                     ConditionOperator.LIKE,
                     new StringValue(segmentationStringField, "-")
                 ),
-                "2 = 1"
+                "attribute->>'$.F4S' LIKE \"%-%\""
             ),
             new Case(
+                "segmentation string like 这是一个测试",
                 new Condition(
                     segmentationStringField,
                     ConditionOperator.LIKE,
@@ -188,6 +205,7 @@ public class SQLJsonConditionBuilderTest {
                 "attribute->>'$.F4S' LIKE \"%这是%一个%测试%\""
             ),
             new Case(
+                "segmentation string like -这是一个测试",
                 new Condition(
                     segmentationStringField,
                     ConditionOperator.LIKE,

@@ -61,6 +61,7 @@ public abstract class AbstractDevOpsContainer {
     protected TransactionManager transactionManager;
     protected DataSourcePackage dataSourcePackage;
     protected SQLMasterStorage masterStorage;
+    protected MockMetaManager metaManager;
     protected DataSource dataSource;
     protected TransactionExecutor masterTransactionExecutor;
     protected RedisClient redisClient;
@@ -137,7 +138,7 @@ public abstract class AbstractDevOpsContainer {
         sqlJsonConditionsBuilderFactory.init();
 
         masterStorage = new SQLMasterStorage();
-        MetaManager metaManager = new MockMetaManager();
+        metaManager = new MockMetaManager();
 
         SimpleFieldKeyGenerator simpleFieldKeyGenerator = new SimpleFieldKeyGenerator();
         ReflectionTestUtils.setField(simpleFieldKeyGenerator, "metaManager", metaManager);

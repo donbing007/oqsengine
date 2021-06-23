@@ -19,7 +19,7 @@ import org.junit.Test;
 public class MultipleTimerWheelTest {
 
     @Test
-    public void add() throws InterruptedException {
+    public void testAdd() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(0);
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification<Long>() {
@@ -49,7 +49,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void parallelAdd() throws InterruptedException {
+    public void testParallelAdd() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         final CountDownLatch latch = new CountDownLatch(500000);
         final AtomicInteger result = new AtomicInteger(0);
@@ -81,7 +81,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void size() {
+    public void testSize() {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
@@ -98,12 +98,11 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void parallelSize() throws InterruptedException {
+    public void testParallelSize() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-//                Assert.fail("Unexpected elimination can be known.");
 
                 return 0;
             }
@@ -122,7 +121,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void remove() {
+    public void testRemove() {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
@@ -141,7 +140,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void exist() {
+    public void testExist() {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
@@ -158,7 +157,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void cleanExpire() throws InterruptedException {
+    public void testCleanExpire() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification<String>() {
             @Override
@@ -180,7 +179,7 @@ public class MultipleTimerWheelTest {
     }
 
     @Test
-    public void ExpireAddValue() throws InterruptedException {
+    public void testExpireAddValue() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(0);
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification<Long>() {
@@ -190,8 +189,8 @@ public class MultipleTimerWheelTest {
                     long expireTime = System.currentTimeMillis();
 
                     long space = expireTime - addTime;
-//                    System.out.println(space);
-                    if (result.get() == 0 && space <= 6000) {//6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    // 6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                    if (result.get() == 0 && space <= 6000) {
                         result.incrementAndGet();
                     } else if (result.get() == 1 && space <= 12000) {
                         result.incrementAndGet();
@@ -212,7 +211,6 @@ public class MultipleTimerWheelTest {
         });
 
         wheel.add(System.currentTimeMillis(), 5000);
-//        wheel.add("test", 5000);
         latch.await();
         TimeUnit.SECONDS.sleep(5L);
         wheel.size();

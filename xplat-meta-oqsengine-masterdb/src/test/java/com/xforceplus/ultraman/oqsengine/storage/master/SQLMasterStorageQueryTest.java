@@ -44,7 +44,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
-import com.zaxxer.hikari.HikariDataSource;
 import io.lettuce.core.RedisClient;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -60,7 +59,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,7 +80,7 @@ public class SQLMasterStorageQueryTest {
     private TransactionManager transactionManager;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
-    private DataSource dataSource;
+    private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
     private RedisClient redisClient;
 
@@ -224,10 +222,10 @@ public class SQLMasterStorageQueryTest {
 
         storage = new SQLMasterStorage();
 
-        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
+        dataSourcePackage = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+            new NoSelector<>(dataSourcePackage.getFirstMaster()), new NoSelector<>("oqsbigentity"));
 
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
@@ -279,13 +277,13 @@ public class SQLMasterStorageQueryTest {
 
         storage.destroy();
 
-        Connection conn = dataSource.getConnection();
+        Connection conn = dataSourcePackage.getFirstMaster().getConnection();
         Statement stat = conn.createStatement();
         stat.execute("truncate table oqsbigentity");
         stat.close();
         conn.close();
 
-        ((HikariDataSource) dataSource).close();
+        dataSourcePackage.close();
 
         commitIdStatusService.destroy();
         redisClient.connect().sync().flushall();
@@ -895,11 +893,10 @@ public class SQLMasterStorageQueryTest {
         }
     }
 
-    private DataSource buildDataSource(String file) throws SQLException {
+    private DataSourcePackage buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-        this.dataSource = dataSourcePackage.getMaster().get(0);
-        return dataSource;
+        return dataSourcePackage;
     }
 
     private void buildData() {

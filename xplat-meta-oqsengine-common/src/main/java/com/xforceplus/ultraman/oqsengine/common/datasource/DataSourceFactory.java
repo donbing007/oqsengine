@@ -60,9 +60,6 @@ public class DataSourceFactory {
     private static final String INDEX_WRITER_PATH = "dataSources.index.write";
     private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
     private static final String MASTER_PATH = "dataSources.master";
-    private static final String DEV_OPS_PATH = MASTER_PATH;
-    private static final String CHANGE_LOG_PATH = MASTER_PATH;
-    private static final String SEGMENT_PATH = MASTER_PATH;
 
     public static DataSourcePackage build() {
         return build(false);
@@ -109,46 +106,12 @@ public class DataSourceFactory {
             master = Collections.emptyList();
         }
 
-        DataSource devOpsDataSource;
-        if (config.hasPath(DEV_OPS_PATH)) {
-            List<DataSource> devOps =
-                buildDataSources("master", (List<Config>) config.getConfigList(DEV_OPS_PATH), showSql);
-            if (devOps.size() > 0) {
-                devOpsDataSource = devOps.get(0);
-            } else {
-                throw new RuntimeException("devOps dataSource was been configure, but not init success");
-            }
-        } else {
-            devOpsDataSource = null;
-        }
+        /*
+         * 如果想增加想额外创建连接主库存的信息,尽量不要复 MASTER_PATH.
+         * 额外创建自己的结点,防止连接被复数创建造成浪费.
+         */
 
-        DataSource segmentDataSource;
-        if (config.hasPath(SEGMENT_PATH)) {
-            List<DataSource> segmentSource =
-                    buildDataSources("master", (List<Config>) config.getConfigList(SEGMENT_PATH), showSql);
-            if (segmentSource.size() > 0) {
-                segmentDataSource = segmentSource.get(0);
-            } else {
-                throw new RuntimeException("Segment dataSource was been configure, but not init success");
-            }
-        } else {
-            segmentDataSource = null;
-        }
-
-        DataSource changelogDataSource;
-        if (config.hasPath(CHANGE_LOG_PATH)) {
-            List<DataSource> devOps =
-                buildDataSources("master", (List<Config>) config.getConfigList(CHANGE_LOG_PATH), showSql);
-            if (devOps.size() > 0) {
-                changelogDataSource = devOps.get(0);
-            } else {
-                throw new RuntimeException("devOps dataSource was been configure, but not init success");
-            }
-        } else {
-            changelogDataSource = null;
-        }
-
-        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource, changelogDataSource, segmentDataSource);
+        return new DataSourcePackage(master, indexWrite, indexSearch);
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs, boolean showSql) {

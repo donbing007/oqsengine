@@ -43,6 +43,9 @@ public class SimpleFieldKeyGeneratorTest {
     private SimpleFieldKeyGenerator keyGenerator;
     private MetaManager metaManager;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() {
         keyGenerator = new SimpleFieldKeyGenerator();

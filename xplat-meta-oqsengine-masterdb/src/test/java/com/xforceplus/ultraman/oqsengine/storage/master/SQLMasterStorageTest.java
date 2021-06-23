@@ -76,14 +76,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL})
 public class SQLMasterStorageTest {
 
-    final Logger logger = LoggerFactory.getLogger(SQLMasterStorageTest.class);
-
     private TransactionManager transactionManager;
     private RedisClient redisClient;
     private MetaManager metaManager;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
-    private DataSource dataSource;
+    private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
 
     //-------------level 0--------------------
@@ -172,7 +170,7 @@ public class SQLMasterStorageTest {
         mockMetaManager.addEntityClass(l2EntityClass);
         metaManager = mockMetaManager;
 
-        dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
+        dataSourcePackage = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -200,7 +198,7 @@ public class SQLMasterStorageTest {
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(dataSource), new NoSelector<>("oqsbigentity"));
+            new NoSelector<>(dataSourcePackage.getFirstMaster()), new NoSelector<>("oqsbigentity"));
 
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
@@ -222,13 +220,13 @@ public class SQLMasterStorageTest {
 
         transactionManager.finish();
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSourcePackage.getFirstMaster().getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.execute("truncate table oqsbigentity");
             }
         }
 
-        ((HikariDataSource) dataSource).close();
+        dataSourcePackage.close();
 
         commitIdStatusService.destroy();
 
@@ -459,9 +457,9 @@ public class SQLMasterStorageTest {
         return random.nextInt(max) % (max - min + 1) + min;
     }
 
-    private DataSource buildDataSource(String file) throws SQLException {
+    private DataSourcePackage buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-        return dataSourcePackage.getMaster().get(0);
+        return dataSourcePackage;
     }
 }
