@@ -16,7 +16,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
-import com.xforceplus.ultraman.oqsengine.storage.master.UniqueMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
@@ -85,25 +84,6 @@ public class BaseInit {
                     .build(),
                 null,
                 new DefaultExecutorHint());
-        }
-    }
-
-    public static class MockUniqueMasterStorage implements UniqueMasterStorage {
-
-        @Override
-        public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
-            throws SQLException {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass) {
-            return false;
-        }
-
-        @Override
-        public boolean containUniqueConfig(IEntity entity, IEntityClass entityClass) {
-            return false;
         }
     }
 }

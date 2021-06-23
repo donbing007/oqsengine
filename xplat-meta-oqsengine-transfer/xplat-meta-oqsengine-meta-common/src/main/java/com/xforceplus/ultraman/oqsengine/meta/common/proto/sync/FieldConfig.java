@@ -30,6 +30,7 @@ private static final long serialVersionUID = 0L;
     wildcardMaxWidth_ = 0;
     uniqueName_ = "";
     crossSearch_ = false;
+    length_ = 0;
   }
 
   @java.lang.Override
@@ -135,6 +136,11 @@ private static final long serialVersionUID = 0L;
           case 112: {
 
             crossSearch_ = input.readBool();
+            break;
+          }
+          case 120: {
+
+            length_ = input.readInt32();
             break;
           }
         }
@@ -548,6 +554,15 @@ private static final long serialVersionUID = 0L;
     return crossSearch_;
   }
 
+  public static final int LENGTH_FIELD_NUMBER = 15;
+  private int length_;
+  /**
+   * <code>int32 length = 15;</code>
+   */
+  public int getLength() {
+    return length_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -601,6 +616,9 @@ private static final long serialVersionUID = 0L;
     }
     if (crossSearch_ != false) {
       output.writeBool(14, crossSearch_);
+    }
+    if (length_ != 0) {
+      output.writeInt32(15, length_);
     }
     unknownFields.writeTo(output);
   }
@@ -663,6 +681,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(14, crossSearch_);
     }
+    if (length_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(15, length_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -706,6 +728,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getUniqueName());
     result = result && (getCrossSearch()
         == other.getCrossSearch());
+    result = result && (getLength()
+        == other.getLength());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -751,6 +775,8 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + CROSSSEARCH_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getCrossSearch());
+    hash = (37 * hash) + LENGTH_FIELD_NUMBER;
+    hash = (53 * hash) + getLength();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -908,6 +934,8 @@ private static final long serialVersionUID = 0L;
 
       crossSearch_ = false;
 
+      length_ = 0;
+
       return this;
     }
 
@@ -944,6 +972,7 @@ private static final long serialVersionUID = 0L;
       result.wildcardMaxWidth_ = wildcardMaxWidth_;
       result.uniqueName_ = uniqueName_;
       result.crossSearch_ = crossSearch_;
+      result.length_ = length_;
       onBuilt();
       return result;
     }
@@ -1029,6 +1058,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getCrossSearch() != false) {
         setCrossSearch(other.getCrossSearch());
+      }
+      if (other.getLength() != 0) {
+        setLength(other.getLength());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1564,6 +1596,32 @@ private static final long serialVersionUID = 0L;
     public Builder clearCrossSearch() {
       
       crossSearch_ = false;
+      onChanged();
+      return this;
+    }
+
+    private int length_ ;
+    /**
+     * <code>int32 length = 15;</code>
+     */
+    public int getLength() {
+      return length_;
+    }
+    /**
+     * <code>int32 length = 15;</code>
+     */
+    public Builder setLength(int value) {
+      
+      length_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 length = 15;</code>
+     */
+    public Builder clearLength() {
+      
+      length_ = 0;
       onChanged();
       return this;
     }

@@ -401,7 +401,7 @@ public class EntityClassManagerExecutorTest {
             try {
                 opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
             } catch (Exception e) {
-                throw new RuntimeException(String.format("toFieldTypeValue failed, message : ", e.getMessage()));
+                throw new RuntimeException(String.format("toFieldTypeValue failed, message : %s", e.getMessage()));
             }
             Assert.assertTrue(opObject.isPresent());
             Assert.assertEquals(opObject.get(), act.calculator().getFailedDefaultValue());
@@ -421,8 +421,7 @@ public class EntityClassManagerExecutorTest {
             Assert.assertNotNull(afc);
 
             Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-            Assert.assertEquals(efc.getMax(), afc.getMax());
-            Assert.assertEquals(efc.getMin(), afc.getMin());
+            Assert.assertEquals(efc.getLength(), afc.getLen());
             Assert.assertEquals(efc.getPrecision(), afc.precision());
             Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
             Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
