@@ -47,6 +47,8 @@ public class RemoteBase {
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+        //  如需连接redis压测环境,请在本地port forword后连接
+        //  redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).withPassword("8eSf4M97VLhP6hq9").build());
 
         /*
          * init cacheExecutor
