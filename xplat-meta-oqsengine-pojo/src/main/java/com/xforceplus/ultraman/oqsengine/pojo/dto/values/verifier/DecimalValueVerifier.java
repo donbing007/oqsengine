@@ -30,6 +30,15 @@ public class DecimalValueVerifier implements ValueVerifier {
     public boolean isHighPrecision(IEntityField field, IValue value) {
         BigDecimal decimal = (BigDecimal) value.getValue();
 
-        return !(decimal.scale() > field.config().getPrecision());
+        int precision = field.config().getPrecision();
+        /*
+         * 最小精度为1,至少有一个.0
+         */
+        if (precision == 0) {
+            precision = 1;
+        }
+
+        int scale = decimal.scale();
+        return !(scale > precision);
     }
 }

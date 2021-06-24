@@ -65,5 +65,17 @@ public class DecimalValueVerifierTest {
         Assert.assertFalse(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.1143"))
         ));
+
+        field = EntityField.Builder.anEntityField()
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(3)
+                    .withPrecision(0)
+                    .build()
+            ).build();
+
+        Assert.assertTrue(verifier.isHighPrecision(field,
+            new DecimalValue(field, new BigDecimal("1"))
+        ));
     }
 }

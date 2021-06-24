@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 /**
@@ -14,13 +15,13 @@ import java.util.Objects;
 public class DecimalValue extends AbstractValue<BigDecimal> {
 
     public DecimalValue(IEntityField field, BigDecimal value) {
-        super(field, value);
+        super(field, buildWellBigDecimal(field, value));
     }
 
     @Override
     BigDecimal fromString(String value) {
         if (value != null) {
-            return new BigDecimal(value);
+            return buildWellBigDecimal(getField(), new BigDecimal(value));
         }
         return null;
     }
@@ -32,13 +33,7 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     @Override
     public String valueToString() {
-        String value = getValue().toPlainString();
-        // 补足小数.
-        if (value.indexOf(".") < 0) {
-            return value + ".0";
-        } else {
-            return value;
-        }
+        return getValue().toPlainString();
     }
 
     @Override
@@ -68,5 +63,17 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     @Override
     public String toString() {
         return "DecimalValue{" + "field=" + getField() + ", value=" + getValue() + '}';
+    }
+
+    // 保证至少有一位数度.
+    private static BigDecimal buildWellBigDecimal(IEntityField field, BigDecimal value) {
+        String plainValue = value.toPlainString();
+        if (plainValue.indexOf(".") < 0) {
+            plainValue = Long.toString(value.longValue()) + ".0";
+        } else {
+            plainValue = value.toPlainString();
+        }
+
+        return new BigDecimal(plainValue);
     }
 }
