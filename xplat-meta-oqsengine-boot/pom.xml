@@ -14,7 +14,7 @@
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
         <deployment.skip>true</deployment.skip>
-        <common.version>2.0.6</common.version>
+        <common.version>2.0.7</common.version>
     </properties>
 
     <dependencies>
