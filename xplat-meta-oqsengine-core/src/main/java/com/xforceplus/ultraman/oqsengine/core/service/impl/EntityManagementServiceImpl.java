@@ -284,7 +284,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             // 表示有些校验不通过.
             return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                 transformVerifierResultToReusltStatus(verifyResult.getKey()),
-                instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
+                instantiateMessage(
+                    verifyResult.getKey(),
+                    verifyResult.getValue(),
+                    entity.entityValue().getValue(verifyResult.getValue().id()).orElse(null)
+                )
+            );
         }
 
         OperationResult operationResult = null;
@@ -389,13 +394,18 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 // 操作时间
                 targetEntity.markTime(entity.time());
 
-                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, entity);
+                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, targetEntity);
                 if (VerifierResult.OK != verifyResult.getKey()) {
                     hint.setRollback(true);
                     // 表示有些校验不通过.
-                    return new OperationResult(0, entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
+                    return new OperationResult(0, targetEntity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         transformVerifierResultToReusltStatus(verifyResult.getKey()),
-                        instantiateMessage(verifyResult.getKey(), verifyResult.getValue()));
+                        instantiateMessage(
+                            verifyResult.getKey(),
+                            verifyResult.getValue(),
+                            targetEntity.entityValue().getValue(verifyResult.getValue().id()).orElse(null)
+                        )
+                    );
                 }
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
@@ -655,21 +665,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private String instantiateMessage(VerifierResult verifierResult, IEntityField field) {
+    private String instantiateMessage(VerifierResult verifierResult, IEntityField field, IValue value) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Field {}({}) validation result {}, validation is based on {}.",
-                field.name(), field.id(), verifierResult.name(), field.config().toString());
+            logger.debug("Field {}({}) validation result {}, validation is based on {}.[%s]",
+                field.name(),
+                field.id(),
+                verifierResult.name(),
+                field.config().toString(),
+                value != null ? value.getValue().toString() : "NULL");
         }
 
         switch (verifierResult) {
             case REQUIRED:
                 return String.format("The field %s is required.", field.name());
             case TOO_LONG:
-                return String.format("The value of field %s is too long. The maximum acceptable length is %d.",
-                    field.name(), field.config().getLen());
+                return String.format("The value of field %s is too long. The maximum acceptable length is %d.[%s]",
+                    field.name(), field.config().getLen(), value != null ? value.getValue().toString() : "NULL");
             case HIGH_PRECISION:
-                return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.",
-                    field.name(), field.config().getPrecision());
+                return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.[%s]",
+                    field.name(), field.config().getPrecision(), value != null ? value.getValue().toString() : "NULL");
             default:
                 return "Unknown validation failed.";
         }

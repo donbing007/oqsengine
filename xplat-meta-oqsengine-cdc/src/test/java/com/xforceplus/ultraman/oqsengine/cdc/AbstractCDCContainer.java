@@ -32,6 +32,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -70,6 +72,7 @@ public abstract class AbstractCDCContainer {
     protected IndexStorage indexStorage;
 
     protected MetaManager metaManager;
+    protected UniqueKeyGenerator keyGenerator;
 
     protected TransactionManager transactionManager;
     protected DataSourcePackage dataSourcePackage;
@@ -105,6 +108,8 @@ public abstract class AbstractCDCContainer {
                 .withCacheEventHandler(new DoNothingCacheEventHandler())
                 .build();
         }
+
+        metaManager = EntityClassBuilder.getMetaManager();
 
         initMaster();
         if (!isMockIndex) {
@@ -189,7 +194,6 @@ public abstract class AbstractCDCContainer {
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
 
-        metaManager = EntityClassBuilder.getMetaManager();
         sphinxSyncExecutor = new SphinxSyncExecutor();
 
 
@@ -224,10 +228,16 @@ public abstract class AbstractCDCContainer {
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
+
+        SimpleFieldKeyGenerator simpleFieldKeyGenerator = new SimpleFieldKeyGenerator();
+        ReflectionTestUtils.setField(simpleFieldKeyGenerator, "metaManager", metaManager);
+        keyGenerator = simpleFieldKeyGenerator;
+
         masterStorage = new SQLMasterStorage();
         ReflectionTestUtils.setField(masterStorage, "transactionExecutor", masterTransactionExecutor);
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
         ReflectionTestUtils.setField(masterStorage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
+        ReflectionTestUtils.setField(masterStorage, "keyGenerator", keyGenerator);
         masterStorage.setTableName(tableName);
         masterStorage.init();
     }

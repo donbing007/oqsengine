@@ -99,7 +99,7 @@ public class SQLMasterStorage implements MasterStorage {
     private MetaManager metaManager;
 
     @Resource
-    UniqueKeyGenerator keyGenerator;
+    private UniqueKeyGenerator keyGenerator;
 
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncErrorExecutor;
