@@ -787,7 +787,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-
     private List<BusinessKey> getRawBusinessKeys(IEntityClass entityClass, List<FieldConditionUp> fieldConditionUps) {
         String code = entityClass.code();
         Collection<IEntityField> fields = entityClass.fields();
@@ -828,8 +827,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         List<BusinessKey> businessKeys = Collections.emptyList();
 
-        while (entityClass != null && businessKeys.isEmpty()) {
-            businessKeys = getRawBusinessKeys(entityClass, fieldConditionUps);
+        IEntityClass ptr = entityClass;
+
+        while (ptr != null && businessKeys.isEmpty()) {
+            businessKeys = getRawBusinessKeys(ptr, fieldConditionUps);
+            ptr = ptr.father().orElse(null);
         }
 
         return businessKeys;
