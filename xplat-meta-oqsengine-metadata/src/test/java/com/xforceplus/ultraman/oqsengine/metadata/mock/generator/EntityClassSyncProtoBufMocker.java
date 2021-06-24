@@ -242,6 +242,8 @@ public class EntityClassSyncProtoBufMocker {
             .setIsRequired(true)
             .setIdentifier(false)
             .setMetaFieldSense(systemFieldType)
+            .setLength(15)
+            .setPrecision(4)
             .build();
     }
 
