@@ -650,6 +650,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private String instantiateMessage(VerifierResult verifierResult, IEntityField field) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Field {}({}) validation result {}, validation is based on {}.",
+                field.name(), field.id(), verifierResult.name(), field.config().toString());
+        }
+
         switch (verifierResult) {
             case REQUIRED:
                 return String.format("The field %s is required.", field.name());
