@@ -29,6 +29,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
@@ -624,6 +625,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
         VerifierResult result;
         for (IEntityField field : entityClass.fields()) {
+            // 跳过主标识类型的检查.
+            if (field.config().isIdentifie()) {
+                continue;
+            }
+
             ValueVerifier verifier = verifierFactory.getVerifier(field.type());
             Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
             result = verifier.verify(field, valueOp.orElse(null));
