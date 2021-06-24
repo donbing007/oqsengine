@@ -65,9 +65,8 @@ public class SphinxConsumerToolsTest {
     }
 
     private void init() throws NoSuchMethodException {
-        EntityClassBuilder metaManager = new EntityClassBuilder();
         sphinxSyncExecutor = new SphinxSyncExecutor();
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", metaManager);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", EntityClassBuilder.getMetaManager());
 
         initGetEntityClass();
         initAttrCollection();
