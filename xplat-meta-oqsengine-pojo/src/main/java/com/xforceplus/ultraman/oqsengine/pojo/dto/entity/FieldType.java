@@ -121,11 +121,12 @@ public enum FieldType {
         }
     }, new String[] {"double", "decimal"}, (f, v) -> {
         //default precision is 2
-        int precision = Optional.ofNullable(f.config())
-            .map(FieldConfig::precision)
-            .filter(x -> x > 0).orElse(2);
-        return new DecimalValue(f, new BigDecimal(v)
-            .setScale(precision, RoundingMode.HALF_UP));
+//        int precision = Optional.ofNullable(f.config())
+//            .map(FieldConfig::precision)
+//            .filter(x -> x > 0).orElse(2);
+//        return new DecimalValue(f, new BigDecimal(v)
+//            .setScale(precision, RoundingMode.HALF_UP));
+        return new DecimalValue(f, new BigDecimal(v));
     },
         (v1, v2) -> {
             BigDecimal value1 = ((DecimalValue) v1).getValue();
