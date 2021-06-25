@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -120,12 +119,6 @@ public enum FieldType {
             return false;
         }
     }, new String[] {"double", "decimal"}, (f, v) -> {
-        //default precision is 2
-//        int precision = Optional.ofNullable(f.config())
-//            .map(FieldConfig::precision)
-//            .filter(x -> x > 0).orElse(2);
-//        return new DecimalValue(f, new BigDecimal(v)
-//            .setScale(precision, RoundingMode.HALF_UP));
         return new DecimalValue(f, new BigDecimal(v));
     },
         (v1, v2) -> {
