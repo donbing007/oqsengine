@@ -10,6 +10,11 @@ import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.ok;
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.other;
 import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
+import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.CONFLICT;
+import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.HALF_SUCCESS;
+import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.NOT_FOUND;
+import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.SUCCESS;
+import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.UNKNOWN;
 
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
@@ -272,34 +277,62 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     entityManagementService.build(entity);
                 long txId = operationResult.getTxId();
                 long version = operationResult.getVersion();
-                ResultStatus resultStatus = operationResult.getResultStatus();
-                if (resultStatus == ResultStatus.SUCCESS) {
-                    OperationResult.Builder builder = OperationResult.newBuilder()
-                        .addIds(entity.id())
-                        .addIds(txId)
-                        .addIds(version);
+                ResultStatus createStatus = operationResult.getResultStatus();
 
-                    result = builder.setCode(OperationResult.Code.OK).buildPartial();
-                } else if (resultStatus == ResultStatus.HALF_SUCCESS) {
-
-                    Map<String, String> failedMap = operationResult.getFailedMap();
-                    String failedValues = "";
-                    try {
-                        failedValues = mapper.writeValueAsString(failedMap);
-                    } catch (Exception ex) {
-                        logger.error("{}", ex);
-                    }
-
-                    OperationResult.Builder builder = OperationResult.newBuilder()
-                        .addIds(entity.id())
-                        .addIds(txId)
-                        .addIds(version);
-
-                    result = builder.setCode(OperationResult.Code.OTHER)
-                        .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                if (createStatus == null) {
+                    result = OperationResult.newBuilder()
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setOriginStatus(UNKNOWN.name())
+                        .setMessage(
+                            other("Unknown response status"))
                         .buildPartial();
                 } else {
-                    throw new RuntimeException(resultStatus.name() + ":" + operationResult.getMessage());
+                    switch (createStatus) {
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                .addIds(entity.id())
+                                .addIds(txId)
+                                .addIds(version)
+                                .setCode(OperationResult.Code.OK)
+                                .setOriginStatus(SUCCESS.name())
+                                .buildPartial();
+                            break;
+                        case HALF_SUCCESS:
+                            Map<String, String> failedMap = operationResult.getFailedMap();
+                            String failedValues = "";
+                            try {
+                                failedValues = mapper.writeValueAsString(failedMap);
+                            } catch (Exception ex) {
+                                logger.error("{}", ex);
+                            }
+
+                            result = OperationResult.newBuilder()
+                                .addIds(entity.id())
+                                .addIds(txId)
+                                .addIds(version).setCode(OperationResult.Code.OTHER)
+                                .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                                .buildPartial();
+                            break;
+                        case FIELD_MUST:
+                        case FIELD_TOO_LONG:
+                        case FIELD_HIGH_PRECISION:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(createStatus.name())
+                                .setMessage(operationResult.getMessage())
+                                .buildPartial();
+                            break;
+                        default:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(createStatus.name())
+                                .setMessage(
+                                    other(String.format("Unknown response status %s.", createStatus.name())))
+                                .buildPartial();
+                    }
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
@@ -376,61 +409,85 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 long txId = operationResult.getTxId();
                 int version = operationResult.getVersion();
                 ResultStatus replaceStatus = operationResult.getResultStatus();
-                switch (replaceStatus) {
-                    case SUCCESS:
-                        result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .addIds(txId)
-                            .addIds(version)
-                            .buildPartial();
-                        break;
-                    case HALF_SUCCESS:
-                        Map<String, String> failedMap = operationResult.getFailedMap();
-                        String failedValues = "";
-                        try {
-                            failedValues = mapper.writeValueAsString(failedMap);
-                        } catch (Exception ex) {
-                            logger.error("{}", ex);
-                        }
 
-                        result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OTHER)
-                            .setMessage(ResultStatus.HALF_SUCCESS.name() + ":" + failedValues)
-                            .addIds(txId)
-                            .addIds(version)
-                            .buildPartial();
-                        break;
-                    case CONFLICT:
-                        //send to sdk
-                        result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
-                            .setCode(OperationResult.Code.OTHER)
-                            .setMessage(ResultStatus.CONFLICT.name())
-                            .buildPartial();
-                        break;
-                    case NOT_FOUND:
-                        //send to sdk
-                        result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
-                            .setCode(OperationResult.Code.FAILED)
-                            .setMessage(notFound("No record found."))
-                            .buildPartial();
-                        break;
 
-                    default:
-                        //unreachable code
-                        result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
-                            .setCode(OperationResult.Code.FAILED)
-                            .setMessage(
-                                other(String.format("Unknown response status %s.",
-                                    replaceStatus != null ? replaceStatus.name() : "NULL")))
-                            .buildPartial();
+                if (replaceStatus == null) {
+                    result = OperationResult.newBuilder()
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setOriginStatus(UNKNOWN.name())
+                        .setMessage(
+                            other("Unknown response status."))
+                        .buildPartial();
+                } else {
+
+                    switch (replaceStatus) {
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(1)
+                                .setCode(OperationResult.Code.OK)
+                                .setOriginStatus(SUCCESS.name())
+                                .addIds(txId)
+                                .addIds(version)
+                                .buildPartial();
+                            break;
+                        case HALF_SUCCESS:
+                            Map<String, String> failedMap = operationResult.getFailedMap();
+                            String failedValues = "";
+                            try {
+                                failedValues = mapper.writeValueAsString(failedMap);
+                            } catch (Exception ex) {
+                                logger.error("{}", ex);
+                            }
+
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(1)
+                                .setCode(OperationResult.Code.OTHER)
+                                .setOriginStatus(HALF_SUCCESS.name())
+                                .setMessage(failedValues)
+                                .addIds(txId)
+                                .addIds(version)
+                                .buildPartial();
+                            break;
+                        case CONFLICT:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.OTHER)
+                                .setOriginStatus(ResultStatus.CONFLICT.name())
+                                .setMessage(ResultStatus.CONFLICT.name())
+                                .buildPartial();
+                            break;
+                        case NOT_FOUND:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setMessage(notFound("No record found."))
+                                .setOriginStatus(NOT_FOUND.name())
+                                .buildPartial();
+                            break;
+                        case FIELD_MUST:
+                        case FIELD_TOO_LONG:
+                        case FIELD_HIGH_PRECISION:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(replaceStatus.name())
+                                .setMessage(operationResult.getMessage())
+                                .buildPartial();
+                            break;
+                        default:
+                            //unreachable code
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(replaceStatus.name())
+                                .setMessage(
+                                    other(String.format("Unknown response status %s.", replaceStatus.name())))
+                                .buildPartial();
+                    }
                 }
-
-
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
@@ -626,7 +683,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
             OperationResult result;
-
             try {
 
                 Entity targetEntity =
@@ -638,72 +694,96 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
                     ResultStatus deleteStatus = operationResult.getResultStatus();
-
-                    switch (deleteStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(1)
-                                .setCode(OperationResult.Code.OK)
-                                .addIds(txId)
-                                .addIds(version)
-                                .buildPartial();
-                            break;
-                        case CONFLICT:
-                            //send to sdk
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.OTHER)
-                                .setMessage(ResultStatus.CONFLICT.name())
-                                .buildPartial();
-                            break;
-                        case NOT_FOUND:
-                            //send to sdk
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.OK)
-                                .buildPartial();
-                            break;
-                        default:
-                            //unreachable code
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.FAILED)
-                                .setMessage(
-                                    other(String.format("Unknown response status %s.",
-                                        deleteStatus != null ? deleteStatus.name() : "NULL")))
-                                .buildPartial();
+                    if (deleteStatus == null) {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setOriginStatus(UNKNOWN.name())
+                            .setMessage(
+                                other("Unknown response status."))
+                            .buildPartial();
+                    } else {
+                        switch (deleteStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .setOriginStatus(SUCCESS.name())
+                                    .addIds(txId)
+                                    .addIds(version)
+                                    .buildPartial();
+                                break;
+                            case CONFLICT:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .setOriginStatus(CONFLICT.name())
+                                    .buildPartial();
+                                break;
+                            case NOT_FOUND:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OK)
+                                    .setOriginStatus(NOT_FOUND.name())
+                                    .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setOriginStatus(deleteStatus.name())
+                                    .setMessage(
+                                        other(String.format("Unknown response status %s.",
+                                            deleteStatus != null ? deleteStatus.name() : "NULL")))
+                                    .buildPartial();
+                        }
                     }
                 } else {
                     com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
                         entityManagementService.deleteForce(targetEntity);
                     long txId = operationResult.getTxId();
                     long version = operationResult.getVersion();
-                    ResultStatus resultStatus = operationResult.getResultStatus();
-                    switch (resultStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(1)
-                                .setCode(OperationResult.Code.OK)
-                                .addIds(txId)
-                                .addIds(version)
-                                .buildPartial();
-                            break;
-                        case NOT_FOUND:
-                            //send to sdk
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.OK)
-                                .buildPartial();
-                            break;
-                        default:
-                            //unreachable code
-                            result = OperationResult.newBuilder()
-                                .setAffectedRow(0)
-                                .setCode(OperationResult.Code.FAILED)
-                                .setMessage(
-                                    other(String.format("Unknown response status %s.",
-                                        resultStatus != null ? resultStatus.name() : "NULL")))
-                                .buildPartial();
+                    ResultStatus deleteStatus = operationResult.getResultStatus();
+                    if (deleteStatus == null) {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setOriginStatus(UNKNOWN.name())
+                            .setMessage(
+                                other("Unknown response status."))
+                            .buildPartial();
+                    } else {
+                        switch (deleteStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .addIds(txId)
+                                    .addIds(version)
+                                    .setOriginStatus(SUCCESS.name())
+                                    .buildPartial();
+                                break;
+                            case NOT_FOUND:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OK)
+                                    .setOriginStatus(NOT_FOUND.name())
+                                    .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage(
+                                        other(String.format("Unknown response status %s.", deleteStatus.name())))
+                                    .buildPartial();
+                        }
                     }
                 }
 
