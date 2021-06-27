@@ -316,6 +316,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
                                 .buildPartial();
                             break;
+                        case ELEVATEFAILED:
                         case FIELD_MUST:
                         case FIELD_TOO_LONG:
                         case FIELD_HIGH_PRECISION:
@@ -469,6 +470,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setOriginStatus(NOT_FOUND.name())
                                 .buildPartial();
                             break;
+                        case ELEVATEFAILED:
                         case FIELD_MUST:
                         case FIELD_TOO_LONG:
                         case FIELD_HIGH_PRECISION:
