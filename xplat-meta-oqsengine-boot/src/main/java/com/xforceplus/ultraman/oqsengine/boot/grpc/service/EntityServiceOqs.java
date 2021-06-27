@@ -66,6 +66,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectByTree;
+import com.xforceplus.ultraman.oqsengine.sdk.SortNode;
+import com.xforceplus.ultraman.oqsengine.sdk.Sorts;
 import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -1099,13 +1101,107 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * 未实现.
      */
     @Override
-    public CompletionStage<OperationResult> selectByTreeFilter(SelectByTree selectByTree, Metadata metadata) {
+    public CompletionStage<OperationResult> selectByTreeFilter(SelectByTree in, Metadata metadata) {
         return asyncRead(() -> {
-            return OperationResult
-                .newBuilder()
-                .setCode(OperationResult.Code.UNRECOGNIZED)
-                .setMessage("Not Implemented")
-                .build();
+
+            String profile = extractProfile(metadata).orElse("");
+
+            //check entityRef
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in.getEntity(), profile);
+            IEntityClass entityClass;
+
+            try {
+                entityClass = checkedEntityClassRef(entityClassRef);
+            } catch (Exception ex) {
+                return exceptional(ex);
+            }
+
+            if (extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
+                try {
+                    transactionManagementService.restore(id);
+                } catch (Exception e) {
+                    logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
+                }
+            }
+
+            OperationResult result;
+            try {
+
+                Collection<IEntity> entities = null;
+
+                int pageNo = in.getRange().getPageIndex();
+                int pageSize = in.getRange().getPageSize();
+                Page page = new Page(pageNo, pageSize);
+
+                Optional<? extends IEntityField> sortField;
+
+                List<SortNode> sortList = in.getSorts().getSortList();
+                if (sortList.isEmpty()) {
+                    sortField = Optional.empty();
+                } else {
+                    SortNode sortUp = sortList.get(0);
+                    //get related field
+                    sortField = entityClass.field(sortUp.getFieldId());
+                }
+
+                Sort sortParam = Sort.buildOutOfSort();
+                if (sortField.isPresent()) {
+                    SortNode sortUp = sortList.get(0);
+                    if (sortUp.getOrder() == SortNode.Order.asc) {
+                        sortParam = Sort.buildAscSort(sortField.get());
+                    } else {
+                        sortParam = Sort.buildDescSort(sortField.get());
+                    }
+                }
+
+                ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig
+                    .Builder.anSearchConfig()
+                    .withSort(sortParam)
+                    .withPage(page)
+                    .build();
+
+                Optional<Conditions> consOp = toConditions(
+                    entityClass, in.getFilters(), metaManager);
+
+
+                if (consOp.isPresent()) {
+                    entities =
+                        entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
+                } else {
+                    entities = entitySearchService.selectByConditions(
+                        Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
+                }
+
+                result = OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                        .stream().filter(Objects::nonNull)
+                        .map(EntityClassHelper::toEntityUp).collect(Collectors.toList()))
+                    .setTotalRow(page == null || !page.isReady()
+                        ? Optional.ofNullable(entities).orElseGet(Collections::emptyList).size()
+                        : Long.valueOf(page.getTotalCount()).intValue())
+                    .buildPartial();
+
+            } catch (Exception e) {
+                logger.error("{}", e);
+                result = OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
+            } finally {
+
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
+            }
+
+            return result;
         });
     }
 
