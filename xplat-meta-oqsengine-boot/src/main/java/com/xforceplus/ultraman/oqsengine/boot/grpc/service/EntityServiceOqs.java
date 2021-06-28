@@ -313,7 +313,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .addIds(entity.id())
                                 .addIds(txId)
                                 .addIds(version).setCode(OperationResult.Code.OTHER)
-                                .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                                .setMessage(failedValues)
                                 .setOriginStatus(ResultStatus.HALF_SUCCESS.name())
                                 .buildPartial();
                             break;
