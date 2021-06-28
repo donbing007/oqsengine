@@ -314,6 +314,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .addIds(txId)
                                 .addIds(version).setCode(OperationResult.Code.OTHER)
                                 .setMessage(ResultStatus.HALF_SUCCESS + ":" + failedValues)
+                                .setOriginStatus(ResultStatus.HALF_SUCCESS.name())
                                 .buildPartial();
                             break;
                         case ELEVATEFAILED:
