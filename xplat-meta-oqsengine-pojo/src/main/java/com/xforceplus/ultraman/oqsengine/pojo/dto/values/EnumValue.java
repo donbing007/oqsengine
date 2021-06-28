@@ -49,9 +49,4 @@ public class EnumValue extends AbstractValue<String> {
     public IValue<String> shallowClone() {
         return new EnumValue(this.getField(), getValue());
     }
-
-    @Override
-    public String toString() {
-        return "EnumValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
 }

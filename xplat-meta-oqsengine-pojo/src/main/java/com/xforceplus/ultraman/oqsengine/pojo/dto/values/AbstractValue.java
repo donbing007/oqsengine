@@ -56,4 +56,14 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
     @Override
     public abstract long valueToLong();
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(this.getClass().getSimpleName()).append("{");
+        sb.append("field=").append(field);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
+    }
 }

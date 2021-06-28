@@ -49,9 +49,4 @@ public class StringValue extends AbstractValue<String> {
     public IValue<String> shallowClone() {
         return new StringValue(this.getField(), getValue());
     }
-
-    @Override
-    public String toString() {
-        return "StringValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
 }

@@ -60,11 +60,6 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
         return new DecimalValue(this.getField(), getValue());
     }
 
-    @Override
-    public String toString() {
-        return "DecimalValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
-
     // 保证至少有一位数度.
     private static BigDecimal buildWellBigDecimal(IEntityField field, BigDecimal value) {
         String plainValue = value.toPlainString();

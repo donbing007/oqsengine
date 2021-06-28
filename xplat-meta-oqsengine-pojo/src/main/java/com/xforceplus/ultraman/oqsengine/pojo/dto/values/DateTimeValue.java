@@ -78,11 +78,6 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
         return false;
     }
 
-    @Override
-    public String toString() {
-        return "DateTimeValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
-
     /**
      * 默认的timestamp转LocalDateTime.
      */

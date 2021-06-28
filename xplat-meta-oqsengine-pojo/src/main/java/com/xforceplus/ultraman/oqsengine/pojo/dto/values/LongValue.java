@@ -58,9 +58,4 @@ public class LongValue extends AbstractValue<Long> {
     public boolean compareByString() {
         return false;
     }
-
-    @Override
-    public String toString() {
-        return "LongValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
 }
