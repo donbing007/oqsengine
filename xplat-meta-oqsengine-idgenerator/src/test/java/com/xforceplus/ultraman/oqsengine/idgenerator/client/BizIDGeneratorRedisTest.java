@@ -214,12 +214,12 @@ public class BizIDGeneratorRedisTest {
         CountDownLatch latch = new CountDownLatch(1);
         for(int j =0;j<10;j++) {
             executorService.submit(() -> {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 for (int i = 0; i < 50; i++) {
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     System.out.println(bizIDGenerator1.nextId(linearBizType));
                 }
             });
