@@ -18,3 +18,5 @@
 * 增加了新的promethrus的指标输出,可以输出如果处于只读状态的原因.
   
   oqs_readonly_rease 取值 1 非只读,2 CDC心跳失败,3 未提交号过多,4 CDC服务离线.
+
+* 修正若干BUG.
