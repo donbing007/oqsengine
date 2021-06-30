@@ -67,7 +67,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectByTree;
 import com.xforceplus.ultraman.oqsengine.sdk.SortNode;
-import com.xforceplus.ultraman.oqsengine.sdk.Sorts;
 import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -80,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
@@ -1028,13 +1028,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 }
 
+                Collection<IEntity> retCollections = simplify(metadata, entities, in.getQueryFieldsList());
+
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
-                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                    .addAllQueryResult(Optional.ofNullable(retCollections).orElseGet(Collections::emptyList)
                         .stream().filter(Objects::nonNull)
                         .map(EntityClassHelper::toEntityUp).collect(Collectors.toList()))
                     .setTotalRow(page == null || !page.isReady()
-                        ? Optional.ofNullable(entities).orElseGet(Collections::emptyList).size()
+                        ? Optional.ofNullable(retCollections).orElseGet(Collections::emptyList).size()
                         : Long.valueOf(page.getTotalCount()).intValue())
                     .buildPartial();
 
@@ -1053,6 +1055,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             return result;
         });
+    }
+
+    private Collection<IEntity> simplify(Metadata metadata, Collection<IEntity> rawEntities,
+                                         List<QueryFieldsUp> projects) {
+        Boolean isSimplify = extractSimplify(metadata).map(Boolean::parseBoolean).orElse(false);
+        if (!isSimplify) {
+            return rawEntities;
+        } else {
+            //do simplify
+            Set<Long> idSet = projects.stream().map(QueryFieldsUp::getId).collect(Collectors.toSet());
+            return rawEntities.stream().map(x -> {
+                Collection<IValue> values = x.entityValue().values();
+                values.removeIf(item -> !idSet.contains(item.getField().id()));
+                return x;
+            }).collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -1375,6 +1393,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Optional<String> extractProfile(Metadata metadata) {
         Optional<String> profile = metadata.getText("profile");
         return profile;
+    }
+
+    private Optional<String> extractSimplify(Metadata metadata) {
+        Optional<String> simplify = metadata.getText("simplify");
+        return simplify;
     }
 
     private void logInfo(Metadata metadata, BiFunction<String, String, String> template) {
