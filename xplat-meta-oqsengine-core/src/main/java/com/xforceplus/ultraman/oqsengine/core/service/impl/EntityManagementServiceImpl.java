@@ -25,15 +25,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
@@ -270,7 +272,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         Map<String, String> failedMap = null;
         try {
-            failedMap = prepareBuild(entityClass, entity);
+            failedMap = processFormulaWithBuild(entityClass, entity);
         } catch (Exception e) {
             String message = e.toString();
             logger.warn("prepare build error, message [{}]", message);
@@ -382,7 +384,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  */
                 Map<String, String> failedMap = null;
                 try {
-                    failedMap = prepareReplace(entityClass, targetEntity, entity);
+                    failedMap = processFormulaWithReplace(entityClass, targetEntity, entity);
                 } catch (Exception e) {
                     String message = e.toString();
                     logger.warn("prepare replace error, message [{}]", message);
@@ -690,8 +692,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
 
-    //  build前的准备
-    private Map<String, String> prepareBuild(IEntityClass entityClass, IEntity entity) {
+    // 创建对象时的公式计算.
+    private Map<String, String> processFormulaWithBuild(IEntityClass entityClass, IEntity entity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
@@ -743,8 +745,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return failedMaps;
     }
 
-    //  replace前的准备
-    private Map<String, String> prepareReplace(IEntityClass entityClass, IEntity targetEntity, IEntity updateEntity) {
+    // 更新对象时的公式处理.
+    private Map<String, String> processFormulaWithReplace(IEntityClass entityClass, IEntity targetEntity, IEntity updateEntity) {
 
         //  生成的新的entityValue
         IEntityValue entityValue = EntityValue.build();
@@ -897,4 +899,43 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             masterStorage.writeError(errorStorageEntity);
         }
     }
+
+    /*
+     * lookup字段处理.
+     * lookup字段在创建/更新的时候可以接爱一个long,其表示为指向目标的标识.其值会替换成目标对象字段的值.
+     * 和目标对象字段的值将是完全一样的状态.
+     * 在读取时,会当成一个普通字段读取.
+     */
+    //private IEntity processLookup(IEntityClass entityClass, IEntity entity) throws SQLException {
+    //    IEntityValue entityValue = entity.entityValue();
+    //
+    //    for (IEntityField field : entityClass.fields()) {
+    //
+    //        if (field.type() == FieldType.LOOKUP) {
+    //
+    //            Optional<IValue> valueUp = entity.entityValue().getValue(field.id());
+    //            if (valueUp.isPresent()) {
+    //
+    //                // 指向的实例id.
+    //                IValue<Long> value = valueUp.get();
+    //                long lookupEntityId = value.valueToLong();
+    //
+    //                Optional<IEntity> lookupEntityOp = masterStorage.selectOne(lookupEntityId);
+    //                if (!lookupEntityOp.isPresent()) {
+    //                    throw new SQLException();
+    //                }
+    //
+    //                IEntity lookupEntity = lookupEntityOp.get();
+    //                Optional<IValue> lookupValueOp =
+    //                    lookupEntity.entityValue().getValue(field.config().getLookupEntityFieldId());
+    //                if (!lookupValueOp.isPresent()) {
+    //                    throw new SQLException();
+    //                }
+    //
+    //                IValue lookupValue = lookupValueOp.get();
+    //
+    //            }
+    //        }
+    //    }
+    //}
 }

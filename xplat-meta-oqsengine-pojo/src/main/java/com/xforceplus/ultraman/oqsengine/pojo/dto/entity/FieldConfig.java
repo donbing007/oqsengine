@@ -190,6 +190,18 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "wildcardMaxWidth")
     private int wildcardMaxWidth = 6;
 
+    /**
+     * lookup的类型标识.
+     */
+    @JsonProperty(value = "lookupEntityClassId")
+    private long lookupEntityClassId;
+
+    /**
+     * lookup的字段标识.
+     */
+    @JsonProperty(value = "lookupEntityFieldId")
+    private long lookupEntityFieldId;
+
     @JsonProperty(value = "uniqueName")
     private String uniqueName = "";
 
@@ -411,6 +423,14 @@ public class FieldConfig implements Serializable {
         return len;
     }
 
+    public long getLookupEntityClassId() {
+        return lookupEntityClassId;
+    }
+
+    public long getLookupEntityFieldId() {
+        return lookupEntityFieldId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -432,7 +452,9 @@ public class FieldConfig implements Serializable {
             && Objects.equals(getDelimiter(), that.getDelimiter())
             && Objects.equals(getDisplayType(), that.getDisplayType())
             && getFuzzyType() == that.getFuzzyType()
-            && getLen() == that.getLen();
+            && getLen() == that.getLen()
+            && getLookupEntityClassId() == this.getLookupEntityClassId()
+            && getLookupEntityFieldId() == this.getLookupEntityFieldId();
     }
 
     @Override
@@ -447,7 +469,9 @@ public class FieldConfig implements Serializable {
             getValidateRegexString(),
             isSplittable(),
             getDelimiter(),
-            getDisplayType());
+            getDisplayType(),
+            getLookupEntityClassId(),
+            getLookupEntityFieldId());
     }
 
     @Override
@@ -459,10 +483,17 @@ public class FieldConfig implements Serializable {
         sb.append(", identifie=").append(identifie);
         sb.append(", required=").append(required);
         sb.append(", fieldSense=").append(fieldSense);
+        sb.append(", crossSearch=").append(crossSearch);
         sb.append(", validateRegexString='").append(validateRegexString).append('\'');
         sb.append(", splittable=").append(splittable);
         sb.append(", delimiter='").append(delimiter).append('\'');
         sb.append(", displayType='").append(displayType).append('\'');
+        sb.append(", fuzzyType=").append(fuzzyType);
+        sb.append(", wildcardMinWidth=").append(wildcardMinWidth);
+        sb.append(", wildcardMaxWidth=").append(wildcardMaxWidth);
+        sb.append(", lookupEntityClassId=").append(lookupEntityClassId);
+        sb.append(", lookupEntityFieldId=").append(lookupEntityFieldId);
+        sb.append(", uniqueName='").append(uniqueName).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -487,6 +518,8 @@ public class FieldConfig implements Serializable {
         private FuzzyType fuzzyType = FuzzyType.NOT;
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
+        private long lookupEntityClassId = 0;
+        private long lookupEntityFieldId = 0;
         private String uniqueName = "";
 
         private Builder() {
@@ -586,6 +619,16 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withLookupEntityClassId(long entityClassId) {
+            this.lookupEntityClassId = entityClassId;
+            return this;
+        }
+
+        public Builder withLookupEntityFieldId(long entityFieldId) {
+            this.lookupEntityFieldId = entityFieldId;
+            return this;
+        }
+
         public Builder withUniqueName(String uniqueName) {
             this.uniqueName = uniqueName;
             return this;
@@ -614,6 +657,8 @@ public class FieldConfig implements Serializable {
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
+            fieldConfig.lookupEntityClassId = this.lookupEntityClassId;
+            fieldConfig.lookupEntityFieldId = this.lookupEntityFieldId;
             fieldConfig.uniqueName = this.uniqueName;
             return fieldConfig;
         }
