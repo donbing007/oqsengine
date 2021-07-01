@@ -72,7 +72,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         int loop = 0;
         int maxLoop = 100;
         while (loop < maxLoop) {
-            if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
+            if (expectedCount <= mockRedisCallbackService.getExecuted().get()) {
                 break;
             }
             logger.warn("func -> {}, current -> {}, expectedCount -> {}", func,
@@ -83,7 +83,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         }
         logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount,
             mockRedisCallbackService.getExecuted().get());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+        Assert.assertTrue(expectedCount <= mockRedisCallbackService.getExecuted().get());
     }
 
 
