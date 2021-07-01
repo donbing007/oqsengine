@@ -4,6 +4,7 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;
 import com.googlecode.aviator.Expression;
 import com.googlecode.aviator.Options;
+import com.googlecode.aviator.runtime.type.AviatorFunction;
 import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
 import java.math.MathContext;
@@ -51,5 +52,14 @@ public class ExpressionUtils {
                 expressionWrapper.getCode(), expressionWrapper.getExpression()));
         }
         return expression.execute(params);
+    }
+
+    /**
+     * 注册一个自定义函数.
+     *
+     * @param function 待添加的函数实例
+     */
+    public static void addFunction(AviatorFunction function) {
+        INSTANCE.addFunction(function);
     }
 }
