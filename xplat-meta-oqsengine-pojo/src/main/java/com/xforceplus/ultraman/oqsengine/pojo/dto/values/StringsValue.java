@@ -32,8 +32,10 @@ public class StringsValue extends AbstractValue<String[]> {
     }
 
     @Override
-    public IValue<String[]> shallowClone() {
-        return new StringsValue(this.getField(), this.getValue());
+    public IValue<String[]> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new StringsValue(newField, getValue());
     }
 
     @Override

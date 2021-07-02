@@ -22,7 +22,7 @@ public class EmptyTypedValue extends AbstractValue {
     }
 
     @Override
-    public IValue shallowClone() {
-        return this;
+    public IValue copy(IEntityField newField) {
+        return new EmptyTypedValue(newField);
     }
 }

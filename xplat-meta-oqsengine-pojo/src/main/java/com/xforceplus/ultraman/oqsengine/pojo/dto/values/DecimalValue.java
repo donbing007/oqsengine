@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Objects;
 
 /**
@@ -56,8 +55,10 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
-    public IValue<BigDecimal> shallowClone() {
-        return new DecimalValue(this.getField(), getValue());
+    public IValue<BigDecimal> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new DecimalValue(newField, getValue());
     }
 
     // 保证至少有一位数度.

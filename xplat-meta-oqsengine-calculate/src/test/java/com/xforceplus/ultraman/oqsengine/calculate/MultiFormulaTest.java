@@ -14,6 +14,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ * 多个公式字段测试.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/12
  * @since 1.8
@@ -22,7 +24,8 @@ public class MultiFormulaTest {
 
     @Test
     public void test() {
-        String expression1 = "a = 1010 + d; b = a + 100; c = a + b; let m = seq.map('%s', c, '%s', b, '%s', a); return m;";
+        String expression1 =
+            "a = 1010 + d; b = a + 100; c = a + b; let m = seq.map('%s', c, '%s', b, '%s', a); return m;";
 
         String c = "c";
         String b = "b";
@@ -30,7 +33,7 @@ public class MultiFormulaTest {
         String fullExpression = String.format(expression1, c, b, a);
 
         Expression expression = AviatorEvaluator.getInstance()
-            .compile("test",  fullExpression, false);
+            .compile("test", fullExpression, false);
 
         Assert.assertNotNull(expression);
 
@@ -49,7 +52,8 @@ public class MultiFormulaTest {
     public void testEmptyCalculate() {
         String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
 
-        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+        ExpressionWrapper expressionWrapper =
+            ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
         Expression expression = ExpressionUtils.compile(expressionWrapper);
 
@@ -98,7 +102,8 @@ public class MultiFormulaTest {
     @Test
     public void testPlus() {
         String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
-        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+        ExpressionWrapper expressionWrapper =
+            ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
         Expression expression = ExpressionUtils.compile(expressionWrapper);
 
@@ -119,7 +124,8 @@ public class MultiFormulaTest {
     @Test
     public void testLocalDataTime() {
         String expression1 = "${current_time}";
-        ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
+        ExpressionWrapper expressionWrapper =
+            ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
         Expression expression = ExpressionUtils.compile(expressionWrapper);
         long now = System.currentTimeMillis();
         Map<String, Object> params = new HashMap<>();

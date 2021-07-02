@@ -28,7 +28,9 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
     }
 
     @Override
-    public IValue<Map<String, Object>> shallowClone() {
-        return this;
+    public IValue<Map<String, Object>> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new FormulaTypedValue(newField, getValue());
     }
 }

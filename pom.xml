@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.2.2-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -140,6 +140,7 @@
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-calculate</module>
         <module>xplat-meta-oqsengine-metadata</module>
         <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-cdc</module>
@@ -149,7 +150,6 @@
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
         <module>xplat-meta-oqsengine-idgenerator</module>
-        <module>xplat-meta-oqsengine-calculate</module>
     </modules>
 
     <distributionManagement>

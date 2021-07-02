@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Objects;
 
@@ -56,7 +57,9 @@ public class BooleanValue extends AbstractValue<Boolean> {
     }
 
     @Override
-    public IValue<Boolean> shallowClone() {
-        return new BooleanValue(this.getField(), getValue());
+    public IValue<Boolean> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new BooleanValue(newField, getValue());
     }
 }
