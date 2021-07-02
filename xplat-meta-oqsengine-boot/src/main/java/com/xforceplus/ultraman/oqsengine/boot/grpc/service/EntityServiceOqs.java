@@ -997,7 +997,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         extraCondition = toConditions(entityClass, filters, metaManager);
                     }
 
-                    Sort sortParam = Sort.buildOutOfSort();
+                    Sort sortParam = null;
                     if (sortField.isPresent()) {
                         FieldSortUp sortUp = sort.get(0);
 
@@ -1171,7 +1171,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     sortField = entityClass.field(sortUp.getFieldId());
                 }
 
-                Sort sortParam = Sort.buildOutOfSort();
+                Sort sortParam = null;
                 if (sortField.isPresent()) {
                     SortNode sortUp = sortList.get(0);
                     if (sortUp.getOrder() == SortNode.Order.asc) {
