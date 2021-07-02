@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -99,13 +100,25 @@ public class JoinSelectTest {
         Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
 
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
+
         Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id()))
+            .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
 
         Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
+
         Mockito.when(metaManager.load(MockMetaManager.driverEntityClass.id()))
+            .thenReturn(Optional.of(MockMetaManager.driverEntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.driverEntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.driverEntityClass));
 
         initData();

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -119,13 +120,13 @@ public class UserCaseTest {
         Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
         Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), null))
