@@ -4,6 +4,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  * 表示指向一个外部对象的字段.
+ * 其中持有的IEntityField实例将和普通字段不同.
+ * 其学段ID将使用当前字段,但是类型将是目标字段的类型.
+ * 所以lookup字段的字段类型是随着目标字面不同而不同的.
+ * </p>
+ * lookupValue ->   DecimalValue   此lookup字段类型就是浮点型.
+ * lookupValue ->   StringValue    此lookup字段类型就是字符串.
  *
  * @author dongbin
  * @version 0.1 2021/06/28 10:13
@@ -32,7 +38,9 @@ public class LookupValue extends AbstractValue<Long> {
     }
 
     @Override
-    public IValue<Long> shallowClone() {
-        return new LookupValue(getField(), getValue());
+    public IValue<Long> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new LookupValue(newField, getValue());
     }
 }

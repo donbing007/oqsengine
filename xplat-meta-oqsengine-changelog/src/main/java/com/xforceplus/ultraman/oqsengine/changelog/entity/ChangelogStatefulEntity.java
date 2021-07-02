@@ -432,7 +432,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
             if (value.isPresent()) {
                 //has old value
                 //TODO copy value
-                IValue iValue = value.get().shallowClone();
+                IValue iValue = value.get().copy();
                 iValue.setStringValue(x.getRawValue());
                 entityValue.addValue(iValue);
             } else {

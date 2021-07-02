@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 
@@ -58,6 +59,11 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     public abstract long valueToLong();
 
     @Override
+    public IValue<V> copy() {
+        return copy(getField());
+    }
+
+    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(this.getClass().getSimpleName()).append("{");
@@ -65,5 +71,13 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         sb.append(", value=").append(value);
         sb.append('}');
         return sb.toString();
+    }
+
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != FieldType.BOOLEAN) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
     }
 }

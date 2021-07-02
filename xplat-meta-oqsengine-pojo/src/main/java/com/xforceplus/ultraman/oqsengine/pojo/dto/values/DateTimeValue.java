@@ -69,8 +69,10 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     }
 
     @Override
-    public IValue<LocalDateTime> shallowClone() {
-        return new DateTimeValue(this.getField(), getValue());
+    public IValue<LocalDateTime> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new DateTimeValue(newField, getValue());
     }
 
     @Override

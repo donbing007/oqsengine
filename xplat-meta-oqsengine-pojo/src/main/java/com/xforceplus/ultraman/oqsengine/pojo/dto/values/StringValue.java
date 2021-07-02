@@ -46,7 +46,9 @@ public class StringValue extends AbstractValue<String> {
     }
 
     @Override
-    public IValue<String> shallowClone() {
-        return new StringValue(this.getField(), getValue());
+    public IValue<String> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new StringValue(newField, getValue());
     }
 }
