@@ -45,7 +45,7 @@ public class SegmentStorageTest {
     @BeforeEach
     public void before() throws Exception {
         System.setProperty(
-            "MYSQL_JDBC_URL_IDGEN",
+            "MYSQL_JDBC_ID",
             String.format(
                 "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));

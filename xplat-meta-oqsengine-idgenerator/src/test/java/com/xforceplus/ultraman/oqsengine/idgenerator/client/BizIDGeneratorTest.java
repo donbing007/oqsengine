@@ -17,7 +17,9 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,12 +54,12 @@ public class BizIDGeneratorTest {
     private BizIDGenerator bizIDGenerator1;
     private ExecutorService executorService;
     private DataSource dataSource;
-
+    private DataSourcePackage dataSourcePackage;
 
     @BeforeEach
     public void before() throws SQLException {
         System.setProperty(
-            "MYSQL_JDBC_URL_IDGEN",
+            "MYSQL_JDBC_ID",
             String.format(
                 "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
@@ -88,6 +91,18 @@ public class BizIDGeneratorTest {
         int ret = storage1.build(info);
         Assertions.assertEquals(ret, 1);
     }
+
+    @AfterEach
+    public void after() throws SQLException {
+        try(Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table segment");
+            st.close();
+        } finally {
+            dataSourcePackage.close();
+        }
+    }
+
 
     @Test
     public void testBizIDGenerator() {
@@ -147,7 +162,7 @@ public class BizIDGeneratorTest {
 
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
+        dataSourcePackage = DataSourceFactory.build(true);
         return dataSourcePackage.getMaster().get(0);
     }
 }

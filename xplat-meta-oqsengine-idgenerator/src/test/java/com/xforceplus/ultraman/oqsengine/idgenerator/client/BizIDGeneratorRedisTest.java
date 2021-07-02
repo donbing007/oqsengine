@@ -18,7 +18,9 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentService
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -68,6 +70,7 @@ public class BizIDGeneratorRedisTest {
     private RedissonClient redissonClient;
     private DataSource dataSource;
     private ExecutorService executorService;
+    private DataSourcePackage dataSourcePackage;
 
     @AfterEach
     public void tearDown() throws SQLException {
@@ -83,12 +86,23 @@ public class BizIDGeneratorRedisTest {
         segmentInfo3.setBizType(linearBizType3);
         storage1.delete(segmentInfo3);
     }
+    @AfterEach
+    public void after() throws SQLException {
+        try(Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table segment");
+            st.close();
+        } finally {
+            dataSourcePackage.close();
+        }
 
+        redissonClient.shutdown();
+    }
 
     @BeforeEach
     public void before() throws SQLException {
         System.setProperty(
-            "MYSQL_JDBC_URL_IDGEN",
+            "MYSQL_JDBC_ID",
             String.format(
                 "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
@@ -202,7 +216,7 @@ public class BizIDGeneratorRedisTest {
 
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
+        dataSourcePackage = DataSourceFactory.build(true);
         return dataSourcePackage.getMaster().get(0);
     }
 

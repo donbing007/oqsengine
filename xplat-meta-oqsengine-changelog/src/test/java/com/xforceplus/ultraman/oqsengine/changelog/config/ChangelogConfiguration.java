@@ -28,7 +28,7 @@ import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
-import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
