@@ -60,7 +60,7 @@
                     <configLocation>./checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*</excludes>
+                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*, **/mock/*</excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -349,19 +349,6 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson</artifactId>
                 <version>3.15.5</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-junit4</artifactId>
-                <version>2.0.7</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito2</artifactId>
-                <version>2.0.7</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.googlecode.aviator</groupId>

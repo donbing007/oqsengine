@@ -27,7 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * SQLMasterStorage Tester.
+ * SegmentStorageTest Tester.
  *
  * @author <Authors name>
  * @version 1.0 02/25/2020
