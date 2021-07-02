@@ -387,5 +387,4 @@
         <test.skip>false</test.skip>
         <argLine>-Xmx4096m -Xms4096m</argLine>
     </properties>
-
 </project>
