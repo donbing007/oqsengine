@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,10 +36,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -58,7 +59,7 @@ public class EntitySearchServiceImplTest {
     private MetaManager metaManager;
     private EntitySearchServiceImpl impl;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.getMin()).thenReturn((Optional.of(Long.valueOf("1"))));
@@ -78,7 +79,7 @@ public class EntitySearchServiceImplTest {
         impl.init();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
     }
@@ -122,8 +123,8 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
-        Assert.assertEquals(0, entities.size());
-        Assert.assertEquals(2, page.getTotalCount());
+        Assertions.assertEquals(0, entities.size());
+        Assertions.assertEquals(2, page.getTotalCount());
     }
 
     /**
@@ -188,8 +189,8 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
-        Assert.assertEquals(3, entities.size());
-        Assert.assertEquals(3, page.getTotalCount());
+        Assertions.assertEquals(3, entities.size());
+        Assertions.assertEquals(3, page.getTotalCount());
     }
 
     @Test
@@ -199,8 +200,8 @@ public class EntitySearchServiceImplTest {
         );
         Optional<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
 
-        Assert.assertTrue(entityOp.isPresent());
-        Assert.assertEquals(1, entityOp.get().id());
+        Assertions.assertTrue(entityOp.isPresent());
+        Assertions.assertEquals(1, entityOp.get().id());
     }
 
     @Test
@@ -218,10 +219,10 @@ public class EntitySearchServiceImplTest {
 
         Collection<IEntity> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
 
-        Assert.assertEquals(ids.length, entities.size());
+        Assertions.assertEquals(ids.length, entities.size());
         List<IEntity> entityList = new ArrayList<>(entities);
         for (int i = 0; i < ids.length; i++) {
-            Assert.assertEquals(ids[i], entityList.get(i).id());
+            Assertions.assertEquals(ids[i], entityList.get(i).id());
         }
     }
 
@@ -241,8 +242,8 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
-        Assert.assertEquals(100L, entities.stream().findFirst().get().id());
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(100L, entities.stream().findFirst().get().id());
     }
 
     @Test
@@ -298,31 +299,33 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         ));
 
-        Assert.assertEquals(3, entities.size());
+        Assertions.assertEquals(3, entities.size());
         long[] expectedIds = new long[] {
             1, 3, 4
         };
         for (int i = 0; i < expectedIds.length; i++) {
-            Assert.assertEquals(expectedIds[i], entities.get(i).id());
+            Assertions.assertEquals(expectedIds[i], entities.get(i).id());
         }
     }
 
-    @Test(expected = SQLException.class)
+    @Test
     public void testHaveFuzzyFilterConditions() throws Exception {
-        impl.selectByConditions(
-            Conditions.buildEmtpyConditions(),
-            EntityClassDefine.l2EntityClass.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig()
-                .withFilter(
-                    Conditions.buildEmtpyConditions()
-                        .addAnd(
-                            new Condition(
-                                EntityClassDefine.l2EntityClass.field("l0-string").get(),
-                                ConditionOperator.LIKE,
-                                new StringValue(EntityClassDefine.l2EntityClass.field("l0-string").get(), "123")
+        assertThrows(SQLException.class, () -> {
+            impl.selectByConditions(
+                Conditions.buildEmtpyConditions(),
+                EntityClassDefine.l2EntityClass.ref(),
+                ServiceSelectConfig.Builder.anSearchConfig()
+                    .withFilter(
+                        Conditions.buildEmtpyConditions()
+                            .addAnd(
+                                new Condition(
+                                    EntityClassDefine.l2EntityClass.field("l0-string").get(),
+                                    ConditionOperator.LIKE,
+                                    new StringValue(EntityClassDefine.l2EntityClass.field("l0-string").get(), "123")
+                                )
                             )
-                        )
-                ).build()
-        );
+                    ).build()
+            );
+        });
     }
 }

@@ -4,8 +4,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.math.BigDecimal;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 /**
  * 浮点数测试.
@@ -29,9 +30,9 @@ public class DecimalValueTest {
             ).build();
 
         DecimalValue value = new DecimalValue(field, new BigDecimal("123"));
-        Assert.assertEquals("123.0", value.valueToString());
+        Assertions.assertEquals("123.0", value.valueToString());
 
         value = new DecimalValue(field, new BigDecimal("123.789"));
-        Assert.assertEquals("123.789", value.valueToString());
+        Assertions.assertEquals("123.789", value.valueToString());
     }
 }

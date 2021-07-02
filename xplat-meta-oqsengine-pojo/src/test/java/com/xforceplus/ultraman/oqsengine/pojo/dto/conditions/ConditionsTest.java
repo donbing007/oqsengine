@@ -11,10 +11,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Conditions Tester.
@@ -24,14 +22,6 @@ import org.junit.Test;
  * @since <pre>Feb 22, 2020</pre>
  */
 public class ConditionsTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void testScan() throws Exception {
@@ -84,9 +74,9 @@ public class ConditionsTest {
         /*
          * 验证不能将影子结点返回.
          */
-        Assert.assertFalse(shadow.get());
+        Assertions.assertFalse(shadow.get());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "updateTime = 100 AND updateTime = 200 AND (createTime != 3000 OR createTime != 5000)", buff.toString());
     }
 
@@ -95,29 +85,29 @@ public class ConditionsTest {
     public void testAndOrFlag() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
 
-        Assert.assertEquals(false, conditions.haveOrLink());
-        Assert.assertEquals(false, conditions.haveRangeCondition());
+        Assertions.assertEquals(false, conditions.haveOrLink());
+        Assertions.assertEquals(false, conditions.haveRangeCondition());
 
         IEntityField field = new EntityField(1, "test", FieldType.STRING);
         conditions.addAnd(
             new Condition(field, ConditionOperator.EQUALS, new StringValue(field, "test")));
 
-        Assert.assertEquals(false, conditions.haveOrLink());
-        Assert.assertEquals(false, conditions.haveRangeCondition());
+        Assertions.assertEquals(false, conditions.haveOrLink());
+        Assertions.assertEquals(false, conditions.haveRangeCondition());
 
 
         Conditions orConnditons = Conditions.buildEmtpyConditions().addAnd(
             new Condition(field, ConditionOperator.EQUALS, new StringValue(field, "test"))
         );
         conditions.addOr(orConnditons, true);
-        Assert.assertEquals(true, conditions.haveOrLink());
-        Assert.assertEquals(false, conditions.haveRangeCondition());
+        Assertions.assertEquals(true, conditions.haveOrLink());
+        Assertions.assertEquals(false, conditions.haveRangeCondition());
     }
 
     @Test
     public void testFuzzyFlag() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        Assert.assertFalse(conditions.haveFuzzyCondition());
+        Assertions.assertFalse(conditions.haveFuzzyCondition());
 
         IEntityField field = new EntityField(1, "test", FieldType.STRING);
 
@@ -129,7 +119,7 @@ public class ConditionsTest {
                 new StringValue(field, "test")
             )
         );
-        Assert.assertFalse(conditions.haveFuzzyCondition());
+        Assertions.assertFalse(conditions.haveFuzzyCondition());
 
         // 增加一个模糊查询条件.
         conditions.addAnd(
@@ -139,7 +129,7 @@ public class ConditionsTest {
                 new StringValue(field, "test")
             )
         );
-        Assert.assertTrue(conditions.haveFuzzyCondition());
+        Assertions.assertTrue(conditions.haveFuzzyCondition());
 
         // 增加一个条件组,条件组本身没有模糊,但当前条件组已经含有模糊,最终结果仍为模糊.
         conditions.addAnd(
@@ -152,7 +142,7 @@ public class ConditionsTest {
                     )
                 ), false
         );
-        Assert.assertTrue(conditions.haveFuzzyCondition());
+        Assertions.assertTrue(conditions.haveFuzzyCondition());
 
     }
 
@@ -165,7 +155,7 @@ public class ConditionsTest {
 
         try {
             new Conditions(wrongCondition);
-            Assert.fail("Attempt to add error condition, but no error.");
+            Assertions.fail("Attempt to add error condition, but no error.");
         } catch (IllegalArgumentException ex) {
             ex.printStackTrace();
         }
@@ -176,11 +166,11 @@ public class ConditionsTest {
             new StringValue(new EntityField(1, "test", FieldType.STRING), "test.value")
         );
         Conditions conditions = new Conditions(correctCondition);
-        Assert.assertEquals(1, conditions.size());
+        Assertions.assertEquals(1, conditions.size());
 
         try {
             conditions.addAnd(wrongCondition);
-            Assert.fail("Attempt to add error condition, but no error.");
+            Assertions.fail("Attempt to add error condition, but no error.");
         } catch (IllegalArgumentException ex) {
             ex.printStackTrace();
         }
@@ -210,13 +200,13 @@ public class ConditionsTest {
             );
 
         List<AbstractConditionNode> nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
-        Assert.assertEquals(2, nodes.size());
+        Assertions.assertEquals(2, nodes.size());
         String[] expectedStrings = new String[] {
             "c1 = 100",
             "c2 = 100 AND c3 = 100"
         };
         for (int i = 0; i < expectedStrings.length; i++) {
-            Assert.assertEquals(expectedStrings[i], nodes.get(i).toString());
+            Assertions.assertEquals(expectedStrings[i], nodes.get(i).toString());
         }
 
 
@@ -224,10 +214,10 @@ public class ConditionsTest {
             new EntityField(1, "c1", FieldType.LONG),
             ConditionOperator.EQUALS,
             new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L));
-        Assert.assertEquals(expectedCondtiton,
+        Assertions.assertEquals(expectedCondtiton,
             ((ValueConditionNode) nodes.stream().filter(c -> Conditions.isValueNode(c)).findFirst().get())
                 .getCondition());
-        Assert.assertEquals(ConditionLink.AND,
+        Assertions.assertEquals(ConditionLink.AND,
             ((LinkConditionNode) nodes.stream().filter(c -> Conditions.isLinkNode(c)).findFirst().get()).getLink());
 
         conditions = Conditions.buildEmtpyConditions()
@@ -255,14 +245,14 @@ public class ConditionsTest {
             );
 
         nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
-        Assert.assertEquals(3, nodes.size());
+        Assertions.assertEquals(3, nodes.size());
         expectedStrings = new String[] {
             "c1 = 100",
             "c2 = 100",
             "c3 = 100 AND c4 = 100"
         };
         for (int i = 0; i < expectedStrings.length; i++) {
-            Assert.assertEquals(expectedStrings[i], nodes.get(i).toString());
+            Assertions.assertEquals(expectedStrings[i], nodes.get(i).toString());
         }
     }
 
@@ -271,7 +261,7 @@ public class ConditionsTest {
 
         buildIteratorCase().stream().forEach(c -> {
 
-            Assert.assertEquals(c.expected, c.conditions.toPrefixExpression());
+            Assertions.assertEquals(c.expected, c.conditions.toPrefixExpression());
 
         });
     }
@@ -301,11 +291,11 @@ public class ConditionsTest {
             );
 
         Conditions newConditions = new Conditions(expectedConditions.collectConditionTree());
-        Assert.assertEquals(newConditions.size(), expectedConditions.size());
-        Assert.assertEquals(newConditions.isEmtpy(), expectedConditions.isEmtpy());
-        Assert.assertEquals(newConditions.haveFuzzyCondition(), expectedConditions.haveFuzzyCondition());
-        Assert.assertEquals(newConditions.haveRangeCondition(), expectedConditions.haveRangeCondition());
-        Assert.assertEquals(newConditions.haveOrLink(), expectedConditions.haveOrLink());
+        Assertions.assertEquals(newConditions.size(), expectedConditions.size());
+        Assertions.assertEquals(newConditions.isEmtpy(), expectedConditions.isEmtpy());
+        Assertions.assertEquals(newConditions.haveFuzzyCondition(), expectedConditions.haveFuzzyCondition());
+        Assertions.assertEquals(newConditions.haveRangeCondition(), expectedConditions.haveRangeCondition());
+        Assertions.assertEquals(newConditions.haveOrLink(), expectedConditions.haveOrLink());
     }
 
     private Collection<Case> buildIteratorCase() {
@@ -464,5 +454,4 @@ public class ConditionsTest {
             this.expected = expected;
         }
     }
-
 } 

@@ -1,10 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -12,11 +11,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.LongStream;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -26,8 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 11/13/2020
  * @since <pre>Nov 13, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers(ContainerType.REDIS)
+@ExtendWith({RedisContainer.class})
 public class CommitIdStatusServiceImplTest {
 
     private RedisClient redisClient;
@@ -35,11 +33,9 @@ public class CommitIdStatusServiceImplTest {
     private String key = "test";
     private String statusKeyPreifx = "test.status";
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+        redisClient = CommonInitialization.getInstance().getRedisClient();
 
         impl = new CommitIdStatusServiceImpl(key, statusKeyPreifx);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
@@ -48,14 +44,12 @@ public class CommitIdStatusServiceImplTest {
         TimeUnit.MILLISECONDS.sleep(100L);
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         impl.destroy();
         impl = null;
 
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown(0, 1, TimeUnit.MINUTES);
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     /**
@@ -70,10 +64,10 @@ public class CommitIdStatusServiceImplTest {
 
         long[] allIds = impl.getAll();
         long actualTotal = Arrays.stream(allIds).sum();
-        Assert.assertEquals(expectedTotal, actualTotal);
+        Assertions.assertEquals(expectedTotal, actualTotal);
 
         Arrays.stream(allIds).forEach(id -> {
-            Assert.assertFalse(impl.isReady(id));
+            Assertions.assertFalse(impl.isReady(id));
         });
     }
 
@@ -86,10 +80,10 @@ public class CommitIdStatusServiceImplTest {
 
         long[] allIds = impl.getAll();
         long actualTotal = Arrays.stream(allIds).sum();
-        Assert.assertEquals(expectedTotal, actualTotal);
+        Assertions.assertEquals(expectedTotal, actualTotal);
 
         Arrays.stream(allIds).forEach(id -> {
-            Assert.assertTrue(impl.isReady(id));
+            Assertions.assertTrue(impl.isReady(id));
         });
     }
 
@@ -97,29 +91,29 @@ public class CommitIdStatusServiceImplTest {
     public void testSetReady() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assert.assertEquals(commitId, impl.getMin().get().longValue());
+        Assertions.assertEquals(commitId, impl.getMin().get().longValue());
 
-        Assert.assertFalse(impl.isReady(commitId));
+        Assertions.assertFalse(impl.isReady(commitId));
 
         impl.ready(commitId);
 
         /*
          * 多次判断相等.
          */
-        Assert.assertTrue(impl.isReady(commitId));
-        Assert.assertTrue(impl.isReady(commitId));
+        Assertions.assertTrue(impl.isReady(commitId));
+        Assertions.assertTrue(impl.isReady(commitId));
     }
 
     @Test
     public void testStatusClean() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assert.assertEquals(commitId, impl.getMin().get().longValue());
+        Assertions.assertEquals(commitId, impl.getMin().get().longValue());
         impl.ready(commitId);
         impl.obsolete(commitId);
 
         for (int i = 0; i < 10; i++) {
-            Assert.assertFalse(impl.isReady(commitId));
+            Assertions.assertFalse(impl.isReady(commitId));
         }
     }
 
@@ -135,7 +129,7 @@ public class CommitIdStatusServiceImplTest {
             }).min().getAsLong();
 
         long actualMin = impl.getMin().get();
-        Assert.assertEquals(expectedMin, actualMin);
+        Assertions.assertEquals(expectedMin, actualMin);
     }
 
     /**
@@ -150,7 +144,7 @@ public class CommitIdStatusServiceImplTest {
             }).max().getAsLong();
 
         long actualMax = impl.getMax().get();
-        Assert.assertEquals(expectedMax, actualMax);
+        Assertions.assertEquals(expectedMax, actualMax);
     }
 
     /**
@@ -166,7 +160,7 @@ public class CommitIdStatusServiceImplTest {
 
         long[] actualAll = impl.getAll();
 
-        Assert.assertEquals(expectedAll.length, actualAll.length);
+        Assertions.assertEquals(expectedAll.length, actualAll.length);
 
     }
 
@@ -180,7 +174,7 @@ public class CommitIdStatusServiceImplTest {
                 impl.save(i, false);
                 return i;
             }).count();
-        Assert.assertEquals(expectedCount, impl.size());
+        Assertions.assertEquals(expectedCount, impl.size());
     }
 
     /**
@@ -196,13 +190,13 @@ public class CommitIdStatusServiceImplTest {
             .sorted().toArray();
         impl.obsolete(20);
         impl.obsolete(9);
-        Assert.assertArrayEquals(expected, impl.getAll());
+        Assertions.assertArrayEquals(expected, impl.getAll());
 
-        Assert.assertEquals(10L, impl.getMin().get().longValue());
+        Assertions.assertEquals(10L, impl.getMin().get().longValue());
 
         try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
-            Assert.assertEquals(0, conn.sync().exists("test.status.20").longValue());
-            Assert.assertEquals(0, conn.sync().exists("test.status.9").longValue());
+            Assertions.assertEquals(0, conn.sync().exists("test.status.20").longValue());
+            Assertions.assertEquals(0, conn.sync().exists("test.status.9").longValue());
         }
     }
 
@@ -220,11 +214,11 @@ public class CommitIdStatusServiceImplTest {
         impl.obsolete(20, 9, 100);
         // Idempotent
         impl.obsolete(20, 9, 100);
-        Assert.assertEquals(expected.length, impl.size());
-        Assert.assertArrayEquals(expected, impl.getAll());
+        Assertions.assertEquals(expected.length, impl.size());
+        Assertions.assertArrayEquals(expected, impl.getAll());
 
-        Assert.assertEquals(10L, impl.getMin().get().longValue());
-        Assert.assertEquals(99L, impl.getMax().get().longValue());
+        Assertions.assertEquals(10L, impl.getMin().get().longValue());
+        Assertions.assertEquals(99L, impl.getMax().get().longValue());
     }
 
     @Test
@@ -233,19 +227,19 @@ public class CommitIdStatusServiceImplTest {
         impl.save(2, false);
         impl.save(3, true);
 
-        Assert.assertEquals(2, Arrays.stream(impl.getUnreadiness()).filter(i -> i == 1 | i == 2).count());
+        Assertions.assertEquals(2, Arrays.stream(impl.getUnreadiness()).filter(i -> i == 1 | i == 2).count());
     }
 
     @Test
     public void testIsObsolete() throws Exception {
         impl.save(1, true);
         impl.save(2, true);
-        Assert.assertFalse(impl.isObsolete(1));
-        Assert.assertFalse(impl.isObsolete(2));
+        Assertions.assertFalse(impl.isObsolete(1));
+        Assertions.assertFalse(impl.isObsolete(2));
 
         impl.obsolete(1, 2);
-        Assert.assertTrue(impl.isObsolete(1));
-        Assert.assertTrue(impl.isObsolete(2));
+        Assertions.assertTrue(impl.isObsolete(1));
+        Assertions.assertTrue(impl.isObsolete(2));
     }
 
     /**
@@ -254,9 +248,9 @@ public class CommitIdStatusServiceImplTest {
     @Test
     public void testUnknownNumber() throws Exception {
         for (int i = 0; i < 30; i++) {
-            Assert.assertFalse(impl.isReady(Integer.MAX_VALUE));
+            Assertions.assertFalse(impl.isReady(Integer.MAX_VALUE));
         }
-        Assert.assertTrue(impl.isReady(Integer.MAX_VALUE));
+        Assertions.assertTrue(impl.isReady(Integer.MAX_VALUE));
     }
 
     @Test
@@ -266,11 +260,11 @@ public class CommitIdStatusServiceImplTest {
         impl.obsolete(100);
         impl.save(100, true);
 
-        Assert.assertFalse(impl.isReady(100));
-        Assert.assertTrue(impl.isObsolete(100));
-        Assert.assertEquals(200, impl.getMin().get().longValue());
-        Assert.assertEquals(1, impl.size());
-        Assert.assertTrue(Arrays.equals(new long[] {200L}, impl.getAll()));
+        Assertions.assertFalse(impl.isReady(100));
+        Assertions.assertTrue(impl.isObsolete(100));
+        Assertions.assertEquals(200, impl.getMin().get().longValue());
+        Assertions.assertEquals(1, impl.size());
+        Assertions.assertTrue(Arrays.equals(new long[] {200L}, impl.getAll()));
     }
 
     /**
@@ -312,11 +306,11 @@ public class CommitIdStatusServiceImplTest {
              */
             if (impl.isObsolete(i)) {
 
-                Assert.assertFalse(impl.isReady(i));
+                Assertions.assertFalse(impl.isReady(i));
 
             } else if (impl.isReady(i + 1)) {
 
-                Assert.assertFalse(impl.isObsolete(i));
+                Assertions.assertFalse(impl.isObsolete(i));
 
             }
         }

@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.math.BigDecimal;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by justin.xu on 06/2021.
@@ -23,6 +23,6 @@ public class ToIValueTest {
     @Test
     public void testRoundDown() {
         IValue<?> value = IValueUtils.toIValue(DECIMAL_FIELD, new BigDecimal("123.454963474"));
-        Assert.assertEquals(new BigDecimal("123.454"), value.getValue());
+        Assertions.assertEquals(new BigDecimal("123.454"), value.getValue());
     }
 }

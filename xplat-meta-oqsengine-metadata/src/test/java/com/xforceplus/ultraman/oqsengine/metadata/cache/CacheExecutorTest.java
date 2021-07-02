@@ -3,28 +3,21 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * 测试.
@@ -32,34 +25,12 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author xujia 2021/2/16
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS})
+@ExtendWith({RedisContainer.class})
 public class CacheExecutorTest {
 
-    private RedisClient redisClient;
-    private DefaultCacheExecutor cacheExecutor;
+    private CacheExecutor cacheExecutor = MetaInitialization.getInstance().getCacheExecutor();
 
-    @Before
-    public void before() throws Exception {
-
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-
-        cacheExecutor = new DefaultCacheExecutor();
-
-        ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        cacheExecutor.init();
-    }
-
-    @After
-    public void after() throws Exception {
-        cacheExecutor.destroy();
-        cacheExecutor = null;
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+    public CacheExecutorTest() throws IllegalAccessException {
     }
 
     @Test
@@ -68,62 +39,62 @@ public class CacheExecutorTest {
          * 设置prepare appId = 1 version = 9，预期返回true
          */
         boolean ret = cacheExecutor.prepare("1", 9);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 重置当前的版本version = 9，预期返回true
          */
         ret = cacheExecutor.resetVersion("1", 9, null);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 结束当前的appId prepare，预期返回true
          */
         ret = cacheExecutor.endPrepare("1");
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 设置prepare appId = 1 version = 13，预期返回true
          */
         ret = cacheExecutor.prepare("1", 13);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 重置当前的版本version = 13，预期返回true
          */
         ret = cacheExecutor.resetVersion("1", 13, null);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 结束当前的appId prepare，预期返回true
          */
         ret = cacheExecutor.endPrepare("1");
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 设置prepare appId = 1 version = 9，预期返回true
          */
         ret = cacheExecutor.prepare("1", 9);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
 
         /*
          * 设置prepare appId = 1 version = 13，预期返回true
          */
         ret = cacheExecutor.prepare("1", 101);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 重置当前的版本version = 13，预期返回true
          */
         ret = cacheExecutor.resetVersion("1", 101, null);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 结束当前的appId prepare，预期返回true
          */
         ret = cacheExecutor.endPrepare("1");
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
     }
 
     @Test
@@ -132,69 +103,69 @@ public class CacheExecutorTest {
          * 设置prepare appId = 1 version = 1，预期返回true
          */
         boolean ret = cacheExecutor.prepare("1", 1);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 当前appId = 1 已经被锁定，重复发起会被拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 2);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /*
          * 结束当前的appId prepare，预期返回true
          */
         ret = cacheExecutor.endPrepare("1");
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 结束一个不存在的(appId = 2)prepare，预期返回false
          */
         ret = cacheExecutor.endPrepare("2");
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /*
          * 重置当前的版本version = 2，预期返回true
          */
         ret = cacheExecutor.resetVersion("1", 2, null);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 更新版本小于当前活动版本,拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 1);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /*
          * 更新版本等于当前活动版本,拒绝，预期返回false
          */
         ret = cacheExecutor.prepare("1", 2);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /*
          * 更新版本大于当前活动版本,接收，预期返回true
          */
         ret = cacheExecutor.prepare("1", 3);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 等待时间未到达指定时常，将被拒绝
          */
         Thread.sleep(30_000);
         ret = cacheExecutor.prepare("1", 4);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /*
          * 等待时间超过expired time，将被接收
          */
         Thread.sleep(31_000);
         ret = cacheExecutor.prepare("1", 4);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /*
          * 结束当前prepare
          */
         ret = cacheExecutor.endPrepare("1");
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
     }
 
     @Test
@@ -207,17 +178,17 @@ public class CacheExecutorTest {
         List<Long> expectedIds = Arrays.asList(1L, 2L);
 
         boolean ret = cacheExecutor.resetVersion(appId, expectedVersion, expectedIds);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
-        Assert.assertEquals(expectedVersion, cacheExecutor.version(appId));
+        Assertions.assertEquals(expectedVersion, cacheExecutor.version(appId));
 
-        Assert.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(0)));
+        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(0)));
 
-        Assert.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(1)));
+        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(1)));
         /*
          * 使用一个未关联的entityId 3 进行版本信息查询，将返回NOT_EXIST_VERSION
          */
-        Assert.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L));
+        Assertions.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L));
     }
 
     @Test
@@ -259,7 +230,7 @@ public class CacheExecutorTest {
         check(expectedVersion, expectedEntityStorageList, null);
 
         boolean ret = cacheExecutor.clean(expectedAppId, expectedVersion, true);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             invalid(e.getSelf(), "entityClassStorage is null, may be delete.");
@@ -270,7 +241,7 @@ public class CacheExecutorTest {
         try {
             cacheExecutor.read(id);
         } catch (Exception e) {
-            Assert.assertEquals(message, e.getMessage());
+            Assertions.assertEquals(message, e.getMessage());
         }
     }
 
@@ -287,15 +258,15 @@ public class CacheExecutorTest {
         }
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
-            Assert.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
+            Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
             Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
 
-            Assert.assertNotNull(results.remove(e.getSelf()));
+            Assertions.assertNotNull(results.remove(e.getSelf()));
 
             if (null != e.getAncestors()) {
                 for (Long id : e.getAncestors()) {
                     EntityClassStorage r = results.remove(id);
-                    Assert.assertNotNull(r);
+                    Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {
                         checkEntity(fullCheckMaps.get(id), r);
@@ -303,32 +274,32 @@ public class CacheExecutorTest {
                 }
             }
 
-            Assert.assertEquals(0, results.size());
+            Assertions.assertEquals(0, results.size());
         }
     }
 
     private void checkEntity(EntityClassStorage expected, EntityClassStorage actual) {
         //  basic
-        Assert.assertEquals(expected.getId(), actual.getId());
-        Assert.assertEquals(expected.getCode(), actual.getCode());
-        Assert.assertEquals(expected.getVersion(), actual.getVersion());
-        Assert.assertEquals(expected.getName(), actual.getName());
-        Assert.assertEquals(expected.getFatherId(), actual.getFatherId());
-        Assert.assertEquals(expected.getLevel(), actual.getLevel());
+        Assertions.assertEquals(expected.getId(), actual.getId());
+        Assertions.assertEquals(expected.getCode(), actual.getCode());
+        Assertions.assertEquals(expected.getVersion(), actual.getVersion());
+        Assertions.assertEquals(expected.getName(), actual.getName());
+        Assertions.assertEquals(expected.getFatherId(), actual.getFatherId());
+        Assertions.assertEquals(expected.getLevel(), actual.getLevel());
 
         //  ancestors
         if (null != expected.getAncestors()) {
-            Assert.assertNotNull(actual.getAncestors());
-            Assert.assertEquals(expected.getAncestors().size(), actual.getAncestors().size());
+            Assertions.assertNotNull(actual.getAncestors());
+            Assertions.assertEquals(expected.getAncestors().size(), actual.getAncestors().size());
             for (int i = 0; i < expected.getAncestors().size(); i++) {
-                Assert.assertEquals(expected.getAncestors().get(i), actual.getAncestors().get(i));
+                Assertions.assertEquals(expected.getAncestors().get(i), actual.getAncestors().get(i));
             }
         }
 
         //  relations
         if (null != expected.getRelations()) {
             for (int i = 0; i < expected.getRelations().size(); i++) {
-                Assert.assertEquals(expected.getRelations().get(i), actual.getRelations().get(i));
+                Assertions.assertEquals(expected.getRelations().get(i), actual.getRelations().get(i));
             }
         }
 
@@ -340,11 +311,11 @@ public class CacheExecutorTest {
             for (int i = 0; i < expected.getFields().size(); i++) {
                 IEntityField exp = expected.getFields().get(i);
                 IEntityField act = entityFieldMap.remove(exp.id());
-                Assert.assertNotNull(act);
-                Assert.assertEquals(exp, act);
+                Assertions.assertNotNull(act);
+                Assertions.assertEquals(exp, act);
             }
 
-            Assert.assertEquals(0, entityFieldMap.size());
+            Assertions.assertEquals(0, entityFieldMap.size());
         }
     }
 

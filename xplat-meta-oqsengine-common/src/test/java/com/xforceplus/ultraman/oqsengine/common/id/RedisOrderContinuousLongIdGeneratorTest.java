@@ -1,20 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * RedisOrderContinuousLongIdGenerator Tester.
@@ -23,45 +21,38 @@ import org.junit.runner.RunWith;
  * @version 1.0 12/17/2020
  * @since <pre>Dec 17, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS})
-public class RedisOrderContinuousLongIdGeneratorTest {
+public class RedisOrderContinuousLongIdGeneratorTest extends AbstractContainerExtends {
 
-    private RedisClient redisClient;
     private RedisOrderContinuousLongIdGenerator idGenerator;
 
     private StatefulRedisConnection<String, String> conn;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
 
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-
+        RedisClient redisClient = CommonInitialization.getInstance().getRedisClient();
         idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test", () -> 0L);
         idGenerator.init();
 
         conn = redisClient.connect();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         idGenerator.destroy();
 
-        conn.close();
+        if (null != conn) {
+            conn.close();
+        }
 
-        conn.close();
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     @Test
     public void testNext() throws Exception {
-        Assert.assertEquals(1L, idGenerator.next().longValue());
-        Assert.assertEquals(2L, idGenerator.next().longValue());
-        Assert.assertEquals(3L, idGenerator.next().longValue());
+        Assertions.assertEquals(1L, idGenerator.next().longValue());
+        Assertions.assertEquals(2L, idGenerator.next().longValue());
+        Assertions.assertEquals(3L, idGenerator.next().longValue());
     }
 
     @Test
@@ -78,7 +69,7 @@ public class RedisOrderContinuousLongIdGeneratorTest {
 
         latch.await();
 
-        Assert.assertEquals(100, buff.size());
+        Assertions.assertEquals(100, buff.size());
     }
 
 } 

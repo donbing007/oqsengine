@@ -8,10 +8,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.EmptyConditionsBuilder;
 import java.util.Arrays;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,14 +27,6 @@ public class EmptyConditionsBuilderTest {
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(longField));
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     /**
      * Method: build(IEntityClass entityClass, Conditions conditions)
      */
@@ -46,8 +36,6 @@ public class EmptyConditionsBuilderTest {
         EmptyConditionsBuilder emptyConditionsBuilder = new EmptyConditionsBuilder();
         String where = emptyConditionsBuilder.build(Conditions.buildEmtpyConditions(), entityClass).toString();
 
-        Assert.assertTrue(where.isEmpty());
+        Assertions.assertTrue(where.isEmpty());
     }
-
-
 } 

@@ -1,31 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
-
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -35,12 +26,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/11
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class FailOverTest extends AbstractCDCContainer {
-    private MockRedisCallbackService mockRedisCallbackService;
-
-    private CDCDaemonService cdcDaemonService;
+public class FailOverTest extends CDCTestHelper {
+    private static CDCDaemonService cdcDaemonService;
 
     private static final int PARTITION = 2000000;
 
@@ -48,30 +35,15 @@ public class FailOverTest extends AbstractCDCContainer {
 
     private volatile boolean isTetOver = false;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        initDaemonService();
+        super.init(true);
+        cdcDaemonService = initDaemonService();
     }
 
-    @After
-    public void after() throws SQLException {
-        clear();
-        closeAll();
-    }
-
-    private void initDaemonService() throws Exception {
-
-        CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        ConsumerService consumerService = initAll(false);
-
-        cdcDaemonService = new CDCDaemonService();
-        ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", consumerService);
-        ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
-        ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", singleCDCConnector);
+    @AfterEach
+    public void after() throws Exception {
+        super.destroy(true);
     }
 
     @Test
@@ -116,6 +88,7 @@ public class FailOverTest extends AbstractCDCContainer {
             System.out.println("start MysqlInitCall thread.");
             int i = PARTITION;
             while (!isTetOver) {
+                TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
                 Transaction tx = transactionManager.create();
                 transactionManager.bind(tx.id());
                 try {
@@ -145,12 +118,12 @@ public class FailOverTest extends AbstractCDCContainer {
         }
     }
 
-    private void initData(IEntity[] datas, boolean replacement) throws SQLException {
+    private void initData(IEntity[] datas, boolean replacement) throws Exception {
         for (IEntity entity : datas) {
             if (!replacement) {
-                masterStorage.build(entity, getEntityClass(entity.id()));
+                MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.id()));
             } else {
-                masterStorage.replace(entity, getEntityClass(entity.id()));
+                MasterDBInitialization.getInstance().getMasterStorage().replace(entity, getEntityClass(entity.id()));
             }
         }
     }

@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * ShortStorageName Tester.
@@ -14,18 +13,10 @@ import org.junit.Test;
  */
 public class ShortStorageNameTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void testNoLocationSuffix() {
         ShortStorageName shortStorageName = new ShortStorageName("123", "678L0");
-        Assert.assertEquals("678L", shortStorageName.getNoLocationSuffix());
+        Assertions.assertEquals("678L", shortStorageName.getNoLocationSuffix());
     }
 
 } 

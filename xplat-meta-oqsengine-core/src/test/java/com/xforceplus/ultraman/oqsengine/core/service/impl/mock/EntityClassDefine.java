@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import org.junit.Ignore;
 
 /**
  * metamanager mock.
@@ -16,7 +15,6 @@ import org.junit.Ignore;
  * @version 0.1 2021/3/18 15:12
  * @since 1.8
  */
-@Ignore
 public class EntityClassDefine {
 
 

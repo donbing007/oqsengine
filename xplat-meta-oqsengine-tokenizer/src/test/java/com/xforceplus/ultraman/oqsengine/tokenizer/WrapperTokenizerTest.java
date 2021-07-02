@@ -7,10 +7,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * WrapperTokenizer Tester.
@@ -21,14 +19,6 @@ import org.junit.Test;
  */
 public class WrapperTokenizerTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void testIterator() throws Exception {
         WrapperTokenizer tokenizer = new WrapperTokenizer(Arrays.asList(
@@ -38,7 +28,7 @@ public class WrapperTokenizerTest {
             new WildcardTokenizer(6)
         ), FieldConfig.FuzzyType.WILDCARD);
 
-        Assert.assertEquals(FieldConfig.FuzzyType.WILDCARD, tokenizer.support());
+        Assertions.assertEquals(FieldConfig.FuzzyType.WILDCARD, tokenizer.support());
 
 
         Iterator<String> words = tokenizer.tokenize("scan1");
@@ -56,8 +46,8 @@ public class WrapperTokenizerTest {
         Collections.sort(expectedWords);
         Collections.sort(wildCardWords);
 
-        Assert.assertEquals(expectedWords.size(), wildCardWords.size());
-        Assert.assertArrayEquals(expectedWords.toArray(new String[0]), wildCardWords.toArray(new String[0]));
+        Assertions.assertEquals(expectedWords.size(), wildCardWords.size());
+        Assertions.assertArrayEquals(expectedWords.toArray(new String[0]), wildCardWords.toArray(new String[0]));
 
         words = tokenizer.tokenize("scan");
         expectedWords = Arrays.asList(
@@ -71,10 +61,7 @@ public class WrapperTokenizerTest {
         Collections.sort(expectedWords);
         Collections.sort(wildCardWords);
 
-        Assert.assertEquals(expectedWords.size(), wildCardWords.size());
-        Assert.assertArrayEquals(expectedWords.toArray(new String[0]), wildCardWords.toArray(new String[0]));
-
+        Assertions.assertEquals(expectedWords.size(), wildCardWords.size());
+        Assertions.assertArrayEquals(expectedWords.toArray(new String[0]), wildCardWords.toArray(new String[0]));
     }
-
-
 } 

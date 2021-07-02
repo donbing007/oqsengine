@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.string;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 字符串工具测试.
@@ -25,10 +26,10 @@ public class StringUtilsTest {
 
         buff.append("end");
 
-        Assert.assertEquals("startend", StringUtils.filterCanSeeChar(buff.toString()));
-        Assert.assertEquals(null, StringUtils.filterCanSeeChar(null));
-        Assert.assertEquals("", StringUtils.filterCanSeeChar(""));
-        Assert.assertEquals("abcdef", StringUtils.filterCanSeeChar("abcdef"));
+        Assertions.assertEquals("startend", StringUtils.filterCanSeeChar(buff.toString()));
+        Assertions.assertEquals(null, StringUtils.filterCanSeeChar(null));
+        Assertions.assertEquals("", StringUtils.filterCanSeeChar(""));
+        Assertions.assertEquals("abcdef", StringUtils.filterCanSeeChar("abcdef"));
     }
 
 }

@@ -6,18 +6,15 @@ import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
-import com.xforceplus.ultraman.oqsengine.common.hash.Hash;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith({RedisContainer.class, SpringExtension.class})
 @SpringBootTest(classes = ChangelogConfiguration.class)
 public class ReplayServiceTest {
 

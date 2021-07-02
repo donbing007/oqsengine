@@ -13,10 +13,8 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * SQLJsonConditionBuilder Tester.
@@ -43,14 +41,6 @@ public class SQLJsonConditionBuilderTest {
         .withConfig(FieldConfig.Builder.anFieldConfig().withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).build())
         .build();
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void testBuildCondition() throws Exception {
 
@@ -65,7 +55,7 @@ public class SQLJsonConditionBuilderTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            Assert.assertEquals(c.desc, c.expectedSql, builder.build(c.condition));
+            Assertions.assertEquals(c.expectedSql, builder.build(c.condition), c.desc);
         });
     }
 

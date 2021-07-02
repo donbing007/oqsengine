@@ -9,8 +9,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpda
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * desc :.
@@ -45,8 +45,8 @@ public class SQLBuildTest {
 
         String result = (String) m.invoke(cdcErrorBuildExecutor, null);
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(expectedBuild, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(expectedBuild, result);
     }
 
     @Test
@@ -59,8 +59,8 @@ public class SQLBuildTest {
 
         String result = (String) m.invoke(cdcErrorUpdateExecutor, null);
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(expectedUpdate, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(expectedUpdate, result);
     }
 
     @Test
@@ -73,8 +73,8 @@ public class SQLBuildTest {
 
         String result = (String) m.invoke(cdcErrorRecoverExecutor, null);
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(expectedRecover, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(expectedRecover, result);
     }
 
     @Test
@@ -103,10 +103,10 @@ public class SQLBuildTest {
         StringBuilder stringBuilder = new StringBuilder();
         Boolean result = (Boolean) m.invoke(cdcErrorQueryExecutor, stringBuilder, expectErrorQueryCondition);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(result);
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result);
 
-        Assert.assertEquals(expectedIdSelect, stringBuilder.toString());
+        Assertions.assertEquals(expectedIdSelect, stringBuilder.toString());
     }
 
     @Test
@@ -122,10 +122,10 @@ public class SQLBuildTest {
         StringBuilder stringBuilder = new StringBuilder();
         Boolean result = (Boolean) m.invoke(cdcErrorQueryExecutor, stringBuilder, expectErrorQueryCondition);
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(result);
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result);
 
-        Assert.assertEquals(expectedEmptySelect, stringBuilder.toString());
+        Assertions.assertEquals(expectedEmptySelect, stringBuilder.toString());
     }
 
     private void checkByCondition(boolean isEquals, String expectString)
@@ -140,10 +140,10 @@ public class SQLBuildTest {
         StringBuilder stringBuilder = new StringBuilder();
         Boolean result = (Boolean) m.invoke(cdcErrorQueryExecutor, stringBuilder, expectErrorQueryCondition);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(result);
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result);
 
-        Assert.assertEquals(expectString, stringBuilder.toString());
+        Assertions.assertEquals(expectString, stringBuilder.toString());
     }
 
     private CdcErrorQueryCondition init(boolean isEquals) {

@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -21,8 +19,6 @@ import java.util.Map;
  */
 public class EntityClassBuilder {
 
-    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
-
     public static final IEntityField STRING_FIELD =
         new EntityField(1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
     public static final IEntityField LONG_FIELD =
@@ -37,7 +33,7 @@ public class EntityClassBuilder {
         new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
     // level 1
-    public static IEntityClass entityClass0 =
+    public static final IEntityClass entityClass0 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
             .withVersion(1)
@@ -47,7 +43,7 @@ public class EntityClassBuilder {
             ).build();
 
     // level 2
-    public static IEntityClass entityClass1 =
+    public static final IEntityClass entityClass1 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 1)
             .withVersion(1)
@@ -57,7 +53,7 @@ public class EntityClassBuilder {
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
     // level 3
-    public static IEntityClass entityClass2 =
+    public static final IEntityClass entityClass2 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withVersion(1)
@@ -67,24 +63,15 @@ public class EntityClassBuilder {
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
 
-    static MetaManager metaManager;
-
-    static {
-        entityClassMap.put(entityClass0.id(), entityClass0);
-        entityClassMap.put(entityClass1.id(), entityClass1);
-        entityClassMap.put(entityClass2.id(), entityClass2);
-
-        MockMetaManager mockMetaManager = new MockMetaManager();
-        mockMetaManager.addEntityClass(entityClass2);
-        metaManager = mockMetaManager;
-    }
-
+    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
 
     public static IEntityClass getEntityClass(long id) {
         return entityClassMap.get(id);
     }
 
-    public static MetaManager getMetaManager() {
-        return metaManager;
+    static {
+        entityClassMap.put(entityClass0.id(), entityClass0);
+        entityClassMap.put(entityClass1.id(), entityClass1);
+        entityClassMap.put(entityClass2.id(), entityClass2);
     }
 }

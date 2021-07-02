@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.pojo;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 测试获取真实类型ID.
@@ -18,24 +18,24 @@ public class MasterStorageEntityTest {
             .withEntityClasses(new long[] {
                 1, 2, 3, 0, 0
             }).build();
-        Assert.assertEquals(3, entity.getSelfEntityClassId());
+        Assertions.assertEquals(3, entity.getSelfEntityClassId());
 
         entity = MasterStorageEntity.Builder.anStorageEntity()
             .withEntityClasses(new long[] {
                 1, 2, 3, 4, 5
             }).build();
-        Assert.assertEquals(5, entity.getSelfEntityClassId());
+        Assertions.assertEquals(5, entity.getSelfEntityClassId());
 
         entity = MasterStorageEntity.Builder.anStorageEntity()
             .withEntityClasses(new long[] {
                 0
             }).build();
-        Assert.assertEquals(0, entity.getSelfEntityClassId());
+        Assertions.assertEquals(0, entity.getSelfEntityClassId());
 
         entity = MasterStorageEntity.Builder.anStorageEntity()
             .withEntityClasses(new long[] {
                 0, 0
             }).build();
-        Assert.assertEquals(0, entity.getSelfEntityClassId());
+        Assertions.assertEquals(0, entity.getSelfEntityClassId());
     }
 }

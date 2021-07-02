@@ -4,12 +4,12 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
 
@@ -25,12 +25,12 @@ public class ResponseWatchExecutorTest {
 
     private ResponseWatchExecutor responseWatchExecutor;
 
-    @Before
+    @BeforeEach
     public void before() {
         responseWatchExecutor = new ResponseWatchExecutor();
     }
 
-    @After
+    @AfterEach
     public void after() {
         responseWatchExecutor.stop();
     }
@@ -45,7 +45,7 @@ public class ResponseWatchExecutorTest {
         responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
         responseWatchExecutor.watcher(uid).resetHeartBeat();
 
-        Assert.assertTrue(System.currentTimeMillis() - responseWatchExecutor.watcher(uid).heartBeat() <= 1);
+        Assertions.assertTrue(System.currentTimeMillis() - responseWatchExecutor.watcher(uid).heartBeat() <= 1);
     }
 
     @Test
@@ -56,11 +56,11 @@ public class ResponseWatchExecutorTest {
         String uid = UUID.randomUUID().toString();
 
         boolean result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, Init));
-        Assert.assertFalse(result);
+        Assertions.assertFalse(result);
 
         responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
-        Assert.assertNotNull(watcher);
+        Assertions.assertNotNull(watcher);
 
         List<Cases<Boolean>> cases = new ArrayList<>();
         /**
@@ -82,14 +82,14 @@ public class ResponseWatchExecutorTest {
 
         cases.forEach(
                 cas -> {
-                    Assert.assertEquals(cas.getExpected(), responseWatchExecutor.update(uid, cas.getWatchElement()));
+                    Assertions.assertEquals(cas.getExpected(), responseWatchExecutor.update(uid, cas.getWatchElement()));
                 }
         );
 
         responseWatchExecutor.release(uid);
 
         watcher = responseWatchExecutor.watcher(uid);
-        Assert.assertNull(watcher);
+        Assertions.assertNull(watcher);
     }
 
     @Test
@@ -111,21 +111,21 @@ public class ResponseWatchExecutorTest {
         responseWatchExecutor.release(uid);
 
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
-        Assert.assertNull(watcher);
+        Assertions.assertNull(watcher);
 
         watcher = responseWatchExecutor.watcher(uid2);
-        Assert.assertNotNull(watcher);
+        Assertions.assertNotNull(watcher);
 
         Set<String> ret = responseWatchExecutor.appWatchers(appId, env);
-        Assert.assertNotNull(ret);
-        Assert.assertEquals(1, ret.size());
+        Assertions.assertNotNull(ret);
+        Assertions.assertEquals(1, ret.size());
         for(String s : ret) {
-            Assert.assertEquals(uid2, s);
+            Assertions.assertEquals(uid2, s);
         }
         responseWatchExecutor.release(uid2);
 
         watcher = responseWatchExecutor.watcher(uid2);
-        Assert.assertNull(watcher);
+        Assertions.assertNull(watcher);
     }
 
     @Test
@@ -138,36 +138,36 @@ public class ResponseWatchExecutorTest {
         for (int i = 0; i < 3; i++) {
             responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
             ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
-            Assert.assertNotNull(watcher);
+            Assertions.assertNotNull(watcher);
 
             WatchElement other = new WatchElement(appId, env, version + 1, Confirmed);
-            Assert.assertTrue(watcher.onWatch(other));
+            Assertions.assertTrue(watcher.onWatch(other));
 
             /**
              * 重复写一条, 将失败
              */
             responseWatchExecutor.add(uid, streamObserver(), other);
             watcher = responseWatchExecutor.watcher(uid);
-            Assert.assertNotNull(watcher);
+            Assertions.assertNotNull(watcher);
             /**
              * 通过onWatch判断版本是否重复添加成功
              */
-            Assert.assertTrue(watcher.onWatch(other));
+            Assertions.assertTrue(watcher.onWatch(other));
 
 
             responseWatchExecutor.update(uid, other);
             watcher = responseWatchExecutor.watcher(uid);
-            Assert.assertNotNull(watcher);
+            Assertions.assertNotNull(watcher);
 
             /**
              * 通过onWatch判断版本是否重复添加成功
              */
-            Assert.assertFalse(watcher.onWatch(other));
+            Assertions.assertFalse(watcher.onWatch(other));
 
             responseWatchExecutor.release(uid);
 
             watcher = responseWatchExecutor.watcher(uid);
-            Assert.assertNull(watcher);
+            Assertions.assertNull(watcher);
         }
     }
 
@@ -195,7 +195,7 @@ public class ResponseWatchExecutorTest {
                             responseWatchExecutor.watcher(expectedUid2).watches().size() +
                                 responseWatchExecutor.watcher(expectedUid3).watches().size();
 
-        Assert.assertEquals(cases.size(), actualCount);
+        Assertions.assertEquals(cases.size(), actualCount);
 
         /**
          * pos 0
@@ -236,13 +236,13 @@ public class ResponseWatchExecutorTest {
 
     private void check(WatchElement w, List<AbstractMap.SimpleEntry<String, Cases<Integer>>> expectedList) {
         List<ResponseWatcher> needs = responseWatchExecutor.need(w);
-        Assert.assertEquals(expectedList.size(), needs.size());
+        Assertions.assertEquals(expectedList.size(), needs.size());
 
         for(ResponseWatcher r : needs) {
             /**
              * 验证
              */
-            Assert.assertTrue(r.onWatch(w));
+            Assertions.assertTrue(r.onWatch(w));
         }
     }
 

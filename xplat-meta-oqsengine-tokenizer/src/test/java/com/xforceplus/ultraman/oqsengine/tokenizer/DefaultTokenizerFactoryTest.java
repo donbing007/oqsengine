@@ -8,10 +8,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * DefaultTokenizerFactory Tester.
@@ -21,15 +19,6 @@ import org.junit.Test;
  * @since <pre>Mar 16, 2021</pre>
  */
 public class DefaultTokenizerFactoryTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void testWildcardTokenizer() throws Exception {
         DefaultTokenizerFactory factory = new DefaultTokenizerFactory();
@@ -43,9 +32,9 @@ public class DefaultTokenizerFactoryTest {
 
         Tokenizer tokenizer = factory.getTokenizer(field);
         Iterator<String> words = tokenizer.tokenize("abc");
-        Assert.assertTrue(words.hasNext());
+        Assertions.assertTrue(words.hasNext());
 
-        Assert.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
+        Assertions.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
             factory.getWildcardTokenizerCache().size());
 
         field = EntityField.Builder.anEntityField()
@@ -63,9 +52,9 @@ public class DefaultTokenizerFactoryTest {
         Collections.sort(wordList);
         List<String> expectedList = Arrays.asList("abc", "bcd", "abcd");
         Collections.sort(expectedList);
-        Assert.assertEquals(expectedList, wordList);
+        Assertions.assertEquals(expectedList, wordList);
 
-        Assert.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
+        Assertions.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
             factory.getWildcardTokenizerCache().size());
 
         field = EntityField.Builder.anEntityField()
@@ -91,11 +80,9 @@ public class DefaultTokenizerFactoryTest {
             "155856572", "558565728", "585657282"
         );
         Collections.sort(expectedList);
-        Assert.assertEquals(expectedList, wordList);
+        Assertions.assertEquals(expectedList, wordList);
 
-        Assert.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
+        Assertions.assertEquals(field.config().getWildcardMaxWidth() - field.config().getWildcardMinWidth() + 1,
             factory.getWildcardTokenizerCache().size());
     }
-
-
 } 

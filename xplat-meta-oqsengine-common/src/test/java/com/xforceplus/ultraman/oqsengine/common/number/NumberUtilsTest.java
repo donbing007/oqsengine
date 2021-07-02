@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.number;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 数字工具测试.
@@ -16,14 +17,14 @@ public class NumberUtilsTest {
     public void testSize() {
         String value = "1";
         for (int i = 1; i <= 19; i++) {
-            Assert.assertEquals(i, NumberUtils.size(Long.parseLong(value)));
+            Assertions.assertEquals(i, NumberUtils.size(Long.parseLong(value)));
 
             value = value + "0";
         }
 
         value = "-1";
         for (int i = 1; i <= 19; i++) {
-            Assert.assertEquals(i, NumberUtils.size(Long.parseLong(value)));
+            Assertions.assertEquals(i, NumberUtils.size(Long.parseLong(value)));
 
             value = value + "0";
         }

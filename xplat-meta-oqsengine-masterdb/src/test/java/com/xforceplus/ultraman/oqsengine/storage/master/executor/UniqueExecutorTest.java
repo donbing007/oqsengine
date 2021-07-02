@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
-import com.xforceplus.ultraman.test.tools.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class UniqueExecutorTest {
     @BeforeEach
     public void before() throws SQLException {
         System.setProperty(
-            "MYSQL_JDBC",
+            "MYSQL_JDBC_UNIQUE_KEY",
             String.format(
                 "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
@@ -62,8 +62,6 @@ public class UniqueExecutorTest {
         List<IEntityField> fields = new ArrayList<>();
         fields.add(f1);
         entityClass = OqsEntityClass.Builder.anEntityClass().withCode("test").withFields(fields).withId(1008l).build();
-
-
     }
 
     @AfterEach

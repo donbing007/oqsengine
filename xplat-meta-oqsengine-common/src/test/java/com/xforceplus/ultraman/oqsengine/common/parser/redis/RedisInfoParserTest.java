@@ -2,10 +2,8 @@ package com.xforceplus.ultraman.oqsengine.common.parser.redis;
 
 import com.xforceplus.ultraman.oqsengine.common.parser.KeyValueParser;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * RedisInfoParser Tester.
@@ -15,14 +13,6 @@ import org.junit.Test;
  * @since <pre>Nov 16, 2020</pre>
  */
 public class RedisInfoParserTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     /**
      * Method: parse(String info).
@@ -53,9 +43,9 @@ public class RedisInfoParserTest {
 
         KeyValueParser<String, Map> parser = RedisInfoParser.getInstance();
         Map<String, String> infos = parser.parse(info);
-        Assert.assertEquals("6.0.9", infos.get("redis_version"));
-        Assert.assertEquals("0", infos.get("io_threads_active"));
-        Assert.assertEquals("2d2d0ef33ff52229cec929bb708d159b5d7e9c0e", infos.get("run_id"));
+        Assertions.assertEquals("6.0.9", infos.get("redis_version"));
+        Assertions.assertEquals("0", infos.get("io_threads_active"));
+        Assertions.assertEquals("2d2d0ef33ff52229cec929bb708d159b5d7e9c0e", infos.get("run_id"));
     }
 
 

@@ -9,8 +9,8 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 搜索条件构造器测试.
@@ -29,7 +29,7 @@ public class SearchConditionsBuilderTest {
 
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.config, c.entityClasses).toString();
-            Assert.assertEquals(c.expected, where);
+            Assertions.assertEquals(c.expected, where);
         });
     }
 

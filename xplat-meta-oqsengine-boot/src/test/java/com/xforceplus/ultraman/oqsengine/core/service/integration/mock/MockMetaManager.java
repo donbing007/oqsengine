@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -9,9 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 
 /**
  * MetaManager的Mock实现,为了单元测试准备.
@@ -20,7 +17,7 @@ import org.junit.Ignore;
  * @version 0.1 2021/3/18 15:12
  * @since 1.8
  */
-@Ignore
+@Disabled("explanation")
 public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager {
 
 

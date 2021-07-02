@@ -84,7 +84,6 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 return resourceTask.run(null, resource, hint);
             }
         } finally {
-
             if (!tx.isPresent()) {
                 resource.destroy();
             }

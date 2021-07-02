@@ -4,10 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * EntityClassHelper Tester.
@@ -17,15 +15,6 @@ import org.junit.Test;
  * @since <pre>Feb 26, 2021</pre>
  */
 public class EntityClassHelperTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     /**
      * Method: buildEntityClassQuerySql(IEntityClass entityClass).
      */
@@ -62,10 +51,10 @@ public class EntityClassHelperTest {
                 .withName("l2-long").build())
             .build();
 
-        Assert.assertEquals("(entityclassl0 = 1)", EntityClassHelper.buildEntityClassQuerySql(l0EntityClass));
-        Assert.assertEquals("(entityclassl0 = 1 AND entityclassl1 = 2)",
+        Assertions.assertEquals("(entityclassl0 = 1)", EntityClassHelper.buildEntityClassQuerySql(l0EntityClass));
+        Assertions.assertEquals("(entityclassl0 = 1 AND entityclassl1 = 2)",
             EntityClassHelper.buildEntityClassQuerySql(l1EntityClass));
-        Assert.assertEquals("(entityclassl0 = 1 AND entityclassl1 = 2 AND entityclassl2 = 3)",
+        Assertions.assertEquals("(entityclassl0 = 1 AND entityclassl1 = 2 AND entityclassl2 = 3)",
             EntityClassHelper.buildEntityClassQuerySql(l2EntityClass));
     }
 

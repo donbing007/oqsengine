@@ -10,10 +10,10 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.math.BigDecimal;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * GtNotMatchDecimalConditionQueryBuilder Tester.
@@ -26,13 +26,13 @@ public class GtNotMatchDecimalConditionBuilderTest {
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
     }
 
@@ -51,7 +51,7 @@ public class GtNotMatchDecimalConditionBuilderTest {
             )
         );
 
-        Assert.assertEquals("((" + FieldDefine.ATTRIBUTE + ".1L0 > 123) OR (" + FieldDefine.ATTRIBUTE
+        Assertions.assertEquals("((" + FieldDefine.ATTRIBUTE + ".1L0 > 123) OR (" + FieldDefine.ATTRIBUTE
             + ".1L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".1L1 > 456000000000000000))", conditionSql);
 
     }

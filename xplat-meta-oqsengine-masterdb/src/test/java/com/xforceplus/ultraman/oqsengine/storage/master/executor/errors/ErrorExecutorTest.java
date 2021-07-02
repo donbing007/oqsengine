@@ -1,58 +1,32 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor.errors;
 
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
+import static com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization.MASTER_STORAGE_FAILED_TABLE;
+
+
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.ErrorDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import com.zaxxer.hikari.HikariDataSource;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.SQLException;
 
-import java.sql.Statement;
 import java.util.Collection;
-import java.util.concurrent.Executors;
-import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by justin.xu on 06/2021.
  *
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.MYSQL})
-public class ErrorExecutorTest {
 
-    private TransactionManager transactionManager;
-
-    private DataSource dataSource;
-    private SQLMasterStorage storage;
+public class ErrorExecutorTest extends AbstractContainerExtends {
 
     static String[] expectedSql = new String[2];
 
@@ -65,62 +39,23 @@ public class ErrorExecutorTest {
             ErrorDefine.EXECUTE_TIME
         );
 
-        expectedSql[1] = "REPLACE INTO entityfaileds VALUES (?,?,?,?,?,?)";
+        expectedSql[1] = "REPLACE INTO " + MASTER_STORAGE_FAILED_TABLE + " VALUES (?,?,?,?,?,?)";
     }
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .withWaitCommitSync(false)
-            .build();
-
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
-
-        SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
-        sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sqlJsonConditionsBuilderFactory.init();
-
-        storage = new SQLMasterStorage();
-
-        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("entityfaileds"),
-            new NoSelector<>(ds), new NoSelector<>("entityfaileds"));
-
-        ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
-        ReflectionTestUtils.setField(storage, "asyncErrorExecutor", Executors.newFixedThreadPool(2));
-
-        storage.setErrorTable("entityfaileds");
-        storage.setQueryTimeout(100000000);
-        storage.init();
+        MasterDBInitialization.getInstance().resetTransactionExecutor(MASTER_STORAGE_FAILED_TABLE);
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-
-        transactionManager.finish();
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (Statement stat = conn.createStatement()) {
-                stat.execute("truncate table entityfaileds");
-            }
-        }
-
-        ((HikariDataSource) dataSource).close();
-
+        InitializationHelper.clearAll();
     }
 
     @Test
     public void testQuerySqlParser() throws Exception {
-        QueryErrorExecutor queryErrorExecutor = new QueryErrorExecutor("entityfaileds", null, 3600);
+
+        QueryErrorExecutor queryErrorExecutor = new QueryErrorExecutor(MASTER_STORAGE_FAILED_TABLE, null, 3600);
 
         QueryErrorCondition expectedQueryErrorCondition = initFullQueryErrorCondition();
 
@@ -130,13 +65,12 @@ public class ErrorExecutorTest {
 
         String result = (String) m.invoke(queryErrorExecutor, expectedQueryErrorCondition);
 
-        Assert.assertEquals(expectedSql[0], result);
+        Assertions.assertEquals(expectedSql[0], result);
     }
-
 
     @Test
     public void testReplaceSqlParser() throws Exception {
-        ReplaceErrorExecutor replaceErrorExecutor = new ReplaceErrorExecutor("entityfaileds", null);
+        ReplaceErrorExecutor replaceErrorExecutor = new ReplaceErrorExecutor(MASTER_STORAGE_FAILED_TABLE, null);
 
         Method m = ReplaceErrorExecutor.class
             .getDeclaredMethod("buildSQL");
@@ -144,14 +78,16 @@ public class ErrorExecutorTest {
 
         String result = (String) m.invoke(replaceErrorExecutor);
 
-        Assert.assertEquals(expectedSql[1], result);
+        Assertions.assertEquals(expectedSql[1], result);
     }
 
     @Test
-    public void testReplaceQuery() throws SQLException, InterruptedException {
+    public void testReplaceQuery() throws Exception {
+        SQLMasterStorage masterStorage = MasterDBInitialization.getInstance().getMasterStorage();
+
         QueryErrorCondition errorCondition = initFullQueryErrorCondition();
-        Collection<ErrorStorageEntity> selectErrors = storage.selectErrors(errorCondition);
-        Assert.assertTrue(selectErrors.isEmpty());
+        Collection<ErrorStorageEntity> selectErrors = masterStorage.selectErrors(errorCondition);
+        Assertions.assertTrue(selectErrors.isEmpty());
 
         Thread.sleep(1_000);
         //  将entityId设置为maintainId
@@ -163,27 +99,27 @@ public class ErrorExecutorTest {
             .withFixedStatus(errorCondition.getFixedStatus().getStatus())
             .build();
 
-        storage.writeError(errorStorageEntity);
+        masterStorage.writeError(errorStorageEntity);
 
         Thread.sleep(5_000);
 
-        selectErrors = storage.selectErrors(errorCondition);
-        Assert.assertEquals(1, selectErrors.size());
+        selectErrors = masterStorage.selectErrors(errorCondition);
+        Assertions.assertEquals(1, selectErrors.size());
 
         selectErrors.forEach(
             error -> {
-                Assert.assertEquals(errorCondition.getMaintainId().longValue(), error.getMaintainId());
-                Assert.assertEquals(errorCondition.getId().longValue(), error.getId());
-                Assert.assertEquals(errorCondition.getEntity().longValue(), error.getEntity());
-                Assert.assertEquals(errorCondition.getFixedStatus().getStatus(), error.getStatus());
-                Assert.assertEquals("test error", error.getErrors());
+                Assertions.assertEquals(errorCondition.getMaintainId().longValue(), error.getMaintainId());
+                Assertions.assertEquals(errorCondition.getId().longValue(), error.getId());
+                Assertions.assertEquals(errorCondition.getEntity().longValue(), error.getEntity());
+                Assertions.assertEquals(errorCondition.getFixedStatus().getStatus(), error.getStatus());
+                Assertions.assertEquals("test error", error.getErrors());
             }
         );
 
         //  当设置时间范围不对时，应不存在记录
         errorCondition.setEndTime(errorCondition.getStartTime() + 1000L);
-        selectErrors = storage.selectErrors(errorCondition);
-        Assert.assertTrue(selectErrors.isEmpty());
+        selectErrors = MasterDBInitialization.getInstance().getMasterStorage().selectErrors(errorCondition);
+        Assertions.assertTrue(selectErrors.isEmpty());
     }
 
     private QueryErrorCondition initFullQueryErrorCondition() {
@@ -197,12 +133,5 @@ public class ErrorExecutorTest {
         queryErrorCondition.setStartPos(0L);
         queryErrorCondition.setSize(256);
         return queryErrorCondition;
-    }
-
-    private DataSource buildDataSource(String file) throws SQLException {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-        this.dataSource = dataSourcePackage.getMaster().get(0);
-        return dataSource;
     }
 }

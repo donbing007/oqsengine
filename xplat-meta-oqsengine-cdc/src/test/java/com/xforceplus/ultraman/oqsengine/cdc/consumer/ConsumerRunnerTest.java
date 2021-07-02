@@ -2,24 +2,19 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.util.ReflectionTestUtils;
 
 
 /**
@@ -29,41 +24,25 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/9
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class ConsumerRunnerTest extends AbstractCDCContainer {
+public class ConsumerRunnerTest extends CDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
-    private ConsumerRunner consumerRunner;
-
-    private MockRedisCallbackService mockRedisCallbackService;
 
     private long startId = 0;
 
     private int expectedCount = 0;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        consumerRunner = initConsumerRunner();
-        consumerRunner.start();
+        super.init(true);
+
     }
 
-    @After
-    public void after() throws SQLException {
-        consumerRunner.shutdown();
-        clear();
-        closeAll();
+    @AfterEach
+    public void after() throws Exception {
+        super.destroy(true);
     }
 
-    private ConsumerRunner initConsumerRunner() throws Exception {
-        ConsumerService consumerService = initAll(false);
-        CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        return new ConsumerRunner(consumerService, cdcMetricsService, singleCDCConnector);
-    }
-
-    private void startConsumerRunner(long partitionId) throws Exception {
+    private void startConsumerRunner(long partitionId) {
         startId = partitionId;
         expectedCount = 0;
     }
@@ -83,7 +62,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         }
         logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount,
             mockRedisCallbackService.getExecuted().get());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+        Assertions.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
 
@@ -92,6 +71,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
 
         startConsumerRunner(1);
         try {
+            TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
             Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
@@ -124,6 +104,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         startConsumerRunner(1000000);
 
         try {
+            TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
             Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
@@ -158,6 +139,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
 
         try {
             while (i < loops) {
+                TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
                 Transaction tx = transactionManager.create(30_000);
                 transactionManager.bind(tx.id());
                 try {
@@ -193,6 +175,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
 
         startConsumerRunner(15000);
         try {
+            TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
             Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
@@ -216,11 +199,6 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         }
     }
 
-    @Test
-    public void syncError() {
-
-    }
-
 
     @Test
     public void loopSmallTransactionBatches() throws Exception {
@@ -233,6 +211,7 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
             long limits = startId + gap * loops;
 
             while (i < limits) {
+                TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
                 Transaction tx = transactionManager.create();
                 transactionManager.bind(tx.id());
                 try {
@@ -255,18 +234,18 @@ public class ConsumerRunnerTest extends AbstractCDCContainer {
         }
     }
 
-
-    private void initData(Transaction tx, IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
+    private void initData(Transaction tx, IEntity[] datas, boolean replacement, boolean delete) throws Exception {
         for (IEntity entity : datas) {
             if (delete) {
-                masterStorage.delete(entity, getEntityClass(entity.entityClassRef().getId()));
+                MasterDBInitialization
+                    .getInstance().getMasterStorage().delete(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateDelete(entity);
             } else if (replacement) {
                 entity.resetVersion(0);
-                masterStorage.replace(entity, getEntityClass(entity.entityClassRef().getId()));
+                MasterDBInitialization.getInstance().getMasterStorage().replace(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateReplace(entity, entity);
             } else {
-                masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
+                MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateBuild(entity);
             }
         }

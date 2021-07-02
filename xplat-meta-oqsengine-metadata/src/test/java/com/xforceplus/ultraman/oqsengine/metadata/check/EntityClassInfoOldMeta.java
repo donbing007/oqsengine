@@ -1,20 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.metadata.check;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 /**
  * Created by justin.xu on 06/2021.
@@ -42,10 +41,10 @@ public class EntityClassInfoOldMeta {
         String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
 
         IEntityField e1 = OBJECT_MAPPER.readValue(entityFieldStr, EntityField.class);
-        Assert.assertNotNull(e1);
+        Assertions.assertNotNull(e1);
 
         IEntityField e2 = cloneEntityField(e1);
-        Assert.assertNotNull(e2);
+        Assertions.assertNotNull(e2);
     }
 
 

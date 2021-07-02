@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -27,7 +27,7 @@ public class RawEntryTest {
 
     private int expectedSize = 4;
 
-    @Before
+    @BeforeEach
     public void before() {
         rawEntries = new LinkedHashMap<>();
         rawLists = new ArrayList<>(size);
@@ -40,7 +40,7 @@ public class RawEntryTest {
             rawEntries.put(Long.valueOf(i % expectedSize + ""), rawLists.get(i));
         }
 
-        Assert.assertEquals(expectedSize, rawEntries.size());
+        Assertions.assertEquals(expectedSize, rawEntries.size());
     }
 
     private void initData(int size) {

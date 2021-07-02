@@ -36,9 +36,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -51,7 +51,7 @@ public class ManagementWithCalculatorTest {
     private EntityManagementServiceImpl impl;
     private MockMasterStorage masterStorage;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         impl = BaseInit.entityManagementService(new MockCalculatorMetaManager());
 
@@ -191,30 +191,34 @@ public class ManagementWithCalculatorTest {
             .build();
         OperationResult operationResult = insert ? impl.build(replaceEntity) : impl.replace(replaceEntity);
         if (null == expectedValue) {
-            Assert.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus());
-            Assert.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
-            expectedFailed.forEach(
-                failed -> {
-                    Assert.assertTrue(operationResult.getFailedMap().containsKey(failed));
-                }
-            );
+            Assertions.assertNotEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
+            if (operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+                Assertions.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
+                expectedFailed.forEach(
+                    failed -> {
+                        Assertions.assertTrue(operationResult.getFailedMap().containsKey(failed));
+                    }
+                );
+            }
         } else {
-            Assert.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
         }
 
+        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS) ||
+                operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+            Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
+            Assertions.assertTrue(eOp.isPresent());
+            IEntity entity = eOp.get();
 
-        Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
-        Assert.assertTrue(eOp.isPresent());
-        IEntity entity = eOp.get();
-
-        expectedResult.forEach((key, value) -> {
-            Optional<IValue> vOp = entity.entityValue().getValue(key);
-            Assert.assertTrue(vOp.isPresent());
-            Assert.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
-            if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
-                Assert.assertEquals(expectedAutoFill, vOp.get().getValue());
-            }
-        });
+            expectedResult.forEach((key, value) -> {
+                Optional<IValue> vOp = entity.entityValue().getValue(key);
+                Assertions.assertTrue(vOp.isPresent());
+                Assertions.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
+                if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
+                    Assertions.assertEquals(expectedAutoFill, vOp.get().getValue());
+                }
+            });
+        }
     }
 
     private void setExpectedResult(Long expectedValue) {

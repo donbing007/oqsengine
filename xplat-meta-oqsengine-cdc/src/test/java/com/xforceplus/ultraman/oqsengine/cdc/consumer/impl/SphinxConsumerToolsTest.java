@@ -12,8 +12,8 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.ByteString;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
-import com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -25,8 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -64,9 +64,13 @@ public class SphinxConsumerToolsTest {
         testPrepareForUpdateDelete.setAccessible(true);
     }
 
-    private void init() throws NoSuchMethodException {
+    private void init() throws NoSuchMethodException, IllegalAccessException {
         sphinxSyncExecutor = new SphinxSyncExecutor();
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", EntityClassBuilder.getMetaManager());
+
+        MockMetaManager metaManager = new MockMetaManager();
+        metaManager.addEntityClass(entityClass2);
+
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", metaManager);
 
         initGetEntityClass();
         initAttrCollection();
@@ -127,49 +131,49 @@ public class SphinxConsumerToolsTest {
 
                 for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
                     long id = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ID);
-                    Assert.assertTrue(expectedIds.contains(id));
+                    Assertions.assertTrue(expectedIds.contains(id));
 
                     Boolean deleted = getBooleanFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.DELETED);
-                    Assert.assertNotNull(deleted);
+                    Assertions.assertNotNull(deleted);
 
                     int op = getIntegerFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.OP);
-                    Assert.assertTrue(op > 0);
+                    Assertions.assertTrue(op > 0);
 
                     int version = getIntegerFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.VERSION);
-                    Assert.assertTrue(version > 0);
+                    Assertions.assertTrue(version > 0);
 
                     int oqsMajor = getIntegerFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.OQSMAJOR);
-                    Assert.assertTrue(oqsMajor > 0);
+                    Assertions.assertTrue(oqsMajor > 0);
 
                     long create = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.CREATETIME);
-                    Assert.assertTrue(create > 0);
+                    Assertions.assertTrue(create > 0);
 
                     long update = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.UPDATETIME);
-                    Assert.assertTrue(update > 0);
+                    Assertions.assertTrue(update > 0);
 
                     long tx = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.TX);
-                    Assert.assertTrue(tx > 0);
+                    Assertions.assertTrue(tx > 0);
 
                     long commitid = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.COMMITID);
-                    Assert.assertTrue(commitid > 0);
+                    Assertions.assertTrue(commitid > 0);
 
                     long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL0);
-                    Assert.assertEquals(0, entity);
+                    Assertions.assertEquals(0, entity);
 
                     entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL1);
-                    Assert.assertEquals(0, entity);
+                    Assertions.assertEquals(0, entity);
 
                     entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL2);
-                    Assert.assertTrue(entity > 0);
+                    Assertions.assertTrue(entity > 0);
 
                     entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL3);
-                    Assert.assertEquals(0, entity);
+                    Assertions.assertEquals(0, entity);
 
                     entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL4);
-                    Assert.assertEquals(0, entity);
+                    Assertions.assertEquals(0, entity);
 
                     String attr = getStringFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ATTRIBUTE);
-                    Assert.assertTrue(null != attr && !attr.isEmpty());
+                    Assertions.assertFalse(attr.isEmpty());
                 }
             }
         }
@@ -178,14 +182,14 @@ public class SphinxConsumerToolsTest {
     private void assertGetEntityClass(List<CanalEntry.Column> columns) throws Exception {
         IEntityClass entityClass = (IEntityClass) testGetEntityClass
             .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
-        Assert.assertNotNull(entityClass);
+        Assertions.assertNotNull(entityClass);
     }
 
     @SuppressWarnings("unchecked")
     private void assertAttributes(List<CanalEntry.Column> columns, int index) throws Exception {
         List<Object> objects = (List<Object>) testAttrCollection
             .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
-        Assert.assertTrue(null != objects && !objects.isEmpty() && objects.size() % 2 == 0);
+        Assertions.assertTrue(null != objects && !objects.isEmpty() && objects.size() % 2 == 0);
 
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> kv = objectMapper.readValue(CanalEntryTools.Prepared.attrs[index], Map.class);
@@ -197,15 +201,15 @@ public class SphinxConsumerToolsTest {
                 for (int i = 0; i < objects.size(); i++) {
                     Object object = objects.get(i);
                     if (i % 2 == 0) {
-                        Assert.assertEquals(String.class, object.getClass());
+                        Assertions.assertEquals(String.class, object.getClass());
                         if (object.equals(k)) {
                             findKey = true;
-                            Assert.assertEquals(v, objects.get(i + 1));
+                            Assertions.assertEquals(v, objects.get(i + 1));
                             break;
                         }
                     }
                 }
-                Assert.assertTrue(findKey);
+                Assertions.assertTrue(findKey);
             }
         );
     }
@@ -215,21 +219,21 @@ public class SphinxConsumerToolsTest {
         OriginalEntity originalEntity = (OriginalEntity) testPrepareForUpdateDelete.invoke(sphinxSyncExecutor, columns,
             getLongFromColumn(columns, OqsBigEntityColumns.ID),
             getLongFromColumn(columns, OqsBigEntityColumns.COMMITID));
-        Assert.assertNotNull(originalEntity);
+        Assertions.assertNotNull(originalEntity);
         assertByCaseEntry(caseEntry, originalEntity);
     }
 
     private void assertByCaseEntry(CanalEntryTools.Case caseEntry, OriginalEntity originalEntity) {
-        Assert.assertEquals(caseEntry.getId(), originalEntity.getId());
-        Assert.assertEquals(caseEntry.getOp(), originalEntity.getOp());
-        Assert.assertEquals(caseEntry.isDeleted(), originalEntity.isDeleted());
-        Assert.assertEquals(caseEntry.getVersion(), originalEntity.getVersion());
-        Assert.assertEquals(caseEntry.getOqsmajor(), originalEntity.getOqsMajor());
-        Assert.assertEquals(caseEntry.getCreate(), originalEntity.getCreateTime());
-        Assert.assertEquals(caseEntry.getUpdate(), originalEntity.getUpdateTime());
-        Assert.assertEquals(caseEntry.getTx(), originalEntity.getTx());
-        Assert.assertEquals(caseEntry.getCommitId(), originalEntity.getCommitid());
-        Assert.assertEquals(caseEntry.getEntityId(), originalEntity.getEntityClass().id());
+        Assertions.assertEquals(caseEntry.getId(), originalEntity.getId());
+        Assertions.assertEquals(caseEntry.getOp(), originalEntity.getOp());
+        Assertions.assertEquals(caseEntry.isDeleted(), originalEntity.isDeleted());
+        Assertions.assertEquals(caseEntry.getVersion(), originalEntity.getVersion());
+        Assertions.assertEquals(caseEntry.getOqsmajor(), originalEntity.getOqsMajor());
+        Assertions.assertEquals(caseEntry.getCreate(), originalEntity.getCreateTime());
+        Assertions.assertEquals(caseEntry.getUpdate(), originalEntity.getUpdateTime());
+        Assertions.assertEquals(caseEntry.getTx(), originalEntity.getTx());
+        Assertions.assertEquals(caseEntry.getCommitId(), originalEntity.getCommitid());
+        Assertions.assertEquals(caseEntry.getEntityId(), originalEntity.getEntityClass().id());
     }
 
 

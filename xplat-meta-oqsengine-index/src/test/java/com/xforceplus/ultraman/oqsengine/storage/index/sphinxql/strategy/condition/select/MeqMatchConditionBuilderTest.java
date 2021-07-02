@@ -8,16 +8,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MeqMatchConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * MeqMatchConditionQueryBuilder Tester.
@@ -30,13 +29,13 @@ public class MeqMatchConditionBuilderTest {
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
     }
 
@@ -66,7 +65,7 @@ public class MeqMatchConditionBuilderTest {
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test2")
                 ),
                 r -> {
-                    Assert.assertEquals("(1y2p0ijtest032e8e7S | 1y2p0ijtest132e8e7S | 1y2p0ijtest232e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0ijtest032e8e7S | 1y2p0ijtest132e8e7S | 1y2p0ijtest232e8e7S)", r);
                 }
             ),
             new Case(
@@ -78,7 +77,7 @@ public class MeqMatchConditionBuilderTest {
                     new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 3L)
                 ),
                 r -> {
-                    Assert.assertEquals("(1y2p0ij132e8e7L | 1y2p0ij232e8e7L | 1y2p0ij332e8e7L)", r);
+                    Assertions.assertEquals("(1y2p0ij132e8e7L | 1y2p0ij232e8e7L | 1y2p0ij332e8e7L)", r);
                 }
             ),
             new Case(
@@ -88,7 +87,7 @@ public class MeqMatchConditionBuilderTest {
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "one")
                 ),
                 r -> {
-                    Assert.assertEquals("(1y2p0ijone32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0ijone32e8e7S)", r);
                 }
             ),
             new Case(
@@ -100,7 +99,7 @@ public class MeqMatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assert.assertEquals("(1y2p0ijone32e8e7S | 1y2p0ijtwo32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0ijone32e8e7S | 1y2p0ijtwo32e8e7S)", r);
                 }
             )
         );
