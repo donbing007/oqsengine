@@ -47,8 +47,6 @@ public class BusinessIDGeneratorConfiguration {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-
-
     /**
      * 主库存连接池.
      */
@@ -173,23 +171,23 @@ public class BusinessIDGeneratorConfiguration {
         return new MemoryEventStorage();
     }
 
-//    /**
-//     * datePattenParser.
-//     *
-//     * @return datePattenParser
-//     */
-//    @Bean
-//    public PatternParser datePattenParser() {
-//        return new DatePatternParser();
-//    }
-//
-//    /**
-//     * numberPattenParser.
-//     *
-//     * @return numberPattenParser
-//     */
-//    @Bean
-//    public PatternParser numberPattenParser() {
-//        return new NumberPatternParser();
-//    }
+    /**
+     * datePattenParser.
+     *
+     * @return datePattenParser
+     */
+    @Bean("datePattenParser")
+    public PatternParser datePattenParser() {
+        return new DatePatternParser();
+    }
+
+    /**
+     * numberPattenParser.
+     *
+     * @return numberPattenParser
+     */
+    @Bean("numberPattenParser")
+    public PatternParser numberPattenParser() {
+        return new NumberPatternParser();
+    }
 }

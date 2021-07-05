@@ -3,10 +3,9 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.service.impl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.config.BusinessIDGeneratorConfiguration;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
-import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
@@ -47,6 +46,12 @@ public class SegmentServiceImplTest {
     @Resource
     private PatternParserUtil patternParserUtil;
 
+    @Resource(name = "datePattenParser")
+    private PatternParser datePattenParser;
+
+    @Resource(name = "numberPattenParser")
+    private PatternParser numberPattenParser;
+
     SegmentInfo info;
 
     @BeforeEach
@@ -61,8 +66,8 @@ public class SegmentServiceImplTest {
             .build();
         storage.build(info);
 
-        manager.registVariableParser(new NumberPatternParser());
-        manager.registVariableParser(new DatePatternParser());
+        manager.registVariableParser(datePattenParser);
+        manager.registVariableParser(numberPattenParser);
     }
 
     @AfterEach

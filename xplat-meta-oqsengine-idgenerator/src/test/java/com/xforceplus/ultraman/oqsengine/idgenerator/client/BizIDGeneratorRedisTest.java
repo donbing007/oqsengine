@@ -55,7 +55,6 @@ public class BizIDGeneratorRedisTest {
 
     private ApplicationContext applicationContext;
 
-
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
@@ -73,7 +72,8 @@ public class BizIDGeneratorRedisTest {
     private DataSourcePackage dataSourcePackage;
 
     @AfterEach
-    public void tearDown() throws SQLException {
+    public void after() throws SQLException {
+
         SegmentInfo segmentInfo = new SegmentInfo();
         segmentInfo.setBizType(linearBizType);
         storage1.delete(segmentInfo);
@@ -85,9 +85,7 @@ public class BizIDGeneratorRedisTest {
         SegmentInfo segmentInfo3 = new SegmentInfo();
         segmentInfo3.setBizType(linearBizType3);
         storage1.delete(segmentInfo3);
-    }
-    @AfterEach
-    public void after() throws SQLException {
+
         try(Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
@@ -122,24 +120,27 @@ public class BizIDGeneratorRedisTest {
         config.useSingleServer().setAddress(String.format("redis://%s:%s", redisIp, redisPort));
         redissonClient = Redisson.create(config);
 
-
         PatternParserManager manager = new PatternParserManager();
         NumberPatternParser parser = new NumberPatternParser();
         DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
+
         applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
         ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
 
-        this.segmentService1 = new SegmentServiceImpl();
-        this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         this.bizIDGenerator1 = new BizIDGenerator();
         this.bizIDGenerator2 = new BizIDGenerator();
         this.bizIDGenerator3 = new BizIDGenerator();
+
+        this.segmentService1 = new SegmentServiceImpl();
         ReflectionTestUtils.setField(segmentService1, "sqlSegmentStorage", storage1);
+
+        this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService", segmentService1);
         ReflectionTestUtils.setField(idGeneratorFactory1, "redissonClient", redissonClient);
+
         ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory", idGeneratorFactory1);
         ReflectionTestUtils.setField(bizIDGenerator2, "idGeneratorFactory", idGeneratorFactory1);
         ReflectionTestUtils.setField(bizIDGenerator3, "idGeneratorFactory", idGeneratorFactory1);
@@ -191,7 +192,7 @@ public class BizIDGeneratorRedisTest {
         al.set(value);
         SegmentId next = value.clone();
         next.nextId();
-        Assertions.assertEquals(true, al.compareAndSet(value, next));
+        Assertions.assertTrue(al.compareAndSet(value, next));
     }
 
     @Test
@@ -223,6 +224,7 @@ public class BizIDGeneratorRedisTest {
     @Test
     public void testMutliThreadCount() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch closeLatch = new CountDownLatch(10);
         for (int j = 0; j < 10; j++) {
             executorService.submit(() -> {
                 for (int i = 0; i < 50; i++) {
@@ -233,11 +235,12 @@ public class BizIDGeneratorRedisTest {
                     }
                     System.out.println(bizIDGenerator1.nextId(linearBizType));
                 }
+                closeLatch.countDown();
             });
         }
         System.out.println("prepare execute nextID.....");
         latch.countDown();
-        Thread.sleep(3000);
+        closeLatch.await();
         String bizID = bizIDGenerator1.nextId(linearBizType);
         System.out.println("last bizID : " + bizID);
         LocalDateTime localDateTime = LocalDateTime.now();
@@ -250,6 +253,7 @@ public class BizIDGeneratorRedisTest {
     public void testMutliThreadOver() throws InterruptedException {
 
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch closeLatch = new CountDownLatch(10);
         List<Future> futures = Lists.newArrayList();
         for (int j = 0; j < 10; j++) {
             Future future = executorService.submit(() -> {
@@ -261,12 +265,13 @@ public class BizIDGeneratorRedisTest {
                     }
                     System.out.println(bizIDGenerator3.nextId(linearBizType3));
                 }
+                closeLatch.countDown();
             });
             futures.add(future);
         }
         System.out.println("prepare execute nextID.....");
         latch.countDown();
-        Thread.sleep(15000);
+        closeLatch.await();
         String bizID = bizIDGenerator3.nextId(linearBizType3);
         System.out.println("last bizID : " + bizID);
         LocalDateTime localDateTime = LocalDateTime.now();

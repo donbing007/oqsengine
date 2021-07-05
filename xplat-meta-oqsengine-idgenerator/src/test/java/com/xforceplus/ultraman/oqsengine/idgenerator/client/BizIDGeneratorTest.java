@@ -121,13 +121,13 @@ public class BizIDGeneratorTest {
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String expected = LocalDateTime.now().format(formatter) + ":00010";
-        Assert.assertEquals(bizId, expected);
+        Assertions.assertEquals(bizId, expected);
         for (int i = 0; i < 1000; i++) {
             bizId = bizIDGenerator1.nextId(bizType);
             System.out.println(bizId);
         }
         String expected1 = LocalDateTime.now().format(formatter) + ":01010";
-        Assert.assertEquals(expected1, bizId);
+        Assertions.assertEquals(expected1, bizId);
     }
 
     @Test
@@ -154,7 +154,7 @@ public class BizIDGeneratorTest {
             bizId = bizIDGenerator1.nextId(bizType);
         }
         System.out.println(bizId);
-        Assert
+        Assertions
             .assertEquals(LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ":00001",
                 bizId);
     }
