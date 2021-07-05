@@ -8,13 +8,12 @@
         <version>1.2.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <description>锁实现</description>
 
     <artifactId>xplat-meta-oqsengine-synchronizer</artifactId>
 
     <properties>
-        <checkstyle.skip>true</checkstyle.skip>
         <deployment.skip>true</deployment.skip>
-        <common.version>2.0.7</common.version>
     </properties>
 
     <dependencies>
@@ -25,7 +24,6 @@
         <dependency>
             <artifactId>reactive-grpc-server</artifactId>
             <groupId>com.xforceplus.xplat-galaxy</groupId>
-            <version>6.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.vavr</groupId>
@@ -34,7 +32,6 @@
         <dependency>
             <groupId>com.xforceplus.ultraman.common</groupId>
             <artifactId>oqsengine-sdk-server</artifactId>
-            <version>${common.version}</version>
         </dependency>
     </dependencies>
 
