@@ -208,59 +208,59 @@ public class BizIDGeneratorRedisTest {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    @Test
-    public void testMutliThreadCount() throws InterruptedException {
-
-        CountDownLatch latch = new CountDownLatch(1);
-        for(int j =0;j<10;j++) {
-            executorService.submit(() -> {
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                for (int i = 0; i < 50; i++) {
-                    System.out.println(bizIDGenerator1.nextId(linearBizType));
-                }
-            });
-        }
-        System.out.println("prepare execute nextID.....");
-        latch.countDown();
-        Thread.sleep(3000);
-        String bizID =  bizIDGenerator1.nextId(linearBizType);
-        System.out.println("last bizID : " + bizID);
-        LocalDateTime localDateTime = LocalDateTime.now();
-       String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-       Assert.assertEquals(date+":00501",bizID);
-    }
-
-
-    @Test
-    public void testMutliThreadOver() throws InterruptedException {
-
-        CountDownLatch latch = new CountDownLatch(1);
-        List<Future> futures = Lists.newArrayList();
-        for(int j =0;j<10;j++) {
-           Future future =  executorService.submit(() -> {
-                for (int i = 0; i < 300; i++) {
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println(bizIDGenerator3.nextId(linearBizType3));
-                }
-            });
-           futures.add(future);
-        }
-        System.out.println("prepare execute nextID.....");
-        latch.countDown();
-        Thread.sleep(15000);
-        String bizID =  bizIDGenerator3.nextId(linearBizType3);
-        System.out.println("last bizID : " + bizID);
-        LocalDateTime localDateTime = LocalDateTime.now();
-        String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        Assert.assertEquals(date+":03001",bizID);
-    }
+//    @Test
+//    public void testMutliThreadCount() throws InterruptedException {
+//
+//        CountDownLatch latch = new CountDownLatch(1);
+//        for(int j =0;j<10;j++) {
+//            executorService.submit(() -> {
+//                try {
+//                    latch.await();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                for (int i = 0; i < 50; i++) {
+//                    System.out.println(bizIDGenerator1.nextId(linearBizType));
+//                }
+//            });
+//        }
+//        System.out.println("prepare execute nextID.....");
+//        latch.countDown();
+//        Thread.sleep(3000);
+//        String bizID =  bizIDGenerator1.nextId(linearBizType);
+//        System.out.println("last bizID : " + bizID);
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//       String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+//       Assert.assertEquals(date+":00501",bizID);
+//    }
+//
+//
+//    @Test
+//    public void testMutliThreadOver() throws InterruptedException {
+//
+//        CountDownLatch latch = new CountDownLatch(1);
+//        List<Future> futures = Lists.newArrayList();
+//        for(int j =0;j<10;j++) {
+//           Future future =  executorService.submit(() -> {
+//                for (int i = 0; i < 300; i++) {
+//                    try {
+//                        latch.await();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    System.out.println(bizIDGenerator3.nextId(linearBizType3));
+//                }
+//            });
+//           futures.add(future);
+//        }
+//        System.out.println("prepare execute nextID.....");
+//        latch.countDown();
+//        Thread.sleep(15000);
+//        String bizID =  bizIDGenerator3.nextId(linearBizType3);
+//        System.out.println("last bizID : " + bizID);
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//        String date =  localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+//        Assert.assertEquals(date+":03001",bizID);
+//    }
 
 }
