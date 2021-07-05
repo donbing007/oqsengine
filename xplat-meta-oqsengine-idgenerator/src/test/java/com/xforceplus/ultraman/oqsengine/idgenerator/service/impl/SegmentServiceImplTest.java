@@ -52,22 +52,23 @@ public class SegmentServiceImplTest {
     @Resource(name = "numberPattenParser")
     private PatternParser numberPattenParser;
 
-    SegmentInfo info;
+    SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
+        .withCreateTime(new Timestamp(System.currentTimeMillis()))
+        .withMaxId(0l)
+        .withPatten("{yyyy}-{MM}-{dd}-{000}")
+        .withMode(2)
+        .withStep(1000)
+        .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+        .withVersion(1l)
+        .withResetable(0)
+        .withPatternKey("")
+        .build();
 
     @BeforeEach
     public void before() throws Exception {
-        info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
-            .withCreateTime(new Timestamp(System.currentTimeMillis()))
-            .withMaxId(0l).withPatten("{yyyy}-{MM}-{dd}-{000}").withMode(2).withStep(1000)
-            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-            .withVersion(1l)
-            .withResetable(0)
-            .withPatternKey("")
-            .build();
-        storage.build(info);
 
-        manager.registVariableParser(datePattenParser);
-        manager.registVariableParser(numberPattenParser);
+        storage.build(info);
+        Thread.sleep(1_000);
     }
 
     @AfterEach

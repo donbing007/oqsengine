@@ -13,7 +13,9 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -87,6 +89,12 @@ public class SegmentStorageTest {
 //            }
 //        }
 //        ((HikariDataSource) dataSource).close();
+
+        try(Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table segment");
+            st.close();
+        }
     }
 
     /**

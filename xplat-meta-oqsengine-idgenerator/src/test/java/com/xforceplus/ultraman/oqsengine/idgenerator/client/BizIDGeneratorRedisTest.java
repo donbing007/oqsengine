@@ -74,17 +74,17 @@ public class BizIDGeneratorRedisTest {
     @AfterEach
     public void after() throws SQLException {
 
-        SegmentInfo segmentInfo = new SegmentInfo();
-        segmentInfo.setBizType(linearBizType);
-        storage1.delete(segmentInfo);
-
-        SegmentInfo segmentInfo2 = new SegmentInfo();
-        segmentInfo2.setBizType(linearBizType2);
-        storage1.delete(segmentInfo2);
-
-        SegmentInfo segmentInfo3 = new SegmentInfo();
-        segmentInfo3.setBizType(linearBizType3);
-        storage1.delete(segmentInfo3);
+//        SegmentInfo segmentInfo = new SegmentInfo();
+//        segmentInfo.setBizType(linearBizType);
+//        storage1.delete(segmentInfo);
+//
+//        SegmentInfo segmentInfo2 = new SegmentInfo();
+//        segmentInfo2.setBizType(linearBizType2);
+//        storage1.delete(segmentInfo2);
+//
+//        SegmentInfo segmentInfo3 = new SegmentInfo();
+//        segmentInfo3.setBizType(linearBizType3);
+//        storage1.delete(segmentInfo3);
 
         try(Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
