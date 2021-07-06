@@ -31,7 +31,7 @@ public final class ContainerStarter {
     private static GenericContainer searchManticore;
     private static GenericContainer cannal;
 
-    private static final int WAIT_START_TIME_OUT = 120;
+    private static final int WAIT_START_TIME_OUT = 200;
     private static final Network NETWORK = Network.newNetwork();
 
     static {
