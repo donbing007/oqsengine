@@ -32,8 +32,8 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
 
-    private static int size = 1000;
-    private static long startId = 1;
+    private static final int size = 1000;
+    private static final long startId = 1;
 
     private static CDCMetricsService cdcMetricsService;
     private ConsumerService sphinxConsumerService;
@@ -48,7 +48,7 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);
-        build(entries, 1000, startId);
+        build(entries, size, startId);
         cdcMetricsService = new CDCMetricsService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService(null));
     }
