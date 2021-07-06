@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 
+import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -21,13 +22,17 @@ public final class ContainerStarter {
 
     static final Logger LOGGER = LoggerFactory.getLogger(ContainerStarter.class);
 
+
+
     private static GenericContainer redis;
     private static GenericContainer mysql;
     private static GenericContainer manticore0;
     private static GenericContainer manticore1;
     private static GenericContainer searchManticore;
     private static GenericContainer cannal;
-    private static Network network = Network.newNetwork();
+
+    private static final int WAIT_START_TIME_OUT = 120;
+    private static final Network NETWORK = Network.newNetwork();
 
     static {
         System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
@@ -63,10 +68,10 @@ public final class ContainerStarter {
     public static synchronized void startRedis() {
         if (redis == null) {
             redis = new GenericContainer("redis:6.0.9-alpine3.12")
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("redis")
                 .withExposedPorts(6379)
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             redis.start();
             redis.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
@@ -102,7 +107,7 @@ public final class ContainerStarter {
     public static synchronized void startMysql() {
         if (mysql == null) {
             mysql = new GenericContainer("mysql:5.7")
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("mysql")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
@@ -110,7 +115,7 @@ public final class ContainerStarter {
                 .withEnv("MYSQL_ROOT_PASSWORD", "root")
                 .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
                 .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             mysql.start();
             mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
@@ -153,11 +158,11 @@ public final class ContainerStarter {
         if (manticore0 == null) {
             manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("manticore0")
                 .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             manticore0.start();
             manticore0.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
@@ -181,11 +186,11 @@ public final class ContainerStarter {
         if (manticore1 == null) {
             manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("manticore1")
                 .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             manticore1.start();
             manticore1.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
@@ -209,12 +214,12 @@ public final class ContainerStarter {
         if (searchManticore == null) {
             searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("searchManticore")
                 .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .dependsOn(manticore0, manticore1)
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             searchManticore.start();
             searchManticore.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
@@ -283,7 +288,7 @@ public final class ContainerStarter {
             System.setProperty("CANAL_DESTINATION", getRandomString(6));
 
             cannal = new GenericContainer("canal/canal-server:v1.1.4")
-                .withNetwork(network)
+                .withNetwork(NETWORK)
                 .withNetworkAliases("cannal")
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
@@ -294,7 +299,7 @@ public final class ContainerStarter {
                 .withEnv("canal.instance.dbPassword", "root")
                 .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
                 .dependsOn(mysql)
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
             cannal.start();
             cannal.followOutput((Consumer<OutputFrame>) outputFrame -> {
                 LOGGER.info(outputFrame.getUtf8String());
