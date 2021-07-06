@@ -35,12 +35,24 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
             .withId(Long.MAX_VALUE - 1)
             .withFieldType(FieldType.STRING)
             .withName("l0-string")
-            .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build())
+            .withConfig(FieldConfig
+                            .Builder.anFieldConfig().withLen(128)
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+                            .build())
+            .build()
+        )
         .withField(EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 2)
             .withFieldType(FieldType.STRINGS)
             .withName("l0-strings")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(FieldConfig
+                .Builder.anFieldConfig().withLen(128)
+                .withSearchable(true)
+                .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+                .build())
+        .build()
+        )
         .build();
 
     //-------------level 1--------------------
