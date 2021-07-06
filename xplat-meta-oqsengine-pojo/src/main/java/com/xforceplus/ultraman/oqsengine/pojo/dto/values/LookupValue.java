@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
@@ -35,6 +36,15 @@ public class LookupValue extends AbstractValue<Long> {
     @Override
     public long valueToLong() {
         return getValue();
+    }
+
+    @Override
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != FieldType.LOOKUP) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
     }
 
     @Override

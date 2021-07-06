@@ -38,6 +38,15 @@ public class BooleanValue extends AbstractValue<Boolean> {
     }
 
     @Override
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != FieldType.BOOLEAN) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(getField(), getValue());
     }
@@ -62,4 +71,6 @@ public class BooleanValue extends AbstractValue<Boolean> {
 
         return new BooleanValue(newField, getValue());
     }
+
+
 }

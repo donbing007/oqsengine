@@ -22,6 +22,11 @@ public class EmptyTypedValue extends AbstractValue {
     }
 
     @Override
+    protected void checkType(IEntityField newFiled) {
+        return;
+    }
+
+    @Override
     public IValue copy(IEntityField newField) {
         return new EmptyTypedValue(newField);
     }
