@@ -46,6 +46,8 @@ public final class ContainerStarter {
                 LOGGER.error(ex.getMessage(), ex);
             }
         }
+        //  这里再关闭一次
+        genericContainer.close();
     }
 
     /**
