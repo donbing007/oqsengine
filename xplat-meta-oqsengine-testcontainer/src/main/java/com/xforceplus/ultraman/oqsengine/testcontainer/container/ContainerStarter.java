@@ -40,14 +40,12 @@ public final class ContainerStarter {
     private static void waitStop(GenericContainer genericContainer) {
         while (genericContainer.isRunning()) {
             try {
-                LOGGER.info("The {} container is not closed, etc. 100 ms.", genericContainer.getDockerImageName());
-                TimeUnit.MILLISECONDS.sleep(100);
+                LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
+                TimeUnit.MILLISECONDS.sleep(5);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
             }
         }
-        //  这里再关闭一次
-        genericContainer.close();
     }
 
     /**
