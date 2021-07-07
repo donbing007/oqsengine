@@ -40,7 +40,7 @@ public final class ContainerStarter {
     private static void waitStop(GenericContainer genericContainer) {
         while (genericContainer.isRunning()) {
             try {
-                LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
+                LOGGER.info("The {} container is not closed, etc. 100 ms.", genericContainer.getDockerImageName());
                 TimeUnit.MILLISECONDS.sleep(100);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
