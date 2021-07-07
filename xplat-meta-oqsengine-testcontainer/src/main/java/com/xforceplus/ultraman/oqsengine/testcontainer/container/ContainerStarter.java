@@ -23,7 +23,6 @@ public final class ContainerStarter {
     static final Logger LOGGER = LoggerFactory.getLogger(ContainerStarter.class);
 
 
-
     private static GenericContainer redis;
     private static GenericContainer mysql;
     private static GenericContainer manticore0;
@@ -69,6 +68,7 @@ public final class ContainerStarter {
         if (redis == null) {
             redis = new GenericContainer("redis:6.0.9-alpine3.12")
                 .withNetwork(NETWORK)
+                .withReuse(true)
                 .withNetworkAliases("redis")
                 .withExposedPorts(6379)
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
@@ -88,6 +88,7 @@ public final class ContainerStarter {
      * 结束redis容器.
      */
     public static synchronized void stopRedis() {
+        /*
         if (redis != null) {
             redis.stop();
             waitStop(redis);
@@ -98,7 +99,7 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed redis container!");
         }
-
+        */
     }
 
     /**
@@ -108,6 +109,7 @@ public final class ContainerStarter {
         if (mysql == null) {
             mysql = new GenericContainer("mysql:5.7")
                 .withNetwork(NETWORK)
+                .withReuse(true)
                 .withNetworkAliases("mysql")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
@@ -138,6 +140,7 @@ public final class ContainerStarter {
      * 结束mysql容器.
      */
     public static synchronized void stopMysql() {
+        /*
         if (mysql != null) {
             mysql.stop();
             waitStop(mysql);
@@ -149,6 +152,7 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed mysql container!");
         }
+        */
     }
 
     /**
@@ -158,6 +162,7 @@ public final class ContainerStarter {
         if (manticore0 == null) {
             manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("manticore0")
                 .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -186,6 +191,7 @@ public final class ContainerStarter {
         if (manticore1 == null) {
             manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("manticore1")
                 .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -214,6 +220,7 @@ public final class ContainerStarter {
         if (searchManticore == null) {
             searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("searchManticore")
                 .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -243,6 +250,7 @@ public final class ContainerStarter {
      * 结束 manticore 容器.
      */
     public static synchronized void stopManticore() {
+        /*
         if (searchManticore != null) {
             searchManticore.stop();
             waitStop(searchManticore);
@@ -278,6 +286,7 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed manticore1 container!");
         }
+        */
     }
 
     /**
@@ -289,6 +298,7 @@ public final class ContainerStarter {
 
             cannal = new GenericContainer("canal/canal-server:v1.1.4")
                 .withNetwork(NETWORK)
+                .withReuse(true)
                 .withNetworkAliases("cannal")
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
@@ -316,6 +326,7 @@ public final class ContainerStarter {
      * 结束 cannal 容器.
      */
     public static synchronized void stopCannal() {
+        /*
         if (cannal != null) {
             cannal.stop();
             waitStop(cannal);
@@ -327,6 +338,8 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed cannal container!");
         }
+
+         */
     }
 
     private static String getRandomString(int length) {
