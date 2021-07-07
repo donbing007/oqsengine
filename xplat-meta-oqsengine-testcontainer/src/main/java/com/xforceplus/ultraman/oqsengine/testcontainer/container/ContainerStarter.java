@@ -88,7 +88,6 @@ public final class ContainerStarter {
      * 结束redis容器.
      */
     public static synchronized void stopRedis() {
-        /*
         if (redis != null) {
             redis.stop();
             waitStop(redis);
@@ -99,7 +98,6 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed redis container!");
         }
-        */
     }
 
     /**
@@ -140,7 +138,6 @@ public final class ContainerStarter {
      * 结束mysql容器.
      */
     public static synchronized void stopMysql() {
-        /*
         if (mysql != null) {
             mysql.stop();
             waitStop(mysql);
@@ -152,7 +149,6 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed mysql container!");
         }
-        */
     }
 
     /**
@@ -250,7 +246,6 @@ public final class ContainerStarter {
      * 结束 manticore 容器.
      */
     public static synchronized void stopManticore() {
-        /*
         if (searchManticore != null) {
             searchManticore.stop();
             waitStop(searchManticore);
@@ -286,7 +281,6 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed manticore1 container!");
         }
-        */
     }
 
     /**
@@ -326,7 +320,6 @@ public final class ContainerStarter {
      * 结束 cannal 容器.
      */
     public static synchronized void stopCannal() {
-        /*
         if (cannal != null) {
             cannal.stop();
             waitStop(cannal);
@@ -338,8 +331,6 @@ public final class ContainerStarter {
 
             LOGGER.info("Closed cannal container!");
         }
-
-         */
     }
 
     private static String getRandomString(int length) {
