@@ -41,7 +41,7 @@ public final class ContainerStarter {
         while (genericContainer.isRunning()) {
             try {
                 LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
-                TimeUnit.MILLISECONDS.sleep(5);
+                TimeUnit.MILLISECONDS.sleep(100);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
             }
