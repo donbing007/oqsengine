@@ -87,15 +87,6 @@ public class StringsValue extends AbstractValue<String[]> {
         return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
     }
 
-    @Override
-    protected void checkType(IEntityField newFiled) {
-        if (newFiled.type() != FieldType.STRINGS) {
-            throw new IllegalArgumentException(
-                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
-                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
-        }
-    }
-
     /**
      * 将字符串拆分为字符串数组.
      */

@@ -73,5 +73,11 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         return sb.toString();
     }
 
-    protected abstract void checkType(IEntityField newFiled);
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != getField().type()) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
+    }
 }

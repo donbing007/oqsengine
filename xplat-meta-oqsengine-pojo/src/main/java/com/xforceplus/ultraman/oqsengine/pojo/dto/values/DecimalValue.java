@@ -32,15 +32,6 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
-    protected void checkType(IEntityField newFiled) {
-        if (newFiled.type() != FieldType.DECIMAL) {
-            throw new IllegalArgumentException(
-                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
-                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
-        }
-    }
-
-    @Override
     public String valueToString() {
         return getValue().toPlainString();
     }

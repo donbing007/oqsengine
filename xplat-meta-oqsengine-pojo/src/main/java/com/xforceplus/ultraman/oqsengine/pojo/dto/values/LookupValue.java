@@ -39,15 +39,6 @@ public class LookupValue extends AbstractValue<Long> {
     }
 
     @Override
-    protected void checkType(IEntityField newFiled) {
-        if (newFiled.type() != FieldType.LOOKUP) {
-            throw new IllegalArgumentException(
-                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
-                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
-        }
-    }
-
-    @Override
     public IValue<Long> copy(IEntityField newField) {
         checkType(newField);
 
