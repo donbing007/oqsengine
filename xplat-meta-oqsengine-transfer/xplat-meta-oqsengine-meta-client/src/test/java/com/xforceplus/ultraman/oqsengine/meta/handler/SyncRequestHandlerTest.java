@@ -6,14 +6,15 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_OK;
@@ -30,12 +31,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.utils.EntityClassSyncRespon
  */
 public class SyncRequestHandlerTest extends BaseTest {
 
-    @Before
+    @BeforeEach
     public void before() {
         baseInit();
     }
 
-    @After
+    @AfterEach
     public void after() {
         requestHandler.stop();
 
@@ -81,13 +82,13 @@ public class SyncRequestHandlerTest extends BaseTest {
         m0.setAccessible(true);
 
         boolean ret = (boolean) m0.invoke(requestHandler, entityClassSyncResponse.getMd5(), entityClassSyncResponse.getEntityClassSyncRspProto());
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         EntityClassSyncResponse notExpected =
                 entityClassSyncResponseGenerator(appId, version, true, mockSelfFatherAncestorsGenerate(System.currentTimeMillis()));
 
         ret = (boolean) m0.invoke(requestHandler, entityClassSyncResponse.getMd5(), notExpected.getEntityClassSyncRspProto());
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
     }
 
     private void check(String appId, int version, int status, EntityClassSyncResponse entityClassSyncResponse) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
@@ -97,10 +98,10 @@ public class SyncRequestHandlerTest extends BaseTest {
 
         EntityClassSyncRequest.Builder builder = (EntityClassSyncRequest.Builder) m0.invoke(requestHandler, entityClassSyncResponse);
 
-        Assert.assertNotNull(builder);
+        Assertions.assertNotNull(builder);
         EntityClassSyncRequest entityClassSyncRequest = builder.build();
-        Assert.assertEquals(appId, entityClassSyncRequest.getAppId());
-        Assert.assertEquals(version + 1, entityClassSyncRequest.getVersion());
-        Assert.assertEquals(status, entityClassSyncRequest.getStatus());
+        Assertions.assertEquals(appId, entityClassSyncRequest.getAppId());
+        Assertions.assertEquals(version + 1, entityClassSyncRequest.getVersion());
+        Assertions.assertEquals(status, entityClassSyncRequest.getStatus());
     }
 }

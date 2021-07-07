@@ -18,9 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,13 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +46,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2021/4/9
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS})
+@ExtendWith({RedisContainer.class})
 public class RedisEventHandlerTest extends MiddleWare {
 
     final Logger logger = LoggerFactory.getLogger(RedisEventHandlerTest.class);
@@ -64,19 +59,9 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private Method method;
 
-    @BeforeClass
-    public static void beforeClass() {
-        initRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        closeRedis();
-    }
-
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-
+        initRedis();
         objectMapper = new ObjectMapper();
 
         cacheEventHandler = redisEventHandler(redisClient, objectMapper);
@@ -87,10 +72,10 @@ public class RedisEventHandlerTest extends MiddleWare {
         method.setAccessible(true);
     }
 
-    @After
-    public void after() {
-        clearRedis();
+    @AfterEach
+    public void after() throws Exception {
         expectedCachePayloads.clear();
+        destroyRedis();
     }
 
     private static final int TEST_SIZE = 10;
@@ -105,7 +90,7 @@ public class RedisEventHandlerTest extends MiddleWare {
         for (int i = 0; i < TEST_SIZE; i++) {
             cacheEventHandler.create(expectedTxId, i, randomEntityBuild(i, 1));
         }
-        Assert.assertTrue(checkWithExpire(expectedTxId, TEST_SIZE, 1000));
+        Assertions.assertTrue(checkWithExpire(expectedTxId, TEST_SIZE, 1000));
     }
 
 
@@ -145,7 +130,7 @@ public class RedisEventHandlerTest extends MiddleWare {
         Thread.sleep(3_000);
 
         for (Map.Entry<Long, AtomicInteger> entry : expectSizeByTxId.entrySet()) {
-            Assert.assertTrue(checkWithExpire(entry.getKey(), entry.getValue().get(), 100));
+            Assertions.assertTrue(checkWithExpire(entry.getKey(), entry.getValue().get(), 100));
         }
     }
 
@@ -170,12 +155,12 @@ public class RedisEventHandlerTest extends MiddleWare {
         cacheEventHandler.commit(expectTx, TEST_SIZE);
 
         Collection<String> collection = cacheEventHandler.eventsQuery(expectTx, null, null, null);
-        Assert.assertTrue(collection.size() > 0);
+        Assertions.assertTrue(collection.size() > 0);
 
         Thread.sleep((EXPIRE + 1) * 1000);
 
         collection = cacheEventHandler.eventsQuery(expectTx, null, null, null);
-        Assert.assertTrue(null == collection || collection.isEmpty());
+        Assertions.assertTrue(null == collection || collection.isEmpty());
     }
 
 
@@ -207,7 +192,7 @@ public class RedisEventHandlerTest extends MiddleWare {
         for (CachePayload v : expectedCachePayloads) {
             //  这里传入2个-1是为了测试判断条件是否进入eventType check
             Collection<String> ret = cacheEventHandler.eventsQuery(v.getTxId(), -1L, -1, null);
-            Assert.assertEquals(TEST_SIZE, ret.size());
+            Assertions.assertEquals(TEST_SIZE, ret.size());
 
             storageWithQueryAssert(v);
         }
@@ -220,14 +205,14 @@ public class RedisEventHandlerTest extends MiddleWare {
             case ENTITY_DELETE:
                 cachePayload =
                     CacheEventHelper.toCachePayload(eventType, txId, number, randomEntityBuild(number, version), null);
-                Assert.assertTrue((boolean) method.invoke(cacheEventHandler, cachePayload));
+                Assertions.assertTrue((boolean) method.invoke(cacheEventHandler, cachePayload));
                 storageWithQueryAssert(cachePayload);
                 break;
             case ENTITY_REPLACE:
                 cachePayload = CacheEventHelper
                     .toCachePayload(eventType, txId, number, randomEntityBuild(number, version),
                         randomEntityBuild(number, version - 1));
-                Assert.assertTrue((boolean) method.invoke(cacheEventHandler, cachePayload));
+                Assertions.assertTrue((boolean) method.invoke(cacheEventHandler, cachePayload));
                 storageWithQueryAssert(cachePayload);
                 break;
             default: {
@@ -240,37 +225,37 @@ public class RedisEventHandlerTest extends MiddleWare {
         Collection<String> ret = cacheEventHandler
             .eventsQuery(cachePayload.getTxId(), cachePayload.getNumber(), cachePayload.getVersion(),
                 cachePayload.getEventType().getValue());
-        Assert.assertEquals(1, ret.size());
+        Assertions.assertEquals(1, ret.size());
 
 
         Iterator<String> it = ret.iterator();
-        Assert.assertTrue(it.hasNext());
+        Assertions.assertTrue(it.hasNext());
 
         assertCachePayload(cachePayload, objectMapper.readValue(ZipUtils.unzip(it.next()), CachePayload.class));
     }
 
     private void assertCachePayload(CachePayload expected, CachePayload actual) {
-        Assert.assertEquals(expected.getId(), actual.getId());
-        Assert.assertEquals(expected.getEventType(), actual.getEventType());
-        Assert.assertEquals(expected.getNumber(), actual.getNumber());
-        Assert.assertEquals(expected.getTime(), actual.getTime());
-        Assert.assertEquals(expected.getVersion(), actual.getVersion());
-        Assert.assertEquals(expected.getTxId(), actual.getTxId());
-        Assert.assertEquals(expected.getFieldValueMapping().size(), actual.getFieldValueMapping().size());
+        Assertions.assertEquals(expected.getId(), actual.getId());
+        Assertions.assertEquals(expected.getEventType(), actual.getEventType());
+        Assertions.assertEquals(expected.getNumber(), actual.getNumber());
+        Assertions.assertEquals(expected.getTime(), actual.getTime());
+        Assertions.assertEquals(expected.getVersion(), actual.getVersion());
+        Assertions.assertEquals(expected.getTxId(), actual.getTxId());
+        Assertions.assertEquals(expected.getFieldValueMapping().size(), actual.getFieldValueMapping().size());
 
         for (Map.Entry<Long, String> e : expected.getFieldValueMapping().entrySet()) {
             String v = actual.getFieldValueMapping().remove(e.getKey());
-            Assert.assertEquals(e.getValue(), v);
+            Assertions.assertEquals(e.getValue(), v);
         }
 
         if (null == expected.getOldFieldValueMapping()) {
-            Assert.assertNull(actual.getOldFieldValueMapping());
+            Assertions.assertNull(actual.getOldFieldValueMapping());
         } else {
-            Assert.assertEquals(expected.getOldFieldValueMapping().size(), actual.getOldFieldValueMapping().size());
+            Assertions.assertEquals(expected.getOldFieldValueMapping().size(), actual.getOldFieldValueMapping().size());
 
             for (Map.Entry<Long, String> e : expected.getOldFieldValueMapping().entrySet()) {
                 String v = actual.getOldFieldValueMapping().remove(e.getKey());
-                Assert.assertEquals(e.getValue(), v);
+                Assertions.assertEquals(e.getValue(), v);
             }
         }
     }
@@ -286,7 +271,7 @@ public class RedisEventHandlerTest extends MiddleWare {
         CachePayload cachePayload = CacheEventHelper.toCachePayload(ENTITY_BUILD, txId, current, entity, null);
 
         boolean result = (boolean) method.invoke(cacheEventHandler, cachePayload);
-        Assert.assertTrue(result);
+        Assertions.assertTrue(result);
         expectedCachePayloads.add(cachePayload);
     }
 

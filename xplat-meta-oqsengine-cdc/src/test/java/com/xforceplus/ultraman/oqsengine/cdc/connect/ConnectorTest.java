@@ -1,23 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
-
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -27,42 +16,20 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/19
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class ConnectorTest extends AbstractCDCContainer {
-
-    private MockRedisCallbackService mockRedisCallbackService;
+public class ConnectorTest extends CDCTestHelper {
 
     private CDCDaemonService cdcDaemonService;
 
-    private CDCMetricsService cdcMetricsService;
-
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        initDaemonService();
-        clear();
+        super.init(true);
+        cdcDaemonService = initDaemonService();
     }
 
-    @After
-    public void after() throws SQLException {
-        cdcDaemonService.stopDaemon();
-        clear();
-        closeAll();
+    @AfterEach
+    public void after() throws Exception {
+        super.destroy(true);
     }
-
-    private void initDaemonService() throws Exception {
-        cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService(null);
-
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        cdcDaemonService = new CDCDaemonService();
-        ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll(false));
-        ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
-        ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", singleCDCConnector);
-    }
-
 
     @Test
     public void testStartFromDisConnected() throws InterruptedException {
@@ -73,8 +40,8 @@ public class ConnectorTest extends AbstractCDCContainer {
 
         Thread.sleep(10_000);
 
-        Assert.assertEquals(CDCStatus.CONNECTED,
+        Assertions.assertEquals(CDCStatus.CONNECTED,
             cdcMetricsService.getCdcMetrics().getCdcAckMetrics().getCdcConsumerStatus());
-        Assert.assertEquals(CDCStatus.CONNECTED, mockRedisCallbackService.getAckMetrics().getCdcConsumerStatus());
+        Assertions.assertEquals(CDCStatus.CONNECTED, mockRedisCallbackService.getAckMetrics().getCdcConsumerStatus());
     }
 }

@@ -93,7 +93,8 @@ public class MockMetaManager implements MetaManager {
 
     @Override
     public void invalidateLocal() {
-
+        entityClassPool.clear();
+        profileEntityClassPool.clear();
     }
 
     private String buildKey(long id, int version) {

@@ -25,7 +25,7 @@ public interface ValueVerifier {
             return VerifierResult.REQUIRED;
         }
 
-        if (value != null) {
+        if (value != null && !EmptyTypedValue.class.isInstance(value)) {
 
             if (!isTooLong(field, value)) {
                 return VerifierResult.TOO_LONG;

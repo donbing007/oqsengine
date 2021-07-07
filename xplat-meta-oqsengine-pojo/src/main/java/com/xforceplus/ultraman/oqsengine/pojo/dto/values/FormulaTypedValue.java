@@ -28,6 +28,11 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
     }
 
     @Override
+    protected void checkType(IEntityField newFiled) {
+        return;
+    }
+
+    @Override
     public IValue<Map<String, Object>> copy(IEntityField newField) {
         checkType(newField);
 

@@ -1,10 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author weikai
@@ -12,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @mail weikai@xforceplus.com
  */
 public class ITimerWheelTest {
+
     @Test
     public void add() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -38,7 +38,7 @@ public class ITimerWheelTest {
         multipleTimerWheel.add(System.currentTimeMillis(), 5000);
         latch.await();
 
-        Assert.assertEquals(1, result.get());
+        Assertions.assertEquals(1, result.get());
     }
 
     @Test
@@ -67,7 +67,7 @@ public class ITimerWheelTest {
         multipleTimerWheel.add(System.currentTimeMillis(), 5000);
         latch.await();
 
-        Assert.assertEquals(1, result.get());
+        Assertions.assertEquals(1, result.get());
     }
 
 }

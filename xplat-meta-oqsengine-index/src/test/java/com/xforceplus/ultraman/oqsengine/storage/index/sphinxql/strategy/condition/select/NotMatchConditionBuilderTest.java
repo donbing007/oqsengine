@@ -9,16 +9,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.NotMatchConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * NotMatchConditionQueryBuilder Tester.
@@ -31,13 +30,13 @@ public class NotMatchConditionBuilderTest {
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
     }
 
@@ -51,7 +50,7 @@ public class NotMatchConditionBuilderTest {
             NotMatchConditionBuilder builder = new NotMatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator());
 
-            Assert.assertEquals(c.expected, builder.build(c.condition));
+            Assertions.assertEquals(c.expected, builder.build(c.condition));
         });
     }
 

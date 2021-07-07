@@ -4,10 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.util.Arrays;
 import java.util.Collections;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * DefaultTransactionAccumulator Tester.
@@ -17,14 +15,6 @@ import org.junit.Test;
  * @since <pre>Dec 11, 2020</pre>
  */
 public class DefaultTransactionAccumulatorTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     /**
      * Method: accumulateBuild().
@@ -36,15 +26,15 @@ public class DefaultTransactionAccumulatorTest {
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(1).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(2).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(3).build());
-        Assert.assertEquals(3, accumulator.getBuildNumbers());
+        Assertions.assertEquals(3, accumulator.getBuildNumbers());
 
         accumulator.accumulateDelete(Entity.Builder.anEntity().withId(4).build());
         accumulator.accumulateDelete(Entity.Builder.anEntity().withId(5).build());
-        Assert.assertEquals(2, accumulator.getDeleteNumbers());
+        Assertions.assertEquals(2, accumulator.getDeleteNumbers());
 
         accumulator.accumulateReplace(Entity.Builder.anEntity().withId(6).build(),
             Entity.Builder.anEntity().withId(6).build());
-        Assert.assertEquals(1, accumulator.getReplaceNumbers());
+        Assertions.assertEquals(1, accumulator.getReplaceNumbers());
     }
 
     /**
@@ -59,18 +49,18 @@ public class DefaultTransactionAccumulatorTest {
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
             Entity.Builder.anEntity().withId(10).build());
 
-        Assert.assertEquals(2, acc.getReplaceNumbers());
-        Assert.assertEquals(1, acc.getUpdateIds().size());
-        Assert.assertEquals(10, acc.getUpdateIds().stream().findFirst().get().longValue());
+        Assertions.assertEquals(2, acc.getReplaceNumbers());
+        Assertions.assertEquals(1, acc.getUpdateIds().size());
+        Assertions.assertEquals(10, acc.getUpdateIds().stream().findFirst().get().longValue());
     }
 
     @Test
     public void testNoBuild() throws Exception {
         DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
         acc.accumulateBuild(Entity.Builder.anEntity().withId(100).build());
-        Assert.assertEquals(0, acc.getUpdateIds().size());
+        Assertions.assertEquals(0, acc.getUpdateIds().size());
 
-        Assert.assertEquals(Collections.emptySet(), acc.getUpdateIds());
+        Assertions.assertEquals(Collections.emptySet(), acc.getUpdateIds());
     }
 
     @Test
@@ -83,13 +73,12 @@ public class DefaultTransactionAccumulatorTest {
         acc.accumulateReplace(Entity.Builder.anEntity().withId(30).build(),
             Entity.Builder.anEntity().withId(30).build());
 
-        Assert.assertEquals(2, acc.getReplaceNumbers());
-        Assert.assertEquals(1, acc.getDeleteNumbers());
+        Assertions.assertEquals(2, acc.getReplaceNumbers());
+        Assertions.assertEquals(1, acc.getDeleteNumbers());
         long[] expectedIds = new long[] {10, 20, 30};
         long[] actualIds = acc.getUpdateIds().stream().mapToLong(i -> i.longValue()).toArray();
         Arrays.sort(expectedIds);
         Arrays.sort(actualIds);
-        Assert.assertArrayEquals(expectedIds, actualIds);
+        Assertions.assertArrayEquals(expectedIds, actualIds);
     }
-
 } 

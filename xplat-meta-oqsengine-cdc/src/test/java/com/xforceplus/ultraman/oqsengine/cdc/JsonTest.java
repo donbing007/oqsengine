@@ -3,8 +3,8 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * desc :.
@@ -20,6 +20,6 @@ public class JsonTest {
     @Test
     public void test() throws JsonProcessingException {
         List<Object> objects = OriginalEntityUtils.attributesToList(str);
-        Assert.assertNotNull(objects);
+        Assertions.assertNotNull(objects);
     }
 }

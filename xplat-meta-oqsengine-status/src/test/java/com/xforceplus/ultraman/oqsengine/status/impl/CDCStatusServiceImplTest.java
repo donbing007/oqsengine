@@ -1,20 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -24,8 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 11/16/2020
  * @since <pre>Nov 16, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers(ContainerType.REDIS)
+@ExtendWith({RedisContainer.class})
 public class CDCStatusServiceImplTest {
 
     private RedisClient redisClient;
@@ -36,12 +34,10 @@ public class CDCStatusServiceImplTest {
     private String notReadyKey = "cdc-commitId-notReady";
     private StatefulRedisConnection<String, String> conn;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
 
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+        redisClient = CommonInitialization.getInstance().getRedisClient();
 
         ObjectMapper objectMapper = new ObjectMapper();
         impl = new CDCStatusServiceImpl(statusKey, ackKey, heartBeatKey, notReadyKey);
@@ -52,34 +48,32 @@ public class CDCStatusServiceImplTest {
         conn = redisClient.connect();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         impl.destroy();
         impl = null;
 
         conn.close();
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     @Test
     public void testSaveGet() throws Exception {
         CDCMetrics metrics = new CDCMetrics();
         metrics.setBatchId(100);
-        Assert.assertTrue(impl.saveUnCommit(metrics));
+        Assertions.assertTrue(impl.saveUnCommit(metrics));
         metrics = impl.getUnCommit().get();
-        Assert.assertEquals(100, metrics.getBatchId());
+        Assertions.assertEquals(100, metrics.getBatchId());
     }
 
     @Test
     public void testHeartBeat() throws Exception {
-        Assert.assertTrue(impl.heartBeat());
-        Assert.assertTrue(impl.heartBeat());
-        Assert.assertTrue(impl.heartBeat());
+        Assertions.assertTrue(impl.heartBeat());
+        Assertions.assertTrue(impl.heartBeat());
+        Assertions.assertTrue(impl.heartBeat());
 
         long heartBeatValue = Long.parseLong(conn.sync().get(heartBeatKey));
-        Assert.assertEquals(3, heartBeatValue);
+        Assertions.assertEquals(3, heartBeatValue);
     }
 
     /**
@@ -91,28 +85,28 @@ public class CDCStatusServiceImplTest {
 
         impl.heartBeat();
 
-        Assert.assertTrue(impl.isAlive());
+        Assertions.assertTrue(impl.isAlive());
 
-        Assert.assertEquals("0", conn.sync().get(heartBeatKey));
+        Assertions.assertEquals("0", conn.sync().get(heartBeatKey));
     }
 
     @Test
     public void testHeartBeatNotExist() throws Exception {
         conn.sync().del(heartBeatKey);
 
-        Assert.assertTrue(impl.isAlive());
+        Assertions.assertTrue(impl.isAlive());
 
         impl.heartBeat();
 
-        Assert.assertTrue(impl.isAlive());
+        Assertions.assertTrue(impl.isAlive());
     }
 
     @Test
     public void testSaveAck() throws Exception {
         CDCAckMetrics ack = new CDCAckMetrics(CDCStatus.CONNECTED);
-        Assert.assertTrue(impl.saveAck(ack));
+        Assertions.assertTrue(impl.saveAck(ack));
 
         ack = impl.getAck().get();
-        Assert.assertEquals(CDCStatus.CONNECTED, ack.getCdcConsumerStatus());
+        Assertions.assertEquals(CDCStatus.CONNECTED, ack.getCdcConsumerStatus());
     }
 } 

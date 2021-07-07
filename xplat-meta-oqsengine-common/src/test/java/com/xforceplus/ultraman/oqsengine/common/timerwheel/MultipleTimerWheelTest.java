@@ -6,8 +6,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 多时间轮实现测试.
@@ -45,7 +45,7 @@ public class MultipleTimerWheelTest {
         wheel.add(System.currentTimeMillis(), 5000);
         latch.await();
 
-        Assert.assertEquals(1, result.get());
+        Assertions.assertEquals(1, result.get());
     }
 
     @Test
@@ -76,8 +76,8 @@ public class MultipleTimerWheelTest {
 
         latch.await();
         int size = wheel.size();
-        Assert.assertEquals(500000, result.get());
-        Assert.assertEquals(0, size);
+        Assertions.assertEquals(500000, result.get());
+        Assertions.assertEquals(0, size);
     }
 
     @Test
@@ -85,7 +85,7 @@ public class MultipleTimerWheelTest {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-                Assert.fail("Unexpected elimination can be known.");
+                Assertions.fail("Unexpected elimination can be known.");
 
                 return 0;
             }
@@ -94,7 +94,7 @@ public class MultipleTimerWheelTest {
         Object target = new Object();
         wheel.add(target, 180000000);
 
-        Assert.assertEquals(1, wheel.size());
+        Assertions.assertEquals(1, wheel.size());
     }
 
     @Test
@@ -117,7 +117,7 @@ public class MultipleTimerWheelTest {
 
         TimeUnit.MILLISECONDS.sleep(2000);
 
-        Assert.assertEquals(500000, wheel.size());
+        Assertions.assertEquals(500000, wheel.size());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class MultipleTimerWheelTest {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-                Assert.fail("Unexpected elimination can be known.");
+                Assertions.fail("Unexpected elimination can be known.");
 
                 return 0;
             }
@@ -134,9 +134,9 @@ public class MultipleTimerWheelTest {
         Object target = new Object();
         wheel.add(target, 180000000);
 
-        Assert.assertEquals(1, wheel.size());
+        Assertions.assertEquals(1, wheel.size());
         wheel.remove(target);
-        Assert.assertEquals(0, wheel.size());
+        Assertions.assertEquals(0, wheel.size());
     }
 
     @Test
@@ -144,7 +144,7 @@ public class MultipleTimerWheelTest {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-                Assert.fail("Unexpected elimination can be known.");
+                Assertions.fail("Unexpected elimination can be known.");
 
                 return 0;
             }
@@ -153,7 +153,7 @@ public class MultipleTimerWheelTest {
         Object target = new Object();
         wheel.add(target, 180000000);
 
-        Assert.assertTrue(wheel.exist(target));
+        Assertions.assertTrue(wheel.exist(target));
     }
 
     @Test
@@ -174,8 +174,8 @@ public class MultipleTimerWheelTest {
         latch.await();
 
         TimeUnit.SECONDS.sleep(1L);
-        Assert.assertEquals(0, wheel.size());
-        Assert.assertFalse(wheel.exist("test"));
+        Assertions.assertEquals(0, wheel.size());
+        Assertions.assertFalse(wheel.exist("test"));
     }
 
     @Test
@@ -214,9 +214,9 @@ public class MultipleTimerWheelTest {
         latch.await();
         TimeUnit.SECONDS.sleep(5L);
         wheel.size();
-        Assert.assertEquals(2, result.get());
-        Assert.assertEquals(0, wheel.size());
-        Assert.assertFalse(wheel.exist("test"));
+        Assertions.assertEquals(2, result.get());
+        Assertions.assertEquals(0, wheel.size());
+        Assertions.assertFalse(wheel.exist("test"));
 
     }
 }

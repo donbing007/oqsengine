@@ -3,15 +3,13 @@ package com.xforceplus.ultraman.oqsengine.meta.client;
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
@@ -24,7 +22,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  * @since : 1.8
  */
 @ActiveProfiles("clientRemote")
-@RunWith(SpringRunner.class)
+@ExtendWith({SpringExtension.class})
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestClientRemote {
 
@@ -40,9 +38,7 @@ public class TestClientRemote {
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
 
-            Assert.assertTrue(ret);
-//
-//            ret = requestHandler.register(new WatchElement("1", "0", -1, Register));
+            Assertions.assertTrue(ret);
 
             Thread.sleep(10000_000);
         }

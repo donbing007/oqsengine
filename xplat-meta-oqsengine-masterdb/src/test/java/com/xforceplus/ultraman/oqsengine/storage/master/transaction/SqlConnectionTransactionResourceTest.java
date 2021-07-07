@@ -8,9 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * ConnectionTransactionResource Tester.
@@ -20,14 +18,6 @@ import org.junit.Test;
  * @since <pre>Nov 11, 2020</pre>
  */
 public class SqlConnectionTransactionResourceTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     /**
      * Method: commit(long txId, long commitId).
@@ -50,7 +40,6 @@ public class SqlConnectionTransactionResourceTest {
         verify(ps).setLong(1, 2);
         verify(ps).setLong(2, 1);
         verify(ps).executeUpdate();
-
     }
 
 } 

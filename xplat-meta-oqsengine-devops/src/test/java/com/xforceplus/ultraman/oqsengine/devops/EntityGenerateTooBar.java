@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import org.junit.Ignore;
 
 /**
  * entity生成工具.
@@ -32,7 +31,6 @@ import org.junit.Ignore;
  * @author xujia 2020/11/26
  * @since 1.8
  */
-@Ignore
 public class EntityGenerateTooBar {
 
     public static final IEntityField

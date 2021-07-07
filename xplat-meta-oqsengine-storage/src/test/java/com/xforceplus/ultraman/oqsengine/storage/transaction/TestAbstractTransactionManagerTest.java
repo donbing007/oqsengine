@@ -2,15 +2,15 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -19,12 +19,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * AbstractTransactionManager Tester.
@@ -33,31 +32,22 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers(ContainerType.REDIS)
+@ExtendWith({RedisContainer.class})
 public class TestAbstractTransactionManagerTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+        redisClient = CommonInitialization.getInstance().getRedisClient();
 
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
+        commitIdStatusService = StorageInitialization.getInstance().getCommitIdStatusService();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        commitIdStatusService.destroy();
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     @Test
@@ -66,19 +56,19 @@ public class TestAbstractTransactionManagerTest {
         Transaction tx = tm.create();
         tm.bind(tx.id());
 
-        Assert.assertEquals(tx, tm.getCurrent().get());
+        Assertions.assertEquals(tx, tm.getCurrent().get());
 
         tm.unbind();
-        Assert.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
 
         tm.bind(tx.id());
-        Assert.assertEquals(tx, tm.getCurrent().get());
+        Assertions.assertEquals(tx, tm.getCurrent().get());
 
         tm.finish(tx);
-        Assert.assertFalse(tm.getCurrent().isPresent());
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertTrue(tx.isRollback());
-        Assert.assertFalse(tx.isCommitted());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertTrue(tx.isCompleted());
+        Assertions.assertTrue(tx.isRollback());
+        Assertions.assertFalse(tx.isCommitted());
     }
 
     @Test
@@ -90,10 +80,10 @@ public class TestAbstractTransactionManagerTest {
 
         tm.finish();
 
-        Assert.assertFalse(tm.getCurrent().isPresent());
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertFalse(tx.isRollback());
-        Assert.assertTrue(tx.isCommitted());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertTrue(tx.isCompleted());
+        Assertions.assertFalse(tx.isRollback());
+        Assertions.assertTrue(tx.isCommitted());
     }
 
     @Test
@@ -132,22 +122,26 @@ public class TestAbstractTransactionManagerTest {
         worker.shutdown();
 
         TimeUnit.SECONDS.sleep(1);
-        Assert.assertEquals(3, tm.size());
+        Assertions.assertEquals(3, tm.size());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testFreeze() throws Exception {
-        MockTransactionManager tm = new MockTransactionManager();
-        Transaction tx = tm.create();
-        Assert.assertNotNull(tx);
+    @Test
+    public void testFreeze() {
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            MockTransactionManager tm = new MockTransactionManager();
+            Transaction tx = tm.create();
+            Assertions.assertNotNull(tx);
 
-        tm.freeze();
-        tm.create();
+            tm.freeze();
+            tm.create();
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeoutTooSmall() throws Exception {
-        MockTransactionManager tm = new MockTransactionManager(100);
+    @Test
+    public void testTimeoutTooSmall() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            MockTransactionManager tm = new MockTransactionManager(100);
+        });
     }
 
     /**
@@ -166,9 +160,8 @@ public class TestAbstractTransactionManagerTest {
 
         TimeUnit.SECONDS.sleep(2);
 
-        Assert.assertTrue(tx.isCommitted());
-        Assert.assertFalse(tx.isRollback());
-
+        Assertions.assertTrue(tx.isCommitted());
+        Assertions.assertFalse(tx.isRollback());
     }
 
     @Test
@@ -181,16 +174,16 @@ public class TestAbstractTransactionManagerTest {
 
         try {
             tm.bind(tx.id());
-            Assert.fail("An unbound exception is expected, but it is not.");
+            Assertions.fail("An unbound exception is expected, but it is not.");
         } catch (RuntimeException ex) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                 String.format("Invalid transaction(%s), transaction may have timed out.", tx.id()), ex.getMessage());
         }
 
-        Assert.assertFalse(tm.getCurrent().isPresent());
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertFalse(tx.isCommitted());
-        Assert.assertTrue(tx.isRollback());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertTrue(tx.isCompleted());
+        Assertions.assertFalse(tx.isCommitted());
+        Assertions.assertTrue(tx.isRollback());
     }
 
     @Test
@@ -206,17 +199,17 @@ public class TestAbstractTransactionManagerTest {
         tx.commit();
         tm.finish(tx);
 
-        Assert.assertEquals(0, tm.size());
+        Assertions.assertEquals(0, tm.size());
 
         Field survivalField = AbstractTransactionManager.class.getDeclaredField("survival");
         survivalField.setAccessible(true);
         ConcurrentMap<Long, Transaction> survival = (ConcurrentMap<Long, Transaction>) survivalField.get(tm);
-        Assert.assertEquals(0, survival.size());
+        Assertions.assertEquals(0, survival.size());
 
         Field usingField = AbstractTransactionManager.class.getDeclaredField("using");
         usingField.setAccessible(true);
         ConcurrentMap<Long, Transaction> using = (ConcurrentMap<Long, Transaction>) usingField.get(tm);
-        Assert.assertEquals(0, using.size());
+        Assertions.assertEquals(0, using.size());
     }
 
 

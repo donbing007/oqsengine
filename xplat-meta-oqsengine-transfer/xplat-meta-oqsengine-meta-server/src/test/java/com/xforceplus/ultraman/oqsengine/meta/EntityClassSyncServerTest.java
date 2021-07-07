@@ -7,10 +7,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ public class EntityClassSyncServerTest extends BaseInit {
 
     private MockerSyncClient mockerSyncClient;
 
-    @Before
+    @BeforeEach
     public void before() throws InterruptedException {
 
         String host = "localhost";
@@ -46,7 +46,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         mockerSyncClient = initClient(host, port);
     }
 
-    @After
+    @AfterEach
     public void after() {
         mockerSyncClient.stop();
         stopServer();
@@ -76,19 +76,19 @@ public class EntityClassSyncServerTest extends BaseInit {
         Thread.sleep(2_000);
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-        Assert.assertNotNull(watcher);
+        Assertions.assertNotNull(watcher);
 
         WatchElement watchElement = watcher.watches().get(appId);
 
-        Assert.assertEquals(env, watchElement.getEnv());
-        Assert.assertEquals(version, watchElement.getVersion());
+        Assertions.assertEquals(env, watchElement.getEnv());
+        Assertions.assertEquals(version, watchElement.getVersion());
 
         /**
          * 当超出最大心跳时间时，将移除该watcher
          */
         Thread.sleep(31_000);
         watcher = responseWatchExecutor.watcher(uid);
-        Assert.assertNull(watcher);
+        Assertions.assertNull(watcher);
     }
 
     @Test
@@ -131,15 +131,13 @@ public class EntityClassSyncServerTest extends BaseInit {
         observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_OK));
         Thread.sleep(1_000);
         WatchElement element = responseWatchExecutor.watcher(uid).watches().get(appId);
-        Assert.assertEquals(element.getEnv(), env);
-        Assert.assertEquals(element.getVersion(), resetVersion);
+        Assertions.assertEquals(element.getEnv(), env);
+        Assertions.assertEquals(element.getVersion(), resetVersion);
 
         Set<String> appWatchers = responseWatchExecutor.appWatchers(appId, env);
-        Assert.assertTrue(appWatchers.contains(uid));
+        Assertions.assertTrue(appWatchers.contains(uid));
         Integer v = responseWatchExecutor.version(appId, env);
-        Assert.assertNull(v);
-
-
+        Assertions.assertNull(v);
     }
 
     @Test
@@ -204,7 +202,7 @@ public class EntityClassSyncServerTest extends BaseInit {
             Thread.sleep(1_000);
         }
 
-        Assert.assertNotEquals(currentWait, maxWaitLoops);
+        Assertions.assertNotEquals(currentWait, maxWaitLoops);
 
         mockerSyncClient.releaseSuccess(appId);
     }

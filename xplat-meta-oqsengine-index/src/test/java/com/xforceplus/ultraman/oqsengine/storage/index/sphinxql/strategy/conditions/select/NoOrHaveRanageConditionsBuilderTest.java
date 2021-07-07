@@ -13,16 +13,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.NoOrHaveRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * NoOrHaveRanageConditionsBuilder Tester.
@@ -36,13 +33,6 @@ public class NoOrHaveRanageConditionsBuilderTest {
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(longField));
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     /**
      * Method: build(Conditions conditions).
@@ -59,7 +49,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
 
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions, entityClass).toString();
-            Assert.assertEquals(c.expected, where);
+            Assertions.assertEquals(c.expected, where);
         });
 
     }

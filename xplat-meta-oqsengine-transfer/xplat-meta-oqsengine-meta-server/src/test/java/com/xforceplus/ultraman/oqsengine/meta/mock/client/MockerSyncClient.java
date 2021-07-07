@@ -5,10 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
-import org.junit.Assert;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
@@ -53,14 +53,14 @@ public class MockerSyncClient {
                             entityClassSyncResponse.getVersion(), Confirmed);
                     watchElementMap.put(w.getAppId(), w);
                 } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
-                    Assert.assertEquals(entityClassSyncResponse.getMd5(),
+                    Assertions.assertEquals(entityClassSyncResponse.getMd5(),
                             getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
                     WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), Confirmed);
 
                     success.put(entityClassSyncResponse.getAppId(), w);
                 } else {
-                    Assert.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
+                    Assertions.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
                 }
             }
 

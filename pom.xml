@@ -42,7 +42,7 @@
                 <configuration>
                     <skip>${test.skip}</skip>
                     <forkCount>1</forkCount>
-                    <reuseForks>false</reuseForks>
+                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
             <plugin>
@@ -60,7 +60,7 @@
                     <configLocation>./checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*</excludes>
+                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*, **/mock/*</excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -239,12 +239,12 @@
                 <version>0.10.3</version>
             </dependency>
 
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
-                <scope>test</scope>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>junit</groupId>-->
+<!--                <artifactId>junit</artifactId>-->
+<!--                <version>4.12</version>-->
+<!--                <scope>test</scope>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>com.h2database</groupId>
@@ -267,12 +267,12 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers</artifactId>
-                <version>1.15.2</version>
-                <scope>test</scope>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.testcontainers</groupId>-->
+<!--                <artifactId>testcontainers</artifactId>-->
+<!--                <version>1.15.2</version>-->
+<!--                <scope>test</scope>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>io.lettuce</groupId>
                 <artifactId>lettuce-core</artifactId>
@@ -351,19 +351,6 @@
                 <artifactId>redisson</artifactId>
                 <version>3.15.5</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-junit4</artifactId>
-                <version>2.0.7</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito2</artifactId>
-                <version>2.0.7</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>com.googlecode.aviator</groupId>
                 <artifactId>aviator</artifactId>
@@ -371,9 +358,8 @@
             </dependency>
             <dependency>
                 <groupId>com.xforceplus</groupId>
-                <artifactId>ultraman-test-tools</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-                <scope>test</scope>
+                <artifactId>ultraman-test-tools-core</artifactId>
+                <version>1.0.3-SNAPSHOT</version>
             </dependency>
 
             <dependency>
@@ -401,5 +387,4 @@
         <test.skip>false</test.skip>
         <argLine>-Xmx4096m -Xms4096m</argLine>
     </properties>
-
 </project>

@@ -25,8 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -35,7 +33,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
@@ -642,7 +639,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 continue;
             }
 
-            ValueVerifier verifier = verifierFactory.getVerifier(field.type());
+            ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
             Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
             result = verifier.verify(field, valueOp.orElse(null));
             if (VerifierResult.OK != result) {

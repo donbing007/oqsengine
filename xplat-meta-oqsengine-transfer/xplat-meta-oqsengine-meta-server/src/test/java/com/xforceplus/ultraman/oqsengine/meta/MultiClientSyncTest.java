@@ -6,10 +6,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ public class MultiClientSyncTest extends BaseInit {
     private int testClientSize = 2;
     private StreamEvent[] streamEvents = new StreamEvent[testClientSize];
 
-    @Before
+    @BeforeEach
     public void before() throws InterruptedException {
 
         String host = "localhost";
@@ -51,7 +51,7 @@ public class MultiClientSyncTest extends BaseInit {
         init();
     }
 
-    @After
+    @AfterEach
     public void after() {
         for (int i = 0; i < testClientSize; i++) {
             streamEvents[i].getMockerSyncClient().stop();
@@ -144,14 +144,14 @@ public class MultiClientSyncTest extends BaseInit {
     }
 
     private void assertEquals(WatchElement expected, WatchElement actual) {
-        Assert.assertEquals(expected.getAppId(), actual.getAppId());
-        Assert.assertEquals(expected.getEnv(), actual.getEnv());
-        Assert.assertEquals(expected.getVersion(), actual.getVersion());
-        Assert.assertEquals(Confirmed, actual.getStatus());
+        Assertions.assertEquals(expected.getAppId(), actual.getAppId());
+        Assertions.assertEquals(expected.getEnv(), actual.getEnv());
+        Assertions.assertEquals(expected.getVersion(), actual.getVersion());
+        Assertions.assertEquals(Confirmed, actual.getStatus());
     }
 
     private void assertNotEquals(WatchElement expected, WatchElement actual) {
-        Assert.assertTrue(
+        Assertions.assertTrue(
                 !expected.getAppId().equals(actual.getAppId()) ||
                         !expected.getEnv().equals(actual.getEnv()) ||
                         expected.getVersion() != actual.getVersion()

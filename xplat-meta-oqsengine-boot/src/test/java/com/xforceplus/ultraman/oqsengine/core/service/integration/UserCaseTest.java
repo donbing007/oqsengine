@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -25,7 +26,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -35,18 +36,17 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * 用户用例测试.
@@ -55,9 +55,9 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @version 0.1 2020/11/29 17:37
  * @since 1.8
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class UserCaseTest {
+public class UserCaseTest extends AbstractContainerExtends {
 
     final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
 
@@ -82,17 +82,10 @@ public class UserCaseTest {
     @MockBean
     private MetaManager metaManager;
 
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
 
     private static final int TEST_LOOPS = 10;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
@@ -119,13 +112,13 @@ public class UserCaseTest {
         Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
 
-        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), ""))
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
         Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), null))
@@ -138,7 +131,7 @@ public class UserCaseTest {
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         while (commitIdStatusService.size() > 0) {
             logger.info("Wait for CDC synchronization to complete.");
@@ -150,7 +143,6 @@ public class UserCaseTest {
                 stat.executeUpdate("truncate table oqsbigentity");
             }
         }
-
 
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
@@ -176,7 +168,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> entities = entitySearchService.selectByConditions(
@@ -191,8 +183,8 @@ public class UserCaseTest {
             MockMetaManager.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
         );
-        Assert.assertEquals(1, entities.size());
-        Assert.assertEquals(99L,
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(99L,
             entities.stream().findFirst().get().entityValue().getValue("l0-long").get().getValue());
 
         tx.commit();
@@ -209,7 +201,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -218,7 +210,7 @@ public class UserCaseTest {
         transactionManager.bind(tx.id());
 
         entity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L));
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
@@ -229,7 +221,7 @@ public class UserCaseTest {
             )
         ), MockMetaManager.l2EntityClass.ref(), Page.newSinglePage(10));
 
-        Assert.assertEquals(0, result.size());
+        Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
         transactionManager.unbind();
@@ -245,7 +237,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -253,7 +245,7 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
@@ -264,7 +256,7 @@ public class UserCaseTest {
             )
         ), MockMetaManager.l2EntityClass.ref(), Page.newSinglePage(10));
 
-        Assert.assertEquals(0, result.size());
+        Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
         transactionManager.unbind();
@@ -280,12 +272,12 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
         IEntity fatherEntity = entitySearchService.selectOne(entity.id(), MockMetaManager.l0EntityClass.ref()).get();
 
         fatherEntity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 100L));
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
@@ -298,7 +290,7 @@ public class UserCaseTest {
             Page.newSinglePage(100)
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
     }
 
@@ -315,14 +307,14 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 1; i <= TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
             entity.entityValue().addValue(
                 new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
@@ -341,12 +333,12 @@ public class UserCaseTest {
                 page
             );
 
-            Assert.assertEquals(1, page.getTotalCount());
+            Assertions.assertEquals(1, page.getTotalCount());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
+        Assertions.assertEquals(0, commitIdStatusService.size());
 
     }
 
@@ -365,19 +357,19 @@ public class UserCaseTest {
                         new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
             IEntity selectEntity =
                 entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
 
-            Assert.assertNotEquals(0, selectEntity.id());
+            Assertions.assertNotEquals(0, selectEntity.id());
 
-            Assert.assertEquals(i, selectEntity.entityValue().getValue("l0-long").get().valueToLong());
-            Assert.assertEquals("0", selectEntity.entityValue().getValue("l2-string").get().valueToString());
+            Assertions.assertEquals(i, selectEntity.entityValue().getValue("l0-long").get().valueToLong());
+            Assertions.assertEquals("0", selectEntity.entityValue().getValue("l2-string").get().valueToString());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
+        Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
     @Test
@@ -392,8 +384,8 @@ public class UserCaseTest {
                         new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
@@ -408,8 +400,8 @@ public class UserCaseTest {
                 page
             );
 
-            Assert.assertEquals(0, entities.size());
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, entities.size());
+            Assertions.assertEquals(0, page.getTotalCount());
         }
     }
 
@@ -426,7 +418,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
@@ -436,7 +428,7 @@ public class UserCaseTest {
 
             OperationResult opResult = entityManagementService.replace(entity);
             ResultStatus status = opResult.getResultStatus();
-            Assert.assertTrue(ResultStatus.SUCCESS == status);
+            Assertions.assertTrue(ResultStatus.SUCCESS == status);
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
@@ -450,14 +442,14 @@ public class UserCaseTest {
                 MockMetaManager.l2EntityClass.ref(),
                 page
             );
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, page.getTotalCount());
 
-            Assert.assertEquals(0, entities.size());
+            Assertions.assertEquals(0, entities.size());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
+        Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
     /**
@@ -473,7 +465,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -483,7 +475,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -493,7 +485,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -503,10 +495,10 @@ public class UserCaseTest {
             MockMetaManager.l2EntityClass.ref(),
             Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l0-long").get()), Page.newSinglePage(100));
 
-        Assert.assertEquals(3, entities.size());
-        Assert.assertEquals(e0.id(), entities.stream().findFirst().get().id());
-        Assert.assertEquals(e1.id(), entities.stream().skip(1).findFirst().get().id());
-        Assert.assertEquals(e2.id(), entities.stream().skip(2).findFirst().get().id());
+        Assertions.assertEquals(3, entities.size());
+        Assertions.assertEquals(e0.id(), entities.stream().findFirst().get().id());
+        Assertions.assertEquals(e1.id(), entities.stream().skip(1).findFirst().get().id());
+        Assertions.assertEquals(e2.id(), entities.stream().skip(2).findFirst().get().id());
     }
 
     // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
@@ -520,7 +512,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -530,7 +522,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
@@ -539,7 +531,7 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -552,13 +544,13 @@ public class UserCaseTest {
             Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l0-long").get()),
             Page.newSinglePage(100));
 
-        Assert.assertEquals(3, entities.size());
+        Assertions.assertEquals(3, entities.size());
 
-        Assert.assertFalse(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
+        Assertions.assertFalse(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
 
-        Assert.assertEquals(100L,
+        Assertions.assertEquals(100L,
             entities.stream().skip(1).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
-        Assert.assertEquals(200L,
+        Assertions.assertEquals(200L,
             entities.stream().skip(2).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
     }
 
@@ -575,14 +567,14 @@ public class UserCaseTest {
                     new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
             entity.entityValue().addValue(
                 new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), i)
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
@@ -596,7 +588,7 @@ public class UserCaseTest {
                 page
             );
 
-            Assert.assertEquals(1, page.getTotalCount());
+            Assertions.assertEquals(1, page.getTotalCount());
         }
     }
 
@@ -614,7 +606,7 @@ public class UserCaseTest {
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity.resetId(0);
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
             entityManagementService.deleteForce(entity);
 
@@ -630,7 +622,7 @@ public class UserCaseTest {
                 page
             );
 
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, page.getTotalCount());
         }
     }
 
@@ -648,7 +640,7 @@ public class UserCaseTest {
             ).build();
 
         // 新创建
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
 
@@ -656,7 +648,7 @@ public class UserCaseTest {
             new DecimalValue(MockMetaManager.l2EntityClass.field("l2-dec").get(), new BigDecimal("789.123"))
         );
         // 更新保证进入索引中.
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -671,9 +663,9 @@ public class UserCaseTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
         entity = entities.stream().findFirst().get();
-        Assert.assertEquals("789.123", entity.entityValue().getValue("l2-dec").get().valueToString());
+        Assertions.assertEquals("789.123", entity.entityValue().getValue("l2-dec").get().valueToString());
     }
 
     /**
@@ -691,7 +683,7 @@ public class UserCaseTest {
             ).build();
 
         // 新创建
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
 
@@ -700,7 +692,7 @@ public class UserCaseTest {
                 "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
         );
         // 更新保证进入索引中.
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
@@ -715,7 +707,7 @@ public class UserCaseTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
     }
 
     @Test
@@ -745,7 +737,7 @@ public class UserCaseTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
         // 更新会等等CDC同步结束才返回,这里是为了保证查询落在索引中.
         entityManagementService.replace(entity);
@@ -764,7 +756,7 @@ public class UserCaseTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
         entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
@@ -780,6 +772,6 @@ public class UserCaseTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
     }
 }

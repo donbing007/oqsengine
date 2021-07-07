@@ -9,13 +9,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.HaveOrNoRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 有OR条件,但是没有范围查询的条件生成器测试.
@@ -45,7 +44,7 @@ public class HaveOrNoRanageConditionsBuilderTest {
 
         buildCase().forEach(c -> {
             String where = builder.build(c.conditions, entityClass).toString();
-            Assert.assertEquals(c.expected, where);
+            Assertions.assertEquals(c.expected, where);
         });
     }
 

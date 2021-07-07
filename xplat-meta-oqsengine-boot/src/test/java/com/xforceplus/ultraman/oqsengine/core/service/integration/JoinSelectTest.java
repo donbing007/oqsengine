@@ -3,12 +3,14 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -19,7 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,18 +33,18 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * 关联查询集成测试.
@@ -51,9 +53,9 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @version 0.1 2020/4/28 16:27
  * @since 1.8
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class JoinSelectTest {
+public class JoinSelectTest extends AbstractContainerExtends {
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
@@ -83,15 +85,10 @@ public class JoinSelectTest {
     private List<IEntity> entities;
     private List<IEntity> driverEntities;
 
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
+    public JoinSelectTest() throws IllegalAccessException {
     }
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
 
         initialization = false;
@@ -99,13 +96,25 @@ public class JoinSelectTest {
         Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
 
+        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
+
         Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id()))
+            .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
 
         Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
             .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
 
+        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
+
         Mockito.when(metaManager.load(MockMetaManager.driverEntityClass.id()))
+            .thenReturn(Optional.of(MockMetaManager.driverEntityClass));
+
+        Mockito.when(metaManager.load(MockMetaManager.driverEntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockMetaManager.driverEntityClass));
 
         initData();
@@ -113,7 +122,7 @@ public class JoinSelectTest {
         initialization = true;
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         if (initialization) {
             clear();
@@ -149,8 +158,8 @@ public class JoinSelectTest {
         Page page = new Page(1, 100);
         Collection<IEntity> results =
             entitySearchService.selectByConditions(conditions, MockMetaManager.l2EntityClass.ref(), page);
-        Assert.assertEquals(0, results.size());
-        Assert.assertEquals(0, page.getTotalCount());
+        Assertions.assertEquals(0, results.size());
+        Assertions.assertEquals(0, page.getTotalCount());
     }
 
     @Test
@@ -176,8 +185,8 @@ public class JoinSelectTest {
         Page page = Page.newSinglePage(100);
         Collection<IEntity> results =
             entitySearchService.selectByConditions(conditions, MockMetaManager.l2EntityClass.ref(), page);
-        Assert.assertEquals(1, results.size());
-        Assert.assertEquals(1, page.getTotalCount());
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(1, page.getTotalCount());
 
         conditions = Conditions.buildEmtpyConditions()
             .addAnd(
@@ -200,35 +209,38 @@ public class JoinSelectTest {
         page = Page.newSinglePage(100);
         results =
             entitySearchService.selectByConditions(conditions, MockMetaManager.l2EntityClass.ref(), page);
-        Assert.assertEquals(1, results.size());
-        Assert.assertEquals(1, page.getTotalCount());
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(1, page.getTotalCount());
     }
 
     /**
      * 测试驱动实例超出设定上限.
      */
-    @Test(expected = SQLException.class)
+    @Test
     public void testDriverInstanceLimitExceeded() throws Exception {
-        Conditions conditions = Conditions.buildEmtpyConditions()
-            .addAnd(
-                new Condition(
-                    MockMetaManager.driverEntityClass.ref(),
-                    MockMetaManager.driverEntityClass.field("driver-long").get(),
-                    ConditionOperator.EQUALS,
-                    3L,
-                    new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 100L)
+        Assertions.assertThrows(SQLException.class, () -> {
+            Conditions conditions = Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.driverEntityClass.ref(),
+                        MockMetaManager.driverEntityClass.field("driver-long").get(),
+                        ConditionOperator.EQUALS,
+                        3L,
+                        new LongValue(MockMetaManager.driverEntityClass.field("driver-long").get(), 100L)
+                    )
                 )
-            )
-            .addAnd(
-                new Condition(
-                    MockMetaManager.l2EntityClass.field("l2-string").get(),
-                    ConditionOperator.EQUALS,
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "v3")
-                )
-            );
+                .addAnd(
+                    new Condition(
+                        MockMetaManager.l2EntityClass.field("l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "v3")
+                    )
+                );
 
-        Page page = Page.newSinglePage(100);
-        entitySearchService.selectByConditions(conditions, MockMetaManager.l2EntityClass.ref(), page);
+            Page page = Page.newSinglePage(100);
+            entitySearchService.selectByConditions(conditions, MockMetaManager.l2EntityClass.ref(), page);
+        });
+
     }
 
     private void initData() throws SQLException {

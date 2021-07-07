@@ -6,10 +6,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
 import java.util.Arrays;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * SphinxQLHelper Tester.
@@ -20,13 +18,6 @@ import org.junit.Test;
  */
 public class SphinxQLHelperTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void testFilterSymbols() throws Exception {
@@ -40,7 +31,7 @@ public class SphinxQLHelperTest {
         buff.insert(0, "before");
         buff.append("after");
 
-        Assert.assertEquals("beforeMDafter", SphinxQLHelper.filterSymbols(buff.toString()));
+        Assertions.assertEquals("beforeMDafter", SphinxQLHelper.filterSymbols(buff.toString()));
     }
 
     @Test
@@ -63,37 +54,37 @@ public class SphinxQLHelperTest {
         });
         String expected = buff.toString();
 
-        Assert.assertEquals(expected, SphinxQLHelper.encodeJsonCharset(value));
+        Assertions.assertEquals(expected, SphinxQLHelper.encodeJsonCharset(value));
     }
 
     @Test
     public void testBuildPreciseQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false));
+        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true));
 
         storageValue = new LongStorageValue("9223372036854775807", 100, true);
-        Assert.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assert.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false));
+        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true));
     }
 
     @Test
     public void testBuildFuzzyQuery() throws Exception {
         Tokenizer tokenizer = new JcsegTokenizer();
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("(1y2p0ijtestw32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
+        Assertions.assertEquals("(1y2p0ijtestw32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
 
         storageValue = new StringStorageValue("9223372036854775807", "测试test", true);
-        Assert.assertEquals("(1y2p0ij测试w32e8e7S << 1y2p0ijtestw32e8e7S)",
+        Assertions.assertEquals("(1y2p0ij测试w32e8e7S << 1y2p0ijtestw32e8e7S)",
             SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
 
         storageValue = new StringStorageValue("9223372036854775807", "上海", true);
-        Assert.assertEquals("(1y2p0ij上海w32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
+        Assertions.assertEquals("(1y2p0ij上海w32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
     }
 
     @Test
     public void testBuildWirdcardQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("1y2p0ijtestw32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
+        Assertions.assertEquals("1y2p0ijtestw32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
     }
 } 

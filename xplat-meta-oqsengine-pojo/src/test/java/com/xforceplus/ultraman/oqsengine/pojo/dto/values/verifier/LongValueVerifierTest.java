@@ -4,9 +4,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 /**
  * 数值型的校验器测试.
@@ -30,7 +30,7 @@ public class LongValueVerifierTest {
 
         LongValue value = new LongValue(field, 123);
 
-        Assert.assertFalse(verifier.isTooLong(field, value));
+        Assertions.assertFalse(verifier.isTooLong(field, value));
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
@@ -41,7 +41,7 @@ public class LongValueVerifierTest {
 
         value = new LongValue(field, 12);
 
-        Assert.assertTrue(verifier.isTooLong(field, value));
+        Assertions.assertTrue(verifier.isTooLong(field, value));
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
@@ -52,7 +52,7 @@ public class LongValueVerifierTest {
 
         value = new LongValue(field, -12);
 
-        Assert.assertTrue(verifier.isTooLong(field, value));
+        Assertions.assertTrue(verifier.isTooLong(field, value));
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
@@ -63,7 +63,7 @@ public class LongValueVerifierTest {
 
         value = new LongValue(field, -123);
 
-        Assert.assertFalse(verifier.isTooLong(field, value));
+        Assertions.assertFalse(verifier.isTooLong(field, value));
     }
 
 }

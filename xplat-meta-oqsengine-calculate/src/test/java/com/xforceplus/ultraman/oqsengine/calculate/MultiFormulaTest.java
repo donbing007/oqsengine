@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 多个公式字段测试.
@@ -35,14 +35,14 @@ public class MultiFormulaTest {
         Expression expression = AviatorEvaluator.getInstance()
             .compile("test", fullExpression, false);
 
-        Assert.assertNotNull(expression);
+        Assertions.assertNotNull(expression);
 
         Map<String, Object> params = new HashMap<>();
         params.put("d", 1010);
 
         Object value = expression.execute(params);
 
-        Assert.assertNotNull(value);
+        Assertions.assertNotNull(value);
         //  Assert.assertNotNull(value.get("a"));
         //  Assert.assertNotNull(value.get("b"));
         //  Assert.assertNotNull(value.get("c"));
@@ -69,7 +69,7 @@ public class MultiFormulaTest {
         } catch (Exception e) {
             ex = e;
         }
-        Assert.assertNotNull(ex);
+        Assertions.assertNotNull(ex);
 
 
         String expression2 = "string.join(seq.list(${abc}, ${xyz}, '-'));";
@@ -80,7 +80,7 @@ public class MultiFormulaTest {
         params.put("xyz", "xyz");
         Object res = expression.execute(params);
         //  当abc不存在时，没有报错而是返回null
-        Assert.assertNull(res);
+        Assertions.assertNull(res);
     }
 
     @Test
@@ -96,7 +96,7 @@ public class MultiFormulaTest {
         params.put("name", expectedValue);
         String res = (String) expression.execute(params);
 
-        Assert.assertEquals(expectedValue, res);
+        Assertions.assertEquals(expectedValue, res);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class MultiFormulaTest {
         params.put("amount", expectedAmount);
 
         Object res = expression.execute(params);
-        Assert.assertEquals(BigDecimal.class, res.getClass());
+        Assertions.assertEquals(BigDecimal.class, res.getClass());
         //  BigDecimal finalRes = ((BigDecimal)res).setScale(6);
         //  System.out.println(finalRes + "");
     }
@@ -132,12 +132,12 @@ public class MultiFormulaTest {
         params.put("current_time", now);
 
         Object res = expression.execute(params);
-        Assert.assertEquals(LocalDateTime.class, TimeUtils.convert((Long) res).getClass());
+        Assertions.assertEquals(LocalDateTime.class, TimeUtils.convert((Long) res).getClass());
 
         expression1 = "sysdate()";
         expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
         expression = ExpressionUtils.compile(expressionWrapper);
         res = expression.execute();
-        Assert.assertEquals(LocalDateTime.class, TimeUtils.convert((Date) res).getClass());
+        Assertions.assertEquals(LocalDateTime.class, TimeUtils.convert((Date) res).getClass());
     }
 }

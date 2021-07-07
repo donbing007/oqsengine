@@ -3,15 +3,15 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.RedisEventHandler;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * MultiLocalTransaction Tester.
@@ -33,35 +32,26 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers(ContainerType.REDIS)
+@ExtendWith({RedisContainer.class})
 public class MultiLocalTransactionTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
     private RedisEventHandler redisEventHandler;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+        redisClient = CommonInitialization.getInstance().getRedisClient();
 
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
+        commitIdStatusService = StorageInitialization.getInstance().getCommitIdStatusService();
 
         redisEventHandler = new RedisEventHandler(redisClient, new ObjectMapper(), 10);
         redisEventHandler.init();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        commitIdStatusService.destroy();
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     @Test
@@ -88,7 +78,7 @@ public class MultiLocalTransactionTest {
         tx.commit();
 
         for (MockResource resource : resources) {
-            Assert.assertTrue(resource.isCommitted());
+            Assertions.assertTrue(resource.isCommitted());
         }
     }
 
@@ -125,10 +115,10 @@ public class MultiLocalTransactionTest {
         });
         tx.commit();
 
-        Assert.assertTrue(tx.isWaitedSync());
+        Assertions.assertTrue(tx.isWaitedSync());
 
         for (MockResource resource : resources) {
-            Assert.assertTrue(resource.isCommitted());
+            Assertions.assertTrue(resource.isCommitted());
         }
     }
 
@@ -150,7 +140,7 @@ public class MultiLocalTransactionTest {
 
         tx.rollback();
         for (MockResource resource : resources) {
-            Assert.assertTrue(resource.isRollback());
+            Assertions.assertTrue(resource.isRollback());
         }
     }
 
@@ -181,19 +171,19 @@ public class MultiLocalTransactionTest {
 
         try {
             tx.commit();
-            Assert.fail("No expected exception was thrown.");
+            Assertions.fail("No expected exception was thrown.");
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
 
         for (MockResource r : exResources) {
-            Assert.assertFalse(r.isCommitted());
-            Assert.assertTrue(r.isDestroyed());
+            Assertions.assertFalse(r.isCommitted());
+            Assertions.assertTrue(r.isDestroyed());
         }
 
         for (MockResource r : correctResources) {
-            Assert.assertFalse(r.isRollback());
-            Assert.assertTrue(r.isDestroyed());
+            Assertions.assertFalse(r.isRollback());
+            Assertions.assertTrue(r.isDestroyed());
         }
 
     }
@@ -221,17 +211,17 @@ public class MultiLocalTransactionTest {
 
         try {
             tx.rollback();
-            Assert.fail("No expected exception was thrown.");
+            Assertions.fail("No expected exception was thrown.");
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
 
         for (MockResource r : exResources) {
-            Assert.assertFalse(r.isRollback());
+            Assertions.assertFalse(r.isRollback());
         }
 
         for (MockResource r : correctResources) {
-            Assert.assertTrue(r.isRollback());
+            Assertions.assertTrue(r.isRollback());
         }
     }
 
@@ -248,20 +238,20 @@ public class MultiLocalTransactionTest {
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(8)
             .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(8L).build()).build());
 
-        Assert.assertFalse(tx.isReadyOnly());
+        Assertions.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(9)
             .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(9L).build()).build());
 
-        Assert.assertFalse(tx.isReadyOnly());
+        Assertions.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(10)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build(),
             Entity.Builder.anEntity().withId(10)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build());
-        Assert.assertFalse(tx.isReadyOnly());
+        Assertions.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1)
@@ -281,10 +271,10 @@ public class MultiLocalTransactionTest {
         tx.getAccumulator().accumulateDelete(Entity.Builder.anEntity().withId(5)
             .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(5L).build()).build());
 
-        Assert.assertFalse(tx.isReadyOnly());
+        Assertions.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        Assert.assertTrue(tx.isReadyOnly());
+        Assertions.assertTrue(tx.isReadyOnly());
     }
 
     private List<MockResource> buildResources(int size, boolean ex) {
@@ -381,7 +371,5 @@ public class MultiLocalTransactionTest {
         public boolean isDestroyed() throws SQLException {
             return this.destroyed;
         }
-
     }
-
 }

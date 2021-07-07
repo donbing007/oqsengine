@@ -14,9 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -34,7 +34,7 @@ public class TestSegmentId {
     private ExecutorService executorService;
 
 
-    @Before
+    @BeforeEach
     public void before() {
         executorService = Executors.newFixedThreadPool(30);
 
@@ -45,20 +45,19 @@ public class TestSegmentId {
         manager.registVariableParser(datePattenParser);
         applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
-        ReflectionTestUtils.setField(PatternParserUtil.class,"applicationContext",applicationContext);
-
+        ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
     }
 
     @Test
     public void testNextId() throws InterruptedException, IOException {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        SegmentId segmentId  = new SegmentId();
+        SegmentId segmentId = new SegmentId();
         segmentId.setMaxId(1000);
         segmentId.setLoadingId(300);
         segmentId.setPattern("{yyyy}-{MM}:{0000}");
-        PatternValue value = new PatternValue(0,"1");
+        PatternValue value = new PatternValue(0, "1");
         segmentId.setCurrentId(value);
-        for(int j=0;j<20;j++) {
+        for (int j = 0; j < 20; j++) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -68,8 +67,8 @@ public class TestSegmentId {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    for(int i=0;i<100;i++) {
-                       System.out.println(Thread.currentThread().getName()+segmentId.nextId().getId());
+                    for (int i = 0; i < 100; i++) {
+                        System.out.println(Thread.currentThread().getName() + segmentId.nextId().getId());
                     }
                 }
             });
@@ -79,6 +78,6 @@ public class TestSegmentId {
         Thread.sleep(2000);
         LocalDateTime time = LocalDateTime.now();
         String ext = time.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-        Assert.assertEquals(ext+":2001",segmentId.nextId().getId());
+        Assertions.assertEquals(ext + ":2001", segmentId.nextId().getId());
     }
 }

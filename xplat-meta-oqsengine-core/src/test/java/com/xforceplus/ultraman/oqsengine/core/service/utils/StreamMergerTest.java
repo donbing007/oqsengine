@@ -7,9 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * StreamMerger Tester.
@@ -19,14 +17,6 @@ import org.junit.Test;
  * @since <pre>Dec 3, 2020</pre>
  */
 public class StreamMergerTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void mergeTest() {
@@ -83,8 +73,5 @@ public class StreamMergerTest {
             .collect(toList());
 
         System.out.println(collect);
-
     }
-
-
 } 

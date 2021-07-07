@@ -3,12 +3,8 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * TimerWheel Tester.
@@ -20,22 +16,6 @@ import org.junit.Test;
 public class TimerWheelTest {
 
     public TimerWheelTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
     }
 
     /**
@@ -58,8 +38,8 @@ public class TimerWheelTest {
 
         TimeUnit.SECONDS.sleep(1L);
 
-        Assert.assertEquals(0, wheel.size());
-        Assert.assertFalse(wheel.exist("test"));
+        Assertions.assertEquals(0, wheel.size());
+        Assertions.assertFalse(wheel.exist("test"));
 
     }
 
@@ -93,7 +73,7 @@ public class TimerWheelTest {
         wheel.add(System.currentTimeMillis(), 5000);
         latch.await();
 
-        Assert.assertEquals(1, result.get());
+        Assertions.assertEquals(1, result.get());
     }
 
     /**
@@ -134,7 +114,7 @@ public class TimerWheelTest {
         wheel.add(System.currentTimeMillis(), 5000);
         latch.await();
 
-        Assert.assertEquals(2, result.get());
+        Assertions.assertEquals(2, result.get());
     }
 
     /**
@@ -145,7 +125,7 @@ public class TimerWheelTest {
         TimerWheel wheel = new TimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-                Assert.fail("Unexpected elimination can be known.");
+                Assertions.fail("Unexpected elimination can be known.");
 
                 return 0;
             }
@@ -154,9 +134,9 @@ public class TimerWheelTest {
         Object target = new Object();
         wheel.add(target, 5000);
 
-        Assert.assertEquals(1, wheel.size());
+        Assertions.assertEquals(1, wheel.size());
         wheel.remove(target);
-        Assert.assertEquals(0, wheel.size());
+        Assertions.assertEquals(0, wheel.size());
     }
 
 }

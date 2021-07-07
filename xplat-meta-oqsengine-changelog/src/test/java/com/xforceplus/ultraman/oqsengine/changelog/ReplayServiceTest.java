@@ -6,18 +6,17 @@ import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
-import com.xforceplus.ultraman.oqsengine.common.hash.Hash;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith({RedisContainer.class, SpringExtension.class})
 @SpringBootTest(classes = ChangelogConfiguration.class)
 public class ReplayServiceTest {
 
@@ -41,12 +40,12 @@ public class ReplayServiceTest {
     private ChangelogExample example;
 
     @Test
-    public void testReplayRelation(){
-        replayService.replayAggDomain(1,1,1);
+    public void testReplayRelation() {
+        replayService.replayAggDomain(1, 1, 1);
     }
 
     @Test
-    public void testChangelogTestList(){
+    public void testChangelogTestList() {
 
         long start = System.currentTimeMillis();
         System.out.println("Current" + start);
@@ -73,7 +72,7 @@ public class ReplayServiceTest {
     }
 
     @Test
-    public void testTime(){
+    public void testTime() {
         AtomicLong atomicLong = new AtomicLong(0);
         AtomicLong reduce = example.changelogs.stream().reduce(atomicLong, (a, b) -> {
             a.incrementAndGet();
@@ -86,7 +85,7 @@ public class ReplayServiceTest {
     }
 
     @Test
-    public void testReplayEntity(){
+    public void testReplayEntity() {
         long startTime = System.currentTimeMillis();
         Optional<ChangelogStatefulEntity> changelogStatefulEntity = replayService.replayStatefulEntity(1, 1000001L);
         System.out.println(System.currentTimeMillis() - startTime);
@@ -98,7 +97,8 @@ public class ReplayServiceTest {
 
         ChangedEvent changedEvent = genChangedEventA(changelog);
 
-        List<ChangelogEvent> receive = statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent), new HashMap<>());
+        List<ChangelogEvent> receive =
+            statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent), new HashMap<>());
 
         receive.forEach(System.out::println);
         System.out.println(statefulEntity);
@@ -107,14 +107,15 @@ public class ReplayServiceTest {
         Changelog changelogRel = example.addRelABChangelog();
         ChangedEvent changedEvent1 = genChangedEventAB(changelogRel);
 
-        List<ChangelogEvent> receive2 = statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent1), new HashMap<>());
+        List<ChangelogEvent> receive2 =
+            statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent1), new HashMap<>());
         System.out.println(statefulEntity);
 
         receive2.forEach(System.out::println);
     }
 
     //TODO
-    private ChangedEvent genChangedEventA(Changelog changelog){
+    private ChangedEvent genChangedEventA(Changelog changelog) {
         ChangedEvent changedEvent = new ChangedEvent();
         changedEvent.setCommitId(changelog.getVersion());
         changedEvent.setEntityClassId(changelog.getEntityClass());
@@ -132,7 +133,7 @@ public class ReplayServiceTest {
         return changedEvent;
     }
 
-    private ChangedEvent genChangedEventAB(Changelog changelog){
+    private ChangedEvent genChangedEventAB(Changelog changelog) {
         ChangedEvent changedEvent = new ChangedEvent();
         changedEvent.setCommitId(changelog.getVersion());
         changedEvent.setEntityClassId(changelog.getEntityClass());

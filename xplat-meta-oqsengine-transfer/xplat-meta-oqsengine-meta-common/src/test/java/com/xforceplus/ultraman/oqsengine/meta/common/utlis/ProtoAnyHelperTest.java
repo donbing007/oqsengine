@@ -6,8 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by justin.xu on 05/2021.
@@ -45,21 +45,21 @@ public class ProtoAnyHelperTest {
 
     private <T> void compare(T expected, FieldType fieldType) throws Exception {
         Optional<Any> t = ProtoAnyHelper.toAnyValue(expected);
-        Assert.assertTrue(t.isPresent());
+        Assertions.assertTrue(t.isPresent());
 
         Optional<?> v = ProtoAnyHelper.toFieldTypeValue(fieldType, t.get());
-        Assert.assertTrue(v.isPresent());
+        Assertions.assertTrue(v.isPresent());
         switch (fieldType) {
             case DATETIME: {
-                Assert.assertEquals(expected, ((LocalDateTime) v.get()).toInstant(ZoneOffset.of("+8")).toEpochMilli());
+                Assertions.assertEquals(expected, ((LocalDateTime) v.get()).toInstant(ZoneOffset.of("+8")).toEpochMilli());
                 break;
             }
             case STRINGS: {
-                Assert.assertEquals(expected, String.join(",", (String[]) v.get()));
+                Assertions.assertEquals(expected, String.join(",", (String[]) v.get()));
                 break;
             }
             default: {
-                Assert.assertEquals(expected, v.get());
+                Assertions.assertEquals(expected, v.get());
             }
         }
 

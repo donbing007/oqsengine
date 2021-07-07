@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value;
 
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 测试Strings的转换.
@@ -24,12 +24,12 @@ public class SphinxQLStringsStorageStrategyTest {
         StorageValue secondStorageValue = storageValue.next();
         StorageValue thirdStorageValue = secondStorageValue.next();
 
-        Assert.assertEquals("teal", firstStorageValue.value());
-        Assert.assertEquals("fuchsia", secondStorageValue.value());
-        Assert.assertEquals("cyan", thirdStorageValue.value());
+        Assertions.assertEquals("teal", firstStorageValue.value());
+        Assertions.assertEquals("fuchsia", secondStorageValue.value());
+        Assertions.assertEquals("cyan", thirdStorageValue.value());
 
-        Assert.assertEquals(0, firstStorageValue.location());
-        Assert.assertEquals(1, secondStorageValue.location());
-        Assert.assertEquals(2, thirdStorageValue.location());
+        Assertions.assertEquals(0, firstStorageValue.location());
+        Assertions.assertEquals(1, secondStorageValue.location());
+        Assertions.assertEquals(2, thirdStorageValue.location());
     }
 }

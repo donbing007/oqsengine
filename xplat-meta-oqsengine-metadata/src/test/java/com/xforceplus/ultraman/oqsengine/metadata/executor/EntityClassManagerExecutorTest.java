@@ -4,18 +4,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MI
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.EventBus;
-import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
-import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaTestHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
@@ -25,29 +20,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * 测试.
@@ -55,114 +38,38 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author xujia 2021/2/20
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS})
-public class EntityClassManagerExecutorTest {
+public class EntityClassManagerExecutorTest extends MetaTestHelper {
 
-    private RedisClient redisClient;
-
-    private DefaultCacheExecutor cacheExecutor;
-
-    private EntityClassSyncExecutor entityClassSyncExecutor;
-
-    private MockRequestHandler mockRequestHandler;
-
-    private StorageMetaManager storageMetaManager;
-
-    private ExecutorService executorService;
-
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        /*
-         * init RedisClient
-         */
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-
-        /*
-         * init cacheExecutor
-         */
-        cacheExecutor = new DefaultCacheExecutor();
-
-        ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-        cacheExecutor.init();
-
-
-
-        /*
-         * init entityClassExecutor
-         */
-        entityClassSyncExecutor = new EntityClassSyncExecutor();
-        ReflectionTestUtils.setField(entityClassSyncExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassSyncExecutor, "expireExecutor", new ExpireExecutor());
-        ReflectionTestUtils.setField(entityClassSyncExecutor, "eventBus", new EventBus() {
-
-            @Override
-            public void watch(EventType type, Consumer<Event> listener) {
-                Assert.assertEquals(type, EventType.AUTO_FILL_UPGRADE);
-            }
-
-            @Override
-            public void notify(Event event) {
-                Assert.assertEquals(event.type(), EventType.AUTO_FILL_UPGRADE);
-            }
-        });
-
-        entityClassSyncExecutor.start();
-
-        /*
-         * init mockRequestHandler
-         */
-        mockRequestHandler = new MockRequestHandler();
-        ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);
-
-        storageMetaManager = new StorageMetaManager();
-
-        /*
-         * init entityClassManagerExecutor
-         */
-        executorService = new ThreadPoolExecutor(5, 5, 0,
-            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
-        ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(storageMetaManager, "requestHandler", mockRequestHandler);
-        ReflectionTestUtils.setField(storageMetaManager, "asyncDispatcher", executorService);
-
+        super.init();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        entityClassSyncExecutor.stop();
-        executorService.shutdown();
-
-        cacheExecutor.destroy();
-        cacheExecutor = null;
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        super.destroy();
     }
 
     @Test
-    public void needTest() {
+    public void needTest() throws IllegalAccessException {
         String appId = "testNeed";
         String env = "test";
         int expectedVersion = EXIST_MIN_VERSION + 1;
-        int version = storageMetaManager.need(appId, env);
-        Assert.assertEquals(expectedVersion, version);
+        int version = MetaInitialization.getInstance().getMetaManager().need(appId, env);
+        Assertions.assertEquals(expectedVersion, version);
     }
 
     @Test
-    public void loadByEntityRefTest() {
+    public void loadByEntityRefTest() throws IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
         try {
-            storageMetaManager.load(expectedId);
+            MetaInitialization.getInstance().getMetaManager().load(expectedId);
         } catch (Exception e) {
-            Assert.assertTrue(
+            Assertions.assertTrue(
                 e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
 
@@ -173,46 +80,46 @@ public class EntityClassManagerExecutorTest {
 
         //  测试替身1
         Optional<IEntityClass> entityClassOp =
-            storageMetaManager.load(expectedId, GeneralConstant.PROFILE_CODE_1.getKey());
-        Assert.assertTrue(entityClassOp.isPresent());
+            MetaInitialization.getInstance().getMetaManager().load(expectedId, GeneralConstant.PROFILE_CODE_1.getKey());
+        Assertions.assertTrue(entityClassOp.isPresent());
 
         Optional<IEntityField> fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true));
-        Assert.assertTrue(fieldOp.isPresent());
+        Assertions.assertTrue(fieldOp.isPresent());
 
         //  不包含替身2
-        Assert.assertFalse(entityClassOp.get().field(
+        Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
             .isPresent()
         );
 
         //  测试替身2
-        entityClassOp = storageMetaManager.load(expectedId, GeneralConstant.PROFILE_CODE_2.getKey());
-        Assert.assertTrue(entityClassOp.isPresent());
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, GeneralConstant.PROFILE_CODE_2.getKey());
+        Assertions.assertTrue(entityClassOp.isPresent());
 
         fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)
         );
-        Assert.assertTrue(fieldOp.isPresent());
+        Assertions.assertTrue(fieldOp.isPresent());
         //  不包含替身1
-        Assert.assertFalse(entityClassOp.get().field(
+        Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
             .isPresent()
         );
 
         //  测试不带替身
-        entityClassOp = storageMetaManager.load(expectedId, null);
-        Assert.assertTrue(entityClassOp.isPresent());
-        Assert.assertFalse(entityClassOp.get().field(
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, null);
+        Assertions.assertTrue(entityClassOp.isPresent());
+        Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
             .isPresent()
         );
-        Assert.assertFalse(entityClassOp.get().field(
+        Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
                 .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
             .isPresent()
@@ -220,7 +127,7 @@ public class EntityClassManagerExecutorTest {
     }
 
     @Test
-    public void loadTest() throws InterruptedException {
+    public void loadTest() throws InterruptedException, IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = 1 + 3600;
@@ -228,9 +135,9 @@ public class EntityClassManagerExecutorTest {
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
         try {
-            storageMetaManager.load(expectedId);
+            MetaInitialization.getInstance().getMetaManager().load(expectedId);
         } catch (Exception e) {
-            Assert.assertTrue(
+            Assertions.assertTrue(
                 e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
         }
 
@@ -239,13 +146,13 @@ public class EntityClassManagerExecutorTest {
                 .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
-        Optional<IEntityClass> entityClassOp = storageMetaManager.load(expectedId);
-        Assert.assertTrue(entityClassOp.isPresent());
+        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId);
+        Assertions.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
             entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
 
-        Assert.assertNotNull(entityClassInfo);
+        Assertions.assertNotNull(entityClassInfo);
 
         check(expectedVersion + 1, entityClassOp.get(), entityClassInfo);
 
@@ -254,8 +161,8 @@ public class EntityClassManagerExecutorTest {
             re.forEach(
                 s -> {
                     IEntityClass e = s.getRightEntityClass();
-                    Assert.assertNotNull(e);
-                    Assert.assertEquals(s.getRightEntityClassId(), e.id());
+                    Assertions.assertNotNull(e);
+                    Assertions.assertEquals(s.getRightEntityClassId(), e.id());
                 }
             );
         }
@@ -264,21 +171,21 @@ public class EntityClassManagerExecutorTest {
             check 自循环
          */
         long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
-        entityClassOp = storageMetaManager.load(expectedAnc);
-        Assert.assertTrue(entityClassOp.isPresent());
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedAnc);
+        Assertions.assertTrue(entityClassOp.isPresent());
 
         entityClassInfo =
             entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
 
-        Assert.assertNotNull(entityClassInfo);
+        Assertions.assertNotNull(entityClassInfo);
 
         re = entityClassOp.get().oqsRelations();
         if (null != re) {
             re.forEach(
                 s -> {
                     IEntityClass e = s.getRightEntityClass();
-                    Assert.assertNotNull(e);
-                    Assert.assertEquals(s.getRightEntityClassId(), e.id());
+                    Assertions.assertNotNull(e);
+                    Assertions.assertEquals(s.getRightEntityClassId(), e.id());
                 }
 
             );
@@ -288,14 +195,15 @@ public class EntityClassManagerExecutorTest {
     /**
      * test & check.
      */
-    private void check(int expectedVersion, IEntityClass entityClass, List<EntityClassInfo> entityClassInfos) {
+    private void check(int expectedVersion, IEntityClass entityClass, List<EntityClassInfo> entityClassInfos)
+        throws IllegalAccessException {
 
-        Assert.assertTrue(entityClassInfos.size() > 0);
+        Assertions.assertTrue(entityClassInfos.size() > 0);
         Map<Long, EntityClassInfo> fullCheckMaps =
             entityClassInfos.stream().collect(Collectors.toMap(EntityClassInfo::getId, f1 -> f1, (f1, f2) -> f1));
 
         //  check current appId version
-        Assert.assertEquals(expectedVersion, cacheExecutor.version(entityClass.id()));
+        Assertions.assertEquals(expectedVersion, MetaInitialization.getInstance().getCacheExecutor().version(entityClass.id()));
 
         Map<Long, List<EntityFieldInfo>> expectedFields = new HashMap<>();
         for (EntityClassInfo e : entityClassInfos) {
@@ -321,7 +229,7 @@ public class EntityClassManagerExecutorTest {
     }
 
     private IEntityClass getEntityClass(long expectedId, IEntityClass entityClass) {
-        Assert.assertNotNull(entityClass);
+        Assertions.assertNotNull(entityClass);
         if (entityClass.id() == expectedId) {
             return entityClass;
         }
@@ -334,21 +242,21 @@ public class EntityClassManagerExecutorTest {
 
     private void checkEntity(EntityClassInfo expected, IEntityClass actual,
                              Map<Long, List<EntityFieldInfo>> fieldMaps) {
-        Assert.assertNotNull(actual);
+        Assertions.assertNotNull(actual);
         //  basic
-        Assert.assertEquals(expected.getId(), actual.id());
-        Assert.assertEquals(expected.getCode(), actual.code());
-        Assert.assertEquals(expected.getVersion(), actual.version());
-        Assert.assertEquals(expected.getName(), actual.name());
+        Assertions.assertEquals(expected.getId(), actual.id());
+        Assertions.assertEquals(expected.getCode(), actual.code());
+        Assertions.assertEquals(expected.getVersion(), actual.version());
+        Assertions.assertEquals(expected.getName(), actual.name());
         if (expected.getFather() >= MIN_ID) {
-            Assert.assertNotNull(actual.father());
-            Assert.assertEquals(expected.getFather(), actual.father().get().id());
+            Assertions.assertNotNull(actual.father());
+            Assertions.assertEquals(expected.getFather(), actual.father().get().id());
         }
-        Assert.assertEquals(expected.getLevel(), actual.level());
+        Assertions.assertEquals(expected.getLevel(), actual.level());
 
         //  relations
         if (!expected.getRelationsList().isEmpty()) {
-            Assert.assertNotNull(actual.oqsRelations());
+            Assertions.assertNotNull(actual.oqsRelations());
             Map<Long, OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
                 .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
 
@@ -356,14 +264,14 @@ public class EntityClassManagerExecutorTest {
 
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
                 OqsRelation actualRelation = actualRelations.get(expectedRelation.getId());
-                Assert.assertNotNull(actualRelation);
-                Assert.assertEquals(expectedRelation.getCode(), actualRelation.getCode());
-                Assert.assertEquals(expectedRelation.getRightEntityClassId(), actualRelation.getRightEntityClassId());
-                Assert.assertEquals(expectedRelation.getLeftEntityClassId(), actualRelation.getLeftEntityClassId());
-                Assert.assertEquals(expectedRelation.getLeftEntityClassCode(), actualRelation.getLeftEntityClassCode());
-                Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType().ordinal());
-                Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
-                Assert.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());
+                Assertions.assertNotNull(actualRelation);
+                Assertions.assertEquals(expectedRelation.getCode(), actualRelation.getCode());
+                Assertions.assertEquals(expectedRelation.getRightEntityClassId(), actualRelation.getRightEntityClassId());
+                Assertions.assertEquals(expectedRelation.getLeftEntityClassId(), actualRelation.getLeftEntityClassId());
+                Assertions.assertEquals(expectedRelation.getLeftEntityClassCode(), actualRelation.getLeftEntityClassCode());
+                Assertions.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType().ordinal());
+                Assertions.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
+                Assertions.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());
 
                 assertEntityField(expectedRelation.getEntityField(), actualRelation.getEntityField());
             }
@@ -379,7 +287,7 @@ public class EntityClassManagerExecutorTest {
             for (int i = 0; i < expectedList.size(); i++) {
                 EntityFieldInfo exp = expectedList.get(i);
                 IEntityField act = entityFieldMap.remove(exp.getId());
-                Assert.assertNotNull(act);
+                Assertions.assertNotNull(act);
 
                 assertEntityField(exp, act);
             }
@@ -387,47 +295,47 @@ public class EntityClassManagerExecutorTest {
     }
 
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
-        Assert.assertEquals(exp.getName(), act.name());
-        Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType().name().toUpperCase(), act.type().getType().toUpperCase());
-        Assert.assertEquals(exp.getDictId(), act.dictId());
-        Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+        Assertions.assertEquals(exp.getName(), act.name());
+        Assertions.assertEquals(exp.getCname(), act.cnName());
+        Assertions.assertEquals(exp.getFieldType().name().toUpperCase(), act.type().getType().toUpperCase());
+        Assertions.assertEquals(exp.getDictId(), act.dictId());
+        Assertions.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
         if (act.calculateType().equals(Calculator.Type.FORMULA)) {
-            Assert.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.FORMULA.getType());
-            Assert.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
-            Assert.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
+            Assertions.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.FORMULA.getType());
+            Assertions.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
+            Assertions.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
             Optional<?> opObject;
             try {
                 opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
             } catch (Exception e) {
                 throw new RuntimeException(String.format("toFieldTypeValue failed, message : %s", e.getMessage()));
             }
-            Assert.assertTrue(opObject.isPresent());
-            Assert.assertEquals(opObject.get(), act.calculator().getFailedDefaultValue());
-            Assert.assertEquals(exp.getCalculator().getArgsList().size(), act.calculator().getArgs().size());
-            Assert.assertEquals(exp.getCalculator().getFailedPolicy(), act.calculator().getFailedPolicy().getPolicy());
+            Assertions.assertTrue(opObject.isPresent());
+            Assertions.assertEquals(opObject.get(), act.calculator().getFailedDefaultValue());
+            Assertions.assertEquals(exp.getCalculator().getArgsList().size(), act.calculator().getArgs().size());
+            Assertions.assertEquals(exp.getCalculator().getFailedPolicy(), act.calculator().getFailedPolicy().getPolicy());
         } else if (act.calculateType().equals(Calculator.Type.AUTO_FILL)) {
-            Assert.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.AUTO_FILL.getType());
-            Assert.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());
-            Assert.assertEquals(exp.getCalculator().getModel(), act.calculator().getModel());
-            Assert.assertEquals(exp.getCalculator().getStep(), act.calculator().getStep());
+            Assertions.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.AUTO_FILL.getType());
+            Assertions.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());
+            Assertions.assertEquals(exp.getCalculator().getModel(), act.calculator().getModel());
+            Assertions.assertEquals(exp.getCalculator().getStep(), act.calculator().getStep());
         }
 
         //  check field Config
         com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
         if (efc.isInitialized()) {
             FieldConfig afc = act.config();
-            Assert.assertNotNull(afc);
+            Assertions.assertNotNull(afc);
 
-            Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-            Assert.assertEquals(efc.getLength(), afc.getLen());
-            Assert.assertEquals(efc.getPrecision(), afc.precision());
-            Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
-            Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
-            Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
-            Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
+            Assertions.assertEquals(efc.getSearchable(), afc.isSearchable());
+            Assertions.assertEquals(efc.getLength(), afc.getLen());
+            Assertions.assertEquals(efc.getPrecision(), afc.precision());
+            Assertions.assertEquals(efc.getIdentifier(), afc.isIdentifie());
+            Assertions.assertEquals(efc.getIsRequired(), afc.isRequired());
+            Assertions.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+            Assertions.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
+            Assertions.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
     }
 }

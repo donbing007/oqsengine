@@ -3,25 +3,18 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
+import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
 import java.util.Collection;
-import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * desc :.
@@ -30,9 +23,7 @@ import org.junit.runner.RunWith;
  * @author : xujia 2020/11/22
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
-public class CdcErrorStorageTest extends AbstractCDCContainer {
+public class CdcErrorStorageTest extends CDCTestHelper {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
@@ -50,55 +41,38 @@ public class CdcErrorStorageTest extends AbstractCDCContainer {
 
     private static String expectedUniKey = uniKeyGenerate("111", 1, ErrorType.DATA_INSERT_ERROR);
 
-
     private static CdcErrorTask expectedCdcErrorTask =
         CdcErrorTask.buildErrorTask(expectedSeqNo, expectedUniKey, expectedBatchId, expectedId, expectedEntityId,
             expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
 
 
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerStarter.reset();
-    }
-
-
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        initAll(false);
+        super.init(false);
     }
 
-    @After
-    public void after() throws SQLException {
-        closeAll();
-    }
-
-    private DataSource buildDevOpsDataSource() {
-        return dataSourcePackage.getDevOps();
+    @AfterEach
+    public void after() throws Exception {
+        super.destroy(false);
     }
 
 
     @Test
     public void cdcCru() throws Exception {
+        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
+
         int count = cdcErrorStorage.buildCdcError(expectedCdcErrorTask);
-        Assert.assertEquals(1, count);
+        Assertions.assertEquals(1, count);
 
         count = cdcErrorStorage
             .submitRecover(expectedCdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, expectedObjectStr);
-        Assert.assertEquals(1, count);
+        Assertions.assertEquals(1, count);
 
         count = cdcErrorStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
-        Assert.assertEquals(1, count);
+        Assertions.assertEquals(1, count);
 
         count = cdcErrorStorage.updateCdcError(unExpectedSeqNo, FixedStatus.FIXED);
-        Assert.assertEquals(0, count);
+        Assertions.assertEquals(0, count);
 
 
         //  使用expectedSeqNo查询
@@ -145,36 +119,36 @@ public class CdcErrorStorageTest extends AbstractCDCContainer {
             .setId(expectedId).setCommitId(expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType())
             .setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(false);
         queryWithOneExpected(cdcErrorQueryCondition);
-
-
     }
 
-    private void queryWithOneExpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
+    private void queryWithOneExpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws Exception {
+        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
         Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-        Assert.assertEquals(1, cdcErrorTaskList.size());
+        Assertions.assertEquals(1, cdcErrorTaskList.size());
         isExpectedCdcErrorTask(cdcErrorTaskList.stream().findFirst().get());
     }
 
-    private void queryWithUnexpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
+    private void queryWithUnexpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws Exception {
+        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
         Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-        Assert.assertEquals(0, cdcErrorTaskList.size());
+        Assertions.assertEquals(0, cdcErrorTaskList.size());
     }
 
     private void isExpectedCdcErrorTask(CdcErrorTask cdcErrorTask) {
-        Assert.assertEquals(expectedSeqNo, cdcErrorTask.getSeqNo());
-        Assert.assertEquals(expectedUniKey, cdcErrorTask.getUniKey());
-        Assert.assertEquals(expectedBatchId, cdcErrorTask.getBatchId());
-        Assert.assertEquals(expectedId, cdcErrorTask.getId());
-        Assert.assertEquals(expectedEntityId, cdcErrorTask.getEntity());
-        Assert.assertEquals(expectedVersion, cdcErrorTask.getVersion());
-        Assert.assertEquals(expectedOp, cdcErrorTask.getOp());
-        Assert.assertEquals(expectedCommitId, cdcErrorTask.getCommitId());
-        Assert.assertEquals(expectedErrorType, cdcErrorTask.getErrorType());
-        Assert.assertEquals(expectedMessage, cdcErrorTask.getMessage());
-        Assert.assertEquals(expectedObjectStr, cdcErrorTask.getOperationObject());
-        Assert.assertEquals(FixedStatus.FIXED.getStatus(), cdcErrorTask.getStatus());
-        Assert.assertTrue(
+        Assertions.assertEquals(expectedSeqNo, cdcErrorTask.getSeqNo());
+        Assertions.assertEquals(expectedUniKey, cdcErrorTask.getUniKey());
+        Assertions.assertEquals(expectedBatchId, cdcErrorTask.getBatchId());
+        Assertions.assertEquals(expectedId, cdcErrorTask.getId());
+        Assertions.assertEquals(expectedEntityId, cdcErrorTask.getEntity());
+        Assertions.assertEquals(expectedVersion, cdcErrorTask.getVersion());
+        Assertions.assertEquals(expectedOp, cdcErrorTask.getOp());
+        Assertions.assertEquals(expectedCommitId, cdcErrorTask.getCommitId());
+        Assertions.assertEquals(expectedErrorType, cdcErrorTask.getErrorType());
+        Assertions.assertEquals(expectedMessage, cdcErrorTask.getMessage());
+        Assertions.assertEquals(expectedObjectStr, cdcErrorTask.getOperationObject());
+        Assertions.assertEquals(FixedStatus.FIXED.getStatus(), cdcErrorTask.getStatus());
+        Assertions.assertTrue(
             System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
-        Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);
+        Assertions.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);
     }
 }

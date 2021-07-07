@@ -4,9 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 字符串校验器测试.
@@ -30,7 +29,7 @@ public class StringValueVerifierTest {
 
         StringValue value = new StringValue(field, "abc");
 
-        Assert.assertFalse(verifier.isTooLong(field, value));
+        Assertions.assertFalse(verifier.isTooLong(field, value));
 
         field = EntityField.Builder.anEntityField()
             .withConfig(
@@ -41,7 +40,7 @@ public class StringValueVerifierTest {
 
         value = new StringValue(field, "ab");
 
-        Assert.assertTrue(verifier.isTooLong(field, value));
+        Assertions.assertTrue(verifier.isTooLong(field, value));
     }
 
 }

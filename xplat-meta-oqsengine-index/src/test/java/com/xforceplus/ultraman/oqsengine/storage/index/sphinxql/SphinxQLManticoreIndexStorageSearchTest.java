@@ -1,13 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
-import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -16,46 +9,19 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
-import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
-import io.lettuce.core.RedisClient;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * 搜索测试.
@@ -64,9 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 0.1 2021/05/18 15:51
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
-public class SphinxQLManticoreIndexStorageSearchTest {
+public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerExtends {
 
     private IEntityField baseStringField = EntityField.Builder.anEntityField()
         .withId(Long.MAX_VALUE)
@@ -121,127 +85,35 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withFather(baseEntityClass)
         .build();
 
-    private TransactionManager transactionManager;
-    private RedisClient redisClient;
-    private CommitIdStatusServiceImpl commitIdStatusService;
-    private DataSourcePackage dataSourcePackage;
-    private Selector<String> indexWriteIndexNameSelector;
-    private Selector<DataSource> writeDataSourceSelector;
-    private ExecutorService threadPool;
-    private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
-    private TokenizerFactory tokenizerFactory;
-    private StorageStrategyFactory storageStrategyFactory;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-
-        redisClient = RedisClient.create(
-            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
-
-        writeDataSourceSelector = buildWriteDataSourceSelector();
-
-        // 等待加载完毕
-        TimeUnit.SECONDS.sleep(1L);
-
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .withWaitCommitSync(false)
-            .build();
-
-        indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
-
-        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
-
-        tokenizerFactory = new DefaultTokenizerFactory();
-
-        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
-
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
-
-        threadPool = Executors.newFixedThreadPool(3);
-
-        storage = new SphinxQLManticoreIndexStorage();
-
-        DataSource searchDataSource = buildSearchDataSourceSelector();
-        TransactionExecutor searchExecutor =
-            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
-                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
-        TransactionExecutor writeExecutor =
-            new AutoJoinTransactionExecutor(
-                transactionManager, new SphinxQLTransactionResourceFactory(),
-                writeDataSourceSelector, indexWriteIndexNameSelector);
-
-
-        ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
-        ReflectionTestUtils.setField(storage, "writeTransactionExecutor", writeExecutor);
-        ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
-        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
-        ReflectionTestUtils.setField(storage, "tokenizerFactory", tokenizerFactory);
-        ReflectionTestUtils.setField(storage, "threadPool", threadPool);
-        storage.setSearchIndexName("oqsindex");
-        storage.setMaxSearchTimeoutMs(1000);
-        storage.init();
-
+        Thread.sleep(1_000);
         initData();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        Optional<Transaction> t = transactionManager.getCurrent();
-        if (t.isPresent()) {
-            Transaction tx = t.get();
-            if (!tx.isCompleted()) {
-                tx.rollback();
-            }
-        }
-
-        transactionManager.finish();
-
-        truncate();
-
-        dataSourcePackage.close();
-
-        commitIdStatusService.destroy();
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-
-        ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+        InitializationHelper.clearAll();
     }
 
     @Test
     public void testSearch() throws Exception {
-
         for (Case c : buildCase()) {
-            Collection<EntityRef> refs = storage.search(
+            Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().search(
                 c.config,
                 c.entityClasses
             );
 
             long[] expectedIds = c.expectedSupplie.get();
             Arrays.sort(expectedIds);
-            Assert.assertEquals(
-                String.format("%s check length failed.", c.description), expectedIds.length, refs.size());
+            Assertions.assertEquals(
+                expectedIds.length, refs.size(), String.format("%s check length failed.", c.description));
             for (EntityRef ref : refs) {
-                Assert
-                    .assertTrue(String.format("%s validation failed to find expected %d.", c.description, ref.getId()),
-                        Arrays.binarySearch(expectedIds, ref.getId()) >= 0);
+                Assertions
+                    .assertTrue(Arrays.binarySearch(expectedIds, ref.getId()) >= 0,
+                        String.format("%s validation failed to find expected %d.", c.description, ref.getId()));
             }
         }
     }
@@ -355,42 +227,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             expectedDatas.add(oe);
         }
 
-        storage.saveOrDeleteOriginalEntities(expectedDatas);
+        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(expectedDatas);
     }
 
     private String buildAttributeKey(long id) {
         return String.format("%dS", id);
-    }
-
-    private DataSource buildSearchDataSourceSelector() {
-        if (dataSourcePackage == null) {
-            dataSourcePackage = DataSourceFactory.build(true);
-        }
-
-        return dataSourcePackage.getIndexSearch().get(0);
-
-    }
-
-    private Selector<DataSource> buildWriteDataSourceSelector() {
-        if (dataSourcePackage == null) {
-            dataSourcePackage = DataSourceFactory.build(true);
-        }
-
-        return new HashSelector<>(dataSourcePackage.getIndexWriter());
-
-    }
-
-    private void truncate() throws SQLException {
-        List<DataSource> dataSources = dataSourcePackage.getIndexWriter();
-        for (DataSource ds : dataSources) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-
-            st.close();
-            conn.close();
-        }
     }
 
 }

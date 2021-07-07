@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
+import com.google.common.collect.Lists;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -26,29 +24,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
-import io.lettuce.core.RedisClient;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneId;
@@ -57,14 +40,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * 主库搜索测试.
@@ -73,16 +54,10 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 0.1 2020/11/6 16:16
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL})
-public class SQLMasterStorageQueryTest {
+public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
 
-    private TransactionManager transactionManager;
-    private CommitIdStatusServiceImpl commitIdStatusService;
-
-    private DataSourcePackage dataSourcePackage;
-    private SQLMasterStorage storage;
-    private RedisClient redisClient;
+    private TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
+    private SQLMasterStorage storage = MasterDBInitialization.getInstance().getMasterStorage();
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -189,59 +164,13 @@ public class SQLMasterStorageQueryTest {
 
     private List<IEntity> entityes;
 
+    public SQLMasterStorageQueryTest() throws Exception {
+    }
 
-    @Before
+
+    @BeforeEach
     public void before() throws Exception {
-
-        // 等待加载完毕
-        TimeUnit.SECONDS.sleep(1L);
-
-        redisClient = RedisClient.create(
-            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
-
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .withWaitCommitSync(false)
-            .build();
-
-
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
-
-        SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
-        sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sqlJsonConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
-        sqlJsonConditionsBuilderFactory.init();
-
-        storage = new SQLMasterStorage();
-
-        dataSourcePackage = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(dataSourcePackage.getFirstMaster()), new NoSelector<>("oqsbigentity"));
-
-        ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
-
-        MockMetaManager metaManager = new MockMetaManager();
-        metaManager.addEntityClass(l2EntityClass);
-        SimpleFieldKeyGenerator keyGenerator = new SimpleFieldKeyGenerator();
-        ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);
-
-        ReflectionTestUtils.setField(storage, "metaManager", metaManager);
-        ReflectionTestUtils.setField(storage, "keyGenerator", keyGenerator);
-
-        storage.setTableName("oqsbigentity");
-        storage.setQueryTimeout(100000000);
-        storage.init();
+        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(l2EntityClass));
 
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
@@ -267,39 +196,24 @@ public class SQLMasterStorageQueryTest {
         }
 
         // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+        Assertions.assertFalse(transactionManager.getCurrent().isPresent());
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-
-        transactionManager.finish();
-
-        storage.destroy();
-
-        Connection conn = dataSourcePackage.getFirstMaster().getConnection();
-        Statement stat = conn.createStatement();
-        stat.execute("truncate table oqsbigentity");
-        stat.close();
-        conn.close();
-
-        dataSourcePackage.close();
-
-        commitIdStatusService.destroy();
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
+        InitializationHelper.clearAll();
     }
 
     @Test
     public void testActualEntityClass() throws Exception {
         Optional<IEntity> entityOp = storage.selectOne(entityes.get(0).id(), l0EntityClass);
-        Assert.assertTrue(entityOp.isPresent());
+        Assertions.assertTrue(entityOp.isPresent());
         IEntity entity = entityOp.get();
-        Assert.assertEquals(l2EntityClass.ref(), entity.entityClassRef());
+        Assertions.assertEquals(l2EntityClass.ref(), entity.entityClassRef());
 
         Collection<IEntity> entities = storage.selectMultiple(new long[] {entityes.get(1).id()}, l0EntityClass);
         for (IEntity e : entities) {
-            Assert.assertEquals(l2EntityClass.ref(), e.entityClassRef());
+            Assertions.assertEquals(l2EntityClass.ref(), e.entityClassRef());
         }
     }
 
@@ -334,7 +248,7 @@ public class SQLMasterStorageQueryTest {
             )).build();
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        Assert.assertEquals(1, storage.build(uncommitEntity, l2EntityClass));
+        Assertions.assertEquals(1, storage.build(uncommitEntity, l2EntityClass));
 
         Collection<EntityRef> refs = storage.select(
             Conditions.buildEmtpyConditions().addAnd(
@@ -348,9 +262,9 @@ public class SQLMasterStorageQueryTest {
         transactionManager.getCurrent().get().rollback();
         transactionManager.finish();
 
-        Assert.assertEquals(2, refs.size());
+        Assertions.assertEquals(2, refs.size());
         long size = refs.stream().mapToLong(e -> e.getId()).filter(id -> (id == 1004) || (id == 1000000)).count();
-        Assert.assertEquals(2, size);
+        Assertions.assertEquals(2, size);
     }
 
     /**
@@ -359,7 +273,7 @@ public class SQLMasterStorageQueryTest {
     @Test
     public void testSelect() throws Exception {
         // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+        Assertions.assertFalse(transactionManager.getCurrent().isPresent());
 
         // 每一个都以独立事务运行.
         buildSelectCase().stream().forEach(c -> {
@@ -830,12 +744,12 @@ public class SQLMasterStorageQueryTest {
     }
 
     private void assertSelect(long[] expectedIds, Collection<EntityRef> result, boolean sort) {
-        Assert.assertEquals(expectedIds.length, result.size());
+        Assertions.assertEquals(expectedIds.length, result.size());
         result.stream().forEach(e -> {
-            Assert
-                .assertTrue(String.format("Not found %d", e.getId()), Arrays.binarySearch(expectedIds, e.getId()) >= 0);
+            Assertions
+                .assertTrue(Arrays.binarySearch(expectedIds, e.getId()) >= 0, String.format("Not found %d", e.getId()));
             if (sort) {
-                Assert.assertNotNull(e.getOrderValue());
+                Assertions.assertNotNull(e.getOrderValue());
             }
         });
     }
@@ -879,25 +793,20 @@ public class SQLMasterStorageQueryTest {
         buildData();
 
         try {
-            entityes.stream().forEach(e -> {
+            for (IEntity entity : entityes) {
                 try {
-                    storage.build(e, l2EntityClass);
+                    storage.build(entity, l2EntityClass);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
-                commitIdStatusService.obsoleteAll();
-            });
+                StorageInitialization.getInstance().getCommitIdStatusService().obsoleteAll();
+            }
         } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();
             throw ex;
         }
     }
 
-    private DataSourcePackage buildDataSource(String file) throws SQLException {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-        return dataSourcePackage;
-    }
 
     private void buildData() {
         entityes = new ArrayList<>();

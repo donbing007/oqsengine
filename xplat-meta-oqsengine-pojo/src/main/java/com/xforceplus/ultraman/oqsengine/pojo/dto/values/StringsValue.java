@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -84,6 +85,15 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
+    }
+
+    @Override
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != FieldType.STRINGS) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
     }
 
     /**

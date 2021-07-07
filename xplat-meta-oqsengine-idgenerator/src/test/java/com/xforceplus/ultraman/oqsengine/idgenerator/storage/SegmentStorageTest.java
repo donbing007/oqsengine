@@ -3,45 +3,39 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.storage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * SQLMasterStorage Tester.
+ * SegmentStorageTest Tester.
  *
  * @author <Authors name>
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.MYSQL})
+@ExtendWith(MysqlContainer.class)
 public class SegmentStorageTest {
 
     private TransactionManager transactionManager;
@@ -50,8 +44,14 @@ public class SegmentStorageTest {
     private SqlSegmentStorage storage;
 
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
+        System.setProperty(
+            "MYSQL_JDBC_ID",
+            String.format(
+                "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
+
         dataSource = buildDataSource("./src/test/resources/generator.conf");
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -80,7 +80,7 @@ public class SegmentStorageTest {
 //        transactionManager.finish();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
 //        transactionManager.finish();
 //        try (Connection conn = dataSource.getConnection()) {
@@ -89,6 +89,12 @@ public class SegmentStorageTest {
 //            }
 //        }
 //        ((HikariDataSource) dataSource).close();
+
+        try(Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table segment");
+            st.close();
+        }
     }
 
     /**
@@ -110,31 +116,29 @@ public class SegmentStorageTest {
             .withPatternKey("")
             .build();
         int size = storage.build(info);
-        Assert.assertEquals(1, size);
+        Assertions.assertEquals(1, size);
 
         Optional<SegmentInfo> entityOptional = storage.query("testBiz");
-        Assert.assertTrue(entityOptional.isPresent());
+        Assertions.assertTrue(entityOptional.isPresent());
         SegmentInfo targetEntity = entityOptional.get();
-        Assert.assertEquals(targetEntity.getBeginId(), Long.valueOf(1L));
-        Assert.assertEquals(targetEntity.getPattern(), "yyyy-mm-dd{000}");
+        Assertions.assertEquals(targetEntity.getBeginId(), Long.valueOf(1L));
+        Assertions.assertEquals(targetEntity.getPattern(), "yyyy-mm-dd{000}");
 
         storage.udpate(targetEntity);
 
         entityOptional = storage.query("testBiz");
-        Assert.assertTrue(entityOptional.isPresent());
+        Assertions.assertTrue(entityOptional.isPresent());
         SegmentInfo segmentInfo = entityOptional.get();
-        Assert.assertEquals(segmentInfo.getMaxId(), Long.valueOf(2000l));
-        Assert.assertEquals(segmentInfo.getVersion(), Long.valueOf(2l));
+        Assertions.assertEquals(segmentInfo.getMaxId(), Long.valueOf(2000l));
+        Assertions.assertEquals(segmentInfo.getVersion(), Long.valueOf(2l));
 
         segmentInfo.setPatternKey("2020-02-02");
         int reset = storage.reset(segmentInfo);
-        Assert.assertEquals(reset, 1);
+        Assertions.assertEquals(reset, 1);
         entityOptional = storage.query("testBiz");
-        Assert.assertEquals(0, entityOptional.get().getMaxId().intValue());
-        Assert.assertEquals("2020-02-02", entityOptional.get().getPatternKey());
+        Assertions.assertEquals(0, entityOptional.get().getMaxId().intValue());
+        Assertions.assertEquals("2020-02-02", entityOptional.get().getPatternKey());
         tx.commit();
-
-
     }
 
     // 初始化数据

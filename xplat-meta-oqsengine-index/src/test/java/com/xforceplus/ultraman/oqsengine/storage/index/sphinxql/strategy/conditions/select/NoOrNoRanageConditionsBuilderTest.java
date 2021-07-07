@@ -14,14 +14,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.select.NoOrNoRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * NoOrNorRanageConditionsBuilder Tester.
@@ -50,7 +49,7 @@ public class NoOrNoRanageConditionsBuilderTest {
 
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions, entityClass).toString();
-            Assert.assertEquals(c.expected, where);
+            Assertions.assertEquals(c.expected, where);
         });
     }
 

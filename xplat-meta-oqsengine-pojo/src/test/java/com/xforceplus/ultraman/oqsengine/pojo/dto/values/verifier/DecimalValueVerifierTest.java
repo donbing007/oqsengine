@@ -5,8 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import java.math.BigDecimal;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 浮点数校验测试.
@@ -28,13 +28,13 @@ public class DecimalValueVerifierTest {
                     .build()
             ).build();
 
-        Assert.assertTrue(verifier.isTooLong(field,
+        Assertions.assertTrue(verifier.isTooLong(field,
             new DecimalValue(field, new BigDecimal("1"))
         ));
-        Assert.assertTrue(verifier.isTooLong(field,
+        Assertions.assertTrue(verifier.isTooLong(field,
             new DecimalValue(field, new BigDecimal("1.1"))
         ));
-        Assert.assertFalse(verifier.isTooLong(field,
+        Assertions.assertFalse(verifier.isTooLong(field,
             new DecimalValue(field, new BigDecimal("1.13"))
         ));
     }
@@ -50,19 +50,19 @@ public class DecimalValueVerifierTest {
                     .build()
             ).build();
 
-        Assert.assertTrue(verifier.isHighPrecision(field,
+        Assertions.assertTrue(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1"))
         ));
-        Assert.assertTrue(verifier.isHighPrecision(field,
+        Assertions.assertTrue(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.0"))
         ));
-        Assert.assertTrue(verifier.isHighPrecision(field,
+        Assertions.assertTrue(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.11"))
         ));
-        Assert.assertTrue(verifier.isHighPrecision(field,
+        Assertions.assertTrue(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.113"))
         ));
-        Assert.assertFalse(verifier.isHighPrecision(field,
+        Assertions.assertFalse(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.1143"))
         ));
 
@@ -74,7 +74,7 @@ public class DecimalValueVerifierTest {
                     .build()
             ).build();
 
-        Assert.assertTrue(verifier.isHighPrecision(field,
+        Assertions.assertTrue(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1"))
         ));
     }

@@ -1,14 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.storage.query;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * AbstractConditionBuilder Tester.
@@ -19,19 +19,11 @@ import org.junit.Test;
  */
 public class ConditionBuilderAbstractTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void testTypeEq() throws Exception {
         MockConditionBuilder builder = new MockConditionBuilder(ConditionOperator.EQUALS, FieldType.BOOLEAN);
 
-        Assert.assertEquals(ConditionOperator.EQUALS, builder.operator());
+        Assertions.assertEquals(ConditionOperator.EQUALS, builder.operator());
 
         Condition condition = new Condition(
             new EntityField(1, "code", FieldType.BOOLEAN),
@@ -39,21 +31,22 @@ public class ConditionBuilderAbstractTest {
             new BooleanValue(new EntityField(1, "code", FieldType.BOOLEAN), true)
         );
 
-        Assert.assertEquals("test", builder.build(condition));
+        Assertions.assertEquals("test", builder.build(condition));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTypeNotEq() throws Exception {
-        MockConditionBuilder builder = new MockConditionBuilder(ConditionOperator.EQUALS, FieldType.STRING);
+        assertThrows(IllegalArgumentException.class, () -> {
+            MockConditionBuilder builder = new MockConditionBuilder(ConditionOperator.EQUALS, FieldType.STRING);
 
-        Condition condition = new Condition(
-            new EntityField(1, "code", FieldType.BOOLEAN),
-            ConditionOperator.EQUALS,
-            new BooleanValue(new EntityField(1, "code", FieldType.BOOLEAN), true)
-        );
+            Condition condition = new Condition(
+                new EntityField(1, "code", FieldType.BOOLEAN),
+                ConditionOperator.EQUALS,
+                new BooleanValue(new EntityField(1, "code", FieldType.BOOLEAN), true)
+            );
 
-        builder.build(condition);
-
+            builder.build(condition);
+        });
     }
 
     static class MockConditionBuilder extends AbstractConditionBuilder<String> {

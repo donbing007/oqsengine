@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +25,12 @@ public class LocalResourceLockerTest {
 
     private LocalResourceLocker locker;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         locker = new LocalResourceLocker();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         locker = null;
     }
@@ -61,7 +61,7 @@ public class LocalResourceLockerTest {
         latch.await();
         worker.shutdown();
 
-        Assert.assertEquals(size, values.size());
+        Assertions.assertEquals(size, values.size());
     }
 
 

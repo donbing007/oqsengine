@@ -6,8 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.xforceplus.ultraman.oqsengine.boot.rest.DevOpsController;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,12 +30,13 @@ public class DevOpsControllerTest {
 
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
         this.mockMvc = MockMvcBuilders.standaloneSetup(devOpsController).build();
     }
+
     @Test
     public void testMetaImport() throws Exception {
         this.mockMvc.perform(put("/oqs/devops/import-meta/{appId}/{version}", "1", 1)

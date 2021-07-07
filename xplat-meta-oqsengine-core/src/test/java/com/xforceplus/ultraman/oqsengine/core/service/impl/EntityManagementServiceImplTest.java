@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -17,10 +16,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.sql.SQLException;
 import java.util.Optional;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -34,14 +33,14 @@ public class EntityManagementServiceImplTest {
 
     private EntityManagementServiceImpl impl;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         impl = BaseInit.entityManagementService(EntityClassDefine.getMockMetaManager());
 
         impl.init();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
 
     }
@@ -57,17 +56,17 @@ public class EntityManagementServiceImplTest {
 
         try {
             impl.build(targetEntity);
-            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
         } catch (SQLException ex) {
-            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
                 targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
         try {
             impl.replace(targetEntity);
-            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
         } catch (SQLException ex) {
-            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
                 targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
@@ -78,16 +77,16 @@ public class EntityManagementServiceImplTest {
             .withTime(System.currentTimeMillis()).build();
         try {
             impl.build(targetEntity);
-            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
         } catch (SQLException ex) {
-            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
                 targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
         try {
             impl.replace(targetEntity);
-            Assert.fail("The SQLException was expected to be thrown, but it was not.");
+            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
         } catch (SQLException ex) {
-            Assert.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
+            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
                 targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
         }
 
@@ -116,7 +115,7 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -142,7 +141,7 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assert.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNCREATED, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -158,7 +157,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
-        Assert.assertEquals(ResultStatus.FIELD_TOO_LONG, impl.build(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.FIELD_TOO_LONG, impl.build(targetEntity).getResultStatus());
 
 
         targetEntity = Entity.Builder.anEntity()
@@ -172,7 +171,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
-        Assert.assertEquals(ResultStatus.FIELD_MUST, impl.build(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.FIELD_MUST, impl.build(targetEntity).getResultStatus());
     }
 
     @Test
@@ -199,7 +198,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
-        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
     }
 
     @Test
@@ -252,7 +251,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -305,7 +304,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -333,7 +332,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
@@ -380,8 +379,8 @@ public class EntityManagementServiceImplTest {
             )
             .build();
 
-        Assert.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
-        Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
+        Assertions.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
+        Assertions.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
 
     }
 
@@ -410,7 +409,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
@@ -434,7 +433,7 @@ public class EntityManagementServiceImplTest {
             )
             .build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assert.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
     }
 
 } 

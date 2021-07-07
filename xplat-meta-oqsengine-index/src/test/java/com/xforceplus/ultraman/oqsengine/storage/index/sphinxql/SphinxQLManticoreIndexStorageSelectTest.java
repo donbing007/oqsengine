@@ -1,14 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.alibaba.fastjson.JSONArray;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
-import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -17,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
@@ -27,52 +19,27 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
-import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
-import io.lettuce.core.RedisClient;
+import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * 索引查询测试.
@@ -81,21 +48,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 0.1 2021/3/10 14:01
  * @since 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
-public class SphinxQLManticoreIndexStorageSelectTest {
-
-    private TransactionManager transactionManager;
-    private RedisClient redisClient;
-    private CommitIdStatusServiceImpl commitIdStatusService;
-    private DataSourcePackage dataSourcePackage;
-    private Selector<String> indexWriteIndexNameSelector;
-    private Selector<DataSource> writeDataSourceSelector;
-    private ExecutorService threadPool;
-    private SphinxQLManticoreIndexStorage storage;
-    private Collection<OriginalEntity> expectedDatas;
-    private TokenizerFactory tokenizerFactory;
-    private StorageStrategyFactory storageStrategyFactory;
+public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerExtends {
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -177,92 +130,18 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withFather(l1EntityClass)
         .build();
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-
-        redisClient = RedisClient.create(
-            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
-
-        writeDataSourceSelector = buildWriteDataSourceSelector();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .withWaitCommitSync(false)
-            .build();
-
-        indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
-
-        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
-
-        tokenizerFactory = new DefaultTokenizerFactory();
-
-        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
-        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
-        sphinxQLConditionsBuilderFactory.init();
-
-        threadPool = Executors.newFixedThreadPool(3);
-
-        storage = new SphinxQLManticoreIndexStorage();
-
-        DataSource searchDataSource = buildSearchDataSourceSelector();
-        TransactionExecutor searchExecutor =
-            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
-                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
-        TransactionExecutor writeExecutor =
-            new AutoJoinTransactionExecutor(
-                transactionManager, new SphinxQLTransactionResourceFactory(),
-                writeDataSourceSelector, indexWriteIndexNameSelector);
-
-
-        ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
-        ReflectionTestUtils.setField(storage, "writeTransactionExecutor", writeExecutor);
-        ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
-        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
-        ReflectionTestUtils.setField(storage, "tokenizerFactory", tokenizerFactory);
-        ReflectionTestUtils.setField(storage, "threadPool", threadPool);
-        storage.setSearchIndexName("oqsindex");
-        storage.setMaxSearchTimeoutMs(1000);
-        storage.init();
-
         initData();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        Optional<Transaction> t = transactionManager.getCurrent();
-        if (t.isPresent()) {
-            Transaction tx = t.get();
-            if (!tx.isCompleted()) {
-                tx.rollback();
-            }
-        }
-
-        transactionManager.finish();
-
-        truncate();
-
-        dataSourcePackage.close();
-
-        commitIdStatusService.destroy();
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-
-        ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+        InitializationHelper.clearAll();
     }
 
     /**
@@ -271,7 +150,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     @Test
     public void testEmptyPageCount() throws Exception {
         Page page = Page.emptyPage();
-        storage.select(
+        IndexInitialization.getInstance().getIndexStorage().select(
             Conditions.buildEmtpyConditions(),
             l2EntityClass,
             SelectConfig.Builder.anSelectConfig()
@@ -280,7 +159,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
                 .build()
         );
-        Assert.assertEquals(page.getTotalCount(), expectedDatas.size());
+        Assertions.assertEquals(page.getTotalCount(), expectedDatas.size());
     }
 
     @Test
@@ -300,10 +179,10 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 )
             ).build();
 
-        storage.saveOrDeleteOriginalEntities(Arrays.asList(entity));
+        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(Arrays.asList(entity));
 
 
-        Collection<EntityRef> refs = storage.select(
+        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -319,8 +198,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .build()
         );
 
-        Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(123, refs.stream().findFirst().get().getId());
+        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(123, refs.stream().findFirst().get().getId());
     }
 
 
@@ -362,9 +241,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             ).build();
         entities.add(scanEntity);
 
-        storage.saveOrDeleteOriginalEntities(entities);
+        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(entities);
 
-        Collection<EntityRef> refs = storage.select(
+        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -378,11 +257,11 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(scanEntity.getId(), refs.stream().findFirst().get().getId());
+        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(scanEntity.getId(), refs.stream().findFirst().get().getId());
 
         // 查询所有包含scan的,应该包含所有新加入的记录.
-        refs = storage.select(
+        refs = IndexInitialization.getInstance().getIndexStorage().select(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -398,7 +277,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .build()
         );
 
-        Assert.assertEquals(4, refs.size());
+        Assertions.assertEquals(4, refs.size());
         List<Long> expecteIds = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             expecteIds.add((long) (1000 + i));
@@ -407,32 +286,32 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         for (EntityRef ref : refs) {
             expecteIds.remove(ref.getId());
         }
-        Assert.assertEquals(0, expecteIds.size());
+        Assertions.assertEquals(0, expecteIds.size());
     }
 
     @Test
     public void testSelect() throws Exception {
         Collection<EntityRef> refs;
         for (Case c : buildSelectCases()) {
-            refs = storage.select(c.conditions, c.entityClass, c.selectConfig);
+            refs = IndexInitialization.getInstance().getIndexStorage().select(c.conditions, c.entityClass, c.selectConfig);
 
             long[] expectedIds = c.expectedIds;
             if (expectedIds == null) {
                 expectedIds = expectedDatas.stream().mapToLong(oe -> oe.getId()).toArray();
             }
             Arrays.sort(expectedIds);
-            Assert.assertEquals(
-                String.format("%s check length failed.", c.description), expectedIds.length, refs.size());
+            Assertions.assertEquals(
+                expectedIds.length, refs.size(), String.format("%s check length failed.", c.description));
             for (EntityRef ref : refs) {
-                Assert
-                    .assertTrue(String.format("%s validation failed to find expected %d.", c.description, ref.getId()),
-                        Arrays.binarySearch(expectedIds, ref.getId()) >= 0);
+                Assertions
+                    .assertTrue(Arrays.binarySearch(expectedIds, ref.getId()) >= 0,
+                        String.format("%s validation failed to find expected %d.", c.description, ref.getId()));
             }
 
             if (c.otherCheck != null) {
                 String r = (String) c.otherCheck.apply(new SelectResult(refs, c.selectConfig.getPage()));
                 if (r != null && r.length() > 0) {
-                    Assert.fail(String.format("%s validation failed due to %s.", c.description, r));
+                    Assertions.fail(String.format("%s validation failed due to %s.", c.description, r));
                 }
             }
         }
@@ -1201,39 +1080,10 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             o.setEntityClass(l2EntityClass);
         });
 
-        storage.saveOrDeleteOriginalEntities(datas);
+        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(datas);
 
         this.expectedDatas = datas;
     }
 
-    private Selector<DataSource> buildWriteDataSourceSelector() {
-        if (dataSourcePackage == null) {
-            dataSourcePackage = DataSourceFactory.build(true);
-        }
-
-        return new HashSelector<>(dataSourcePackage.getIndexWriter());
-
-    }
-
-    private DataSource buildSearchDataSourceSelector() {
-        if (dataSourcePackage == null) {
-            dataSourcePackage = DataSourceFactory.build(true);
-        }
-
-        return dataSourcePackage.getIndexSearch().get(0);
-
-    }
-
-    private void truncate() throws SQLException {
-        List<DataSource> dataSources = dataSourcePackage.getIndexWriter();
-        for (DataSource ds : dataSources) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-
-            st.close();
-            conn.close();
-        }
-    }
+    private Collection<OriginalEntity> expectedDatas;
 }
