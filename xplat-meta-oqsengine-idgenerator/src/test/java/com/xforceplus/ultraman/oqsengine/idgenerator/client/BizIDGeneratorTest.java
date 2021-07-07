@@ -16,7 +16,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternPa
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.test.tools.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,10 +24,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,7 +41,6 @@ import org.springframework.test.util.ReflectionTestUtils;
  * 创建时间: 5/9/21 11:57 PM
  */
 
-@ExtendWith(MysqlContainer.class)
 public class BizIDGeneratorTest {
 
     private static final String bizType = "bizTest";
@@ -51,8 +51,17 @@ public class BizIDGeneratorTest {
     private ExecutorService executorService;
     private DataSource dataSource;
 
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+    }
 
-    @BeforeEach
+    @AfterClass
+    public static void afterClass() {
+        ContainerStarter.reset();
+    }
+
+    @Before
     public void before() throws SQLException {
         System.setProperty(
             "MYSQL_JDBC",
@@ -149,7 +158,5 @@ public class BizIDGeneratorTest {
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
         return dataSourcePackage.getMaster().get(0);
     }
-
-
 }
 

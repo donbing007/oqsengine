@@ -16,9 +16,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternPa
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.test.tools.container.basic.MysqlContainer;
-import com.xforceplus.ultraman.test.tools.container.basic.RedisContainer;
-import io.opencensus.stats.Aggregation;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -30,11 +28,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.sql.DataSource;
 import org.apache.commons.compress.utils.Lists;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -49,7 +48,6 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 0.1 5/21/21 3:51 PM
  * @since 1.8
  */
-@ExtendWith({MysqlContainer.class, RedisContainer.class})
 public class BizIDGeneratorRedisTest {
 
     private ApplicationContext applicationContext;
@@ -70,7 +68,17 @@ public class BizIDGeneratorRedisTest {
     private DataSource dataSource;
     private ExecutorService executorService;
 
-    @AfterEach
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerStarter.reset();
+    }
+
+    @After
     public void tearDown() throws SQLException {
         SegmentInfo segmentInfo = new SegmentInfo();
         segmentInfo.setBizType(linearBizType);
@@ -86,7 +94,7 @@ public class BizIDGeneratorRedisTest {
     }
 
 
-    @BeforeEach
+    @Before
     public void before() throws SQLException {
         System.setProperty(
             "MYSQL_JDBC",
@@ -178,7 +186,7 @@ public class BizIDGeneratorRedisTest {
         al.set(value);
         SegmentId next = value.clone();
         next.nextId();
-        Assert.assertEquals(true, al.compareAndSet(value, next));
+        Assert.assertTrue(al.compareAndSet(value, next));
     }
 
     @Test
@@ -199,7 +207,6 @@ public class BizIDGeneratorRedisTest {
         bizId = bizIDGenerator2.nextId(linearBizType2);
         String expected2 = LocalDateTime.now().format(formatter) + ":00111";
         Assert.assertEquals(expected2, bizId);
-
     }
 
     private DataSource buildDataSource(String file) throws SQLException {
