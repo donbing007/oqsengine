@@ -68,7 +68,6 @@ public final class ContainerStarter {
         if (redis == null) {
             redis = new GenericContainer("redis:6.0.9-alpine3.12")
                 .withNetwork(NETWORK)
-                .withReuse(true)
                 .withNetworkAliases("redis")
                 .withExposedPorts(6379)
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(WAIT_START_TIME_OUT)));
@@ -107,7 +106,6 @@ public final class ContainerStarter {
         if (mysql == null) {
             mysql = new GenericContainer("mysql:5.7")
                 .withNetwork(NETWORK)
-                .withReuse(true)
                 .withNetworkAliases("mysql")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
@@ -158,7 +156,6 @@ public final class ContainerStarter {
         if (manticore0 == null) {
             manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("manticore0")
                 .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -187,7 +184,6 @@ public final class ContainerStarter {
         if (manticore1 == null) {
             manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("manticore1")
                 .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -216,7 +212,6 @@ public final class ContainerStarter {
         if (searchManticore == null) {
             searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
-                .withReuse(true)
                 .withNetwork(NETWORK)
                 .withNetworkAliases("searchManticore")
                 .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -292,7 +287,6 @@ public final class ContainerStarter {
 
             cannal = new GenericContainer("canal/canal-server:v1.1.4")
                 .withNetwork(NETWORK)
-                .withReuse(true)
                 .withNetworkAliases("cannal")
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
