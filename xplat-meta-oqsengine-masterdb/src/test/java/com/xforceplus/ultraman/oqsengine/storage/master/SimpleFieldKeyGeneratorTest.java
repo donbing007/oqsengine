@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -46,7 +46,7 @@ public class SimpleFieldKeyGeneratorTest {
     /**
      * 初始化.
      */
-    @BeforeEach
+    @Before
     public void before() {
         keyGenerator = new SimpleFieldKeyGenerator();
         metaManager = mock(MetaManager.class);

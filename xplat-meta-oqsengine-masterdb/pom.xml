@@ -109,11 +109,6 @@
             <artifactId>p6spy</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.xforceplus</groupId>
-            <artifactId>ultraman-test-tools</artifactId>
-        </dependency>
-
     </dependencies>
 
     <properties>

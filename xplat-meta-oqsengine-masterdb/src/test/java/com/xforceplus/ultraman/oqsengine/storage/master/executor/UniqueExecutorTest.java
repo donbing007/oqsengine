@@ -12,18 +12,19 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
-import com.xforceplus.ultraman.test.tools.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.sql.DataSource;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * .
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * @version 0.1 6/8/21 11:30 AM
  * @since 1.8
  */
-@ExtendWith(MysqlContainer.class)
 public class UniqueExecutorTest {
 
     private static final String TABLE_NAME = "oqsunique";
@@ -45,7 +45,18 @@ public class UniqueExecutorTest {
 
     private IEntityClass entityClass;
 
-    @BeforeEach
+
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerStarter.reset();
+    }
+
+    @Before
     public void before() throws SQLException {
         System.setProperty(
             "MYSQL_JDBC",
@@ -66,7 +77,7 @@ public class UniqueExecutorTest {
 
     }
 
-    @AfterEach
+    @After
     public void after() {
         dataSourcePackage.close();
     }
