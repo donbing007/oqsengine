@@ -29,8 +29,16 @@ public class InitializationHelper {
      * 清理.
      */
     public static void clearAll() throws Exception  {
+        CommonInitialization commonInitialization = null;
         for (BeanInitialization beanInitialization : clearList) {
-            beanInitialization.clear();
+            if (beanInitialization instanceof CommonInitialization) {
+                commonInitialization = (CommonInitialization) beanInitialization;
+            } else {
+                beanInitialization.clear();
+            }
+        }
+        if (null != commonInitialization) {
+            commonInitialization.clear();
         }
     }
 
