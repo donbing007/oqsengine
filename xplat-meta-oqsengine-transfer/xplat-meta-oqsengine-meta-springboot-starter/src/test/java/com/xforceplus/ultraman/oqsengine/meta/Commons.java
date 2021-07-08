@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import org.junit.Assert;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
@@ -59,10 +59,10 @@ public class Commons {
     }
 
     public static boolean assertWatchElement(String caseName, WatchElement.ElementStatus appStatus, WatchElement w) {
-        Assert.assertEquals(w.getAppId(), Commons.cases.get(caseName).getAppId());
-        Assert.assertEquals(w.getEnv(), Commons.cases.get(caseName).getEnv());
-        Assert.assertEquals(w.getVersion(), Commons.cases.get(caseName).getVersion());
-        Assert.assertEquals(w.getStatus(), appStatus);
+        Assertions.assertEquals(w.getAppId(), Commons.cases.get(caseName).getAppId());
+        Assertions.assertEquals(w.getEnv(), Commons.cases.get(caseName).getEnv());
+        Assertions.assertEquals(w.getVersion(), Commons.cases.get(caseName).getVersion());
+        Assertions.assertEquals(w.getStatus(), appStatus);
         return true;
     }
 

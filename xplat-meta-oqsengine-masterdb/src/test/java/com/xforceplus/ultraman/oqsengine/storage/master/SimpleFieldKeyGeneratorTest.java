@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -60,7 +60,7 @@ public class SimpleFieldKeyGeneratorTest {
     public void testKeyGenerator() throws SQLException {
         IEntity entity = buildEntity(1008);
         Map<String, UniqueIndexValue> keys = keyGenerator.generator(entity);
-        Assert.assertEquals(((UniqueIndexValue) keys.values().toArray()[0]).getValue(), "f2Value-f1Value");
+        Assertions.assertEquals(((UniqueIndexValue) keys.values().toArray()[0]).getValue(), "f2Value-f1Value");
     }
 
     @Test
@@ -76,7 +76,7 @@ public class SimpleFieldKeyGeneratorTest {
         keys.add(key1);
         keys.add(key2);
         Map<String, UniqueIndexValue> resultKeys = keyGenerator.generator(keys, buildEntityClass(1008));
-        Assert.assertEquals(((UniqueIndexValue) resultKeys.values().toArray()[0]).getValue(), "f2Value-f1Value");
+        Assertions.assertEquals(((UniqueIndexValue) resultKeys.values().toArray()[0]).getValue(), "f2Value-f1Value");
     }
 
 

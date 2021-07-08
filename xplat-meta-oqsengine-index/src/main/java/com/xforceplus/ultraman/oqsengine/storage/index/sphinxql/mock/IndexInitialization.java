@@ -114,7 +114,7 @@ public class IndexInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         List<DataSource> dataSources = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter();
         for (DataSource ds : dataSources) {
             Connection conn = ds.getConnection();
@@ -124,6 +124,18 @@ public class IndexInitialization implements BeanInitialization {
             st.close();
             conn.close();
         }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        indexWriteIndexNameSelector = null;
+        writeDataSourceSelector = null;
+        tokenizerFactory = null;
+        storageStrategyFactory = null;
+        indexStorage.destroy();
+        indexStorage = null;
+
+        instance = null;
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector() throws IllegalAccessException {

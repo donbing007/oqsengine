@@ -52,10 +52,28 @@ public class CommonInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() {
+    public void clear() throws Exception {
         if (null != redisClient) {
             redisClient.connect().sync().flushall();
         }
+    }
+
+    @Override
+    public void destroy() {
+        if (null != redisClient) {
+            redisClient.shutdown();
+            redisClient = null;
+        }
+
+        if (null != dataSourcePackage) {
+            dataSourcePackage.close();
+            dataSourcePackage = null;
+        }
+
+        runner.shutdownNow();
+        runner = null;
+
+        instance = null;
     }
 
     /**
