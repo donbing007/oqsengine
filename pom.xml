@@ -361,7 +361,18 @@
                 <artifactId>ultraman-test-tools-core</artifactId>
                 <version>1.0.3-SNAPSHOT</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>5.7.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>5.7.0</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>com.xforceplus.ultraman.common</groupId>
                 <artifactId>oqsengine-sdk-server</artifactId>
