@@ -43,31 +43,31 @@ public class InitializationHelper {
     }
 
     public static void registerDestroy() {
-//        if (clearList.isEmpty()) {
-//            AbstractContainerExtension.addConsumer((v) -> {
-//                CommonInitialization commonInitialization = null;
-//                for (BeanInitialization beanInitialization : clearList) {
-//                    //  commonInitialization必须最后关闭
-//                    if (beanInitialization instanceof CommonInitialization) {
-//                        commonInitialization = (CommonInitialization) beanInitialization;
-//                    } else {
-//                        try {
-//                            LOGGER.info("destroy beanInitialization {}...",
-//                                beanInitialization.getClass().getCanonicalName());
-//                            beanInitialization.destroy();
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
-//
-//                if (null != commonInitialization) {
-//                    LOGGER.info("destroy beanInitialization {}...",
-//                        commonInitialization.getClass().getCanonicalName());
-//                    commonInitialization.destroy();
-//                }
-//                clearList.clear();
-//            });
-//        }
+        if (clearList.isEmpty()) {
+            AbstractContainerExtension.addConsumer((v) -> {
+                CommonInitialization commonInitialization = null;
+                for (BeanInitialization beanInitialization : clearList) {
+                    //  commonInitialization必须最后关闭
+                    if (beanInitialization instanceof CommonInitialization) {
+                        commonInitialization = (CommonInitialization) beanInitialization;
+                    } else {
+                        try {
+                            LOGGER.info("destroy beanInitialization {}...",
+                                beanInitialization.getClass().getCanonicalName());
+                            beanInitialization.destroy();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                if (null != commonInitialization) {
+                    LOGGER.info("destroy beanInitialization {}...",
+                        commonInitialization.getClass().getCanonicalName());
+                    commonInitialization.destroy();
+                }
+                clearList.clear();
+            });
+        }
     }
 }
