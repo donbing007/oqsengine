@@ -59,10 +59,18 @@ public interface IEntityField extends Comparable<IEntityField> {
     String defaultValue();
 
     /**
+     * 字段计算类型.
+     *
+     * @return 计算类型.
+     */
+    CalculationType calculationType();
+
+    /**
      * 获取计算类型.
      *
      * @return 计算类型
      */
+    @Deprecated
     Calculator.Type calculateType();
 
     /**
@@ -70,6 +78,7 @@ public interface IEntityField extends Comparable<IEntityField> {
      *
      * @return 计算对象
      */
+    @Deprecated
     Calculator calculator();
 
     /**

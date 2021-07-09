@@ -301,7 +301,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = operationResult.getFailedMap();
+                            Map<String, String> failedMap = operationResult.getHints();
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
@@ -436,7 +436,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = operationResult.getFailedMap();
+                            Map<String, String> failedMap = operationResult.getHints();
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
