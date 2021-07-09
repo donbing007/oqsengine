@@ -193,10 +193,10 @@ public class ManagementWithCalculatorTest {
         if (null == expectedValue) {
             Assertions.assertNotEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
             if (operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
-                Assertions.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
+                Assertions.assertEquals(expectedFailed.size(), operationResult.getHints().size());
                 expectedFailed.forEach(
                     failed -> {
-                        Assertions.assertTrue(operationResult.getFailedMap().containsKey(failed));
+                        Assertions.assertTrue(operationResult.getHints().containsKey(failed));
                     }
                 );
             }

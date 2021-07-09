@@ -10,11 +10,14 @@
     <modelVersion>4.0.0</modelVersion>
     <description>OQS信息管理,用以统一处理运行中依赖的管理信息.</description>
 
-    <artifactId>xplat-meta-oqsengine-manager</artifactId>
+    <artifactId>xplat-meta-oqsengine-housekeeper</artifactId>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
+
+    <dependencies>
+    </dependencies>
 
 </project>

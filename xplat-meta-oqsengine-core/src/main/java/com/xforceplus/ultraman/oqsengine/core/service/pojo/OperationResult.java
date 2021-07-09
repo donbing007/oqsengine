@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
+import com.xforceplus.ultraman.oqsengine.calculation.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -16,7 +18,7 @@ public class OperationResult {
     private final int version;
     private final int eventType;
     private ResultStatus resultStatus;
-    private Map<String, String> failedMap;
+    private Collection<CalculationHint> hints;
     private String message;
 
     /**
@@ -47,22 +49,22 @@ public class OperationResult {
      * 实例化.
      */
     public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
-                           Map<String, String> failedMap, String message) {
+                           Collection<CalculationHint> hints, String message) {
         this.txId = txId;
         this.version = version;
         this.resultStatus = resultStatus;
         this.entityId = entityId;
         this.eventType = eventType;
-        this.failedMap = failedMap;
+        this.hints = hints;
         this.message = message;
     }
 
     /**
      * 半成功状态.
      */
-    public void resetStatus(Map<String, String> failedMap) {
+    public void resetStatus(Collection<CalculationHint> hints) {
         this.resultStatus = ResultStatus.HALF_SUCCESS;
-        this.failedMap = failedMap;
+        this.hints = hints;
         this.message = ResultStatus.HALF_SUCCESS.name();
     }
 
@@ -90,8 +92,8 @@ public class OperationResult {
         return message;
     }
 
-    public Map<String, String> getFailedMap() {
-        return failedMap;
+    public Collection<CalculationHint> getHints() {
+        return hints;
     }
 
     @Override
