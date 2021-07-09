@@ -88,10 +88,21 @@ public class MetaInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         if (null != metaManager) {
             metaManager.invalidateLocal();
         }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        cacheExecutor.destroy();
+
+        entityClassSyncExecutor.stop();
+
+        metaManager = null;
+
+        instance = null;
     }
 
     public DefaultCacheExecutor getCacheExecutor() {

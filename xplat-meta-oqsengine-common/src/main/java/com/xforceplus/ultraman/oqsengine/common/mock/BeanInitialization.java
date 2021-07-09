@@ -13,6 +13,11 @@ public interface BeanInitialization {
     void init() throws Exception;
 
     /**
+     * clear.
+     */
+    void clear() throws Exception;
+
+    /**
      * 销毁.
      */
     void destroy() throws Exception;

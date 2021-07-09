@@ -6,7 +6,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.testing.GrpcCleanupRule;
-import org.junit.Rule;
 
 /**
  * desc :
@@ -24,7 +23,6 @@ public class MockGRpcClient implements GRpcClient {
 
     private boolean isClientOpen;
 
-    @Rule
     public GrpcCleanupRule gRpcCleanup = new GrpcCleanupRule();
 
     @Override

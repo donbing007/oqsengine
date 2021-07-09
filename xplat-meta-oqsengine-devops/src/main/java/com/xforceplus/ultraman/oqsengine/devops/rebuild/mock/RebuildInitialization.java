@@ -69,12 +69,22 @@ public class RebuildInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         try (Connection conn = devOpsDataSource.getConnection()) {
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate("truncate table " + DEVOPS_TABLE_NAME);
             }
         }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+
+        taskExecutor.destroy();
+        devOpsDataSource = null;
+        idGenerator = null;
+
+        instance = null;
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {

@@ -105,7 +105,7 @@ public class MasterDBInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         MasterDBInitialization.getInstance().resetTransactionExecutor(MASTER_STORAGE_TABLE);
 
         DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
@@ -120,6 +120,20 @@ public class MasterDBInitialization implements BeanInitialization {
                 conn.close();
             }
         }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+
+        dataSource = null;
+        masterTransactionExecutor = null;
+        keyGenerator = null;
+        masterStorageStrategyFactory = null;
+        sqlJsonConditionsBuilderFactory = null;
+        masterStorage.destroy();
+
+        instance = null;
+
     }
 
     /**

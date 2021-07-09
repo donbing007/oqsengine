@@ -80,7 +80,7 @@ public class CdcInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
         if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
             for (DataSource ds : dataSourcePackage.getMaster()) {
@@ -91,6 +91,16 @@ public class CdcInitialization implements BeanInitialization {
                 conn.close();
             }
         }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        sphinxSyncExecutor = null;
+        cdcErrorStorage = null;
+        singleCDCConnector = null;
+        consumerService = null;
+
+        instance = null;
     }
 
     /**

@@ -63,7 +63,7 @@ public class StorageInitialization implements BeanInitialization {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         Optional<Transaction> t = transactionManager.getCurrent();
         if (t.isPresent()) {
             Transaction tx = t.get();
@@ -73,6 +73,13 @@ public class StorageInitialization implements BeanInitialization {
         }
 
         transactionManager.finish();
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        commitIdStatusService.destroy();
+        transactionManager = null;
+        instance = null;
     }
 
     public CommitIdStatusServiceImpl getCommitIdStatusService() {
