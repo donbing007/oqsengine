@@ -21,7 +21,7 @@ public class InitializationHelper {
      * 加入.
      */
     public static void add(BeanInitialization beanInitialization) {
-        registerDestroy();
+        //registerDestroy();
         clearList.add(beanInitialization);
     }
 
