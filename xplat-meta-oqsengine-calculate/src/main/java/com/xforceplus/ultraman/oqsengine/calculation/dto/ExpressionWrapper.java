@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
-import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 
 /**
@@ -85,9 +85,9 @@ public class ExpressionWrapper {
         /**
          * build.
          */
-        public ExpressionWrapper build() {
+        public ExpressionWrapper build() throws CalculationLogicException {
             if (null == this.expression || this.expression.isEmpty()) {
-                throw new CalculateExecutionException("expression can't be null in build function.");
+                throw new CalculationLogicException("expression can't be null in build function.");
             }
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 
