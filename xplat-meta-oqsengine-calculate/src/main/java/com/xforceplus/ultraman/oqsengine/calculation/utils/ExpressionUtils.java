@@ -1,14 +1,14 @@
-package com.xforceplus.ultraman.oqsengine.calculate.utils;
+package com.xforceplus.ultraman.oqsengine.calculation.utils;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;
 import com.googlecode.aviator.Expression;
 import com.googlecode.aviator.Options;
 import com.googlecode.aviator.runtime.type.AviatorFunction;
-import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculateExecutionException;
 import java.math.MathContext;
-import java.util.Map;
 
 /**
  * 表达式工具类.
@@ -45,13 +45,13 @@ public class ExpressionUtils {
     /**
      * 编译并执行一个函数.
      */
-    public static Object execute(ExpressionWrapper expressionWrapper, Map<String, Object> params) {
-        Expression expression = compile(expressionWrapper);
+    public static Object execute(ExecutionWrapper executionWrapper) {
+        Expression expression = compile(executionWrapper.getExpressionWrapper());
         if (null == expression) {
-            throw new CalculateExecutionException(String.format("compile expression failed [%s-%s].",
-                expressionWrapper.getCode(), expressionWrapper.getExpression()));
+            throw new CalculateExecutionException(String.format("compile [expression-%s] failed .",
+                executionWrapper.getExpressionWrapper().getExpression()));
         }
-        return expression.execute(params);
+        return expression.execute(executionWrapper.getParams());
     }
 
     /**

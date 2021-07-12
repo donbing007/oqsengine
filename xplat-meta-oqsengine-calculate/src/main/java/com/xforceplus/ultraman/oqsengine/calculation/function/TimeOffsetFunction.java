@@ -1,10 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculate.function;
+package com.xforceplus.ultraman.oqsengine.calculation.function;
 
 import com.alibaba.google.common.base.Preconditions;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
 import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorObject;
-import com.xforceplus.ultraman.oqsengine.calculate.function.constant.TimeUnit;
+import com.xforceplus.ultraman.oqsengine.calculation.function.constant.TimeUnit;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;

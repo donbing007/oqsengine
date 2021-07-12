@@ -1,5 +1,8 @@
-package com.xforceplus.ultraman.oqsengine.calculation;
+package com.xforceplus.ultraman.oqsengine.calculation.factory;
 
+import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.AutoFillCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.FormulaCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.LookupCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.UnknownCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -24,7 +27,8 @@ public class CalculationLogicFactory {
         calculations = new HashMap<>();
 
         calculations.put(CalculationType.LOOKUP, new LookupCalculationLogic());
-
+        calculations.put(CalculationType.FORMULA, new FormulaCalculationLogic());
+        calculations.put(CalculationType.AUTO_FILL, new AutoFillCalculationLogic());
     }
 
     /**

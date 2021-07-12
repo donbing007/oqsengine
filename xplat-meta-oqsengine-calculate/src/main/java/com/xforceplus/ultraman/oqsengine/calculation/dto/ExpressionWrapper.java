@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.calculate.dto;
+package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
-import com.xforceplus.ultraman.oqsengine.calculate.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculateExecutionException;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 
 /**
@@ -61,8 +61,6 @@ public class ExpressionWrapper {
      */
     public static final class Builder {
 
-        private String code;
-
         private String expression;
 
         private Boolean cached;
@@ -72,11 +70,6 @@ public class ExpressionWrapper {
 
         public static Builder anExpression() {
             return new ExpressionWrapper.Builder();
-        }
-
-        public Builder withCode(String code) {
-            this.code = code;
-            return this;
         }
 
         public Builder withExpression(String expression) {
@@ -99,9 +92,9 @@ public class ExpressionWrapper {
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 
             expressionWrapper.expression = this.expression;
-            expressionWrapper.code = (null == this.code || this.code.isEmpty())
-                                                         ? MD5Utils.encrypt(this.expression) : this.code;
             expressionWrapper.cached = (null != this.cached && this.cached);
+
+            expressionWrapper.code = MD5Utils.encrypt(this.expression);
 
             return expressionWrapper;
         }

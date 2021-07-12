@@ -5,30 +5,28 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.Optional;
 
 /**
- * 处理未知计算.
+ * Created by justin.xu on 07/2021.
  *
- * @author dongbin
- * @version 0.1 2021/07/07 16:42
  * @since 1.8
  */
-public class UnknownCalculationLogic implements CalculationLogic {
-
-    private static final CalculationLogic INSTANCE = new UnknownCalculationLogic();
-
-    public static CalculationLogic getInstance() {
-        return INSTANCE;
-    }
+public class AutoFillCalculationLogic implements CalculationLogic {
 
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
-        return Optional.empty();
+        Object result = context.getBizIDGenerator().nextId(String.valueOf(context.getFocusField().id()));
+        if (null == result) {
+            throw new CalculationLogicException("autoFill id generate is null.");
+        }
+
+        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result));
     }
 
     @Override
     public CalculationType supportType() {
-        return CalculationType.UNKNOWN;
+        return CalculationType.AUTO_FILL;
     }
 }

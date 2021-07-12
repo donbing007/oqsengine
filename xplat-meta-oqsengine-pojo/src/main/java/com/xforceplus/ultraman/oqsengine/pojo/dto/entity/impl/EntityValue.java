@@ -4,9 +4,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -102,6 +105,13 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public void filter(Predicate<? super IValue> predicate) {
         if (values != null) {
             values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
+        }
+    }
+
+    @Override
+    public void sort(Comparator<IValue> comparator) {
+        if (values != null) {
+            ((List) values.values()).sort(comparator);
         }
     }
 

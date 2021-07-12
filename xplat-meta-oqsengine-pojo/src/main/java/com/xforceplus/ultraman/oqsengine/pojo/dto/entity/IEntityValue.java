@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -75,6 +76,13 @@ public interface IEntityValue extends Cloneable {
      * @param predicate 条件.
      */
     public void filter(Predicate<? super IValue> predicate);
+
+    /**
+     * 根据条件进行IValue排序.
+     *
+     * @param comparator 排序规则.
+     */
+    public void sort(Comparator<IValue> comparator);
 
     /**
      * 清空当前的所有属性值.

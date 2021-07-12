@@ -1,5 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.calculation;
+package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -94,5 +95,19 @@ public interface CalculationLogicContext {
      * @return 提示列表.
      */
     public Collection<CalculationHint> getHints();
+
+    /**
+     * 增加一个 业务id生成器.
+     *
+     * @param bizIDGenerator
+     */
+    public void bizIdGenerator(BizIDGenerator bizIDGenerator);
+
+    /**
+     * 获取 业务id生成器.
+     *
+     * @return bizIDGenerator.
+     */
+    public BizIDGenerator getBizIDGenerator();
 
 }

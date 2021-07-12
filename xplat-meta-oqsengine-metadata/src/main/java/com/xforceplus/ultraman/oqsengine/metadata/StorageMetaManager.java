@@ -15,8 +15,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -288,31 +286,6 @@ public class StorageMetaManager implements MetaManager {
                 .withId(entityField.id())
                 .withDefaultValue(entityField.defaultValue());
 
-            if (null == entityField.calculator()) {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(Calculator.Type.NORMAL)
-                    .withFailedPolicy(Calculator.FailedPolicy.UNKNOWN)
-                    .build()
-                );
-            } else {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(entityField.calculator().getType())
-                    .withExpression(entityField.calculator().getExpression())
-                    .withMin(entityField.calculator().getMin())
-                    .withMax(entityField.calculator().getMax())
-                    .withCondition(entityField.calculator().getCondition())
-                    .withEmptyValueTransfer(entityField.calculator().getEmptyValueTransfer())
-                    .withValidator(entityField.calculator().getValidator())
-                    .withModel(entityField.calculator().getModel())
-                    .withStep(entityField.calculator().getStep())
-                    .withLevel(entityField.calculator().getLevel())
-                    .withPatten(entityField.calculator().getPatten())
-                    .withArgs(entityField.calculator().getArgs())
-                    .withFailedPolicy(entityField.calculator().getFailedPolicy())
-                    .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
-                    .build());
-            }
-
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();
                 builder.withConfig(FieldConfig.Builder.anFieldConfig()
@@ -333,6 +306,7 @@ public class StorageMetaManager implements MetaManager {
                     .withWildcardMinWidth(config.getWildcardMinWidth())
                     .withCrossSearch(config.isCrossSearch())
                     .withLen(config.getLen())
+                    .withCalculationDefinition(config.getCalculationDefinition())
                     .build()
                 );
             }

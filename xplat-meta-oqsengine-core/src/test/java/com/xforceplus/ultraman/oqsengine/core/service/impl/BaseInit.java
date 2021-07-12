@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.calculate.ActualCalculateStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -10,18 +9,12 @@ import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -41,7 +34,6 @@ public class BaseInit {
         ReflectionTestUtils.setField(impl, "idGenerator", idGenerator());
         ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
-        ReflectionTestUtils.setField(impl, "calculateStorage", new ActualCalculateStorage());
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
             @Override
             public void watch(EventType type, Consumer<Event> listener) {

@@ -339,7 +339,7 @@ private static final long serialVersionUID = 0L;
 
     private final int value;
 
-    MetaFieldSense(int value) {
+    private MetaFieldSense(int value) {
       this.value = value;
     }
 
@@ -978,30 +978,30 @@ private static final long serialVersionUID = 0L;
     }
 
     public Builder clone() {
-      return super.clone();
+      return (Builder) super.clone();
     }
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return super.setField(field, value);
+      return (Builder) super.setField(field, value);
     }
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return super.clearField(field);
+      return (Builder) super.clearField(field);
     }
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return super.clearOneof(oneof);
+      return (Builder) super.clearOneof(oneof);
     }
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         int index, java.lang.Object value) {
-      return super.setRepeatedField(field, index, value);
+      return (Builder) super.setRepeatedField(field, index, value);
     }
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return super.addRepeatedField(field, value);
+      return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig) {

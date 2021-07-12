@@ -138,4 +138,14 @@ public interface CalculatorOrBuilder extends
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
   com.google.protobuf.AnyOrBuilder getFailedDefaultValueOrBuilder();
+
+  /**
+   * <code>int64 lookupEntityClassId = 15;</code>
+   */
+  long getLookupEntityClassId();
+
+  /**
+   * <code>int64 lookupEntityFieldId = 16;</code>
+   */
+  long getLookupEntityFieldId();
 }

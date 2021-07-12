@@ -1,14 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import com.xforceplus.ultraman.oqsengine.calculate.CalculateStorage;
-import com.xforceplus.ultraman.oqsengine.calculate.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculate.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationHint;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogicFactory;
-import com.xforceplus.ultraman.oqsengine.calculation.DefaultCalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -31,19 +28,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -55,14 +48,10 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -106,10 +95,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private EventBus eventBus;
-
-    @Resource
-    private CalculateStorage calculateStorage;
-
 
     @Resource
     private BizIDGenerator bizIDGenerator;
@@ -736,7 +721,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         ).sorted(
 
-            Comparator.comparing(f -> f.calculationType().getPriority())
+            new CalculationComparator()
 
         ).collect(Collectors.toList());
 
@@ -771,192 +756,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMasterStorage(this.masterStorage)
             .withEntityClass(entityClass)
             .withEntity(entity)
+            .withBizIdGenerator(bizIDGenerator)
             .build();
-    }
-
-
-    // 创建对象时的公式计算.
-    private Map<String, String> processFormulaWithBuild(IEntityClass entityClass, IEntity entity) {
-
-        //  生成的新的entityValue
-        IEntityValue entityValue = EntityValue.build();
-
-        //  context
-        Map<String, Object> context = toContext(entityClass, entity);
-
-        //  需要进行计算的公式字段
-        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
-
-        entity.entityValue().values().forEach(
-            v -> {
-                IEntityField entityField = v.getField();
-                //  自动填充
-                if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
-                    Object result = bizIDGenerator.nextId(String.valueOf(entityField.id()));
-                    if (null != result) {
-                        context.put(entityField.name(), result);
-                        entityValue.addValue(IValueUtils.toIValue(entityField, result));
-                    }
-                } else if (entityField.calculateType().equals(Calculator.Type.FORMULA)) {
-                    addContextWrappers(v, context, executionWrappers);
-                } else {
-                    //  将没有置入context中的常量加入到计算中
-                    context.putIfAbsent(entityField.name(), v.getValue());
-                    entityValue.addValue(v);
-                }
-            }
-        );
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("before formula-elevator, entity-id :[{}], context : [{}].",
-                entity.id(),
-                context.entrySet().stream().map(Objects::toString).collect(Collectors.toList()));
-        }
-
-        //  计算公式字段
-        Map<String, String> failedMaps
-            = formulaElevator(entityValue, context, executionWrappers);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("after formula-elevator, entity-id :[{}], entityValue : [{}].",
-                entity.id(), entityValue.values().toArray());
-        }
-
-        //  将entityValue加入到目标中
-        entity.resetEntityValue(entityValue);
-
-        return failedMaps;
-    }
-
-    // 更新对象时的公式处理.
-    private Map<String, String> processFormulaWithReplace(IEntityClass entityClass, IEntity targetEntity,
-                                                          IEntity updateEntity) {
-
-        //  生成的新的entityValue
-        IEntityValue entityValue = EntityValue.build();
-
-        //  context
-        Map<String, Object> context = toContext(entityClass, updateEntity);
-
-        //  需要进行计算的公式字段
-        List<ExecutionWrapper<?>> executionWrappers = new ArrayList<>();
-
-        //  合并new
-        updateEntity.entityValue().values().forEach(
-            v -> {
-                IEntityField entityField = v.getField();
-                //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
-                if (entityField.calculateType().equals(Calculator.Type.FORMULA)) {
-                    addContextWrappers(v, context, executionWrappers);
-                } else if (!entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
-                    //  加入新的entityValue中
-                    entityValue.addValue(v);
-                }
-            }
-        );
-
-        //  将targetEntity中剩余entity加入进行计算
-        targetEntity.entityValue().values().forEach(
-            v -> {
-                switch (v.getField().calculateType()) {
-                    case AUTO_FILL: {
-                        //  自动填充字段强制覆盖
-                        entityValue.addValue(v);
-                        context.put(v.getField().name(), v.getValue());
-                        break;
-                    }
-                    case FORMULA: {
-                        break;
-                    }
-                    default: {
-                        //  当context不存在该值时写入
-                        context.putIfAbsent(v.getField().name(), v.getValue());
-                        if (!entityValue.getValue(v.getField().id()).isPresent()) {
-                            entityValue.addValue(v);
-                        }
-                        break;
-                    }
-                }
-            }
-        );
-
-        //  计算公式字段
-        Map<String, String> failedMaps =
-            formulaElevator(entityValue, context, executionWrappers);
-
-        //  将entityValue加入到目标中
-        targetEntity.resetEntityValue(entityValue);
-
-        return failedMaps;
-    }
-
-    private void addContextWrappers(IValue<?> v, Map<String, Object> context,
-                                    List<ExecutionWrapper<?>> executionWrappers) {
-        if (!(v instanceof FormulaTypedValue)) {
-            throw new IllegalArgumentException(
-                "entityValue must be formulaTypedValue when calculateType equals [FORMULA].");
-        }
-        executionWrappers.add(initExecutionWrapper(v.getField()));
-
-        //  公式字段，v传入的类型应该为FormulaTypedValue-> v.getValue()为Map<String, Object>类型
-        Map<String, Object> local = (Map<String, Object>) v.getValue();
-        if (null != local) {
-            local.entrySet().stream().filter(
-                entry -> {
-                    return null != entry.getValue();
-                }
-            ).forEach(
-                entry -> {
-                    context.putIfAbsent(entry.getKey(), entry.getValue());
-                }
-            );
-        }
-    }
-
-    private Map<String, String> formulaElevator(IEntityValue entityValue,
-                                                Map<String, Object> context,
-                                                List<ExecutionWrapper<?>> executionWrappers) {
-        AbstractMap.SimpleEntry<List<IValue>, Map<String, String>> result =
-            calculateStorage.execute(executionWrappers, context);
-        if (null != result && null != result.getKey()) {
-            result.getKey().forEach(entityValue::addValue);
-        }
-
-        return result.getValue();
-    }
-
-    private ExecutionWrapper<?> initExecutionWrapper(IEntityField entityField) {
-        return ExecutionWrapper.Builder.anExecution()
-            .withCode(entityField.name())
-            .withRetClass(entityField.type().getJavaType())
-            .witLevel(entityField.calculator().getLevel())
-            .withIEntityField(entityField)
-            .withExpressionWrapper(
-                ExpressionWrapper.Builder.anExpression()
-                    .withExpression(entityField.calculator().getExpression())
-                    .withCached(true)
-                    .build()
-            ).build();
-    }
-
-    private Map<String, Object> toContext(IEntityClass entityClass, IEntity entity) {
-        Map<String, Object> context = new HashMap<>();
-        entityClass.fields().forEach(
-            entityField -> {
-                if (entityField.calculateType().equals(Calculator.Type.NORMAL)) {
-                    entity.entityValue().getValue(entityField.id())
-                        .ifPresent(
-                            value -> {
-                                //  context只加入有值的数据
-                                if (!(value instanceof EmptyTypedValue) && null != value.getValue()) {
-                                    context.putIfAbsent(entityField.name(), value.getValue());
-                                }
-                            });
-                }
-            }
-        );
-
-        return context;
     }
 
     private void handleHalfSuccessOrRecover(long maintainId, long entityClassId, OperationResult operationResult) {

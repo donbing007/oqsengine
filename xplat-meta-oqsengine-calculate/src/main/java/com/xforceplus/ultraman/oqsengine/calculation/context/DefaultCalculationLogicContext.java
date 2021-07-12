@@ -1,5 +1,8 @@
-package com.xforceplus.ultraman.oqsengine.calculation;
+package com.xforceplus.ultraman.oqsengine.calculation.context;
 
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -29,6 +32,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     private MetaManager metaManager;
     private Map<String, Object> attributes;
     private Collection<CalculationHint> hints;
+    private BizIDGenerator bizIDGenerator;
 
     @Override
     public boolean isBuild() {
@@ -94,6 +98,16 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         return new ArrayList<>(hints);
     }
 
+    @Override
+    public void bizIdGenerator(BizIDGenerator bizIDGenerator) {
+        this.bizIDGenerator = bizIDGenerator;
+    }
+
+    @Override
+    public BizIDGenerator getBizIDGenerator() {
+        return bizIDGenerator;
+    }
+
     /**
      * 构造器.
      */
@@ -104,6 +118,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private MasterStorage masterStorage;
         private MetaManager metaManager;
         private Map<String, Object> attributes;
+        private BizIDGenerator bizIDGenerator;
 
         private Builder() {
         }
@@ -137,6 +152,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
+        public Builder withBizIdGenerator(BizIDGenerator bizIdGenerator) {
+            this.bizIDGenerator = bizIdGenerator;
+            return this;
+        }
+
         /**
          * 增加新的属性.
          */
@@ -161,6 +181,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             defaultCalculationLogicContext.attributes = this.attributes;
             defaultCalculationLogicContext.metaManager = this.metaManager;
             defaultCalculationLogicContext.masterStorage = this.masterStorage;
+            defaultCalculationLogicContext.bizIDGenerator = this.bizIDGenerator;
             return defaultCalculationLogicContext;
         }
     }

@@ -119,6 +119,8 @@ message Calculator {
   repeated string args = 12;
   int32 failedPolicy = 13;
   google.protobuf.Any failedDefaultValue = 14;
+  int64 lookupEntityClassId = 15;
+  int64 lookupEntityFieldId = 16;
 }
 
 message ProfileInfo {

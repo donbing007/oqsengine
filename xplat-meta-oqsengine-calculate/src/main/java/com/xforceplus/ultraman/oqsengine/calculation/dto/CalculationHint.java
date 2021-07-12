@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation;
+package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Objects;

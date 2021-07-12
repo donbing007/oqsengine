@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationDefinition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -190,20 +192,11 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "wildcardMaxWidth")
     private int wildcardMaxWidth = 6;
 
-    /**
-     * lookup的类型标识.
-     */
-    @JsonProperty(value = "lookupEntityClassId")
-    private long lookupEntityClassId;
-
-    /**
-     * lookup的字段标识.
-     */
-    @JsonProperty(value = "lookupEntityFieldId")
-    private long lookupEntityFieldId;
-
     @JsonProperty(value = "uniqueName")
     private String uniqueName = "";
+
+    @JsonProperty(value = "calculationDefinition")
+    private CalculationDefinition calculationDefinition;
 
     /**
      * 创建一个新的 FieldConfig.
@@ -254,6 +247,10 @@ public class FieldConfig implements Serializable {
     public FieldConfig max(long max) {
         this.max = max;
         return this;
+    }
+
+    public CalculationDefinition getCalculationDefinition() {
+        return calculationDefinition;
     }
 
     /**
@@ -423,14 +420,6 @@ public class FieldConfig implements Serializable {
         return len;
     }
 
-    public long getLookupEntityClassId() {
-        return lookupEntityClassId;
-    }
-
-    public long getLookupEntityFieldId() {
-        return lookupEntityFieldId;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -452,9 +441,7 @@ public class FieldConfig implements Serializable {
             && Objects.equals(getDelimiter(), that.getDelimiter())
             && Objects.equals(getDisplayType(), that.getDisplayType())
             && getFuzzyType() == that.getFuzzyType()
-            && getLen() == that.getLen()
-            && getLookupEntityClassId() == this.getLookupEntityClassId()
-            && getLookupEntityFieldId() == this.getLookupEntityFieldId();
+            && getLen() == that.getLen();
     }
 
     @Override
@@ -469,9 +456,7 @@ public class FieldConfig implements Serializable {
             getValidateRegexString(),
             isSplittable(),
             getDelimiter(),
-            getDisplayType(),
-            getLookupEntityClassId(),
-            getLookupEntityFieldId());
+            getDisplayType());
     }
 
     @Override
@@ -491,8 +476,6 @@ public class FieldConfig implements Serializable {
         sb.append(", fuzzyType=").append(fuzzyType);
         sb.append(", wildcardMinWidth=").append(wildcardMinWidth);
         sb.append(", wildcardMaxWidth=").append(wildcardMaxWidth);
-        sb.append(", lookupEntityClassId=").append(lookupEntityClassId);
-        sb.append(", lookupEntityFieldId=").append(lookupEntityFieldId);
         sb.append(", uniqueName='").append(uniqueName).append('\'');
         sb.append('}');
         return sb.toString();
@@ -521,6 +504,7 @@ public class FieldConfig implements Serializable {
         private long lookupEntityClassId = 0;
         private long lookupEntityFieldId = 0;
         private String uniqueName = "";
+        private CalculationDefinition calculationDefinition = new StaticCalculation();
 
         private Builder() {
         }
@@ -634,6 +618,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withCalculationDefinition(CalculationDefinition calculationDefinition) {
+            this.calculationDefinition = calculationDefinition;
+            return this;
+        }
+
         /**
          * 构造实例.
          *
@@ -657,8 +646,6 @@ public class FieldConfig implements Serializable {
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
-            fieldConfig.lookupEntityClassId = this.lookupEntityClassId;
-            fieldConfig.lookupEntityFieldId = this.lookupEntityFieldId;
             fieldConfig.uniqueName = this.uniqueName;
             return fieldConfig;
         }

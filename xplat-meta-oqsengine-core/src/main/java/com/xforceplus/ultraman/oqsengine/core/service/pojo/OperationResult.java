@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationHint;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
 
 /**

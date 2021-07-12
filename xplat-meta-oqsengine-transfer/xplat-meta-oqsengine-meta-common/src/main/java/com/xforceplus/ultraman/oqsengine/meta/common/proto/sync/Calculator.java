@@ -29,6 +29,8 @@ private static final long serialVersionUID = 0L;
     level_ = 0;
     args_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     failedPolicy_ = 0;
+    lookupEntityClassId_ = 0L;
+    lookupEntityFieldId_ = 0L;
   }
 
   @java.lang.Override
@@ -150,6 +152,16 @@ private static final long serialVersionUID = 0L;
               failedDefaultValue_ = subBuilder.buildPartial();
             }
 
+            break;
+          }
+          case 120: {
+
+            lookupEntityClassId_ = input.readInt64();
+            break;
+          }
+          case 128: {
+
+            lookupEntityFieldId_ = input.readInt64();
             break;
           }
         }
@@ -538,6 +550,24 @@ private static final long serialVersionUID = 0L;
     return getFailedDefaultValue();
   }
 
+  public static final int LOOKUPENTITYCLASSID_FIELD_NUMBER = 15;
+  private long lookupEntityClassId_;
+  /**
+   * <code>int64 lookupEntityClassId = 15;</code>
+   */
+  public long getLookupEntityClassId() {
+    return lookupEntityClassId_;
+  }
+
+  public static final int LOOKUPENTITYFIELDID_FIELD_NUMBER = 16;
+  private long lookupEntityFieldId_;
+  /**
+   * <code>int64 lookupEntityFieldId = 16;</code>
+   */
+  public long getLookupEntityFieldId() {
+    return lookupEntityFieldId_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -591,6 +621,12 @@ private static final long serialVersionUID = 0L;
     }
     if (failedDefaultValue_ != null) {
       output.writeMessage(14, getFailedDefaultValue());
+    }
+    if (lookupEntityClassId_ != 0L) {
+      output.writeInt64(15, lookupEntityClassId_);
+    }
+    if (lookupEntityFieldId_ != 0L) {
+      output.writeInt64(16, lookupEntityFieldId_);
     }
     unknownFields.writeTo(output);
   }
@@ -652,6 +688,14 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(14, getFailedDefaultValue());
     }
+    if (lookupEntityClassId_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(15, lookupEntityClassId_);
+    }
+    if (lookupEntityFieldId_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(16, lookupEntityFieldId_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -699,6 +743,10 @@ private static final long serialVersionUID = 0L;
       result = result && getFailedDefaultValue()
           .equals(other.getFailedDefaultValue());
     }
+    result = result && (getLookupEntityClassId()
+        == other.getLookupEntityClassId());
+    result = result && (getLookupEntityFieldId()
+        == other.getLookupEntityFieldId());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -742,6 +790,12 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + FAILEDDEFAULTVALUE_FIELD_NUMBER;
       hash = (53 * hash) + getFailedDefaultValue().hashCode();
     }
+    hash = (37 * hash) + LOOKUPENTITYCLASSID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getLookupEntityClassId());
+    hash = (37 * hash) + LOOKUPENTITYFIELDID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getLookupEntityFieldId());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -903,6 +957,10 @@ private static final long serialVersionUID = 0L;
         failedDefaultValue_ = null;
         failedDefaultValueBuilder_ = null;
       }
+      lookupEntityClassId_ = 0L;
+
+      lookupEntityFieldId_ = 0L;
+
       return this;
     }
 
@@ -949,36 +1007,38 @@ private static final long serialVersionUID = 0L;
       } else {
         result.failedDefaultValue_ = failedDefaultValueBuilder_.build();
       }
+      result.lookupEntityClassId_ = lookupEntityClassId_;
+      result.lookupEntityFieldId_ = lookupEntityFieldId_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
 
     public Builder clone() {
-      return super.clone();
+      return (Builder) super.clone();
     }
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return super.setField(field, value);
+      return (Builder) super.setField(field, value);
     }
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return super.clearField(field);
+      return (Builder) super.clearField(field);
     }
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return super.clearOneof(oneof);
+      return (Builder) super.clearOneof(oneof);
     }
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         int index, java.lang.Object value) {
-      return super.setRepeatedField(field, index, value);
+      return (Builder) super.setRepeatedField(field, index, value);
     }
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
-      return super.addRepeatedField(field, value);
+      return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) {
@@ -1047,6 +1107,12 @@ private static final long serialVersionUID = 0L;
       }
       if (other.hasFailedDefaultValue()) {
         mergeFailedDefaultValue(other.getFailedDefaultValue());
+      }
+      if (other.getLookupEntityClassId() != 0L) {
+        setLookupEntityClassId(other.getLookupEntityClassId());
+      }
+      if (other.getLookupEntityFieldId() != 0L) {
+        setLookupEntityFieldId(other.getLookupEntityFieldId());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1941,6 +2007,58 @@ private static final long serialVersionUID = 0L;
         failedDefaultValue_ = null;
       }
       return failedDefaultValueBuilder_;
+    }
+
+    private long lookupEntityClassId_ ;
+    /**
+     * <code>int64 lookupEntityClassId = 15;</code>
+     */
+    public long getLookupEntityClassId() {
+      return lookupEntityClassId_;
+    }
+    /**
+     * <code>int64 lookupEntityClassId = 15;</code>
+     */
+    public Builder setLookupEntityClassId(long value) {
+      
+      lookupEntityClassId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 lookupEntityClassId = 15;</code>
+     */
+    public Builder clearLookupEntityClassId() {
+      
+      lookupEntityClassId_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long lookupEntityFieldId_ ;
+    /**
+     * <code>int64 lookupEntityFieldId = 16;</code>
+     */
+    public long getLookupEntityFieldId() {
+      return lookupEntityFieldId_;
+    }
+    /**
+     * <code>int64 lookupEntityFieldId = 16;</code>
+     */
+    public Builder setLookupEntityFieldId(long value) {
+      
+      lookupEntityFieldId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 lookupEntityFieldId = 16;</code>
+     */
+    public Builder clearLookupEntityFieldId() {
+      
+      lookupEntityFieldId_ = 0L;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

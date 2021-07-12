@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation;
+package com.xforceplus.ultraman.oqsengine.calculation.exception;
 
 /**
  * 表示计算异常.
