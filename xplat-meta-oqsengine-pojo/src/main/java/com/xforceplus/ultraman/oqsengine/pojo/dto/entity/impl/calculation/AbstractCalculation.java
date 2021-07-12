@@ -24,6 +24,10 @@ public abstract class AbstractCalculation {
     @JsonProperty(value = "calculationType")
     protected CalculationType calculationType;
 
+    public AbstractCalculation(CalculationType calculationType) {
+        this.calculationType = calculationType;
+    }
+
     public CalculationType getCalculationType() {
         return calculationType;
     }
@@ -31,5 +35,7 @@ public abstract class AbstractCalculation {
     public void setCalculationType(CalculationType calculationType) {
         this.calculationType = calculationType;
     }
+
+    public abstract AbstractCalculation clone();
 }
 

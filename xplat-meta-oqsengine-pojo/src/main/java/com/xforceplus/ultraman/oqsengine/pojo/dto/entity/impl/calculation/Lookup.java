@@ -38,6 +38,18 @@ public class Lookup extends AbstractCalculation {
         this.fieldId = fieldId;
     }
 
+    private Lookup() {
+        super(CalculationType.LOOKUP);
+    }
+
+    @Override
+    public AbstractCalculation clone() {
+        Lookup lookup = new Lookup();
+        lookup.classId = this.classId;
+        lookup.fieldId = this.fieldId;
+        return lookup;
+    }
+
     /**
      * builder.
      */

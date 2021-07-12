@@ -435,6 +435,28 @@ public class FieldConfig implements Serializable {
         return len;
     }
 
+    public FieldConfig clone() {
+        return FieldConfig.Builder.anFieldConfig()
+            .withDelimiter(this.getDelimiter())
+            .withDisplayType(this.getDisplayType())
+            .withFieldSense(this.getFieldSense())
+            .withFuzzyType(this.getFuzzyType())
+            .withIdentifie(this.isIdentifie())
+            .withMax(this.getMax())
+            .withMin(this.getMin())
+            .withPrecision(this.getPrecision())
+            .withRequired(this.isRequired())
+            .withSearchable(this.isSearchable())
+            .withSplittable(this.isSplittable())
+            .withUniqueName(this.getUniqueName())
+            .withValidateRegexString(this.getValidateRegexString())
+            .withWildcardMaxWidth(this.getWildcardMaxWidth())
+            .withWildcardMinWidth(this.getWildcardMinWidth())
+            .withCrossSearch(this.isCrossSearch())
+            .withLen(this.getLen())
+            .withCalculation(this.getCalculation().clone())
+            .build();
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -520,7 +542,7 @@ public class FieldConfig implements Serializable {
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
         private String uniqueName = "";
-        private AbstractCalculation calculation = new StaticCalculation();
+        private AbstractCalculation calculation = StaticCalculation.Builder.anStaticCalculation().build();
 
         private Builder() {
         }
@@ -660,6 +682,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.displayType = this.displayType;
             fieldConfig.uniqueName = this.uniqueName;
             fieldConfig.calculation = this.calculation;
+
             return fieldConfig;
         }
     }

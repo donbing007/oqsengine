@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -287,28 +286,7 @@ public class StorageMetaManager implements MetaManager {
                 .withDefaultValue(entityField.defaultValue());
 
             if (null != entityField.config()) {
-                FieldConfig config = entityField.config();
-                builder.withConfig(FieldConfig.Builder.anFieldConfig()
-                    .withDelimiter(config.getDelimiter())
-                    .withDisplayType(config.getDisplayType())
-                    .withFieldSense(config.getFieldSense())
-                    .withFuzzyType(config.getFuzzyType())
-                    .withIdentifie(config.isIdentifie())
-                    .withMax(config.getMax())
-                    .withMin(config.getMin())
-                    .withPrecision(config.getPrecision())
-                    .withRequired(config.isRequired())
-                    .withSearchable(config.isSearchable())
-                    .withSplittable(config.isSplittable())
-                    .withUniqueName(config.getUniqueName())
-                    .withValidateRegexString(config.getValidateRegexString())
-                    .withWildcardMaxWidth(config.getWildcardMaxWidth())
-                    .withWildcardMinWidth(config.getWildcardMinWidth())
-                    .withCrossSearch(config.isCrossSearch())
-                    .withLen(config.getLen())
-                    .withCalculation(config.getCalculation())
-                    .build()
-                );
+                builder.withConfig(entityField.config().clone());
             }
 
             return builder.build();

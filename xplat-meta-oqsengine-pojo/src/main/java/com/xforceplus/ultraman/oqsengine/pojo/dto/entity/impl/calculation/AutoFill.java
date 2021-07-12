@@ -65,6 +65,22 @@ public class AutoFill extends AbstractCalculation {
         this.max = max;
     }
 
+    private AutoFill() {
+        super(CalculationType.AUTO_FILL);
+    }
+
+    @Override
+    public AbstractCalculation clone() {
+        AutoFill autoFill = new AutoFill();
+        autoFill.step = this.step;
+        autoFill.model = this.model;
+        autoFill.patten = this.patten;
+        autoFill.max = this.max;
+        autoFill.min = this.min;
+
+        return autoFill;
+    }
+
     /**
      * builder.
      */

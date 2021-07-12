@@ -81,6 +81,22 @@ public class Formula extends AbstractCalculation  {
         this.code = code;
     }
 
+    private Formula() {
+        super(CalculationType.FORMULA);
+    }
+
+    @Override
+    public AbstractCalculation clone() {
+        Formula formula = new Formula();
+        formula.args = this.args;
+        formula.failedPolicy = this.failedPolicy;
+        formula.failedDefaultValue = this.failedDefaultValue;
+        formula.level = this.level;
+        formula.expression = this.expression;
+        formula.code = this.code;
+        return formula;
+    }
+
     /**
      * builder.
      */

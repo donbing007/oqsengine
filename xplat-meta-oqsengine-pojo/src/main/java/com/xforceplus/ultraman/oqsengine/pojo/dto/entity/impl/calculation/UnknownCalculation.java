@@ -8,6 +8,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  * @since 1.8
  */
 public class UnknownCalculation extends AbstractCalculation {
+
+    private UnknownCalculation() {
+        super(CalculationType.UNKNOWN);
+    }
+
+    @Override
+    public AbstractCalculation clone() {
+        return new UnknownCalculation();
+    }
+
     /**
      * builder.
      */

@@ -8,6 +8,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  * @since 1.8
  */
 public class StaticCalculation extends AbstractCalculation {
+
+    private StaticCalculation() {
+        super(CalculationType.STATIC);
+    }
+
+    @Override
+    public AbstractCalculation clone() {
+        return new StaticCalculation();
+    }
+
     /**
      * builder.
      */
