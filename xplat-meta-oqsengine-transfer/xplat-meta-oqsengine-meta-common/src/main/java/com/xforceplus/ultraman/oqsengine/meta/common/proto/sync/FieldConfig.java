@@ -31,6 +31,7 @@ private static final long serialVersionUID = 0L;
     uniqueName_ = "";
     crossSearch_ = false;
     length_ = 0;
+    valueFloatScale_ = 0;
   }
 
   @java.lang.Override
@@ -141,6 +142,11 @@ private static final long serialVersionUID = 0L;
           case 120: {
 
             length_ = input.readInt32();
+            break;
+          }
+          case 128: {
+
+            valueFloatScale_ = input.readInt32();
             break;
           }
         }
@@ -563,6 +569,15 @@ private static final long serialVersionUID = 0L;
     return length_;
   }
 
+  public static final int VALUEFLOATSCALE_FIELD_NUMBER = 16;
+  private int valueFloatScale_;
+  /**
+   * <code>int32 valueFloatScale = 16;</code>
+   */
+  public int getValueFloatScale() {
+    return valueFloatScale_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -619,6 +634,9 @@ private static final long serialVersionUID = 0L;
     }
     if (length_ != 0) {
       output.writeInt32(15, length_);
+    }
+    if (valueFloatScale_ != 0) {
+      output.writeInt32(16, valueFloatScale_);
     }
     unknownFields.writeTo(output);
   }
@@ -685,6 +703,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(15, length_);
     }
+    if (valueFloatScale_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(16, valueFloatScale_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -730,6 +752,8 @@ private static final long serialVersionUID = 0L;
         == other.getCrossSearch());
     result = result && (getLength()
         == other.getLength());
+    result = result && (getValueFloatScale()
+        == other.getValueFloatScale());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -777,6 +801,8 @@ private static final long serialVersionUID = 0L;
         getCrossSearch());
     hash = (37 * hash) + LENGTH_FIELD_NUMBER;
     hash = (53 * hash) + getLength();
+    hash = (37 * hash) + VALUEFLOATSCALE_FIELD_NUMBER;
+    hash = (53 * hash) + getValueFloatScale();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -936,6 +962,8 @@ private static final long serialVersionUID = 0L;
 
       length_ = 0;
 
+      valueFloatScale_ = 0;
+
       return this;
     }
 
@@ -973,6 +1001,7 @@ private static final long serialVersionUID = 0L;
       result.uniqueName_ = uniqueName_;
       result.crossSearch_ = crossSearch_;
       result.length_ = length_;
+      result.valueFloatScale_ = valueFloatScale_;
       onBuilt();
       return result;
     }
@@ -1061,6 +1090,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getLength() != 0) {
         setLength(other.getLength());
+      }
+      if (other.getValueFloatScale() != 0) {
+        setValueFloatScale(other.getValueFloatScale());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1622,6 +1654,32 @@ private static final long serialVersionUID = 0L;
     public Builder clearLength() {
       
       length_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int valueFloatScale_ ;
+    /**
+     * <code>int32 valueFloatScale = 16;</code>
+     */
+    public int getValueFloatScale() {
+      return valueFloatScale_;
+    }
+    /**
+     * <code>int32 valueFloatScale = 16;</code>
+     */
+    public Builder setValueFloatScale(int value) {
+      
+      valueFloatScale_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 valueFloatScale = 16;</code>
+     */
+    public Builder clearValueFloatScale() {
+      
+      valueFloatScale_ = 0;
       onChanged();
       return this;
     }

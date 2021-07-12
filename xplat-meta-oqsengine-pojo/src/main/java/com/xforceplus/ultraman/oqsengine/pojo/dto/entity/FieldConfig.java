@@ -145,6 +145,12 @@ public class FieldConfig implements Serializable {
     private int precision = 6;
 
     /**
+     * 尾数处理模式.
+     */
+    @JsonProperty(value = "scale")
+    private int scale = 6;
+
+    /**
      * 是否为数据标识.
      */
     @JsonProperty(value = "identifie")
@@ -222,6 +228,15 @@ public class FieldConfig implements Serializable {
     public int precision() {
         return precision;
     }
+
+    /**
+     * 尾数处理模式.
+     */
+    public int scale() {
+        return scale;
+    }
+
+
 
     /**
      * 设置是否可搜索,默认不搜索.
@@ -431,6 +446,7 @@ public class FieldConfig implements Serializable {
         FieldConfig that = (FieldConfig) o;
         return isSearchable() == that.isSearchable()
             && precision() == that.precision()
+            && scale() == that.scale()
             && isIdentifie() == that.isIdentifie()
             && isRequired() == that.isRequired()
             && isSplittable() == that.isSplittable()
@@ -465,6 +481,7 @@ public class FieldConfig implements Serializable {
         sb.append("searchable=").append(searchable);
         sb.append(", len=").append(len);
         sb.append(", precision=").append(precision);
+        sb.append(", scale=").append(scale);
         sb.append(", identifie=").append(identifie);
         sb.append(", required=").append(required);
         sb.append(", fieldSense=").append(fieldSense);
@@ -491,6 +508,7 @@ public class FieldConfig implements Serializable {
         private long max = Long.MAX_VALUE;
         private long min = Long.MIN_VALUE;
         private int precision = 0;
+        private int scale = 0;
         private boolean identifie = false;
         private boolean required = false;
         private FieldSense fieldSense = FieldSense.NORMAL;
@@ -501,8 +519,6 @@ public class FieldConfig implements Serializable {
         private FuzzyType fuzzyType = FuzzyType.NOT;
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
-        private long lookupEntityClassId = 0;
-        private long lookupEntityFieldId = 0;
         private String uniqueName = "";
         private AbstractCalculation calculation = new StaticCalculation();
 
@@ -550,6 +566,11 @@ public class FieldConfig implements Serializable {
 
         public Builder withPrecision(int precision) {
             this.precision = precision;
+            return this;
+        }
+
+        public Builder withScale(int scale) {
+            this.scale = scale;
             return this;
         }
 
@@ -603,16 +624,6 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
-        public Builder withLookupEntityClassId(long entityClassId) {
-            this.lookupEntityClassId = entityClassId;
-            return this;
-        }
-
-        public Builder withLookupEntityFieldId(long entityFieldId) {
-            this.lookupEntityFieldId = entityFieldId;
-            return this;
-        }
-
         public Builder withUniqueName(String uniqueName) {
             this.uniqueName = uniqueName;
             return this;
@@ -636,6 +647,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.max = this.max;
             fieldConfig.fieldSense = this.fieldSense;
             fieldConfig.precision = this.precision;
+            fieldConfig.scale = this.scale;
             fieldConfig.delimiter = this.delimiter;
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
@@ -647,6 +659,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
             fieldConfig.uniqueName = this.uniqueName;
+            fieldConfig.calculation = this.calculation;
             return fieldConfig;
         }
     }

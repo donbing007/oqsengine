@@ -256,6 +256,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         verifierFactory = new VerifierFactory();
+        calculationLogicFactory = new CalculationLogicFactory();
     }
 
     @PreDestroy
@@ -392,13 +393,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 // 合并需要修改的字段值.
-                entity.entityValue().values().stream().forEach(v -> {
-                    targetEntity.entityValue().addValue(v);
-                });
+                entity.entityValue().values().stream()
+                    // 自增编号无法重复计算
+                    .filter(f -> !CalculationType.AUTO_FILL.equals(f.getField().calculationType()))
+                    .forEach(v -> {
+                        targetEntity.entityValue().addValue(v);
+                    });
 
                 Collection<CalculationHint> hints;
                 try {
-                    hints = processCalculationField(targetEntity, entityClass, true);
+                    hints = processCalculationField(targetEntity, entityClass, false);
                 } catch (CalculationLogicException ex) {
                     logger.warn(ex.getMessage(), ex);
                     return new OperationResult(
@@ -709,20 +713,26 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private Collection<CalculationHint> processCalculationField(IEntity sourceEntity, IEntityClass entityClass, boolean build)
+    private Collection<CalculationHint> processCalculationField(IEntity sourceEntity, IEntityClass entityClass,
+                                                                boolean build)
         throws CalculationLogicException {
 
         /*
         过滤掉所有的UNKNOWN和静态字段类型,同时按照计算的优先级从数字从小至大排序.
          */
         List<IEntityField> calculationFields = entityClass.fields().stream().filter(
-
-            f -> CalculationType.UNKNOWN != f.calculationType() || CalculationType.STATIC != f.calculationType()
-
+            f -> {
+                if (build) {
+                    return CalculationType.UNKNOWN != f.calculationType()
+                        && CalculationType.STATIC != f.calculationType();
+                } else {
+                    return CalculationType.UNKNOWN != f.calculationType()
+                        && CalculationType.STATIC != f.calculationType()
+                        && CalculationType.AUTO_FILL != f.calculationType();
+                }
+            }
         ).sorted(
-
             new CalculationComparator()
-
         ).collect(Collectors.toList());
 
         if (calculationFields.isEmpty()) {

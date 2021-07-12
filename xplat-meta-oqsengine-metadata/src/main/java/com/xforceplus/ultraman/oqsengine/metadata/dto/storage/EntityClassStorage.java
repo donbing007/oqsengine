@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
+package com.xforceplus.ultraman.oqsengine.metadata.dto.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;

@@ -102,6 +102,7 @@ message FieldConfig {
   string uniqueName = 13;
   bool crossSearch = 14;
   int32 length = 15;
+  int32 valueFloatScale = 16;
 }
 
 message Calculator {

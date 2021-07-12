@@ -12,7 +12,9 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,23 +27,23 @@ import java.util.Optional;
  * @since 1.8
  */
 public class EntityClassSyncProtoBufMocker {
-    public static List<GeneralConstant.FourTa<Integer, String, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean>>
+    public static List<GeneralConstant.FourTa<Integer, String, CalculationType, Boolean>>
         EXPECTED_ENTITY_INFO_LIST =
         Arrays.asList(
             new GeneralConstant.FourTa<>(1, FieldType.LONG.name(),
-                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL, false),
+                CalculationType.STATIC, false),
             new GeneralConstant.FourTa<>(2, FieldType.STRING.name(),
-                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL, false),
+                CalculationType.STATIC, false),
             new GeneralConstant.FourTa<>(3, FieldType.LONG.name(),
-                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA, false),
+                CalculationType.FORMULA, false),
             new GeneralConstant.FourTa<>(4, FieldType.STRING.name(),
-                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.AUTO_FILL, false)
+                CalculationType.AUTO_FILL, false)
         );
 
-    public static GeneralConstant.FourTa<Integer, String, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean>
+    public static GeneralConstant.FourTa<Integer, String, CalculationType, Boolean>
         EXPECTED_PROFILE_FOUR_TA =
         new GeneralConstant.FourTa<>(10, FieldType.LONG.name(),
-            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA, true);
+            CalculationType.FORMULA, true);
 
     public static class Response {
         /**
@@ -121,8 +123,7 @@ public class EntityClassSyncProtoBufMocker {
     /**
      * 生成profileInfo.
      */
-    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String,
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean> fourTa) {
+    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
         return ProfileInfo.newBuilder().setCode(code)
             .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id,
                 GeneralConstant.DEFAULT_RELATION_TYPE, id))
@@ -136,7 +137,7 @@ public class EntityClassSyncProtoBufMocker {
      */
     public static Calculator genericCalculator() {
         return Calculator.newBuilder()
-            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.NORMAL.getType())
+            .setCalculateType(CalculationType.STATIC.getSymbol())
             .build();
     }
 
@@ -146,11 +147,10 @@ public class EntityClassSyncProtoBufMocker {
     public static Calculator formulaCalculator(String expression, int level, FieldType fieldType) {
         Optional<Any> result = ProtoAnyHelper.toAnyValue(defaultValue(fieldType));
         Calculator.Builder builder = Calculator.newBuilder()
-            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.FORMULA.getType())
+            .setCalculateType(CalculationType.STATIC.getSymbol())
             .setExpression(expression)
             .setLevel(level)
-            .setFailedPolicy(com.xforceplus.ultraman.oqsengine.pojo.dto.entity
-                .Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE.getPolicy())
+            .setFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE.getPolicy())
             .addAllArgs(DEFAULT_ARGS);
         result.ifPresent(builder::setFailedDefaultValue);
         return builder.build();
@@ -161,8 +161,11 @@ public class EntityClassSyncProtoBufMocker {
      */
     public static Calculator autoFillCalculator(String patten, String model, String min, int step) {
         return Calculator.newBuilder()
-            .setCalculateType(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type.AUTO_FILL.getType())
-            .setPatten(patten).setModel(model).setMin(min).setStep(step).build();
+            .setCalculateType(CalculationType.AUTO_FILL.getSymbol())
+            .setPatten(patten).setModel(model)
+            .setMin(min)
+            .setStep(step)
+            .build();
     }
 
     private static EntityFieldInfo.FieldType toFieldType(String type) {
@@ -178,8 +181,7 @@ public class EntityClassSyncProtoBufMocker {
      * 生成entityFieldInfo.
      */
     public static EntityFieldInfo entityFieldInfo(long id,
-                                                  GeneralConstant.FourTa<Integer, String,
-                                                      com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator.Type, Boolean> fourTa) {
+                                                  GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
         EntityFieldInfo.FieldType protoType = toFieldType(fourTa.getB());
         FieldType fieldType = FieldType.fromRawType(protoType.name());
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()
@@ -191,7 +193,7 @@ public class EntityClassSyncProtoBufMocker {
             .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
 
         switch (fourTa.getC()) {
-            case NORMAL: {
+            case STATIC: {
                 builder.setCalculator(genericCalculator());
                 break;
             }

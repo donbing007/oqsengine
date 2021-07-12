@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager.L1_ENTITY_CLASS;
 
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
@@ -12,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockC
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -194,9 +194,9 @@ public class ManagementWithCalculatorTest {
             Assertions.assertNotEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
             if (operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
                 Assertions.assertEquals(expectedFailed.size(), operationResult.getHints().size());
-                expectedFailed.forEach(
-                    failed -> {
-                        Assertions.assertTrue(operationResult.getHints().containsKey(failed));
+                operationResult.getHints().forEach(
+                    hints -> {
+                        Assertions.assertTrue(expectedFailed.contains(hints.getField().name()));
                     }
                 );
             }
@@ -214,7 +214,7 @@ public class ManagementWithCalculatorTest {
                 Optional<IValue> vOp = entity.entityValue().getValue(key);
                 Assertions.assertTrue(vOp.isPresent());
                 Assertions.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
-                if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
+                if (vOp.get().getField().calculationType().equals(CalculationType.AUTO_FILL)) {
                     Assertions.assertEquals(expectedAutoFill, vOp.get().getValue());
                 }
             });

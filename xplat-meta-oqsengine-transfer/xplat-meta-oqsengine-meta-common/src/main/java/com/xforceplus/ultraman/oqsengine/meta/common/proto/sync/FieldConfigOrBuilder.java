@@ -100,4 +100,9 @@ public interface FieldConfigOrBuilder extends
    * <code>int32 length = 15;</code>
    */
   int getLength();
+
+  /**
+   * <code>int32 valueFloatScale = 16;</code>
+   */
+  int getValueFloatScale();
 }

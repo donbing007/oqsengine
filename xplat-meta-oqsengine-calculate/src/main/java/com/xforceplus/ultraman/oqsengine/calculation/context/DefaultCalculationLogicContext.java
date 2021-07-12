@@ -95,6 +95,9 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
 
     @Override
     public Collection<CalculationHint> getHints() {
+        if (null == hints) {
+            return new ArrayList<>();
+        }
         return new ArrayList<>(hints);
     }
 

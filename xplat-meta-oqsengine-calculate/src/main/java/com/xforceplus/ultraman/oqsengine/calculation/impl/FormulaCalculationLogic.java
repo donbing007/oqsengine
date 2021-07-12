@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
@@ -55,8 +54,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
                     return Optional.of(IValueUtils.toIValue(context.getFocusField(), formula.getFailedDefaultValue()));
                 } finally {
                     //  将错误加入hints中
-                    context.getHints().add(new CalculationHint(context.getFocusField(),
-                        e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH))));
+                    context.hint(e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
                 }
             } else {
                 logger.warn("formula [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
@@ -87,13 +85,15 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
     private Map<String, Object> toRuntimeParams(Formula formula, IEntity entity) throws CalculationLogicException {
         Map<String, Object> map = new HashMap<>();
-        for (String arg : formula.getArgs()) {
-            Optional<IValue> iValueOp = entity.entityValue().getValue(arg);
+        if (null != formula.getArgs()) {
+            for (String arg : formula.getArgs()) {
+                Optional<IValue> iValueOp = entity.entityValue().getValue(arg);
 
-            if (iValueOp.isPresent()) {
-                map.put(arg, iValueOp.get().getValue());
-            } else {
-                throw new CalculationLogicException(String.format("formula execution absence param [%s]", arg));
+                if (iValueOp.isPresent()) {
+                    map.put(arg, iValueOp.get().getValue());
+                } else {
+                    throw new CalculationLogicException(String.format("formula execution absence param [%s]", arg));
+                }
             }
         }
 

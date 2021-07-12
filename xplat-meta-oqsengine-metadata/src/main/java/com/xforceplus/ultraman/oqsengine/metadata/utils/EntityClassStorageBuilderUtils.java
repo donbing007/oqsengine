@@ -5,9 +5,9 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
@@ -317,7 +317,6 @@ public class EntityClassStorageBuilderUtils {
             .withExpression(calculator.getExpression())
             .withLevel(calculator.getLevel())
             .withArgs(args)
-            .withLevel(calculator.getLevel())
             .withFailedPolicy(policy);
 
         failedValueOp.ifPresent(builder::withFailedDefaultValue);
@@ -337,6 +336,7 @@ public class EntityClassStorageBuilderUtils {
             .withMax(fieldConfig.getMax())
             .withMin(fieldConfig.getMin())
             .withPrecision(fieldConfig.getPrecision())
+            .withScale(fieldConfig.getValueFloatScale())
             .withIdentifie(fieldConfig.getIdentifier())
             .withRequired(fieldConfig.getIsRequired())
             .withValidateRegexString(fieldConfig.getValidateRegexString())

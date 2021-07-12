@@ -7,7 +7,7 @@ import com.googlecode.aviator.Options;
 import com.googlecode.aviator.runtime.type.AviatorFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculateExecutionException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import java.math.MathContext;
 
 /**
@@ -45,10 +45,10 @@ public class ExpressionUtils {
     /**
      * 编译并执行一个函数.
      */
-    public static Object execute(ExecutionWrapper executionWrapper) {
+    public static Object execute(ExecutionWrapper executionWrapper) throws CalculationLogicException {
         Expression expression = compile(executionWrapper.getExpressionWrapper());
         if (null == expression) {
-            throw new CalculateExecutionException(String.format("compile [expression-%s] failed .",
+            throw new CalculationLogicException(String.format("compile [expression-%s] failed .",
                 executionWrapper.getExpressionWrapper().getExpression()));
         }
         return expression.execute(executionWrapper.getParams());

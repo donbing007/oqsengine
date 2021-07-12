@@ -28,7 +28,6 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.genera
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -39,9 +38,9 @@ import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
@@ -365,7 +364,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
                     }
-                    if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
+                    if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
                         payLoads.add(
                             new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
                         );
@@ -385,7 +384,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 throw new MetaSyncClientException("parse profile-entityFields failed.", false);
                             }
 
-                            if (entityField.calculateType().equals(Calculator.Type.AUTO_FILL)) {
+                            if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
                                 payLoads.add(
                                     new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
                                         new AutoFillUpgradePayload(entityField))

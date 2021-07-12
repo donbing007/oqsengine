@@ -6,6 +6,7 @@ import com.googlecode.aviator.runtime.type.AviatorBigInt;
 import com.googlecode.aviator.runtime.type.AviatorRuntimeJavaType;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class OffsetTest {
     }
 
     @Test
-    public void testOffsetData() {
+    public void testOffsetData() throws CalculationLogicException {
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
             .withExpression("timeOffset(createTime,1,1)").build();

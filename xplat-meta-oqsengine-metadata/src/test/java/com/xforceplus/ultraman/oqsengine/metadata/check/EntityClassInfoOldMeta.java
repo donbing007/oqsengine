@@ -5,11 +5,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -64,31 +68,6 @@ public class EntityClassInfoOldMeta {
                 .withId(entityField.id())
                 .withDefaultValue(entityField.defaultValue());
 
-            if (null == entityField.calculator()) {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(Calculator.Type.NORMAL)
-                    .withFailedPolicy(Calculator.FailedPolicy.UNKNOWN)
-                    .build()
-                );
-            } else {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(entityField.calculator().getType())
-                    .withExpression(entityField.calculator().getExpression())
-                    .withMin(entityField.calculator().getMin())
-                    .withMax(entityField.calculator().getMax())
-                    .withCondition(entityField.calculator().getCondition())
-                    .withEmptyValueTransfer(entityField.calculator().getEmptyValueTransfer())
-                    .withValidator(entityField.calculator().getValidator())
-                    .withModel(entityField.calculator().getModel())
-                    .withStep(entityField.calculator().getStep())
-                    .withLevel(entityField.calculator().getLevel())
-                    .withPatten(entityField.calculator().getPatten())
-                    .withArgs(null != entityField.calculator().getArgs() ? entityField.calculator().getArgs() : new ArrayList<>())
-                    .withFailedPolicy(entityField.calculator().getFailedPolicy())
-                    .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
-                    .build());
-            }
-
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();
                 builder.withConfig(FieldConfig.Builder.anFieldConfig()
@@ -100,6 +79,7 @@ public class EntityClassInfoOldMeta {
                     .withMax(config.getMax())
                     .withMin(config.getMin())
                     .withPrecision(config.getPrecision())
+                    .withScale(config.scale())
                     .withRequired(config.isRequired())
                     .withSearchable(config.isSearchable())
                     .withSplittable(config.isSplittable())
@@ -108,6 +88,7 @@ public class EntityClassInfoOldMeta {
                     .withWildcardMaxWidth(config.getWildcardMaxWidth())
                     .withWildcardMinWidth(config.getWildcardMinWidth())
                     .withCrossSearch(config.isCrossSearch())
+                    .withCalculation(toCalculation(config.getCalculation()))
                     .build()
                 );
             }
@@ -115,5 +96,43 @@ public class EntityClassInfoOldMeta {
             return builder.build();
         }
         return null;
+    }
+
+    public <R extends AbstractCalculation> R toCalculation(AbstractCalculation calculation) {
+        switch (calculation.getCalculationType()) {
+            case FORMULA: {
+                Formula f = (Formula) calculation;
+
+                return (R) Formula.Builder.anFormula()
+                    .withExpression(f.getExpression())
+                    .withLevel(f.getLevel())
+                    .withArgs(f.getArgs())
+                    .withFailedPolicy(f.getFailedPolicy())
+                    .withFailedDefaultValue(f.getFailedDefaultValue())
+                    .build();
+            }
+            case AUTO_FILL: {
+                AutoFill f = (AutoFill) calculation;
+
+                return (R) AutoFill.Builder.anAutoFill()
+                    .withMin(f.getMin())
+                    .withMax(f.getMax())
+                    .withStep(f.getStep())
+                    .withModel(f.getModel())
+                    .withPatten(f.getPatten())
+                    .build();
+            }
+            case LOOKUP: {
+                Lookup f = (Lookup) calculation;
+
+                return (R) Lookup.Builder.anLookup()
+                    .withClassId(f.getClassId())
+                    .withFieldId(f.getFieldId())
+                    .build();
+            }
+            default: {
+                return (R) StaticCalculation.Builder.anStaticCalculation().build();
+            }
+        }
     }
 }

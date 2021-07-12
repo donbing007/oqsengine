@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculate;
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import java.math.BigDecimal;
@@ -49,7 +50,7 @@ public class MultiFormulaTest {
     }
 
     @Test
-    public void testEmptyCalculate() {
+    public void testEmptyCalculate() throws CalculationLogicException {
         String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
 
         ExpressionWrapper expressionWrapper =
@@ -84,7 +85,7 @@ public class MultiFormulaTest {
     }
 
     @Test
-    public void testSimpleString() {
+    public void testSimpleString() throws CalculationLogicException {
         String a = "${name}";
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(a).build();
 
@@ -100,7 +101,7 @@ public class MultiFormulaTest {
     }
 
     @Test
-    public void testPlus() {
+    public void testPlus() throws CalculationLogicException {
         String expression1 = "${amount} * ${taxRate} / 100 + ${amount}";
         ExpressionWrapper expressionWrapper =
             ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
@@ -122,7 +123,7 @@ public class MultiFormulaTest {
     }
 
     @Test
-    public void testLocalDataTime() {
+    public void testLocalDataTime() throws CalculationLogicException {
         String expression1 = "${current_time}";
         ExpressionWrapper expressionWrapper =
             ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
