@@ -21,6 +21,7 @@ import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
@@ -75,6 +76,7 @@ import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -301,7 +303,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = operationResult.getHints();
+                            Map<String, String> failedMap = hintsToFails(operationResult.getHints());
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
@@ -351,6 +353,21 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
             return result;
         });
+    }
+
+    /**
+     * convert hints to fails.
+     */
+    private Map<String, String> hintsToFails(Collection<CalculationHint> calculationHintCollections) {
+        Map<String, String> hintsMap = new HashMap<>();
+        if (null != calculationHintCollections) {
+            calculationHintCollections.forEach(
+                calculationHint -> {
+                    hintsMap.put(calculationHint.getField().name(), calculationHint.getHint());
+                }
+            );
+        }
+        return hintsMap;
     }
 
     /**
@@ -436,7 +453,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = operationResult.getHints();
+                            Map<String, String> failedMap = hintsToFails(operationResult.getHints());
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
