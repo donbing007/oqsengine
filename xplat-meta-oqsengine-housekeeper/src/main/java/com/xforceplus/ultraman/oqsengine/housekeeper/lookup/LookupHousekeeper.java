@@ -12,9 +12,9 @@ public interface LookupHousekeeper {
     /**
      * 记录lookup字段的追踪信息,用以追踪某个字段被lookup的信息.
      *
-     * @param entityClassId
-     * @param entityFieldId
-     * @param targetEntity
+     * @param entityClassId classId.
+     * @param entityFieldId fieldId.
+     * @param targetEntityId targetEntityId.
      */
-    public void recordTrackInfo(long lookupEntityClassId, long lookupEntityFieldId, long targetEntityId);
+    public void recordTrackInfo(long entityClassId, long entityFieldId, long targetEntityId);
 }

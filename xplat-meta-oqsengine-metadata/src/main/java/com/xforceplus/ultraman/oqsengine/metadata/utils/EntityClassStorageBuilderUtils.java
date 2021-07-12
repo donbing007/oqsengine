@@ -20,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationDefinition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -211,7 +211,7 @@ public class EntityClassStorageBuilderUtils {
         return builder.build();
     }
 
-    private static CalculationDefinition toCalculator(FieldType fieldType,
+    private static AbstractCalculation toCalculator(FieldType fieldType,
                                                       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         CalculationType calculationType = CalculationType.UNKNOWN;
         try {
@@ -259,6 +259,8 @@ public class EntityClassStorageBuilderUtils {
             .withPatten(calculator.getPatten())
             .withModel(calculator.getModel())
             .withStep(calculator.getStep())
+            .withMax(calculator.getMax().isEmpty() ? 0 : Long.parseLong(calculator.getMax()))
+            .withMin(calculator.getMin().isEmpty() ? 0 : Long.parseLong(calculator.getMin()))
             .build();
     }
 
@@ -350,7 +352,7 @@ public class EntityClassStorageBuilderUtils {
             .withLen(fieldConfig.getLength());
 
         if (!isRelationEntity) {
-            builder.withCalculationDefinition(toCalculator(fieldType, calculator));
+            builder.withCalculation(toCalculator(fieldType, calculator));
         }
 
         return builder.build();

@@ -10,10 +10,10 @@ import java.util.List;
  *
  * @since 1.8
  */
-public class Formula extends CalculationDefinition  {
+public class Formula extends AbstractCalculation  {
 
     /**
-     * 公式的唯一标示
+     * 公式的唯一标示.
      */
     @JsonProperty(value = "code")
     protected String code;

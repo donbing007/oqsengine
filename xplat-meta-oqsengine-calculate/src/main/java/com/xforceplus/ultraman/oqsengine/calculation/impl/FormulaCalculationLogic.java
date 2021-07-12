@@ -32,7 +32,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
         //  执行公式
-        Formula formula = (Formula) context.getFocusField().config().getCalculationDefinition();
+        Formula formula = (Formula) context.getFocusField().config().getCalculation();
 
         try {
             //  获取公式执行对象

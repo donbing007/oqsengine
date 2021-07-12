@@ -189,8 +189,8 @@ public class EntityField implements IEntityField, Serializable {
 
     @Override
     public CalculationType calculationType() {
-        return (null == this.config || null == config.getCalculationDefinition()) ? CalculationType.UNKNOWN :
-                                    config.getCalculationDefinition().getCalculationType();
+        return (null == this.config || null == config.getCalculation()) ? CalculationType.UNKNOWN :
+                                    config.getCalculation().getCalculationType();
     }
 
 

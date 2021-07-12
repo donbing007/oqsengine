@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  *
  * @since 1.8
  */
-public class StaticCalculation extends CalculationDefinition {
+public class StaticCalculation extends AbstractCalculation {
     /**
      * builder.
      */

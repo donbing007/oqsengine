@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgrad
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public class AutoFillUpgradeListener {
             AutoFillUpgradePayload payload = (AutoFillUpgradePayload) event.payload().get();
             String bizType = String.valueOf(payload.getEntityField().id());
             Optional<SegmentInfo> segmentInfo = storage.query(bizType);
-            Calculator calculator = payload.getEntityField().calculator();
+            AutoFill calculator = (AutoFill) payload.getEntityField().config().getCalculation();
             if (!segmentInfo.isPresent()) {
                 SegmentInfo info = SegmentInfo.builder().withVersion(0L)
                     .withCreateTime(new Timestamp(System.currentTimeMillis()))

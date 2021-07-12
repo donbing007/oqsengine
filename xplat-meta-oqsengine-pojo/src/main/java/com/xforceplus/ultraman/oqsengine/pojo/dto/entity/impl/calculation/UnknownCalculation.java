@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  *
  * @since 1.8
  */
-public class UnknownCalculation extends CalculationDefinition {
+public class UnknownCalculation extends AbstractCalculation {
     /**
      * builder.
      */

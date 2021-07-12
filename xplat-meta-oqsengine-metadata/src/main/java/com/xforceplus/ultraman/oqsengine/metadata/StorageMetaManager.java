@@ -306,7 +306,7 @@ public class StorageMetaManager implements MetaManager {
                     .withWildcardMinWidth(config.getWildcardMinWidth())
                     .withCrossSearch(config.isCrossSearch())
                     .withLen(config.getLen())
-                    .withCalculationDefinition(config.getCalculationDefinition())
+                    .withCalculation(config.getCalculation())
                     .build()
                 );
             }

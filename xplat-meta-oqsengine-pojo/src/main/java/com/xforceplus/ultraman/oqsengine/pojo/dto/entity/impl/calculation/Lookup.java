@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  *
  * @since 1.8
  */
-public class Lookup extends CalculationDefinition {
+public class Lookup extends AbstractCalculation {
 
     /**
      * lookup的类型标识.

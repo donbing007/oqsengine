@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  *
  * @since 1.8
  */
-public class AutoFill extends CalculationDefinition {
+public class AutoFill extends AbstractCalculation {
 
     @JsonProperty(value = "patten")
     private String patten;
@@ -18,6 +18,12 @@ public class AutoFill extends CalculationDefinition {
 
     @JsonProperty(value = "step")
     private int step;
+
+    @JsonProperty(value = "min")
+    private long min;
+
+    @JsonProperty(value = "max")
+    private long max;
 
     public String getPatten() {
         return patten;
@@ -43,6 +49,22 @@ public class AutoFill extends CalculationDefinition {
         this.step = step;
     }
 
+    public long getMin() {
+        return min;
+    }
+
+    public void setMin(long min) {
+        this.min = min;
+    }
+
+    public long getMax() {
+        return max;
+    }
+
+    public void setMax(long max) {
+        this.max = max;
+    }
+
     /**
      * builder.
      */
@@ -50,6 +72,8 @@ public class AutoFill extends CalculationDefinition {
         private String patten;
         private String model;
         private int step;
+        private long min;
+        private long max;
 
         private Builder() {
         }
@@ -74,6 +98,16 @@ public class AutoFill extends CalculationDefinition {
             return this;
         }
 
+        public AutoFill.Builder withMin(long min) {
+            this.min = min;
+            return this;
+        }
+
+        public AutoFill.Builder withMax(long max) {
+            this.max = max;
+            return this;
+        }
+
         /**
          * build.
          */
@@ -83,6 +117,9 @@ public class AutoFill extends CalculationDefinition {
             autoFill.patten = patten;
             autoFill.model = model;
             autoFill.step = step;
+            autoFill.min = min;
+
+            autoFill.max = max;
 
             return autoFill;
         }

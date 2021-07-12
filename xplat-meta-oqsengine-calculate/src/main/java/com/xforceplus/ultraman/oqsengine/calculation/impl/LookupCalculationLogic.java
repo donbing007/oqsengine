@@ -48,7 +48,7 @@ public class LookupCalculationLogic implements CalculationLogic {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
 
-        Lookup lookup = (Lookup) context.getFocusField().config().getCalculationDefinition();
+        Lookup lookup = (Lookup) context.getFocusField().config().getCalculation();
 
         Optional<IValue> sourceValueOp = sourceEntity.entityValue().getValue(sourceField.id());
         if (!sourceValueOp.isPresent()) {
@@ -86,7 +86,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     }
 
     private IValue findTargetValue(CalculationLogicContext context, IEntity targetEntity) {
-        long targetFieldId = ((Lookup) context.getFocusField().config().getCalculationDefinition()).getFieldId();
+        long targetFieldId = ((Lookup) context.getFocusField().config().getCalculation()).getFieldId();
         Optional<IValue> targetValue = targetEntity.entityValue().getValue(targetFieldId);
         return targetValue.orElse(null);
     }

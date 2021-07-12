@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationDefinition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
 import java.util.Objects;
@@ -195,8 +195,8 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "uniqueName")
     private String uniqueName = "";
 
-    @JsonProperty(value = "calculationDefinition")
-    private CalculationDefinition calculationDefinition;
+    @JsonProperty(value = "calculation")
+    private AbstractCalculation calculation;
 
     /**
      * 创建一个新的 FieldConfig.
@@ -249,8 +249,8 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
-    public CalculationDefinition getCalculationDefinition() {
-        return calculationDefinition;
+    public AbstractCalculation getCalculation() {
+        return calculation;
     }
 
     /**
@@ -504,7 +504,7 @@ public class FieldConfig implements Serializable {
         private long lookupEntityClassId = 0;
         private long lookupEntityFieldId = 0;
         private String uniqueName = "";
-        private CalculationDefinition calculationDefinition = new StaticCalculation();
+        private AbstractCalculation calculation = new StaticCalculation();
 
         private Builder() {
         }
@@ -618,8 +618,8 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
-        public Builder withCalculationDefinition(CalculationDefinition calculationDefinition) {
-            this.calculationDefinition = calculationDefinition;
+        public Builder withCalculation(AbstractCalculation calculation) {
+            this.calculation = calculation;
             return this;
         }
 

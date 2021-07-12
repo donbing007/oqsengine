@@ -20,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "STATIC"),
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "UNKNOWN"),
 })
-public abstract class CalculationDefinition {
+public abstract class AbstractCalculation {
     @JsonProperty(value = "calculationType")
     protected CalculationType calculationType;
 
