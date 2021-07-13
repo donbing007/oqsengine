@@ -35,10 +35,10 @@ public abstract class CDCTestHelper extends AbstractContainerExtends {
     }
 
     protected void destroy(boolean isStopRunner) throws Exception {
-        InitializationHelper.clearAll();
         if (isStopRunner) {
             consumerRunner.shutdown();
         }
+        InitializationHelper.clearAll();
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {

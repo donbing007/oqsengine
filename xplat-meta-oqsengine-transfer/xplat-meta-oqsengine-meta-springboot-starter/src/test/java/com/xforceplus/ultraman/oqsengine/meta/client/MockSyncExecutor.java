@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.meta.client;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
@@ -16,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
 
 /**
  * desc :
@@ -41,8 +39,6 @@ public class MockSyncExecutor implements SyncExecutor {
             if (status.equals(RequestStatus.DATA_ERROR)) {
                 throw new MetaSyncClientException("data error.", false);
             } else if (status.equals(RequestStatus.SYNC_OK)) {
-                List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
-                Assert.assertNotNull(entityClassStorageList);
                 RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
                 if (null != requestStatusVersion) {
                     Assert.assertTrue(version > requestStatusVersion.getVersion());

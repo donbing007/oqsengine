@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaTestHelper;

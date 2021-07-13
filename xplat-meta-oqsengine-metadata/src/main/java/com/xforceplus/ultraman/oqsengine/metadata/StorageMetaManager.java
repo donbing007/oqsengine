@@ -9,15 +9,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -288,53 +285,8 @@ public class StorageMetaManager implements MetaManager {
                 .withId(entityField.id())
                 .withDefaultValue(entityField.defaultValue());
 
-            if (null == entityField.calculator()) {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(Calculator.Type.NORMAL)
-                    .withFailedPolicy(Calculator.FailedPolicy.UNKNOWN)
-                    .build()
-                );
-            } else {
-                builder.withCalculator(Calculator.Builder.anCalculator()
-                    .withCalculateType(entityField.calculator().getType())
-                    .withExpression(entityField.calculator().getExpression())
-                    .withMin(entityField.calculator().getMin())
-                    .withMax(entityField.calculator().getMax())
-                    .withCondition(entityField.calculator().getCondition())
-                    .withEmptyValueTransfer(entityField.calculator().getEmptyValueTransfer())
-                    .withValidator(entityField.calculator().getValidator())
-                    .withModel(entityField.calculator().getModel())
-                    .withStep(entityField.calculator().getStep())
-                    .withLevel(entityField.calculator().getLevel())
-                    .withPatten(entityField.calculator().getPatten())
-                    .withArgs(entityField.calculator().getArgs())
-                    .withFailedPolicy(entityField.calculator().getFailedPolicy())
-                    .withFailedDefaultValue(entityField.calculator().getFailedDefaultValue())
-                    .build());
-            }
-
             if (null != entityField.config()) {
-                FieldConfig config = entityField.config();
-                builder.withConfig(FieldConfig.Builder.anFieldConfig()
-                    .withDelimiter(config.getDelimiter())
-                    .withDisplayType(config.getDisplayType())
-                    .withFieldSense(config.getFieldSense())
-                    .withFuzzyType(config.getFuzzyType())
-                    .withIdentifie(config.isIdentifie())
-                    .withMax(config.getMax())
-                    .withMin(config.getMin())
-                    .withPrecision(config.getPrecision())
-                    .withRequired(config.isRequired())
-                    .withSearchable(config.isSearchable())
-                    .withSplittable(config.isSplittable())
-                    .withUniqueName(config.getUniqueName())
-                    .withValidateRegexString(config.getValidateRegexString())
-                    .withWildcardMaxWidth(config.getWildcardMaxWidth())
-                    .withWildcardMinWidth(config.getWildcardMinWidth())
-                    .withCrossSearch(config.isCrossSearch())
-                    .withLen(config.getLen())
-                    .build()
-                );
+                builder.withConfig(entityField.config().clone());
             }
 
             return builder.build();

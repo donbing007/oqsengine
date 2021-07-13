@@ -4,6 +4,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MI
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
@@ -15,10 +16,12 @@ import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSync
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -301,10 +304,10 @@ public class EntityClassManagerExecutorTest extends MetaTestHelper {
         Assertions.assertEquals(exp.getDictId(), act.dictId());
         Assertions.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
-        if (act.calculateType().equals(Calculator.Type.FORMULA)) {
-            Assertions.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.FORMULA.getType());
-            Assertions.assertEquals(exp.getCalculator().getExpression(), act.calculator().getExpression());
-            Assertions.assertEquals(exp.getCalculator().getLevel(), act.calculator().getLevel());
+        if (act.calculationType().equals(CalculationType.FORMULA)) {
+            Assertions.assertEquals(exp.getCalculator().getCalculateType(), CalculationType.FORMULA.getSymbol());
+            Assertions.assertEquals(exp.getCalculator().getExpression(), ((Formula) act.config().getCalculation()).getExpression());
+            Assertions.assertEquals(exp.getCalculator().getLevel(), ((Formula) act.config().getCalculation()).getLevel());
             Optional<?> opObject;
             try {
                 opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
@@ -312,14 +315,14 @@ public class EntityClassManagerExecutorTest extends MetaTestHelper {
                 throw new RuntimeException(String.format("toFieldTypeValue failed, message : %s", e.getMessage()));
             }
             Assertions.assertTrue(opObject.isPresent());
-            Assertions.assertEquals(opObject.get(), act.calculator().getFailedDefaultValue());
-            Assertions.assertEquals(exp.getCalculator().getArgsList().size(), act.calculator().getArgs().size());
-            Assertions.assertEquals(exp.getCalculator().getFailedPolicy(), act.calculator().getFailedPolicy().getPolicy());
-        } else if (act.calculateType().equals(Calculator.Type.AUTO_FILL)) {
-            Assertions.assertEquals(exp.getCalculator().getCalculateType(), Calculator.Type.AUTO_FILL.getType());
-            Assertions.assertEquals(exp.getCalculator().getPatten(), act.calculator().getPatten());
-            Assertions.assertEquals(exp.getCalculator().getModel(), act.calculator().getModel());
-            Assertions.assertEquals(exp.getCalculator().getStep(), act.calculator().getStep());
+            Assertions.assertEquals(opObject.get(), ((Formula) act.config().getCalculation()).getFailedDefaultValue());
+            Assertions.assertEquals(exp.getCalculator().getArgsList().size(), ((Formula) act.config().getCalculation()).getArgs().size());
+            Assertions.assertEquals(exp.getCalculator().getFailedPolicy(), ((Formula) act.config().getCalculation()).getFailedPolicy().getPolicy());
+        } else if (act.calculationType().equals(CalculationType.AUTO_FILL)) {
+            Assertions.assertEquals(exp.getCalculator().getCalculateType(), CalculationType.AUTO_FILL.getSymbol());
+            Assertions.assertEquals(exp.getCalculator().getPatten(), ((AutoFill) act.config().getCalculation()).getPatten());
+            Assertions.assertEquals(exp.getCalculator().getModel(), ((AutoFill) act.config().getCalculation()).getModel());
+            Assertions.assertEquals(exp.getCalculator().getStep(), ((AutoFill) act.config().getCalculation()).getStep());
         }
 
         //  check field Config

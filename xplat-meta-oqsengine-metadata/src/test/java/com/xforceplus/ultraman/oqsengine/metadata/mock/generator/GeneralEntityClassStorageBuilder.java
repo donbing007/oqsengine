@@ -7,14 +7,18 @@ import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralC
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_2;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,39 +62,42 @@ public class GeneralEntityClassStorageBuilder {
             .withId(fieldId)
             .withFieldType(fieldType)
             .withName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-            .withConfig(defaultFieldConfig())
+            .withConfig(fieldConfig(null))
             .build());
         r.setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id));
         return r;
     }
 
-    public static FieldConfig defaultFieldConfig() {
-        return FieldConfig.Builder.anFieldConfig()
+    public static <T extends AbstractCalculation> FieldConfig fieldConfig(T calculation) {
+        FieldConfig.Builder builder = FieldConfig.Builder.anFieldConfig()
             .withFieldSense(FieldConfig.FieldSense.NORMAL)
             .withSearchable(true)
             .withRequired(true)
-            .withIdentifie(false)
-            .build();
+            .withIdentifie(false);
+
+        if (null != calculation) {
+            builder.withCalculation(calculation);
+        }
+
+        return builder.build();
     }
 
-    public static Calculator defaultCalculator() {
-        return Calculator.Builder.anCalculator().withCalculateType(Calculator.Type.NORMAL).build();
+    public static StaticCalculation staticCalculation() {
+        return StaticCalculation.Builder.anStaticCalculation().build();
     }
 
-    public static Calculator formulaCalculator(String expression, int level, FieldType fieldType) {
-        return Calculator.Builder.anCalculator()
-            .withCalculateType(Calculator.Type.FORMULA)
+    public static Formula formula(String expression, int level, FieldType fieldType) {
+        return Formula.Builder.anFormula()
             .withExpression(expression)
             .withLevel(level)
-            .withFailedPolicy(Calculator.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+            .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
             .withFailedDefaultValue(defaultValue(fieldType))
             .withArgs(DEFAULT_ARGS)
             .build();
     }
 
-    public static Calculator autoFillCalculator(String patten, String model, String min, int step) {
-        return Calculator.Builder.anCalculator()
-            .withCalculateType(Calculator.Type.AUTO_FILL)
+    public static AutoFill autoFill(String patten, String model, long min, int step) {
+        return AutoFill.Builder.anAutoFill()
             .withStep(step)
             .withMin(min)
             .withPatten(patten)
@@ -99,37 +106,37 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static EntityField genericEntityField(long id,
-                                                 GeneralConstant.FourTa<Integer, String, Calculator.Type, Boolean> fourTa) {
+                                                 GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
 
         FieldType fieldType = FieldType.fromRawType(fourTa.getB());
+
+
         EntityField.Builder builder = EntityField.Builder.anEntityField()
-            .withCalculator(defaultCalculator())
             .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
             .withName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .withCnName(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .withDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .withFieldType(fieldType)
-            .withConfig(defaultFieldConfig());
+            .withFieldType(fieldType);
 
         switch (fourTa.getC()) {
-            case NORMAL: {
-                builder.withCalculator(defaultCalculator());
+            case STATIC: {
+                builder.withConfig(fieldConfig(staticCalculation()));
                 break;
             }
             case FORMULA: {
-                builder.withCalculator(
-                    formulaCalculator(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType));
+                builder.withConfig(fieldConfig(formula(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType)));
                 break;
             }
             case AUTO_FILL: {
-                builder.withCalculator(autoFillCalculator(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
-                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP));
+                builder.withConfig(fieldConfig(autoFill(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
+                    Long.parseLong(GeneralConstant.MOCK_MIN), GeneralConstant.MOCK_STEP)));
                 break;
             }
             default: {
                 throw new IllegalArgumentException("not support generate unknown-type calculator");
             }
         }
+
         return builder.build();
     }
 

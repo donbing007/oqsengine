@@ -124,7 +124,12 @@ public class IValueUtils {
                 case DECIMAL: {
                     BigDecimal r;
                     if (field.config().getPrecision() > 0) {
-                        r = ((BigDecimal) result).setScale(field.config().getPrecision(), BigDecimal.ROUND_DOWN);
+                        Scale scale = Scale.getInstance(field.config().scale());
+                        if (!scale.equals(Scale.UN_KNOW)) {
+                            r = ((BigDecimal) result).setScale(field.config().getPrecision(), scale.getMode());
+                        } else {
+                            r = (BigDecimal) result;
+                        }
                     } else {
                         r = (BigDecimal) result;
                     }
@@ -136,6 +141,38 @@ public class IValueUtils {
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format("toIValue failed, message [%s]", e.getMessage()));
+        }
+    }
+
+
+    public enum Scale {
+        UN_KNOW(0, BigDecimal.ROUND_UNNECESSARY),
+        ROUNDING(1, BigDecimal.ROUND_HALF_UP),
+        CUT_OUT(2, BigDecimal.ROUND_DOWN);
+
+        private int scale;
+        private int mode;
+
+        Scale(int scale, int mode) {
+            this.scale = scale;
+            this.mode = mode;
+        }
+
+        public int getScale() {
+            return scale;
+        }
+
+        public int getMode() {
+            return mode;
+        }
+
+        public static Scale getInstance(int v) {
+            for (Scale s : Scale.values()) {
+                if (s.scale == v) {
+                    return s;
+                }
+            }
+            return Scale.UN_KNOW;
         }
     }
 }

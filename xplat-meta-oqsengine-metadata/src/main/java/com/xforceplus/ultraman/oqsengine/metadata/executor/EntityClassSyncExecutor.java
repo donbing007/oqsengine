@@ -3,14 +3,14 @@ package com.xforceplus.ultraman.oqsengine.metadata.executor;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.protoToStorageList;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;

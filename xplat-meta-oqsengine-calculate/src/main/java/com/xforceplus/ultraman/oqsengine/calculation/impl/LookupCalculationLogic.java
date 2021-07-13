@@ -1,13 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.calculation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.sql.SQLException;
@@ -47,6 +48,9 @@ public class LookupCalculationLogic implements CalculationLogic {
     private IEntity findTargetEntity(CalculationLogicContext context) throws CalculationLogicException {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
+
+        Lookup lookup = (Lookup) context.getFocusField().config().getCalculation();
+
         Optional<IValue> sourceValueOp = sourceEntity.entityValue().getValue(sourceField.id());
         if (!sourceValueOp.isPresent()) {
             return null;
@@ -55,11 +59,11 @@ public class LookupCalculationLogic implements CalculationLogic {
         IValue<Long> sourceValue = sourceValueOp.get();
         MetaManager metaManager = context.getMetaManager();
         Optional<IEntityClass> targetEntityClassOp = metaManager.load(
-            sourceValue.getField().config().getLookupEntityClassId());
+            lookup.getClassId());
         if (!targetEntityClassOp.isPresent()) {
             throw new CalculationLogicException(
                 String.format("Invalid target meta information.[entityClassid = %d]",
-                    sourceValue.getField().config().getLookupEntityClassId()));
+                    lookup.getClassId()));
         }
         IEntityClass targetEntityClass = targetEntityClassOp.get();
 
@@ -83,7 +87,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     }
 
     private IValue findTargetValue(CalculationLogicContext context, IEntity targetEntity) {
-        long targetFieldId = context.getFocusField().config().getLookupEntityFieldId();
+        long targetFieldId = ((Lookup) context.getFocusField().config().getCalculation()).getFieldId();
         Optional<IValue> targetValue = targetEntity.entityValue().getValue(targetFieldId);
         return targetValue.orElse(null);
     }

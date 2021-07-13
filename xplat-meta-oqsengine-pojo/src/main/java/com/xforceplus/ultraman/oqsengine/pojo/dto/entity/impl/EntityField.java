@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -87,14 +86,6 @@ public class EntityField implements IEntityField, Serializable {
      */
     @JsonProperty(value = "calculationType")
     private CalculationType calculationType;
-
-    /**
-     * 计算对象.
-     * 当calculateType > CalculateType.NORMAL时,该对象值不能为空.
-     */
-    @JsonProperty(value = "calculator")
-    @Deprecated
-    private Calculator calculator;
 
     public EntityField() {
     }
@@ -207,16 +198,6 @@ public class EntityField implements IEntityField, Serializable {
         return this.calculationType;
     }
 
-    @Override
-    public Calculator.Type calculateType() {
-        return null == this.calculator ? Calculator.Type.UNKNOWN : this.calculator.getType();
-    }
-
-    @Override
-    public Calculator calculator() {
-        return this.calculator;
-    }
-
     public String getDictId() {
         return dictId;
     }
@@ -284,12 +265,11 @@ public class EntityField implements IEntityField, Serializable {
         private long id;
         private String name;
         private String cnName;
-        private FieldType fieldType = FieldType.UNKNOWN;
+        private FieldType fieldType;
         private String dictId;
         private String defaultValue;
         private FieldConfig config;
         private CalculationType calculationType = CalculationType.STATIC;
-        private Calculator calculator;
 
         private Builder() {
         }
@@ -338,11 +318,6 @@ public class EntityField implements IEntityField, Serializable {
             return this;
         }
 
-        public Builder withCalculator(Calculator calculator) {
-            this.calculator = calculator;
-            return this;
-        }
-
         /**
          * 构造实例.
          *
@@ -357,7 +332,6 @@ public class EntityField implements IEntityField, Serializable {
             entityField.dictId = this.dictId;
             entityField.defaultValue = this.defaultValue;
             entityField.config = this.config;
-            entityField.calculator = this.calculator;
             entityField.calculationType = this.calculationType;
             return entityField;
         }

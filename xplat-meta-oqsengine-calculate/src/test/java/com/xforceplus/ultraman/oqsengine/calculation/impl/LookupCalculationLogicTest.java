@@ -4,7 +4,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.xforceplus.ultraman.oqsengine.calculation.DefaultCalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -70,8 +71,13 @@ public class LookupCalculationLogicTest {
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
-                .withLookupEntityClassId(targetEntityClass.id())
-                .withLookupEntityFieldId(targetStringField.id()).build()).build();
+                .withCalculation(
+                    Lookup.Builder.anLookup()
+                        .withClassId(targetEntityClass.id())
+                        .withFieldId(targetStringField.id()).build()
+                )
+                .build()
+        ).build();
     private IEntityClass lookupEntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(1)
         .withLevel(0)
@@ -116,7 +122,7 @@ public class LookupCalculationLogicTest {
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                lookStringLookupField.config().getLookupEntityClassId()
+                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 
@@ -165,7 +171,7 @@ public class LookupCalculationLogicTest {
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                lookStringLookupField.config().getLookupEntityClassId()
+                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 
@@ -226,7 +232,7 @@ public class LookupCalculationLogicTest {
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                lookStringLookupField.config().getLookupEntityClassId()
+                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 

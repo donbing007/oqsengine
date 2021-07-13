@@ -15,9 +15,9 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseO
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;

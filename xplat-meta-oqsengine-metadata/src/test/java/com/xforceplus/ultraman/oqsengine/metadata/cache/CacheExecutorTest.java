@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
