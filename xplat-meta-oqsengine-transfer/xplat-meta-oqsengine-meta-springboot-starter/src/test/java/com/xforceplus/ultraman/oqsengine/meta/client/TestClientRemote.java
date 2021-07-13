@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
 /**
@@ -29,11 +30,9 @@ public class TestClientRemote {
     @Autowired
     private IRequestHandler requestHandler;
 
-    boolean ifTest = false;
-
     @Test
     public void test() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(1_000);
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));

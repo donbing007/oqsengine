@@ -57,15 +57,13 @@ public class TestServerStart {
     @Resource
     private SyncResponseHandler syncResponseHandler;
 
-    boolean ifTest = false;
-
     private Thread[] executors = new Thread[3];
 
     int max = 300;
 
     @BeforeEach
     public void before() {
-        if (ifTest) {
+        if (IF_TEST) {
             executors[0] = ThreadUtils.create(() -> heartBeatTest(caseHeartBeat, watchElementHeartBeat));
             executors[1] = ThreadUtils.create(() -> registerPullTest(caseRegisterPull, watchElementRegisterPull));
             executors[2] = ThreadUtils.create(() -> registerPushTest(caseRegisterPush, watchElementRegisterPush));
@@ -78,7 +76,7 @@ public class TestServerStart {
 
     @AfterEach
     public void after() {
-        if (ifTest) {
+        if (IF_TEST) {
             for (Thread exec : executors) {
                 Assertions.assertFalse(exec.isAlive());
             }
@@ -87,7 +85,7 @@ public class TestServerStart {
 
     @Test
     public void testStart() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             int max = 3;
             while (true) {
                 int down = 0;

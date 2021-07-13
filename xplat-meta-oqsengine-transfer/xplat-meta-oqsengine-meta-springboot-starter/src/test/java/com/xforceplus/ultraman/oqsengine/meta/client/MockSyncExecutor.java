@@ -72,8 +72,6 @@ public class MockSyncExecutor implements SyncExecutor {
         return requestStatusVersion != null ? requestStatusVersion.getVersion() : 0;
     }
 
-
-
     public static class RequestStatusVersion {
         private RequestStatus requestStatus;
         private int version;

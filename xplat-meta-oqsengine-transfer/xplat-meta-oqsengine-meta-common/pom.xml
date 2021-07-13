@@ -18,8 +18,8 @@
             <artifactId>grpc-all</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>io.grpc</groupId>
-                    <artifactId>grpc-testing</artifactId>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
                 </exclusion>
             </exclusions>
             <version>1.28.1</version>
@@ -48,11 +48,6 @@
                     <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.xforceplus.ultraman</groupId>
