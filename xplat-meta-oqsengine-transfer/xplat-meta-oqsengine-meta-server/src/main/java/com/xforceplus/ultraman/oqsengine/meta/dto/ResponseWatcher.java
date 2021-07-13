@@ -27,7 +27,7 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
     @Override
     public boolean onWatch(WatchElement w) {
         WatchElement v = watches.get(w.getAppId());
-        return null == v || v.getVersion() < w.getVersion();
+        return null == v || (v.getEnv().equals(w.getEnv()) && v.getVersion() < w.getVersion());
     }
 
     @Override

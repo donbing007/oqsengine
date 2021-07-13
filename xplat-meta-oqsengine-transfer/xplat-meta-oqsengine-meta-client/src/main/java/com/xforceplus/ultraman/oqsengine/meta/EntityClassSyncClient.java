@@ -44,7 +44,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Thread observerStreamMonitorThread;
 
-    private final AtomicInteger clientRebuildStreamCounter =
+    private AtomicInteger clientRebuildStreamCounter =
         Metrics.gauge(ConnectorMetricsDefine.CLIENT_CONTINUES_REBUILD_STREAM, new AtomicInteger(0));
 
     @Override

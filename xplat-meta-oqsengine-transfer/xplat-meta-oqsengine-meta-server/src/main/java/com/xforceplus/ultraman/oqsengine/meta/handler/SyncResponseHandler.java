@@ -270,8 +270,11 @@ public class SyncResponseHandler implements IResponseHandler {
             try {
                 AppUpdateEvent appUpdateEvent =
                     entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
-                if (force || isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
-
+                if (null == appUpdateEvent) {
+                    logger.warn("pull data fail, appUpdateEvent is null, app {}, env {}.", watchElement.getAppId(), watchElement.getEnv());
+                    return true;
+                }
+                if (isNeedEvent(watchElement, appUpdateEvent, requestStatus, force)) {
                     //  主动拉取不会更新当前的appVersion
                     EntityClassSyncResponse response =
                         generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
@@ -335,15 +338,28 @@ public class SyncResponseHandler implements IResponseHandler {
      * 如果是requestStatus是sync_ok，表示只关注大于当前expected的版本
      * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本.
      */
-    private boolean isNeedEvent(int expected, int actual, RequestStatus requestStatus) {
-        switch (requestStatus) {
-            case SYNC_OK:
-                return expected < actual;
-            case SYNC_FAIL:
-                return expected <= actual;
-            default:
-                return false;
+    private boolean isNeedEvent(WatchElement expected, AppUpdateEvent actual, RequestStatus requestStatus, boolean force) {
+        if (!expected.getAppId().equals(actual.getAppId())) {
+            logger.warn("pull data fail, expected appId {} not equals to event-returns {}", expected.getAppId(), actual.getAppId());
+            return false;
         }
+
+        if (!expected.getEnv().equals(actual.getEnv())) {
+            logger.warn("pull data fail, appId {}, expected env {} not equals to event-returns {}",
+                expected.getAppId(), expected.getEnv(), actual.getEnv());
+            return false;
+        }
+        if (!force) {
+            switch (requestStatus) {
+                case SYNC_OK:
+                    return expected.getVersion() < actual.getVersion();
+                case SYNC_FAIL:
+                    return expected.getVersion() <= actual.getVersion();
+                default:
+                    return false;
+            }
+        }
+        return true;
     }
 
     /**

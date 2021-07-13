@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.meta.connect;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import io.grpc.ManagedChannel;
+import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
-import io.grpc.testing.GrpcCleanupRule;
 
 /**
  * desc :
@@ -23,7 +23,7 @@ public class MockGRpcClient implements GRpcClient {
 
     private boolean isClientOpen;
 
-    public GrpcCleanupRule gRpcCleanup = new GrpcCleanupRule();
+    public Server mockServer;
 
     @Override
     public void start() {
@@ -42,6 +42,8 @@ public class MockGRpcClient implements GRpcClient {
     @Override
     public void stop() {
         isClientOpen = false;
+        channel.shutdown();
+        mockServer.shutdown();
     }
 
     @Override
@@ -50,20 +52,17 @@ public class MockGRpcClient implements GRpcClient {
     }
 
     private void buildServer() {
-        MockServer mockServer = new MockServer();
         try {
-            gRpcCleanup.register(InProcessServerBuilder
-                    .forName(serverName).directExecutor().addService(mockServer).build().start());
+            mockServer = InProcessServerBuilder
+                .forName(serverName).directExecutor().addService(new MockServer()).build().start();
         } catch (Exception e) {
             throw new RuntimeException();
         }
     }
 
     private void buildChannel() {
-        channel = gRpcCleanup.register(
-                InProcessChannelBuilder
-                        .forName(serverName).directExecutor().maxInboundMessageSize(1024).build()
-        );
+        channel = InProcessChannelBuilder
+            .forName(serverName).directExecutor().maxInboundMessageSize(1024).build();
     }
 
     @Override

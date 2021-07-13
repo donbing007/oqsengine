@@ -16,6 +16,12 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-all</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-testing</artifactId>
+                </exclusion>
+            </exclusions>
             <version>1.28.1</version>
         </dependency>
         <dependency>
