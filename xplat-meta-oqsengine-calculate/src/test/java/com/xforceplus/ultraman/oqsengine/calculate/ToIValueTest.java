@@ -28,7 +28,7 @@ public class ToIValueTest {
                         .build()
             ).build();
 
-    public static final IEntityField ROUND_UP =
+    public static final IEntityField ROUND_HALF_UP =
         EntityField.Builder.anEntityField()
             .withId(5)
             .withName("decimal")
@@ -36,7 +36,7 @@ public class ToIValueTest {
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withPrecision(3)
-                    .withScale(IValueUtils.Scale.ROUND_UP.getScale())
+                    .withScale(IValueUtils.Scale.ROUND_HALF_UP.getScale())
                     .build()
             ).build();
 
@@ -45,7 +45,10 @@ public class ToIValueTest {
         IValue<?> value = IValueUtils.toIValue(ROUND_DOWN, new BigDecimal("123.454963474"));
         Assertions.assertEquals(new BigDecimal("123.454"), value.getValue());
 
-        value = IValueUtils.toIValue(ROUND_UP, new BigDecimal("123.454963474"));
+        value = IValueUtils.toIValue(ROUND_HALF_UP, new BigDecimal("123.454963474"));
         Assertions.assertEquals(new BigDecimal("123.455"), value.getValue());
+
+        value = IValueUtils.toIValue(ROUND_HALF_UP, new BigDecimal("123.4544"));
+        Assertions.assertEquals(new BigDecimal("123.454"), value.getValue());
     }
 }

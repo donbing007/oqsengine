@@ -150,7 +150,7 @@ public class IValueUtils {
      */
     public enum Scale {
         UN_KNOW(0, BigDecimal.ROUND_UNNECESSARY),
-        ROUND_UP(1, BigDecimal.ROUND_UP),
+        ROUND_HALF_UP(1, BigDecimal.ROUND_HALF_UP),
         ROUND_DOWN(2, BigDecimal.ROUND_DOWN);
 
         private int scale;
