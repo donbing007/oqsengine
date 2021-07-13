@@ -16,13 +16,36 @@ import org.junit.jupiter.api.Test;
  * @since 1.8
  */
 public class ToIValueTest {
-    public static final IEntityField DECIMAL_FIELD =
-        new EntityField(5, "decimal", FieldType.DECIMAL,
-            FieldConfig.Builder.anFieldConfig().withPrecision(3).withSearchable(true).build(), null, null);
+    public static final IEntityField ROUND_DOWN =
+        EntityField.Builder.anEntityField()
+            .withId(5)
+            .withName("decimal")
+            .withFieldType(FieldType.DECIMAL)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                        .withPrecision(3)
+                        .withScale(IValueUtils.Scale.ROUND_DOWN.getScale())
+                        .build()
+            ).build();
+
+    public static final IEntityField ROUND_UP =
+        EntityField.Builder.anEntityField()
+            .withId(5)
+            .withName("decimal")
+            .withFieldType(FieldType.DECIMAL)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withPrecision(3)
+                    .withScale(IValueUtils.Scale.ROUND_UP.getScale())
+                    .build()
+            ).build();
 
     @Test
-    public void testRoundDown() {
-        IValue<?> value = IValueUtils.toIValue(DECIMAL_FIELD, new BigDecimal("123.454963474"));
+    public void test() {
+        IValue<?> value = IValueUtils.toIValue(ROUND_DOWN, new BigDecimal("123.454963474"));
         Assertions.assertEquals(new BigDecimal("123.454"), value.getValue());
+
+        value = IValueUtils.toIValue(ROUND_UP, new BigDecimal("123.454963474"));
+        Assertions.assertEquals(new BigDecimal("123.455"), value.getValue());
     }
 }
