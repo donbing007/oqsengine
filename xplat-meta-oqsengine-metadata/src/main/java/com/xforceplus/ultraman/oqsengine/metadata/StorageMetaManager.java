@@ -9,12 +9,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -209,7 +209,8 @@ public class StorageMetaManager implements MetaManager {
         }
 
         //  加载profile
-        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE) && null != entityClassStorage.getProfileStorageMap()) {
+        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)
+            && null != entityClassStorage.getProfileStorageMap()) {
             ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
             if (null != profileStorage) {
                 if (null != profileStorage.getEntityFieldList()) {

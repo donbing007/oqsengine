@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.calculation.impl;
 
-import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
@@ -87,10 +87,10 @@ public class FormulaCalculationLogic implements CalculationLogic {
         Map<String, Object> map = new HashMap<>();
         if (null != formula.getArgs()) {
             for (String arg : formula.getArgs()) {
-                Optional<IValue> iValueOp = entity.entityValue().getValue(arg);
+                Optional<IValue> valueOp = entity.entityValue().getValue(arg);
 
-                if (iValueOp.isPresent()) {
-                    map.put(arg, iValueOp.get().getValue());
+                if (valueOp.isPresent()) {
+                    map.put(arg, valueOp.get().getValue());
                 } else {
                     throw new CalculationLogicException(String.format("formula execution absence param [%s]", arg));
                 }

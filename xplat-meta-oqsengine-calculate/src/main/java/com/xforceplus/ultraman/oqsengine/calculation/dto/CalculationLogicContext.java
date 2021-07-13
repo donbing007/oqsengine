@@ -99,7 +99,7 @@ public interface CalculationLogicContext {
     /**
      * 增加一个 业务id生成器.
      *
-     * @param bizIDGenerator
+     * @param bizIDGenerator generator.
      */
     public void bizIdGenerator(BizIDGenerator bizIDGenerator);
 
