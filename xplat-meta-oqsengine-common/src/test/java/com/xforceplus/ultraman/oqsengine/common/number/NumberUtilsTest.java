@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.common.number;
 
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +29,8 @@ public class NumberUtilsTest {
 
             value = value + "0";
         }
+
+        Assertions.assertEquals(1, NumberUtils.size(0));
     }
 
 }

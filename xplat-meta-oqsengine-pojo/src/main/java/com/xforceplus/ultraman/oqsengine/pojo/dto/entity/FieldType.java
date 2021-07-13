@@ -127,23 +127,7 @@ public enum FieldType {
             BigDecimal value2 = ((DecimalValue) v2).getValue();
             return value1.compareTo(value2);
         }
-    ),
-    /**
-     * lookup field.
-     */
-    LOOKUP("lookup", Long.class, s -> {
-        try {
-            Long.parseLong(s);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }, new String[] {"long"}, (f, v) -> new LookupValue(f, Long.parseLong(v)), (v1, v2) -> {
-
-        Long value1 = ((LookupValue) v1).getValue();
-        Long value2 = ((LookupValue) v2).getValue();
-        return Long.compare(value1, value2);
-    });
+    );
 
     private String type;
 

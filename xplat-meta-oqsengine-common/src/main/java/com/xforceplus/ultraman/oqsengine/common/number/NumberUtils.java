@@ -64,6 +64,10 @@ public class NumberUtils {
      * @return 位数.
      */
     public static int size(long value) {
+        if (value == 0) {
+            return 1;
+        }
+
         if (value < 0) {
             for (int i = 0; i < NEGATIVE_STEPS.length; i++) {
                 if (value > NEGATIVE_STEPS[i]) {

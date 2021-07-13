@@ -32,7 +32,8 @@ public class LookupCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
 
-        targetValue.copy(context.getFocusField());
+
+        targetValue = targetValue.copy(context.getFocusField());
 
         return Optional.of(targetValue);
     }
