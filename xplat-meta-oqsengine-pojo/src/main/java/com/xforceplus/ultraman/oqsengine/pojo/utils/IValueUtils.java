@@ -145,6 +145,9 @@ public class IValueUtils {
     }
 
 
+    /**
+     * scal enum class.
+     */
     public enum Scale {
         UN_KNOW(0, BigDecimal.ROUND_UNNECESSARY),
         ROUNDING(1, BigDecimal.ROUND_HALF_UP),
@@ -166,6 +169,11 @@ public class IValueUtils {
             return mode;
         }
 
+        /**
+         * get instance.
+         *
+         * @return scale instance.
+         */
         public static Scale getInstance(int v) {
             for (Scale s : Scale.values()) {
                 if (s.scale == v) {
