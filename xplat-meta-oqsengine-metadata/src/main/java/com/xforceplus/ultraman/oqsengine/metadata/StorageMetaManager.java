@@ -278,19 +278,15 @@ public class StorageMetaManager implements MetaManager {
 
     private IEntityField cloneEntityField(IEntityField entityField) {
         if (null != entityField) {
-            EntityField.Builder builder = EntityField.Builder.anEntityField()
+            return EntityField.Builder.anEntityField()
                 .withName(entityField.name())
                 .withCnName(entityField.cnName())
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue());
-
-            if (null != entityField.config()) {
-                builder.withConfig(entityField.config().clone());
-            }
-
-            return builder.build();
+                .withDefaultValue(entityField.defaultValue())
+                .withConfig(entityField.config().clone())
+                .build();
         }
         return null;
     }

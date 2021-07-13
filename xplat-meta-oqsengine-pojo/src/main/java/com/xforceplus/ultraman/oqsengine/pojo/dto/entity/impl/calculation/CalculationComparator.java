@@ -20,7 +20,7 @@ public class CalculationComparator implements Comparator<IEntityField> {
 
     @Override
     public int compare(IEntityField o1, IEntityField o2) {
-        if (o1.calculationType().equals(FORMULA) && o1.calculationType().equals(o2.calculationType())) {
+        if (o1.calculationType() == FORMULA && o2.calculationType() == FORMULA) {
             return ((Formula) o1.config().getCalculation()).getLevel() - ((Formula) o2.config().getCalculation()).getLevel();
         }
         return o1.calculationType().getPriority() - o2.calculationType().getPriority();

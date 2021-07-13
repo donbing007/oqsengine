@@ -199,28 +199,24 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
         FieldType fieldType = FieldType.fromRawType(e.getFieldType().name());
-        EntityField.Builder builder = EntityField.Builder.anEntityField()
+
+        FieldConfig fieldConfig =
+            toFieldConfig(isRelationEntity, fieldType, e.getFieldConfig(), e.getCalculator());
+
+        return EntityField.Builder.anEntityField()
             .withId(eid)
             .withName(e.getName())
             .withCnName(e.getCname())
             .withFieldType(fieldType)
             .withDictId(e.getDictId())
             .withDefaultValue(e.getDefaultValue())
-            .withConfig(toFieldConfig(isRelationEntity, fieldType, e.getFieldConfig(), e.getCalculator()));
-
-        return builder.build();
+            .withConfig(fieldConfig)
+            .build();
     }
 
     private static AbstractCalculation toCalculator(FieldType fieldType,
                                                       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
-        CalculationType calculationType = CalculationType.UNKNOWN;
-        try {
-            Integer type = calculator.getCalculateType();
-            calculationType = CalculationType.getInstance(type.byteValue());
-        } catch (Exception e) {
-            throw new MetaSyncClientException("to calculationType instance failed.",
-                false);
-        }
+        CalculationType calculationType = toCalculationType(calculator);
 
         switch (calculationType) {
             case AUTO_FILL: {
@@ -353,8 +349,20 @@ public class EntityClassStorageBuilderUtils {
 
         if (!isRelationEntity) {
             builder.withCalculation(toCalculator(fieldType, calculator));
+        } else {
+            builder.withCalculation(StaticCalculation.Builder.anStaticCalculation().build());
         }
 
         return builder.build();
+    }
+
+    private static CalculationType toCalculationType(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+        try {
+            Integer type = calculator.getCalculateType();
+            return CalculationType.getInstance(type.byteValue());
+        } catch (Exception e) {
+            throw new MetaSyncClientException("to calculationType instance failed.",
+                false);
+        }
     }
 }
