@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Map;
 import java.util.Optional;
@@ -95,6 +98,21 @@ public class MockMetaManager implements MetaManager {
     public void invalidateLocal() {
         entityClassPool.clear();
         profileEntityClassPool.clear();
+    }
+
+    @Override
+    public boolean dataImport(String appId, int version, String content) {
+        try {
+            EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            return true;
+        } catch (InvalidProtocolBufferException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public Optional<MetaMetrics> showMeta(String appId) {
+        return Optional.empty();
     }
 
     private String buildKey(long id, int version) {

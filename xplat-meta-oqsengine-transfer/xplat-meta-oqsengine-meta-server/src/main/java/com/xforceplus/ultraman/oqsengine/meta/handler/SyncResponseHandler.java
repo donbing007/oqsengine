@@ -138,7 +138,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                             entityClassSyncRequest.getVersion(), Register);
 
-            responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+            responseWatchExecutor.add(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid(), responseStreamObserver, w);
             if (entityClassSyncRequest.getForce()) {
                 pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
 

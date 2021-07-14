@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
@@ -145,7 +144,7 @@ public class EntityClassStorageBuilderUtils {
                             p.getCode()), false);
                 }
 
-                List<IEntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
+                List<EntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
                 List<RelationStorage> relationStorageList = toRelationStorageList(p.getRelationInfoList());
                 profileStorageMap.put(p.getCode(), new ProfileStorage(p.getCode(), fieldList, relationStorageList));
             }
@@ -155,8 +154,8 @@ public class EntityClassStorageBuilderUtils {
         return storage;
     }
 
-    private static List<IEntityField> toEntityFieldList(List<EntityFieldInfo> entityFieldInfoList) {
-        List<IEntityField> fields = new ArrayList<>();
+    private static List<EntityField> toEntityFieldList(List<EntityFieldInfo> entityFieldInfoList) {
+        List<EntityField> fields = new ArrayList<>();
         if (null != entityFieldInfoList) {
             for (EntityFieldInfo e : entityFieldInfoList) {
                 EntityField entityField = toEntityField(false, e);

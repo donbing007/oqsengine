@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.utils.ClientIdUtils;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Metrics;
 import java.util.UUID;
@@ -46,6 +47,8 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private AtomicInteger clientRebuildStreamCounter =
         Metrics.gauge(ConnectorMetricsDefine.CLIENT_CONTINUES_REBUILD_STREAM, new AtomicInteger(0));
+
+    private static String CLIENT_ID = ClientIdUtils.generate();
 
     @Override
     @PostConstruct
@@ -104,7 +107,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             }
 
             //  创建uid->streamObserver
-            requestHandler.initWatcher(UUID.randomUUID().toString(), streamObserver);
+            requestHandler.initWatcher(CLIENT_ID, UUID.randomUUID().toString(), streamObserver);
 
             /*
                 重新注册所有watchList到服务端

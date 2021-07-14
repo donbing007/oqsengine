@@ -6,12 +6,15 @@ import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecu
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -90,8 +93,8 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      * 当注册时，初始化observer的映射关系.
      */
     @Override
-    public void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(uid, observer)).addWatch(watchElement);
+    public void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
+        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 
@@ -164,6 +167,24 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     @Override
     public ResponseWatcher watcher(String uid) {
         return uidWatchers.get(uid);
+    }
+
+    @Override
+    public Optional<ServerMetricsInfo> showMetrics() {
+        List<ServerMetricsInfo.ClientWatches> clientWatches = new ArrayList<>();
+        uidWatchers.forEach(
+            (k, v) -> {
+                List<WatchElement> watchElements = new ArrayList<>();
+                v.watches().values().forEach(
+                    w -> {
+                        watchElements.add(new WatchElement(w.getAppId(), w.getEnv(), w.getVersion(), w.getStatus()));
+                    }
+                );
+
+                clientWatches.add(new ServerMetricsInfo.ClientWatches(v.clientId(), watchElements, v.heartBeat())) ;
+            }
+        );
+        return Optional.of(new ServerMetricsInfo(clientWatches));
     }
 
     @Override

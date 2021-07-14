@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,7 +106,7 @@ public class EntityClassStorageConvert {
         }
 
         //  entityFields
-        List<IEntityField> fields = new ArrayList<>();
+        List<EntityField> fields = new ArrayList<>();
         //profile
         Map<String, ProfileStorage> profileStorageMap = new HashMap<>();
         Iterator<Map.Entry<String, String>> iterator = keyValues.entrySet().iterator();

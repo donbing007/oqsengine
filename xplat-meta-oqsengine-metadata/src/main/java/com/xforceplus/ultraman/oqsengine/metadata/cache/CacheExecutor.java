@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public interface CacheExecutor {
      * @return 元信息结果.
      * @throws JsonProcessingException JSON异常.
      */
-    Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException;
+    Map<Long, EntityClassStorage> multiplyRead(Collection<Long> ids, int version, boolean useLocalCache) throws JsonProcessingException;
 
     /**
      * 清除AppId + version对应的存储记录.
@@ -53,6 +54,15 @@ public interface CacheExecutor {
      * @return true 成功, false 失败.
      */
     boolean clean(String appId, int version, boolean force);
+
+    /**
+     * 获取当前appId的entityId列表.
+     *
+     * @param appId  应用标识.
+     * @param version 版本号.
+     * @return entityId列表.
+     */
+    public Collection<Long> appEntityIdList(String appId, Integer version);
 
     /**
      * 获取appId对应的版本信息.

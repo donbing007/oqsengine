@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto.storage;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +56,7 @@ public class EntityClassStorage {
     /**
      * entityField.
      */
-    private List<IEntityField> fields;
+    private List<EntityField> fields;
 
     /**
      * custom定制结构，
@@ -138,11 +138,11 @@ public class EntityClassStorage {
         this.ancestors.add(ancestor);
     }
 
-    public List<IEntityField> getFields() {
+    public List<EntityField> getFields() {
         return fields;
     }
 
-    public void setFields(List<IEntityField> fields) {
+    public void setFields(List<EntityField> fields) {
         this.fields = fields;
     }
 

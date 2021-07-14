@@ -13,6 +13,8 @@ import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.listener.EntityClassListener;
+import com.xforceplus.ultraman.oqsengine.meta.provider.metrics.ServerMetrics;
+import com.xforceplus.ultraman.oqsengine.meta.provider.metrics.impl.DefaultServerMetrics;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ServerShutDown;
 import io.grpc.BindableService;
@@ -88,6 +90,11 @@ public class ServerConfiguration implements ApplicationContextAware {
         }
 
         return buildThreadPool(useWorker, useQueue, "grpc-server-call", false);
+    }
+
+    @Bean
+    public ServerMetrics serverMetrics() {
+        return new DefaultServerMetrics();
     }
 
     @Bean

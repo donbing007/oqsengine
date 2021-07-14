@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.dto;
 
-import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
@@ -19,8 +18,8 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     private final Logger logger = LoggerFactory.getLogger(RequestWatcher.class);
 
 
-    public RequestWatcher(String uid, StreamObserver<EntityClassSyncRequest> observer) {
-        super(uid, observer);
+    public RequestWatcher(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer) {
+        super(clientId, uid, observer);
     }
 
     /**

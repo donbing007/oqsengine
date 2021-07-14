@@ -47,6 +47,7 @@ import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -187,9 +188,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
     /**
      * 实例化.
      *
-     * @param maxCacheSize 缓存最多元素.
+     * @param maxCacheSize         缓存最多元素.
      * @param prepareExpireSeconds 预备的等待超时秒数.
-     * @param cacheExpireSeconds 缓存过期的秒数.
+     * @param cacheExpireSeconds   缓存过期的秒数.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
         this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
@@ -204,18 +205,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
     /**
      * 实例化.
      *
-     * @param maxCacheSize 缓存的最多元素.
-     * @param prepareExpireSeconds 预备的等等超时秒数.
-     * @param cacheExpireSeconds 缓存过期的秒数.
-     * @param appEnvKeys 应用环境KEY.
-     * @param appVersionKeys 应用版本KEY.
-     * @param appPrepareKeyPrefix 应用预备的KEY.
-     * @param entityStorageKeys 元信息储存KEY.
-     * @param appEntityMappingKey 元信息属性MAP的KEY.
+     * @param maxCacheSize            缓存的最多元素.
+     * @param prepareExpireSeconds    预备的等等超时秒数.
+     * @param cacheExpireSeconds      缓存过期的秒数.
+     * @param appEnvKeys              应用环境KEY.
+     * @param appVersionKeys          应用版本KEY.
+     * @param appPrepareKeyPrefix     应用预备的KEY.
+     * @param entityStorageKeys       元信息储存KEY.
+     * @param appEntityMappingKey     元信息属性MAP的KEY.
      * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
-                                String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+                                String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
+                                String entityStorageKeys,
                                 String appEntityMappingKey, String appEntityCollectionsKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
@@ -379,7 +381,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
                         for (IEntityField entityField : ps.getEntityFieldList()) {
                             try {
                                 String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
-                                syncCommands.hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
+                                syncCommands
+                                    .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
                             } catch (JsonProcessingException e) {
                                 throw new MetaSyncClientException("parse profile-entityFields failed.", false);
                             }
@@ -420,7 +423,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
          * 不存在时抛出异常
          */
         if (NOT_EXIST_VERSION == version) {
-            throw new RuntimeException(String.format("invalid entityClassId : [%s], no version pair", entityClassId));
+            throw new RuntimeException(String.format("invalid entityClassId : [%d], no version pair", entityClassId));
         }
 
         EntityClassStorage entityClassStorage = getFromLocal(entityClassId, version);
@@ -463,17 +466,23 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 根据Ids读取EntityStorage列表.
      */
     @Override
-    public Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException {
+    public Map<Long, EntityClassStorage> multiplyRead(Collection<Long> ids, int version, boolean useLocalCache)
+        throws JsonProcessingException {
         Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
         if (null != ids && ids.size() > 0) {
             List<Long> remoteFilters = new ArrayList<>();
+
             ids.forEach(
                 id -> {
-                    EntityClassStorage entityClassStorage = getFromLocal(id, version);
-                    if (null == entityClassStorage) {
+                    if (!useLocalCache) {
                         remoteFilters.add(id);
                     } else {
-                        entityClassStorageMap.put(id, entityClassStorage);
+                        EntityClassStorage entityClassStorage = getFromLocal(id, version);
+                        if (null == entityClassStorage) {
+                            remoteFilters.add(id);
+                        } else {
+                            entityClassStorageMap.put(id, entityClassStorage);
+                        }
                     }
                 }
             );
@@ -565,7 +574,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
          */
         if (ret) {
             try {
-                String fieldName = String.format("%s.%s", appId, version);
+                String fieldName = String.format("%s.%d", appId, version);
                 syncCommands.hset(appEntityCollectionsKey,
                     fieldName, OBJECT_MAPPER.writeValueAsString(ids));
             } catch (Exception e) {
@@ -651,27 +660,37 @@ public class DefaultCacheExecutor implements CacheExecutor {
             }
         }
 
-        String fieldName = String.format("%s.%s", appId, version);
+        Collection<Long> ids = appEntityIdList(appId, version);
+        try {
+            for (Long id : ids) {
+                doClean(id, version);
+            }
+            //  删除 appId + version 映射的 entityIds列表
+            syncCommands.hdel(appEntityCollectionsKey, String.format("%s.%d", appId, version));
+        } catch (Exception e) {
+            logger.warn("{}", e.toString());
+        }
+
+        return true;
+    }
+
+    @Override
+    public Collection<Long> appEntityIdList(String appId, Integer version) {
+        String fieldName = String.format("%s.%d", appId, version);
 
         //  获取 appId + version 映射的 entityIds列表
-        String v = syncCommands.hget(appEntityCollectionsKey,
-            fieldName);
+        String v = syncCommands.hget(appEntityCollectionsKey, fieldName);
 
         if (null != v && !v.isEmpty()) {
             try {
-                List<Long> ids = OBJECT_MAPPER.readValue(v,
+                return OBJECT_MAPPER.readValue(v,
                     OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
-                for (Long id : ids) {
-                    doClean(id, version);
-                }
-                //  删除 appId + version 映射的 entityIds列表
-                syncCommands.hdel(appEntityCollectionsKey, fieldName);
             } catch (Exception e) {
                 logger.warn("{}", e.toString());
             }
         }
 
-        return true;
+        return new ArrayList<>();
     }
 
     @Override
@@ -707,12 +726,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
         /*
          * 获取当前的Key.
          */
-        String keys = String.format("%s.%s.%s", entityStorageKeys, version, entityId);
+        String keys = String.format("%s.%d.%d", entityStorageKeys, version, entityId);
 
         try {
             List<String> entityClassKeys = syncCommands.hkeys(keys);
             if (null != entityClassKeys && entityClassKeys.size() > 0) {
-                return syncCommands.hdel(keys, entityClassKeys.toArray(new String[entityClassKeys.size()])) == entityClassKeys.size();
+                return syncCommands.hdel(keys, entityClassKeys.toArray(new String[entityClassKeys.size()]))
+                    == entityClassKeys.size();
             }
             return true;
         } catch (Exception e) {

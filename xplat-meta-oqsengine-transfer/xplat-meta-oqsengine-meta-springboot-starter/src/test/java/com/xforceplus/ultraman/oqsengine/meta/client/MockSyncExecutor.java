@@ -1,10 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -12,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -52,17 +49,6 @@ public class MockSyncExecutor implements SyncExecutor {
           throw e;
         } finally {
             status = RequestStatus.SYNC_OK;
-        }
-    }
-
-    @Override
-    public boolean dataImport(String appId, int version, String content) {
-        try {
-            EntityClassStorageHelper.toEntityClassSyncRspProto(content);
-            return true;
-        } catch (InvalidProtocolBufferException e) {
-            logger.warn("message : {}", e.getMessage());
-            return false;
         }
     }
 

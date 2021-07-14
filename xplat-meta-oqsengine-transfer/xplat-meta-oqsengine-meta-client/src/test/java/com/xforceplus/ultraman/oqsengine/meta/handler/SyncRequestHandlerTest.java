@@ -45,7 +45,7 @@ public class SyncRequestHandlerTest extends BaseTest {
 
     @Test
     public void executorTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        requestWatchExecutor.create(UUID.randomUUID().toString(), new StreamObserver<EntityClassSyncRequest>() {
+        requestWatchExecutor.create(testClientId, UUID.randomUUID().toString(), new StreamObserver<EntityClassSyncRequest>() {
             @Override
             public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
 

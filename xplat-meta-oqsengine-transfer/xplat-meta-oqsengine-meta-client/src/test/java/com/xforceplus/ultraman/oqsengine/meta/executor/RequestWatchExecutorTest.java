@@ -26,10 +26,11 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  */
 public class RequestWatchExecutorTest extends BaseTest {
 
+
     @BeforeEach
     public void before() {
         requestWatchExecutor = requestWatchExecutor();
-        RequestWatcher requestWatcher = new RequestWatcher(UUID.randomUUID().toString(), mockObserver());
+        RequestWatcher requestWatcher = new RequestWatcher(testClientId, UUID.randomUUID().toString(), mockObserver());
         ReflectionTestUtils.setField(requestWatchExecutor, "requestWatcher", requestWatcher);
 
         requestWatchExecutor.start();
@@ -57,7 +58,7 @@ public class RequestWatchExecutorTest extends BaseTest {
 
         Thread.sleep(1);
         StreamObserver<EntityClassSyncRequest> observer = requestWatchExecutor.watcher().observer();
-        requestWatchExecutor.create(UUID.randomUUID().toString(), mockObserver());
+        requestWatchExecutor.create(testClientId, UUID.randomUUID().toString(), mockObserver());
         Assertions.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
         Assertions.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
         Assertions.assertNotEquals(observer, requestWatchExecutor.watcher().observer());

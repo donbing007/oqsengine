@@ -13,6 +13,8 @@ import java.util.function.Supplier;
  */
 public interface IWatcher<T> {
 
+    String clientId();
+
     String uid();
 
     long heartBeat();

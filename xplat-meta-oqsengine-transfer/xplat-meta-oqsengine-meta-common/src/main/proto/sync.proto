@@ -19,6 +19,7 @@ message EntityClassSyncRequest {
   int32 status = 4;
   string env = 5;
   bool force = 6;
+  string clientId = 7;
 }
 
 message EntityClassSyncResponse {

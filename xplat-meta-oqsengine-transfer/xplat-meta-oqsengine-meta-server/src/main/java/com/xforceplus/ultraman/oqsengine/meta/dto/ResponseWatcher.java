@@ -20,8 +20,8 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
 
     private final Logger logger = LoggerFactory.getLogger(ResponseWatcher.class);
 
-    public ResponseWatcher(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
-        super(uid, streamObserver);
+    public ResponseWatcher(String clientId, String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
+        super(clientId, uid, streamObserver);
     }
 
     @Override
