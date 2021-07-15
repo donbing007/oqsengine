@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 
@@ -51,4 +51,14 @@ public interface MetaManager {
      * 这个操作将强制将本地缓存清除.
      */
     void invalidateLocal();
+
+    /**
+     * 导入.
+     */
+    boolean dataImport(String appId, String env, int version, String content);
+
+    /**
+     * 产看当前appId下的信息.
+     */
+    Optional<MetaMetrics> showMeta(String appId) throws Exception;
 }

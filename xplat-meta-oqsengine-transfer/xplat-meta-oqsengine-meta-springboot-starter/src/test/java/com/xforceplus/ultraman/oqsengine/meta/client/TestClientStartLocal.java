@@ -17,6 +17,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
 /**
@@ -37,11 +38,9 @@ public class TestClientStartLocal {
 
     Thread serverThread;
 
-    boolean ifTest = false;
-
     @BeforeEach
     public void before() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             buildServer();
             Thread.sleep(1_000);
         }
@@ -49,7 +48,7 @@ public class TestClientStartLocal {
 
     @AfterEach
     public void after() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             ThreadUtils.shutdown(serverThread, 1);
 
             Thread.sleep(3_000);
@@ -58,7 +57,7 @@ public class TestClientStartLocal {
 
     @Test
     public void test() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
 

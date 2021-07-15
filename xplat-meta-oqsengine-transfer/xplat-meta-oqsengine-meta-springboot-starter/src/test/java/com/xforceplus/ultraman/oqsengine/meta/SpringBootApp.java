@@ -14,7 +14,6 @@ import org.springframework.context.annotation.ComponentScan;
  * @since : 1.8
  */
 @SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
-//@ComponentScan({ "com.xforceplus.ultraman.oqsengine.meta"})
 public class SpringBootApp {
     /**
      * @param args

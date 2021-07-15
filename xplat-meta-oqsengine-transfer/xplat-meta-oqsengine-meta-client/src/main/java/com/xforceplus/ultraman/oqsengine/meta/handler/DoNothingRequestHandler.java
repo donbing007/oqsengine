@@ -23,7 +23,7 @@ public class DoNothingRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
+    public void initWatcher(String clientId, String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
 
     }
 

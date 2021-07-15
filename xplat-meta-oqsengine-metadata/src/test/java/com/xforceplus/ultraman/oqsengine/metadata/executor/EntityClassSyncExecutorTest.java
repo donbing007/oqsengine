@@ -42,49 +42,6 @@ public class EntityClassSyncExecutorTest extends MetaTestHelper {
     }
 
     @Test
-    public void dataImportTest() throws IOException, IllegalAccessException {
-        String defaultTestAppId = "5";
-        String env = "0";
-        int defaultTestVersion = 2;
-        Boolean result = false;
-        InputStream in = null;
-        try {
-            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
-
-            result = MetaInitialization.getInstance().getEntityClassSyncExecutor().dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
-            Assertions.assertTrue(result);
-        } catch (Exception e) {
-            Assertions.fail();
-        } finally {
-            if (null != in) {
-                in.close();
-            }
-        }
-
-        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L);
-
-        Assertions.assertTrue(op.isPresent());
-
-        //  重新导入老版本，结果为失败
-        try {
-            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
-
-            defaultTestVersion = 1;
-
-            result = MetaInitialization.getInstance().getEntityClassSyncExecutor().dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
-            Assertions.assertFalse(result);
-        } catch (Exception e) {
-            Assertions.fail();
-        } finally {
-            if (null != in) {
-                in.close();
-            }
-        }
-    }
-
-    @Test
     public void syncTest()
         throws InterruptedException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
         JsonProcessingException {
@@ -153,14 +110,4 @@ public class EntityClassSyncExecutorTest extends MetaTestHelper {
             Assertions.assertNotNull(exists);
         }
     }
-
-
-    /**
-     * 从resource目录中生成InputStream.
-     */
-    private InputStream initInputStreamByResource(String appId, Integer version, String env) {
-        String path = String.format("/%s_%d_%s.json", appId, version, env);
-        return EntityClassStorageHelper.class.getResourceAsStream(path);
-    }
-
 }

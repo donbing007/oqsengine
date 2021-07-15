@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Calculator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -137,7 +137,7 @@ public class EntityClassHelper {
                 return entityFieldOp
                     .map(x -> {
 
-                        if (Calculator.Type.FORMULA.equals(x.calculateType())) {
+                        if (CalculationType.FORMULA.equals(x.calculationType())) {
                             String contextStr = y.getContextStr();
                             Map<String, Object> contextMap = Collections.emptyMap();
                             if (!StringUtils.isEmpty(contextStr)) {
@@ -164,7 +164,7 @@ public class EntityClassHelper {
 
         //  add auto_fill.
         List<IValue> autoFilled =
-            entityClass.fields().stream().filter(x -> x.calculateType() == Calculator.Type.AUTO_FILL).map(x -> {
+            entityClass.fields().stream().filter(x -> x.calculationType() == CalculationType.AUTO_FILL).map(x -> {
                 return x.type().toTypedValue(x, "");
             }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 

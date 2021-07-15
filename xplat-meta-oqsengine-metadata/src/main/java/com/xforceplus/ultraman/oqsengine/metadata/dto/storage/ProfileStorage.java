@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto.storage;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +12,13 @@ import java.util.List;
  */
 public class ProfileStorage {
     private final String code;
-    private final List<IEntityField> entityFieldList;
+    private final List<EntityField> entityFieldList;
     private List<RelationStorage> relationStorageList;
 
     /**
      * 构造函数.
      */
-    public ProfileStorage(String code, List<IEntityField> entityFieldList, List<RelationStorage> relationStorageList) {
+    public ProfileStorage(String code, List<EntityField> entityFieldList, List<RelationStorage> relationStorageList) {
         this.code = code;
         this.entityFieldList = entityFieldList;
         this.relationStorageList = relationStorageList;
@@ -33,7 +33,7 @@ public class ProfileStorage {
         return code;
     }
 
-    public List<IEntityField> getEntityFieldList() {
+    public List<EntityField> getEntityFieldList() {
         return entityFieldList;
     }
 
@@ -41,7 +41,7 @@ public class ProfileStorage {
         return relationStorageList;
     }
 
-    public void addField(IEntityField entityField) {
+    public void addField(EntityField entityField) {
         this.entityFieldList.add(entityField);
     }
 

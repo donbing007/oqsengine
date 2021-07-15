@@ -69,66 +69,67 @@ public final class EntityClassSyncProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\nsync.proto\032\031google/protobuf/any.proto\"" +
-      "q\n\026EntityClassSyncRequest\022\013\n\003uid\030\001 \001(\t\022\r" +
-      "\n\005appId\030\002 \001(\t\022\017\n\007version\030\003 \001(\005\022\016\n\006status" +
-      "\030\004 \001(\005\022\013\n\003env\030\005 \001(\t\022\r\n\005force\030\006 \001(\010\"\272\001\n\027E" +
-      "ntityClassSyncResponse\022\r\n\005appId\030\001 \001(\t\022\017\n" +
-      "\007version\030\002 \001(\005\022\013\n\003uid\030\003 \001(\t\022\016\n\006status\030\004 " +
-      "\001(\005\022\013\n\003env\030\005 \001(\t\022\013\n\003md5\030\006 \001(\t\0229\n\027entityC" +
-      "lassSyncRspProto\030\007 \001(\0132\030.EntityClassSync" +
-      "RspProto\022\r\n\005force\030\010 \001(\010\"B\n\027EntityClassSy" +
-      "ncRspProto\022\'\n\rentityClasses\030\001 \003(\0132\020.Enti" +
-      "tyClassInfo\"\323\001\n\017EntityClassInfo\022\014\n\004code\030" +
-      "\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name\030\003 \001(\t\022\016\n\006fathe" +
-      "r\030\004 \001(\003\022\r\n\005level\030\005 \001(\005\022\017\n\007version\030\006 \001(\005\022" +
-      "&\n\014entityFields\030\007 \003(\0132\020.EntityFieldInfo\022" +
-      " \n\trelations\030\010 \003(\0132\r.RelationInfo\022\036\n\010pro" +
-      "files\030\t \003(\0132\014.ProfileInfo\"\302\002\n\017EntityFiel" +
-      "dInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\r\n\005cname" +
-      "\030\003 \001(\t\022-\n\tfieldType\030\004 \001(\0162\032.EntityFieldI" +
-      "nfo.FieldType\022\016\n\006dictId\030\005 \001(\t\022\024\n\014default" +
-      "Value\030\006 \001(\t\022!\n\013fieldConfig\030\007 \001(\0132\014.Field" +
-      "Config\022\037\n\ncalculator\030\t \001(\0132\013.Calculator\"" +
-      "m\n\tFieldType\022\013\n\007UNKNOWN\020\000\022\013\n\007BOOLEAN\020\001\022\010" +
-      "\n\004ENUM\020\002\022\014\n\010DATETIME\020\003\022\010\n\004LONG\020\004\022\n\n\006STRI" +
-      "NG\020\005\022\013\n\007STRINGS\020\006\022\013\n\007DECIMAL\020\007\"\311\004\n\013Field" +
-      "Config\022\022\n\nsearchable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022" +
-      "\013\n\003min\030\003 \001(\003\022\021\n\tprecision\030\004 \001(\005\022\022\n\nident" +
-      "ifier\030\005 \001(\010\022\022\n\nisRequired\030\006 \001(\010\022\033\n\023valid" +
-      "ateRegexString\030\007 \001(\t\022\023\n\013displayType\030\010 \001(" +
-      "\t\0223\n\016metaFieldSense\030\t \001(\0162\033.FieldConfig." +
-      "MetaFieldSense\022\021\n\tfuzzyType\030\n \001(\005\022\030\n\020wil" +
-      "dcardMinWidth\030\013 \001(\005\022\030\n\020wildcardMaxWidth\030" +
-      "\014 \001(\005\022\022\n\nuniqueName\030\r \001(\t\022\023\n\013crossSearch" +
-      "\030\016 \001(\010\022\016\n\006length\030\017 \001(\005\022\027\n\017valueFloatScal" +
-      "e\030\020 \001(\005\"\320\001\n\016MetaFieldSense\022\013\n\007UNKNOWN\020\000\022" +
-      "\n\n\006NORMAL\020\001\022\r\n\tTENANT_ID\020\002\022\017\n\013TENANT_COD" +
-      "E\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013UPDATE_TIME\020\005\022\022\n" +
-      "\016CREATE_USER_ID\020\006\022\022\n\016UPDATE_USER_ID\020\007\022\024\n" +
-      "\020CREATE_USER_NAME\020\010\022\024\n\020UPDATE_USER_NAME\020" +
-      "\t\022\017\n\013DELETE_FLAG\020\n\"\337\002\n\nCalculator\022\025\n\rcal" +
-      "culateType\030\001 \001(\005\022\022\n\nexpression\030\002 \001(\t\022\021\n\t" +
-      "validator\030\003 \001(\t\022\013\n\003min\030\004 \001(\t\022\013\n\003max\030\005 \001(" +
-      "\t\022\021\n\tcondition\030\006 \001(\t\022\032\n\022emptyValueTransf" +
-      "er\030\007 \001(\t\022\016\n\006patten\030\010 \001(\t\022\r\n\005model\030\t \001(\t\022" +
-      "\014\n\004step\030\n \001(\005\022\r\n\005level\030\013 \001(\005\022\014\n\004args\030\014 \003" +
-      "(\t\022\024\n\014failedPolicy\030\r \001(\005\0220\n\022failedDefaul" +
-      "tValue\030\016 \001(\0132\024.google.protobuf.Any\022\033\n\023lo" +
-      "okupEntityClassId\030\017 \001(\003\022\033\n\023lookupEntityF" +
-      "ieldId\030\020 \001(\003\"k\n\013ProfileInfo\022\014\n\004code\030\001 \001(" +
-      "\t\022)\n\017entityFieldInfo\030\002 \003(\0132\020.EntityField" +
-      "Info\022#\n\014relationInfo\030\003 \003(\0132\r.RelationInf" +
-      "o\"\362\001\n\014RelationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002" +
-      " \001(\t\022\032\n\022rightEntityClassId\030\003 \001(\003\022\031\n\021left" +
-      "EntityClassId\030\004 \001(\003\022\033\n\023leftEntityClassCo" +
-      "de\030\005 \001(\t\022\024\n\014relationType\030\006 \001(\005\022\020\n\010identi" +
-      "ty\030\007 \001(\010\022%\n\013entityField\030\010 \001(\0132\020.EntityFi" +
-      "eldInfo\022\025\n\rbelongToOwner\030\t \001(\010\022\016\n\006strong" +
-      "\030\n \001(\0102V\n\017EntityClassSync\022C\n\010register\022\027." +
-      "EntityClassSyncRequest\032\030.EntityClassSync" +
-      "Response\"\000(\0010\001BR\n8com.xforceplus.ultrama" +
-      "n.oqsengine.meta.common.proto.syncB\024Enti" +
-      "tyClassSyncProtoP\001b\006proto3"
+      "\203\001\n\026EntityClassSyncRequest\022\013\n\003uid\030\001 \001(\t\022" +
+      "\r\n\005appId\030\002 \001(\t\022\017\n\007version\030\003 \001(\005\022\016\n\006statu" +
+      "s\030\004 \001(\005\022\013\n\003env\030\005 \001(\t\022\r\n\005force\030\006 \001(\010\022\020\n\010c" +
+      "lientId\030\007 \001(\t\"\272\001\n\027EntityClassSyncRespons" +
+      "e\022\r\n\005appId\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\022\013\n\003uid" +
+      "\030\003 \001(\t\022\016\n\006status\030\004 \001(\005\022\013\n\003env\030\005 \001(\t\022\013\n\003m" +
+      "d5\030\006 \001(\t\0229\n\027entityClassSyncRspProto\030\007 \001(" +
+      "\0132\030.EntityClassSyncRspProto\022\r\n\005force\030\010 \001" +
+      "(\010\"B\n\027EntityClassSyncRspProto\022\'\n\rentityC" +
+      "lasses\030\001 \003(\0132\020.EntityClassInfo\"\323\001\n\017Entit" +
+      "yClassInfo\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004" +
+      "name\030\003 \001(\t\022\016\n\006father\030\004 \001(\003\022\r\n\005level\030\005 \001(" +
+      "\005\022\017\n\007version\030\006 \001(\005\022&\n\014entityFields\030\007 \003(\013" +
+      "2\020.EntityFieldInfo\022 \n\trelations\030\010 \003(\0132\r." +
+      "RelationInfo\022\036\n\010profiles\030\t \003(\0132\014.Profile" +
+      "Info\"\302\002\n\017EntityFieldInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004" +
+      "name\030\002 \001(\t\022\r\n\005cname\030\003 \001(\t\022-\n\tfieldType\030\004" +
+      " \001(\0162\032.EntityFieldInfo.FieldType\022\016\n\006dict" +
+      "Id\030\005 \001(\t\022\024\n\014defaultValue\030\006 \001(\t\022!\n\013fieldC" +
+      "onfig\030\007 \001(\0132\014.FieldConfig\022\037\n\ncalculator\030" +
+      "\t \001(\0132\013.Calculator\"m\n\tFieldType\022\013\n\007UNKNO" +
+      "WN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004ENUM\020\002\022\014\n\010DATETIME\020" +
+      "\003\022\010\n\004LONG\020\004\022\n\n\006STRING\020\005\022\013\n\007STRINGS\020\006\022\013\n\007" +
+      "DECIMAL\020\007\"\311\004\n\013FieldConfig\022\022\n\nsearchable\030" +
+      "\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013\n\003min\030\003 \001(\003\022\021\n\tpreci" +
+      "sion\030\004 \001(\005\022\022\n\nidentifier\030\005 \001(\010\022\022\n\nisRequ" +
+      "ired\030\006 \001(\010\022\033\n\023validateRegexString\030\007 \001(\t\022" +
+      "\023\n\013displayType\030\010 \001(\t\0223\n\016metaFieldSense\030\t" +
+      " \001(\0162\033.FieldConfig.MetaFieldSense\022\021\n\tfuz" +
+      "zyType\030\n \001(\005\022\030\n\020wildcardMinWidth\030\013 \001(\005\022\030" +
+      "\n\020wildcardMaxWidth\030\014 \001(\005\022\022\n\nuniqueName\030\r" +
+      " \001(\t\022\023\n\013crossSearch\030\016 \001(\010\022\016\n\006length\030\017 \001(" +
+      "\005\022\027\n\017valueFloatScale\030\020 \001(\005\"\320\001\n\016MetaField" +
+      "Sense\022\013\n\007UNKNOWN\020\000\022\n\n\006NORMAL\020\001\022\r\n\tTENANT" +
+      "_ID\020\002\022\017\n\013TENANT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022" +
+      "\017\n\013UPDATE_TIME\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016" +
+      "UPDATE_USER_ID\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024" +
+      "\n\020UPDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\337\002" +
+      "\n\nCalculator\022\025\n\rcalculateType\030\001 \001(\005\022\022\n\ne" +
+      "xpression\030\002 \001(\t\022\021\n\tvalidator\030\003 \001(\t\022\013\n\003mi" +
+      "n\030\004 \001(\t\022\013\n\003max\030\005 \001(\t\022\021\n\tcondition\030\006 \001(\t\022" +
+      "\032\n\022emptyValueTransfer\030\007 \001(\t\022\016\n\006patten\030\010 " +
+      "\001(\t\022\r\n\005model\030\t \001(\t\022\014\n\004step\030\n \001(\005\022\r\n\005leve" +
+      "l\030\013 \001(\005\022\014\n\004args\030\014 \003(\t\022\024\n\014failedPolicy\030\r " +
+      "\001(\005\0220\n\022failedDefaultValue\030\016 \001(\0132\024.google" +
+      ".protobuf.Any\022\033\n\023lookupEntityClassId\030\017 \001" +
+      "(\003\022\033\n\023lookupEntityFieldId\030\020 \001(\003\"k\n\013Profi" +
+      "leInfo\022\014\n\004code\030\001 \001(\t\022)\n\017entityFieldInfo\030" +
+      "\002 \003(\0132\020.EntityFieldInfo\022#\n\014relationInfo\030" +
+      "\003 \003(\0132\r.RelationInfo\"\362\001\n\014RelationInfo\022\n\n" +
+      "\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEntityCl" +
+      "assId\030\003 \001(\003\022\031\n\021leftEntityClassId\030\004 \001(\003\022\033" +
+      "\n\023leftEntityClassCode\030\005 \001(\t\022\024\n\014relationT" +
+      "ype\030\006 \001(\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entityFie" +
+      "ld\030\010 \001(\0132\020.EntityFieldInfo\022\025\n\rbelongToOw" +
+      "ner\030\t \001(\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityClass" +
+      "Sync\022C\n\010register\022\027.EntityClassSyncReques" +
+      "t\032\030.EntityClassSyncResponse\"\000(\0010\001BR\n8com" +
+      ".xforceplus.ultraman.oqsengine.meta.comm" +
+      "on.proto.syncB\024EntityClassSyncProtoP\001b\006p" +
+      "roto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -148,7 +149,7 @@ public final class EntityClassSyncProto {
     internal_static_EntityClassSyncRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassSyncRequest_descriptor,
-        new java.lang.String[] { "Uid", "AppId", "Version", "Status", "Env", "Force", });
+        new java.lang.String[] { "Uid", "AppId", "Version", "Status", "Env", "Force", "ClientId", });
     internal_static_EntityClassSyncResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_EntityClassSyncResponse_fieldAccessorTable = new

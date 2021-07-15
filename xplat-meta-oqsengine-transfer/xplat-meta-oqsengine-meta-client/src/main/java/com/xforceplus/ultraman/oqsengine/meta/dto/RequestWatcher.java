@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * request watcher.
@@ -13,8 +15,11 @@ import io.grpc.stub.StreamObserver;
  */
 public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
 
-    public RequestWatcher(String uid, StreamObserver<EntityClassSyncRequest> observer) {
-        super(uid, observer);
+    private final Logger logger = LoggerFactory.getLogger(RequestWatcher.class);
+
+
+    public RequestWatcher(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer) {
+        super(clientId, uid, observer);
     }
 
     /**
@@ -34,6 +39,10 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
         if (null == v) {
+            return false;
+        } else if (!watchElement.getEnv().equals(v.getEnv())) {
+            logger.warn("current appId {}, onWatch-env {} not equals to params-env {}",
+                v.getAppId(), v.getEnv(), watchElement.getEnv());
             return false;
         }
 

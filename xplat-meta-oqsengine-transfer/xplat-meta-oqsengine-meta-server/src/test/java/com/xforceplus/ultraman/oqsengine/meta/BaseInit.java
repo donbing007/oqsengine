@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
@@ -14,6 +12,12 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassGenerator;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockClient;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
+import com.xforceplus.ultraman.oqsengine.meta.provider.metrics.ServerMetrics;
+import com.xforceplus.ultraman.oqsengine.meta.provider.metrics.impl.DefaultServerMetrics;
+import io.grpc.stub.StreamObserver;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.concurrent.ExecutorService;
@@ -45,10 +49,12 @@ public class BaseInit {
     private GRpcServer gRpcServer;
     private ExecutorService gRpcExecutor;
 
+    protected ServerMetrics serverMetrics;
+
     protected void stopServer() {
         gRpcServer.stop();
-        ExecutorHelper.shutdownAndAwaitTermination(taskExecutor);
-        ExecutorHelper.shutdownAndAwaitTermination(gRpcExecutor);
+        taskExecutor.shutdownNow();
+        gRpcExecutor.shutdownNow();
     }
 
     protected void initServer(int port) throws InterruptedException {
@@ -56,6 +62,9 @@ public class BaseInit {
 
         gRpcExecutor = new ThreadPoolExecutor(5, 5, 0,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+
+        serverMetrics = new DefaultServerMetrics();
+        ReflectionTestUtils.setField(serverMetrics, "responseWatchExecutor", responseWatchExecutor);
 
         gRpcServer = new GRpcServer(port);
         ReflectionTestUtils.setField(gRpcServer, "entityClassSyncServer", entityClassSyncServer);
@@ -116,13 +125,64 @@ public class BaseInit {
     }
 
 
-    protected EntityClassSyncRequest buildRequest(WatchElement w, String uid, RequestStatus requestStatus) {
+    protected EntityClassSyncRequest buildRequest(WatchElement w, String clientId, String uid, RequestStatus requestStatus) {
         return EntityClassSyncRequest.newBuilder()
+                .setClientId(clientId)
                 .setUid(uid)
                 .setAppId(w.getAppId())
                 .setVersion(w.getVersion())
                 .setStatus(requestStatus.ordinal())
                 .setEnv(w.getEnv())
                 .build();
+    }
+
+    public static class WatchElementVisitor {
+        private WatchElement watchElement;
+        private Set<Integer> visitors;
+
+        public WatchElementVisitor(WatchElement watchElement) {
+            this.watchElement = watchElement;
+            visitors = new HashSet<>();
+        }
+
+        public WatchElement getWatchElement() {
+            return watchElement;
+        }
+
+        public Set<Integer> getVisitors() {
+            return visitors;
+        }
+
+        public void setVisitors(Integer visitors) {
+            this.visitors.add(visitors);
+        }
+    }
+
+    public static class StreamEvent {
+        private MockerSyncClient mockerSyncClient;
+        private StreamObserver<EntityClassSyncRequest> streamObserver;
+        private String uid;
+
+        public StreamEvent(MockerSyncClient mockerSyncClient, StreamObserver<EntityClassSyncRequest> streamObserver, String uid) {
+            this.mockerSyncClient = mockerSyncClient;
+            this.streamObserver = streamObserver;
+            this.uid = uid;
+        }
+
+        public MockerSyncClient getMockerSyncClient() {
+            return mockerSyncClient;
+        }
+
+        public StreamObserver<EntityClassSyncRequest> getStreamObserver() {
+            return streamObserver;
+        }
+
+        public String getUid() {
+            return uid;
+        }
+
+        public Map<String, WatchElement> getWatchElements() {
+            return mockerSyncClient.getWatchElementMap();
+        }
     }
 }

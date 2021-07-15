@@ -17,7 +17,7 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
     /**
      * 创建一个新的RequestWatcher.
      */
-    void create(String uid, StreamObserver<EntityClassSyncRequest> observer);
+    void create(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer);
 
     /**
      * 增加WatchElement.

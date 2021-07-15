@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.handler.DoNothingRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
@@ -41,15 +39,22 @@ public class MetaManagerConfiguration {
      * 增加isOffLineUse.
      */
     @Bean("metaManager")
-    @DependsOn("cacheExecutor")
+    @DependsOn({"cacheExecutor", "grpcSyncExecutor"})
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
-    public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type) {
+    public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type,
+                                          @Value("${meta.load.path:}") String loadPath) {
         StorageMetaManager storageMetaManager = new StorageMetaManager();
         if (type.equals("offline")) {
             logger.info("init storageMetaManager, use offline model.");
             storageMetaManager.isOffLineUse();
         }
         logger.info("init storageMetaManager success.");
+
+        if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
+            logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
+            storageMetaManager.setLoadPath(loadPath);
+        }
+
         return storageMetaManager;
     }
 
@@ -68,7 +73,6 @@ public class MetaManagerConfiguration {
     @Bean("grpcSyncExecutor")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public SyncExecutor grpcSyncExecutor(
-        @Value("${meta.load.path:}") String loadPath,
         @Value("${metadata.enhanced:false}") boolean enhanced) {
         if (enhanced) {
             logger.info("init EnhancedSyncExecutor success.");
@@ -76,10 +80,7 @@ public class MetaManagerConfiguration {
         }
         logger.info("init EntityClassSyncExecutor success.");
         EntityClassSyncExecutor entityClassSyncExecutor = new EntityClassSyncExecutor();
-        if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
-            logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
-            entityClassSyncExecutor.setLoadPath(loadPath);
-        }
+
         return entityClassSyncExecutor;
     }
 
@@ -93,17 +94,6 @@ public class MetaManagerConfiguration {
             @Override
             public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
                 return true;
-            }
-
-            @Override
-            public boolean dataImport(String appId, int version, String content) {
-                try {
-                    EntityClassStorageHelper.toEntityClassSyncRspProto(content);
-                    return true;
-                } catch (InvalidProtocolBufferException e) {
-                    logger.error("toEntityClassSyncRspProto error, message {}", e.getMessage());
-                    return false;
-                }
             }
 
             @Override

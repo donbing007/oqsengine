@@ -51,12 +51,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
     private Thread thread;
 
-    private String loadPath;
-
-    public void setLoadPath(String loadPath) {
-        this.loadPath = loadPath;
-    }
-
     /**
      * 创建监听delayTask的线程.
      */
@@ -64,20 +58,12 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     public void start() {
         closed = false;
 
-        //  sync data from file
-        if (null != loadPath && !loadPath.isEmpty()) {
-            logger.info("start load from local path : {}", loadPath);
-            loadFromLocal(loadPath);
-            logger.info("success load from local path : {}", loadPath);
-        }
-
         thread = ThreadUtils.create(() -> {
             delayCleanTask();
             return true;
         });
 
         thread.start();
-
     }
 
     /**
@@ -142,30 +128,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         return false;
     }
 
-    @Override
-    public boolean dataImport(String appId, int version, String content) {
-        int currentVersion = version(appId);
-
-        if (version > currentVersion) {
-            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion, version);
-
-            EntityClassSyncRspProto entityClassSyncRspProto;
-            try {
-                entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
-            }
-
-            if (!sync(appId, version, entityClassSyncRspProto)) {
-                throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
-            }
-            return true;
-        } else {
-            String message = String.format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId, currentVersion, version);
-            logger.warn(message);
-            return false;
-        }
-    }
 
     /**
      * 获取当前meta的版本信息.
@@ -207,35 +169,5 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 eventBus.notify(payload);
             }
         );
-    }
-
-
-    private void loadFromLocal(String path) {
-        if (!path.endsWith(File.separator)) {
-            path = path + File.separator;
-        }
-        List<String> files = FileReaderUtils.getFileNamesInOneDir(path);
-        for (String file : files) {
-            try {
-                String[] splitter = EntityClassStorageHelper.splitMetaFromFileName(file);
-
-                String appId = splitter[0];
-                int version = Integer.parseInt(splitter[1]);
-                String fullPath = path + file;
-
-                String v =
-                    EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
-
-                if (dataImport(splitter[0], version, v)) {
-                    logger.info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId, version);
-                } else {
-                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);
-                }
-            } catch (Exception e) {
-                logger.warn("load from local-file failed, path : {}, message : {}", path + file, e.getMessage());
-
-                //  ignore current file
-            }
-        }
     }
 }

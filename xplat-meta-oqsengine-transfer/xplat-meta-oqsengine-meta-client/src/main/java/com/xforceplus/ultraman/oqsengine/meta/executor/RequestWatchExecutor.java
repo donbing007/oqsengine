@@ -36,9 +36,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public void create(String uid, StreamObserver<EntityClassSyncRequest> observer) {
+    public void create(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer) {
         if (null == requestWatcher) {
-            requestWatcher = new RequestWatcher(uid, observer);
+            requestWatcher = new RequestWatcher(clientId, uid, observer);
         } else {
             requestWatcher.reset(uid, observer);
         }

@@ -41,6 +41,8 @@ public class MockMetaManagerHolder {
             ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,
                 MetaInitialization.getInstance().getCacheExecutor());
             ReflectionUtils.reflectionFieldValue(cacheFields, "requestHandler", metaManager, requestHandler);
+            ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
+                MetaInitialization.getInstance().getEntityClassSyncExecutor());
             ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
                 CommonInitialization.getInstance().getRunner());
 

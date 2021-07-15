@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerSyncEvent;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 
 import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRspProtoBuilder.entityClassSyncRspProtoGenerator;
@@ -24,8 +24,8 @@ public class MockEntityClassGenerator implements EntityClassGenerator {
     }
 
     @Override
-    public AppUpdateEvent pull(String appId, String env) {
-        return new AppUpdateEvent("mock", appId, env, version, entityClassSyncRspProtoGenerator(entityId));
+    public ServerSyncEvent pull(String appId, String env) {
+        return new MockSyncEvent(appId, env, version, entityClassSyncRspProtoGenerator(entityId));
     }
 
 }

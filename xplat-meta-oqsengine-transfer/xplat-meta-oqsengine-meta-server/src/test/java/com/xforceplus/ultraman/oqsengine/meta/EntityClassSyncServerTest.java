@@ -34,6 +34,8 @@ public class EntityClassSyncServerTest extends BaseInit {
 
     private MockerSyncClient mockerSyncClient;
 
+    private String clientId = "entityClassSyncServerTest";
+
     @BeforeEach
     public void before() throws InterruptedException {
 
@@ -65,12 +67,12 @@ public class EntityClassSyncServerTest extends BaseInit {
         /**
          * 注册
          */
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.REGISTER));
 
         /**
          * 发送心跳
          */
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.HEARTBEAT));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.HEARTBEAT));
 
 
         Thread.sleep(2_000);
@@ -104,7 +106,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         long entityId = Long.MAX_VALUE - 100;
         entityClassGenerator.reset(expectedVersion, entityId);
 
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.REGISTER));
 
         /**
          * 检查结果，最大3秒
@@ -117,7 +119,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         expectedVersion = version + 3;
         entityId = Long.MAX_VALUE - 1000;
         entityClassGenerator.reset(expectedVersion, entityId);
-        observer.onNext(buildRequest(new WatchElement(appId, env, version + 2, null), uid, RequestStatus.REGISTER));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version + 2, null), clientId, uid, RequestStatus.REGISTER));
 
         waitForResult(3, expectedVersion, appId);
 
@@ -128,7 +130,7 @@ public class EntityClassSyncServerTest extends BaseInit {
          * check 整体appId + env 对应的版本没有更新(这个版本更新只能由push产生)
          */
         int resetVersion = version + 4;
-        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_OK));
+        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), clientId, uid, RequestStatus.SYNC_OK));
         Thread.sleep(1_000);
         WatchElement element = responseWatchExecutor.watcher(uid).watches().get(appId);
         Assertions.assertEquals(element.getEnv(), env);
@@ -151,44 +153,49 @@ public class EntityClassSyncServerTest extends BaseInit {
         int expectedVersion = version + 1;
         long entityId = Long.MAX_VALUE - 1000;
         entityClassGenerator.reset(expectedVersion, entityId);
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.REGISTER));
 
         /**
          * 当前版本更新失败
          * check服务端3秒内重新推一个新版本数据
          */
         Thread t = ThreadUtils.create(() -> {
-            while (true) {
+            int i = 0;
+            while (i < 10) {
                 try {
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
-                            .setUid(uid)
-                            .setAppId(appId)
-                            .setStatus(RequestStatus.HEARTBEAT.ordinal())
-                            .setEnv(env)
-                            .build();
+                        .setUid(uid)
+                        .setAppId(appId)
+                        .setStatus(RequestStatus.HEARTBEAT.ordinal())
+                        .setEnv(env)
+                        .build();
 
                     observer.onNext(request);
 
-                    logger.debug("send heartbeat, uid [{}]", uid);
+                    logger.debug("syncFailTest, send heartbeat, uid [{}]", uid);
                 } catch (Exception e) {
 
                 }
+                i++;
                 wakeupAfter(5_000, TimeUnit.MILLISECONDS);
             }
+            return null;
         });
 
-        t.start();
+        try {
+            t.start();
+            int resetVersion = expectedVersion + 1;
+            entityClassGenerator.reset(resetVersion, entityId);
+            syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
 
-        int resetVersion = expectedVersion + 1;
-        entityClassGenerator.reset(resetVersion, entityId);
-        syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
+            Thread.sleep(3_000);
 
-        Thread.sleep(5_000);
+            observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), clientId, uid, RequestStatus.SYNC_FAIL));
 
-        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
-
-        waitForResult(Integer.MAX_VALUE, resetVersion, appId);
-        ThreadUtils.shutdown(t, 1);
+            waitForResult(Integer.MAX_VALUE, resetVersion, appId);
+        } finally {
+            ThreadUtils.shutdown(t, 1);
+        }
     }
 
     private void waitForResult(int maxWaitLoops, int version, String appId) throws InterruptedException {

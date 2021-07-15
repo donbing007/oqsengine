@@ -1,16 +1,16 @@
-package com.xforceplus.ultraman.oqsengine.metadata.executor;
+package com.xforceplus.ultraman.oqsengine.metadata;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaTestHelper;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
@@ -23,25 +23,41 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.apache.commons.compress.utils.Lists;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * 测试.
+ * Created by justin.xu on 07/2021.
  *
- * @author xujia 2021/2/20
  * @since 1.8
  */
-public class EntityClassManagerExecutorTest extends MetaTestHelper {
+public class StorageMetaManagerTest extends MetaTestHelper {
+
+    final Logger logger = LoggerFactory.getLogger(StorageMetaManagerTest.class);
+
+    private static final String NEED_CONCURRENT_APP_ID = "test";
+    private static final String[] NEED_CONCURRENT_APP_ENV_LIST = {"1", "2", "3"};
+
+    ExecutorService executorService = Executors.newFixedThreadPool(3);
 
     @BeforeEach
     public void before() throws Exception {
@@ -51,6 +67,105 @@ public class EntityClassManagerExecutorTest extends MetaTestHelper {
     @AfterEach
     public void after() throws Exception {
         super.destroy();
+    }
+
+    @Test
+    public void needConcurrentTest() throws InterruptedException {
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+        CountDownLatch startCountDown = new CountDownLatch(1);
+        CountDownLatch endCountDown = new CountDownLatch(NEED_CONCURRENT_APP_ENV_LIST.length);
+        List<Future> futures = Lists.newArrayList();
+        for (int j = 0; j < NEED_CONCURRENT_APP_ENV_LIST.length; j++) {
+            final int pos = j;
+            Future future = executorService.submit(() -> {
+                try {
+                    startCountDown.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    MetaInitialization.getInstance().getMetaManager().need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[pos]);
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failCount.incrementAndGet();
+                    logger.warn(e.getMessage());
+                } finally {
+                    endCountDown.countDown();
+                }
+            });
+            futures.add(future);
+        }
+
+        startCountDown.countDown();
+
+        endCountDown.await();
+
+        Assertions.assertEquals(1, successCount.get());
+        Assertions.assertEquals(NEED_CONCURRENT_APP_ENV_LIST.length - 1, failCount.get());
+    }
+
+    String defaultTestAppId = "5";
+    String env = "0";
+    int defaultTestVersion = 2;
+
+    @Test
+    public void showMeta() throws Exception {
+
+        dataImportTest();
+
+        Optional<MetaMetrics> result =
+            MetaInitialization.getInstance().getMetaManager().showMeta(defaultTestAppId);
+
+        Assertions.assertTrue(result.isPresent());
+
+        MetaMetrics metaMetrics = result.get();
+        Assertions.assertEquals(env, metaMetrics.getEnv());
+        Assertions.assertEquals(defaultTestVersion, metaMetrics.getVersion());
+        Assertions.assertTrue(metaMetrics.getMetas().size() > 0);
+    }
+
+    @Test
+    public void dataImportTest() throws IOException, IllegalAccessException {
+
+        Boolean result = false;
+        InputStream in = null;
+        try {
+            StorageMetaManager storageMetaManager = (StorageMetaManager) MetaInitialization.getInstance().getMetaManager();
+            storageMetaManager.init();
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
+            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, defaultTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            Assertions.assertTrue(result);
+        } catch (Exception e) {
+            Assertions.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+        }
+
+        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L);
+
+        Assertions.assertTrue(op.isPresent());
+
+        //  重新导入老版本，结果为失败
+        try {
+            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
+
+            int failTestVersion = 1;
+
+            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, failTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
+            Assertions.assertFalse(result);
+        } catch (Exception e) {
+            Assertions.fail();
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+        }
     }
 
     @Test
@@ -310,7 +425,7 @@ public class EntityClassManagerExecutorTest extends MetaTestHelper {
             Assertions.assertEquals(exp.getCalculator().getLevel(), ((Formula) act.config().getCalculation()).getLevel());
             Optional<?> opObject;
             try {
-                opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
+                opObject = toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
             } catch (Exception e) {
                 throw new RuntimeException(String.format("toFieldTypeValue failed, message : %s", e.getMessage()));
             }
@@ -340,5 +455,13 @@ public class EntityClassManagerExecutorTest extends MetaTestHelper {
             Assertions.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
             Assertions.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
+    }
+
+    /**
+     * 从resource目录中生成InputStream.
+     */
+    private InputStream initInputStreamByResource(String appId, Integer version, String env) {
+        String path = String.format("/%s_%d_%s.json", appId, version, env);
+        return EntityClassStorageHelper.class.getResourceAsStream(path);
     }
 }

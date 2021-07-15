@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
@@ -78,7 +77,7 @@ public class SyncResponseHandlerTest {
     @AfterEach
     public void after() {
         syncResponseHandler.stop();
-        ExecutorHelper.shutdownAndAwaitTermination(executor);
+        executor.shutdownNow();
     }
 
     private GRpcParams gRpcParamsConfig() {
