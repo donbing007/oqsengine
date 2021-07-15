@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
+import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -32,7 +32,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     private MetaManager metaManager;
     private Map<String, Object> attributes;
     private Collection<CalculationHint> hints;
-    private BizIDGenerator bizIDGenerator;
+    private IDGenerator bizIDGenerator;
 
     @Override
     public boolean isBuild() {
@@ -102,12 +102,12 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     }
 
     @Override
-    public void bizIdGenerator(BizIDGenerator bizIDGenerator) {
+    public void bizIdGenerator(IDGenerator bizIDGenerator) {
         this.bizIDGenerator = bizIDGenerator;
     }
 
     @Override
-    public BizIDGenerator getBizIDGenerator() {
+    public IDGenerator getBizIDGenerator() {
         return bizIDGenerator;
     }
 
@@ -121,7 +121,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private MasterStorage masterStorage;
         private MetaManager metaManager;
         private Map<String, Object> attributes;
-        private BizIDGenerator bizIDGenerator;
+        private IDGenerator bizIDGenerator;
 
         private Builder() {
         }
@@ -155,7 +155,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
-        public Builder withBizIdGenerator(BizIDGenerator bizIdGenerator) {
+        public Builder withBizIdGenerator(IDGenerator bizIdGenerator) {
             this.bizIDGenerator = bizIdGenerator;
             return this;
         }

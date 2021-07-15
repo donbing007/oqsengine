@@ -9,19 +9,22 @@ import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.Optional;
 
 /**
- * Created by justin.xu on 07/2021.
+ *
+ * @author justin.xu
+ * @date 07/2021
  *
  * @since 1.8
  */
 public class AutoFillCalculationLogic implements CalculationLogic {
 
+    private static final int DEFAULT_STEP = 1;
+
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
-        Object result = context.getBizIDGenerator().nextId(String.valueOf(context.getFocusField().id()));
+        Object result = context.getBizIDGenerator().nextId("",DEFAULT_STEP);
         if (null == result) {
             throw new CalculationLogicException("autoFill id generate is null.");
         }
-
         return Optional.of(IValueUtils.toIValue(context.getFocusField(), result));
     }
 

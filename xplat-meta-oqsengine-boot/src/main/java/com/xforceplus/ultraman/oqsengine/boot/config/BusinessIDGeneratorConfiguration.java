@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.RedisIDGenerator;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
@@ -22,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -160,5 +163,18 @@ public class BusinessIDGeneratorConfiguration {
         }
         return Redisson.create(config);
     }
+
+    @Bean(name = "redisIDGenerator")
+    public RedisIDGenerator redisIDGenerator() {
+        RedisIDGenerator generator = new RedisIDGenerator();
+        return generator;
+    }
+
+    @Bean
+    public SpringContextUtil springContextUtil() {
+        return new SpringContextUtil();
+    }
+
+
 
 }
