@@ -27,8 +27,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerSyncEvent;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
@@ -224,16 +224,16 @@ public class SyncResponseHandler implements IResponseHandler {
      * 接收外部推送.
      */
     @Override
-    public boolean push(AppUpdateEvent event) {
+    public boolean push(ServerSyncEvent event) {
 
         //  更新版本成功、则推送给外部
-        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+        if (responseWatchExecutor.addVersion(event.appId(), event.env(), event.version())) {
             List<ResponseWatcher> needList = null;
             try {
-                needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
+                needList = responseWatchExecutor.need(new WatchElement(event.appId(), event.env(), event.version(), Notice));
             } catch (Exception e) {
                 logger.warn("push event failed...event [{}-{}-{}], message [{}]",
-                            event.getAppId(), event.getEnv(), event.getVersion(), e.getMessage());
+                            event.appId(), event.env(), event.version(), e.getMessage());
                 return false;
             }
 
@@ -241,9 +241,9 @@ public class SyncResponseHandler implements IResponseHandler {
                 for (ResponseWatcher r : needList) {
                     taskExecutor.submit(() -> {
                         try {
-                            EntityClassSyncResponse response = generateResponse(r.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
-                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto(), false);
-                            responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, r, false);
+                            EntityClassSyncResponse response = generateResponse(r.uid(), event.appId(), event.env(), event.version(),
+                                    RequestStatus.SYNC, event.entityClassSyncRspProto(), false);
+                            responseByWatch(event.appId(), event.env(), event.version(), response, r, false);
                         } catch (Exception e) {
                             logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event,
                                 e.getMessage());
@@ -251,13 +251,13 @@ public class SyncResponseHandler implements IResponseHandler {
                     });
                 }
             } else {
-                logger.warn("need list is empty, no watch on event [{}-{}-{}]", event.getAppId(), event.getEnv(), event.getVersion());
+                logger.warn("need list is empty, no watch on event [{}-{}-{}]", event.appId(), event.env(), event.version());
             }
         } else {
             //  元数据推送的AppId版本小于当前关注版本，忽略...
             logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore...",
-                event.getAppId(), event.getEnv(), event.getVersion(),
-                responseWatchExecutor.version(event.getAppId(), event.getEnv()));
+                event.appId(), event.env(), event.version(),
+                responseWatchExecutor.version(event.appId(), event.env()));
         }
         return true;
     }
@@ -268,7 +268,7 @@ public class SyncResponseHandler implements IResponseHandler {
         //  判断watcher的可用性
         if (null != watcher && watcher.isActive()) {
             try {
-                AppUpdateEvent appUpdateEvent =
+                ServerSyncEvent appUpdateEvent =
                     entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
                 if (null == appUpdateEvent) {
                     logger.warn("pull data fail, appUpdateEvent is null, app {}, env {}.", watchElement.getAppId(), watchElement.getEnv());
@@ -277,14 +277,14 @@ public class SyncResponseHandler implements IResponseHandler {
                 if (isNeedEvent(watchElement, appUpdateEvent, requestStatus, force)) {
                     //  主动拉取不会更新当前的appVersion
                     EntityClassSyncResponse response =
-                        generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                            appUpdateEvent.getVersion(),
-                            RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto(), force);
-                    return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                        appUpdateEvent.getVersion(), response, watcher, force);
+                        generateResponse(uid, appUpdateEvent.appId(), appUpdateEvent.env(),
+                            appUpdateEvent.version(),
+                            RequestStatus.SYNC, appUpdateEvent.entityClassSyncRspProto(), force);
+                    return responseByWatch(appUpdateEvent.appId(), appUpdateEvent.env(),
+                        appUpdateEvent.version(), response, watcher, force);
                 }
                 logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore...",
-                    watchElement.getVersion(), appUpdateEvent.getVersion());
+                    watchElement.getVersion(), appUpdateEvent.version());
                 return true;
             } catch (Exception e) {
                 //  当元数据告知失败将在一分钟后进行重试
@@ -338,23 +338,23 @@ public class SyncResponseHandler implements IResponseHandler {
      * 如果是requestStatus是sync_ok，表示只关注大于当前expected的版本
      * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本.
      */
-    private boolean isNeedEvent(WatchElement expected, AppUpdateEvent actual, RequestStatus requestStatus, boolean force) {
-        if (!expected.getAppId().equals(actual.getAppId())) {
-            logger.warn("pull data fail, expected appId {} not equals to event-returns {}", expected.getAppId(), actual.getAppId());
+    private boolean isNeedEvent(WatchElement expected, ServerSyncEvent actual, RequestStatus requestStatus, boolean force) {
+        if (!expected.getAppId().equals(actual.appId())) {
+            logger.warn("pull data fail, expected appId {} not equals to event-returns {}", expected.getAppId(), actual.appId());
             return false;
         }
 
-        if (!expected.getEnv().equals(actual.getEnv())) {
+        if (!expected.getEnv().equals(actual.env())) {
             logger.warn("pull data fail, appId {}, expected env {} not equals to event-returns {}",
-                expected.getAppId(), expected.getEnv(), actual.getEnv());
+                expected.getAppId(), expected.getEnv(), actual.env());
             return false;
         }
         if (!force) {
             switch (requestStatus) {
                 case SYNC_OK:
-                    return expected.getVersion() < actual.getVersion();
+                    return expected.getVersion() < actual.version();
                 case SYNC_FAIL:
-                    return expected.getVersion() <= actual.getVersion();
+                    return expected.getVersion() <= actual.version();
                 default:
                     return false;
             }

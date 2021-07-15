@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.listener.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;

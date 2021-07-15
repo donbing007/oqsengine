@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 
@@ -57,7 +55,7 @@ public interface MetaManager {
     /**
      * 导入.
      */
-    boolean dataImport(String appId, int version, String content);
+    boolean dataImport(String appId, String env, int version, String content);
 
     /**
      * 产看当前appId下的信息.

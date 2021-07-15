@@ -1,18 +1,24 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.rest;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.xforceplus.ultraman.oqsengine.boot.rest.DevOpsController;
+import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import java.util.ArrayList;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
@@ -31,15 +37,18 @@ public class DevOpsControllerTest {
     private MockMvc mockMvc;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        Mockito.when(metaManager.showMeta("1"))
+            .thenReturn(Optional.of(new MetaMetrics(1, "0", "1", new ArrayList<>())));
 
         this.mockMvc = MockMvcBuilders.standaloneSetup(devOpsController).build();
     }
 
     @Test
     public void testMetaImport() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/oqs/devops/import-meta/{appId}/{version}", "1", 1)
+        this.mockMvc.perform(put("/oqs/devops/import-meta/{appId}/{env}/{version}", "1", "0", 1)
             .accept(MediaType.APPLICATION_JSON)
             .content("test")
         ).andDo(print())
@@ -48,9 +57,7 @@ public class DevOpsControllerTest {
 
     @Test
     public void testShowMeta() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/oqs/devops/show-meta/{appId}", "1")
-            .accept(MediaType.APPLICATION_JSON)
-            .content("test")
+        this.mockMvc.perform(get("/oqs/devops/show-meta/{appId}", "1")
         ).andDo(print())
             .andExpect(status().isOk());
     }

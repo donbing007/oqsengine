@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.handler.IObserverHandler;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerSyncEvent;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -23,6 +23,6 @@ public interface IResponseHandler extends IObserverHandler<EntityClassSyncReques
     /**
      * 推送.
      */
-    boolean push(AppUpdateEvent event);
+    boolean push(ServerSyncEvent event);
 }
 

@@ -203,7 +203,14 @@ public class StorageMetaManager implements MetaManager {
 
 
     @Override
-    public boolean dataImport(String appId, int version, String content) {
+    public boolean dataImport(String appId, String env, int version, String content) {
+
+        cacheExecutor.appEnvSet(appId, env);
+
+        if (!cacheExecutor.appEnvGet(appId).equals(env)) {
+            throw new RuntimeException("appId has been init with another Id, need failed...");
+        }
+
         int currentVersion = cacheExecutor.version(appId);
 
         if (version > currentVersion) {
@@ -383,7 +390,7 @@ public class StorageMetaManager implements MetaManager {
                 String v =
                     EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
 
-                if (dataImport(splitter[0], version, v)) {
+                if (dataImport(splitter[0], splitter[2], version, v)) {
                     logger.info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId, version);
                 } else {
                     logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);

@@ -22,7 +22,6 @@
                     <artifactId>junit</artifactId>
                 </exclusion>
             </exclusions>
-            <version>1.28.1</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -35,13 +34,16 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>3.11.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -50,10 +52,12 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
-            <artifactId>xplat-meta-oqsengine-pojo</artifactId>
-            <version>1.2.2-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
         </dependency>
     </dependencies>
 
@@ -77,14 +81,14 @@
                     <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
                     <clearOutputDirectory>false</clearOutputDirectory>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>compile-custom</goal>
-                        </goals>
-                    </execution>
-                </executions>
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>compile</goal>-->
+<!--                            <goal>compile-custom</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
             </plugin>
         </plugins>
     </build>

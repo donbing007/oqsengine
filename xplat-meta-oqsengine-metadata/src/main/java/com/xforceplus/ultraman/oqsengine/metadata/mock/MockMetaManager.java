@@ -101,7 +101,7 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
-    public boolean dataImport(String appId, int version, String content) {
+    public boolean dataImport(String appId, String env, int version, String content) {
         try {
             EntityClassStorageHelper.toEntityClassSyncRspProto(content);
             return true;

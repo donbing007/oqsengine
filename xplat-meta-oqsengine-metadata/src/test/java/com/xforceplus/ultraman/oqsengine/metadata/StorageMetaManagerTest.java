@@ -3,13 +3,14 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
@@ -104,13 +105,29 @@ public class StorageMetaManagerTest extends MetaTestHelper {
         Assertions.assertEquals(NEED_CONCURRENT_APP_ENV_LIST.length - 1, failCount.get());
     }
 
+    String defaultTestAppId = "5";
+    String env = "0";
+    int defaultTestVersion = 2;
 
+    @Test
+    public void showMeta() throws Exception {
+
+        dataImportTest();
+
+        Optional<MetaMetrics> result =
+            MetaInitialization.getInstance().getMetaManager().showMeta(defaultTestAppId);
+
+        Assertions.assertTrue(result.isPresent());
+
+        MetaMetrics metaMetrics = result.get();
+        Assertions.assertEquals(env, metaMetrics.getEnv());
+        Assertions.assertEquals(defaultTestVersion, metaMetrics.getVersion());
+        Assertions.assertTrue(metaMetrics.getMetas().size() > 0);
+    }
 
     @Test
     public void dataImportTest() throws IOException, IllegalAccessException {
-        String defaultTestAppId = "5";
-        String env = "0";
-        int defaultTestVersion = 2;
+
         Boolean result = false;
         InputStream in = null;
         try {
@@ -118,7 +135,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             storageMetaManager.init();
             in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, defaultTestVersion,
+            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, defaultTestVersion,
                 EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
             Assertions.assertTrue(result);
         } catch (Exception e) {
@@ -137,10 +154,10 @@ public class StorageMetaManagerTest extends MetaTestHelper {
         try {
             in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
 
-            defaultTestVersion = 1;
+            int failTestVersion = 1;
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, failTestVersion,
+                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
             Assertions.assertFalse(result);
         } catch (Exception e) {
             Assertions.fail();
@@ -408,7 +425,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             Assertions.assertEquals(exp.getCalculator().getLevel(), ((Formula) act.config().getCalculation()).getLevel());
             Optional<?> opObject;
             try {
-                opObject = ProtoAnyHelper.toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
+                opObject = toFieldTypeValue(act.type(), exp.getCalculator().getFailedDefaultValue());
             } catch (Exception e) {
                 throw new RuntimeException(String.format("toFieldTypeValue failed, message : %s", e.getMessage()));
             }

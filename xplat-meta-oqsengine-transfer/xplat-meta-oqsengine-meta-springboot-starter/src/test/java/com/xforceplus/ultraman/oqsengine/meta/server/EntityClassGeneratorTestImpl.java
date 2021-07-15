@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.server;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.listener.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import org.springframework.stereotype.Component;
 
