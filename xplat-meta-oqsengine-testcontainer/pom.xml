@@ -24,13 +24,8 @@
             <artifactId>ultraman-test-tools-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-commons</artifactId>
+            <artifactId>junit-platform-engine</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
