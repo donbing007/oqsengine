@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import static com.xforceplus.ultraman.test.tools.core.constant.ContainerEnvKeys.REDIS_HOST;
 import static com.xforceplus.ultraman.test.tools.core.constant.ContainerEnvKeys.REDIS_PORT;
 
+import com.xforceplus.ultraman.oqsengine.calculation.adapt.RedisIDGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.lang.reflect.Field;

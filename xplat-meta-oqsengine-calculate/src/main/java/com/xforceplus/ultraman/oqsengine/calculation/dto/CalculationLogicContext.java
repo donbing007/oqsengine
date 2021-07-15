@@ -23,56 +23,56 @@ public interface CalculationLogicContext {
      *
      * @return true 是创建场景, false 不是.
      */
-     boolean isBuild();
+    boolean isBuild();
 
     /**
      * 计算触发是否为更新场景.
      *
      * @return true 是更新场景, false 不是.
      */
-     boolean isReplace();
+    boolean isReplace();
 
     /**
      * 当前处理的entity实例.
      *
      * @return 对象实例.
      */
-     IEntity getEntity();
+    IEntity getEntity();
 
     /**
      * 设置当前的焦点字段.
      *
      * @param field 焦点字段.
      */
-     void focusField(IEntityField field);
+    void focusField(IEntityField field);
 
     /**
      * 当前的焦点字段.
      *
      * @return 字段信息.
      */
-     IEntityField getFocusField();
+    IEntityField getFocusField();
 
     /**
      * 获取当前计算字段的类型元信息.
      *
      * @return 元信息实例.
      */
-     IEntityClass getEntityClass();
+    IEntityClass getEntityClass();
 
     /**
      * 获取主库存的持久实例.
      *
      * @return 实例.
      */
-     MasterStorage getMasterStorage();
+    MasterStorage getMasterStorage();
 
     /**
      * 获取当前的元信息管理器实例.
      *
      * @return 实例.
      */
-     MetaManager getMetaManager();
+    MetaManager getMetaManager();
 
     /**
      * 获取属性.
@@ -80,34 +80,34 @@ public interface CalculationLogicContext {
      * @param key 属性key.
      * @return 属性值.
      */
-     Optional<Object> getAttribute(String key);
+    Optional<Object> getAttribute(String key);
 
     /**
      * 创建提示.
      *
      * @param hint 提示信息.
      */
-     void hint(String hint);
+    void hint(String hint);
 
     /**
      * 读取当前已经存在的提示.
      *
      * @return 提示列表.
      */
-     Collection<CalculationHint> getHints();
+    Collection<CalculationHint> getHints();
 
     /**
      * 增加一个 业务id生成器.
      *
      * @param bizIDGenerator generator.
      */
-     void bizIdGenerator(IDGenerator bizIDGenerator);
+    void bizIdGenerator(IDGenerator bizIDGenerator);
 
     /**
      * 获取 业务id生成器.
      *
      * @return bizIDGenerator.
      */
-     IDGenerator getBizIDGenerator();
+    IDGenerator getBizIDGenerator();
 
 }

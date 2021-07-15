@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.impl;
+package com.xforceplus.ultraman.oqsengine.calculation.adapt;
 
 import com.alibaba.google.common.base.Preconditions;
 import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
@@ -20,17 +20,17 @@ public class RedisIDGenerator implements IDGenerator {
     private RedissonClient redissonClient;
 
     @Override
-    public Long nextId(String bizTag,int step) {
-        Preconditions.checkArgument(step >= 1,"Step must great eq than 1");
-        long result =  redissonClient.getAtomicLong(bizTag).addAndGet(step);
+    public Long nextId(String bizTag, int step) {
+        Preconditions.checkArgument(step >= 1, "Step must great eq than 1");
+        long result = redissonClient.getAtomicLong(bizTag).addAndGet(step);
         return result;
     }
 
     @Override
     public List<Long> nextIds(String bizTag, int step, Integer batchSize) {
         List<Long> results = Lists.newArrayList();
-        Preconditions.checkArgument(step >= 1,"Step must great eq than 1");
-        for(int i=0;i<batchSize;i++) {
+        Preconditions.checkArgument(step >= 1, "Step must great eq than 1");
+        for (int i = 0; i < batchSize; i++) {
             results.add(redissonClient.getAtomicLong(bizTag).addAndGet(step));
         }
         return results;

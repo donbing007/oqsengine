@@ -6,13 +6,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * spring context utils
- * @author leo
+ * Created by leo on 07/2021.
  *
+ * @since 1.8
  */
 public class SpringContextUtil implements ApplicationContextAware {
 
-    private  static ApplicationContext m_applicationContext;
+    private static ApplicationContext m_applicationContext;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -23,7 +23,7 @@ public class SpringContextUtil implements ApplicationContextAware {
         return m_applicationContext;
     }
 
-    public static Map<String,Object> getBeans(Class type) {
+    public static Map<String, Object> getBeans(Class type) {
         return m_applicationContext.getBeansOfType(type);
     }
 

@@ -12,7 +12,7 @@ import com.googlecode.aviator.runtime.type.AviatorString;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.impl.RedisIDGenerator;
+import com.xforceplus.ultraman.oqsengine.calculation.adapt.RedisIDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;

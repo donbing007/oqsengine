@@ -4,17 +4,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * .
+ * Created by leo on 07/2021.
  *
- * @author leo
- * @version 0.1 7/15/21 5:07 PM
  * @since 1.8
  */
 public class NumberFormatUtils {
 
     private static final String REGEX_PATTEN = "\\{(0+)\\}";
 
-
+    /**
+     * parse.
+     */
     public static String parse(String patten, Long id) {
         String ret = id.toString();
         Pattern pattern = Pattern.compile(REGEX_PATTEN);
