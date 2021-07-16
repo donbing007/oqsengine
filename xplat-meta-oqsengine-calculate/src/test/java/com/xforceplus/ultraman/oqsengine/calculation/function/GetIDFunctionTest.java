@@ -6,7 +6,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
 import com.alibaba.google.common.collect.Maps;
+import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorBigInt;
+import com.googlecode.aviator.runtime.type.AviatorLong;
 import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.googlecode.aviator.runtime.type.AviatorString;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
@@ -21,6 +23,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,11 +42,11 @@ import org.redisson.config.Config;
 @ExtendWith(RedisContainer.class)
 public class GetIDFunctionTest {
 
-    private RedissonClient redissonClient;
-    private RedisIDGenerator redisIDGenerator;
+    private static RedissonClient redissonClient;
+    private static RedisIDGenerator redisIDGenerator;
 
-    @BeforeEach
-    public void before() throws IllegalAccessException {
+    @BeforeAll
+    public static void before() throws IllegalAccessException {
         Config config = new Config();
         String redisIp = System.getProperty(REDIS_HOST);
         int redisPort = Integer.parseInt(System.getProperty(REDIS_PORT));
@@ -61,7 +64,8 @@ public class GetIDFunctionTest {
     public void testGetIDFunction() throws CalculationLogicException {
         GetIDFunction function = new GetIDFunction();
         Map<String, Object> params = com.alibaba.google.common.collect.Maps.newHashMap();
-        AviatorObject result = function.call(params,new AviatorString("{000}"),new AviatorString("testOne"),new AviatorBigInt(1));
+        AviatorObject result = function.call(params,new AviatorString("{000}"),new AviatorString("testOne"),
+            FunctionUtils.wrapReturn(1l));
         Assert.assertEquals("001",result.getValue(params).toString());
     }
 
