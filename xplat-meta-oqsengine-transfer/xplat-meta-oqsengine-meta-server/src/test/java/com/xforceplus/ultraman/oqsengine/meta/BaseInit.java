@@ -19,6 +19,8 @@ import io.grpc.stub.StreamObserver;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.concurrent.ExecutorService;
@@ -35,6 +37,9 @@ import java.util.concurrent.TimeUnit;
  * @since : 1.8
  */
 public class BaseInit {
+
+    private Logger logger = LoggerFactory.getLogger(BaseInit.class);
+
     protected EntityClassSyncServer entityClassSyncServer;
 
     protected ResponseWatchExecutor responseWatchExecutor;
@@ -57,9 +62,12 @@ public class BaseInit {
         gRpcServer.stop();
         ExecutorHelper.shutdownAndAwaitTermination(taskExecutor, 10);
         ExecutorHelper.shutdownAndAwaitTermination(gRpcExecutor, 10);
+
+        logger.info("baseInit -> stop server ok.");
     }
 
     protected void initServer(int port) throws InterruptedException {
+        logger.info("baseInit -> init server.");
         entityClassSyncServer = entityClassSyncServer();
 
         gRpcExecutor = new ThreadPoolExecutor(5, 5, 0,
@@ -74,6 +82,8 @@ public class BaseInit {
         ReflectionTestUtils.setField(gRpcServer, "grpcExecutor", gRpcExecutor);
 
         gRpcServer.start();
+
+        logger.info("baseInit -> init server ok.");
     }
 
     protected EntityClassSyncServer entityClassSyncServer() {

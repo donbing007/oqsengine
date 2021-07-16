@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -95,8 +96,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private EventBus eventBus;
 
-    @Resource
-    private BizIDGenerator bizIDGenerator;
+    @Resource(name = "redisIDGenerator")
+    private IDGenerator redisIDGenerator;
 
     /**
      * 字段校验器工厂.
@@ -765,7 +766,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMasterStorage(this.masterStorage)
             .withEntityClass(entityClass)
             .withEntity(entity)
-            .withBizIdGenerator(bizIDGenerator)
+            .withBizIdGenerator(redisIDGenerator)
             .build();
     }
 

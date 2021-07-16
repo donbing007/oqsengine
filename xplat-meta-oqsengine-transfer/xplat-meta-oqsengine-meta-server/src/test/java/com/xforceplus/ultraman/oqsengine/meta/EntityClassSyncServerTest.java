@@ -142,6 +142,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         Assertions.assertNull(v);
     }
 
+    static volatile boolean isShutDown = false;
     @Test
     public void syncFailTest() throws InterruptedException {
         StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
@@ -159,9 +160,13 @@ public class EntityClassSyncServerTest extends BaseInit {
          * 当前版本更新失败
          * check服务端3秒内重新推一个新版本数据
          */
+
+
         Thread t = ThreadUtils.create(() -> {
-            int i = 0;
-            while (i < 10) {
+            while (true) {
+                if (isShutDown) {
+                    break;
+                }
                 try {
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                         .setUid(uid)
@@ -176,7 +181,6 @@ public class EntityClassSyncServerTest extends BaseInit {
                 } catch (Exception e) {
 
                 }
-                i++;
                 wakeupAfter(5_000, TimeUnit.MILLISECONDS);
             }
             return null;
@@ -192,8 +196,9 @@ public class EntityClassSyncServerTest extends BaseInit {
 
             observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), clientId, uid, RequestStatus.SYNC_FAIL));
 
-            waitForResult(Integer.MAX_VALUE, resetVersion, appId);
+            waitForResult(100, resetVersion, appId);
         } finally {
+            isShutDown = true;
             ThreadUtils.shutdown(t, 1);
         }
     }
