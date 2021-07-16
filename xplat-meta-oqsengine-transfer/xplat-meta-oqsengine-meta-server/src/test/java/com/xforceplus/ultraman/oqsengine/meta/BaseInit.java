@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -44,17 +45,18 @@ public class BaseInit {
 
     protected SyncResponseHandler syncResponseHandler;
 
+    private GRpcServer gRpcServer;
+
     protected ExecutorService taskExecutor;
 
-    private GRpcServer gRpcServer;
     private ExecutorService gRpcExecutor;
 
     protected ServerMetrics serverMetrics;
 
     protected void stopServer() {
         gRpcServer.stop();
-        taskExecutor.shutdownNow();
-        gRpcExecutor.shutdownNow();
+        ExecutorHelper.shutdownAndAwaitTermination(taskExecutor, 10);
+        ExecutorHelper.shutdownAndAwaitTermination(gRpcExecutor, 10);
     }
 
     protected void initServer(int port) throws InterruptedException {

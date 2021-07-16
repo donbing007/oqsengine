@@ -400,6 +400,12 @@
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
+                <artifactId>grpc-census</artifactId>
+                <version>1.28.1</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
                 <artifactId>grpc-all</artifactId>
                 <exclusions>
                     <exclusion>

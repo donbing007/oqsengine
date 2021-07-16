@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,14 +31,14 @@ public class MockSyncExecutor implements SyncExecutor {
 
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        Assert.assertNotNull(entityClassSyncRspProto);
+        Assertions.assertNotNull(entityClassSyncRspProto);
         try {
             if (status.equals(RequestStatus.DATA_ERROR)) {
                 throw new MetaSyncClientException("data error.", false);
             } else if (status.equals(RequestStatus.SYNC_OK)) {
                 RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
                 if (null != requestStatusVersion) {
-                    Assert.assertTrue(version > requestStatusVersion.getVersion());
+                    Assertions.assertTrue(version > requestStatusVersion.getVersion());
                 }
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
                 logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto);

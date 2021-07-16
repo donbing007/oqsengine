@@ -472,6 +472,7 @@ public class SyncRequestHandler implements IRequestHandler {
                             builder.setUid(requestWatcher.uid())
                                 .setClientId(requestWatcher.clientId())
                                 .setAppId(k.getAppId())
+                                .setEnv(k.getEnv())
                                 .setVersion(k.getVersion())
                                 .setStatus(RequestStatus.REGISTER.ordinal())
                                 .build();
