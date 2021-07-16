@@ -50,7 +50,7 @@ public class MultiClientSyncTest extends BaseInit {
     }
 
     @AfterEach
-    public void after() {
+    public void after() throws InterruptedException {
         for (int i = 0; i < testClientSize; i++) {
             streamEvents[i].getMockerSyncClient().stop();
         }

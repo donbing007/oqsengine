@@ -52,26 +52,24 @@ public class BaseInit {
 
     private GRpcServer gRpcServer;
 
-    protected ExecutorService taskExecutor;
-
-    private ExecutorService gRpcExecutor;
-
     protected ServerMetrics serverMetrics;
+
+    protected ExecutorService grpcExecutor;
+    protected ExecutorService taskExecutor;
 
     protected void stopServer() {
         gRpcServer.stop();
+        ExecutorHelper.shutdownAndAwaitTermination(grpcExecutor, 10);
         ExecutorHelper.shutdownAndAwaitTermination(taskExecutor, 10);
-        ExecutorHelper.shutdownAndAwaitTermination(gRpcExecutor, 10);
-
         logger.info("baseInit -> stop server ok.");
     }
 
-    protected void initServer(int port) throws InterruptedException {
+    protected void initServer(int port) {
         logger.info("baseInit -> init server.");
-        entityClassSyncServer = entityClassSyncServer();
+        grpcExecutor = new ThreadPoolExecutor(5, 5, 0,
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
-        gRpcExecutor = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+        entityClassSyncServer = entityClassSyncServer();
 
         serverMetrics = new DefaultServerMetrics();
         ReflectionTestUtils.setField(serverMetrics, "responseWatchExecutor", responseWatchExecutor);
@@ -79,7 +77,7 @@ public class BaseInit {
         gRpcServer = new GRpcServer(port);
         ReflectionTestUtils.setField(gRpcServer, "entityClassSyncServer", entityClassSyncServer);
         ReflectionTestUtils.setField(gRpcServer, "configuration", gRpcParamsConfig);
-        ReflectionTestUtils.setField(gRpcServer, "grpcExecutor", gRpcExecutor);
+        ReflectionTestUtils.setField(gRpcServer, "grpcExecutor", grpcExecutor);
 
         gRpcServer.start();
 
@@ -99,10 +97,10 @@ public class BaseInit {
 
         entityClassGenerator = new MockEntityClassGenerator();
 
-        taskExecutor = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
-
         gRpcParamsConfig = gRpcParamsConfig();
+
+        taskExecutor = new ThreadPoolExecutor(5, 5, 0,
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         SyncResponseHandler syncResponseHandler = new SyncResponseHandler();
         ReflectionTestUtils.setField(syncResponseHandler, "responseWatchExecutor", responseWatchExecutor);
@@ -126,11 +124,7 @@ public class BaseInit {
     }
 
     protected MockerSyncClient initClient(String host, int port) {
-        //  start client
-        MockClient mockClient = new MockClient();
-
-        MockerSyncClient mockerSyncClient = new MockerSyncClient();
-        ReflectionTestUtils.setField(mockerSyncClient, "mockClient", mockClient);
+        MockerSyncClient mockerSyncClient = new MockerSyncClient(new MockClient());
         mockerSyncClient.start(host, port);
 
         return mockerSyncClient;
@@ -140,11 +134,11 @@ public class BaseInit {
     protected EntityClassSyncRequest buildRequest(WatchElement w, String clientId, String uid, RequestStatus requestStatus) {
         return EntityClassSyncRequest.newBuilder()
                 .setClientId(clientId)
+                .setEnv(w.getEnv())
                 .setUid(uid)
                 .setAppId(w.getAppId())
                 .setVersion(w.getVersion())
                 .setStatus(requestStatus.ordinal())
-                .setEnv(w.getEnv())
                 .build();
     }
 

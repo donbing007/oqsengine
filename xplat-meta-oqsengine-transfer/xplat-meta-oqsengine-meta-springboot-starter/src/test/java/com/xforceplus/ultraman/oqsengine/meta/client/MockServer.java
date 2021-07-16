@@ -1,8 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

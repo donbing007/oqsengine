@@ -25,9 +25,15 @@ public class MockClient {
         isClientOpen = true;
     }
 
-    public void stop() {
+    public void stop() throws InterruptedException {
         isClientOpen = false;
         channel.shutdown();
+        if (!channel.isShutdown()) {
+            Thread.sleep(2_000);
+            channel.shutdownNow();
+        }
+        channel = null;
+        stub = null;
     }
 
     public boolean opened() {

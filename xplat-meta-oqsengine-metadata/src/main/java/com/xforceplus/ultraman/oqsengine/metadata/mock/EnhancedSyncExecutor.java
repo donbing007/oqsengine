@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import java.util.HashMap;
 import java.util.List;

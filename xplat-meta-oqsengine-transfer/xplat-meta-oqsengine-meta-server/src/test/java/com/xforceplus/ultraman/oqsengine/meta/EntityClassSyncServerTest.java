@@ -36,61 +36,22 @@ public class EntityClassSyncServerTest extends BaseInit {
 
     private String clientId = "entityClassSyncServerTest";
 
+    static int port = 8999;
+
     @BeforeEach
     public void before() throws InterruptedException {
-
         String host = "localhost";
-        int port = 8999;
-
         initServer(port);
         Thread.sleep(3_000);
-
         mockerSyncClient = initClient(host, port);
     }
 
     @AfterEach
-    public void after() {
+    public void after() throws InterruptedException {
         mockerSyncClient.stop();
+        Thread.sleep(15_000);
         stopServer();
-    }
 
-
-    @Test
-    public void heartBeatTest() throws InterruptedException {
-        StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
-
-        String uid = UUID.randomUUID().toString();
-        String appId = "heartBeatTest";
-        String env = "test";
-        int version = 1;
-
-        /**
-         * 注册
-         */
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.REGISTER));
-
-        /**
-         * 发送心跳
-         */
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.HEARTBEAT));
-
-
-        Thread.sleep(2_000);
-        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
-
-        Assertions.assertNotNull(watcher);
-
-        WatchElement watchElement = watcher.watches().get(appId);
-
-        Assertions.assertEquals(env, watchElement.getEnv());
-        Assertions.assertEquals(version, watchElement.getVersion());
-
-        /**
-         * 当超出最大心跳时间时，将移除该watcher
-         */
-        Thread.sleep(31_000);
-        watcher = responseWatchExecutor.watcher(uid);
-        Assertions.assertNull(watcher);
     }
 
     @Test
@@ -111,7 +72,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         /**
          * 检查结果，最大3秒
          */
-        waitForResult(3, expectedVersion, appId);
+        waitForResult(8, expectedVersion, appId);
 
         /**
          * 当前版本小于元数据版本，将进入
@@ -143,6 +104,7 @@ public class EntityClassSyncServerTest extends BaseInit {
     }
 
     static volatile boolean isShutDown = false;
+
     @Test
     public void syncFailTest() throws InterruptedException {
         StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
@@ -154,34 +116,29 @@ public class EntityClassSyncServerTest extends BaseInit {
         int expectedVersion = version + 1;
         long entityId = Long.MAX_VALUE - 1000;
         entityClassGenerator.reset(expectedVersion, entityId);
-        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), clientId, uid, RequestStatus.REGISTER));
+        observer.onNext(buildRequest(new WatchElement(appId, env, expectedVersion, WatchElement.ElementStatus.Register), clientId, uid, RequestStatus.REGISTER));
 
         /**
          * 当前版本更新失败
          * check服务端3秒内重新推一个新版本数据
          */
-
-
         Thread t = ThreadUtils.create(() -> {
-            while (true) {
-                if (isShutDown) {
-                    break;
-                }
+            while (!isShutDown) {
                 try {
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                         .setUid(uid)
+                        .setEnv(env)
                         .setAppId(appId)
                         .setStatus(RequestStatus.HEARTBEAT.ordinal())
-                        .setEnv(env)
                         .build();
 
                     observer.onNext(request);
 
-                    logger.debug("syncFailTest, send heartbeat, uid [{}]", uid);
+                    logger.debug("loops to send heartbeat, uid [{}]", uid);
                 } catch (Exception e) {
 
                 }
-                wakeupAfter(5_000, TimeUnit.MILLISECONDS);
+                wakeupAfter(10_000, TimeUnit.MILLISECONDS);
             }
             return null;
         });
@@ -190,17 +147,59 @@ public class EntityClassSyncServerTest extends BaseInit {
             t.start();
             int resetVersion = expectedVersion + 1;
             entityClassGenerator.reset(resetVersion, entityId);
-            syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
+            syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion, null), RequestStatus.SYNC);
 
-            Thread.sleep(3_000);
+            Thread.sleep(5_000);
 
-            observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), clientId, uid, RequestStatus.SYNC_FAIL));
+            mockerSyncClient.releaseSuccess(appId);
 
-            waitForResult(100, resetVersion, appId);
+            while (true) {
+                WatchElement element = mockerSyncClient.getSuccess(appId);
+                if (null != element && element.getVersion() == resetVersion) {
+                    mockerSyncClient.releaseSuccess(appId);
+                    break;
+                }
+                Thread.sleep(1_000);
+            }
+            //  mock set sync fail
+            observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, WatchElement.ElementStatus.Confirmed), clientId, uid, RequestStatus.SYNC_FAIL));
+
+            waitForResult(50, resetVersion, appId);
         } finally {
             isShutDown = true;
             ThreadUtils.shutdown(t, 1);
         }
+    }
+
+
+    @Test
+    public void heartBeatTest() throws InterruptedException {
+        StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
+
+        String uid = UUID.randomUUID().toString();
+        String appId = "heartBeatTest";
+        String env = "test";
+        int version = 1;
+
+        /**
+         * 注册
+         */
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register), clientId, uid, RequestStatus.REGISTER));
+
+        Thread.sleep(2_000);
+
+        /**
+         * 发送心跳
+         */
+        long heartBeat = System.currentTimeMillis();
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register), clientId, uid, RequestStatus.HEARTBEAT));
+
+
+        Thread.sleep(2_000);
+        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
+
+        Assertions.assertNotNull(watcher);
+        Assertions.assertTrue(watcher.heartBeat() > heartBeat);
     }
 
     private void waitForResult(int maxWaitLoops, int version, String appId) throws InterruptedException {
@@ -218,5 +217,6 @@ public class EntityClassSyncServerTest extends BaseInit {
 
         mockerSyncClient.releaseSuccess(appId);
     }
+
 
 }

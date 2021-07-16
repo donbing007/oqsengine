@@ -18,10 +18,10 @@ public class ThreadUtils {
      * 默认5秒关闭.
      */
     public static void shutdown(Thread thread, long timeout) {
-        TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
         if (null != thread) {
             //  等待timeout秒后结束线程
             if (thread.isAlive()) {
+                TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
                 thread.interrupt();
             }
         }

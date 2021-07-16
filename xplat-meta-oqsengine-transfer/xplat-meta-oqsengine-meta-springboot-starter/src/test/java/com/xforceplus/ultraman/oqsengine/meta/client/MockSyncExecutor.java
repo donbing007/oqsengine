@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.client;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
