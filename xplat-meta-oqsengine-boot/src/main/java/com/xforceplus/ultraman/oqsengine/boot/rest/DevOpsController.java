@@ -42,7 +42,7 @@ public class DevOpsController {
     /**
      * 关注meta信息.
      */
-    @GetMapping("/oqs/devops/notice-meta/{appId}/{env}")
+    @PutMapping("/oqs/devops/notice-meta/{appId}/{env}")
     public ResponseEntity<Integer> noticeMeta(@PathVariable String appId, @PathVariable String env) {
         try {
             return ResponseEntity.ok(metaManager.need(appId, env));
