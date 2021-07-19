@@ -57,8 +57,9 @@ public class BaseInit {
     protected ExecutorService grpcExecutor;
     protected ExecutorService taskExecutor;
 
-    protected void stopServer() {
+    protected void stopServer() throws InterruptedException {
         gRpcServer.stop();
+        Thread.sleep(5_000);
         ExecutorHelper.shutdownAndAwaitTermination(grpcExecutor, 10);
         ExecutorHelper.shutdownAndAwaitTermination(taskExecutor, 10);
         logger.info("baseInit -> stop server ok.");
