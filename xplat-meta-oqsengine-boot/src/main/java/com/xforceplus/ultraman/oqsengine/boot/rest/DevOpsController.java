@@ -40,6 +40,18 @@ public class DevOpsController {
     }
 
     /**
+     * 关注meta信息.
+     */
+    @GetMapping("/oqs/devops/notice-meta/{appId}/{env}")
+    public ResponseEntity<Integer> noticeMeta(@PathVariable String appId, @PathVariable String env) {
+        try {
+            return ResponseEntity.ok(metaManager.need(appId, env));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
      * 查看meta信息.
      */
     @GetMapping("/oqs/devops/show-meta/{appId}")
