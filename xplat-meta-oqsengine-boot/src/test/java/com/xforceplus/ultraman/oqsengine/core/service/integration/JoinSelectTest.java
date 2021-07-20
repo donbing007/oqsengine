@@ -77,7 +77,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
-    @MockBean
+    @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
     private boolean initialization;

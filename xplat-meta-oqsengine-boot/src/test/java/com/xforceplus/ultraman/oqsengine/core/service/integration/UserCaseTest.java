@@ -79,7 +79,7 @@ public class UserCaseTest extends AbstractContainerExtends {
     @Resource
     private TransactionManager transactionManager;
 
-    @MockBean
+    @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
 
