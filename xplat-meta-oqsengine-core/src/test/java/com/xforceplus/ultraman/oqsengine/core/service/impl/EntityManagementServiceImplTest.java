@@ -14,12 +14,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.sql.SQLException;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -29,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 03/18/2021
  * @since <pre>Mar 18, 2021</pre>
  */
+@ExtendWith({RedisContainer.class})
 public class EntityManagementServiceImplTest {
 
     private EntityManagementServiceImpl impl;
@@ -40,9 +43,10 @@ public class EntityManagementServiceImplTest {
         impl.init();
     }
 
+
     @AfterEach
     public void after() throws Exception {
-
+        BaseInit.close();
     }
 
     @Test
