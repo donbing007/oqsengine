@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.common.number;
+package com.xforceplus.ultraman.oqsengine.common;
 
 /**
  * 数字工具.

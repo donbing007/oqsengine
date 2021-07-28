@@ -137,6 +137,7 @@
         <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
+        <module>xplat-meta-oqsengine-kv</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
@@ -206,6 +207,18 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.caucho</groupId>
+                <artifactId>hessian</artifactId>
+                <version>4.0.65</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>5.1.1</version>
             </dependency>
 
             <dependency>

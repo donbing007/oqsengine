@@ -423,7 +423,6 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     // 填允全文属性.
-    // TODO: 还没有处理写入跨entity搜索字段. by dongbin
     private String toAttributesF(OriginalEntity source) throws SQLException {
 
         StringBuilder buff = new StringBuilder();

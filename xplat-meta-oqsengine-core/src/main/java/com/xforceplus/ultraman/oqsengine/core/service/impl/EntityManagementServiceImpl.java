@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -776,7 +776,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             String errors = "serialize errors failed.";
             try {
-                errors = SerializeUtils.OBJECT_MAPPER.writeValueAsString(operationResult.getHints());
+                errors = JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(operationResult.getHints());
             } catch (Exception e) {
                 //  ignore
             }

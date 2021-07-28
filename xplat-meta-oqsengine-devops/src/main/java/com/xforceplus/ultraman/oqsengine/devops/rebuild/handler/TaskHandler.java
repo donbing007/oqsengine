@@ -48,7 +48,7 @@ public interface TaskHandler {
      *
      * @return 百分比0-100.
      */
-    int getProgressPercentage();
+    long getProgressPercentage();
 
     DevOpsTaskInfo devOpsTaskInfo();
 }

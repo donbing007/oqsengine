@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.executor.jdbc;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * master库执行器统抽像.
+ * jdbc执行器统抽像.
  *
  * @param <R> 请求资源.
  * @param <T> 响应结果.
@@ -17,14 +17,14 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/11/6 14:13
  * @since 1.8
  */
-public abstract class AbstractMasterExecutor<R, T> implements Executor<R, T> {
+public abstract class AbstractJdbcTaskExecutor<R, T> implements Executor<R, T> {
 
-    final Logger logger = LoggerFactory.getLogger(AbstractMasterExecutor.class);
+    final Logger logger = LoggerFactory.getLogger(AbstractJdbcTaskExecutor.class);
     private String tableName;
     private TransactionResource<Connection> resource;
     private long timeoutMs;
 
-    public AbstractMasterExecutor(String tableName, TransactionResource<Connection> resource) {
+    public AbstractJdbcTaskExecutor(String tableName, TransactionResource<Connection> resource) {
         this(tableName, resource, 0);
     }
 
@@ -35,7 +35,7 @@ public abstract class AbstractMasterExecutor<R, T> implements Executor<R, T> {
      * @param resource 事务资源.
      * @param timeoutMs 超时毫秒.
      */
-    public AbstractMasterExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public AbstractJdbcTaskExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
         this.tableName = tableName;
         this.resource = resource;
         this.timeoutMs = timeoutMs;

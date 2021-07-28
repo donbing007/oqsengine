@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.common.number;
+package com.xforceplus.ultraman.oqsengine.common;
 
 
-import org.junit.Assert;
+import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

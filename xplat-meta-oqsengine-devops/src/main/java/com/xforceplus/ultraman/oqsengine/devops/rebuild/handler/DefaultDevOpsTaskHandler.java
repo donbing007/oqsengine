@@ -72,7 +72,7 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
     }
 
     @Override
-    public int getProgressPercentage() {
+    public long getProgressPercentage() {
         if (!isDone()) {
             return devOpsTaskInfo.getProgressPercentage();
         }

@@ -15,7 +15,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     private long entity;
     private long starts;
     private long ends;
-    private int batchSize;
+    private long batchSize;
     private volatile int finishSize;
     private volatile int status;
     private long createTime;
@@ -97,7 +97,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         return entityClass;
     }
 
-    public int getBatchSize() {
+    public long getBatchSize() {
         return batchSize;
     }
 
@@ -170,12 +170,12 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     }
 
     @Override
-    public int getProgressPercentage() {
+    public long getProgressPercentage() {
         return 0 < batchSize ? (getFinishSize() * 100) / batchSize : 0;
     }
 
     @Override
-    public void setBatchSize(int size) {
+    public void setBatchSize(long size) {
         this.batchSize = size;
     }
 

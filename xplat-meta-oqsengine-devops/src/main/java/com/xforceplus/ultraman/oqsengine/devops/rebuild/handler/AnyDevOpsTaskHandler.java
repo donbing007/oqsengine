@@ -37,7 +37,7 @@ public class AnyDevOpsTaskHandler implements TaskHandler {
     }
 
     @Override
-    public int getProgressPercentage() {
+    public long getProgressPercentage() {
         return 0;
     }
 
