@@ -57,7 +57,7 @@ public class FieldConfig implements Serializable {
                 }
             }
 
-            return null;
+            return UNKNOWN;
         }
     }
 
@@ -103,7 +103,7 @@ public class FieldConfig implements Serializable {
                 }
             }
 
-            return null;
+            return UNKNOWN;
         }
     }
 

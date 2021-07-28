@@ -51,13 +51,11 @@ public class TestClientStart {
     @Autowired
     private MockSyncExecutor mockSyncExecutor;
 
-    boolean ifTest = false;
-
     private static final Map<String, BiFunction<String, WatchElement, Boolean>> functions = new HashMap<>();
 
     @BeforeEach
     public void before() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(1_000);
 
             functions.put(caseHeartBeat, this::heartBeatTest);
@@ -68,15 +66,14 @@ public class TestClientStart {
 
     @AfterEach
     public void after() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(1_000);
         }
     }
 
-
     @Test
     public void test() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(5_000);
             for (Map.Entry<String, WatchElement> e : Commons.cases.entrySet()) {
                 BiFunction<String, WatchElement, Boolean> f = functions.get(e.getKey());

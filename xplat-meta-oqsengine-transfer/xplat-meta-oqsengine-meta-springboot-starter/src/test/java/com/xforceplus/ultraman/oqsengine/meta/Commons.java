@@ -17,6 +17,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  * @since : 1.8
  */
 public class Commons {
+    public static final boolean IF_TEST = false;
 
     public static final Map<String, WatchElement> cases = new LinkedHashMap<>();
 

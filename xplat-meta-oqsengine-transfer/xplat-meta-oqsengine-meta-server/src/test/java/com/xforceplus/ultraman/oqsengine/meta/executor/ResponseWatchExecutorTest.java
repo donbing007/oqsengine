@@ -25,6 +25,8 @@ public class ResponseWatchExecutorTest {
 
     private ResponseWatchExecutor responseWatchExecutor;
 
+    private static final String clientId = "oqs-test";
+
     @BeforeEach
     public void before() {
         responseWatchExecutor = new ResponseWatchExecutor();
@@ -42,7 +44,7 @@ public class ResponseWatchExecutorTest {
         String env = "test";
         int version = 1;
         String uid = UUID.randomUUID().toString();
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
+        responseWatchExecutor.add(clientId, uid, streamObserver(), new WatchElement(appId, env, version, Init));
         responseWatchExecutor.watcher(uid).resetHeartBeat();
 
         Assertions.assertTrue(System.currentTimeMillis() - responseWatchExecutor.watcher(uid).heartBeat() <= 1);
@@ -58,7 +60,7 @@ public class ResponseWatchExecutorTest {
         boolean result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, Init));
         Assertions.assertFalse(result);
 
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
+        responseWatchExecutor.add(clientId, uid, streamObserver(), new WatchElement(appId, env, version, Init));
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
         Assertions.assertNotNull(watcher);
 
@@ -98,15 +100,16 @@ public class ResponseWatchExecutorTest {
         String env = "test";
         int version = 1;
         String uid = UUID.randomUUID().toString();
-
+        String clientId1 = "oqs-test1";
 
         String appId2 = "addTest";
         int version2 = 1;
         String uid2 = UUID.randomUUID().toString();
+        String clientId2 = "oqs-test2";
 
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
+        responseWatchExecutor.add(clientId1, uid, streamObserver(), new WatchElement(appId, env, version, Init));
 
-        responseWatchExecutor.add(uid2, streamObserver(), new WatchElement(appId2, env, version2, Init));
+        responseWatchExecutor.add(clientId2, uid2, streamObserver(), new WatchElement(appId2, env, version2, Init));
 
         responseWatchExecutor.release(uid);
 
@@ -136,7 +139,7 @@ public class ResponseWatchExecutorTest {
         String uid = UUID.randomUUID().toString();
 
         for (int i = 0; i < 3; i++) {
-            responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
+            responseWatchExecutor.add(clientId, uid, streamObserver(), new WatchElement(appId, env, version, Init));
             ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
             Assertions.assertNotNull(watcher);
 
@@ -146,7 +149,7 @@ public class ResponseWatchExecutorTest {
             /**
              * 重复写一条, 将失败
              */
-            responseWatchExecutor.add(uid, streamObserver(), other);
+            responseWatchExecutor.add(clientId, uid, streamObserver(), other);
             watcher = responseWatchExecutor.watcher(uid);
             Assertions.assertNotNull(watcher);
             /**
@@ -188,7 +191,7 @@ public class ResponseWatchExecutorTest {
         cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test3", "prod", 5, Register), 5)));
 
         for (AbstractMap.SimpleEntry<String, Cases<Integer>> cas : cases) {
-            responseWatchExecutor.add(cas.getKey(), streamObserver(), cas.getValue().getWatchElement());
+            responseWatchExecutor.add(clientId, cas.getKey(), streamObserver(), cas.getValue().getWatchElement());
         }
 
         int actualCount = responseWatchExecutor.watcher(expectedUid1).watches().size() +

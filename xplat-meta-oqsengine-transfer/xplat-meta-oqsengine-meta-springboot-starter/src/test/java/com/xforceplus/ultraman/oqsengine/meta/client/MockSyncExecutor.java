@@ -1,18 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -34,14 +31,14 @@ public class MockSyncExecutor implements SyncExecutor {
 
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        Assert.assertNotNull(entityClassSyncRspProto);
+        Assertions.assertNotNull(entityClassSyncRspProto);
         try {
             if (status.equals(RequestStatus.DATA_ERROR)) {
                 throw new MetaSyncClientException("data error.", false);
             } else if (status.equals(RequestStatus.SYNC_OK)) {
                 RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
                 if (null != requestStatusVersion) {
-                    Assert.assertTrue(version > requestStatusVersion.getVersion());
+                    Assertions.assertTrue(version > requestStatusVersion.getVersion());
                 }
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
                 logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto);
@@ -56,23 +53,10 @@ public class MockSyncExecutor implements SyncExecutor {
     }
 
     @Override
-    public boolean dataImport(String appId, int version, String content) {
-        try {
-            EntityClassStorageHelper.toEntityClassSyncRspProto(content);
-            return true;
-        } catch (InvalidProtocolBufferException e) {
-            logger.warn("message : {}", e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
     public int version(String appId) {
         RequestStatusVersion requestStatusVersion = requestStatusHashMap.get(appId);
         return requestStatusVersion != null ? requestStatusVersion.getVersion() : 0;
     }
-
-
 
     public static class RequestStatusVersion {
         private RequestStatus requestStatus;

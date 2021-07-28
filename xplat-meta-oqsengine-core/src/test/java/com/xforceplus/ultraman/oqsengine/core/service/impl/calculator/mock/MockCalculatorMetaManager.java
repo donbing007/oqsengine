@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -153,5 +154,15 @@ public class MockCalculatorMetaManager implements MetaManager {
     @Override
     public void invalidateLocal() {
 
+    }
+
+    @Override
+    public boolean dataImport(String appId, String env, int version, String content) {
+        return true;
+    }
+
+    @Override
+    public Optional<MetaMetrics> showMeta(String appId) throws Exception {
+        return Optional.empty();
     }
 }

@@ -118,7 +118,7 @@ public class SyncRequestHandler implements IRequestHandler {
             }
 
             if (watchElement.getVersion() == NOT_EXIST_VERSION) {
-                return sendRegister(watcher.uid(), true, w);
+                return sendRegister(watcher.clientId(), watcher.uid(), true, w);
             }
 
             logger.info("current watchList has this watchElement, appId [{}], ignore register...",
@@ -128,7 +128,7 @@ public class SyncRequestHandler implements IRequestHandler {
             if (!requestWatchExecutor.isAlive(watcher.uid())) {
                 forgotQueue.add(watchElement);
             } else {
-                return sendRegister(watcher.uid(), false, watchElement);
+                return sendRegister(watcher.clientId(), watcher.uid(), false, watchElement);
             }
         }
 
@@ -138,7 +138,7 @@ public class SyncRequestHandler implements IRequestHandler {
     /**
      * 发送register.
      */
-    private boolean sendRegister(String uid, boolean force, WatchElement v) {
+    private boolean sendRegister(String clientId, String uid, boolean force, WatchElement v) {
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
         EntityClassSyncRequest entityClassSyncRequest =
@@ -147,7 +147,9 @@ public class SyncRequestHandler implements IRequestHandler {
                 .setEnv(v.getEnv())
                 .setVersion(v.getVersion())
                 .setForce(force)
-                .setStatus(RequestStatus.REGISTER.ordinal()).build();
+                .setStatus(RequestStatus.REGISTER.ordinal())
+                .setClientId(clientId)
+                .build();
 
         requestWatchExecutor.add(v);
 
@@ -181,7 +183,9 @@ public class SyncRequestHandler implements IRequestHandler {
                             .setVersion(e.getValue().getVersion())
                             .setUid(requestWatcher.uid())
                             .setForce(false)
-                            .setStatus(RequestStatus.REGISTER.ordinal()).build();
+                            .setStatus(RequestStatus.REGISTER.ordinal())
+                            .setClientId(requestWatcher.clientId())
+                            .build();
 
                     sendRequest(requestWatcher, entityClassSyncRequest);
                     //  刷新注册时间
@@ -201,8 +205,8 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
-        requestWatchExecutor.create(uid, streamObserver);
+    public void initWatcher(String clientId, String uid, StreamObserver<EntityClassSyncRequest> streamObserver) {
+        requestWatchExecutor.create(clientId, uid, streamObserver);
     }
 
     /**
@@ -261,7 +265,8 @@ public class SyncRequestHandler implements IRequestHandler {
         } else {
             String uid =
                 (null != requestWatchExecutor.watcher()) ? requestWatchExecutor.watcher().uid() : "unKnow-stream";
-            logger.warn("stream [{}] has broken, reCreate new stream after ({})ms...", uid, grpcParams.getReconnectDuration());
+            logger.warn("stream [{}] has broken, reCreate new stream after ({})ms...", uid,
+                grpcParams.getReconnectDuration());
 
             //  设置睡眠
             TimeWaitUtils.wakeupAfter(grpcParams.getReconnectDuration(), TimeUnit.MILLISECONDS);
@@ -292,7 +297,11 @@ public class SyncRequestHandler implements IRequestHandler {
         if (!entityClassSyncResponse.getForce()) {
             //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
             sendRequestWithALiveCheck(requestWatchExecutor.watcher(),
-                entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build());
+                entityClassSyncRequestBuilder
+                    .setClientId(requestWatchExecutor.watcher().clientId())
+                    .setUid(entityClassSyncResponse.getUid())
+                    .build()
+            );
         }
 
         logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
@@ -395,7 +404,8 @@ public class SyncRequestHandler implements IRequestHandler {
             if (null != requestWatcher) {
                 try {
                     if (requestWatcher.isActive()) {
-                        if (System.currentTimeMillis() - requestWatcher.heartBeat() > grpcParams.getDefaultHeartbeatTimeout()) {
+                        if (System.currentTimeMillis() - requestWatcher.heartBeat() >
+                            grpcParams.getDefaultHeartbeatTimeout()) {
                             requestWatcher.observer().onCompleted();
                             logger.warn("last heartbeat time [{}] reaches max timeout [{}]",
                                 System.currentTimeMillis() - requestWatcher.heartBeat(),
@@ -404,7 +414,10 @@ public class SyncRequestHandler implements IRequestHandler {
                     }
 
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
-                        .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
+                        .setClientId(requestWatcher.clientId())
+                        .setUid(requestWatcher.uid())
+                        .setStatus(HEARTBEAT.ordinal())
+                        .build();
 
                     sendRequestWithALiveCheck(requestWatcher, request);
                 } catch (Exception e) {
@@ -450,14 +463,19 @@ public class SyncRequestHandler implements IRequestHandler {
                     //  时间超长的判定标准为当前时间-最后注册时间 > delay时间
                     return s.getStatus().ordinal() == Init.ordinal()
                         || (s.getStatus().ordinal() < Confirmed.ordinal()
-                            && System.currentTimeMillis() - s.getRegisterTime() > grpcParams.getDefaultDelayTaskDuration());
+                        && System.currentTimeMillis() - s.getRegisterTime() > grpcParams.getDefaultDelayTaskDuration());
                 }).forEach(
                     k -> {
                         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
                         EntityClassSyncRequest entityClassSyncRequest =
-                            builder.setUid(requestWatcher.uid()).setAppId(k.getAppId()).setVersion(k.getVersion())
-                                .setStatus(RequestStatus.REGISTER.ordinal()).build();
+                            builder.setUid(requestWatcher.uid())
+                                .setClientId(requestWatcher.clientId())
+                                .setAppId(k.getAppId())
+                                .setEnv(k.getEnv())
+                                .setVersion(k.getVersion())
+                                .setStatus(RequestStatus.REGISTER.ordinal())
+                                .build();
                         try {
                             sendRequestWithALiveCheck(requestWatcher, entityClassSyncRequest);
                             k.setRegisterTime(System.currentTimeMillis());

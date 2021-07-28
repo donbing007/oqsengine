@@ -4,26 +4,32 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MI
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 
+import com.google.protobuf.Any;
+import com.google.protobuf.BoolValue;
+import com.google.protobuf.DoubleValue;
+import com.google.protobuf.Int64Value;
+import com.google.protobuf.StringValue;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -145,7 +151,7 @@ public class EntityClassStorageBuilderUtils {
                             p.getCode()), false);
                 }
 
-                List<IEntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
+                List<EntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
                 List<RelationStorage> relationStorageList = toRelationStorageList(p.getRelationInfoList());
                 profileStorageMap.put(p.getCode(), new ProfileStorage(p.getCode(), fieldList, relationStorageList));
             }
@@ -155,8 +161,8 @@ public class EntityClassStorageBuilderUtils {
         return storage;
     }
 
-    private static List<IEntityField> toEntityFieldList(List<EntityFieldInfo> entityFieldInfoList) {
-        List<IEntityField> fields = new ArrayList<>();
+    private static List<EntityField> toEntityFieldList(List<EntityFieldInfo> entityFieldInfoList) {
+        List<EntityField> fields = new ArrayList<>();
         if (null != entityFieldInfoList) {
             for (EntityFieldInfo e : entityFieldInfoList) {
                 EntityField entityField = toEntityField(false, e);
@@ -199,28 +205,24 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
         FieldType fieldType = FieldType.fromRawType(e.getFieldType().name());
-        EntityField.Builder builder = EntityField.Builder.anEntityField()
+
+        FieldConfig fieldConfig =
+            toFieldConfig(isRelationEntity, fieldType, e.getFieldConfig(), e.getCalculator());
+
+        return EntityField.Builder.anEntityField()
             .withId(eid)
             .withName(e.getName())
             .withCnName(e.getCname())
             .withFieldType(fieldType)
             .withDictId(e.getDictId())
             .withDefaultValue(e.getDefaultValue())
-            .withConfig(toFieldConfig(isRelationEntity, fieldType, e.getFieldConfig(), e.getCalculator()));
-
-        return builder.build();
+            .withConfig(fieldConfig)
+            .build();
     }
 
     private static AbstractCalculation toCalculator(FieldType fieldType,
                                                       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
-        CalculationType calculationType = CalculationType.UNKNOWN;
-        try {
-            Integer type = calculator.getCalculateType();
-            calculationType = CalculationType.getInstance(type.byteValue());
-        } catch (Exception e) {
-            throw new MetaSyncClientException("to calculationType instance failed.",
-                false);
-        }
+        CalculationType calculationType = toCalculationType(calculator);
 
         switch (calculationType) {
             case AUTO_FILL: {
@@ -299,7 +301,7 @@ public class EntityClassStorageBuilderUtils {
             //  当失败策略为RECORD_ERROR_RESUME时,需要对默认值进行计算
             try {
                 failedValueOp =
-                    ProtoAnyHelper.toFieldTypeValue(fieldType, calculator.getFailedDefaultValue());
+                    toFieldTypeValue(fieldType, calculator.getFailedDefaultValue());
             } catch (Exception e) {
                 throw new MetaSyncClientException(
                     String.format(
@@ -353,8 +355,65 @@ public class EntityClassStorageBuilderUtils {
 
         if (!isRelationEntity) {
             builder.withCalculation(toCalculator(fieldType, calculator));
+        } else {
+            builder.withCalculation(StaticCalculation.Builder.anStaticCalculation().build());
         }
 
         return builder.build();
+    }
+
+    private static CalculationType toCalculationType(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+        try {
+            Integer type = calculator.getCalculateType();
+            return CalculationType.getInstance(type.byteValue());
+        } catch (Exception e) {
+            throw new MetaSyncClientException("to calculationType instance failed.",
+                false);
+        }
+    }
+
+
+    /**
+     * 按照FieldType转换成实际的Value值.
+     */
+    public static Optional<?> toFieldTypeValue(FieldType fieldType, Any any) throws Exception {
+        Object value = null;
+        if (any.isInitialized()) {
+            switch (fieldType) {
+                case DATETIME: {
+                    value = DateTimeValue.toLocalDateTime(any.unpack(Int64Value.class).getValue());
+                    break;
+                }
+                case LONG: {
+                    value = any.unpack(Int64Value.class).getValue();
+                    break;
+                }
+                case DECIMAL: {
+                    value = BigDecimal.valueOf(any.unpack(DoubleValue.class).getValue());
+                    break;
+                }
+                case BOOLEAN: {
+                    value = any.unpack(BoolValue.class).getValue();
+                    break;
+                }
+                case STRING:
+                case ENUM: {
+                    value = any.unpack(StringValue.class).getValue();
+                    break;
+                }
+                case STRINGS: {
+                    value = StringsValue.toStrings(any.unpack(StringValue.class).getValue());
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException(
+                        String.format("un-support type, fieldType : %s, protoTypeUrl : %s", fieldType.getType(),
+                            any.getTypeUrl())
+                    );
+                }
+            }
+        }
+
+        return Optional.ofNullable(value);
     }
 }

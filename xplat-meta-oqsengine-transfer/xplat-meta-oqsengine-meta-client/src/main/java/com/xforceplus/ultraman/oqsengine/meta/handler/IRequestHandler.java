@@ -28,7 +28,7 @@ public interface IRequestHandler extends IObserverHandler<EntityClassSyncRespons
     /**
      * 初始化.
      */
-    void initWatcher(String uid, StreamObserver<EntityClassSyncRequest> streamObserver);
+    void initWatcher(String clientId, String uid, StreamObserver<EntityClassSyncRequest> streamObserver);
 
     /**
      * 获得当前IRequestWatchExecutor.

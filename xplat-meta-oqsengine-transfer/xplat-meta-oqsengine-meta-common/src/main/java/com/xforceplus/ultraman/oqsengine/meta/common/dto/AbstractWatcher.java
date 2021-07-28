@@ -18,6 +18,11 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     private final Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
     /**
+     *
+     */
+    protected volatile String clientId;
+
+    /**
      * 注册的uid.
      */
     protected volatile String uid;
@@ -48,11 +53,17 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 构造函数.
      */
-    public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
+    public AbstractWatcher(String clientId, String uid, StreamObserver<T> streamObserver) {
+        this.clientId = clientId;
         this.uid = uid;
         this.streamObserver = streamObserver;
         this.heartBeat = System.currentTimeMillis();
         this.watches = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public String clientId() {
+        return clientId;
     }
 
     @Override

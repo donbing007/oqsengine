@@ -1,20 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaTestHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,49 +34,6 @@ public class EntityClassSyncExecutorTest extends MetaTestHelper {
     @AfterEach
     public void after() throws Exception {
         super.destroy();
-    }
-
-    @Test
-    public void dataImportTest() throws IOException, IllegalAccessException {
-        String defaultTestAppId = "5";
-        String env = "0";
-        int defaultTestVersion = 2;
-        Boolean result = false;
-        InputStream in = null;
-        try {
-            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
-
-            result = MetaInitialization.getInstance().getEntityClassSyncExecutor().dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
-            Assertions.assertTrue(result);
-        } catch (Exception e) {
-            Assertions.fail();
-        } finally {
-            if (null != in) {
-                in.close();
-            }
-        }
-
-        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L);
-
-        Assertions.assertTrue(op.isPresent());
-
-        //  重新导入老版本，结果为失败
-        try {
-            in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
-
-            defaultTestVersion = 1;
-
-            result = MetaInitialization.getInstance().getEntityClassSyncExecutor().dataImport(defaultTestAppId, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
-            Assertions.assertFalse(result);
-        } catch (Exception e) {
-            Assertions.fail();
-        } finally {
-            if (null != in) {
-                in.close();
-            }
-        }
     }
 
     @Test
@@ -153,14 +105,4 @@ public class EntityClassSyncExecutorTest extends MetaTestHelper {
             Assertions.assertNotNull(exists);
         }
     }
-
-
-    /**
-     * 从resource目录中生成InputStream.
-     */
-    private InputStream initInputStreamByResource(String appId, Integer version, String env) {
-        String path = String.format("/%s_%d_%s.json", appId, version, env);
-        return EntityClassStorageHelper.class.getResourceAsStream(path);
-    }
-
 }

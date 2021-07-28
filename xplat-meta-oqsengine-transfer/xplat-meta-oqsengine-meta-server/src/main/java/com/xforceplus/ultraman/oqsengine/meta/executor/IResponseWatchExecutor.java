@@ -4,8 +4,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -18,7 +20,7 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
     /**
      * 新增一个客户端及关注元素,如果当前的uid为一个新的uid，server将持有这个observer.
      */
-    void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
+    void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
 
     /**
      * 更新watchElement.
@@ -54,4 +56,10 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
      * 新增版本.
      */
     boolean addVersion(String appId, String env, int version);
+
+    /**
+     * 获取当前监控指标
+     * @return
+     */
+    Optional<ServerMetricsInfo> showMetrics();
 }

@@ -9,20 +9,27 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.FileReaderUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import io.micrometer.core.annotation.Timed;
+import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +60,9 @@ public class StorageMetaManager implements MetaManager {
     @Resource
     private IRequestHandler requestHandler;
 
+    @Resource(name = "grpcSyncExecutor")
+    private SyncExecutor syncExecutor;
+
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncDispatcher;
 
@@ -61,8 +72,24 @@ public class StorageMetaManager implements MetaManager {
         this.isOffLineUse = true;
     }
 
+    private String loadPath;
+
+    public void setLoadPath(String loadPath) {
+        this.loadPath = loadPath;
+    }
+
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
+    }
+
+    @PostConstruct
+    public void init() {
+        //  sync data from file
+        if (null != loadPath && !loadPath.isEmpty()) {
+            logger.info("start load from local path : {}", loadPath);
+            loadFromLocal(loadPath);
+            logger.info("success load from local path : {}", loadPath);
+        }
     }
 
     /**
@@ -174,6 +201,62 @@ public class StorageMetaManager implements MetaManager {
         cacheExecutor.invalidateLocal();
     }
 
+
+    @Override
+    public boolean dataImport(String appId, String env, int version, String content) {
+
+        cacheExecutor.appEnvSet(appId, env);
+
+        if (!cacheExecutor.appEnvGet(appId).equals(env)) {
+            throw new RuntimeException("appId has been init with another Id, need failed...");
+        }
+
+        int currentVersion = cacheExecutor.version(appId);
+
+        if (version > currentVersion) {
+            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion, version);
+
+            EntityClassSyncRspProto entityClassSyncRspProto;
+            try {
+                entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
+            }
+
+            if (!syncExecutor.sync(appId, version, entityClassSyncRspProto)) {
+                throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
+            }
+            return true;
+        } else {
+            String message = String.format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId, currentVersion, version);
+            logger.warn(message);
+            return false;
+        }
+    }
+
+    @Override
+    public Optional<MetaMetrics> showMeta(String appId) throws Exception {
+
+        try {
+            int currentVersion = cacheExecutor.version(appId);
+            if (currentVersion == NOT_EXIST_VERSION) {
+                return Optional.empty();
+            }
+            String env = cacheExecutor.appEnvGet(appId);
+
+            Collection<Long> ids = cacheExecutor.appEntityIdList(appId, currentVersion);
+
+            Map<Long, EntityClassStorage> metas = cacheExecutor.multiplyRead(ids, currentVersion, false);
+
+            return Optional.of(new MetaMetrics(currentVersion, env, appId, null != metas ? metas.values() : new ArrayList<>()));
+
+        } catch (Exception e) {
+            logger.warn("show meta error, appId {}, message : {}", appId, e.getMessage());
+            throw e;
+        }
+    }
+
+
     private Optional<IEntityClass> innerLoad(long id, String profileCode)
         throws SQLException, JsonProcessingException {
         if (id == HEALTH_CHECK_ENTITY_ID) {
@@ -209,7 +292,8 @@ public class StorageMetaManager implements MetaManager {
         }
 
         //  加载profile
-        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE) && null != entityClassStorage.getProfileStorageMap()) {
+        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)
+            && null != entityClassStorage.getProfileStorageMap()) {
             ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
             if (null != profileStorage) {
                 if (null != profileStorage.getEntityFieldList()) {
@@ -277,20 +361,45 @@ public class StorageMetaManager implements MetaManager {
 
     private IEntityField cloneEntityField(IEntityField entityField) {
         if (null != entityField) {
-            EntityField.Builder builder = EntityField.Builder.anEntityField()
+            return EntityField.Builder.anEntityField()
                 .withName(entityField.name())
                 .withCnName(entityField.cnName())
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue());
-
-            if (null != entityField.config()) {
-                builder.withConfig(entityField.config().clone());
-            }
-
-            return builder.build();
+                .withDefaultValue(entityField.defaultValue())
+                .withConfig(entityField.config().clone())
+                .build();
         }
         return null;
+    }
+
+    private void loadFromLocal(String path) {
+        if (!path.endsWith(File.separator)) {
+            path = path + File.separator;
+        }
+        List<String> files = FileReaderUtils.getFileNamesInOneDir(path);
+        for (String file : files) {
+            try {
+                String[] splitter = EntityClassStorageHelper.splitMetaFromFileName(file);
+
+                String appId = splitter[0];
+                int version = Integer.parseInt(splitter[1]);
+                String fullPath = path + file;
+
+                String v =
+                    EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
+
+                if (dataImport(splitter[0], splitter[2], version, v)) {
+                    logger.info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId, version);
+                } else {
+                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);
+                }
+            } catch (Exception e) {
+                logger.warn("load from local-file failed, path : {}, message : {}", path + file, e.getMessage());
+
+                //  ignore current file
+            }
+        }
     }
 }

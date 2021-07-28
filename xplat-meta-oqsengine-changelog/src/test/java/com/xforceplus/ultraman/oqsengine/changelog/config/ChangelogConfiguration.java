@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
@@ -203,6 +204,16 @@ public class ChangelogConfiguration {
             @Override
             public void invalidateLocal() {
 
+            }
+
+            @Override
+            public boolean dataImport(String appId, String env, int version, String content) {
+                return true;
+            }
+
+            @Override
+            public Optional<MetaMetrics> showMeta(String appId) throws Exception {
+                return Optional.empty();
             }
         };
     }

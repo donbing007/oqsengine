@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
@@ -140,13 +139,12 @@ public class GeneralEntityClassStorageBuilder {
         return builder.build();
     }
 
-
     /**
      * 生成.
      */
     public static EntityClassStorage prepareEntity(
         ExpectedEntityStorage expectedEntityStorage) {
-        IEntityField[] entityFields = new IEntityField[4];
+        EntityField[] entityFields = new EntityField[4];
         entityFields[0] = genericEntityField(expectedEntityStorage.getSelf(), EXPECTED_ENTITY_INFO_LIST.get(0));
         entityFields[1] = genericEntityField(expectedEntityStorage.getSelf(), EXPECTED_ENTITY_INFO_LIST.get(1));
         entityFields[2] = genericEntityField(expectedEntityStorage.getSelf(), EXPECTED_ENTITY_INFO_LIST.get(2));

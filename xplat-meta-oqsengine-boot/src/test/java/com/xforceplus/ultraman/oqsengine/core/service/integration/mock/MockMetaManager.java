@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Disabled;
 @Disabled("explanation")
 public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager {
 
-
     //-------------level 0--------------------
     public static IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)

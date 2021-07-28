@@ -2,10 +2,8 @@ package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.mock.MockSyncEvent;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
-import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +50,7 @@ public class MultiClientSyncTest extends BaseInit {
     }
 
     @AfterEach
-    public void after() {
+    public void after() throws InterruptedException {
         for (int i = 0; i < testClientSize; i++) {
             streamEvents[i].getMockerSyncClient().stop();
         }
@@ -72,6 +70,7 @@ public class MultiClientSyncTest extends BaseInit {
     private String privateEnvPrefix = "privateEnvPrefix";
 
 
+    private static final String baseClient = "MultiClientSyncTest";
     private void init() {
 
         for (int i = 0; i < testClientSize; i++) {
@@ -124,9 +123,11 @@ public class MultiClientSyncTest extends BaseInit {
         /**
          * 注册
          */
+        int i = 0;
         for (StreamEvent streamEvent : streamEvents) {
+            i++;
             for (Map.Entry<String, WatchElement> entry : streamEvent.getWatchElements().entrySet()) {
-                streamEvent.getStreamObserver().onNext(buildRequest(entry.getValue(), streamEvent.getUid(), RequestStatus.REGISTER));
+                streamEvent.getStreamObserver().onNext(buildRequest(entry.getValue(), baseClient + i, streamEvent.getUid(), RequestStatus.REGISTER));
                 Thread.sleep(3000);
                 /**
                  * 判断是否注册成功
@@ -165,7 +166,7 @@ public class MultiClientSyncTest extends BaseInit {
         String expectedAppId = watchElementVisitor.getWatchElement().getAppId();
         String expectedEnv = watchElementVisitor.getWatchElement().getEnv();
         int expectedVersion = watchElementVisitor.getWatchElement().getVersion() + 1;
-        syncResponseHandler.push(new AppUpdateEvent("mock", expectedAppId, expectedEnv, expectedVersion,
+        syncResponseHandler.push(new MockSyncEvent(expectedAppId, expectedEnv, expectedVersion,
                 entityClassSyncRspProtoGenerator(new Random().nextLong())));
 
         Thread.sleep(1000);
@@ -179,56 +180,6 @@ public class MultiClientSyncTest extends BaseInit {
                     assertNotEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
                 }
             }
-        }
-    }
-
-    public static class WatchElementVisitor {
-        private WatchElement watchElement;
-        private Set<Integer> visitors;
-
-        public WatchElementVisitor(WatchElement watchElement) {
-            this.watchElement = watchElement;
-            visitors = new HashSet<>();
-        }
-
-        public WatchElement getWatchElement() {
-            return watchElement;
-        }
-
-        public Set<Integer> getVisitors() {
-            return visitors;
-        }
-
-        public void setVisitors(Integer visitors) {
-            this.visitors.add(visitors);
-        }
-    }
-
-    public static class StreamEvent {
-        private MockerSyncClient mockerSyncClient;
-        private StreamObserver<EntityClassSyncRequest> streamObserver;
-        private String uid;
-
-        public StreamEvent(MockerSyncClient mockerSyncClient, StreamObserver<EntityClassSyncRequest> streamObserver, String uid) {
-            this.mockerSyncClient = mockerSyncClient;
-            this.streamObserver = streamObserver;
-            this.uid = uid;
-        }
-
-        public MockerSyncClient getMockerSyncClient() {
-            return mockerSyncClient;
-        }
-
-        public StreamObserver<EntityClassSyncRequest> getStreamObserver() {
-            return streamObserver;
-        }
-
-        public String getUid() {
-            return uid;
-        }
-
-        public Map<String, WatchElement> getWatchElements() {
-            return mockerSyncClient.getWatchElementMap();
         }
     }
 }

@@ -269,7 +269,6 @@ public class EntityField implements IEntityField, Serializable {
         private String dictId;
         private String defaultValue;
         private FieldConfig config;
-        private CalculationType calculationType = CalculationType.STATIC;
 
         private Builder() {
         }
@@ -313,10 +312,6 @@ public class EntityField implements IEntityField, Serializable {
             return this;
         }
 
-        public Builder withCalculationType(CalculationType calculationType) {
-            this.calculationType = calculationType;
-            return this;
-        }
 
         /**
          * 构造实例.
@@ -332,7 +327,9 @@ public class EntityField implements IEntityField, Serializable {
             entityField.dictId = this.dictId;
             entityField.defaultValue = this.defaultValue;
             entityField.config = this.config;
-            entityField.calculationType = this.calculationType;
+            //  没有calculation时使用static
+            entityField.calculationType = (null == this.config || null == this.config.getCalculation())
+                                            ? CalculationType.STATIC : this.config.getCalculation().getCalculationType();
             return entityField;
         }
     }

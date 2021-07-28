@@ -67,7 +67,6 @@ public class LookupCalculationLogicTest {
         .withId(1003)
         .withFieldType(FieldType.STRING)
         .withName("look-string-lookup")
-        .withCalculationType(CalculationType.LOOKUP)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)

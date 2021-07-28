@@ -1,4 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.utlis;
+package com.xforceplus.ultraman.oqsengine.metadata.utils;
+
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
 import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
@@ -47,7 +49,7 @@ public class ProtoAnyHelperTest {
         Optional<Any> t = ProtoAnyHelper.toAnyValue(expected);
         Assertions.assertTrue(t.isPresent());
 
-        Optional<?> v = ProtoAnyHelper.toFieldTypeValue(fieldType, t.get());
+        Optional<?> v = toFieldTypeValue(fieldType, t.get());
         Assertions.assertTrue(v.isPresent());
         switch (fieldType) {
             case DATETIME: {

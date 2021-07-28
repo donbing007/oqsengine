@@ -1,6 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.meta.dto;
+package com.xforceplus.ultraman.oqsengine.meta.listener.dto;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerSyncEvent;
 import org.springframework.context.ApplicationEvent;
 
 /**
@@ -9,10 +10,12 @@ import org.springframework.context.ApplicationEvent;
  * @author xujia
  * @since 1.8
  */
-public class AppUpdateEvent extends ApplicationEvent {
+public class AppUpdateEvent extends ApplicationEvent implements ServerSyncEvent {
+
     private final String appId;
     private final String env;
     private final int version;
+
     /**
      * standard.
      */
@@ -32,19 +35,23 @@ public class AppUpdateEvent extends ApplicationEvent {
         this.entityClassSyncRspProto = entityClassSyncRspProto;
     }
 
-    public EntityClassSyncRspProto getEntityClassSyncRspProto() {
+    @Override
+    public EntityClassSyncRspProto entityClassSyncRspProto() {
         return entityClassSyncRspProto;
     }
 
-    public String getAppId() {
+    @Override
+    public String appId() {
         return appId;
     }
 
-    public String getEnv() {
+    @Override
+    public String env() {
         return env;
     }
 
-    public int getVersion() {
+    @Override
+    public int version() {
         return version;
     }
 }

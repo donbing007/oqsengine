@@ -1,17 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.metadata.integeration.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import java.util.Optional;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -28,7 +27,7 @@ public class RemoteRedisTest {
 
     private StorageMetaManager storageMetaManager;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         if (isTestOpen) {
             String redisIp = "localhost";
@@ -46,7 +45,7 @@ public class RemoteRedisTest {
         }
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         if (isTestOpen) {
             cacheExecutor.destroy();
@@ -61,7 +60,7 @@ public class RemoteRedisTest {
     public void load() throws JsonProcessingException {
         if (isTestOpen) {
             Optional<IEntityClass> entityClassOptional = storageMetaManager.load(1334095964616527874L);
-            Assert.assertTrue(entityClassOptional.isPresent());
+            Assertions.assertTrue(entityClassOptional.isPresent());
         }
     }
 

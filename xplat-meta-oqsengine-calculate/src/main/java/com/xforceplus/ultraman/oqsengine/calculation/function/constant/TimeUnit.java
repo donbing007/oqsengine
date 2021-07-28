@@ -13,13 +13,13 @@ public enum TimeUnit {
 
     YEAR(1, "年"),
     MONTH(2, "月"),
-    DAY(2, "日"),
-    HOUR(2, "小时"),
-    MINUTE(2, "分钟"),
-    SECOND(2, "秒"),
-    MILLI(2, "毫秒"),
-    WEEK(2, "星期"),
-    QUARTER(2, "季度");
+    DAY(3, "日"),
+    HOUR(4, "小时"),
+    MINUTE(5, "分钟"),
+    SECOND(6, "秒"),
+    MILLI(7, "毫秒"),
+    WEEK(8, "星期"),
+    QUARTER(9, "季度");
 
     private Integer value;
     private String desc;
