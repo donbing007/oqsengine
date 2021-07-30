@@ -29,6 +29,7 @@ public abstract class AbstractDataIterator<E> implements DataIterator<E> {
         } else {
             buff = Collections.emptyList();
         }
+        this.buffSize = buffSize;
     }
 
     @Override

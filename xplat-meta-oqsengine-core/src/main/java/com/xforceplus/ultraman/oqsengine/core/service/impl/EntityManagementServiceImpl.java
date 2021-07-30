@@ -39,6 +39,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactor
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
@@ -83,6 +84,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private MasterStorage masterStorage;
+
+    @Resource
+    private KeyValueStorage kv;
 
     @Resource
     private CDCStatusService cdcStatusService;
@@ -713,8 +717,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private Collection<CalculationHint> processCalculationField(IEntity sourceEntity, IEntityClass entityClass,
-                                                                boolean build)
+    private Collection<CalculationHint> processCalculationField(
+        IEntity sourceEntity, IEntityClass entityClass, boolean build)
         throws CalculationLogicException {
 
         /*
@@ -764,6 +768,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withBuild(build)
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
+            .withKeyValueStorage(this.kv)
             .withEntityClass(entityClass)
             .withEntity(entity)
             .withBizIdGenerator(redisIDGenerator)

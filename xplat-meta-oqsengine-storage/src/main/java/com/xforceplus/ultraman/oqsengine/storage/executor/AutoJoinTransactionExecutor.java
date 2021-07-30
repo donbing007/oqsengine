@@ -6,9 +6,11 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Optional;
 import javax.sql.DataSource;
 
@@ -53,9 +55,11 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
         String dbKey = buildResourceKey(targetDataSource, tableName);
 
         TransactionResource resource;
-        Optional<Transaction> tx = transactionManager.getCurrent();
-        if (tx.isPresent()) {
-            Optional<TransactionResource> currentRes = tx.get().query(dbKey);
+        Optional<Transaction> txOp = transactionManager.getCurrent();
+        if (txOp.isPresent()) {
+
+            Transaction tx = txOp.get();
+            Optional<TransactionResource> currentRes = tx.queryTransactionResource(dbKey);
             if (currentRes.isPresent()) {
                 /*
                  * 已经存在资源,重用.
@@ -63,12 +67,29 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 resource = currentRes.get();
             } else {
 
-                /*
-                 * 资源不存在,重新创建.
-                 */
-                resource = buildResource(targetDataSource, dbKey, false);
+                if (resourceTask.isAttachmentMaster()) {
+                    Collection<TransactionResource> masterResources =
+                        tx.listTransactionResource(TransactionResourceType.MASTER);
+                    TransactionResource masterResource = masterResources.stream().findFirst().orElseGet(null);
+                    /*
+                    如果当前要求创建一个依附于master的事务资源.
+                    找到一个master类型的资源,那么将共享master的资源类型.
+                    找不到将直接普通方式创建.
+                     */
+                    if (masterResource != null) {
 
-                tx.get().join(resource);
+                        resource = buildResourceFromMaster(masterResource, dbKey, false);
+
+                    } else {
+
+                        resource = buildResource(targetDataSource, dbKey, false);
+
+                    }
+                } else {
+                    resource = buildResource(targetDataSource, dbKey, false);
+                }
+
+                txOp.get().join(resource);
             }
         } else {
 
@@ -78,15 +99,25 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
 
         ExecutorHint hint = new DefaultExecutorHint();
         try {
-            if (tx.isPresent()) {
-                return resourceTask.run(tx.get(), resource, hint);
+            if (txOp.isPresent()) {
+                return resourceTask.run(txOp.get(), resource, hint);
             } else {
                 return resourceTask.run(null, resource, hint);
             }
         } finally {
-            if (!tx.isPresent()) {
+            if (!txOp.isPresent()) {
                 resource.destroy();
             }
+        }
+    }
+
+    private TransactionResource buildResourceFromMaster(TransactionResource masterResource, String dbKey,
+                                                        boolean autocommit) throws SQLException {
+        Connection conn = (Connection) masterResource.value();
+        try {
+            return this.transactionResourceFactory.build(dbKey, conn, autocommit);
+        } catch (Exception ex) {
+            throw new SQLException(ex.getMessage(), ex);
         }
     }
 

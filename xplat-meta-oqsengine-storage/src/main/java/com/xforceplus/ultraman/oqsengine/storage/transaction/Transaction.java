@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -82,7 +83,15 @@ public interface Transaction {
      * @param key resource`s key.
      * @return true Has joined. false not.
      */
-    Optional<TransactionResource> query(String key);
+    Optional<TransactionResource> queryTransactionResource(String key);
+
+    /**
+     * 列出当前的指定类型的事务资源列表.
+     *
+     * @param type 事务资源类型.
+     * @return 资源列表.
+     */
+    Collection<TransactionResource> listTransactionResource(TransactionResourceType type);
 
     /**
      * Attachment id. Usually a thread id.

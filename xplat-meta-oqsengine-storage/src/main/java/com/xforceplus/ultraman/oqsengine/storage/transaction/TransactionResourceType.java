@@ -9,7 +9,10 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
  * 修改历史:
  */
 public enum TransactionResourceType {
-    MASTER("1"), INDEX("2"), SEGMENT("3");
+    UNKNOWN("0"),
+    MASTER("1"),
+    INDEX("2"),
+    KV("3");
 
     String value;
 

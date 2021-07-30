@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.util.Collection;
 import java.util.Optional;
@@ -73,6 +74,13 @@ public interface CalculationLogicContext {
      * @return 实例.
      */
     MetaManager getMetaManager();
+
+    /**
+     * 获取 kv 储存实例.
+     *
+     * @return 实例.
+     */
+    KeyValueStorage getKvStorage();
 
     /**
      * 获取属性.

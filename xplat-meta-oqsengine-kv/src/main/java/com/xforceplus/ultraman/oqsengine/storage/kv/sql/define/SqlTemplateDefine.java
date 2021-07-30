@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.kv.define;
+package com.xforceplus.ultraman.oqsengine.storage.kv.sql.define;
 
 /**
  * sql的模板定义.
@@ -47,7 +47,8 @@ public final class SqlTemplateDefine {
      * {2}  获取数量<p></p>
      */
     public static final String ITERATOR_FIRST_TEMPLATE =
-        String.format("SELECT %s FROM %s WHERE %s like ? limit 0, ?", FieldDefine.KEY, "%s", FieldDefine.KEY);
+        String.format("SELECT %s FROM %s WHERE %s like ? order by %s asc limit 0, ?",
+            FieldDefine.KEY, "%s", FieldDefine.KEY, FieldDefine.KEY);
 
     /**
      * 迭代key非首次.<p></p>
@@ -56,7 +57,7 @@ public final class SqlTemplateDefine {
      * {3} 获取数量.<p></p>
      */
     public static final String ITERATOR_NO_FIRST_TEMPLATE =
-        String.format("SELECT %s FROM %s WHERE %s like ? and %s > ? limit 0, ?",
-            FieldDefine.KEY, "%s", FieldDefine.KEY, FieldDefine.KEY);
+        String.format("SELECT %s FROM %s WHERE %s like ? and %s > ? order by %s asc limit 0, ?",
+            FieldDefine.KEY, "%s", FieldDefine.KEY, FieldDefine.KEY, FieldDefine.KEY);
 
 }

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.kv.define;
+package com.xforceplus.ultraman.oqsengine.storage.kv.sql.define;
 
 /**
  * 字段定义.

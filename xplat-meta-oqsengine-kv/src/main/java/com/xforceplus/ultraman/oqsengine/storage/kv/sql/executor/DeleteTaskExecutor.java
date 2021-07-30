@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.storage.kv.executor;
+package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.kv.define.SqlTemplateDefine;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -308,8 +309,13 @@ public class TestAbstractTransactionManagerTest {
         }
 
         @Override
-        public Optional<TransactionResource> query(String key) {
-            return transaction.query(key);
+        public Optional<TransactionResource> queryTransactionResource(String key) {
+            return transaction.queryTransactionResource(key);
+        }
+
+        @Override
+        public Collection<TransactionResource> listTransactionResource(TransactionResourceType type) {
+            return transaction.listTransactionResource(type);
         }
 
         @Override

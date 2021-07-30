@@ -92,14 +92,6 @@ public class CustomTransactionConfiguration {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
-    //@Bean(name = "segmentTransactionResourceFactory")
-    //public SegmentTransactionResourceFactory segmentTransactionResourceFactory(
-    //        @Value("${storage.generator.name:segment}") String tableName) {
-    //    return new SegmentTransactionResourceFactory(tableName);
-    //}
-
-
-
     /**
      * master 的shard将由shard-jdbc来支持,所以主库不需处理shard.
      */
@@ -112,18 +104,6 @@ public class CustomTransactionConfiguration {
         return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource),
             new NoSelector(tableName));
     }
-
-    ///**
-    // * Segment.
-    // */
-    //@Bean
-    //public TransactionExecutor segmentJDBCTransactionExecutor(
-    //        @Qualifier(value = "segmentTransactionResourceFactory") SegmentTransactionResourceFactory factory,
-    //        TransactionManager tm,
-    //        DataSource masterDataSource,
-    //        @Value("${storage.generator.name:segment}") String tableName) {
-    //    return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
-    //}
 
     /**
      * serviceTransactionExecutor.

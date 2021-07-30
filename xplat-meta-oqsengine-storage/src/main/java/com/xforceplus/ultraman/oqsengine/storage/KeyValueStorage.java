@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,6 +22,14 @@ public interface KeyValueStorage<T> {
      * @param value 需要保存的值.
      */
     public void save(String key, T value) throws SQLException;
+
+    /**
+     * 批量保存.
+     *
+     * @param kvs kv列表.
+     * @return 成功的数量.
+     */
+    public long save(Collection<Map.Entry<String, T>> kvs) throws SQLException;
 
     /**
      * 判断指定的key是否存在.

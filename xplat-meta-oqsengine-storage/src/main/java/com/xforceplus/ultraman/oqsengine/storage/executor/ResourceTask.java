@@ -27,6 +27,17 @@ public interface ResourceTask<R> {
     R run(Transaction transaction, TransactionResource resource, ExecutorHint hint) throws SQLException;
 
     /**
+     * 判断是否依附在 master 资源上.
+     * 所谓的依赖即表示会使用 master 的事务资源相关,本身不再处理事务提交和回滚.
+     * 除非没有可依附的.
+     *
+     * @return true依附, false不依附.
+     */
+    default boolean isAttachmentMaster() {
+        return false;
+    }
+
+    /**
      * 任务key.
      *
      * @return 任务key.
