@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -21,7 +22,7 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collection<MasterStorageEntity>> {
+public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<MasterStorageEntity>> {
 
     public static Executor<long[], Collection<MasterStorageEntity>> build(
         String tableName, TransactionResource<Connection> resource, long timeout) {

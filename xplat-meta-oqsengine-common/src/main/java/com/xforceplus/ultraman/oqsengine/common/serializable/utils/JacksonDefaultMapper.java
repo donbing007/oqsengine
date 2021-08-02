@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.common.serializable;
+package com.xforceplus.ultraman.oqsengine.common.serializable.utils;
 
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 /**
  * Created by justin.xu on 05/2021
  */
-public class SerializeUtils {
+public class JacksonDefaultMapper {
 
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
             .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)

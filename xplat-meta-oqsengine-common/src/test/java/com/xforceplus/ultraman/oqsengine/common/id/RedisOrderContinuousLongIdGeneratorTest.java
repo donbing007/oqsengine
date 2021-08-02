@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.common.id;
 
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -31,6 +30,7 @@ public class RedisOrderContinuousLongIdGeneratorTest {
     private StatefulRedisConnection<String, String> conn;
 
     private RedisClient redisClient;
+
     @BeforeEach
     public void before() throws Exception {
 

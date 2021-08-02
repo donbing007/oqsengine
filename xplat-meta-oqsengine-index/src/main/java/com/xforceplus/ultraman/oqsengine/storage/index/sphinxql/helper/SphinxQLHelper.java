@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
-import com.xforceplus.ultraman.oqsengine.common.string.StringUtils;
+import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;

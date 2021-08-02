@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -30,7 +30,7 @@ public class OriginalEntityUtils {
      */
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
-        Map<String, Object> keyValues = SerializeUtils.OBJECT_MAPPER.readValue(attrStr, Map.class);
+        Map<String, Object> keyValues = JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
         keyValues.forEach(
             (k, v) -> {
                 attributes.add(k);
@@ -52,8 +52,8 @@ public class OriginalEntityUtils {
         throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                    SerializeUtils.OBJECT_MAPPER.readValue(orgStr,
-                            SerializeUtils.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                    JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
+                            JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);
@@ -72,7 +72,7 @@ public class OriginalEntityUtils {
      */
     public static String toOriginalEntityStr(List<OriginalEntity> originalEntities) throws JsonProcessingException {
         try {
-            return SerializeUtils.OBJECT_MAPPER.writeValueAsString(
+            return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(
                 originalEntities.stream()
                     .map(RawOriginalEntity::toRawOriginalEntity)
                     .collect(Collectors.toList())

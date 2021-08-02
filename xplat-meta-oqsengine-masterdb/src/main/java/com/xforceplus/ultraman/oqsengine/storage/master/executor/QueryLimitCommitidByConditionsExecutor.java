@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
@@ -28,7 +29,8 @@ import java.util.Collection;
  * @version 0.1 2020/11/4 15:36
  * @since 1.8
  */
-public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecutor<Conditions, Collection<EntityRef>> {
+public class QueryLimitCommitidByConditionsExecutor
+    extends AbstractJdbcTaskExecutor<Conditions, Collection<EntityRef>> {
 
     private static final String SELECT_SORT_COLUMN = "sort";
 

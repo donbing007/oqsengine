@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

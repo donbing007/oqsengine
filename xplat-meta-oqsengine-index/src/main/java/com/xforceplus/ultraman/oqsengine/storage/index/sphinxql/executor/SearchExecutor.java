@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -28,7 +29,7 @@ import java.util.List;
  * @since 1.8
  */
 public class SearchExecutor
-    extends AbstractIndexExecutor<Tuple2<SearchConfig, IEntityClass[]>, Collection<EntityRef>> {
+    extends AbstractJdbcTaskExecutor<Tuple2<SearchConfig, IEntityClass[]>, Collection<EntityRef>> {
 
     private SphinxQLConditionsBuilderFactory conditionsBuilderFactory;
 
@@ -69,7 +70,7 @@ public class SearchExecutor
             }
         }
 
-        String sql = String.format(SQLConstant.SEARCH_SQL, getIndexName(), where.toString(), "bm25");
+        String sql = String.format(SQLConstant.SEARCH_SQL, getTableName(), where.toString(), "bm25");
 
         Page page = config.getPage();
         if (!page.isSinglePage()) {
@@ -81,7 +82,7 @@ public class SearchExecutor
             return Collections.emptyList();
         }
 
-        try (PreparedStatement st = getTransactionResource().value().prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
             if (page.isEmptyPage()) {
                 st.setLong(2, 0);
@@ -109,7 +110,7 @@ public class SearchExecutor
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = SphinxQLHelper.count(getTransactionResource());
+                    long count = SphinxQLHelper.count(getResource());
                     page.setTotalCount(count);
                 } else {
                     page.setTotalCount(refs.size());

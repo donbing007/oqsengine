@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -16,7 +17,7 @@ import java.util.Collections;
  * @version 0.1 2021/3/3 11:41
  * @since 1.8
  */
-public class OriginEntitiesDeleteIndexExecutor extends AbstractIndexExecutor<Collection<OriginalEntity>, Integer> {
+public class OriginEntitiesDeleteIndexExecutor extends AbstractJdbcTaskExecutor<Collection<OriginalEntity>, Integer> {
 
     public static OriginEntitiesDeleteIndexExecutor builder(String indexName, TransactionResource tr) {
         return new OriginEntitiesDeleteIndexExecutor(indexName, tr);
@@ -30,7 +31,7 @@ public class OriginEntitiesDeleteIndexExecutor extends AbstractIndexExecutor<Col
     public Integer execute(Collection<OriginalEntity> originalEntities) throws SQLException {
         final String sql = buildSql(originalEntities.size());
         int point = 1;
-        try (PreparedStatement st = ((Connection) getTransactionResource().value()).prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             for (OriginalEntity entity : originalEntities) {
                 st.setLong(point++, entity.getId());
             }
@@ -44,7 +45,7 @@ public class OriginEntitiesDeleteIndexExecutor extends AbstractIndexExecutor<Col
     private String buildSql(int size) {
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ")
-            .append(getIndexName())
+            .append(getTableName())
             .append(" WHERE ")
             .append(FieldDefine.ID)
             .append(" IN (")

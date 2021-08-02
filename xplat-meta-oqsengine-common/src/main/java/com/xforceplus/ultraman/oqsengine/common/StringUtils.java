@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.common.string;
+package com.xforceplus.ultraman.oqsengine.common;
 
 /**
  * 字符串工具箱.

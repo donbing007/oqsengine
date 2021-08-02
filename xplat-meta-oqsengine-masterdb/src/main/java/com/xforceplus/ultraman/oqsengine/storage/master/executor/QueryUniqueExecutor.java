@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -17,7 +18,7 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class QueryUniqueExecutor extends AbstractMasterExecutor<String, Optional<StorageUniqueEntity>> {
+public class QueryUniqueExecutor extends AbstractJdbcTaskExecutor<String, Optional<StorageUniqueEntity>> {
 
     private IEntityClass entityClass;
 

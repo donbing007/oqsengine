@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * Query condition Executor.
  */
 public class QueryConditionExecutor
-    extends AbstractIndexExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
+    extends AbstractJdbcTaskExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
@@ -349,9 +350,9 @@ public class QueryConditionExecutor
         }
 
         String sql = String.format(
-            SQLConstant.SELECT_SQL, sortSelectValuesSegment, getIndexName(), where.toString(), orderBySqlSegment);
+            SQLConstant.SELECT_SQL, sortSelectValuesSegment, getTableName(), where.toString(), orderBySqlSegment);
 
-        try (PreparedStatement st = getTransactionResource().value().prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
             if (page.isEmptyPage()) {
                 st.setLong(2, 0);
@@ -427,7 +428,7 @@ public class QueryConditionExecutor
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = SphinxQLHelper.count(getTransactionResource());
+                    long count = SphinxQLHelper.count(getResource());
                     page.setTotalCount(count);
                 } else {
                     page.setTotalCount(refs.size());

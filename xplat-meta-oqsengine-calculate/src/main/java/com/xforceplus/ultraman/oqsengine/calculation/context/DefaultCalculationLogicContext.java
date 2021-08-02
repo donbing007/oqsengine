@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     private IEntityClass sourceEntityClass;
     private MasterStorage masterStorage;
     private MetaManager metaManager;
+    private KeyValueStorage keyValueStorage;
     private Map<String, Object> attributes;
     private Collection<CalculationHint> hints;
     private IDGenerator bizIDGenerator;
@@ -72,6 +74,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     @Override
     public MetaManager getMetaManager() {
         return this.metaManager;
+    }
+
+    @Override
+    public KeyValueStorage getKvStorage() {
+        return this.keyValueStorage;
     }
 
     @Override
@@ -119,6 +126,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private IEntity entity;
         private IEntityClass entityClass;
         private MasterStorage masterStorage;
+        private KeyValueStorage keyValueStorage;
         private MetaManager metaManager;
         private Map<String, Object> attributes;
         private IDGenerator bizIDGenerator;
@@ -147,6 +155,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
 
         public Builder withMasterStorage(MasterStorage masterStorage) {
             this.masterStorage = masterStorage;
+            return this;
+        }
+
+        public Builder withKeyValueStorage(KeyValueStorage kv) {
+            this.keyValueStorage = kv;
             return this;
         }
 
@@ -184,6 +197,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             defaultCalculationLogicContext.attributes = this.attributes;
             defaultCalculationLogicContext.metaManager = this.metaManager;
             defaultCalculationLogicContext.masterStorage = this.masterStorage;
+            defaultCalculationLogicContext.keyValueStorage = this.keyValueStorage;
             defaultCalculationLogicContext.bizIDGenerator = this.bizIDGenerator;
             return defaultCalculationLogicContext;
         }

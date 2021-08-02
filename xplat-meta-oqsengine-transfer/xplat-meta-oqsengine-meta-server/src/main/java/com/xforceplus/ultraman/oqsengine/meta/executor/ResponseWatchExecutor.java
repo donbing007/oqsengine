@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +58,9 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         v.release();
                     }
                 });
+        uidWatchers.clear();
+        appWatchers.clear();
+        appVersions.clear();
         logger.debug("responseWatchExecutor stop.");
     }
 
@@ -73,7 +75,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                      */
                     if (current - v.heartBeat() >= heartbeatTimeout) {
                         release(k);
-                        logger.warn("heart-beat check error, watcher has been released,  uid [{}]", k);
+                        logger.warn("release broken stream, [client-uid : {}-{}]", v.clientId(), k);
                     }
                 }
         );

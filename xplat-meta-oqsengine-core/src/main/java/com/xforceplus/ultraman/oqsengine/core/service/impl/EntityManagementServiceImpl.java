@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -10,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -38,6 +39,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactor
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
@@ -84,6 +86,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private MasterStorage masterStorage;
 
     @Resource
+    private KeyValueStorage kv;
+
+    @Resource
     private CDCStatusService cdcStatusService;
 
     @Resource
@@ -95,8 +100,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private EventBus eventBus;
 
-    @Resource
-    private BizIDGenerator bizIDGenerator;
+    @Resource(name = "redisIDGenerator")
+    private IDGenerator redisIDGenerator;
 
     /**
      * 字段校验器工厂.
@@ -712,8 +717,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private Collection<CalculationHint> processCalculationField(IEntity sourceEntity, IEntityClass entityClass,
-                                                                boolean build)
+    private Collection<CalculationHint> processCalculationField(
+        IEntity sourceEntity, IEntityClass entityClass, boolean build)
         throws CalculationLogicException {
 
         /*
@@ -763,9 +768,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withBuild(build)
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
+            .withKeyValueStorage(this.kv)
             .withEntityClass(entityClass)
             .withEntity(entity)
-            .withBizIdGenerator(bizIDGenerator)
+            .withBizIdGenerator(redisIDGenerator)
             .build();
     }
 
@@ -775,7 +781,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             String errors = "serialize errors failed.";
             try {
-                errors = SerializeUtils.OBJECT_MAPPER.writeValueAsString(operationResult.getHints());
+                errors = JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(operationResult.getHints());
             } catch (Exception e) {
                 //  ignore
             }

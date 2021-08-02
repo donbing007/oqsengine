@@ -70,7 +70,7 @@ public class CommonInitialization implements BeanInitialization {
             dataSourcePackage = null;
         }
 
-        runner.shutdownNow();
+        runner.shutdown();
         runner = null;
 
         instance = null;

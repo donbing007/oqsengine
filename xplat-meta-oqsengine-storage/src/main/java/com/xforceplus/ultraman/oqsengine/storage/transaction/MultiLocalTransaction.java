@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -246,7 +248,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public Optional<TransactionResource> query(String key) {
+    public Optional<TransactionResource> queryTransactionResource(String key) {
 
         if (isCompleted()) {
             return Optional.empty();
@@ -259,6 +261,11 @@ public class MultiLocalTransaction implements Transaction {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public Collection<TransactionResource> listTransactionResource(TransactionResourceType type) {
+        return transactionResourceHolder.stream().filter(r -> r.type() == type).collect(Collectors.toList());
     }
 
     @Override

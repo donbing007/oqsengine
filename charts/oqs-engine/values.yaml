@@ -190,7 +190,7 @@ datasource:
   master: |-
     {
       driverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcUrl: "jdbc:mysql://127.0.0.1:3306/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
+      jdbcUrl: "jdbc:mysql://127.0.0.1:3306/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&allowMultiQueries=true&rewriteBatchedStatements=true"
       username: "root",
       password: "root",
       maximumPoolSize: 3,
@@ -204,7 +204,7 @@ datasource:
     write: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
         maximumPoolSize: 3,
@@ -216,7 +216,7 @@ datasource:
     search: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
         maximumPoolSize: 3,

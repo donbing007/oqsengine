@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -77,7 +78,7 @@ public class SyncResponseHandlerTest {
     @AfterEach
     public void after() {
         syncResponseHandler.stop();
-        executor.shutdownNow();
+        ExecutorHelper.shutdownAndAwaitTermination(executor, 10);
     }
 
     private GRpcParams gRpcParamsConfig() {

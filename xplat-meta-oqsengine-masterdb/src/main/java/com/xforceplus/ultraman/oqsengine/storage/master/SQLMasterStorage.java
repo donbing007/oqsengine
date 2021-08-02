@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
-import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeUtils;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -507,7 +507,7 @@ public class SQLMasterStorage implements MasterStorage {
         throws SQLException {
         Map<String, Object> object;
         try {
-            object = SerializeUtils.OBJECT_MAPPER.readValue(masterStorageEntity.getAttribute(), Map.class);
+            object = JacksonDefaultMapper.OBJECT_MAPPER.readValue(masterStorageEntity.getAttribute(), Map.class);
         } catch (JsonProcessingException e) {
             throw new SQLException(e.getMessage(), e);
         }
@@ -596,7 +596,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        return SerializeUtils.OBJECT_MAPPER.writeValueAsString(values);
+        return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(values);
     }
 
     // 无法实例化的数据将返回null.
@@ -755,7 +755,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         @Override
-        public int size() {
+        public long size() {
             try {
                 return (int) transactionExecutor.execute((tx, resource, hint) -> {
                     return BatchQueryCountExecutor
@@ -765,6 +765,11 @@ public class SQLMasterStorage implements MasterStorage {
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
+        }
+
+        @Override
+        public boolean provideSize() {
+            return true;
         }
     }
 

@@ -9,6 +9,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.Metrics;
 import java.io.File;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +62,8 @@ public class DataSourceFactory {
     private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
     private static final String MASTER_PATH = "dataSources.master";
 
+    private static final String CLASS_PATH_PROTOCOL = "classpath:";
+
     public static DataSourcePackage build() {
         return build(false);
     }
@@ -78,6 +81,9 @@ public class DataSourceFactory {
         ConfigFactory.invalidateCaches();
         if (dsConfigFile == null) {
             config = ConfigFactory.load("oqsengine-ds.conf");
+        } else if (dsConfigFile.startsWith(CLASS_PATH_PROTOCOL)) {
+            String path = dsConfigFile.substring(CLASS_PATH_PROTOCOL.length());
+            config = ConfigFactory.load(path);
         } else {
             config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
         }

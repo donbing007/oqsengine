@@ -5,6 +5,8 @@ import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.PatternValue;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
@@ -18,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentService
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import io.lettuce.core.RedisClient;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -72,7 +75,7 @@ public class BizIDGeneratorRedisTest {
     private DataSourcePackage dataSourcePackage;
 
     @AfterEach
-    public void after() throws SQLException {
+    public void after() throws Exception {
 
 //        SegmentInfo segmentInfo = new SegmentInfo();
 //        segmentInfo.setBizType(linearBizType);
@@ -95,10 +98,12 @@ public class BizIDGeneratorRedisTest {
         }
 
         redissonClient.shutdown();
+
+        InitializationHelper.clearAll();
     }
 
     @BeforeEach
-    public void before() throws SQLException {
+    public void before() throws SQLException, IllegalAccessException {
         System.setProperty(
             "MYSQL_JDBC_ID",
             String.format(
@@ -119,6 +124,7 @@ public class BizIDGeneratorRedisTest {
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         config.useSingleServer().setAddress(String.format("redis://%s:%s", redisIp, redisPort));
         redissonClient = Redisson.create(config);
+
 
         PatternParserManager manager = new PatternParserManager();
         NumberPatternParser parser = new NumberPatternParser();

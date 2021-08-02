@@ -111,7 +111,7 @@ public class AutoJoinTransactionExecutorTest {
         Optional<Transaction> t = tm.getCurrent();
         Assertions.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
+        Optional<TransactionResource> resource = t.get().queryTransactionResource(mockDataSource.toString() + ".table");
         Assertions.assertTrue(resource.isPresent());
         Assertions.assertEquals(expectedConn, resource.get().value());
 
@@ -138,7 +138,7 @@ public class AutoJoinTransactionExecutorTest {
             new NoSelector<>("table"));
         // 分片键不关心
         te.execute((tx, resource, hint) -> {
-            Assertions.assertEquals(currentT.query(mockDataSource.toString() + ".table").get(), resource);
+            Assertions.assertEquals(currentT.queryTransactionResource(mockDataSource.toString() + ".table").get(), resource);
 
             return null;
         });
@@ -146,7 +146,7 @@ public class AutoJoinTransactionExecutorTest {
         Optional<Transaction> t = tm.getCurrent();
         Assertions.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
+        Optional<TransactionResource> resource = t.get().queryTransactionResource(mockDataSource.toString() + ".table");
         Assertions.assertTrue(resource.isPresent());
         Assertions.assertEquals(expectedConn, resource.get().value());
 

@@ -115,7 +115,12 @@ public class SyncResponseHandler implements IResponseHandler {
         //  关闭responseWatchExecutor
         responseWatchExecutor.stop();
 
-        ThreadUtils.shutdown(null, SHUT_DOWN_WAIT_TIME_OUT);
+        longRunTasks.forEach(
+            runTask -> {
+                ThreadUtils.shutdown(null, SHUT_DOWN_WAIT_TIME_OUT);
+            }
+        );
+        longRunTasks.clear();
 
         logger.debug("syncResponseHandler stop.");
     }
@@ -126,13 +131,13 @@ public class SyncResponseHandler implements IResponseHandler {
     @Override
     public void invoke(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
-        if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
-            //  处理心跳
-            String uid = entityClassSyncRequest.getUid();
-            if (!uid.isEmpty()) {
-                confirmHeartBeat(uid, responseStreamObserver);
-            }
-        } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
+        //  处理心跳
+        String uid = entityClassSyncRequest.getUid();
+        if (!uid.isEmpty()) {
+            confirmHeartBeat(uid, responseStreamObserver);
+        }
+
+        if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
             //  处理注册
             WatchElement w =
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
@@ -272,7 +277,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
                 if (null == appUpdateEvent) {
                     logger.warn("pull data fail, appUpdateEvent is null, app {}, env {}.", watchElement.getAppId(), watchElement.getEnv());
-                    return true;
+                    return false;
                 }
                 if (isNeedEvent(watchElement, appUpdateEvent, requestStatus, force)) {
                     //  主动拉取不会更新当前的appVersion
@@ -329,7 +334,8 @@ public class SyncResponseHandler implements IResponseHandler {
         responseStreamObserver.onNext(
                 EntityClassSyncResponse.newBuilder()
                         .setUid(uid)
-                        .setStatus(HEARTBEAT.ordinal()).build());
+                        .setStatus(RequestStatus.HEARTBEAT.ordinal())
+                    .build());
     }
 
 
