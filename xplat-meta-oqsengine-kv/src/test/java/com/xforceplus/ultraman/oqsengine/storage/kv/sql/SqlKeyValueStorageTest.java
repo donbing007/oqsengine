@@ -39,6 +39,9 @@ public class SqlKeyValueStorageTest {
 
     private SqlKeyValueStorage storage;
 
+    /**
+     * 初始化测试实例.
+     */
     @BeforeEach
     public void before() throws Exception {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:kv/oqsengine-ds.conf");
@@ -154,6 +157,27 @@ public class SqlKeyValueStorageTest {
         }
 
         Assertions.assertEquals(1000, i);
+
+        iter = storage.iterator(keyPrefix, false);
+        if (iter.provideSize()) {
+            Assertions.assertEquals(1000, iter.size());
+        }
+
+        i = 1000 - 1;
+        buff = new StringBuilder();
+        while (iter.hasNext()) {
+            key = iter.next();
+
+            for (int p = 0; p < 22 - NumberUtils.size(i); p++) {
+                buff.append('0');
+            }
+            buff.append(i--);
+
+            Assertions.assertEquals(keyPrefix + buff.toString(), key);
+
+            buff.delete(0, buff.length());
+        }
+
     }
 
     private void buildData(String prefix, long start, long size,

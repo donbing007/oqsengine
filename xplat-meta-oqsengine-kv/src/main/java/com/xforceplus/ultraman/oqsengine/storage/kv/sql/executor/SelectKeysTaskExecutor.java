@@ -13,22 +13,29 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * 查询指定数量符合要求的key.
+ * 可以指定从头查询还是从尾查询.
+ *
  * @author dongbin
  * @version 0.1 2021/07/26 11:15
  * @since 1.8
  */
-public class ListKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Collection<String>> {
+public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Collection<String>> {
+
+    private static final String SQL_ORDER_ASC = "ASC";
+    private static final String SQL_ORDER_DESC = "DESC";
 
     private String lastKey;
     private int blockSize;
+    private boolean first;
 
-    public ListKeysTaskExecutor(String tableName,
-                                TransactionResource<Connection> resource) {
+    public SelectKeysTaskExecutor(String tableName,
+                                  TransactionResource<Connection> resource) {
         this(tableName, resource, 0);
     }
 
-    public ListKeysTaskExecutor(String tableName,
-                                TransactionResource<Connection> resource, long timeoutMs) {
+    public SelectKeysTaskExecutor(String tableName,
+                                  TransactionResource<Connection> resource, long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 
@@ -38,6 +45,10 @@ public class ListKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Colle
 
     public void setBlockSize(int blockSize) {
         this.blockSize = blockSize;
+    }
+
+    public void setFirst(boolean first) {
+        this.first = first;
     }
 
     @Override
@@ -50,7 +61,11 @@ public class ListKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Colle
     }
 
     private Collection<String> doNoFirstTime(String startKey) throws SQLException {
-        String sql = String.format(SqlTemplateDefine.ITERATOR_NO_FIRST_TEMPLATE, getTableName());
+        String sql = String.format(
+            SqlTemplateDefine.ITERATOR_NO_FIRST_TEMPLATE,
+            getTableName(),
+            first ? ">" : "<",
+            first ? SQL_ORDER_ASC : SQL_ORDER_DESC);
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
             checkTimeout(ps);
 
@@ -63,7 +78,8 @@ public class ListKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Colle
     }
 
     private Collection<String> doFristTime(String startKey) throws SQLException {
-        String sql = String.format(SqlTemplateDefine.ITERATOR_FIRST_TEMPLATE, getTableName());
+        String sql = String.format(
+            SqlTemplateDefine.ITERATOR_FIRST_TEMPLATE, getTableName(), first ? SQL_ORDER_ASC : SQL_ORDER_DESC);
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
             checkTimeout(ps);
 
@@ -75,7 +91,7 @@ public class ListKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Colle
     }
 
     private Collection<String> doBuildResult(PreparedStatement ps) throws SQLException {
-        List<String> keys = new ArrayList((int) this.blockSize);
+        List<String> keys = new ArrayList(this.blockSize);
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 keys.add(rs.getString(FieldDefine.KEY));

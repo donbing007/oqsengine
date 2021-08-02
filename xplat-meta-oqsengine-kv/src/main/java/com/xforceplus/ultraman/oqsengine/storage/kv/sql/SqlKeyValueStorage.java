@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.DeleteTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.ExistTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.ListKeysTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SaveTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -44,7 +44,7 @@ import javax.annotation.Resource;
  * l-9223372036854775807-9223372036854775806-100
  * <br>
  * 通过填充将末尾的数字填充为一样的位数来保证顺序.
-
+ *
  * @author dongbin
  * @version 0.1 2021/07/16 10:25
  * @since 1.8
@@ -183,17 +183,18 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
     }
 
     @Override
-    public DataIterator<String> iterator(String startKey) throws SQLException {
-        checkKey(startKey);
+    public DataIterator<String> iterator(String keyPrefix, boolean first) throws SQLException {
+        checkKey(keyPrefix);
 
         KeysIterator iterator = new KeysIterator();
         iterator.setTableName(tableName);
         iterator.setTimeout(timeout);
         iterator.setTransactionExecutor(transactionExecutor);
-        if (!startKey.endsWith("%")) {
-            iterator.setStartKey(startKey + "%");
+        iterator.setFirst(first);
+        if (!keyPrefix.endsWith("%")) {
+            iterator.setKeyPrefix(keyPrefix + "%");
         } else {
-            iterator.setStartKey(startKey);
+            iterator.setKeyPrefix(keyPrefix);
         }
 
         return iterator;
@@ -207,8 +208,9 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
         private TransactionExecutor transactionExecutor;
         private String tableName;
         private long timeout;
-        private String startKey;
+        private String keyPrefix;
         private String lastKey;
+        private boolean first;
 
         public KeysIterator() {
             this(100);
@@ -245,8 +247,12 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
             this.timeout = timeout;
         }
 
-        public void setStartKey(String startKey) {
-            this.startKey = startKey;
+        public void setKeyPrefix(String keyPrefix) {
+            this.keyPrefix = keyPrefix;
+        }
+
+        public void setFirst(boolean first) {
+            this.first = first;
         }
 
         @Override
@@ -264,10 +270,11 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
                     @Override
                     public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                         throws SQLException {
-                        ListKeysTaskExecutor task = new ListKeysTaskExecutor(tableName, resource, timeout);
+                        SelectKeysTaskExecutor task = new SelectKeysTaskExecutor(tableName, resource, timeout);
                         task.setLastKey(lastKey);
                         task.setBlockSize(limit);
-                        return task.execute(startKey);
+                        task.setFirst(first);
+                        return task.execute(keyPrefix);
                     }
 
                     @Override

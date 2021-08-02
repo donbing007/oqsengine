@@ -59,8 +59,20 @@ public interface KeyValueStorage<T> {
      * 对KEY进行迭代, KEY将按顺序被迭代.
      * KEY可以只输入开始的部份KEY.
      *
-     * @param startKey 开始的key.
+     * @param keyPrefix 开始的key.
      * @return 迭代器.
      */
-    public DataIterator<String> iterator(String startKey) throws SQLException;
+    public default DataIterator<String> iterator(String keyPrefix) throws SQLException {
+        return iterator(keyPrefix, true);
+    }
+
+    /**
+     * 对KEY进行迭代, KEY将按顺序被迭代.
+     * KEY可以只输入开始的部份KEY.
+     *
+     * @param keyPrefix key前辍.
+     * @param first true从开头开始迭代,false从尾到开始迭代.
+     * @return 迭代器.
+     */
+    public DataIterator<String> iterator(String keyPrefix, boolean first) throws SQLException;
 }
