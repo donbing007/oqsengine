@@ -69,7 +69,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Resource
     private SQLTaskStorage sqlTaskStorage;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
 
     private int maxRecovers = 5;

@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -22,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
-import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -76,8 +74,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
 
-    @Resource(name = "snowflakeIdGenerator")
-    private LongIdGenerator idGenerator;
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
+    private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
+
+    @Resource(name = "longContinuousPartialOrderIdGenerator")
+    private LongIdGenerator longContinuousPartialOrderIdGenerator;
 
     @Resource(name = "serviceTransactionExecutor")
     private TransactionExecutor transactionExecutor;
@@ -99,9 +100,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private EventBus eventBus;
-
-    @Resource(name = "redisIDGenerator")
-    private IDGenerator redisIDGenerator;
 
     /**
      * 字段校验器工厂.
@@ -283,6 +281,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        // 计算字段的计算动作.
         Collection<CalculationHint> hints;
         try {
             hints = processCalculationField(entity, entityClass, true);
@@ -316,7 +315,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
-                    long newId = idGenerator.next();
+                    long newId = longNoContinuousPartialOrderIdGenerator.next();
                     entity.resetId(newId);
                 }
                 entity.resetVersion(0);
@@ -769,9 +768,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
             .withKeyValueStorage(this.kv)
+
+            .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
             .withEntityClass(entityClass)
             .withEntity(entity)
-            .withBizIdGenerator(redisIDGenerator)
             .build();
     }
 

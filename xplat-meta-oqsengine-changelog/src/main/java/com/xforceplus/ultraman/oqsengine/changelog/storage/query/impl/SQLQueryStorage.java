@@ -32,7 +32,7 @@ public class SQLQueryStorage implements QueryStorage {
     @Resource(name = "changelogDataSource")
     private DataSource changelogQueryDataSource;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator snowFlakeIdGenerator;
 
     private String tableName = "changeversion";

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
-import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -105,17 +105,17 @@ public interface CalculationLogicContext {
     Collection<CalculationHint> getHints();
 
     /**
-     * 增加一个 业务id生成器.
+     * 获取连续且偏序的ID生成器.
      *
-     * @param bizIDGenerator generator.
+     * @return 实例.
      */
-    void bizIdGenerator(IDGenerator bizIDGenerator);
+    LongIdGenerator getLongContinuousPartialOrderIdGenerator();
 
     /**
-     * 获取 业务id生成器.
+     * 获取不连接续,但偏序的ID生成器.
      *
-     * @return bizIDGenerator.
+     * @return 实例.
      */
-    IDGenerator getBizIDGenerator();
+    LongIdGenerator getLongNoContinuousPartialOrderIdGenerator();
 
 }

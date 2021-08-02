@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,6 +43,8 @@ import org.slf4j.LoggerFactory;
 public class MultiLocalTransaction implements Transaction {
 
     private final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
+
+    private static AtomicLong COMMIT_ID_NUMBER = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
 
     private long id;
     private long attachment;
@@ -108,6 +111,9 @@ public class MultiLocalTransaction implements Transaction {
                 if (logger.isDebugEnabled()) {
                     logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
                 }
+
+                // 当前提交号记录.
+                COMMIT_ID_NUMBER.set(commitId);
 
                 eventBus.notify(
                     new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,

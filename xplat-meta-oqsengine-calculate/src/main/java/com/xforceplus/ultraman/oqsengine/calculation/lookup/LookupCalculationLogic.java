@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.impl;
+package com.xforceplus.ultraman.oqsengine.calculation.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -33,6 +33,7 @@ public class LookupCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
 
+        //link(context, targetEntity);
 
         targetValue = targetValue.copy(context.getFocusField());
 
@@ -90,5 +91,23 @@ public class LookupCalculationLogic implements CalculationLogic {
         long targetFieldId = ((Lookup) context.getFocusField().config().getCalculation()).getFieldId();
         Optional<IValue> targetValue = targetEntity.entityValue().getValue(targetFieldId);
         return targetValue.orElse(null);
+    }
+
+    /**
+     * 记录当前lookup关系.
+     * 用以在之后查询那些实例lookup了目标.
+     * 记录以KV方式记录.
+     * KEY的组成方式如下.
+     * 前辍字符-目标字段id-目标实例id-目标实例版本号 如下.
+     * l-912393213123-123901923232-1
+     * value是
+     */
+    private void logLink(CalculationLogicContext context, IEntity targetEntity) {
+        IEntity lookupEntity = context.getEntity();
+        IEntityClass lookupEntityClass = context.getEntityClass();
+
+        StringBuilder linkKey = new StringBuilder();
+        linkKey.append("l-");
+
     }
 }

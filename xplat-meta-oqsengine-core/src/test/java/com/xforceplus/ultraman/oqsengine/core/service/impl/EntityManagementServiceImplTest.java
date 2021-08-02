@@ -36,9 +36,12 @@ public class EntityManagementServiceImplTest {
 
     private EntityManagementServiceImpl impl;
 
+    /**
+     * 每个测试初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
-        impl = BaseInit.entityManagementService(EntityClassDefine.getMockMetaManager());
+        impl = TestInitTools.entityManagementService(EntityClassDefine.getMockMetaManager());
 
         impl.init();
     }
@@ -46,7 +49,7 @@ public class EntityManagementServiceImplTest {
 
     @AfterEach
     public void after() throws Exception {
-        BaseInit.close();
+        TestInitTools.close();
     }
 
     @Test

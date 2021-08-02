@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.impl;
+package com.xforceplus.ultraman.oqsengine.calculation.autofill;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -15,11 +15,13 @@ import java.util.Optional;
  */
 public class AutoFillCalculationLogic implements CalculationLogic {
 
-    private static final int DEFAULT_STEP = 1;
-
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
-        Object result = context.getBizIDGenerator().nextId("", DEFAULT_STEP);
+        //TODO: 还没定义namespace.
+        if (!context.getLongContinuousPartialOrderIdGenerator().supportNameSpace()) {
+            throw new CalculationLogicException("An invalid ID generator must support namespaces.");
+        }
+        Object result = context.getLongContinuousPartialOrderIdGenerator().next("");
         if (null == result) {
             throw new CalculationLogicException("autoFill id generate is null.");
         }

@@ -35,7 +35,7 @@ public class RedisOrderContinuousLongIdGeneratorTest {
     public void before() throws Exception {
 
         redisClient = CommonInitialization.getInstance().getRedisClient();
-        idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test", () -> 0L);
+        idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test");
         idGenerator.init();
 
         conn = redisClient.connect();

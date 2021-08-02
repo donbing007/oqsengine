@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.calculation.factory;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.impl.AutoFillCalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.impl.FormulaCalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.impl.LookupCalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.impl.UnknownCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.autofill.AutoFillCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.formula.FormulaCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.lookup.LookupCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.UnknownCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.HashMap;
 import java.util.Map;

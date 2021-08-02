@@ -73,7 +73,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
     @Resource(name = "cdcErrorStorage")
     private CdcErrorStorage cdcErrorStorage;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator seqNoGenerator;
 
     @Resource

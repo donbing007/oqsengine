@@ -37,16 +37,16 @@ public class CustomTransactionConfiguration {
      */
     @Bean
     public TransactionManager transactionManager(
-        LongIdGenerator snowflakeIdGenerator,
-        LongIdGenerator redisIdGenerator,
+        LongIdGenerator longNoContinuousPartialOrderIdGenerator,
+        LongIdGenerator longContinuousPartialOrderIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
         CommitIdStatusService commitIdStatusService,
         EventBus eventBus,
         CacheEventHandler cacheEventHandler) {
         return DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withSurvivalTimeMs(transactionTimeoutMs)
-            .withTxIdGenerator(snowflakeIdGenerator)
-            .withCommitIdGenerator(redisIdGenerator)
+            .withTxIdGenerator(longNoContinuousPartialOrderIdGenerator)
+            .withCommitIdGenerator(longContinuousPartialOrderIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
             .withWaitCommitSync(true)
             .withEventBus(eventBus)

@@ -29,7 +29,7 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
 
     private Logger logger = LoggerFactory.getLogger(ManyToOneRelationChangelog.class);
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private IdGenerator<Long> idGenerator;
 
     @Resource

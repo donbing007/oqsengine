@@ -59,6 +59,9 @@ public class EntitySearchServiceImplTest {
     private MetaManager metaManager;
     private EntitySearchServiceImpl impl;
 
+    /**
+     * 每个测试初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         commitIdStatusService = mock(CommitIdStatusService.class);

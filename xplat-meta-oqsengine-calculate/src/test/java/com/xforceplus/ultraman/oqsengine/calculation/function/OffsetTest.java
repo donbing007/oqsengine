@@ -7,7 +7,7 @@ import com.googlecode.aviator.runtime.type.AviatorRuntimeJavaType;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.ExpressionUtils;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;

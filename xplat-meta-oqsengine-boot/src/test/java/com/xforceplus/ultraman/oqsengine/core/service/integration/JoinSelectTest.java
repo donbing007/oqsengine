@@ -59,7 +59,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource

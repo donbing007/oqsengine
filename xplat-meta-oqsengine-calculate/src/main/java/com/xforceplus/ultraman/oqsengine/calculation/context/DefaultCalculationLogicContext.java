@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
-import com.xforceplus.ultraman.oqsengine.calculation.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -34,7 +34,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     private KeyValueStorage keyValueStorage;
     private Map<String, Object> attributes;
     private Collection<CalculationHint> hints;
-    private IDGenerator bizIDGenerator;
+    private LongIdGenerator longContinuousPartialOrderIdGenerator;
+    private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
 
     @Override
     public boolean isBuild() {
@@ -109,13 +110,13 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     }
 
     @Override
-    public void bizIdGenerator(IDGenerator bizIDGenerator) {
-        this.bizIDGenerator = bizIDGenerator;
+    public LongIdGenerator getLongContinuousPartialOrderIdGenerator() {
+        return this.longContinuousPartialOrderIdGenerator;
     }
 
     @Override
-    public IDGenerator getBizIDGenerator() {
-        return bizIDGenerator;
+    public LongIdGenerator getLongNoContinuousPartialOrderIdGenerator() {
+        return this.longNoContinuousPartialOrderIdGenerator;
     }
 
     /**
@@ -129,7 +130,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private KeyValueStorage keyValueStorage;
         private MetaManager metaManager;
         private Map<String, Object> attributes;
-        private IDGenerator bizIDGenerator;
+        private LongIdGenerator longContinuousPartialOrderIdGenerator;
+        private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
 
         private Builder() {
         }
@@ -168,8 +170,15 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
-        public Builder withBizIdGenerator(IDGenerator bizIdGenerator) {
-            this.bizIDGenerator = bizIdGenerator;
+        public Builder withLongContinuousPartialOrderIdGenerator(
+            LongIdGenerator longContinuousPartialOrderIdGenerator) {
+            this.longContinuousPartialOrderIdGenerator = longContinuousPartialOrderIdGenerator;
+            return this;
+        }
+
+        public Builder withLongNoContinuousPartialOrderIdGenerator(
+            LongIdGenerator longNoContinuousPartialOrderIdGenerator) {
+            this.longNoContinuousPartialOrderIdGenerator = longNoContinuousPartialOrderIdGenerator;
             return this;
         }
 
@@ -198,7 +207,10 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             defaultCalculationLogicContext.metaManager = this.metaManager;
             defaultCalculationLogicContext.masterStorage = this.masterStorage;
             defaultCalculationLogicContext.keyValueStorage = this.keyValueStorage;
-            defaultCalculationLogicContext.bizIDGenerator = this.bizIDGenerator;
+            defaultCalculationLogicContext.longContinuousPartialOrderIdGenerator =
+                this.longContinuousPartialOrderIdGenerator;
+            defaultCalculationLogicContext.longNoContinuousPartialOrderIdGenerator =
+                this.longNoContinuousPartialOrderIdGenerator;
             return defaultCalculationLogicContext;
         }
     }

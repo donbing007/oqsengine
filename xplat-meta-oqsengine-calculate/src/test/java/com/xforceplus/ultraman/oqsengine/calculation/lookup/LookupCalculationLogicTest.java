@@ -1,12 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculation.impl;
-
+package com.xforceplus.ultraman.oqsengine.calculation.lookup;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -30,7 +28,7 @@ import org.junit.jupiter.api.Test;
  * lookup 字段计算逻辑.
  *
  * @author dongbin
- * @version 0.1 2021/07/12 19:16
+ * @version 0.1 2021/08/02 15:49
  * @since 1.8
  */
 public class LookupCalculationLogicTest {

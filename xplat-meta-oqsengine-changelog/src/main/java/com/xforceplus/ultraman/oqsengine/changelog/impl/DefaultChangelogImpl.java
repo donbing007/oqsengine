@@ -41,7 +41,7 @@ public class DefaultChangelogImpl implements ChangelogService {
     @Resource
     private ReplayService replayService;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private IdGenerator<Long> idGenerator;
 
     private Logger logger = LoggerFactory.getLogger(ChangelogService.class);

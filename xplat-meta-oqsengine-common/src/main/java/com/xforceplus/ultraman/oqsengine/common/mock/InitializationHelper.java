@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  */
 public class InitializationHelper {
 
-    final static Logger LOGGER = LoggerFactory.getLogger(InitializationHelper.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(InitializationHelper.class);
 
     private static List<BeanInitialization> clearList = new ArrayList<>();
 

@@ -14,12 +14,16 @@ public interface LongIdGenerator extends IdGenerator<Long> {
      *
      * @return true 连续的,false 不连续的.
      */
-    boolean isContinuous();
+    default boolean isContinuous() {
+        return false;
+    }
 
     /**
      * 是否偏序的.
      *
      * @return true 偏序,false不偏序.
      */
-    boolean isPartialOrder();
+    default boolean isPartialOrder() {
+        return false;
+    }
 }

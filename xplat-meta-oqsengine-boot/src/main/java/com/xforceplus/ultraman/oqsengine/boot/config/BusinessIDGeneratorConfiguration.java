@@ -2,8 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
-import com.xforceplus.ultraman.oqsengine.calculation.adapt.RedisIDGenerator;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
+import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
@@ -161,12 +160,6 @@ public class BusinessIDGeneratorConfiguration {
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);
-    }
-
-    @Bean(name = "redisIDGenerator")
-    public RedisIDGenerator redisIDGenerator() {
-        RedisIDGenerator generator = new RedisIDGenerator();
-        return generator;
     }
 
     @Bean
