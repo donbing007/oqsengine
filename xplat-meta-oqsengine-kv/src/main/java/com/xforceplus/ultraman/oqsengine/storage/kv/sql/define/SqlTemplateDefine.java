@@ -34,6 +34,14 @@ public final class SqlTemplateDefine {
         String.format("SELECT %s FROM %s WHERE %s = ? limit 0, 1", FieldDefine.VALUE, "%s", FieldDefine.KEY);
 
     /**
+     * 批量查询KEY的VALUE<br>
+     * 需要动态组织 ? .
+     */
+    public static final String SELECTS_TEMPLATE =
+        String.format("SELECT %s,%s FROM %s WHERE %s IN (%s)",
+            FieldDefine.KEY, FieldDefine.VALUE, "%s", FieldDefine.KEY, "%s");
+
+    /**
      * 判断指定的key是否存在.<p></p>
      * 返回结果如果有命中则返回恒定的1.
      * {1}  完整的key.<p></p>

@@ -10,8 +10,9 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.DeleteTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.ExistTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetsTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SaveTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.SQLException;
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 /**
@@ -49,7 +51,7 @@ import javax.annotation.Resource;
  * @version 0.1 2021/07/16 10:25
  * @since 1.8
  */
-public class SqlKeyValueStorage implements KeyValueStorage<Object> {
+public class SqlKeyValueStorage implements KeyValueStorage {
 
     private static final char DISABLE_SYMBOL = '%';
 
@@ -164,14 +166,51 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
     }
 
     @Override
+    public Collection<Map.Entry<String, Object>> get(String[] keys) throws SQLException {
+        for (String key : keys) {
+            checkKey(key);
+        }
+
+        Collection<Map.Entry<String, byte[]>> results =
+            (Collection<Map.Entry<String, byte[]>>) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws SQLException {
+
+                    return new GetsTaskExecutor(tableName, resource, timeout).execute(keys);
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+
+        return results.stream().map(r ->
+            new AbstractMap.SimpleEntry<>(r.getKey(), serializeStrategy.unserialize(r.getValue()))
+        ).collect(Collectors.toList());
+    }
+
+    @Override
     public void delete(String key) throws SQLException {
-        checkKey(key);
+        delete(new String[] {key});
+    }
+
+    @Override
+    public void delete(String[] keys) throws SQLException {
+        if (keys == null || keys.length == 0) {
+            return;
+        }
+
+        for (String key : keys) {
+            checkKey(key);
+        }
 
         transactionExecutor.execute(new ResourceTask() {
             @Override
             public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                 throws SQLException {
-                return new DeleteTaskExecutor(tableName, resource, timeout).execute(key);
+                return new DeleteTaskExecutor(tableName, resource, timeout).execute(keys);
             }
 
             @Override
@@ -179,7 +218,6 @@ public class SqlKeyValueStorage implements KeyValueStorage<Object> {
                 return true;
             }
         });
-
     }
 
     @Override

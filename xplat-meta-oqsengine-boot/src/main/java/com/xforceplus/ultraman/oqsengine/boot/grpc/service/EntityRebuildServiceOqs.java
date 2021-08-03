@@ -344,10 +344,10 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
             .setIsCancel(taskInfo.isCancel())
             .setIsDone(taskInfo.isDone())
             .setStatus(taskInfo.status().name())
-            .setBatchSize(taskInfo.getBatchSize())
+            .setBatchSize((int) taskInfo.getBatchSize())
             .setEntityId(taskInfo.getEntity())
             .setFinishSize(taskInfo.getFinishSize())
-            .setPercentage(taskInfo.getProgressPercentage())
+            .setPercentage((int) taskInfo.getProgressPercentage())
             .setStarts(taskInfo.getStarts())
             .setEnds(taskInfo.getEnds())
             .build();

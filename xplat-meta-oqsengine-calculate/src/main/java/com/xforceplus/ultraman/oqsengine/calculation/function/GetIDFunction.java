@@ -4,9 +4,9 @@ import com.alibaba.google.common.base.Preconditions;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
 import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorObject;
-import com.xforceplus.ultraman.oqsengine.calculation.autofill.adapt.RedisIDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.NumberFormatUtils;
 import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.SpringContextUtil;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 
@@ -19,7 +19,7 @@ import org.apache.commons.lang.StringUtils;
  */
 public class GetIDFunction extends AbstractFunction {
 
-    private static final String ID_GENERATOR_NAME = "redisIDGenerator";
+    private static final String ID_GENERATOR_NAME = "longContinuousPartialOrderIdGenerator";
 
     @Override
     public String getName() {
@@ -29,14 +29,13 @@ public class GetIDFunction extends AbstractFunction {
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject numberFormat, AviatorObject bizTag,
                               AviatorObject step) {
-        RedisIDGenerator generator = (RedisIDGenerator) SpringContextUtil.getBean(ID_GENERATOR_NAME);
-        Long stepValue = (Long) step.getValue(env);
+        LongIdGenerator generator = (LongIdGenerator) SpringContextUtil.getBean(ID_GENERATOR_NAME);
         String bizTagValue = String.valueOf(bizTag.getValue(env));
         String numverFormatValue = String.valueOf(numberFormat.getValue(env));
         Preconditions.checkNotNull(generator);
         Preconditions.checkArgument(!StringUtils.isBlank(bizTagValue), "BizTag must not be empty!");
         Preconditions.checkArgument(!StringUtils.isBlank(numverFormatValue), "Number format must not be empty!");
-        Long id = generator.nextId(bizTagValue, stepValue.intValue());
+        Long id = generator.next(bizTagValue);
         String result = NumberFormatUtils.parse(numverFormatValue, id);
         return FunctionUtils.wrapReturn(result);
     }

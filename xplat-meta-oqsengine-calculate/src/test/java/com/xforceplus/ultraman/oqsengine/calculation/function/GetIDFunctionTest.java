@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function;
 
-import static com.xforceplus.ultraman.test.tools.core.constant.ContainerEnvKeys.REDIS_HOST;
-import static com.xforceplus.ultraman.test.tools.core.constant.ContainerEnvKeys.REDIS_PORT;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
@@ -12,22 +10,20 @@ import com.googlecode.aviator.runtime.type.AviatorString;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.autofill.adapt.RedisIDGenerator;
 import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.ExpressionUtils;
 import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.SpringContextUtil;
-import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
-import java.lang.reflect.Field;
-import java.util.Collection;
+import io.lettuce.core.RedisClient;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
-import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 
 /**
  * .
@@ -39,31 +35,27 @@ import org.redisson.config.Config;
 @ExtendWith(RedisContainer.class)
 public class GetIDFunctionTest {
 
-    private static RedissonClient redissonClient;
-    private static RedisIDGenerator redisIDGenerator;
+    private static IdGenerator redisIDGenerator;
 
+    /**
+     * 初始化.
+     */
     @BeforeAll
     public static void before() throws IllegalAccessException {
-        Config config = new Config();
-        String redisIp = System.getProperty(REDIS_HOST);
-        int redisPort = Integer.parseInt(System.getProperty(REDIS_PORT));
-        config.useSingleServer().setAddress(String.format("redis://%s:%s", redisIp, redisPort));
-        redissonClient = Redisson.create(config);
-        redisIDGenerator = new RedisIDGenerator();
-        Collection<Field> taskFields = ReflectionUtils.printAllMembers(redisIDGenerator);
-        ReflectionUtils.reflectionFieldValue(taskFields,"redissonClient",redisIDGenerator,redissonClient);
+        RedisClient redisClient = CommonInitialization.getInstance().getRedisClient();
+        redisIDGenerator = new RedisOrderContinuousLongIdGenerator(redisClient);
         ExpressionUtils.addFunction(new GetIDFunction());
         MockedStatic mocked = mockStatic(SpringContextUtil.class);
-        mocked.when(()->SpringContextUtil.getBean(anyString())).thenReturn(redisIDGenerator);
+        mocked.when(() -> SpringContextUtil.getBean(anyString())).thenReturn(redisIDGenerator);
     }
 
     @Test
     public void testGetIDFunction() throws CalculationLogicException {
         GetIDFunction function = new GetIDFunction();
         Map<String, Object> params = com.alibaba.google.common.collect.Maps.newHashMap();
-        AviatorObject result = function.call(params,new AviatorString("{000}"),new AviatorString("testOne"),
-            FunctionUtils.wrapReturn(1l));
-        Assert.assertEquals("001",result.getValue(params).toString());
+        AviatorObject result = function.call(params, new AviatorString("{000}"), new AviatorString("testOne"),
+            FunctionUtils.wrapReturn(1L));
+        Assert.assertEquals("001", result.getValue(params).toString());
     }
 
     @Test
@@ -73,7 +65,7 @@ public class GetIDFunctionTest {
             .withExpression("getId(\"{0000}\",\"tag1\",10)").build();
         Map<String, Object> params = Maps.newHashMap();
         Object result = ExpressionUtils.execute(new ExecutionWrapper(wrapper, params));
-        Assert.assertEquals("0010",result.toString());
+        Assert.assertEquals("0010", result.toString());
     }
 
 
@@ -84,9 +76,9 @@ public class GetIDFunctionTest {
             .withCached(true)
             .withExpression("tenantId+\":\"+getId(\"{0000}\",tenantId,10)").build();
         Map<String, Object> params = Maps.newHashMap();
-        params.put("tenantId","vanke");
+        params.put("tenantId", "vanke");
         Object result = ExpressionUtils.execute(new ExecutionWrapper(wrapper, params));
-        Assert.assertEquals("vanke:0010",result.toString());
+        Assert.assertEquals("vanke:0010", result.toString());
     }
 
 
