@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.client;
 
+import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.DATE_PATTEN_PARSER;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +41,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -68,6 +71,7 @@ public class BizIDGeneratorRedisTest {
     private static final String linearBizType = "bizLinear";
     private static final String linearBizType2 = "bizLinear2";
     private static final String linearBizType3 = "bizLinear3";
+    private static final String linerBizType4 = "bizLinear4";
 
     private RedissonClient redissonClient;
     private DataSource dataSource;
@@ -89,7 +93,7 @@ public class BizIDGeneratorRedisTest {
 //        segmentInfo3.setBizType(linearBizType3);
 //        storage1.delete(segmentInfo3);
 
-        try(Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
             st.close();
@@ -184,6 +188,18 @@ public class BizIDGeneratorRedisTest {
             .build();
         int ret3 = storage1.build(info3);
         Assertions.assertEquals(ret3, 1);
+        Assertions.assertEquals(ret3, 1);
+
+        SegmentInfo info4 = SegmentInfo.builder().withBeginId(1l).withBizType(linerBizType4)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(2).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1l)
+            .withResetable(1)
+            .withPatternKey("")
+            .build();
+        int ret4 = storage1.build(info4);
+        Assertions.assertEquals(ret4, 1);
     }
 
     @Test
@@ -198,6 +214,7 @@ public class BizIDGeneratorRedisTest {
         al.set(value);
         SegmentId next = value.clone();
         next.nextId();
+        Assertions.assertTrue(al.compareAndSet(value, next));
         Assertions.assertTrue(al.compareAndSet(value, next));
     }
 
@@ -283,6 +300,35 @@ public class BizIDGeneratorRedisTest {
         LocalDateTime localDateTime = LocalDateTime.now();
         String date = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         Assertions.assertEquals(date + ":03001", bizID);
+    }
+
+    @Test
+    public void testResetIDGenerator() throws SQLException {
+
+        PatternParserManager manager = new PatternParserManager();
+        NumberPatternParser parser = new NumberPatternParser();
+        DatePatternParser datePattenParser = new DatePatternParser();
+        manager.registVariableParser(parser);
+        manager.registVariableParser(datePattenParser);
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
+
+        ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
+        String bizId = "";
+        for (int i = 0; i < 3; i++) {
+            if (i == 2) {
+                LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
+                DatePatternParser spy = Mockito.spy(datePattenParser);
+                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                manager.unRegist(DATE_PATTEN_PARSER);
+                manager.registVariableParser(spy);
+            }
+            bizId = bizIDGenerator1.nextId(linerBizType4);
+        }
+        System.out.println(bizId);
+        Assertions
+            .assertEquals(LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ":00001",
+                bizId);
     }
 
 }
