@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.ResetModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 项目名称: 票易通
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class SegmentId implements Serializable, Cloneable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SegmentId.class);
     private static final long serialVersionUID = -5222792505264340312L;
     private long maxId;
     private long loadingId;
@@ -64,7 +67,10 @@ public class SegmentId implements Serializable, Cloneable {
         }
         if (PatternParserUtil.needReset(pattern, currentValue, nextValue)
             && ResetModel.fromValue(resetable).equals(ResetModel.RESETABLE)) {
-            return new IDResult((ResultCode.RESET), convert(nextValue.getId()), getPatternKey(nextValue));
+            LOGGER.info("Need reset currentValue  : {}, nextValue : {}", currentValue, nextValue);
+            return new IDResult((ResultCode.RESET), convert(nextValue.getId()), getPatternKey(pattern, nextValue));
+        } else {
+            LOGGER.info("Resetable : {} currentValue : {} , nextValue :{}", resetable, currentValue, nextValue);
         }
         return new IDResult(ResultCode.NORMAL, convert(nextValue.getId()));
     }
