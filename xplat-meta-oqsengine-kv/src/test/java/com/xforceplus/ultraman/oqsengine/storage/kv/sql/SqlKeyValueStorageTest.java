@@ -14,14 +14,19 @@ import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class SqlKeyValueStorageTest {
 
     private SqlKeyValueStorage storage;
+    private DataSource ds;
 
     /**
      * 初始化测试实例.
@@ -52,7 +58,7 @@ public class SqlKeyValueStorageTest {
         storage.setTimeout(200);
 
 
-        DataSource ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
+        ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
             StorageInitialization.getInstance().getTransactionManager(),
@@ -68,6 +74,18 @@ public class SqlKeyValueStorageTest {
 
     }
 
+    /**
+     * 每次测试后的清理.
+     */
+    @AfterEach
+    public void after() throws Exception {
+        try (Connection conn = ds.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.execute("truncate table kv");
+            }
+        }
+    }
+
     @Test
     public void testFailKey() throws Exception {
 
@@ -78,6 +96,51 @@ public class SqlKeyValueStorageTest {
         Assertions.assertThrows(SQLException.class, () -> {
             storage.save("12%3", "123");
         });
+    }
+
+    @Test
+    public void testGetAndGets() throws Exception {
+        int size = 100;
+
+        Collection<Map.Entry<String, Object>> kvs = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            kvs.add(new AbstractMap.SimpleEntry<>(
+                String.format("batch-%d-%d", Long.MAX_VALUE, Long.MAX_VALUE - i), "testvalue-" + i));
+        }
+        Assertions.assertEquals(size, storage.save(kvs));
+
+        for (Map.Entry<String, Object> kv : kvs) {
+            Assertions.assertEquals(kv.getValue(), storage.get(kv.getKey()).get());
+        }
+
+
+        Map<String, Object> results = storage.get(kvs.stream().map(kv -> kv.getKey()).toArray(String[]::new))
+            .stream().collect(Collectors.toMap(r -> r.getKey(), r -> r.getValue(), (r0, r1) -> r0));
+        Assertions.assertEquals(results.size(), kvs.size());
+        for (Map.Entry<String, Object> kv : kvs) {
+            Assertions.assertEquals(kv.getValue(), results.get(kv.getKey()));
+        }
+    }
+
+    @Test
+    public void testDeleteAndDeletes() throws Exception {
+        int size = 100;
+
+        Collection<Map.Entry<String, Object>> kvs = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            kvs.add(new AbstractMap.SimpleEntry<>(
+                String.format("batch-%d-%d", Long.MAX_VALUE, Long.MAX_VALUE - i), "testvalue-" + i));
+        }
+        Assertions.assertEquals(size, storage.save(kvs));
+
+        String targetKey = kvs.stream().findFirst().get().getKey();
+        storage.delete(targetKey);
+        Assertions.assertFalse(storage.get(targetKey).isPresent());
+
+        storage.delete(kvs.stream().map(r -> r.getKey()).toArray(String[]::new));
+        for (Map.Entry<String, Object> kv : kvs) {
+            Assertions.assertFalse(storage.exist(kv.getKey()));
+        }
     }
 
     @Test

@@ -1,13 +1,12 @@
-package com.xforceplus.ultraman.oqsengine.calculation.utils;
+package com.xforceplus.ultraman.oqsengine.calculation.helper;
 
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Optional;
  *
  * @since 1.8
  */
-public class CalculationHelper {
+public class FormulaHelper {
 
     private static ExecutionWrapper<?> toExecutionWrapper(String expression, List<String> args, IEntity entity) throws CalculationLogicException {
 
@@ -30,7 +29,6 @@ public class CalculationHelper {
         Map<String, Object> runtimeParams = toRuntimeParams(args, entity);
 
         return new ExecutionWrapper<>(expressionWrapper, runtimeParams);
-
     }
 
     private static Map<String, Object> toRuntimeParams(List<String> args, IEntity entity) throws CalculationLogicException {
@@ -59,16 +57,15 @@ public class CalculationHelper {
      * @return Optional<IValue>
      * @throws CalculationLogicException。
      */
-    public static Optional<IValue> calculate(String expression, List<String> args, CalculationLogicContext context) throws CalculationLogicException {
+    public static Object calculate(String expression, List<String> args, CalculationLogicContext context) throws CalculationLogicException {
         //  获取公式执行对象
         ExecutionWrapper<?> executionWrapper =
-            CalculationHelper.toExecutionWrapper(expression, args, context.getEntity());
+            toExecutionWrapper(expression, args, context.getEntity());
 
-        Object object = ExpressionUtils.execute(executionWrapper);
+        Object object = AviatorHelper.execute(executionWrapper);
         if (null == object) {
             throw new CalculationLogicException("formula executed, but result is null.");
         }
-
-        return Optional.of(IValueUtils.toIValue(context.getFocusField(), object));
+        return object;
     }
 }

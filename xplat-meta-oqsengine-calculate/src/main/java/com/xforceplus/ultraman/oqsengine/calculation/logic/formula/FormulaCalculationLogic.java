@@ -2,18 +2,12 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationHelper;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +30,9 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
         //  执行公式
         try {
-            return CalculationHelper.calculate(formula.getExpression(), formula.getArgs(), context);
+            //  调用公式执行器执行
+            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
+                FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
         } catch (Exception e) {
             //  异常时
             if (formula.getFailedPolicy().equals(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {

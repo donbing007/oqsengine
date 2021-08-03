@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.autofill;
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -59,7 +59,9 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     private Optional<IValue> onSenior(CalculationLogicContext context, AutoFill autoFill) throws CalculationLogicException {
         try {
-            return CalculationHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context);
+            //  调用公式执行器执行
+            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
+                FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
         } catch (Exception e) {
             logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
                 context.getFocusField().id(), e.getMessage());

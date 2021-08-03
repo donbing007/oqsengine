@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.common.serializable;
 
 /**
- * 无法进行反序列化。
- * @author Mike
+ * 无法进行反序列化.
+ *
+ * @author dongbin
  * @version 1.00 2011-8-9
  * @since 1.5
  */

@@ -12,9 +12,9 @@ import java.io.IOException;
  * 此实现是线程安全的.
  *
  * @author dongbin
+ * @author mike
  * @version 1.00 2020-07-16
  * @since 1.8
- * @author mike
  */
 public class HessianSerializeStrategy implements SerializeStrategy {
 

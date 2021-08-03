@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor.errors;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.ErrorDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -15,7 +14,7 @@ import java.util.Collections;
  *
  * @since 1.8
  */
-public class ReplaceErrorExecutor extends AbstractMasterExecutor<ErrorStorageEntity, Integer> {
+public class ReplaceErrorExecutor extends AbstractJdbcTaskExecutor<ErrorStorageEntity, Integer> {
 
     public static Executor<ErrorStorageEntity, Integer> build(
         String tableName, TransactionResource resource, long timeoutMs) {
