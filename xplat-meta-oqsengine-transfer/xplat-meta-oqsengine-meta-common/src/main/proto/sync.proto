@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 option java_multiple_files = true;
 
@@ -123,6 +123,8 @@ message Calculator {
   google.protobuf.Any failedDefaultValue = 14;
   int64 lookupEntityClassId = 15;
   int64 lookupEntityFieldId = 16;
+  int32 resetType = 17;
+  int32 domainNoSenior = 18;
 }
 
 message ProfileInfo {

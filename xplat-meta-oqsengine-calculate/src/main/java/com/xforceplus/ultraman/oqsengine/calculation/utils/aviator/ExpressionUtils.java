@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.formula.utils;
+package com.xforceplus.ultraman.oqsengine.calculation.utils.aviator;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;

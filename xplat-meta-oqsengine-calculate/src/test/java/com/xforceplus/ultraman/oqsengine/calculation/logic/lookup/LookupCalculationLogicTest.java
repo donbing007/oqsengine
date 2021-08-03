@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

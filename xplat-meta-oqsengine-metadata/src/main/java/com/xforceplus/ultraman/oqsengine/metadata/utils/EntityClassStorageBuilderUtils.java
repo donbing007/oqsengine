@@ -253,16 +253,53 @@ public class EntityClassStorageBuilderUtils {
     }
 
     private static AutoFill toAutoFill(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
-        if (calculator.getPatten().isEmpty()) {
-            throw new MetaSyncClientException("autoFill [patten] could not be null.",
-                false);
+
+        AutoFill.DomainNoType domainNoType = AutoFill.DomainNoType.instance(calculator.getDomainNoSenior());
+
+        //  校验
+        //  判断表达式层级逻辑是否允许
+        if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
+            throw new MetaSyncClientException(
+                String.format("autoFill [level] could not be less than %d.",
+                    MIN_FORMULA_LEVEL), false);
         }
+
+        switch (domainNoType) {
+            //  普通自增编号
+            case NORMAL: {
+                if (calculator.getPatten().isEmpty()) {
+                    throw new MetaSyncClientException("autoFill [patten] could not be null.",
+                        false);
+                }
+
+                break;
+            }
+            //  高级自增编号
+            case SENIOR: {
+                //  判断表达式不能为空
+                if (calculator.getExpression().isEmpty()) {
+                    throw new MetaSyncClientException("autoFill [expression] could not be null.",
+                        false);
+                }
+
+                break;
+            }
+            default: {
+                throw new MetaSyncClientException("autoFill [domainNoType] could be init.",
+                    false);
+            }
+        }
+
         return AutoFill.Builder.anAutoFill()
-            .withPatten(calculator.getPatten())
             .withModel(calculator.getModel())
             .withStep(calculator.getStep())
             .withMax(calculator.getMax().isEmpty() ? 0 : Long.parseLong(calculator.getMax()))
             .withMin(calculator.getMin().isEmpty() ? 0 : Long.parseLong(calculator.getMin()))
+            .withLevel(calculator.getLevel())
+            .withPatten(calculator.getPatten())
+            .withResetType(calculator.getResetType())
+            .withExpression(calculator.getExpression())
+            .withDomainNoType(domainNoType)
             .build();
     }
 

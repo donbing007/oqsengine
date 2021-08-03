@@ -4,9 +4,9 @@ import com.alibaba.google.common.base.Preconditions;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
 import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorObject;
-import com.xforceplus.ultraman.oqsengine.calculation.autofill.adapt.RedisIDGenerator;
-import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.NumberFormatUtils;
-import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.SpringContextUtil;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.autofill.adapt.RedisIDGenerator;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.NumberFormatUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 

@@ -148,4 +148,14 @@ public interface CalculatorOrBuilder extends
    * <code>int64 lookupEntityFieldId = 16;</code>
    */
   long getLookupEntityFieldId();
+
+  /**
+   * <code>int32 resetType = 17;</code>
+   */
+  int getResetType();
+
+  /**
+   * <code>int32 domainNoSenior = 18;</code>
+   */
+  int getDomainNoSenior();
 }
