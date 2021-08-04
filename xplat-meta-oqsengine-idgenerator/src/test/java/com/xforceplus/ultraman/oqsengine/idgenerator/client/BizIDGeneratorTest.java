@@ -49,13 +49,23 @@ public class BizIDGeneratorTest {
 
     private static final String bizType = "bizTest";
     private static final String bizType1 = "bizTest1";
+    private static final String linearBizType3 = "bizLinear3";
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
     private BizIDGenerator bizIDGenerator1;
+    private BizIDGenerator bizIDGenerator3;
     private ExecutorService executorService;
     private DataSource dataSource;
+    private ApplicationContext applicationContext;
     private DataSourcePackage dataSourcePackage;
+
+
+
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+    }
 
     @BeforeEach
     public void before() throws SQLException {
@@ -77,9 +87,21 @@ public class BizIDGeneratorTest {
         this.segmentService1 = new SegmentServiceImpl();
         this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         this.bizIDGenerator1 = new BizIDGenerator();
+        this.bizIDGenerator3 = new BizIDGenerator();
         ReflectionTestUtils.setField(segmentService1, "sqlSegmentStorage", storage1);
         ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService", segmentService1);
         ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory", idGeneratorFactory1);
+        ReflectionTestUtils.setField(bizIDGenerator3, "idGeneratorFactory", idGeneratorFactory1);
+
+        PatternParserManager manager = new PatternParserManager();
+        NumberPatternParser parser = new NumberPatternParser();
+        DatePatternParser datePattenParser = new DatePatternParser();
+        manager.registVariableParser(parser);
+        manager.registVariableParser(datePattenParser);
+        applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
+        ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
+
 
         SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType(bizType)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
@@ -91,7 +113,6 @@ public class BizIDGeneratorTest {
             .build();
         int ret = storage1.build(info);
         Assertions.assertEquals(ret, 1);
-        Assert.assertEquals(ret, 1);
 
         SegmentInfo info1 = SegmentInfo.builder().withBeginId(1l).withBizType(bizType1)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
@@ -103,6 +124,17 @@ public class BizIDGeneratorTest {
             .build();
         int ret1 = storage1.build(info1);
         Assert.assertEquals(ret1, 1);
+
+        SegmentInfo info3 = SegmentInfo.builder().withBeginId(1l).withBizType(linearBizType3)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1l)
+            .withResetable(0)
+            .withPatternKey("")
+            .build();
+        int ret3 = storage1.build(info3);
+        Assert.assertEquals(ret3, 1);
     }
 
     @AfterEach
@@ -141,6 +173,37 @@ public class BizIDGeneratorTest {
         }
         String expected1 = LocalDateTime.now().format(formatter) + ":01010";
         Assertions.assertEquals(expected1, bizId);
+    }
+
+    @Test
+    public void testMutliThreadOver() throws InterruptedException {
+
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch closeLatch = new CountDownLatch(50);
+        List<Future> futures = Lists.newArrayList();
+        for (int j = 0; j < 50; j++) {
+            Future future = executorService.submit(() -> {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                for (int i = 0; i < 100; i++) {
+
+                   System.out.println(bizIDGenerator3.nextId(linearBizType3));
+                }
+                closeLatch.countDown();
+            });
+            futures.add(future);
+        }
+        System.out.println("prepare execute nextID.....");
+        latch.countDown();
+        closeLatch.await();
+        String bizID = bizIDGenerator3.nextId(linearBizType3);
+        System.out.println("last bizID : " + bizID);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        String date = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Assert.assertEquals(date + ":05001", bizID);
     }
 
     @Test

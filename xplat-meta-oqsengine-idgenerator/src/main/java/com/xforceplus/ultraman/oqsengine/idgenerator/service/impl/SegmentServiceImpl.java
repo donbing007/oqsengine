@@ -59,10 +59,10 @@ public class SegmentServiceImpl implements SegmentService {
             if (row == 1) {
                 segmentInfo.setMaxId(newMaxId);
                 SegmentId segmentId = convert(segmentInfo);
-                LOGGER.info("getNextSegmentId success tinyIdInfo:{} current:{}", segmentInfo, segmentId);
+                LOGGER.info("getNextSegmentId success segmentInfo:{} current:{}", segmentInfo, segmentId);
                 return segmentId;
             } else {
-                LOGGER.info("getNextSegmentId conflict tinyIdInfo:{}", segmentInfo);
+                LOGGER.info("getNextSegmentId conflict segmentInfo:{}", segmentInfo);
             }
         }
         throw new IDGeneratorException("get next segment conflict");
@@ -125,6 +125,7 @@ public class SegmentServiceImpl implements SegmentService {
         segmentId.setResetable(idInfo.getResetable());
         // 默认30%加载
         segmentId.setLoadingId(segmentId.getCurrentId().getId() + idInfo.getStep() * Constants.LOADING_PERCENT / 100);
+        LOGGER.info("Loading Id set to {}",segmentId.getLoadingId());
         return segmentId;
     }
 }
