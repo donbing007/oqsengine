@@ -22,7 +22,7 @@ public class AviatorHelper {
 
     //  LRU-CACHE最大缓存公式个数
     private static final int CAPACITY = 1024 * 10;
-    //  函数内默认最大循环次数
+    //  函数内默认最大循环次数Assertions
     private static final int MAX_LOOP_COUNT = 8;
     private static final AviatorEvaluatorInstance INSTANCE;
 

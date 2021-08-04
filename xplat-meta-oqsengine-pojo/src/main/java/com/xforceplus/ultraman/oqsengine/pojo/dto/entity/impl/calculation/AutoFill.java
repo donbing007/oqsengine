@@ -37,9 +37,6 @@ public class AutoFill extends AbstractCalculation {
     @JsonProperty(value = "expression")
     private String expression;
 
-    @JsonProperty(value = "level")
-    private int level;
-
     @JsonProperty(value = "args")
     private List<String> args;
 
@@ -106,14 +103,6 @@ public class AutoFill extends AbstractCalculation {
 
     public void setExpression(String expression) {
         this.expression = expression;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public List<String> getArgs() {

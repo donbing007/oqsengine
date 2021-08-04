@@ -27,9 +27,6 @@ public class Formula extends AbstractCalculation  {
     @JsonProperty(value = "failedDefaultValue")
     private Object failedDefaultValue;
 
-    @JsonProperty(value = "level")
-    private int level;
-
     @JsonProperty(value = "args")
     private List<String> args;
 
@@ -55,14 +52,6 @@ public class Formula extends AbstractCalculation  {
 
     public void setFailedDefaultValue(Object failedDefaultValue) {
         this.failedDefaultValue = failedDefaultValue;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public List<String> getArgs() {

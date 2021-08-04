@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
  */
 public class StaticCalculation extends AbstractCalculation {
 
+    public static final int DEFAULT_LEVEL = 1;
+
     private StaticCalculation() {
         super(CalculationType.STATIC);
     }
@@ -36,6 +38,7 @@ public class StaticCalculation extends AbstractCalculation {
         public StaticCalculation build() {
             StaticCalculation staticCalculation = new StaticCalculation();
             staticCalculation.calculationType = CalculationType.STATIC;
+            staticCalculation.level = DEFAULT_LEVEL;
             return staticCalculation;
         }
     }

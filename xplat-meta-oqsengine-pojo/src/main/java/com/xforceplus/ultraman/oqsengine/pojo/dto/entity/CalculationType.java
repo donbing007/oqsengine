@@ -22,7 +22,7 @@ public enum CalculationType {
     /*
       公式字段.
      */
-    FORMULA((byte) 2, (byte) 3),
+    FORMULA((byte) 2, (byte) 2),
     /*
       自增字段.
      */
