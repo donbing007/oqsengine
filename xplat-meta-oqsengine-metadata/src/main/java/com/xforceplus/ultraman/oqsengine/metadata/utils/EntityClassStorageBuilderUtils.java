@@ -299,6 +299,7 @@ public class EntityClassStorageBuilderUtils {
             .withPatten(calculator.getPatten())
             .withResetType(calculator.getResetType())
             .withExpression(calculator.getExpression())
+            .withArgs(calculator.getArgsList())
             .withDomainNoType(domainNoType)
             .build();
     }

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.MOCK_SENIOR_EXPRESSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
 import com.google.protobuf.Any;
@@ -159,12 +160,16 @@ public class EntityClassSyncProtoBufMocker {
     /**
      * 生成autoFill-calculator
      */
-    public static Calculator autoFillCalculator(String patten, String model, String min, int step) {
+    public static Calculator autoFillCalculator(String patten, String express, int type, int level, List<String> args, String model, String min, int step) {
         return Calculator.newBuilder()
             .setCalculateType(CalculationType.AUTO_FILL.getSymbol())
             .setPatten(patten).setModel(model)
             .setMin(min)
             .setStep(step)
+            .setLevel(level)
+            .setExpression(express)
+            .setDomainNoSenior(type)
+            .addAllArgs(args)
             .build();
     }
 
@@ -203,7 +208,9 @@ public class EntityClassSyncProtoBufMocker {
                 break;
             }
             case AUTO_FILL: {
-                builder.setCalculator(autoFillCalculator(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
+                builder.setCalculator(autoFillCalculator(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_SENIOR_EXPRESSION,
+                    GeneralConstant.MOCK_DOMAIN_NOT_TYPE, GeneralConstant.MOCK_LEVEL,
+                    GeneralConstant.MOCK_SENIOR_ARGS, GeneralConstant.MOCK_MODEL,
                     GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP));
                 break;
             }

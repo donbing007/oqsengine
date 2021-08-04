@@ -371,7 +371,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
                         AutoFill.DomainNoType domainNoType =
                             ((AutoFill) entityField.config().getCalculation()).getDomainNoType();
-                        if (domainNoType.equals(AutoFill.DomainNoType.NORMAL)) {
+                        if (null == domainNoType ||
+                            domainNoType.equals(AutoFill.DomainNoType.NORMAL)) {
                             payLoads.add(
                                 new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
                                         new AutoFillUpgradePayload(entityField))

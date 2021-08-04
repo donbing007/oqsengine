@@ -85,8 +85,13 @@ public class StorageMetaManagerTest extends MetaTestHelper {
                     e.printStackTrace();
                 }
                 try {
-                    MetaInitialization.getInstance().getMetaManager().need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[pos]);
-                    successCount.incrementAndGet();
+                    String env = NEED_CONCURRENT_APP_ENV_LIST[pos];
+                    MetaInitialization.getInstance().getMetaManager().need(NEED_CONCURRENT_APP_ID, env);
+                    if (MetaInitialization.getInstance().getCacheExecutor().appEnvGet(NEED_CONCURRENT_APP_ID).equals(env)) {
+                        successCount.incrementAndGet();
+                    } else {
+                        failCount.incrementAndGet();
+                    }
                 } catch (Exception e) {
                     failCount.incrementAndGet();
                     logger.warn(e.getMessage());
@@ -438,6 +443,18 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             Assertions.assertEquals(exp.getCalculator().getPatten(), ((AutoFill) act.config().getCalculation()).getPatten());
             Assertions.assertEquals(exp.getCalculator().getModel(), ((AutoFill) act.config().getCalculation()).getModel());
             Assertions.assertEquals(exp.getCalculator().getStep(), ((AutoFill) act.config().getCalculation()).getStep());
+
+            Assertions.assertEquals(exp.getCalculator().getArgsList().size(), ((AutoFill) act.config().getCalculation()).getArgs().size());
+            for (int i = 0; i < exp.getCalculator().getArgsList().size(); i++) {
+                Assertions.assertEquals(exp.getCalculator().getArgsList().get(i), ((AutoFill) act.config().getCalculation()).getArgs().get(i));
+            }
+
+            Assertions.assertEquals(exp.getCalculator().getExpression(), ((AutoFill) act.config().getCalculation()).getExpression());
+            Assertions.assertEquals(exp.getCalculator().getDomainNoSenior(), ((AutoFill) act.config().getCalculation()).getDomainNoType().getType());
+            if (exp.getCalculator().getLevel() > MIN_ID) {
+                Assertions.assertEquals(exp.getCalculator().getLevel(),
+                    ((AutoFill) act.config().getCalculation()).getLevel());
+            }
         }
 
         //  check field Config

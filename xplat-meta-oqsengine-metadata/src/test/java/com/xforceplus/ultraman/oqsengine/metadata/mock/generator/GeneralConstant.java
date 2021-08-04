@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +26,10 @@ public class GeneralConstant {
     public static final String MOCK_EXPRESSION = "return 1 + 1;";
     public static final int MOCK_LEVEL = 1;
 
-    public static final String MOCK_PATTEN = "return 2 + 2;";
+    public static final String MOCK_PATTEN = "{0000}";
+    public static final String MOCK_SENIOR_EXPRESSION = "getId(${0000}, ${A}${B})";
+    public static final int MOCK_DOMAIN_NOT_TYPE = AutoFill.DomainNoType.SENIOR.getType();
+    public static final List<String> MOCK_SENIOR_ARGS = Arrays.asList("A", "B");
     public static final String MOCK_MODEL = "model";
     public static final String MOCK_MIN = "1";
     public static final int MOCK_STEP = 1;

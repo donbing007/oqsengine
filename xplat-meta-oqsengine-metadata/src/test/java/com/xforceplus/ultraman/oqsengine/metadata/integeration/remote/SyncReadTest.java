@@ -58,6 +58,8 @@ public class SyncReadTest extends MockerRequestClientHelper {
             Assertions.assertTrue(entityClassOptional.isPresent());
 
             IEntityClass iEntityClass = entityClassOptional.get();
+
+            Assertions.assertEquals(TEST_ENTITY_CLASS_ID, iEntityClass.id());
         }
     }
 }

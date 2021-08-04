@@ -117,7 +117,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     w.getAppId(), watchElement.getEnv(), w.getEnv());
             }
 
-            if (watchElement.getVersion() == NOT_EXIST_VERSION) {
+            if (watchElement.getVersion() == NOT_EXIST_VERSION || watchElement.getVersion() > w.getVersion()) {
                 return sendRegister(watcher.clientId(), watcher.uid(), true, w);
             }
 
