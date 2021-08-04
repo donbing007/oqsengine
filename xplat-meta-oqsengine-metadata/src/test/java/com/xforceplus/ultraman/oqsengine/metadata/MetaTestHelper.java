@@ -23,12 +23,13 @@ public abstract class MetaTestHelper {
         if (null == mockRequestHandler) {
             mockRequestHandler();
             init(mockRequestHandler);
+
+            mockRequestHandler.start();
         }
     }
 
     protected void init(IRequestHandler requestHandler) throws IllegalAccessException {
         mockRequestHandler = requestHandler;
-        mockRequestHandler.start();
         MockMetaManagerHolder.resetMetaManager(mockRequestHandler);
     }
 

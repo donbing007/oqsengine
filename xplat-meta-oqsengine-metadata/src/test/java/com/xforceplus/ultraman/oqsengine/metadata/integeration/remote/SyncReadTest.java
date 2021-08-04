@@ -26,14 +26,14 @@ public class SyncReadTest extends MockerRequestClientHelper {
     @BeforeEach
     public void before() throws Exception {
         if (Constant.IF_TEST_REMOTE) {
-            super.init();
+            init(false);
         }
     }
 
     @AfterEach
     public void after() throws Exception {
         if (Constant.IF_TEST_REMOTE) {
-            super.destroy();
+            destroy();
         }
     }
 
