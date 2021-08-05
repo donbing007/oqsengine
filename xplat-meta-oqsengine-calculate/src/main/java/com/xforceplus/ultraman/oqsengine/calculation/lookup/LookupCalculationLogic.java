@@ -51,8 +51,11 @@ public class LookupCalculationLogic implements CalculationLogic {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
 
+        /*
+        定位发起lookup的entity中的指定实例值.
+        其应该是一个long型指向目标target的id值.
+         */
         Lookup lookup = (Lookup) context.getFocusField().config().getCalculation();
-
         Optional<IValue> sourceValueOp = sourceEntity.entityValue().getValue(sourceField.id());
         if (!sourceValueOp.isPresent()) {
             return null;
@@ -99,6 +102,7 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
      * value为目标数据版本号.
+     *
      * @see com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {

@@ -24,14 +24,18 @@ import org.junit.jupiter.api.Test;
  */
 public class CalculationComparatorTest {
 
-    List<Long> EXPECTED = Arrays.asList(
-        NO_START_ID, NO_START_ID + 1, LOOKUP_START_ID + 1, LOOKUP_START_ID, AUTOFILL_START_ID, FORMULA_START_ID, FORMULA_START_ID + 2, FORMULA_START_ID + 1
-    );
     private static Long FORMULA_START_ID = 401L;
     private static Long AUTOFILL_START_ID = 301L;
     private static Long LOOKUP_START_ID = 201L;
     private static Long NO_START_ID = 101L;
+    private static List<Long> EXPECTED = Arrays.asList(
+        NO_START_ID, NO_START_ID + 1, LOOKUP_START_ID + 1, LOOKUP_START_ID,
+        AUTOFILL_START_ID, FORMULA_START_ID, FORMULA_START_ID + 2, FORMULA_START_ID + 1
+    );
 
+    /**
+     * 构造需要的数据.
+     */
     public static class NeedSortEntityField {
         public static final IEntityClass NEED_SORT_CLASS =
             OqsEntityClass.Builder.anEntityClass()
@@ -149,7 +153,8 @@ public class CalculationComparatorTest {
     @Test
     public void testSort() {
         List<IEntityField> entityFields =
-            NeedSortEntityField.NEED_SORT_CLASS.fields().stream().sorted(new CalculationComparator()).collect(Collectors.toList());
+            NeedSortEntityField.NEED_SORT_CLASS.fields().stream()
+                .sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
 
         for (int i = 0; i < entityFields.size(); i++) {
             Assertions.assertEquals(EXPECTED.get(i), entityFields.get(i).id());

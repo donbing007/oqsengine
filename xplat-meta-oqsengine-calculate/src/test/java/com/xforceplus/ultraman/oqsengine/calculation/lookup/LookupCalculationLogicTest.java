@@ -45,17 +45,17 @@ import org.junit.jupiter.api.Test;
 public class LookupCalculationLogicTest {
 
     private IEntityField targetLongField = EntityField.Builder.anEntityField()
-        .withId(2000)
+        .withId(Long.MAX_VALUE)
         .withFieldType(FieldType.LONG)
         .withName("target-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField targetStringField = EntityField.Builder.anEntityField()
-        .withId(2001)
+        .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("target-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass targetEntityClass = OqsEntityClass.Builder.anEntityClass()
-        .withId(2)
+        .withId(Long.MAX_VALUE)
         .withLevel(1)
         .withCode("l1")
         .withField(targetLongField)
@@ -63,17 +63,17 @@ public class LookupCalculationLogicTest {
         .build();
 
     private IEntityField lookLongField = EntityField.Builder.anEntityField()
-        .withId(1000)
+        .withId(Long.MAX_VALUE - 2)
         .withFieldType(FieldType.LONG)
         .withName("look-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField lookStringField = EntityField.Builder.anEntityField()
-        .withId(1001)
+        .withId(Long.MAX_VALUE - 3)
         .withFieldType(FieldType.STRING)
         .withName("look-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField lookStringLookupField = EntityField.Builder.anEntityField()
-        .withId(1003)
+        .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("look-string-lookup")
         .withConfig(
@@ -87,7 +87,7 @@ public class LookupCalculationLogicTest {
                 .build()
         ).build();
     private IEntityClass lookupEntityClass = OqsEntityClass.Builder.anEntityClass()
-        .withId(1)
+        .withId(Long.MAX_VALUE - 1)
         .withLevel(0)
         .withCode("lookupClass")
         .withField(lookLongField)
@@ -106,7 +106,7 @@ public class LookupCalculationLogicTest {
     public void testCalculate() throws Exception {
         // 目标被lookup的实体.
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withId(1000)
+            .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
             .withVersion(0)
             .withTime(System.currentTimeMillis())
@@ -121,7 +121,7 @@ public class LookupCalculationLogicTest {
 
         // 发起lookup的实体.
         IEntity lookupEntity = Entity.Builder.anEntity()
-            .withId(100)
+            .withId(Long.MAX_VALUE - 1)
             .withEntityClassRef(lookupEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withEntityValue(

@@ -33,4 +33,17 @@ public class NumberUtilsTest {
         Assertions.assertEquals(1, NumberUtils.size(0));
     }
 
+    @Test
+    public void testZeroFill() {
+        int maxLen = 19;
+        Assertions.assertEquals("0000000000000000100", NumberUtils.zeroFill(100, maxLen));
+        Assertions.assertEquals(Long.toString(Long.MAX_VALUE), NumberUtils.zeroFill(Long.MAX_VALUE, maxLen));
+
+        try {
+            NumberUtils.zeroFill(-20, maxLen);
+            Assertions.fail("Negative numbers should throw exceptions, but they don't.");
+        } catch (IllegalArgumentException ex) {
+            ex.printStackTrace();
+        }
+    }
 }

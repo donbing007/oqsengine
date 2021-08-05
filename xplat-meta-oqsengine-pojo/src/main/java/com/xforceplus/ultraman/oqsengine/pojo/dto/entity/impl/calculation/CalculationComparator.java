@@ -18,6 +18,12 @@ import java.util.Comparator;
  */
 public class CalculationComparator implements Comparator<IEntityField> {
 
+    private static final CalculationComparator INSTANCE = new CalculationComparator();
+
+    public static Comparator<IEntityField> getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public int compare(IEntityField o1, IEntityField o2) {
         if (o1.calculationType() == FORMULA && o2.calculationType() == FORMULA) {

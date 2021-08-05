@@ -31,11 +31,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -51,8 +46,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MysqlContainer.class)
 public class BizIDGeneratorTest {
 
-    private static final String bizType = "bizTest";
-    private static final String bizType1 = "bizTest1";
+    private static final String BIZ_TEST = "bizTest";
+    private static final String BIZ_TYPE_1 = "bizTest1";
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
@@ -61,6 +56,9 @@ public class BizIDGeneratorTest {
     private DataSource dataSource;
     private DataSourcePackage dataSourcePackage;
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void before() throws SQLException {
         System.setProperty(
@@ -85,33 +83,35 @@ public class BizIDGeneratorTest {
         ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService", segmentService1);
         ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory", idGeneratorFactory1);
 
-        SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType(bizType)
+        SegmentInfo info = SegmentInfo.builder().withBeginId(1L).withBizType(BIZ_TEST)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
             .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(1000)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-            .withVersion(1l)
+            .withVersion(1L)
             .withResetable(1)
             .withPatternKey("")
             .build();
         int ret = storage1.build(info);
         Assertions.assertEquals(ret, 1);
-        Assert.assertEquals(ret, 1);
 
-        SegmentInfo info1 = SegmentInfo.builder().withBeginId(1l).withBizType(bizType1)
+        SegmentInfo info1 = SegmentInfo.builder().withBeginId(1L).withBizType(BIZ_TYPE_1)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
             .withMaxId(0L).withPatten("{yyyy}{MM}{dd}-{00000}").withMode(1).withStep(1000)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-            .withVersion(1l)
+            .withVersion(1L)
             .withResetable(1)
             .withPatternKey("")
             .build();
         int ret1 = storage1.build(info1);
-        Assert.assertEquals(ret1, 1);
+        Assertions.assertEquals(ret1, 1);
     }
 
+    /**
+     * 测试清理.
+     */
     @AfterEach
     public void after() throws SQLException {
-        try(Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
             st.close();
@@ -133,14 +133,14 @@ public class BizIDGeneratorTest {
         ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
         String bizId = "";
         for (int i = 0; i < 10; i++) {
-            bizId = bizIDGenerator1.nextId(bizType);
+            bizId = bizIDGenerator1.nextId(BIZ_TEST);
             System.out.println(bizId);
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String expected = LocalDateTime.now().format(formatter) + ":00010";
         Assertions.assertEquals(bizId, expected);
         for (int i = 0; i < 1000; i++) {
-            bizId = bizIDGenerator1.nextId(bizType);
+            bizId = bizIDGenerator1.nextId(BIZ_TEST);
             System.out.println(bizId);
         }
         String expected1 = LocalDateTime.now().format(formatter) + ":01010";
@@ -168,7 +168,7 @@ public class BizIDGeneratorTest {
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }
-            bizId = bizIDGenerator1.nextId(bizType);
+            bizId = bizIDGenerator1.nextId(BIZ_TEST);
         }
         System.out.println(bizId);
         Assertions
@@ -198,11 +198,11 @@ public class BizIDGeneratorTest {
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }
-            bizId = bizIDGenerator1.nextId(bizType1);
+            bizId = bizIDGenerator1.nextId(BIZ_TYPE_1);
         }
-        System.out.println(bizId);
-        Assert
-            .assertEquals(LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-00001",
+        Assertions
+            .assertEquals(
+                LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-00001",
                 bizId);
     }
 
