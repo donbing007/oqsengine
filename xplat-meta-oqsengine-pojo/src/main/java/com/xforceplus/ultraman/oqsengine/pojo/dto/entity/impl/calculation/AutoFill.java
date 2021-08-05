@@ -47,7 +47,7 @@ public class AutoFill extends AbstractCalculation {
     private int resetType;
 
     /**
-     * getter/setter
+     * getter/setter.
      */
     public String getPatten() {
         return patten;
