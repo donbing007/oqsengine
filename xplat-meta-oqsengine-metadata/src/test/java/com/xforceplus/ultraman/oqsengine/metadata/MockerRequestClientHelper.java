@@ -40,9 +40,9 @@ public class MockerRequestClientHelper extends MetaTestHelper {
 
         entityClassSyncClient = entityClassSyncClient(isLocal);
 
-        super.init(requestHandler);
-
         entityClassSyncClient.start();
+
+        super.init(requestHandler);
     }
 
     protected void destroy() throws Exception {

@@ -1,10 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;

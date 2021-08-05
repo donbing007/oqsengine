@@ -106,7 +106,7 @@ public final class EntityClassSyncProto {
       "_ID\020\002\022\017\n\013TENANT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022" +
       "\017\n\013UPDATE_TIME\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016" +
       "UPDATE_USER_ID\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024" +
-      "\n\020UPDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\337\002" +
+      "\n\020UPDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\212\003" +
       "\n\nCalculator\022\025\n\rcalculateType\030\001 \001(\005\022\022\n\ne" +
       "xpression\030\002 \001(\t\022\021\n\tvalidator\030\003 \001(\t\022\013\n\003mi" +
       "n\030\004 \001(\t\022\013\n\003max\030\005 \001(\t\022\021\n\tcondition\030\006 \001(\t\022" +
@@ -115,21 +115,22 @@ public final class EntityClassSyncProto {
       "l\030\013 \001(\005\022\014\n\004args\030\014 \003(\t\022\024\n\014failedPolicy\030\r " +
       "\001(\005\0220\n\022failedDefaultValue\030\016 \001(\0132\024.google" +
       ".protobuf.Any\022\033\n\023lookupEntityClassId\030\017 \001" +
-      "(\003\022\033\n\023lookupEntityFieldId\030\020 \001(\003\"k\n\013Profi" +
-      "leInfo\022\014\n\004code\030\001 \001(\t\022)\n\017entityFieldInfo\030" +
-      "\002 \003(\0132\020.EntityFieldInfo\022#\n\014relationInfo\030" +
-      "\003 \003(\0132\r.RelationInfo\"\362\001\n\014RelationInfo\022\n\n" +
-      "\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEntityCl" +
-      "assId\030\003 \001(\003\022\031\n\021leftEntityClassId\030\004 \001(\003\022\033" +
-      "\n\023leftEntityClassCode\030\005 \001(\t\022\024\n\014relationT" +
-      "ype\030\006 \001(\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entityFie" +
-      "ld\030\010 \001(\0132\020.EntityFieldInfo\022\025\n\rbelongToOw" +
-      "ner\030\t \001(\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityClass" +
-      "Sync\022C\n\010register\022\027.EntityClassSyncReques" +
-      "t\032\030.EntityClassSyncResponse\"\000(\0010\001BR\n8com" +
-      ".xforceplus.ultraman.oqsengine.meta.comm" +
-      "on.proto.syncB\024EntityClassSyncProtoP\001b\006p" +
-      "roto3"
+      "(\003\022\033\n\023lookupEntityFieldId\030\020 \001(\003\022\021\n\treset" +
+      "Type\030\021 \001(\005\022\026\n\016domainNoSenior\030\022 \001(\005\"k\n\013Pr" +
+      "ofileInfo\022\014\n\004code\030\001 \001(\t\022)\n\017entityFieldIn" +
+      "fo\030\002 \003(\0132\020.EntityFieldInfo\022#\n\014relationIn" +
+      "fo\030\003 \003(\0132\r.RelationInfo\"\362\001\n\014RelationInfo" +
+      "\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n\022rightEntit" +
+      "yClassId\030\003 \001(\003\022\031\n\021leftEntityClassId\030\004 \001(" +
+      "\003\022\033\n\023leftEntityClassCode\030\005 \001(\t\022\024\n\014relati" +
+      "onType\030\006 \001(\005\022\020\n\010identity\030\007 \001(\010\022%\n\013entity" +
+      "Field\030\010 \001(\0132\020.EntityFieldInfo\022\025\n\rbelongT" +
+      "oOwner\030\t \001(\010\022\016\n\006strong\030\n \001(\0102V\n\017EntityCl" +
+      "assSync\022C\n\010register\022\027.EntityClassSyncReq" +
+      "uest\032\030.EntityClassSyncResponse\"\000(\0010\001BR\n8" +
+      "com.xforceplus.ultraman.oqsengine.meta.c" +
+      "ommon.proto.syncB\024EntityClassSyncProtoP\001" +
+      "b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -185,7 +186,7 @@ public final class EntityClassSyncProto {
     internal_static_Calculator_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Calculator_descriptor,
-        new java.lang.String[] { "CalculateType", "Expression", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", "Patten", "Model", "Step", "Level", "Args", "FailedPolicy", "FailedDefaultValue", "LookupEntityClassId", "LookupEntityFieldId", });
+        new java.lang.String[] { "CalculateType", "Expression", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", "Patten", "Model", "Step", "Level", "Args", "FailedPolicy", "FailedDefaultValue", "LookupEntityClassId", "LookupEntityFieldId", "ResetType", "DomainNoSenior", });
     internal_static_ProfileInfo_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_ProfileInfo_fieldAccessorTable = new

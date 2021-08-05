@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculate;
+package com.xforceplus.ultraman.oqsengine.calculation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;

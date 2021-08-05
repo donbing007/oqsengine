@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType.FORMULA;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Comparator;
 
 /**
@@ -26,9 +23,11 @@ public class CalculationComparator implements Comparator<IEntityField> {
 
     @Override
     public int compare(IEntityField o1, IEntityField o2) {
-        if (o1.calculationType() == FORMULA && o2.calculationType() == FORMULA) {
-            return ((Formula) o1.config().getCalculation()).getLevel() - ((Formula) o2.config().getCalculation()).getLevel();
+        //  当优先级相同时，按照level从低到高进行排序
+        if (o1.calculationType().getPriority() == o2.calculationType().getPriority()) {
+            return o1.config().getCalculation().getLevel() - o2.config().getCalculation().getLevel();
         }
+        //  按优先级从低到高排序
         return o1.calculationType().getPriority() - o2.calculationType().getPriority();
     }
 }

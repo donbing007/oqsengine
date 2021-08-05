@@ -26,14 +26,14 @@ public class SyncReadTest extends MockerRequestClientHelper {
     @BeforeEach
     public void before() throws Exception {
         if (Constant.IF_TEST_REMOTE) {
-            super.init();
+            init(false);
         }
     }
 
     @AfterEach
     public void after() throws Exception {
         if (Constant.IF_TEST_REMOTE) {
-            super.destroy();
+            destroy();
         }
     }
 
@@ -58,6 +58,8 @@ public class SyncReadTest extends MockerRequestClientHelper {
             Assertions.assertTrue(entityClassOptional.isPresent());
 
             IEntityClass iEntityClass = entityClassOptional.get();
+
+            Assertions.assertEquals(TEST_ENTITY_CLASS_ID, iEntityClass.id());
         }
     }
 }

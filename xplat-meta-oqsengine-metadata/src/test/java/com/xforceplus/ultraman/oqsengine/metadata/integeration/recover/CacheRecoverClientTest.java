@@ -41,7 +41,7 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
                 }
             }).start();
 
-            super.init();
+            init(true);
 
             int i = 0;
             while (i < 100) {

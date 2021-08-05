@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup.helper;
+package com.xforceplus.ultraman.oqsengine.calculation.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
