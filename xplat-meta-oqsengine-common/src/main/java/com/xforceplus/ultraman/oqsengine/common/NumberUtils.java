@@ -7,7 +7,7 @@ package com.xforceplus.ultraman.oqsengine.common;
  * @version 0.1 2021/06/18 18:00
  * @since 1.8
  */
-public class NumberUtils {
+public final class NumberUtils {
 
     // 负数的位数阶梯.
     static long[] NEGATIVE_STEPS = new long[] {
@@ -53,12 +53,21 @@ public class NumberUtils {
         1000000000000000000L
     };
 
+    private NumberUtils() {
+    }
+
+    /**
+     * 判断指定整数的位数.
+     *
+     * @param value 目标值.
+     * @return 位数.
+     */
     public static int size(int value) {
         return size((long) value);
     }
 
     /**
-     * 判断数字的位数.
+     * 判断长整形数字的位数.
      *
      * @param value 目标数字.
      * @return 位数.
@@ -83,6 +92,44 @@ public class NumberUtils {
                 }
             }
             return POSITIVE_STEPS.length + 1;
+        }
+    }
+
+    /**
+     * 将整形转换成字符串,同时不足指定位数补0.
+     *
+     * @param value 目标数字.
+     * @param maxLen 目标最大位数.
+     * @return 结果.
+     */
+    public static String zeroFill(int value, int maxLen) {
+        return zeroFill((long) value, maxLen);
+    }
+
+    /**
+     * 转换成字符串,同时如果位数达不到指定的上限在左边补0.
+     *
+     * @param value  目标值.
+     * @param maxLen 需要的最大长度.
+     * @return 结果.
+     */
+    public static String zeroFill(long value, int maxLen) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Cannot use negative numbers.");
+        }
+
+        int len = NumberUtils.size(value);
+        int gap = maxLen - len;
+
+        if (gap <= 0) {
+            return Long.toString(value);
+        } else {
+            StringBuilder buff = new StringBuilder();
+            for (int i = 0; i < gap; i++) {
+                buff.append('0');
+            }
+            buff.append(value);
+            return buff.toString();
         }
     }
 }

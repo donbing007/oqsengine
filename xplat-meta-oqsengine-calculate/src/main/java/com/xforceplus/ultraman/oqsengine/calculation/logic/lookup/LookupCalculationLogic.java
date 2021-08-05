@@ -1,9 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -51,8 +51,11 @@ public class LookupCalculationLogic implements CalculationLogic {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
 
+        /*
+        定位发起lookup的entity中的指定实例值.
+        其应该是一个long型指向目标target的id值.
+         */
         Lookup lookup = (Lookup) context.getFocusField().config().getCalculation();
-
         Optional<IValue> sourceValueOp = sourceEntity.entityValue().getValue(sourceField.id());
         if (!sourceValueOp.isPresent()) {
             return null;
@@ -99,7 +102,8 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
      * value为目标数据版本号.
-     * @see LookupHelper
+     *
+     * @see com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
         Optional<IEntityClass> targetEntityClassOp = context.getMetaManager().load(

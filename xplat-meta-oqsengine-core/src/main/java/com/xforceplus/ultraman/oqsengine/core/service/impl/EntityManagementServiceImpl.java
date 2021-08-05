@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -721,22 +722,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         throws CalculationLogicException {
 
         /*
-        过滤掉所有的UNKNOWN和静态字段类型,同时按照计算的优先级从数字从小至大排序.
+        过滤掉所有的UNKNOWN和静态字段类型,同时按照计算的优先级从数字从小至大排序.化
+        AUTO_FILL 字段为自动生成就不再变化的.所以在更新时排除.
          */
-        List<IEntityField> calculationFields = entityClass.fields().stream().filter(
-            f -> {
-                if (build) {
-                    return CalculationType.UNKNOWN != f.calculationType()
-                        && CalculationType.STATIC != f.calculationType();
-                } else {
-                    return CalculationType.UNKNOWN != f.calculationType()
-                        && CalculationType.STATIC != f.calculationType()
-                        && CalculationType.AUTO_FILL != f.calculationType();
+        List<IEntityField> calculationFields = entityClass.fields().stream()
+            .filter(
+                f -> {
+                    if (build) {
+                        return CalculationType.UNKNOWN != f.calculationType()
+                            && CalculationType.STATIC != f.calculationType();
+                    } else {
+                        return CalculationType.UNKNOWN != f.calculationType()
+                            && CalculationType.STATIC != f.calculationType()
+                            && CalculationType.AUTO_FILL != f.calculationType();
+                    }
                 }
-            }
-        ).sorted(
-            new CalculationComparator()
-        ).collect(Collectors.toList());
+            ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
 
         if (calculationFields.isEmpty()) {
             return Collections.emptyList();

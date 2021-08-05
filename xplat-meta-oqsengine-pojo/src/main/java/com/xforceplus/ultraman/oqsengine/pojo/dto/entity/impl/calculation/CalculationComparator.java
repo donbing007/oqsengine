@@ -15,6 +15,12 @@ import java.util.Comparator;
  */
 public class CalculationComparator implements Comparator<IEntityField> {
 
+    private static final CalculationComparator INSTANCE = new CalculationComparator();
+
+    public static Comparator<IEntityField> getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public int compare(IEntityField o1, IEntityField o2) {
         //  当优先级相同时，按照level从低到高进行排序
