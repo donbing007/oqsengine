@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.alibaba.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
@@ -23,8 +24,11 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.sql.DataSource;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -60,12 +64,6 @@ public class BizIDGeneratorTest {
     private ApplicationContext applicationContext;
     private DataSourcePackage dataSourcePackage;
 
-
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-    }
 
     @BeforeEach
     public void before() throws SQLException {
@@ -139,7 +137,7 @@ public class BizIDGeneratorTest {
 
     @AfterEach
     public void after() throws SQLException {
-        try(Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
             st.close();
@@ -190,7 +188,7 @@ public class BizIDGeneratorTest {
                 }
                 for (int i = 0; i < 100; i++) {
 
-                   System.out.println(bizIDGenerator3.nextId(linearBizType3));
+                    System.out.println(bizIDGenerator3.nextId(linearBizType3));
                 }
                 closeLatch.countDown();
             });

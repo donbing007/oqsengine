@@ -83,7 +83,6 @@ public class BizIDGeneratorRedisTest {
     private DataSourcePackage dataSourcePackage;
 
 
-
     @BeforeClass
     public static void afterClass() {
         Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
@@ -91,7 +90,7 @@ public class BizIDGeneratorRedisTest {
     }
 
     @AfterEach
-    public void after() throws SQLException {
+    public void after() throws Exception {
         try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
