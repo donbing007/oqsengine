@@ -7,7 +7,7 @@ import com.googlecode.aviator.runtime.type.AviatorRuntimeJavaType;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
@@ -26,7 +26,7 @@ public class OffsetTest {
 
     @BeforeEach
     public void before() {
-        ExpressionUtils.addFunction(new TimeOffsetFunction());
+        AviatorHelper.addFunction(new TimeOffsetFunction());
     }
 
     @Test
@@ -36,7 +36,7 @@ public class OffsetTest {
             .withExpression("timeOffset(createTime,1,1)").build();
         Map<String, Object> params = Maps.newHashMap();
         params.put("createTime", LocalDateTime.now());
-        Object result = ExpressionUtils.execute(new ExecutionWrapper(wrapper, params));
+        Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         Assertions.assertTrue(result instanceof LocalDateTime);
         Assertions.assertEquals(((LocalDateTime) result).getYear(), LocalDateTime.now().getYear() + 1);
         System.out.println(result);

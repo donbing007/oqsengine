@@ -7,6 +7,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralC
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_2;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
+import com.xforceplus.ultraman.oqsengine.metadata.Constant;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
@@ -98,6 +99,10 @@ public class GeneralEntityClassStorageBuilder {
     public static AutoFill autoFill(String patten, String model, long min, int step) {
         return AutoFill.Builder.anAutoFill()
             .withStep(step)
+            .withDomainNoType(AutoFill.DomainNoType.instance(GeneralConstant.MOCK_DOMAIN_NOT_TYPE))
+            .withLevel(GeneralConstant.MOCK_LEVEL)
+            .withExpression(GeneralConstant.MOCK_SENIOR_EXPRESSION)
+            .withArgs(GeneralConstant.MOCK_SENIOR_ARGS)
             .withMin(min)
             .withPatten(patten)
             .withModel(model)

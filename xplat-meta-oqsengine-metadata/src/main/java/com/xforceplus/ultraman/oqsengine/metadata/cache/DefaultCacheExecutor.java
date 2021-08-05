@@ -42,6 +42,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -366,10 +367,16 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
                     }
+
                     if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
-                        payLoads.add(
-                            new ActualEvent<>(EventType.AUTO_FILL_UPGRADE, new AutoFillUpgradePayload(entityField))
-                        );
+                        AutoFill.DomainNoType domainNoType =
+                            ((AutoFill) entityField.config().getCalculation()).getDomainNoType();
+                        if (domainNoType.equals(AutoFill.DomainNoType.NORMAL)) {
+                            payLoads.add(
+                                new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
+                                        new AutoFillUpgradePayload(entityField))
+                            );
+                        }
                     }
                 }
             }

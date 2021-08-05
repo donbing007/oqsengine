@@ -5,22 +5,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
- * 一些字节处理的方便方法。
- * @author Mike
+ * 一些字节处理的方便方法.
+ *
+ * @author dongbin
  * @version 1.00 2010-8-23
  * @since 1.5
  */
 public class ByteUtil {
 
     /**
-     * 构造新字节时需要与的值表
+     * 构造新字节时需要与的值表.
      */
-    private static final byte[] BUILD_BYTE_TABLE = new byte[]{
+    private static final byte[] BUILD_BYTE_TABLE = new byte[] {
         (byte) 128,
         (byte) 64,
         (byte) 32,
@@ -35,7 +35,8 @@ public class ByteUtil {
     }
 
     /**
-     * short转换到字节数组
+     * short转换到字节数组.
+     *
      * @param number 需要转换的数据。
      * @return 转换后的字节数组。
      */
@@ -49,7 +50,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节到short转换
+     * 字节到short转换.
+     *
      * @param b short的字节数组
      * @return short数值。
      */
@@ -59,7 +61,8 @@ public class ByteUtil {
 
     /**
      * 字节到short的转换.从指定的开始位置读取2个字节做为转换数据.
-     * @param b 目标字节组.
+     *
+     * @param b     目标字节组.
      * @param start 字节中的开始位置.
      * @return short数值。
      */
@@ -68,7 +71,8 @@ public class ByteUtil {
     }
 
     /**
-     * 整型转换到字节数组
+     * 整型转换到字节数组.
+     *
      * @param number 整形数据。
      * @return 整形数据的字节数组。
      */
@@ -82,7 +86,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到整型转换
+     * 字节数组到整型转换.
+     *
      * @param b 整形数据的字节数组。
      * @return 字节数组转换成的整形数据。
      */
@@ -92,19 +97,21 @@ public class ByteUtil {
 
     /**
      * 字节数组到整形的转换.
-     * @param b 目标字节组.
+     *
+     * @param b     目标字节组.
      * @param start 开始位置.
      * @return 整形.
      */
     public static int byteToInt(byte[] b, int start) {
         return ((((b[start] & 0xff) << 24)
-                | ((b[start + 1] & 0xff) << 16)
-                | ((b[start + 2] & 0xff) << 8)
-                | (b[start + 3] & 0xff)));
+            | ((b[start + 1] & 0xff) << 16)
+            | ((b[start + 2] & 0xff) << 8)
+            | (b[start + 3] & 0xff)));
     }
 
     /**
-     * long转换到字节数组
+     * long转换到字节数组.
+     *
      * @param number 长整形数据。
      * @return 长整形转换成的字节数组。
      */
@@ -118,7 +125,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到整型的转换
+     * 字节数组到整型的转换.
+     *
      * @param b 长整形字节数组。
      * @return 长整形数据。
      */
@@ -128,23 +136,25 @@ public class ByteUtil {
 
     /**
      * 字节转换为长整形.
-     * @param b 目标字节组.
+     *
+     * @param b     目标字节组.
      * @param start 开始的位置.
      * @return 长整形.
      */
     public static long byteToLong(byte[] b, int start) {
         return ((((long) b[start] & 0xff) << 56)
-                | (((long) b[start + 1] & 0xff) << 48)
-                | (((long) b[start + 2] & 0xff) << 40)
-                | (((long) b[start + 3] & 0xff) << 32)
-                | (((long) b[start + 4] & 0xff) << 24)
-                | (((long) b[start + 5] & 0xff) << 16)
-                | (((long) b[start + 6] & 0xff) << 8)
-                | ((long) b[start + 7] & 0xff));
+            | (((long) b[start + 1] & 0xff) << 48)
+            | (((long) b[start + 2] & 0xff) << 40)
+            | (((long) b[start + 3] & 0xff) << 32)
+            | (((long) b[start + 4] & 0xff) << 24)
+            | (((long) b[start + 5] & 0xff) << 16)
+            | (((long) b[start + 6] & 0xff) << 8)
+            | ((long) b[start + 7] & 0xff));
     }
 
     /**
-     * double转换到字节数组
+     * double转换到字节数组.
+     *
      * @param d 双精度浮点。
      * @return 双精度浮点的字节数组。
      */
@@ -159,7 +169,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到double转换
+     * 字节数组到double转换.
+     *
      * @param b 双精度浮点字节数组。
      * @return 双精度浮点数据。
      */
@@ -168,8 +179,9 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到double转换
-     * @param b 双精度浮点字节数组。
+     * 字节数组到double转换.
+     *
+     * @param b     双精度浮点字节数组。
      * @param start 开始位置.
      * @return 双精度浮点数据。
      */
@@ -182,14 +194,14 @@ public class ByteUtil {
         l |= ((long) b[start + 2] << 16);
         l &= 0xffffff;
         l |= ((long) b[start + 3] << 24);
-        l &= 0xffffffffl;
+        l &= 0xffffffffL;
         l |= ((long) b[start + 4] << 32);
-        l &= 0xffffffffffl;
+        l &= 0xffffffffffL;
 
         l |= ((long) b[start + 5] << 40);
-        l &= 0xffffffffffffl;
+        l &= 0xffffffffffffL;
         l |= ((long) b[start + 6] << 48);
-        l &= 0xffffffffffffffl;
+        l &= 0xffffffffffffffL;
 
         l |= ((long) b[start + 7] << 56);
 
@@ -197,7 +209,8 @@ public class ByteUtil {
     }
 
     /**
-     * float转换到字节数组
+     * float转换到字节数组.
+     *
      * @param d 浮点型数据。
      * @return 浮点型数据转换后的字节数组。
      */
@@ -212,7 +225,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到float的转换
+     * 字节数组到float的转换.
+     *
      * @param b 浮点型数据字节数组。
      * @return 浮点型数据。
      */
@@ -221,7 +235,8 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组到float的转换
+     * 字节数组到float的转换.
+     *
      * @param b 浮点型数据字节数组。
      * @return 浮点型数据。
      */
@@ -234,14 +249,15 @@ public class ByteUtil {
         l |= ((long) b[start + 2] << 16);
         l &= 0xffffff;
         l |= ((long) b[start + 3] << 24);
-        l &= 0xffffffffl;
+        l &= 0xffffffffL;
 
         return Float.intBitsToFloat(l);
     }
 
     /**
-     * 字符串到字节数组转换
-     * @param s 字符串。
+     * 字符串到字节数组转换.
+     *
+     * @param s       字符串。
      * @param charset 字符编码
      * @return 字符串按相应字符编码编码后的字节数组。
      */
@@ -250,8 +266,9 @@ public class ByteUtil {
     }
 
     /**
-     * 字节数组带字符串的转换
-     * @param b 字符串按指定编码转换的字节数组。
+     * 字节数组带字符串的转换.
+     *
+     * @param b       字符串按指定编码转换的字节数组。
      * @param charset 字符编码。
      * @return 字符串。
      */
@@ -260,10 +277,10 @@ public class ByteUtil {
     }
 
     /**
-     * 对象转换成字节数组。
+     * 对象转换成字节数组.
+     *
      * @param obj 字节数组。
      * @return 对象实例相应的序列化后的字节数组。
-     * @throws IOException
      */
     public static byte[] objectToByte(Object obj) throws IOException {
         ByteArrayOutputStream buff = new ByteArrayOutputStream();
@@ -277,14 +294,13 @@ public class ByteUtil {
     }
 
     /**
-     * 序死化字节数组转换成实际对象。
+     * 序死化字节数组转换成实际对象.
+     *
      * @param b 字节数组。
      * @return 对象。
-     * @throws IOException
-     * @throws ClassNotFoundException
      */
     public static Object byteToObject(byte[] b)
-            throws IOException, ClassNotFoundException {
+        throws IOException, ClassNotFoundException {
         ByteArrayInputStream buff = new ByteArrayInputStream(b);
         ObjectInputStream in = new ObjectInputStream(buff);
         Object obj = in.readObject();
@@ -297,6 +313,7 @@ public class ByteUtil {
 
     /**
      * 比较两个字节的每一个bit位是否相等.
+     *
      * @param a 比较的字节.
      * @param b 比较的字节
      * @return ture 两个字节每一位都相等,false有至少一位不相等.
@@ -308,9 +325,10 @@ public class ByteUtil {
     /**
      * 比较两个数组中的每一个字节,两个字节必须二进制字节码每一位都相同才表示两个
      * byte相同.
+     *
      * @param a 比较的字节数组.
      * @param b 被比较的字节数.
-     * @return ture每一个元素的每一位两个数组都是相等的,false至少有一位不相等.
+     * @return ture每一个元素的每一位两个数组都是相等的, false至少有一位不相等.
      */
     public static boolean equalsBit(byte[] a, byte[] b) {
         if (a == b) {
@@ -335,6 +353,7 @@ public class ByteUtil {
 
     /**
      * 返回某个字节的bit组成的字符串.
+     *
      * @param b 字节.
      * @return Bit位组成的字符串.
      */
@@ -350,6 +369,7 @@ public class ByteUtil {
     /**
      * 计算出给定byte中的每一位,并以一个布尔数组返回.
      * true表示为1,false表示为0.
+     *
      * @param b 字节.
      * @return 指定字节的每一位bit组成的数组.
      */
@@ -366,7 +386,7 @@ public class ByteUtil {
      * 返回指定字节中指定bit位,true为1,false为0.
      * 指定的位从0-7,超出将抛出数据越界异常.
      *
-     * @param b 需要判断的字节.
+     * @param b     需要判断的字节.
      * @param index 字节中指定位.
      * @return 指定位的值.
      */
@@ -376,6 +396,7 @@ public class ByteUtil {
 
     /**
      * 根据布尔数组表示的二进制构造一个新的字节.
+     *
      * @param values 布尔数组,其中true表示为1,false表示为0.
      * @return 构造的新字节.
      */
@@ -391,8 +412,9 @@ public class ByteUtil {
 
     /**
      * 将指定字节中的某个bit位替换成指定的值,true代表1,false代表0.
-     * @param b 需要被替换的字节.
-     * @param index 位的序号,从0开始.超过7将抛出越界异常.
+     *
+     * @param b        需要被替换的字节.
+     * @param index    位的序号,从0开始.超过7将抛出越界异常.
      * @param newValue 新的值.
      * @return 替换好某个位值的新字节.
      */
@@ -400,52 +422,5 @@ public class ByteUtil {
         boolean[] bitValues = byteToBitArray(b);
         bitValues[index] = newValue;
         return buildNewByte(bitValues);
-    }
-
-    /**
-     * 将指定的IP地址转换成字节表示方式.
-     * IP数组的每一个数字都不能大于255,否则将抛出IllegalArgumentException异常.
-     *
-     * @param ipNums IP地址数组.
-     * @return IP地址字节表示方式.
-     */
-    public static byte[] ipAddressBytes(String address) {
-        if (address == null || address.length() < 0 || address.length() > 15) {
-            throw new IllegalArgumentException("Invalid IP address.");
-        }
-
-        final int ipSize = 4;//最大IP位数
-        final char ipSpace = '.';//IP数字的分隔符
-        int[] ipNums = new int[ipSize];
-        StringBuilder number = new StringBuilder();//当前操作的数字
-        StringBuilder buff = new StringBuilder(address);
-        int point = 0;//当前操作的数字下标,最大到3.
-        char currentChar;
-        for (int i = 0; i < buff.length(); i++) {
-            currentChar = buff.charAt(i);
-            if (ipSpace == currentChar) {
-                //当前位置等于最大于序号后,还有字符没有处理表示这是一个错误的IP.
-                if (point == ipSize - 1 && buff.length() - (i + 1) > 0) {
-                    throw new IllegalArgumentException("Invalid IP address.");
-                }
-                ipNums[point++] = Integer.parseInt(number.toString());
-                number.delete(0, number.length());
-            } else {
-                number.append(currentChar);
-            }
-        }
-        ipNums[point] = Integer.parseInt(number.toString());
-
-        byte[] ipBuff = new byte[ipSize];
-        int pointNum = 0;
-        for (int i = 0; i < 4; i++) {
-            pointNum = Math.abs(ipNums[i]);
-            if (pointNum > 255) {
-                throw new IllegalArgumentException("Invalid IP address.");
-            }
-            ipBuff[i] = (byte) (pointNum & 0xff);
-        }
-
-        return ipBuff;
     }
 }

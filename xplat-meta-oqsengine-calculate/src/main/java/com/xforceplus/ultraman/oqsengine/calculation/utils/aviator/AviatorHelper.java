@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.formula.utils;
+package com.xforceplus.ultraman.oqsengine.calculation.utils.aviator;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;
@@ -9,18 +9,20 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import java.math.MathContext;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 表达式工具类.
- *
- * @author j.xu
- * @version 0.1 2021/05/2021/5/10
- * @since 1.8
+ * aviator辅助类.
  */
-public class ExpressionUtils {
+public class AviatorHelper {
+
+    private static final String REGEX_META = "(#\\{[^#${}]*\\})";
+    private static final String REGEX_ENUM = "(\\$\\{[^#${}]*\\})";
+
     //  LRU-CACHE最大缓存公式个数
     private static final int CAPACITY = 1024 * 10;
-    //  函数内默认最大循环次数
+    //  函数内默认最大循环次数Assertions
     private static final int MAX_LOOP_COUNT = 8;
     private static final AviatorEvaluatorInstance INSTANCE;
 
@@ -61,5 +63,25 @@ public class ExpressionUtils {
      */
     public static void addFunction(AviatorFunction function) {
         INSTANCE.addFunction(function);
+    }
+
+    /**
+     * 将规则转换成aviator可以识别的格式.
+     */
+    public static String parseRule(String ruleContent) {
+        Pattern pattern = Pattern.compile(REGEX_META);
+        Pattern enumPatten = Pattern.compile(REGEX_ENUM);
+        return parse(parse(ruleContent, pattern), enumPatten);
+    }
+
+    private static String parse(String ruleContent, Pattern pattern) {
+        Matcher matcher = pattern.matcher(ruleContent);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String matchStr = matcher.group();
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(matchStr.substring(2, matchStr.length() - 1)));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 }

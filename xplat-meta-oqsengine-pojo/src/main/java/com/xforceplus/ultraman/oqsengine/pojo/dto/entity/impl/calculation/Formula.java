@@ -27,9 +27,6 @@ public class Formula extends AbstractCalculation  {
     @JsonProperty(value = "failedDefaultValue")
     private Object failedDefaultValue;
 
-    @JsonProperty(value = "level")
-    private int level;
-
     @JsonProperty(value = "args")
     private List<String> args;
 
@@ -55,14 +52,6 @@ public class Formula extends AbstractCalculation  {
 
     public void setFailedDefaultValue(Object failedDefaultValue) {
         this.failedDefaultValue = failedDefaultValue;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public List<String> getArgs() {
@@ -146,7 +135,7 @@ public class Formula extends AbstractCalculation  {
             Formula formula = new Formula();
             formula.calculationType = CalculationType.FORMULA;
             formula.expression = expression;
-            formula.code = codeGenerate();
+            formula.code = codeGenerate(expression);
             formula.level = level;
             formula.args = args;
             formula.failedPolicy = failedPolicy;
@@ -155,12 +144,14 @@ public class Formula extends AbstractCalculation  {
             return formula;
         }
 
-        private String codeGenerate() {
-            if (null != expression && !expression.isEmpty()) {
-                return MD5Utils.encrypt(expression);
-            }
-            return "";
+
+    }
+
+    public static String codeGenerate(String expression) {
+        if (null != expression && !expression.isEmpty()) {
+            return MD5Utils.encrypt(expression);
         }
+        return "";
     }
 
     /**

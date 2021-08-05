@@ -5,8 +5,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import org.testcontainers.shaded.org.bouncycastle.jcajce.provider.digest.MD2;
 
 /**
  * 基于kryo 的序列化策略.

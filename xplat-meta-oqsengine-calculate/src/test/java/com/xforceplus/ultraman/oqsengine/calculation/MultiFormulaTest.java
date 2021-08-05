@@ -1,10 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculate;
+package com.xforceplus.ultraman.oqsengine.calculation;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.formula.utils.ExpressionUtils;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,7 +56,7 @@ public class MultiFormulaTest {
         ExpressionWrapper expressionWrapper =
             ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        Expression expression = AviatorHelper.compile(expressionWrapper);
 
         Map<String, Object> params = new HashMap<>();
         BigDecimal expectedAmount = new BigDecimal("10010.000000");
@@ -76,7 +76,7 @@ public class MultiFormulaTest {
         String expression2 = "string.join(seq.list(${abc}, ${xyz}, '-'));";
 
         expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression2).build();
-        expression = ExpressionUtils.compile(expressionWrapper);
+        expression = AviatorHelper.compile(expressionWrapper);
         params = new HashMap<>();
         params.put("xyz", "xyz");
         Object res = expression.execute(params);
@@ -90,7 +90,7 @@ public class MultiFormulaTest {
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(a).build();
 
 
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        Expression expression = AviatorHelper.compile(expressionWrapper);
 
         Map<String, Object> params = new HashMap<>();
         String expectedValue = "aaaaa";
@@ -106,7 +106,7 @@ public class MultiFormulaTest {
         ExpressionWrapper expressionWrapper =
             ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
 
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        Expression expression = AviatorHelper.compile(expressionWrapper);
 
         Map<String, Object> params = new HashMap<>();
         BigDecimal expectedAmount = new BigDecimal("10010.000000");
@@ -127,7 +127,7 @@ public class MultiFormulaTest {
         String expression1 = "${current_time}";
         ExpressionWrapper expressionWrapper =
             ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
-        Expression expression = ExpressionUtils.compile(expressionWrapper);
+        Expression expression = AviatorHelper.compile(expressionWrapper);
         long now = System.currentTimeMillis();
         Map<String, Object> params = new HashMap<>();
         params.put("current_time", now);
@@ -137,7 +137,7 @@ public class MultiFormulaTest {
 
         expression1 = "sysdate()";
         expressionWrapper = ExpressionWrapper.Builder.anExpression().withExpression(expression1).build();
-        expression = ExpressionUtils.compile(expressionWrapper);
+        expression = AviatorHelper.compile(expressionWrapper);
         res = expression.execute();
         Assertions.assertEquals(LocalDateTime.class, TimeUtils.convert((Date) res).getClass());
     }

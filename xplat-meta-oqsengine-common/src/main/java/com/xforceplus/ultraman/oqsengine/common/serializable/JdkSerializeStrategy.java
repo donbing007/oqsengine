@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import java.io.IOException;
 
 /**
- * 默认的序列化策略实现，使用JDK提供的默认序列化方案。
+ * 默认的序列化策略实现，使用JDK提供的默认序列化方案.
  *
  * @author dongbin
  * @version 1.00 2020-07-16

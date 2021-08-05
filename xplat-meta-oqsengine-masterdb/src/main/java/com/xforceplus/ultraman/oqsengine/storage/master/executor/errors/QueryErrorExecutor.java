@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor.errors;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.ErrorDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @since 1.8
  */
-public class QueryErrorExecutor extends AbstractMasterExecutor<QueryErrorCondition, Collection<ErrorStorageEntity>> {
+public class QueryErrorExecutor extends AbstractJdbcTaskExecutor<QueryErrorCondition, Collection<ErrorStorageEntity>> {
 
     public static Executor<QueryErrorCondition, Collection<ErrorStorageEntity>> build(
         String tableName, TransactionResource resource, long timeoutMs) {

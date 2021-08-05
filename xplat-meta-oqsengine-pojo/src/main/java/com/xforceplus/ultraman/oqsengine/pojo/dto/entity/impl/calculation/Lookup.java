@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 
@@ -47,6 +49,7 @@ public class Lookup extends AbstractCalculation {
         Lookup lookup = new Lookup();
         lookup.classId = this.classId;
         lookup.fieldId = this.fieldId;
+        lookup.level = this.level;
         return lookup;
     }
 
@@ -82,7 +85,7 @@ public class Lookup extends AbstractCalculation {
             lookup.calculationType = CalculationType.LOOKUP;
             lookup.classId = this.classId;
             lookup.fieldId = this.fieldId;
-
+            lookup.level = DEFAULT_LEVEL;
             return lookup;
         }
     }

@@ -174,7 +174,7 @@ public class TaskStorageCommand {
             // endTime
             st.setLong(4, taskInfo.getEnds());
             // batchSize
-            st.setInt(5, taskInfo.getBatchSize());
+            st.setLong(5, taskInfo.getBatchSize());
             // finishSize
             st.setInt(6, taskInfo.getFinishSize());
             // batchStatus

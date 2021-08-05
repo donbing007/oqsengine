@@ -1,8 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -33,7 +34,7 @@ public class LookupCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
 
-        //link(context, targetEntity);
+        logLink(context, targetEntity);
 
         targetValue = targetValue.copy(context.getFocusField());
 
@@ -97,17 +98,31 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 记录当前lookup关系.
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
-     * KEY的组成方式如下.
-     * 前辍字符-目标字段id-目标实例id-目标实例版本号 如下.
-     * l-912393213123-123901923232-1
-     * value是
+     * value为目标数据版本号.
+     * @see LookupHelper
      */
-    private void logLink(CalculationLogicContext context, IEntity targetEntity) {
-        IEntity lookupEntity = context.getEntity();
-        IEntityClass lookupEntityClass = context.getEntityClass();
+    private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
+        Optional<IEntityClass> targetEntityClassOp = context.getMetaManager().load(
+            targetEntity.entityClassRef().getId());
+        if (!targetEntityClassOp.isPresent()) {
+            throw new CalculationLogicException(
+                String.format("Invalid target meta information.[entityClassid = %d]",
+                    targetEntity.entityClassRef().getId()));
+        }
 
-        StringBuilder linkKey = new StringBuilder();
-        linkKey.append("l-");
+        long targetFieldId = ((Lookup) context.getFocusField().config().getCalculation()).getFieldId();
+        Optional<IEntityField> targetFieldOp = targetEntityClassOp.get().field(targetFieldId);
+        if (!targetFieldOp.isPresent()) {
+            throw new CalculationLogicException(
+                String.format("No instance field to lookup target.[entityFieldId = %d]", targetFieldId));
+        }
 
+        String key = LookupHelper.buildLookupLinkKey(targetEntity, targetFieldOp.get(), context.getEntity());
+
+        try {
+            context.getKvStorage().save(key, targetEntity.version());
+        } catch (SQLException ex) {
+            throw new CalculationLogicException(ex.getMessage(), ex);
+        }
     }
 }
