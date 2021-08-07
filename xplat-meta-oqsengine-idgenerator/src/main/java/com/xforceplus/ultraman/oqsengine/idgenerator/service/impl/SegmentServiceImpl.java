@@ -125,7 +125,7 @@ public class SegmentServiceImpl implements SegmentService {
         segmentId.setResetable(idInfo.getResetable());
         // 默认30%加载
         segmentId.setLoadingId(segmentId.getCurrentId().getId() + idInfo.getStep() * Constants.LOADING_PERCENT / 100);
-        LOGGER.info("Loading Id set to {}",segmentId.getLoadingId());
+        LOGGER.info("Loading Id set to {}", segmentId.getLoadingId());
         return segmentId;
     }
 }

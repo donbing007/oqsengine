@@ -487,7 +487,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>

@@ -49,18 +49,18 @@ public class LocalCacheGenerator implements IDGenerator {
      * Load current segment.9
      */
     public synchronized void loadCurrent() {
-        if(current != null && !current.useful()) {
-            logger.info("不可用 current :{}",current);
+        if (current != null && !current.useful()) {
+            logger.info("不可用 current :{}", current);
         }
         if (current == null || !current.useful()) {
             if (next == null) {
                 SegmentId segmentId = querySegmentId();
                 this.current = segmentId;
-                logger.info("加载next号段",segmentId);
+                logger.info("加载next号段", segmentId);
             } else {
                 current = next;
                 next = null;
-                logger.info("赋值next号段{}",current);
+                logger.info("赋值next号段{}", current);
             }
         }
     }

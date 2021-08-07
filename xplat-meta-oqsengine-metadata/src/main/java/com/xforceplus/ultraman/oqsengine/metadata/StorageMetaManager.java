@@ -141,8 +141,8 @@ public class StorageMetaManager implements MetaManager {
 
             String cacheEnv = cacheExecutor.appEnvGet(appId);
             if (!cacheEnv.equals(env)) {
-                logger.warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register."
-                    , appId, env, cacheEnv);
+                logger.warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
+                    appId, env, cacheEnv);
                 env = cacheEnv;
             }
 
@@ -217,13 +217,15 @@ public class StorageMetaManager implements MetaManager {
         int currentVersion = cacheExecutor.version(appId);
 
         if (version > currentVersion) {
-            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion, version);
+            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion,
+                version);
 
             EntityClassSyncRspProto entityClassSyncRspProto;
             try {
                 entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
             } catch (Exception e) {
-                throw new RuntimeException(String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
+                throw new RuntimeException(
+                    String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
             }
 
             if (!syncExecutor.sync(appId, version, entityClassSyncRspProto)) {
@@ -231,7 +233,9 @@ public class StorageMetaManager implements MetaManager {
             }
             return true;
         } else {
-            String message = String.format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId, currentVersion, version);
+            String message = String
+                .format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId,
+                    currentVersion, version);
             logger.warn(message);
             return false;
         }
@@ -251,7 +255,8 @@ public class StorageMetaManager implements MetaManager {
 
             Map<Long, EntityClassStorage> metas = cacheExecutor.multiplyRead(ids, currentVersion, false);
 
-            return Optional.of(new MetaMetrics(currentVersion, env, appId, null != metas ? metas.values() : new ArrayList<>()));
+            return Optional
+                .of(new MetaMetrics(currentVersion, env, appId, null != metas ? metas.values() : new ArrayList<>()));
 
         } catch (Exception e) {
             logger.warn("show meta error, appId {}, message : {}", appId, e.getMessage());
@@ -394,9 +399,12 @@ public class StorageMetaManager implements MetaManager {
                     EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
 
                 if (dataImport(splitter[0], splitter[2], version, v)) {
-                    logger.info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId, version);
+                    logger
+                        .info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId,
+                            version);
                 } else {
-                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}", fullPath);
+                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}",
+                        fullPath);
                 }
             } catch (Exception e) {
                 logger.warn("load from local-file failed, path : {}, message : {}", path + file, e.getMessage());

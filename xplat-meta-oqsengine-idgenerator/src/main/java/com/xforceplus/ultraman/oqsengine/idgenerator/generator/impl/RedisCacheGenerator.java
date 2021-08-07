@@ -166,11 +166,11 @@ public class RedisCacheGenerator implements IDGenerator {
             RLock lock = redissonClient.getLock(this.bizType);
             lock.lock();
             try {
-                    currentValue = current.get();
-                    nextValue = currentValue.clone();
-                    result = nextValue.nextId();
-                    current.set(nextValue);
-            }   finally {
+                currentValue = current.get();
+                nextValue = currentValue.clone();
+                result = nextValue.nextId();
+                current.set(nextValue);
+            } finally {
                 lock.unlock();
             }
 

@@ -1,9 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -103,7 +103,7 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 记录以KV方式记录.
      * value为目标数据版本号.
      *
-     * @see com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper
+     * @see com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
         Optional<IEntityClass> targetEntityClassOp = context.getMetaManager().load(
