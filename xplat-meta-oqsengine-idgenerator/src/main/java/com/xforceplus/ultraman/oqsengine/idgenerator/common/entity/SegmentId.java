@@ -69,8 +69,6 @@ public class SegmentId implements Serializable, Cloneable {
             && ResetModel.fromValue(resetable).equals(ResetModel.RESETABLE)) {
             LOGGER.info("Need reset currentValue  : {}, nextValue : {}", currentValue, nextValue);
             return new IDResult((ResultCode.RESET), convert(nextValue.getId()), getPatternKey(pattern, nextValue));
-        } else {
-            LOGGER.info("Resetable : {} currentValue : {} , nextValue :{}", resetable, currentValue, nextValue);
         }
         return new IDResult(ResultCode.NORMAL, convert(nextValue.getId()));
     }

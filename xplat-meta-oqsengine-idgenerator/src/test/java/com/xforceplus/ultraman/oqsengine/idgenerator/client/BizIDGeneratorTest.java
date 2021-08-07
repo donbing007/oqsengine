@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.alibaba.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
@@ -25,6 +26,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +39,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -53,7 +57,7 @@ public class BizIDGeneratorTest {
 
     private static final String BIZ_TEST = "bizTest";
     private static final String BIZ_TYPE_1 = "bizTest1";
-    private static final String linearBizType3 = "bizLinear3";
+    private static final String LINEAR_BIZ_TYPE_3 = "bizLinear3";
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
@@ -63,6 +67,7 @@ public class BizIDGeneratorTest {
     private DataSource dataSource;
     private ApplicationContext applicationContext;
     private DataSourcePackage dataSourcePackage;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BizIDGeneratorTest.class);
 
     /**
      * 测试初始化.
@@ -125,9 +130,9 @@ public class BizIDGeneratorTest {
         int ret1 = storage1.build(info1);
         Assertions.assertEquals(ret1, 1);
 
-        SegmentInfo info3 = SegmentInfo.builder().withBeginId(1l).withBizType(linearBizType3)
+        SegmentInfo info3 = SegmentInfo.builder().withBeginId(1l).withBizType(LINEAR_BIZ_TYPE_3)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
-            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(1000)
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(100)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
             .withVersion(1l)
             .withResetable(0)
@@ -180,12 +185,11 @@ public class BizIDGeneratorTest {
 
     @Test
     public void testMutliThreadOver() throws InterruptedException {
-
+        Set<String> result = Sets.newConcurrentHashSet();
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch closeLatch = new CountDownLatch(50);
-        List<Future> futures = Lists.newArrayList();
         for (int j = 0; j < 50; j++) {
-            Future future = executorService.submit(() -> {
+            executorService.submit(() -> {
                 try {
                     latch.await();
                 } catch (InterruptedException e) {
@@ -193,20 +197,16 @@ public class BizIDGeneratorTest {
                 }
                 for (int i = 0; i < 100; i++) {
 
-                    System.out.println(bizIDGenerator3.nextId(linearBizType3));
+                    result.add(bizIDGenerator3.nextId(LINEAR_BIZ_TYPE_3));
                 }
                 closeLatch.countDown();
             });
-            futures.add(future);
         }
         System.out.println("prepare execute nextID.....");
         latch.countDown();
         closeLatch.await();
-        String bizID = bizIDGenerator3.nextId(linearBizType3);
-        System.out.println("last bizID : " + bizID);
-        LocalDateTime localDateTime = LocalDateTime.now();
-        String date = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        Assert.assertEquals(date + ":05001", bizID);
+        result.add(bizIDGenerator3.nextId(LINEAR_BIZ_TYPE_3));
+        Assert.assertEquals(5001, result.size());
     }
 
     @Test
