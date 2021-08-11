@@ -23,10 +23,10 @@ public class AutoFill extends AbstractCalculation {
     private int step;
 
     @JsonProperty(value = "min")
-    private long min;
+    private String min;
 
     @JsonProperty(value = "max")
-    private long max;
+    private String max;
 
     /**
      * senior auto fill use params.
@@ -46,9 +46,6 @@ public class AutoFill extends AbstractCalculation {
     @JsonProperty(value = "resetType")
     private int resetType;
 
-    /**
-     * getter/setter.
-     */
     public String getPatten() {
         return patten;
     }
@@ -73,19 +70,19 @@ public class AutoFill extends AbstractCalculation {
         this.step = step;
     }
 
-    public long getMin() {
+    public String getMin() {
         return min;
     }
 
-    public void setMin(long min) {
+    public void setMin(String min) {
         this.min = min;
     }
 
-    public long getMax() {
+    public String getMax() {
         return max;
     }
 
-    public void setMax(long max) {
+    public void setMax(String max) {
         this.max = max;
     }
 
@@ -159,8 +156,8 @@ public class AutoFill extends AbstractCalculation {
         private String patten;
         private String model;
         private int step;
-        private long min;
-        private long max;
+        private String min;
+        private String max;
         private String expression;
         private int level;
         private List<String> args;
@@ -190,12 +187,12 @@ public class AutoFill extends AbstractCalculation {
             return this;
         }
 
-        public AutoFill.Builder withMin(long min) {
+        public AutoFill.Builder withMin(String min) {
             this.min = min;
             return this;
         }
 
-        public AutoFill.Builder withMax(long max) {
+        public AutoFill.Builder withMax(String max) {
             this.max = max;
             return this;
         }

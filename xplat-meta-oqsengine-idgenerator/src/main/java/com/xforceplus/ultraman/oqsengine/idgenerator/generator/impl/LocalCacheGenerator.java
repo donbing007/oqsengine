@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generator 本地号段缓存实现.
@@ -27,6 +29,7 @@ public class LocalCacheGenerator implements IDGenerator {
     private volatile boolean isLoadingNext;
     private Object lock = new Object();
     private ExecutorService executorService;
+    private Logger logger = LoggerFactory.getLogger(LocalCacheGenerator.class);
 
     /**
      * constructor.
@@ -43,16 +46,21 @@ public class LocalCacheGenerator implements IDGenerator {
     }
 
     /**
-     * Load current segment.
+     * Load current segment.9
      */
     public synchronized void loadCurrent() {
+        if (current != null && !current.useful()) {
+            logger.info("不可用 current :{}", current);
+        }
         if (current == null || !current.useful()) {
             if (next == null) {
                 SegmentId segmentId = querySegmentId();
                 this.current = segmentId;
+                logger.info("加载next号段", segmentId);
             } else {
                 current = next;
                 next = null;
+                logger.info("赋值next号段{}", current);
             }
         }
     }

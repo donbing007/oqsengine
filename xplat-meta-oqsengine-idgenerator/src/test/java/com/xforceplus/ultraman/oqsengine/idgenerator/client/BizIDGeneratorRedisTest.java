@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
@@ -36,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.sql.DataSource;
 import org.apache.commons.compress.utils.Lists;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,8 @@ import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -78,21 +82,15 @@ public class BizIDGeneratorRedisTest {
     private ExecutorService executorService;
     private DataSourcePackage dataSourcePackage;
 
+
+    @BeforeClass
+    public static void afterClass() {
+        Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
+    }
+
     @AfterEach
     public void after() throws Exception {
-
-//        SegmentInfo segmentInfo = new SegmentInfo();
-//        segmentInfo.setBizType(linearBizType);
-//        storage1.delete(segmentInfo);
-//
-//        SegmentInfo segmentInfo2 = new SegmentInfo();
-//        segmentInfo2.setBizType(linearBizType2);
-//        storage1.delete(segmentInfo2);
-//
-//        SegmentInfo segmentInfo3 = new SegmentInfo();
-//        segmentInfo3.setBizType(linearBizType3);
-//        storage1.delete(segmentInfo3);
-
         try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
@@ -140,17 +138,14 @@ public class BizIDGeneratorRedisTest {
         when(applicationContext.getBean(PatternParserManager.class)).thenReturn(manager);
         ReflectionTestUtils.setField(PatternParserUtil.class, "applicationContext", applicationContext);
 
+        this.segmentService1 = new SegmentServiceImpl();
+        this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         this.bizIDGenerator1 = new BizIDGenerator();
         this.bizIDGenerator2 = new BizIDGenerator();
         this.bizIDGenerator3 = new BizIDGenerator();
-
-        this.segmentService1 = new SegmentServiceImpl();
         ReflectionTestUtils.setField(segmentService1, "sqlSegmentStorage", storage1);
-
-        this.idGeneratorFactory1 = new IDGeneratorFactoryImpl();
         ReflectionTestUtils.setField(idGeneratorFactory1, "segmentService", segmentService1);
         ReflectionTestUtils.setField(idGeneratorFactory1, "redissonClient", redissonClient);
-
         ReflectionTestUtils.setField(bizIDGenerator1, "idGeneratorFactory", idGeneratorFactory1);
         ReflectionTestUtils.setField(bizIDGenerator2, "idGeneratorFactory", idGeneratorFactory1);
         ReflectionTestUtils.setField(bizIDGenerator3, "idGeneratorFactory", idGeneratorFactory1);
@@ -180,14 +175,13 @@ public class BizIDGeneratorRedisTest {
 
         SegmentInfo info3 = SegmentInfo.builder().withBeginId(1l).withBizType(linearBizType3)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
-            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(2).withStep(1000)
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(2).withStep(100)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
             .withVersion(1l)
             .withResetable(0)
             .withPatternKey("")
             .build();
         int ret3 = storage1.build(info3);
-        Assertions.assertEquals(ret3, 1);
         Assertions.assertEquals(ret3, 1);
 
         SegmentInfo info4 = SegmentInfo.builder().withBeginId(1l).withBizType(linerBizType4)
@@ -214,7 +208,6 @@ public class BizIDGeneratorRedisTest {
         al.set(value);
         SegmentId next = value.clone();
         next.nextId();
-        Assertions.assertTrue(al.compareAndSet(value, next));
         Assertions.assertTrue(al.compareAndSet(value, next));
     }
 
@@ -250,12 +243,12 @@ public class BizIDGeneratorRedisTest {
         CountDownLatch closeLatch = new CountDownLatch(10);
         for (int j = 0; j < 10; j++) {
             executorService.submit(() -> {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 for (int i = 0; i < 50; i++) {
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     System.out.println(bizIDGenerator1.nextId(linearBizType));
                 }
                 closeLatch.countDown();
@@ -276,16 +269,17 @@ public class BizIDGeneratorRedisTest {
     public void testMutliThreadOver() throws InterruptedException {
 
         CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch closeLatch = new CountDownLatch(10);
+        CountDownLatch closeLatch = new CountDownLatch(70);
         List<Future> futures = Lists.newArrayList();
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < 70; j++) {
             Future future = executorService.submit(() -> {
-                for (int i = 0; i < 300; i++) {
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                for (int i = 0; i < 10; i++) {
+
                     System.out.println(bizIDGenerator3.nextId(linearBizType3));
                 }
                 closeLatch.countDown();
@@ -299,7 +293,7 @@ public class BizIDGeneratorRedisTest {
         System.out.println("last bizID : " + bizID);
         LocalDateTime localDateTime = LocalDateTime.now();
         String date = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        Assertions.assertEquals(date + ":03001", bizID);
+        Assertions.assertEquals(date + ":00701", bizID);
     }
 
     @Test

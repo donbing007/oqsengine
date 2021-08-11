@@ -21,6 +21,10 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorag
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -30,6 +34,9 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,6 +44,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 public class ChangelogConfiguration {
@@ -49,6 +57,16 @@ public class ChangelogConfiguration {
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
         return redisClient;
+    }
+
+    @Bean("nodeIdGenerator")
+    public NodeIdGenerator staticNodeIdGenerator() {
+        return new StaticNodeIdGenerator(0);
+    }
+
+    @Bean("longNoContinuousPartialOrderIdGenerator")
+    public LongIdGenerator longNoContinuousPartialOrderIdGenerator(@Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
+        return new SnowflakeLongIdGenerator(nodeIdGenerator);
     }
 
     @Bean

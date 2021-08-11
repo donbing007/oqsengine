@@ -54,8 +54,9 @@ public class FormulaHelper {
      * @param expression 执行的表达式
      * @param args 参数列表
      * @param context 上下文
-     * @return Optional<IValue>
-     * @throws CalculationLogicException。
+     *
+     * @return Object the Object
+     * @throws CalculationLogicException exception
      */
     public static Object calculate(String expression, List<String> args, CalculationLogicContext context) throws CalculationLogicException {
         //  获取公式执行对象

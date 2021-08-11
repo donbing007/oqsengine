@@ -99,6 +99,12 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>xplat-meta-oqsengine-kv</artifactId>
+            <version>1.2.2-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <properties>

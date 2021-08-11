@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
-import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;

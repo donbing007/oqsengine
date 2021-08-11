@@ -158,17 +158,28 @@ public class RedisCacheGenerator implements IDGenerator {
             IDResult result = null;
             SegmentId currentValue;
             SegmentId nextValue;
-            do {
+            //do {
+            //    currentValue = current.get();
+            //    nextValue = currentValue.clone();
+            //    result = nextValue.nextId();
+            //} while (!current.compareAndSet(currentValue, nextValue));
+            RLock lock = redissonClient.getLock(this.bizType);
+            lock.lock();
+            try {
                 currentValue = current.get();
                 nextValue = currentValue.clone();
                 result = nextValue.nextId();
-            } while (!current.compareAndSet(currentValue, nextValue));
+                current.set(nextValue);
+            } finally {
+                lock.unlock();
+            }
+
             if (result.getCode() == ResultCode.OVER) {
                 loadCurrent(bizType);
             } else if (result.getCode() == ResultCode.RESET) {
                 resetBizType(result);
             } else {
-                if (result.getCode() == ResultCode.LOADING) {
+                if (result.getCode() == ResultCode.LOADING && isLoadingNext.get() == 0) {
                     loadNext();
                 }
                 return result.getId();

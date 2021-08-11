@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -126,10 +125,6 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         String key = LookupHelper.buildLookupLinkKey(targetEntity, targetFieldOp.get(), context.getEntity());
 
-        try {
-            context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
-        } catch (IOException ex) {
-            throw new CalculationLogicException(ex.getMessage(), ex);
-        }
+        context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
     }
 }

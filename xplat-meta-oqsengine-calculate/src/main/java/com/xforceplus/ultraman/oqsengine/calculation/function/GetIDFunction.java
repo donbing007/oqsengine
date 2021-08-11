@@ -27,8 +27,7 @@ public class GetIDFunction extends AbstractFunction {
     }
 
     @Override
-    public AviatorObject call(Map<String, Object> env, AviatorObject numberFormat, AviatorObject bizTag,
-                              AviatorObject step) {
+    public AviatorObject call(Map<String, Object> env, AviatorObject numberFormat, AviatorObject bizTag) {
         LongIdGenerator generator = (LongIdGenerator) SpringContextUtil.getBean(ID_GENERATOR_NAME);
         String bizTagValue = String.valueOf(bizTag.getValue(env));
         String numverFormatValue = String.valueOf(numberFormat.getValue(env));

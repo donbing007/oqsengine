@@ -33,7 +33,7 @@ public class RemoteRedisTest {
             String redisIp = "localhost";
             int redisPort = 6379;
             redisClient =
-                RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).withPassword("8eSf4M97VLhP6hq9").build());
+                RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).withPassword("8eSf4M97VLhP6hq8").build());
 
             cacheExecutor = new DefaultCacheExecutor();
 
@@ -59,7 +59,7 @@ public class RemoteRedisTest {
     @Test
     public void load() throws JsonProcessingException {
         if (isTestOpen) {
-            Optional<IEntityClass> entityClassOptional = storageMetaManager.load(1334095964616527874L);
+            Optional<IEntityClass> entityClassOptional = storageMetaManager.load(1422422995802726402L);
             Assertions.assertTrue(entityClassOptional.isPresent());
         }
     }

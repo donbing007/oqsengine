@@ -51,13 +51,15 @@ public class TestSegmentId {
     @Test
     public void testNextId() throws InterruptedException, IOException {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        SegmentId segmentId = new SegmentId();
-        segmentId.setMaxId(1000);
-        segmentId.setLoadingId(300);
+        final CountDownLatch countDownLatch1 = new CountDownLatch(20);
+        SegmentId segmentId  = new SegmentId();
+        segmentId.setMaxId(2200);
+        segmentId.setLoadingId(600);
         segmentId.setPattern("{yyyy}-{MM}:{0000}");
-        PatternValue value = new PatternValue(0, "1");
+        String strValue = String.format("%s:%s",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM")),"0000");
+        PatternValue value = new PatternValue(0,strValue);
         segmentId.setCurrentId(value);
-        for (int j = 0; j < 20; j++) {
+        for(int j=0;j<20;j++) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -70,12 +72,13 @@ public class TestSegmentId {
                     for (int i = 0; i < 100; i++) {
                         System.out.println(Thread.currentThread().getName() + segmentId.nextId().getId());
                     }
+                    countDownLatch1.countDown();
                 }
             });
         }
         System.out.println("start execute");
         countDownLatch.countDown();
-        Thread.sleep(2000);
+        countDownLatch1.await();
         LocalDateTime time = LocalDateTime.now();
         String ext = time.format(DateTimeFormatter.ofPattern("yyyy-MM"));
         Assertions.assertEquals(ext + ":2001", segmentId.nextId().getId());
