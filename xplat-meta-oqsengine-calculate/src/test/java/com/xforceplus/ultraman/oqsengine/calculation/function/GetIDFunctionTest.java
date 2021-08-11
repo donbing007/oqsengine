@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
 import com.alibaba.google.common.collect.Maps;
-import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.googlecode.aviator.runtime.type.AviatorString;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
@@ -20,7 +19,6 @@ import io.lettuce.core.RedisClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -84,16 +82,15 @@ public class GetIDFunctionTest {
 
     @Test
     public void testIDFunctionWithDataMap() throws CalculationLogicException {
-        //${tenantId}+":"+date_to_string(sysdate(),"yyyy-MM-dd")+getId("{0000}",${tenantId}
-
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
-            .withExpression("tenantId+\":\"+date_to_string(sysdate(),\"yyyy-MM-dd\")+\":\"+getId(\"{0000}\",tenantId)").build();
+            .withExpression("tenantId+\":\"+date_to_string(sysdate(),\"yyyy-MM-dd\")+\":\"+getId(\"{0000}\",tenantId)")
+            .build();
         Map<String, Object> params = Maps.newHashMap();
         params.put("tenantId", "vanke");
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
-       String dateStr =  LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        Assertions.assertEquals("vanke:"+dateStr+":0001", result.toString());
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Assertions.assertEquals("vanke:" + dateStr + ":0001", result.toString());
     }
 
 
