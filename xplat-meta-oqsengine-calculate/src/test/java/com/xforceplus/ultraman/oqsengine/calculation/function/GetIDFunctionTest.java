@@ -53,8 +53,7 @@ public class GetIDFunctionTest {
     public void testGetIDFunction() throws CalculationLogicException {
         GetIDFunction function = new GetIDFunction();
         Map<String, Object> params = com.alibaba.google.common.collect.Maps.newHashMap();
-        AviatorObject result = function.call(params, new AviatorString("{000}"), new AviatorString("testOne"),
-            FunctionUtils.wrapReturn(1L));
+        AviatorObject result = function.call(params, new AviatorString("{000}"), new AviatorString("testOne"));
         Assertions.assertEquals("001", result.getValue(params).toString());
     }
 
@@ -62,10 +61,10 @@ public class GetIDFunctionTest {
     public void testIDFunction() throws CalculationLogicException {
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
-            .withExpression("getId(\"{0000}\",\"tag1\",10)").build();
+            .withExpression("getId(\"{0000}\",\"tag1\")").build();
         Map<String, Object> params = Maps.newHashMap();
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
-        Assertions.assertEquals("0010", result.toString());
+        Assertions.assertEquals("0001", result.toString());
     }
 
 
@@ -74,11 +73,11 @@ public class GetIDFunctionTest {
 
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
-            .withExpression("tenantId+\":\"+getId(\"{0000}\",tenantId,10)").build();
+            .withExpression("tenantId+\":\"+getId(\"{0000}\",tenantId)").build();
         Map<String, Object> params = Maps.newHashMap();
         params.put("tenantId", "vanke");
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
-        Assertions.assertEquals("vanke:0010", result.toString());
+        Assertions.assertEquals("vanke:0001", result.toString());
     }
 
 
