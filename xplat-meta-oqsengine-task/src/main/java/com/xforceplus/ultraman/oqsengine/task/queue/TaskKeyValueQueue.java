@@ -101,6 +101,11 @@ public class TaskKeyValueQueue implements TaskQueue {
         return null;
     }
 
+    @Override
+    public void ack(Task task) {
+
+    }
+
 
     private String buildNextElementKey(long id) {
         StringBuilder buff = new StringBuilder();

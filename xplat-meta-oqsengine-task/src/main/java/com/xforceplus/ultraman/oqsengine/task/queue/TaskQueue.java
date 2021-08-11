@@ -36,4 +36,11 @@ public interface TaskQueue {
      * @return 任务.
      */
     public Task get(long awaitTimeMs);
+
+    /**
+     * 任务完成确认.
+     *
+     * @param task 任务.
+     */
+    public void ack(Task task);
 }
