@@ -149,10 +149,6 @@ public class Formula extends AbstractCalculation  {
 
     /**
      * generate code.
-     *
-     * @param expression expression
-     *
-     * @return code
      */
     public static String codeGenerate(String expression) {
         if (null != expression && !expression.isEmpty()) {

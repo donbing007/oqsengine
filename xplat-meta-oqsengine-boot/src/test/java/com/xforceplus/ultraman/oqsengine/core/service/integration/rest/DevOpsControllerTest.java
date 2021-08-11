@@ -6,6 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.xforceplus.ultraman.oqsengine.boot.rest.DevOpsController;
+import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
@@ -30,6 +33,16 @@ public class DevOpsControllerTest {
 
     @Mock
     private MetaManager metaManager;
+
+    @Mock
+    private DevOpsManagementServiceImpl devOpsManagementService;
+
+    @Mock
+    private EntityManagementService entityManagementService;
+
+    @Mock
+    private EntitySearchService entitySearchService;
+
 
     @InjectMocks
     private DevOpsController devOpsController;

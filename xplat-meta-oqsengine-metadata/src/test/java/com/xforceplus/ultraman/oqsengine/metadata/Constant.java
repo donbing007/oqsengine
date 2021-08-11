@@ -36,9 +36,9 @@ public class Constant {
         return grpcParamsConfig;
     }
 
-    public static final String TEST_APP_ID = "TEST_70";
+    public static final String TEST_APP_ID = "7";
     public static final String TEST_ENV = "0";
-    public static final int TEST_START_VERSION = 12;
-    public static final long TEST_ENTITY_CLASS_ID = 10001;
+    public static final int TEST_START_VERSION = 0;
+    public static final long TEST_ENTITY_CLASS_ID = 1251658380868685825L;
 
 }
