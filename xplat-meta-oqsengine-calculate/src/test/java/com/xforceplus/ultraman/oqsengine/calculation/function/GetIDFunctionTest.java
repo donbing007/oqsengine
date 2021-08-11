@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGen
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
@@ -78,6 +80,20 @@ public class GetIDFunctionTest {
         params.put("tenantId", "vanke");
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         Assertions.assertEquals("vanke:0001", result.toString());
+    }
+
+    @Test
+    public void testIDFunctionWithDataMap() throws CalculationLogicException {
+        //${tenantId}+":"+date_to_string(sysdate(),"yyyy-MM-dd")+getId("{0000}",${tenantId}
+
+        ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
+            .withCached(true)
+            .withExpression("tenantId+\":\"+date_to_string(sysdate(),\"yyyy-MM-dd\")+\":\"+getId(\"{0000}\",tenantId)").build();
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("tenantId", "vanke");
+        Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+       String dateStr =  LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Assertions.assertEquals("vanke:"+dateStr+":0001", result.toString());
     }
 
 
