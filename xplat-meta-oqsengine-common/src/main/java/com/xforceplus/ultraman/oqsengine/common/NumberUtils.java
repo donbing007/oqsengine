@@ -53,6 +53,16 @@ public final class NumberUtils {
         1000000000000000000L
     };
 
+    /**
+     * 整形最大位数.
+     */
+    private static final int INTEGER_VALUE_MAX_LEN = NumberUtils.size(Integer.MAX_VALUE);
+
+    /**
+     * 长整形最大位数.
+     */
+    private static final int LONG_VALUE_MAX_LEN = NumberUtils.size(Long.MAX_VALUE);
+
     private NumberUtils() {
     }
 
@@ -95,10 +105,18 @@ public final class NumberUtils {
         }
     }
 
+    public static String zeroFill(int value) {
+        return zeroFill(value, INTEGER_VALUE_MAX_LEN);
+    }
+
+    public static String zeroFill(long value) {
+        return zeroFill(value, LONG_VALUE_MAX_LEN);
+    }
+
     /**
      * 将整形转换成字符串,同时不足指定位数补0.
      *
-     * @param value 目标数字.
+     * @param value  目标数字.
      * @param maxLen 目标最大位数.
      * @return 结果.
      */

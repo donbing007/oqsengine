@@ -33,7 +33,7 @@ public class BuildUniqueExecutor extends AbstractJdbcTaskExecutor<StorageUniqueE
 
 
     @Override
-    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws SQLException {
+    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws Exception {
         String sql = buildSQL(storageUniqueEntity.getEntityClasses().length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int pos = 1;

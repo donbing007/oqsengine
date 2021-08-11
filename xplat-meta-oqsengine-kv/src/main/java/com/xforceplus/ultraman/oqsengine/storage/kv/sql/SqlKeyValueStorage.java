@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.kv.sql;
 
 import com.xforceplus.ultraman.oqsengine.common.iterator.AbstractDataIterator;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
-import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -13,9 +12,12 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetsTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SaveTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,13 +55,11 @@ import javax.annotation.Resource;
  */
 public class SqlKeyValueStorage implements KeyValueStorage {
 
+    private static final byte[] EMPTY_VALUES = new byte[0];
     private static final char DISABLE_SYMBOL = '%';
 
     @Resource(name = "kvStorageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
-
-    @Resource
-    private SerializeStrategy serializeStrategy;
 
     private String tableName;
 
@@ -74,105 +74,154 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    public void save(String key, Object value) throws SQLException {
+    public void save(String key, byte[] value) {
         checkKey(key);
 
-        checkValue(value);
+        long size = 0;
+        try {
+            size = (long) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws Exception {
+                    return new SaveTaskExecutor(tableName, resource, timeout, false).execute(
+                        Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
+                }
 
-        byte[] data = serializeStrategy.serialize(value);
-        long size = (long) transactionExecutor.execute(new ResourceTask() {
-            @Override
-            public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
-                throws SQLException {
-                return new SaveTaskExecutor(tableName, resource, timeout).execute(
-                    Arrays.asList(new AbstractMap.SimpleEntry<>(key, data)));
-            }
-
-            @Override
-            public boolean isAttachmentMaster() {
-                return true;
-            }
-        });
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
 
         final long onlyOne = 1;
         if (size < onlyOne) {
-            throw new SQLException(String.format("Failed to save key-value successfully.[KEY =%s]", key));
+            throw new RuntimeException(String.format("Failed to save key-value successfully.[KEY =%s]", key));
         }
     }
 
     @Override
-    public long save(Collection<Map.Entry<String, Object>> kvs) throws SQLException {
+    public long save(Collection<Map.Entry<String, byte[]>> kvs) {
         Collection<Map.Entry<String, byte[]>> keyValues = new ArrayList<>(kvs.size());
-        for (Map.Entry<String, Object> kv : kvs) {
+        for (Map.Entry<String, byte[]> kv : kvs) {
             checkKey(kv.getKey());
-            checkValue(kv.getValue());
-            keyValues.add(new AbstractMap.SimpleEntry(kv.getKey(), serializeStrategy.serialize(kv.getValue())));
+            keyValues
+                .add(new AbstractMap.SimpleEntry(kv.getKey(), kv.getValue() == null ? EMPTY_VALUES : kv.getValue()));
         }
 
-        return (long) transactionExecutor.execute(new ResourceTask() {
-            @Override
-            public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
-                throws SQLException {
-                return new SaveTaskExecutor(tableName, resource, timeout).execute(keyValues);
-            }
-
-            @Override
-            public boolean isAttachmentMaster() {
-                return true;
-            }
-        });
-    }
-
-    @Override
-    public boolean exist(String key) throws SQLException {
-        checkKey(key);
-
-        return (boolean) transactionExecutor.execute(new ResourceTask() {
-            @Override
-            public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
-                throws SQLException {
-                return new ExistTaskExecutor(tableName, resource, timeout).execute(key);
-            }
-
-            @Override
-            public boolean isAttachmentMaster() {
-                return true;
-            }
-        });
-    }
-
-    @Override
-    public Optional<Object> get(String key) throws SQLException {
-        checkKey(key);
-
-        return (Optional<Object>) transactionExecutor.execute(new ResourceTask() {
-            @Override
-            public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
-                throws SQLException {
-                byte[] data = new GetTaskExecutor(tableName, resource, timeout).execute(key);
-
-                if (data == null) {
-                    return Optional.empty();
-                } else {
-                    return Optional.of(serializeStrategy.unserialize(data));
+        try {
+            return (long) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws Exception {
+                    return new SaveTaskExecutor(tableName, resource, timeout, false).execute(keyValues);
                 }
-            }
 
-            @Override
-            public boolean isAttachmentMaster() {
-                return true;
-            }
-        });
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
     }
 
     @Override
-    public Collection<Map.Entry<String, Object>> get(String[] keys) throws SQLException {
+    public boolean add(String key, byte[] value) {
+        checkKey(key);
+
+        long size = 0;
+        try {
+            size = (long) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws Exception {
+                    return new SaveTaskExecutor(tableName, resource, timeout, true).execute(
+                        Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            if (SQLIntegrityConstraintViolationException.class.isInstance(ex.getCause())) {
+                return false;
+            } else {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
+
+        final long onlyOne = 1;
+        return size == onlyOne;
+    }
+
+    @Override
+    public boolean exist(String key) {
+        checkKey(key);
+
+        try {
+            return (boolean) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws SQLException {
+                    return new ExistTaskExecutor(tableName, resource, timeout).execute(key);
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public Optional<byte[]> get(String key) {
+        checkKey(key);
+
+        try {
+            return (Optional<byte[]>) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws SQLException {
+                    byte[] data = new GetTaskExecutor(tableName, resource, timeout).execute(key);
+
+                    if (data == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(data);
+                    }
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
         for (String key : keys) {
             checkKey(key);
         }
 
-        Collection<Map.Entry<String, byte[]>> results =
-            (Collection<Map.Entry<String, byte[]>>) transactionExecutor.execute(new ResourceTask() {
+        Collection<Map.Entry<String, byte[]>> results = null;
+        try {
+            results = (Collection<Map.Entry<String, byte[]>>) transactionExecutor.execute(new ResourceTask() {
                 @Override
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws SQLException {
@@ -185,19 +234,22 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                     return true;
                 }
             });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
 
         return results.stream().map(r ->
-            new AbstractMap.SimpleEntry<>(r.getKey(), serializeStrategy.unserialize(r.getValue()))
+            new AbstractMap.SimpleEntry<>(r.getKey(), r.getValue())
         ).collect(Collectors.toList());
     }
 
     @Override
-    public void delete(String key) throws SQLException {
+    public void delete(String key) {
         delete(new String[] {key});
     }
 
     @Override
-    public void delete(String[] keys) throws SQLException {
+    public void delete(String[] keys) {
         if (keys == null || keys.length == 0) {
             return;
         }
@@ -206,29 +258,33 @@ public class SqlKeyValueStorage implements KeyValueStorage {
             checkKey(key);
         }
 
-        transactionExecutor.execute(new ResourceTask() {
-            @Override
-            public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
-                throws SQLException {
-                return new DeleteTaskExecutor(tableName, resource, timeout).execute(keys);
-            }
+        try {
+            transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws SQLException {
+                    return new DeleteTaskExecutor(tableName, resource, timeout).execute(keys);
+                }
 
-            @Override
-            public boolean isAttachmentMaster() {
-                return true;
-            }
-        });
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
     }
 
     @Override
-    public DataIterator<String> iterator(String keyPrefix, boolean first) throws SQLException {
+    public KeyIterator iterator(String keyPrefix, boolean asc) {
         checkKey(keyPrefix);
 
-        KeysIterator iterator = new KeysIterator();
+        SqlKeyIterator iterator = new SqlKeyIterator();
         iterator.setTableName(tableName);
         iterator.setTimeout(timeout);
         iterator.setTransactionExecutor(transactionExecutor);
-        iterator.setFirst(first);
+        iterator.setAsc(asc);
         if (!keyPrefix.endsWith("%")) {
             iterator.setKeyPrefix(keyPrefix + "%");
         } else {
@@ -241,16 +297,16 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     /**
      * key 迭代器.
      */
-    static class KeysIterator extends AbstractDataIterator<String> {
+    static class SqlKeyIterator extends KeyIterator {
 
         private TransactionExecutor transactionExecutor;
         private String tableName;
         private long timeout;
         private String keyPrefix;
         private String lastKey;
-        private boolean first;
+        private boolean asc;
 
-        public KeysIterator() {
+        public SqlKeyIterator() {
             this(100);
         }
 
@@ -259,8 +315,14 @@ public class SqlKeyValueStorage implements KeyValueStorage {
          *
          * @param buffSize 缓存大小.
          */
-        public KeysIterator(int buffSize) {
+        public SqlKeyIterator(int buffSize) {
             super(buffSize);
+        }
+
+        @Override
+        public void seek(String key) {
+            this.asc = false;
+            this.lastKey = key;
         }
 
         public static DataIterator<String> buildEmptyIterator() {
@@ -289,8 +351,8 @@ public class SqlKeyValueStorage implements KeyValueStorage {
             this.keyPrefix = keyPrefix;
         }
 
-        public void setFirst(boolean first) {
-            this.first = first;
+        public void setAsc(boolean asc) {
+            this.asc = asc;
         }
 
         @Override
@@ -300,7 +362,6 @@ public class SqlKeyValueStorage implements KeyValueStorage {
             return key;
         }
 
-        @Override
         protected void load(List<String> buff, int limit) {
             Collection<String> keys;
             try {
@@ -311,7 +372,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                         SelectKeysTaskExecutor task = new SelectKeysTaskExecutor(tableName, resource, timeout);
                         task.setLastKey(lastKey);
                         task.setBlockSize(limit);
-                        task.setFirst(first);
+                        task.setAsc(asc);
                         return task.execute(keyPrefix);
                     }
 
@@ -321,28 +382,22 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                     }
                 });
             } catch (SQLException ex) {
-                throw new IllegalArgumentException(ex.getMessage(), ex);
+                throw new RuntimeException(ex.getMessage(), ex);
             }
 
             buff.addAll(keys);
         }
     }
 
-    private void checkKey(String key) throws SQLException {
+    private void checkKey(String key) {
         if (key == null || key.isEmpty()) {
-            throw new SQLException("The key is invalid.");
+            throw new IllegalArgumentException("The key is invalid.");
         }
 
         for (char c : key.toCharArray()) {
             if (c == DISABLE_SYMBOL) {
-                throw new SQLException("The '%' symbol cannot be used in KEY.");
+                throw new IllegalArgumentException("The '%' symbol cannot be used in KEY.");
             }
-        }
-    }
-
-    private void checkValue(Object value) throws SQLException {
-        if (value == null) {
-            throw new SQLException("Invalid Value.");
         }
     }
 }

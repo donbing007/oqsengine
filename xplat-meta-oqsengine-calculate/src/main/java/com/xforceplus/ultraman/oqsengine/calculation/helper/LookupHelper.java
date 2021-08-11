@@ -19,10 +19,6 @@ public class LookupHelper {
      * 前辍.
      */
     private static final String LINK_KEY_PREFIX = "l";
-    /**
-     * 所有数字的最大位数.
-     */
-    private static final int MAX_LEN = NumberUtils.size(Long.MAX_VALUE);
 
     /**
      * 构造lookup的link信息记录KEY.<br>
@@ -39,13 +35,13 @@ public class LookupHelper {
         StringBuilder buff = new StringBuilder();
         buff.append(LINK_KEY_PREFIX)
             .append('-')
-            .append(NumberUtils.zeroFill(targetField.id(), MAX_LEN))
+            .append(NumberUtils.zeroFill(targetField.id()))
             .append('-')
-            .append(NumberUtils.zeroFill(targetEntity.id(), MAX_LEN))
+            .append(NumberUtils.zeroFill(targetEntity.id()))
             .append('-')
-            .append(NumberUtils.zeroFill(lookupEntity.entityClassRef().getId(), MAX_LEN))
+            .append(NumberUtils.zeroFill(lookupEntity.entityClassRef().getId()))
             .append('-')
-            .append(NumberUtils.zeroFill(lookupEntity.id(), MAX_LEN));
+            .append(NumberUtils.zeroFill(lookupEntity.id()));
         return buff.toString();
     }
 
@@ -77,13 +73,13 @@ public class LookupHelper {
         StringBuilder buff = new StringBuilder();
         buff.append(LINK_KEY_PREFIX)
             .append('-')
-            .append(NumberUtils.zeroFill(targetField.id(), MAX_LEN))
+            .append(NumberUtils.zeroFill(targetField.id()))
             .append('-')
-            .append(NumberUtils.zeroFill(targetEntity.id(), MAX_LEN));
+            .append(NumberUtils.zeroFill(targetEntity.id()));
 
         if (lookupEntityClassOp.isPresent()) {
             buff.append('-')
-                .append(NumberUtils.zeroFill(lookupEntityClassOp.get().id(), MAX_LEN));
+                .append(NumberUtils.zeroFill(lookupEntityClassOp.get().id()));
         }
         return buff.toString();
     }

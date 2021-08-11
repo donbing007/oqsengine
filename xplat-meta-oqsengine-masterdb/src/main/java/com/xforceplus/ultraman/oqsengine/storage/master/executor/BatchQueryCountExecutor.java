@@ -48,7 +48,7 @@ public class BatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Inte
     }
 
     @Override
-    public Integer execute(Long nothing) throws SQLException {
+    public Integer execute(Long nothing) throws Exception {
         String sql = buildCountSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);

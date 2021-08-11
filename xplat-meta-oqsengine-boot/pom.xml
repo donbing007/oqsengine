@@ -27,6 +27,12 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-lock</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-core</artifactId>
             <version>${project.version}</version>
         </dependency>

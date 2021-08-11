@@ -38,7 +38,7 @@ public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Coll
     }
 
     @Override
-    public Collection<MasterStorageEntity> execute(long[] ids) throws SQLException {
+    public Collection<MasterStorageEntity> execute(long[] ids) throws Exception {
         String sql = buildSQL(ids.length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;

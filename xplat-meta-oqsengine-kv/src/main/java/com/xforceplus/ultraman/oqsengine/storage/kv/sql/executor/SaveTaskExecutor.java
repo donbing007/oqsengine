@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -19,19 +18,26 @@ import java.util.Map;
  */
 public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.Entry<String, byte[]>>, Long> {
 
+    private boolean add = false;
+
     public SaveTaskExecutor(String tableName,
-                            TransactionResource<Connection> resource) {
+                            TransactionResource<Connection> resource, boolean add) {
         super(tableName, resource);
+        this.add = add;
     }
 
     public SaveTaskExecutor(String tableName,
-                            TransactionResource<Connection> resource, long timeoutMs) {
+                            TransactionResource<Connection> resource, long timeoutMs, boolean add) {
         super(tableName, resource, timeoutMs);
+        this.add = add;
     }
 
     @Override
-    public Long execute(Collection<Map.Entry<String, byte[]>> kvs) throws SQLException {
-        String sql = String.format(SqlTemplateDefine.REPLACE_TEMPLATE, getTableName());
+    public Long execute(Collection<Map.Entry<String, byte[]>> kvs) throws Exception {
+
+        String sql =
+            String.format(add ? SqlTemplateDefine.INSERT_TEMPLATE : SqlTemplateDefine.REPLACE_TEMPLATE, getTableName());
+
         // 表示只有一个kv.
         final int single = 1;
         boolean onlyOne = kvs.size() == single;

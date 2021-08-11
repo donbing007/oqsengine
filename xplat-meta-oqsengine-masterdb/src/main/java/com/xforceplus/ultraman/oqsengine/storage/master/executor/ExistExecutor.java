@@ -33,7 +33,7 @@ public class ExistExecutor extends AbstractJdbcTaskExecutor<Long, Boolean> {
     }
 
     @Override
-    public Boolean execute(Long id) throws SQLException {
+    public Boolean execute(Long id) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, id);

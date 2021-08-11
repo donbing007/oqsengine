@@ -46,7 +46,7 @@ public class UniqueExecutorTest {
     private IEntityClass entityClass;
 
     @BeforeEach
-    public void before() throws SQLException {
+    public void before() throws Exception {
         System.setProperty(
             "MYSQL_JDBC_UNIQUE_KEY",
             String.format(
@@ -61,7 +61,7 @@ public class UniqueExecutorTest {
                 .withConfig(config).build();
         List<IEntityField> fields = new ArrayList<>();
         fields.add(f1);
-        entityClass = OqsEntityClass.Builder.anEntityClass().withCode("test").withFields(fields).withId(1008l).build();
+        entityClass = OqsEntityClass.Builder.anEntityClass().withCode("test").withFields(fields).withId(1008L).build();
     }
 
     @AfterEach
@@ -70,10 +70,10 @@ public class UniqueExecutorTest {
     }
 
     @Test
-    public void testBuildExecutor() throws SQLException {
+    public void testBuildExecutor() throws Exception {
 
         StorageUniqueEntity entity =
-            StorageUniqueEntity.builder().key("hello").entityClasses(new long[] {1008l}).build();
+            StorageUniqueEntity.builder().key("hello").entityClasses(new long[] {1008L}).build();
         BuildUniqueExecutor executor = (BuildUniqueExecutor) BuildUniqueExecutor.build(TABLE_NAME, resource, 30000);
         int ret = executor.execute(entity);
         Assert.assertEquals(1, ret);

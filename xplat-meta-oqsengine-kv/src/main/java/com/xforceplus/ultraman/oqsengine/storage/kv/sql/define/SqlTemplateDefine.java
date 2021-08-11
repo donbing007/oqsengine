@@ -13,6 +13,14 @@ public final class SqlTemplateDefine {
     }
 
     /**
+     * 增加一个KEY-VALUE.<p></p>
+     * {1}  key<p></p>
+     * {2}  value<p></p>
+     */
+    public static String INSERT_TEMPLATE =
+        String.format("INSERT INTO %s (%s, %s) values (?, ?)", "%s", FieldDefine.KEY, FieldDefine.VALUE);
+
+    /**
      * 更新KEY-VALUE.<p></p>
      * {1}  key<p></p>
      * {2}  value<p></p>

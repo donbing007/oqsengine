@@ -32,7 +32,7 @@ public class UpdateUniqueExecutor extends AbstractJdbcTaskExecutor<StorageUnique
     }
 
     @Override
-    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws SQLException {
+    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws Exception {
         String sql = buildSQL(storageUniqueEntity);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setString(1, storageUniqueEntity.getKey());

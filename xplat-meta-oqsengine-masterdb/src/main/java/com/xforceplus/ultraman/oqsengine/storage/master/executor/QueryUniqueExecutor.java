@@ -37,7 +37,7 @@ public class QueryUniqueExecutor extends AbstractJdbcTaskExecutor<String, Option
     }
 
     @Override
-    public Optional<StorageUniqueEntity> execute(String key) throws SQLException {
+    public Optional<StorageUniqueEntity> execute(String key) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {

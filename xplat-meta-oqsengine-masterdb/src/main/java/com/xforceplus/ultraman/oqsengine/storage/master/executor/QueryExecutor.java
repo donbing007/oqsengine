@@ -81,7 +81,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
     }
 
     @Override
-    public Optional<MasterStorageEntity> execute(Long id) throws SQLException {
+    public Optional<MasterStorageEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {

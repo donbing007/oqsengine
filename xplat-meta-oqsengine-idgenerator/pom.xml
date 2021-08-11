@@ -12,7 +12,6 @@
     <artifactId>xplat-meta-oqsengine-idgenerator</artifactId>
 
     <properties>
-        <test.skip>true</test.skip>
         <hazelcast.version>4.2</hazelcast.version>
     </properties>
     <dependencies>

@@ -1,9 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculation.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
-import com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -12,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -101,9 +103,10 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 记录当前lookup关系.
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
-     * value为目标数据版本号.
+     * value为目标数据版本号的整形字节数组.
      *
-     * @see com.xforceplus.ultraman.oqsengine.calculation.lookup.helper.LookupHelper
+     * @see ByteUtil
+     * @see com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
         Optional<IEntityClass> targetEntityClassOp = context.getMetaManager().load(
@@ -124,8 +127,8 @@ public class LookupCalculationLogic implements CalculationLogic {
         String key = LookupHelper.buildLookupLinkKey(targetEntity, targetFieldOp.get(), context.getEntity());
 
         try {
-            context.getKvStorage().save(key, targetEntity.version());
-        } catch (SQLException ex) {
+            context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
+        } catch (IOException ex) {
             throw new CalculationLogicException(ex.getMessage(), ex);
         }
     }

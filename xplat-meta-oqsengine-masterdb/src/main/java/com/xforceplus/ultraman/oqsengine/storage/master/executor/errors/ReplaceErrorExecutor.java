@@ -30,7 +30,7 @@ public class ReplaceErrorExecutor extends AbstractJdbcTaskExecutor<ErrorStorageE
     }
 
     @Override
-    public Integer execute(ErrorStorageEntity errorStorageEntity) throws SQLException {
+    public Integer execute(ErrorStorageEntity errorStorageEntity) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, errorStorageEntity.getId());

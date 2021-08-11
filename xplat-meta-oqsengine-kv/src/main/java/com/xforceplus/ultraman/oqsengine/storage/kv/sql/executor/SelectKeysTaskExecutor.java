@@ -47,7 +47,7 @@ public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Col
         this.blockSize = blockSize;
     }
 
-    public void setFirst(boolean first) {
+    public void setAsc(boolean first) {
         this.first = first;
     }
 

@@ -33,7 +33,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
     }
 
     @Override
-    public Integer execute(MasterStorageEntity masterStorageEntity) throws SQLException {
+    public Integer execute(MasterStorageEntity masterStorageEntity) throws Exception {
         if (VersionHelp.isOmnipotence(masterStorageEntity.getVersion())) {
 
             String sql = buildForceSQL(masterStorageEntity);
