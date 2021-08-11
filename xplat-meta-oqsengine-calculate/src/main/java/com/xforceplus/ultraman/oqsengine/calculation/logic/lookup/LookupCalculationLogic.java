@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -101,8 +102,9 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 记录当前lookup关系.
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
-     * value为目标数据版本号.
+     * value为目标数据版本号的整形字节数组.
      *
+     * @see ByteUtil
      * @see com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
@@ -123,10 +125,6 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         String key = LookupHelper.buildLookupLinkKey(targetEntity, targetFieldOp.get(), context.getEntity());
 
-        try {
-            context.getKvStorage().save(key, targetEntity.version());
-        } catch (SQLException ex) {
-            throw new CalculationLogicException(ex.getMessage(), ex);
-        }
+        context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
     }
 }

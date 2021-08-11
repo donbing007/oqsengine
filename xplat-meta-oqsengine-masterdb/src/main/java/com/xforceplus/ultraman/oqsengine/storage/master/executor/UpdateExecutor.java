@@ -33,7 +33,7 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
     }
 
     @Override
-    public Integer execute(MasterStorageEntity masterStorageEntity) throws SQLException {
+    public Integer execute(MasterStorageEntity masterStorageEntity) throws Exception {
         String sql = buildSQL(masterStorageEntity);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, masterStorageEntity.getUpdateTime());

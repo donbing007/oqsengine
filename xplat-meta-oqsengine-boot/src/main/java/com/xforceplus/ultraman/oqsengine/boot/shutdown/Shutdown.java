@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
@@ -46,7 +47,7 @@ public class Shutdown {
     private CDCDaemonService cdcDaemonService;
 
     @Resource
-    private RedisClient redisClient;
+    private RedisClient redisClientState;
 
     @Resource
     private RedisClient redisClientChangeLog;
@@ -105,7 +106,7 @@ public class Shutdown {
         logger.info("Succeed closing thd cdc consumer service...ok!");
 
         logger.info("Start closing the redis client...");
-        redisClient.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
+        redisClientState.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
         logger.info("Succeed closing the redis client...ok!");
 
         logger.info("Start closing the redis client for change-log...");

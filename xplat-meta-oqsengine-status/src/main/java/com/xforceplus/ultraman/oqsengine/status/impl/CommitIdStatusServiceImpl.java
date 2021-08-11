@@ -98,7 +98,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
      */
     public static final long INVALID_COMMITID = 0;
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
 
     private StatefulRedisConnection<String, String> syncConnect;

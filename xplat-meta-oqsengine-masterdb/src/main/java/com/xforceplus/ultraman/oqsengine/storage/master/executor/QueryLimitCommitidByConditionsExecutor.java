@@ -94,7 +94,7 @@ public class QueryLimitCommitidByConditionsExecutor
     }
 
     @Override
-    public Collection<EntityRef> execute(Conditions conditions) throws SQLException {
+    public Collection<EntityRef> execute(Conditions conditions) throws Exception {
         if (!config.getDataAccessFilterCondtitions().isEmtpy()) {
             conditions.addAnd(config.getDataAccessFilterCondtitions(), true);
         }

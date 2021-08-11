@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Resource;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
 
 
-    @Autowired
+    @Resource
     private SegmentService segmentService;
 
     private ExecutorService executorService;
@@ -30,7 +30,7 @@ public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
     private Map<String, IDGenerator> generators;
     private Map<String, IDGenerator> distributeGenerators;
 
-    @Autowired
+    @Resource(name = "redissonClientAutoId")
     private RedissonClient redissonClient;
 
     /**

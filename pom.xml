@@ -176,6 +176,7 @@
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-kv</module>
+        <module>xplat-meta-oqsengine-task</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
@@ -189,6 +190,7 @@
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
         <module>xplat-meta-oqsengine-idgenerator</module>
+        <module>xplat-meta-oqsengine-lock</module>
     </modules>
 
     <distributionManagement>

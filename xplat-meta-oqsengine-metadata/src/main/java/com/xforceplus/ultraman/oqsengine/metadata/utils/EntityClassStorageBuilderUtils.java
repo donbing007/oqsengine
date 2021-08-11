@@ -145,14 +145,23 @@ public class EntityClassStorageBuilderUtils {
                     throw new MetaSyncClientException("profile code is invalid.", false);
                 }
 
+                /*
                 if (p.getEntityFieldInfoList().isEmpty() && p.getRelationInfoList().isEmpty()) {
                     throw new MetaSyncClientException(
                         String.format("profile [%d-%s] must have at least one element, fieldList/relationList", id,
                             p.getCode()), false);
                 }
+                */
 
-                List<EntityField> fieldList = toEntityFieldList(p.getEntityFieldInfoList());
-                List<RelationStorage> relationStorageList = toRelationStorageList(p.getRelationInfoList());
+                List<EntityField> fieldList = new ArrayList<>();
+                if (!p.getEntityFieldInfoList().isEmpty()) {
+                    fieldList = toEntityFieldList(p.getEntityFieldInfoList());
+                }
+                List<RelationStorage> relationStorageList = new ArrayList<>();
+                if (!p.getRelationInfoList().isEmpty()) {
+                    relationStorageList = toRelationStorageList(p.getRelationInfoList());
+                }
+
                 profileStorageMap.put(p.getCode(), new ProfileStorage(p.getCode(), fieldList, relationStorageList));
             }
         }
@@ -207,7 +216,7 @@ public class EntityClassStorageBuilderUtils {
         FieldType fieldType = FieldType.fromRawType(e.getFieldType().name());
 
         FieldConfig fieldConfig =
-            toFieldConfig(isRelationEntity, fieldType, e.getFieldConfig(), e.getCalculator());
+            toFieldConfig(isRelationEntity, fieldType, e.getId(), e.getFieldConfig(), e.getCalculator());
 
         return EntityField.Builder.anEntityField()
             .withId(eid)
@@ -220,13 +229,13 @@ public class EntityClassStorageBuilderUtils {
             .build();
     }
 
-    private static AbstractCalculation toCalculator(FieldType fieldType,
+    private static AbstractCalculation toCalculator(long fieldId, FieldType fieldType,
                                                       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         CalculationType calculationType = toCalculationType(calculator);
 
         switch (calculationType) {
             case AUTO_FILL: {
-                return toAutoFill(calculator);
+                return toAutoFill(fieldId, calculator);
             }
             case FORMULA: {
                 return toFormula(fieldType, calculator);
@@ -252,7 +261,7 @@ public class EntityClassStorageBuilderUtils {
                     .build();
     }
 
-    private static AutoFill toAutoFill(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static AutoFill toAutoFill(long fieldId, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
 
         AutoFill.DomainNoType domainNoType = AutoFill.DomainNoType.instance(calculator.getDomainNoSenior());
 
@@ -260,15 +269,15 @@ public class EntityClassStorageBuilderUtils {
         //  判断表达式层级逻辑是否允许
         if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
             throw new MetaSyncClientException(
-                String.format("autoFill [level] could not be less than %d.",
-                    MIN_FORMULA_LEVEL), false);
+                String.format("fieldId [%d], autoFill [level] could not be less than %d.",
+                    fieldId, MIN_FORMULA_LEVEL), false);
         }
 
         switch (domainNoType) {
             //  普通自增编号
             case NORMAL: {
                 if (calculator.getPatten().isEmpty()) {
-                    throw new MetaSyncClientException("autoFill [patten] could not be null.",
+                    throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [patten] could not be null.", fieldId),
                         false);
                 }
 
@@ -278,14 +287,14 @@ public class EntityClassStorageBuilderUtils {
             case SENIOR: {
                 //  判断表达式不能为空
                 if (calculator.getExpression().isEmpty()) {
-                    throw new MetaSyncClientException("autoFill [expression] could not be null.",
+                    throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [expression] could not be null.", fieldId),
                         false);
                 }
 
                 break;
             }
             default: {
-                throw new MetaSyncClientException("autoFill [domainNoType] could be init.",
+                throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [domainNoType] should not be null.", fieldId),
                     false);
             }
         }
@@ -293,8 +302,8 @@ public class EntityClassStorageBuilderUtils {
         return AutoFill.Builder.anAutoFill()
             .withModel(calculator.getModel())
             .withStep(calculator.getStep())
-            .withMax(calculator.getMax().isEmpty() ? 0 : Long.parseLong(calculator.getMax()))
-            .withMin(calculator.getMin().isEmpty() ? 0 : Long.parseLong(calculator.getMin()))
+            .withMax(calculator.getMax())
+            .withMin(calculator.getMin())
             .withLevel(calculator.getLevel())
             .withPatten(calculator.getPatten())
             .withResetType(calculator.getResetType())
@@ -369,6 +378,7 @@ public class EntityClassStorageBuilderUtils {
      * 转换FieldConfig.
      */
     private static FieldConfig toFieldConfig(boolean isRelationEntity, FieldType fieldType,
+                                             long fieldId,
                                              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig,
                                              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         FieldConfig.Builder builder = FieldConfig.Builder.anFieldConfig()
@@ -392,7 +402,7 @@ public class EntityClassStorageBuilderUtils {
             .withLen(fieldConfig.getLength());
 
         if (!isRelationEntity) {
-            builder.withCalculation(toCalculator(fieldType, calculator));
+            builder.withCalculation(toCalculator(fieldId, fieldType, calculator));
         } else {
             builder.withCalculation(StaticCalculation.Builder.anStaticCalculation().build());
         }
