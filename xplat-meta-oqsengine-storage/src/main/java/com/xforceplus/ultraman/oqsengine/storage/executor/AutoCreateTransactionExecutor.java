@@ -63,7 +63,7 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
                 tx.rollback();
             }
 
-            throw ex;
+            throw new SQLException(ex.getMessage(), ex);
 
         } finally {
 

@@ -12,14 +12,15 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "redis")
-public class LettuceConfiguration {
+public class RedisConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
 
     private int changeLogDb = 14;
     private int cacheEventDb = 15;
-    private int generator = 13;
+    private int autoIdDb = 13;
+    private int lockerDb = 12;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
@@ -29,7 +30,7 @@ public class LettuceConfiguration {
         this.maxReqQueue = maxReqQueue;
     }
 
-    public String getUri() {
+    public String uriWithStateDb() {
         return uri;
     }
 
@@ -45,7 +46,11 @@ public class LettuceConfiguration {
         return String.format("%s/%d", uri, cacheEventDb);
     }
 
-    public String uriWithIDGenerator() {
-        return String.format("%s/%d", uri, generator);
+    public String uriWithAutoIdDb() {
+        return String.format("%s/%d", uri, autoIdDb);
+    }
+
+    public String uriWithLockerDb() {
+        return String.format("%s/%d", uri, lockerDb);
     }
 }

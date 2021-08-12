@@ -32,7 +32,7 @@ public class DeleteUniqueExecutor extends AbstractJdbcTaskExecutor<StorageUnique
     }
 
     @Override
-    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws SQLException {
+    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws Exception {
         String sql = buildForceSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, storageUniqueEntity.getId());

@@ -13,7 +13,7 @@
 
     <properties>
         <test.skip>true</test.skip>
-<!--        <hazelcast.version>4.2</hazelcast.version>-->
+        <hazelcast.version>4.2</hazelcast.version>
     </properties>
     <dependencies>
         <dependency>
@@ -21,11 +21,6 @@
             <artifactId>xplat-meta-oqsengine-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.hazelcast</groupId>-->
-<!--            <artifactId>hazelcast-all</artifactId>-->
-<!--            <version>${hazelcast.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-storage</artifactId>

@@ -28,8 +28,8 @@ create table oqsbigentity
 * kv 储存.
 */
 create table kv (
-  k varchar(255) not null,
-  v blob,
+  k       varchar(255)          not null comment 'key',
+  v     blob                           comment '值',
   primary key (k)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 

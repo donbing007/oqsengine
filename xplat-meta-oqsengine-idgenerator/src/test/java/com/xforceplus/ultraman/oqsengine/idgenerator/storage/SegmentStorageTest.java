@@ -73,24 +73,11 @@ public class SegmentStorageTest {
         storage.setTable("segment");
         storage.setQueryTimeout(100000000);
         storage.init();
-
-//        Transaction tx = transactionManager.create();
-//        transactionManager.bind(tx.id());
-//        expectedEntitys = initData(storage, 100);
-//        transactionManager.finish();
     }
 
     @AfterEach
     public void after() throws Exception {
-//        transactionManager.finish();
-//        try (Connection conn = dataSource.getConnection()) {
-//            try (Statement stat = conn.createStatement()) {
-//                stat.execute("truncate table oqsbigentity");
-//            }
-//        }
-//        ((HikariDataSource) dataSource).close();
-
-        try(Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
             st.executeUpdate("truncate table segment");
             st.close();

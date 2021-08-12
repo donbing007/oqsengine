@@ -24,7 +24,7 @@ public interface ResourceTask<R> {
      * @return 执行结果.
      * @throws SQLException 执行异常.
      */
-    R run(Transaction transaction, TransactionResource resource, ExecutorHint hint) throws SQLException;
+    R run(Transaction transaction, TransactionResource resource, ExecutorHint hint) throws Exception;
 
     /**
      * 判断是否依附在 master 资源上.

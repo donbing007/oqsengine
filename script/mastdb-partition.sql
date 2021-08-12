@@ -24,7 +24,7 @@ create table oqsbigentity
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 PARTITION BY HASH(id) PARTITIONS 40;
 
 create table kv (
-  k varchar(255) not null,
-  v blob,
+  k       varchar(255)          not null comment 'key',
+  v     blob                           comment '值',
   primary key (k)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 PARTITION BY KEY() PARTITIONS 40;

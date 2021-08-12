@@ -104,6 +104,8 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             } else {
                 return resourceTask.run(null, resource, hint);
             }
+        } catch (Exception ex) {
+            throw new SQLException(ex.getMessage(), ex);
         } finally {
             if (!txOp.isPresent()) {
                 resource.destroy();

@@ -87,8 +87,4 @@
 
     </dependencies>
 
-    <properties>
-        <checkstyle.skip>true</checkstyle.skip>
-    </properties>
-
 </project>

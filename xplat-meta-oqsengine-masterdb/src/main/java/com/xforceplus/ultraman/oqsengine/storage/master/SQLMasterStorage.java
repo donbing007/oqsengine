@@ -350,7 +350,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private int buildUnique(IEntity entity, String uniqueKey, IEntityClass entityClass, TransactionResource resource)
-        throws SQLException {
+        throws Exception {
         StorageUniqueEntity storageUniqueEntity =
             StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
                 .entityClasses(getEntityClasses(entityClass)).build();
@@ -457,7 +457,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
-    private int deleteUnique(IEntity entity, TransactionResource resource) throws SQLException {
+    private int deleteUnique(IEntity entity, TransactionResource resource) throws Exception {
         StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
         storageEntityBuilder.id(entity.id());
         return DeleteUniqueExecutor.build(uniqueTableName, resource, queryTimeout)
@@ -685,7 +685,7 @@ public class SQLMasterStorage implements MasterStorage {
                 if (buffer.isEmpty()) {
                     load();
                 }
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
 
@@ -703,7 +703,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        private void load() throws SQLException {
+        private void load() throws Exception {
             transactionExecutor.execute((tx, resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
                     BatchQueryExecutor

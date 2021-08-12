@@ -31,7 +31,7 @@ public class QueryErrorExecutor extends AbstractJdbcTaskExecutor<QueryErrorCondi
     }
 
     @Override
-    public Collection<ErrorStorageEntity> execute(QueryErrorCondition queryErrorCondition) throws SQLException {
+    public Collection<ErrorStorageEntity> execute(QueryErrorCondition queryErrorCondition) throws Exception {
         String sql = buildSQL(queryErrorCondition);
 
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {

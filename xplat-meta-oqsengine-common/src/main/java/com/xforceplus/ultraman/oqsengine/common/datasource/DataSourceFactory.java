@@ -9,7 +9,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.Metrics;
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +55,9 @@ import javax.sql.DataSource;
  */
 public class DataSourceFactory {
 
+    /**
+     * 外部指定配置文件地址.
+     */
     public static final String CONFIG_FILE = "ds";
 
     private static final String INDEX_WRITER_PATH = "dataSources.index.write";

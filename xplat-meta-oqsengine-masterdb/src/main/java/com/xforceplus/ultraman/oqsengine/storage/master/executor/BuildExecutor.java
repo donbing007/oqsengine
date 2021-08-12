@@ -51,7 +51,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity,
     }
 
     @Override
-    public Integer execute(MasterStorageEntity masterStorageEntity) throws SQLException {
+    public Integer execute(MasterStorageEntity masterStorageEntity) throws Exception {
         String sql = buildSQL(masterStorageEntity.getEntityClasses().length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int pos = 1;

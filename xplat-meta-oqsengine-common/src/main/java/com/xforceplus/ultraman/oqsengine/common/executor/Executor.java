@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.common.executor;
 
-import java.sql.SQLException;
-
 /**
  * 执行器定义.
  *
@@ -20,5 +18,5 @@ public interface Executor<R, T> {
      * @return 操作结果.
      * @throws Exception 执行异常.
      */
-    T execute(R r) throws SQLException;
+    T execute(R r) throws Exception;
 }

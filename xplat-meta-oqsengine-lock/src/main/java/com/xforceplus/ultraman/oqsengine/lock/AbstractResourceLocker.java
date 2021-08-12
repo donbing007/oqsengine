@@ -1,9 +1,11 @@
-package com.xforceplus.ultraman.oqsengine.common.lock;
+package com.xforceplus.ultraman.oqsengine.lock;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * 一个为了子类实现方便的抽象类.
@@ -63,15 +65,10 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
         String lockingId = makeThreadId(key);
         long delay = getRetryDelay();
         while (!ok) {
-            ok = doLock(storeKey, lockingId);
+            ok = doLock(storeKey, new LockInfo(lockingId));
 
             if (!ok) {
-                try {
-                    await(delay);
-                } catch (InterruptedException ex) {
-                    removeThreadId(key);
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
+                await(delay);
             }
         }
     }
@@ -84,10 +81,14 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      */
     @Override
     public boolean tryLock(String key) {
-        boolean result = doLock(buildStoreResourceKey(key), makeThreadId(key));
-        if (!result) {
-            //没有加锁成功,去除本次准备的lockingId
-            removeThreadId(key);
+        boolean result = false;
+        try {
+            result = doLock(buildStoreResourceKey(key), new LockInfo(makeThreadId(key)));
+        } finally {
+            if (!result) {
+                //没有加锁成功,去除本次准备的lockingId
+                removeThreadId(key);
+            }
         }
 
         return result;
@@ -105,37 +106,37 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      */
     @Override
     public boolean tryLock(String key, long time, TimeUnit unit) {
-        if (time <= 0) {
-            return tryLock(key);
-        }
-
         boolean ok = false;
-        long timeout = unit.toMillis(time);
-        long timePass = 0;
-        String storeKey = buildStoreResourceKey(key);
-        String lockingId = makeThreadId(key);
-        long delay = getRetryDelay();
-        while (!ok) {
-            ok = doLock(storeKey, lockingId);
+        try {
+            if (time <= 0) {
+                return tryLock(key);
+            }
 
-            if (!ok) {
-                try {
+            long timeout = unit.toMillis(time);
+            long timePass = 0;
+            String storeKey = buildStoreResourceKey(key);
+            String lockingId = makeThreadId(key);
+            long delay = getRetryDelay();
+            while (!ok) {
+                ok = doLock(storeKey, new LockInfo(lockingId));
+
+                if (!ok) {
+
                     await(delay);
-                } catch (InterruptedException ex) {
-                    removeThreadId(key);
-                    throw new RuntimeException(ex.getMessage(), ex);
+
+                    timePass += delay;
+                    if (timePass >= timeout) {
+                        break;
+                    }
                 }
-                timePass += delay;
-                if (timePass >= timeout) {
-                    break;
-                }
+            }
+        } finally {
+            if (!ok) {
+                //没有加锁成功,去除本次准备的lockingId
+                removeThreadId(key);
             }
         }
 
-        if (!ok) {
-            //没有加锁成功,去除本次准备的lockingId
-            removeThreadId(key);
-        }
         return ok;
     }
 
@@ -151,11 +152,12 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
 
         String unLockingId = getThreadId(key);
 
-        String lockingId = isLocked(storeKey);
+        Optional<LockInfo> lockInfoOp = isLocked(storeKey);
 
-        if (lockingId != null) {
+        if (lockInfoOp.isPresent()) {
 
-            if (lockingId.equals(unLockingId)) {
+            LockInfo lockInfo = lockInfoOp.get();
+            if (lockInfo.getLockingId().equals(unLockingId)) {
 
                 int result = doUnLock(storeKey);
 
@@ -179,20 +181,14 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
         }
     }
 
-    @Override
-    public int getLockNumber(String key) {
-        return this.doLockNumber(buildStoreResourceKey(key));
-    }
-
     /**
      * 当前线程睡眠指定毫秒数.
      *
      * @param time 睡眠时间.
      */
-    private void await(long time) throws InterruptedException {
+    private void await(long time) {
 
-        TimeUnit.MILLISECONDS.sleep(time);
-
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(time));
     }
 
     /**
@@ -262,17 +258,17 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
     /**
      * 子类需要实现的锁定方法.
      *
-     * @param key       资源的key.
-     * @param lockingId 锁定者的标识。
+     * @param key  资源的key.
+     * @param info 锁信息.
      * @return true锁定成功，false锁定失败。
      */
-    protected abstract boolean doLock(String key, String lockingId);
+    protected abstract boolean doLock(String key, LockInfo info);
 
     /**
      * 子类需要实现的解锁方法.
      *
      * @param key 资源的key.
-     * @return true解锁成功，false解锁失败。
+     * @return 还剩余的锁定次数.
      */
     protected abstract int doUnLock(String key);
 
@@ -282,13 +278,5 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      * @param key 资源的键。
      * @return 加锁者的标识，没有锁定返回null.
      */
-    protected abstract String isLocked(String key);
-
-    /**
-     * 获取当前资源的锁定数量.
-     *
-     * @param key 资源.
-     * @return 锁定数量.
-     */
-    protected abstract int doLockNumber(String key);
+    protected abstract Optional<LockInfo> isLocked(String key);
 }

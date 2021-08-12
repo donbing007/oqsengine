@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -22,6 +23,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -164,7 +167,7 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(lookStringLookupField.id(), actualValue.getField().id());
 
         String linkKey = LookupHelper.buildLookupLinkKey(targetEntity, targetStringField, lookupEntity);
-        Assertions.assertEquals(targetEntity.version(), mockKvStorage.get(linkKey, Integer.class).get());
+        Assertions.assertEquals(targetEntity.version(), ByteUtil.byteToInt(mockKvStorage.get(linkKey).get()));
     }
 
     /**
@@ -276,38 +279,38 @@ public class LookupCalculationLogicTest {
     // mock的kv.
     static class MockKvStorage implements KeyValueStorage {
 
-        private Map<String, Object> cache = new ConcurrentHashMap<>();
+        private Map<String, byte[]> cache = new ConcurrentHashMap<>();
 
         public void reset() {
             cache.clear();
         }
 
         @Override
-        public void save(String key, Object value) throws SQLException {
+        public void save(String key, byte[] value) throws IOException {
             cache.put(key, value);
         }
 
         @Override
-        public long save(Collection<Map.Entry<String, Object>> kvs) throws SQLException {
-            for (Map.Entry<String, Object> kv : kvs) {
+        public long save(Collection<Map.Entry<String, byte[]>> kvs) throws IOException {
+            for (Map.Entry<String, byte[]> kv : kvs) {
                 cache.put(kv.getKey(), kv.getValue());
             }
             return kvs.size();
         }
 
         @Override
-        public boolean exist(String key) throws SQLException {
+        public boolean exist(String key) throws IOException {
             return cache.containsKey(key);
         }
 
         @Override
-        public Optional<Object> get(String key) throws SQLException {
+        public Optional<byte[]> get(String key) throws IOException {
             return Optional.ofNullable(cache.get(key));
         }
 
         @Override
-        public Collection<Map.Entry<String, Object>> get(String[] keys) throws SQLException {
-            List<Map.Entry<String, Object>> result = new ArrayList<>(keys.length);
+        public Collection<Map.Entry<String, byte[]>> get(String[] keys) throws IOException {
+            List<Map.Entry<String, byte[]>> result = new ArrayList<>(keys.length);
             for (String key : keys) {
                 result.add(new AbstractMap.SimpleEntry<>(key, cache.get(key)));
             }
@@ -315,17 +318,17 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
-        public void delete(String key) throws SQLException {
+        public void delete(String key) throws IOException {
             cache.remove(key);
         }
 
         @Override
-        public void delete(String[] keys) throws SQLException {
+        public void delete(String[] keys) throws IOException {
             Arrays.stream(keys).forEach(k -> cache.remove(k));
         }
 
         @Override
-        public DataIterator<String> iterator(String keyPrefix, boolean first) throws SQLException {
+        public KeyIterator iterator(String keyPrefix, boolean asc) throws IOException {
             return null;
         }
     }

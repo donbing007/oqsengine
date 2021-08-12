@@ -56,7 +56,7 @@ public class BatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collectio
     }
 
     @Override
-    public Collection<MasterStorageEntity> execute(Long startId) throws SQLException {
+    public Collection<MasterStorageEntity> execute(Long startId) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);

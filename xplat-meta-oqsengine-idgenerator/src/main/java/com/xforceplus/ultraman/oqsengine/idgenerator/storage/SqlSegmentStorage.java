@@ -70,6 +70,10 @@ public class SqlSegmentStorage implements SegmentStorage, Lifecycle {
 
     @Override
     public Optional<SegmentInfo> query(String bizType) throws SQLException {
-        return SegmentQueryExecutor.build(table, dataSource, queryTimeout).execute(bizType);
+        try {
+            return SegmentQueryExecutor.build(table, dataSource, queryTimeout).execute(bizType);
+        } catch (Exception e) {
+            throw (SQLException) e;
+        }
     }
 }

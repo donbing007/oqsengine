@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.common.lock;
+package com.xforceplus.ultraman.oqsengine.lock;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,12 +30,12 @@ public interface ResourceLocker {
      * 基本功能同tryLock方法,增加了一个等待时间限制.
      * 在指定的时间内还没有成功获取锁将返回false,否则返回true.
      *
-     * @param key  资源的键.
-     * @param time 超时时间.如果小于等于0,将退化成无等待时间.
-     * @param unit 时间单位.
+     * @param key      资源的键.
+     * @param timeout 超时时间.如果小于等于0,将退化成无等待时间.
+     * @param unit     时间单位.
      * @return true表示成功获取锁, false表示没有获取到锁.
      */
-    public boolean tryLock(String key, long time, TimeUnit unit);
+    public boolean tryLock(String key, long timeout, TimeUnit unit);
 
     /**
      * 解除对于资源的锁占用.解锁者必须为加锁者.
@@ -46,14 +46,5 @@ public interface ResourceLocker {
      */
     public boolean unlock(String key);
 
-
-    /**
-     * 查询指定资源被锁定的次数,一般是同一线程重入造成的锁定次数大于1.
-     * 没有被锁定的将返回0.
-     *
-     * @param key 被锁定的资源.
-     * @return 锁定次数.
-     */
-    public int getLockNumber(String key);
 
 }
