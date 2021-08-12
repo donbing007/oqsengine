@@ -46,7 +46,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     /**
      * 当前是否处于冻结状态.true 是, false 不是.
      */
-    private AtomicBoolean frozenness = new AtomicBoolean(false);
+    private volatile boolean frozenness = false;
 
     /**
      * 允许的早小事务超时,毫秒.
@@ -117,7 +117,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public Transaction create(long timeoutMs, String message) {
-        if (frozenness.get()) {
+        if (frozenness) {
             throw new IllegalStateException("Unable to create transaction, frozen.");
         }
 
@@ -245,12 +245,12 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public void freeze() {
-        frozenness.set(true);
+        frozenness = true;
     }
 
     @Override
     public void unfreeze() {
-        frozenness.set(false);
+        frozenness = false;
     }
 
     // 清理
