@@ -669,9 +669,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
             Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
-            result = verifier.verify(field, valueOp.orElse(null));
-            if (VerifierResult.OK != result) {
-                return new AbstractMap.SimpleEntry(result, field);
+            IValue value = valueOp.orElse(null);
+            try {
+                result = verifier.verify(field, value);
+                if (VerifierResult.OK != result) {
+                    return new AbstractMap.SimpleEntry(result, field);
+                }
+            } catch (Exception e) {
+                logger.warn("verify error, fieldId : {}, code : {}, value : {}, message : {}",
+                    field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
+                throw e;
             }
 
         }

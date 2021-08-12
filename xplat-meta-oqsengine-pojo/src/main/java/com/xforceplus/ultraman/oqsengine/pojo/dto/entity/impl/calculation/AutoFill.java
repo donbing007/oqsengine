@@ -239,6 +239,9 @@ public class AutoFill extends AbstractCalculation {
             }
             autoFill.level = this.level;
             autoFill.args = this.args;
+            if (null == this.domainNoType) {
+                this.domainNoType = DomainNoType.UNKNOWN;
+            }
             autoFill.domainNoType = this.domainNoType;
             autoFill.resetType = this.resetType;
 

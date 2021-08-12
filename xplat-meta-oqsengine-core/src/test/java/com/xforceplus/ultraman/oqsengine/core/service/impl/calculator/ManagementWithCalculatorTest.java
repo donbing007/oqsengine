@@ -3,8 +3,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager.L1_ENTITY_CLASS;
 
 import com.xforceplus.ultraman.oqsengine.core.service.impl.TestInitTools;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
@@ -54,11 +54,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 public class ManagementWithCalculatorTest {
 
     private EntityManagementServiceImpl impl;
-    private MockMasterStorage masterStorage;
 
+    private MasterStorage masterStorage;
     @BeforeEach
     public void before() throws Exception {
-        impl = TestInitTools.entityManagementService(EntityClassDefine.getMockMetaManager());
+
+        impl = TestInitTools.entityManagementService(new MockCalculatorMetaManager());
 
         masterStorage = new MockMasterStorage();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
