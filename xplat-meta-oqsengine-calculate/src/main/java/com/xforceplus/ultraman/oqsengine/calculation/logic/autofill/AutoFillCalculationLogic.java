@@ -54,7 +54,7 @@ public class AutoFillCalculationLogic implements CalculationLogic {
         if (null == result) {
             throw new CalculationLogicException("autoFill id generate is null.");
         }
-        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result));
+        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result.toString()));
     }
 
     private Optional<IValue> onSenior(CalculationLogicContext context, AutoFill autoFill) throws CalculationLogicException {
