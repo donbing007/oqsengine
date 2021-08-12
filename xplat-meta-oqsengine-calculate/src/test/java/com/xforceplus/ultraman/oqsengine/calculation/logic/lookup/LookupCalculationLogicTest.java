@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
-import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -23,9 +22,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.AbstractKeyIterator;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -286,12 +284,12 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
-        public void save(String key, byte[] value) throws IOException {
+        public void save(String key, byte[] value) {
             cache.put(key, value);
         }
 
         @Override
-        public long save(Collection<Map.Entry<String, byte[]>> kvs) throws IOException {
+        public long save(Collection<Map.Entry<String, byte[]>> kvs) {
             for (Map.Entry<String, byte[]> kv : kvs) {
                 cache.put(kv.getKey(), kv.getValue());
             }
@@ -299,17 +297,23 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
-        public boolean exist(String key) throws IOException {
+        public boolean add(String key, byte[] value) {
+            // 不使用此实现.
+            return true;
+        }
+
+        @Override
+        public boolean exist(String key) {
             return cache.containsKey(key);
         }
 
         @Override
-        public Optional<byte[]> get(String key) throws IOException {
+        public Optional<byte[]> get(String key) {
             return Optional.ofNullable(cache.get(key));
         }
 
         @Override
-        public Collection<Map.Entry<String, byte[]>> get(String[] keys) throws IOException {
+        public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
             List<Map.Entry<String, byte[]>> result = new ArrayList<>(keys.length);
             for (String key : keys) {
                 result.add(new AbstractMap.SimpleEntry<>(key, cache.get(key)));
@@ -318,17 +322,17 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
-        public void delete(String key) throws IOException {
+        public void delete(String key) {
             cache.remove(key);
         }
 
         @Override
-        public void delete(String[] keys) throws IOException {
+        public void delete(String[] keys) {
             Arrays.stream(keys).forEach(k -> cache.remove(k));
         }
 
         @Override
-        public KeyIterator iterator(String keyPrefix, boolean asc) throws IOException {
+        public AbstractKeyIterator iterator(String keyPrefix, boolean asc) {
             return null;
         }
     }
