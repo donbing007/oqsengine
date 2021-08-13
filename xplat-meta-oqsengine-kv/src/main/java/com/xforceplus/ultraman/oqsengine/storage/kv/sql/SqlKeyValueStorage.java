@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetsTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SaveTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.AbstractKeyIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.SQLException;
@@ -276,7 +276,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    public AbstractKeyIterator iterator(String keyPrefix, boolean asc) {
+    public KeyIterator iterator(String keyPrefix, boolean asc) {
         checkKey(keyPrefix);
 
         SqlKeyIterator iterator = new SqlKeyIterator();
@@ -296,7 +296,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     /**
      * key 迭代器.
      */
-    static class SqlKeyIterator extends AbstractKeyIterator {
+    static class SqlKeyIterator extends AbstractDataIterator<String> implements KeyIterator {
 
         private TransactionExecutor transactionExecutor;
         private String tableName;

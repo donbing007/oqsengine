@@ -22,8 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.AbstractKeyIterator;
-import java.io.IOException;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -332,7 +331,7 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
-        public AbstractKeyIterator iterator(String keyPrefix, boolean asc) {
+        public KeyIterator iterator(String keyPrefix, boolean asc) {
             return null;
         }
     }

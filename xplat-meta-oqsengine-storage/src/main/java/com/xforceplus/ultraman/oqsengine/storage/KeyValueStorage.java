@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage;
 
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.AbstractKeyIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -85,7 +85,7 @@ public interface KeyValueStorage {
      * @param keyPrefix 开始的key.
      * @return 迭代器.
      */
-    public default AbstractKeyIterator iterator(String keyPrefix) {
+    public default KeyIterator iterator(String keyPrefix) {
         return iterator(keyPrefix, true);
     }
 
@@ -97,5 +97,5 @@ public interface KeyValueStorage {
      * @param asc       true从开头开始迭代,false从尾到开始迭代.
      * @return 迭代器.
      */
-    public AbstractKeyIterator iterator(String keyPrefix, boolean asc);
+    public KeyIterator iterator(String keyPrefix, boolean asc);
 }

@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.AbstractKeyIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.io.IOException;
@@ -269,7 +269,7 @@ public class SqlKeyValueStorageTest {
             },
             (i) -> Long.toString(i).getBytes());
 
-        AbstractKeyIterator iter = storage.iterator(keyPrefix);
+        KeyIterator iter = storage.iterator(keyPrefix);
         if (iter.provideSize()) {
             Assertions.assertEquals(1000, iter.size());
         }
