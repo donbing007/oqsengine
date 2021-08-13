@@ -144,7 +144,27 @@ public class MockCalculatorMetaManager implements MetaManager {
                             .build()
                     ).build()
             ).build()
-        ).withFather(L0_ENTITY_CLASS).build();
+        )
+        .withField(EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 6)
+            .withFieldType(FieldType.STRING)
+            .withName("senior autoFill")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(256)
+                    .withSearchable(true)
+                    .withRequired(true)
+                    .withCalculation(
+                        AutoFill.Builder.anAutoFill()
+                            .withLevel(3)
+                            .withExpression("stringValueMix+\":\"+getId(\"{0000}\",stringValueMix)")
+                            .withDomainNoType(AutoFill.DomainNoType.SENIOR)
+                            .withArgs(Collections.singletonList("stringValueMix"))
+                            .build()
+                    ).build()
+            ).build()
+        )
+        .withFather(L0_ENTITY_CLASS).build();
 
     private final Collection<IEntityClass> entities;
 

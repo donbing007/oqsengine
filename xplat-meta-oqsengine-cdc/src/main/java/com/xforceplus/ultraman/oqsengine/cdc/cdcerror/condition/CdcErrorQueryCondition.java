@@ -256,4 +256,23 @@ public class CdcErrorQueryCondition {
         this.uniKey = uniKey;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CdcErrorQueryCondition{" +
+            "seqNo=" + seqNo +
+            ", uniKey='" + uniKey + '\'' +
+            ", batchId=" + batchId +
+            ", id=" + id +
+            ", entity=" + entity +
+            ", commitId=" + commitId +
+            ", status=" + status +
+            ", isEqualStatus=" + isEqualStatus +
+            ", type=" + type +
+            ", rangeLeExecuteTime=" + rangeLeExecuteTime +
+            ", rangeGeExecuteTime=" + rangeGeExecuteTime +
+            ", rangeLeFixedTime=" + rangeLeFixedTime +
+            ", rangeGeFixedTime=" + rangeGeFixedTime +
+            '}';
+    }
 }

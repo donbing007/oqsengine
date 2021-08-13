@@ -70,7 +70,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     final Logger logger = LoggerFactory.getLogger(DefaultCacheExecutor.class);
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
 
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()

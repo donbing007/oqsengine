@@ -4,6 +4,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
+import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
@@ -47,7 +48,7 @@ public class DevOpsController {
     private MetaManager metaManager;
 
     @Resource
-    private DevOpsManagementServiceImpl devOpsManagementService;
+    private DevOpsManagementService devOpsManagementService;
 
     @Resource
     private EntityManagementService entityManagementService;

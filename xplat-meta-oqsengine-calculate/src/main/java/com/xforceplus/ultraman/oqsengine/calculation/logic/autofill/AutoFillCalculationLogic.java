@@ -45,12 +45,7 @@ public class AutoFillCalculationLogic implements CalculationLogic {
     }
 
     private Optional<IValue> onNormal(CalculationLogicContext context) throws CalculationLogicException {
-        //TODO: 还没定义namespace.
-        if (!context.getLongContinuousPartialOrderIdGenerator().supportNameSpace()) {
-            throw new CalculationLogicException("An invalid ID generator must support namespaces.");
-        }
-        Object result = context.getLongContinuousPartialOrderIdGenerator().next("");
-
+        Object result = context.getBizIDGenerator().nextId(String.valueOf(context.getFocusField().id()));
         if (null == result) {
             throw new CalculationLogicException("autoFill id generate is null.");
         }

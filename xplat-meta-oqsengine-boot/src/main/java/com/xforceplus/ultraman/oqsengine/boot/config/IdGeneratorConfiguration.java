@@ -55,7 +55,7 @@ public class IdGeneratorConfiguration {
      * @return 实例.
      */
     @Bean("longContinuousPartialOrderIdGenerator")
-    public LongIdGenerator longContinuousPartialOrderIdGenerator(RedisClient redisClient) {
+    public LongIdGenerator longContinuousPartialOrderIdGenerator(@Qualifier("redisClientState") RedisClient redisClient) {
         return new RedisOrderContinuousLongIdGenerator(redisClient, "com.xforceplus.ultraman.oqsengine.common.id");
     }
 }

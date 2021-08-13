@@ -39,8 +39,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     final Logger logger = LoggerFactory.getLogger(CDCStatusServiceImpl.class);
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
+
     @Resource
     private ObjectMapper objectMapper;
 
