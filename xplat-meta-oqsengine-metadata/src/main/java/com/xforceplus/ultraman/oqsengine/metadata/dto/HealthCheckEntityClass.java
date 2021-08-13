@@ -56,11 +56,6 @@ public class HealthCheckEntityClass implements IEntityClass {
     }
 
     @Override
-    public Collection<Relation> relations() {
-        return Collections.emptyList();
-    }
-
-    @Override
     public Collection<Relationship> oqsRelations() {
         return Collections.emptyList();
     }

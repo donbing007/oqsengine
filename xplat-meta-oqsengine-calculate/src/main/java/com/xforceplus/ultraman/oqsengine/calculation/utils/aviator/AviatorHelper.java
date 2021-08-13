@@ -8,6 +8,8 @@ import com.googlecode.aviator.runtime.type.AviatorFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.function.GetIDFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.function.TimeOffsetFunction;
 import java.math.MathContext;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +36,13 @@ public class AviatorHelper {
         INSTANCE.setOption(Options.MATH_CONTEXT, MathContext.DECIMAL128);
         //  最大循环次数
         INSTANCE.setOption(Options.MAX_LOOP_COUNT, MAX_LOOP_COUNT);
+
+        functionAdd();
+    }
+
+    private static void functionAdd() {
+        INSTANCE.addFunction(new TimeOffsetFunction());
+        INSTANCE.addFunction(new GetIDFunction());
     }
 
     /**
