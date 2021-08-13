@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -175,13 +175,13 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         /**
          * find event to propagation
          */
-        List<OqsRelation> propagationRelation = EntityClassHelper.findPropagationRelation(entityClass);
-        List<OqsRelation> nextRelation = EntityClassHelper.findNextRelation(entityClass);
+        List<Relationship> propagationRelation = EntityClassHelper.findPropagationRelation(entityClass);
+        List<Relationship> nextRelation = EntityClassHelper.findNextRelation(entityClass);
 
         /**
          * find event to
          */
-        List<Tuple2<OqsRelation, OqsRelation>> associatedRelations = EntityClassHelper.findAssociatedRelations(entityClass);
+        List<Tuple2<Relationship, Relationship>> associatedRelations = EntityClassHelper.findAssociatedRelations(entityClass);
 
         Stream<Tuple2<Long, Long>> previewIdsStream = propagationRelation.stream().flatMap(x -> {
             return findRelatedObjIds(x, associatedRelations, valueMap).stream();
@@ -199,15 +199,15 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     /**
      * find next obj Id
      *
-     * @param oqsRelation
+     * @param relationship
      * @param valueMap
      * @return
      */
-    private List<Tuple2<Long, Long>> findNextObjIds(OqsRelation oqsRelation, Map<Long, ValueWrapper> valueMap) {
+    private List<Tuple2<Long, Long>> findNextObjIds(Relationship relationship, Map<Long, ValueWrapper> valueMap) {
 
         List<Long> nextObjIds = new LinkedList<>();
-        long entityClass = EntityClassHelper.findIdAssociatedEntityClassId(oqsRelation);
-        long id = oqsRelation.getEntityField().id();
+        long entityClass = EntityClassHelper.findIdAssociatedEntityClassId(relationship);
+        long id = relationship.getEntityField().id();
         Optional<IValue> currentValue = entityDomain.getEntity().entityValue().getValue(id);
         ValueWrapper nextValue = valueMap.get(id);
 
@@ -225,19 +225,19 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      * TODO value map  should considered
      * find related id in current value and change event value
      *
-     * @param oqsRelation
+     * @param relationship
      * @param associatedRelations
      * @param valueMap
      * @return
      */
-    private List<Tuple2<Long, Long>> findRelatedObjIds(OqsRelation oqsRelation
-            , List<Tuple2<OqsRelation, OqsRelation>> associatedRelations
+    private List<Tuple2<Long, Long>> findRelatedObjIds(Relationship relationship
+            , List<Tuple2<Relationship, Relationship>> associatedRelations
             , Map<Long, ValueWrapper> valueMap) {
         //find value has two method
         // 1 -> if this oqsRelation has a associate relation find the associate
         // 2 -> all find in map
-        Optional<Tuple2<OqsRelation, OqsRelation>> associatedOqsRelation = associatedRelations.stream()
-                .filter(x -> x._1().equals(oqsRelation)).findAny();
+        Optional<Tuple2<Relationship, Relationship>> associatedOqsRelation = associatedRelations.stream()
+                .filter(x -> x._1().equals(relationship)).findAny();
         if (associatedOqsRelation.isPresent()) {
             //find in self
             // what is this id's entityClassID
@@ -269,8 +269,8 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
         } else {
             Long associatedEntityClassId = EntityClassHelper
-                    .findIdAssociatedEntityClassId(oqsRelation);
-            return Optional.ofNullable(entityDomain.getReferenceMap().get(oqsRelation)).map(x -> x.stream().map(id -> {
+                    .findIdAssociatedEntityClassId(relationship);
+            return Optional.ofNullable(entityDomain.getReferenceMap().get(relationship)).map(x -> x.stream().map(id -> {
                 return Tuple.of(id, associatedEntityClassId);
             }).collect(Collectors.toList())).orElse(Collections.emptyList());
         }
@@ -295,26 +295,26 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         return changelog;
     }
 
-    private List<Long> getCurrentRelatedValue(Map<OqsRelation, OqsRelation> mapping, OqsRelation oqsRelation) {
-        if (mapping.get(oqsRelation) != null) {
+    private List<Long> getCurrentRelatedValue(Map<Relationship, Relationship> mapping, Relationship relationship) {
+        if (mapping.get(relationship) != null) {
             //find in current
-            long id = mapping.get(oqsRelation).getEntityField().id();
+            long id = mapping.get(relationship).getEntityField().id();
             Optional<IValue> value = entityDomain.getEntity().entityValue().getValue(id);
             return value.map(iValue -> Collections.singletonList(iValue.valueToLong())).orElse(Collections.emptyList());
         } else {
             //find in reference map
-            return Optional.ofNullable(entityDomain.getReferenceMap().get(oqsRelation)).orElse(Collections.emptyList());
+            return Optional.ofNullable(entityDomain.getReferenceMap().get(relationship)).orElse(Collections.emptyList());
         }
     }
 
-    private Long getOqsRelationRelatedId(Map<OqsRelation, OqsRelation> mapping, OqsRelation oqsRelation) {
-        if (mapping.get(oqsRelation) != null) {
+    private Long getOqsRelationRelatedId(Map<Relationship, Relationship> mapping, Relationship relationship) {
+        if (mapping.get(relationship) != null) {
             //find in current
-            long id = mapping.get(oqsRelation).getEntityField().id();
+            long id = mapping.get(relationship).getEntityField().id();
             return id;
         } else {
             //find in reference map
-            return oqsRelation.getEntityField().id();
+            return relationship.getEntityField().id();
         }
     }
 
@@ -334,16 +334,16 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
             List<ChangeValue> changeValues = new LinkedList<>();
 
-            List<Tuple2<OqsRelation, OqsRelation>> associatedRelations = EntityClassHelper.findAssociatedRelations(relatedEntity);
+            List<Tuple2<Relationship, Relationship>> associatedRelations = EntityClassHelper.findAssociatedRelations(relatedEntity);
 
-            Map<OqsRelation, OqsRelation> mapping = associatedRelations.stream()
+            Map<Relationship, Relationship> mapping = associatedRelations.stream()
                     .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2, (a, b) -> a));
 
             //amend relation many to one and
             relatedEntity.oqsRelations().stream()
                     .filter(x -> x.getRightEntityClassId() == entityClass.id())
                     .forEach(oqsRelation -> {
-                        if (oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_ONE) {
+                        if (oqsRelation.getRelationType() == Relationship.RelationType.ONE_TO_ONE) {
                             ValueWrapper iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
                             if (iValue != null && iValue.valueToLong() != entityDomain.getId()) {
                                 ChangeValue changeValue = new ChangeValue();
@@ -366,7 +366,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                                     changeValues.add(changeValue);
                                 }
                             }
-                        } else if (oqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE) {
+                        } else if (oqsRelation.getRelationType() == Relationship.RelationType.MANY_TO_ONE) {
 
                             List<Long> currentValues = getCurrentRelatedValue(mapping, oqsRelation);
                             //TODO find related value
@@ -396,7 +396,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                                     changeValues.add(changeValue);
                                 }
                             }
-                        } else if (oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_MANY) {
+                        } else if (oqsRelation.getRelationType() == Relationship.RelationType.ONE_TO_MANY) {
                             //do nothing now
                         }
                     });
@@ -456,9 +456,9 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         Map<Long, List<ChangeValue>> idChangesMapping = changeValues.stream()
                 .collect(Collectors.groupingBy(ChangeValue::getFieldId));
 
-        Map<OqsRelation, List<Long>> referenceMap = entityDomain.getReferenceMap();
+        Map<Relationship, List<Long>> referenceMap = entityDomain.getReferenceMap();
         idChangesMapping.forEach((a, b) -> {
-            Optional<Map.Entry<OqsRelation, List<Long>>> related = referenceMap
+            Optional<Map.Entry<Relationship, List<Long>>> related = referenceMap
                     .entrySet().stream().filter(x -> x.getKey().getEntityField().id() == a).findFirst();
             if (related.isPresent()) {
 
@@ -607,7 +607,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      * @param after
      * @return
      */
-    private List<ChangeValue> compareSelf(Map<Long, IValue> before, Map<OqsRelation, List<Long>> referenceMap, Map<Long, ValueWrapper> after) {
+    private List<ChangeValue> compareSelf(Map<Long, IValue> before, Map<Relationship, List<Long>> referenceMap, Map<Long, ValueWrapper> after) {
         List<ChangeValue> changeValues = new ArrayList<>();
 
         Set<Long> beforeIds = before.keySet();
@@ -616,11 +616,11 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         referenceMap.entrySet()
                 .stream()
                 .filter(x -> {
-                    OqsRelation rel = x.getKey();
+                    Relationship rel = x.getKey();
                     return rel.getLeftEntityClassId() == entityClass.id()
-                            && rel.getRelationType() != OqsRelation.RelationType.ONE_TO_MANY;
+                            && rel.getRelationType() != Relationship.RelationType.ONE_TO_MANY;
                 }).forEach(entry -> {
-            OqsRelation key = entry.getKey();
+            Relationship key = entry.getKey();
             List<Long> value = entry.getValue();
             if (value != null) {
                 referenceMapWithIValue.put(key.getEntityField().id(), new LongValue(key.getEntityField(), value.get(0)));

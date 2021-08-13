@@ -4,8 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Disabled;
 public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager {
 
     //-------------level 0--------------------
-    public static IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(0)
         .withCode("l0")
@@ -55,7 +55,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
         .build();
 
     //-------------level 1--------------------
-    public static IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("l1")
@@ -86,7 +86,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
 
 
     static {
-        l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+        l2EntityClass = EntityClass.Builder.anEntityClass()
             .withId(l2EntityClassId)
             .withLevel(2)
             .withCode(l2EntityClassCode)
@@ -118,10 +118,10 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                 .build())
             .withRelations(
                 Arrays.asList(
-                    OqsRelation.Builder.anOqsRelation()
+                    Relationship.Builder.anOqsRelation()
                         .withId(3)
                         .withCode("l2-one-to-many")
-                        .withRelationType(OqsRelation.RelationType.ONE_TO_MANY)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withIdentity(false)
                         .withLeftEntityClassId(driverEntityClassId)
@@ -137,10 +137,10 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
                         .build(),
-                    OqsRelation.Builder.anOqsRelation()
+                    Relationship.Builder.anOqsRelation()
                         .withId(4)
                         .withCode("l2-many-to-one")
-                        .withRelationType(OqsRelation.RelationType.MANY_TO_ONE)
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
                         .withIdentity(false)
                         .withLeftEntityClassId(l2EntityClassId)
@@ -161,7 +161,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
             .withFather(l1EntityClass)
             .build();
 
-        driverEntityClass = OqsEntityClass.Builder.anEntityClass()
+        driverEntityClass = EntityClass.Builder.anEntityClass()
             .withId(driverEntityClassId)
             .withLevel(0)
             .withCode(driverEntityClassCode)
@@ -178,10 +178,10 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
             )
             .withRelations(
                 Arrays.asList(
-                    OqsRelation.Builder.anOqsRelation()
+                    Relationship.Builder.anOqsRelation()
                         .withId(1)
                         .withCode("l2-one-to-many")
-                        .withRelationType(OqsRelation.RelationType.ONE_TO_MANY)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withIdentity(false)
                         .withLeftEntityClassId(driverEntityClassId)
@@ -190,10 +190,10 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                         .withRightEntityClassId(l2EntityClass.id())
                         .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
                         .build(),
-                    OqsRelation.Builder.anOqsRelation()
+                    Relationship.Builder.anOqsRelation()
                         .withId(2)
                         .withCode("l2-many-to-one")
-                        .withRelationType(OqsRelation.RelationType.MANY_TO_ONE)
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
                         .withIdentity(false)
                         .withLeftEntityClassId(l2EntityClass.id())

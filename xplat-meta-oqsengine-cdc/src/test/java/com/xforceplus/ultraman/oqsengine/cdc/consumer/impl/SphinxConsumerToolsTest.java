@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRowChange;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass2;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_2;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClassMap;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getBooleanFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
@@ -68,7 +68,7 @@ public class SphinxConsumerToolsTest {
         sphinxSyncExecutor = new SphinxSyncExecutor();
 
         MockMetaManager metaManager = new MockMetaManager();
-        metaManager.addEntityClass(entityClass2);
+        metaManager.addEntityClass(ENTITY_CLASS_2);
 
         ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", metaManager);
 
@@ -259,7 +259,7 @@ public class SphinxConsumerToolsTest {
             builder.setHeader(buildHeader());
 
             builder.setStoreValue(
-                buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false)
+                buildRowChange(i, 3, ENTITY_CLASS_2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false)
                     .toByteString());
 
             entries.add(builder.build());

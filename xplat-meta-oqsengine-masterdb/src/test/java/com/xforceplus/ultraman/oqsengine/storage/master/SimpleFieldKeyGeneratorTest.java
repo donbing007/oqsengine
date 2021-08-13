@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -125,7 +125,7 @@ public class SimpleFieldKeyGeneratorTest {
         fields.add(f2);
         fields.add(f3);
         fields.add(f4);
-        return OqsEntityClass.Builder.anEntityClass().withCode("test").withFields(fields).withId(baseId).build();
+        return EntityClass.Builder.anEntityClass().withCode("test").withFields(fields).withId(baseId).build();
     }
 
     private List<IEntityField> buildRandomFields(long baseId, int size) {

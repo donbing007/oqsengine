@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import java.util.Optional;
  * @author xujia 2021/2/18
  * @since 1.8
  */
-public class OqsEntityClass implements IEntityClass {
+public class EntityClass implements IEntityClass {
 
     /*
      * 元数据boId
@@ -45,7 +45,7 @@ public class OqsEntityClass implements IEntityClass {
     /*
      * 关系信息
      */
-    private Collection<OqsRelation> relations;
+    private Collection<Relationship> relations;
 
     /*
      * 继承的对象类型.
@@ -57,7 +57,7 @@ public class OqsEntityClass implements IEntityClass {
     private Collection<IEntityField> fields = Collections.emptyList();
 
 
-    private OqsEntityClass() {
+    private EntityClass() {
     }
 
     @Override
@@ -85,16 +85,10 @@ public class OqsEntityClass implements IEntityClass {
         return level;
     }
 
-    @Deprecated
     @Override
-    public Collection<Relation> relations() {
-        return null;
-    }
+    public Collection<Relationship> oqsRelations() {
 
-    @Override
-    public Collection<OqsRelation> oqsRelations() {
-
-        List<OqsRelation> relations = new ArrayList<>();
+        List<Relationship> relations = new ArrayList<>();
 
         if (this.relations != null) {
             relations.addAll(this.relations);
@@ -161,7 +155,7 @@ public class OqsEntityClass implements IEntityClass {
             return entityFieldOp;
         } else {
             //  从关系中找
-            for (OqsRelation relation : relations) {
+            for (Relationship relation : relations) {
                 if (null != relation
                     && relation.isSelfRelation(this.id)
                     && relation.getEntityField().name().equals(name)) {
@@ -187,7 +181,7 @@ public class OqsEntityClass implements IEntityClass {
             return entityFieldOp;
         } else {
             //  从关系中找
-            for (OqsRelation relation : relations) {
+            for (Relationship relation : relations) {
                 if (null != relation
                     && relation.isSelfRelation(this.id)
                     && relation.getEntityField().id() == id) {
@@ -208,10 +202,10 @@ public class OqsEntityClass implements IEntityClass {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof OqsEntityClass)) {
+        if (!(o instanceof EntityClass)) {
             return false;
         }
-        OqsEntityClass that = (OqsEntityClass) o;
+        EntityClass that = (EntityClass) o;
         return id == that.id
             && version == that.version
             && level == that.level
@@ -251,53 +245,53 @@ public class OqsEntityClass implements IEntityClass {
         private String code;
         private int version;
         private int level;
-        private Collection<OqsRelation> relations = Collections.emptyList();
+        private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
 
         private Builder() {
         }
 
-        public static OqsEntityClass.Builder anEntityClass() {
-            return new OqsEntityClass.Builder();
+        public static EntityClass.Builder anEntityClass() {
+            return new EntityClass.Builder();
         }
 
-        public OqsEntityClass.Builder withId(long id) {
+        public EntityClass.Builder withId(long id) {
             this.id = id;
             return this;
         }
 
-        public OqsEntityClass.Builder withName(String name) {
+        public EntityClass.Builder withName(String name) {
             this.name = name;
             return this;
         }
 
-        public OqsEntityClass.Builder withCode(String code) {
+        public EntityClass.Builder withCode(String code) {
             this.code = code;
             return this;
         }
 
-        public OqsEntityClass.Builder withVersion(int version) {
+        public EntityClass.Builder withVersion(int version) {
             this.version = version;
             return this;
         }
 
-        public OqsEntityClass.Builder withLevel(int level) {
+        public EntityClass.Builder withLevel(int level) {
             this.level = level;
             return this;
         }
 
-        public OqsEntityClass.Builder withRelations(Collection<OqsRelation> relations) {
+        public EntityClass.Builder withRelations(Collection<Relationship> relations) {
             this.relations = relations;
             return this;
         }
 
-        public OqsEntityClass.Builder withFather(IEntityClass father) {
+        public EntityClass.Builder withFather(IEntityClass father) {
             this.father = father;
             return this;
         }
 
-        public OqsEntityClass.Builder withFields(Collection<IEntityField> fields) {
+        public EntityClass.Builder withFields(Collection<IEntityField> fields) {
             this.fields = fields;
             return this;
         }
@@ -308,7 +302,7 @@ public class OqsEntityClass implements IEntityClass {
          * @param field 目标字段.
          * @return 当前构造器.
          */
-        public OqsEntityClass.Builder withField(IEntityField field) {
+        public EntityClass.Builder withField(IEntityField field) {
             if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
                 this.fields = new ArrayList<>(fields);
             }
@@ -323,8 +317,8 @@ public class OqsEntityClass implements IEntityClass {
          *
          * @return 实例.
          */
-        public OqsEntityClass build() {
-            OqsEntityClass entityClass = new OqsEntityClass();
+        public EntityClass build() {
+            EntityClass entityClass = new EntityClass();
             entityClass.id = id;
             entityClass.code = code;
             entityClass.name = this.name;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -15,7 +15,7 @@ import java.util.function.Function;
  * @author xujia 2021/2/18
  * @since 1.8
  */
-public class OqsRelation {
+public class Relationship {
 
     /**
      * 关系类型.
@@ -122,7 +122,7 @@ public class OqsRelation {
 
     private long companionRelation;
 
-    public OqsRelation() {
+    public Relationship() {
 
     }
 
@@ -208,7 +208,7 @@ public class OqsRelation {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OqsRelation that = (OqsRelation) o;
+        Relationship that = (Relationship) o;
         return id == that.id
             && Objects.equals(code, that.code);
     }
@@ -289,12 +289,12 @@ public class OqsRelation {
             return this;
         }
 
-        public OqsRelation.Builder withCompanion(boolean isCompanion) {
+        public Relationship.Builder withCompanion(boolean isCompanion) {
             this.isCompanion = isCompanion;
             return this;
         }
 
-        public OqsRelation.Builder withCompanionRelation(long relationId) {
+        public Relationship.Builder withCompanionRelation(long relationId) {
             this.companionRelation = relationId;
             return this;
         }
@@ -315,23 +315,23 @@ public class OqsRelation {
          *
          * @return 实例.
          */
-        public OqsRelation build() {
-            OqsRelation oqsRelation = new OqsRelation();
-            oqsRelation.belongToOwner = this.belongToOwner;
-            oqsRelation.relationType = this.relationType;
-            oqsRelation.id = this.id;
-            oqsRelation.code = this.code;
-            oqsRelation.leftEntityClassId = this.leftEntityClassId;
-            oqsRelation.rightEntityClassId = this.rightEntityClassId;
-            oqsRelation.identity = this.identity;
-            oqsRelation.rightEntityClassLoader = this.entityClassLoader;
-            oqsRelation.entityField = this.entityField;
-            oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
-            oqsRelation.strong = this.strong;
-            oqsRelation.belongToOwner = this.belongToOwner;
-            oqsRelation.isCompanion = this.isCompanion;
-            oqsRelation.companionRelation = this.companionRelation;
-            return oqsRelation;
+        public Relationship build() {
+            Relationship relationship = new Relationship();
+            relationship.belongToOwner = this.belongToOwner;
+            relationship.relationType = this.relationType;
+            relationship.id = this.id;
+            relationship.code = this.code;
+            relationship.leftEntityClassId = this.leftEntityClassId;
+            relationship.rightEntityClassId = this.rightEntityClassId;
+            relationship.identity = this.identity;
+            relationship.rightEntityClassLoader = this.entityClassLoader;
+            relationship.entityField = this.entityField;
+            relationship.leftEntityClassCode = this.leftEntityClassCode;
+            relationship.strong = this.strong;
+            relationship.belongToOwner = this.belongToOwner;
+            relationship.isCompanion = this.isCompanion;
+            relationship.companionRelation = this.companionRelation;
+            return relationship;
         }
     }
 }

@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 
 /**
  * metamanager mock.
@@ -19,7 +19,7 @@ public class EntityClassDefine {
 
 
     //-------------level 0--------------------
-    public static IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(0)
         .withCode("l0")
@@ -41,7 +41,7 @@ public class EntityClassDefine {
         .build();
 
     //-------------level 1--------------------
-    public static IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("l1")
@@ -66,7 +66,7 @@ public class EntityClassDefine {
         .build();
 
     //-------------level 2--------------------
-    public static IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(2)
         .withCode("l2")
@@ -93,7 +93,7 @@ public class EntityClassDefine {
         .withFather(l1EntityClass)
         .build();
 
-    public static IEntityClass mustEntityClass = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass mustEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 3)
         .withCode("must")
         .withField(

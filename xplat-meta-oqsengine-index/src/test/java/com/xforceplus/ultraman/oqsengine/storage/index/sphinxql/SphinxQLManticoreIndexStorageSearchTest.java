@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
@@ -37,7 +37,7 @@ public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerEx
         .withFieldType(FieldType.STRING)
         .withName("base-string")
         .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
-    private IEntityClass baseEntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass baseEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(0)
         .withCode("base")
@@ -57,7 +57,7 @@ public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerEx
             .build()
         )
         .build();
-    private IEntityClass firstEntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass firstEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("first")
@@ -77,7 +77,7 @@ public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerEx
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                 .build()
         ).build();
-    private IEntityClass secondEntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass secondEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(1)
         .withCode("second")

@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,12 +88,12 @@ public class DefaultChangelogImpl implements ChangelogService {
      * @param entityClass
      * @return
      */
-    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass, OqsRelation oqsRelation) {
-        if (entityClass.id() == changedEvent.getEntityClassId() && oqsRelation == null) {
+    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass, Relationship relationship) {
+        if (entityClass.id() == changedEvent.getEntityClassId() && relationship == null) {
             return Collections.singletonList(genSourceChangelog(changedEvent));
         } else {
-            List<Changelog> changelogs = relationAwareChangeLogs.stream().filter(x -> x.require(oqsRelation))
-                    .flatMap(x -> x.generateOuterChangelog(oqsRelation, entityClass, changedEvent).stream())
+            List<Changelog> changelogs = relationAwareChangeLogs.stream().filter(x -> x.require(relationship))
+                    .flatMap(x -> x.generateOuterChangelog(relationship, entityClass, changedEvent).stream())
                     .collect(Collectors.toList());
 
             return changelogs;

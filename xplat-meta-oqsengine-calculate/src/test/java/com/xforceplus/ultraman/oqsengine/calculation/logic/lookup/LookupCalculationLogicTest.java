@@ -16,7 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -54,7 +54,7 @@ public class LookupCalculationLogicTest {
         .withFieldType(FieldType.STRING)
         .withName("target-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass targetEntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass targetEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(1)
         .withCode("l1")
@@ -86,7 +86,7 @@ public class LookupCalculationLogicTest {
                 )
                 .build()
         ).build();
-    private IEntityClass lookupEntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass lookupEntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(0)
         .withCode("lookupClass")
@@ -164,7 +164,7 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(lookStringLookupField.id(), actualValue.getField().id());
 
         String linkKey = LookupHelper.buildLookupLinkKey(targetStringField, lookupEntity);
-        Assertions.assertEquals(targetEntity.version(), ByteUtil.byteToInt(mockKvStorage.get(linkKey).get()));
+        Assertions.assertEquals(targetEntity.id(), ByteUtil.byteToLong(mockKvStorage.get(linkKey).get()));
     }
 
     /**
@@ -208,7 +208,7 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
 
         try {
-            Optional<IValue> actualValueOp = logic.calculate(context);
+            logic.calculate(context);
             Assertions.fail("An exception should be thrown.");
         } catch (Exception ex) {
             // do nothing.
@@ -298,7 +298,7 @@ public class LookupCalculationLogicTest {
         @Override
         public boolean add(String key, byte[] value) {
             // 不使用此实现.
-            return true;
+            return false;
         }
 
         @Override

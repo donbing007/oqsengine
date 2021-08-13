@@ -11,9 +11,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -50,7 +50,7 @@ public class EntityGenerateTooBar {
         new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
     // level 1
-    public static IEntityClass entityClass0 =
+    public static final IEntityClass ENTITY_CLASS_0 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
             .withVersion(1)
@@ -61,24 +61,24 @@ public class EntityGenerateTooBar {
             ).build();
 
     // level 2
-    public static IEntityClass entityClass1 =
+    public static final IEntityClass ENTITY_CLASS_1 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 1)
             .withVersion(1)
             .withLevel(1)
             .withCode("c1")
-            .withFather(entityClass0)
+            .withFather(ENTITY_CLASS_0)
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
     // level 3
-    public static IEntityClass entityClass2 =
+    public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withVersion(1)
             .withLevel(2)
             .withCode("c2")
-            .withFather(entityClass1)
+            .withFather(ENTITY_CLASS_1)
             .withFields(
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
@@ -92,7 +92,7 @@ public class EntityGenerateTooBar {
 
     public static long longStringStartTime = 0;
     public static long longStringEndTime = 0;
-    public static final IEntityClass LONG_STRING_ENTITY_CLASS = entityClass0;
+    public static final IEntityClass LONG_STRING_ENTITY_CLASS = ENTITY_CLASS_0;
 
     /**
      * 准备数字字段的entity.
@@ -134,7 +134,7 @@ public class EntityGenerateTooBar {
 
     public static long surPlusStartTime = 0;
     public static long surPlusEndTime = 0;
-    public static final IEntityClass SUR_PLUS_ENTITY_CLASS = entityClass1;
+    public static final IEntityClass SUR_PLUS_ENTITY_CLASS = ENTITY_CLASS_1;
 
     /**
      * surplus test use.
@@ -176,7 +176,7 @@ public class EntityGenerateTooBar {
 
     public static long pauseResumeStartTime = 0;
     public static long pauseResumeEndTime = 0;
-    public static final IEntityClass PREPARE_PAUSE_RESUME_ENTITY_CLASS = entityClass2;
+    public static final IEntityClass PREPARE_PAUSE_RESUME_ENTITY_CLASS = ENTITY_CLASS_2;
 
     /**
      * resume test use.

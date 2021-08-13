@@ -44,7 +44,8 @@ public class LookupCalculationLogic implements CalculationLogic {
 
     @Override
     public void maintain(CalculationLogicContext context) throws CalculationLogicException {
-
+        IEntityClass forceClass = context.getEntityClass();
+        //forceClass.relations()
     }
 
     @Override
@@ -112,7 +113,7 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 记录当前lookup关系.
      * 用以在之后查询那些实例lookup了目标.
      * 记录以KV方式记录.
-     * value为目标数据版本号的整形字节数组.
+     * value为目标target的实例标识.
      *
      * @see ByteUtil
      * @see com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper
@@ -135,6 +136,6 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         String key = LookupHelper.buildLookupLinkKey(targetFieldOp.get(), context.getEntity());
 
-        context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
+        context.getKvStorage().save(key, ByteUtil.longToByte(targetEntity.id()));
     }
 }

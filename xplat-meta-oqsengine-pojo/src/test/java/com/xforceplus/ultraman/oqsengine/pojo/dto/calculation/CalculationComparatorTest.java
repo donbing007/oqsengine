@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Calcul
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +38,7 @@ public class CalculationComparatorTest {
      */
     public static class NeedSortEntityField {
         public static final IEntityClass NEED_SORT_CLASS =
-            OqsEntityClass.Builder.anEntityClass()
+            EntityClass.Builder.anEntityClass()
                 .withId(Long.MAX_VALUE / 2)
                 .withLevel(0)
                 .withCode("needSortTest")

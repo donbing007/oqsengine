@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +24,7 @@ import java.util.Optional;
 public class MockCalculatorMetaManager implements MetaManager {
 
     //-------------level 0--------------------
-    public static final IEntityClass L0_ENTITY_CLASS = OqsEntityClass.Builder.anEntityClass()
+    public static final IEntityClass L0_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(0)
         .withCode("l0")
@@ -85,7 +85,7 @@ public class MockCalculatorMetaManager implements MetaManager {
         .build();
 
     //-------------level 1--------------------
-    public static IEntityClass L1_ENTITY_CLASS = OqsEntityClass.Builder.anEntityClass()
+    public static IEntityClass L1_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("l1")

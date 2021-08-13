@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 
@@ -22,47 +22,47 @@ public class EntityClassHelper {
      * @param entityClass
      * @return
      */
-    public static List<OqsRelation> findPropagationRelation(IEntityClass entityClass) {
-        List<OqsRelation> oqsRelations = new LinkedList<>();
+    public static List<Relationship> findPropagationRelation(IEntityClass entityClass) {
+        List<Relationship> relationships = new LinkedList<>();
         entityClass.oqsRelations().forEach(oqsRelation -> {
             if (!isRelationOwner(entityClass.id(), oqsRelation) && oqsRelation.isStrong()) {
-                oqsRelations.add(oqsRelation);
+                relationships.add(oqsRelation);
             }
         });
 
-        return oqsRelations;
+        return relationships;
     }
 
     /**
      * A -> B  1:n
      */
-    public static List<OqsRelation> findNextRelation(IEntityClass entityClass) {
-        List<OqsRelation> oqsRelations = new LinkedList<>();
+    public static List<Relationship> findNextRelation(IEntityClass entityClass) {
+        List<Relationship> relationships = new LinkedList<>();
         entityClass.oqsRelations().forEach(oqsRelation -> {
             if (isRelationOwner(entityClass.id(), oqsRelation)) {
-                oqsRelations.add(oqsRelation);
+                relationships.add(oqsRelation);
             }
         });
 
-        return oqsRelations;
+        return relationships;
     }
 
     /**
      * find associated entityClassId
      *
-     * @param oqsRelation
+     * @param relationship
      * @return
      */
-    public static Long findIdAssociatedEntityClassId(OqsRelation oqsRelation) {
-        if (oqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
-                || oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_ONE) {
-            return oqsRelation.getRightEntityClassId();
+    public static Long findIdAssociatedEntityClassId(Relationship relationship) {
+        if (relationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
+                || relationship.getRelationType() == Relationship.RelationType.ONE_TO_ONE) {
+            return relationship.getRightEntityClassId();
         } else {
-            return oqsRelation.getLeftEntityClassId();
+            return relationship.getLeftEntityClassId();
         }
     }
 
-    public static Optional<OqsRelation> findRelationWithFieldId(IEntityClass entityClass, long fieldId) {
+    public static Optional<Relationship> findRelationWithFieldId(IEntityClass entityClass, long fieldId) {
         return entityClass.oqsRelations().stream().filter(x -> x.getEntityField().id() == fieldId).findFirst();
     }
 
@@ -76,10 +76,10 @@ public class EntityClassHelper {
      * @param entityClass
      * @return
      */
-    public static List<Tuple2<OqsRelation, OqsRelation>> findAssociatedRelations(IEntityClass entityClass) {
+    public static List<Tuple2<Relationship, Relationship>> findAssociatedRelations(IEntityClass entityClass) {
 
-        List<Tuple2<OqsRelation, OqsRelation>> oqsRelations = new LinkedList<>();
-        Map<String, OqsRelation> temp = new HashMap<>();
+        List<Tuple2<Relationship, Relationship>> oqsRelations = new LinkedList<>();
+        Map<String, Relationship> temp = new HashMap<>();
         entityClass.oqsRelations().forEach(oqsRelation -> {
 
             String relName = oqsRelation.getCode();
@@ -88,15 +88,15 @@ public class EntityClassHelper {
                 relName = relName.substring(0, relName.length() - MTO.length());
             }
 
-            OqsRelation retOqsRelation = temp.putIfAbsent(relName, oqsRelation);
-            if (retOqsRelation != null) {
+            Relationship retRelationship = temp.putIfAbsent(relName, oqsRelation);
+            if (retRelationship != null) {
                 //find out which is associate
-                if (retOqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
-                        && isRelationOwner(entityClass.id(), retOqsRelation)) {
-                    oqsRelations.add(Tuple.of(oqsRelation, retOqsRelation));
-                } else if (retOqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
+                if (retRelationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
+                        && isRelationOwner(entityClass.id(), retRelationship)) {
+                    oqsRelations.add(Tuple.of(oqsRelation, retRelationship));
+                } else if (retRelationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
                         && isRelationOwner(entityClass.id(), oqsRelation)) {
-                    oqsRelations.add(Tuple.of(retOqsRelation, oqsRelation));
+                    oqsRelations.add(Tuple.of(retRelationship, oqsRelation));
                 }
             } else {
                 temp.put(relName, oqsRelation);
@@ -106,7 +106,7 @@ public class EntityClassHelper {
         return oqsRelations;
     }
 
-    private static boolean isRelationOwner(long id, OqsRelation relation) {
+    private static boolean isRelationOwner(long id, Relationship relation) {
         return id == relation.getLeftEntityClassId();
     }
 }

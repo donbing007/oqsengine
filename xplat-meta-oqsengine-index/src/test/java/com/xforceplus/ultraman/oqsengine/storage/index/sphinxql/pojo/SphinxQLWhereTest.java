@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

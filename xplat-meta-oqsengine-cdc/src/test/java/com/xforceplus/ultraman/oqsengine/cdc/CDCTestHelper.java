@@ -27,7 +27,7 @@ public abstract class CDCTestHelper extends AbstractContainerExtends {
     protected CDCMetricsService cdcMetricsService;
 
     protected void init(boolean isStartRunner) throws Exception {
-        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(EntityClassBuilder.entityClass2));
+        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(EntityClassBuilder.ENTITY_CLASS_2));
         if (isStartRunner) {
             consumerRunner = initConsumerRunner();
             consumerRunner.start();

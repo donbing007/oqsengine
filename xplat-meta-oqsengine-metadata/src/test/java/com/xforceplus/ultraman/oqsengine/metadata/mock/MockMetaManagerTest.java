@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

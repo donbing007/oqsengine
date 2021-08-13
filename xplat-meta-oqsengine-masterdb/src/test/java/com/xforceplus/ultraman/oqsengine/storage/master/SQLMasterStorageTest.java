@@ -15,7 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -70,7 +70,7 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
         .withFieldType(FieldType.STRINGS)
         .withName("l0-strings")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
         .withId(1)
         .withLevel(0)
         .withCode("l0")
@@ -94,7 +94,7 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
         .withId(2)
         .withLevel(1)
         .withCode("l1")
@@ -118,7 +118,7 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
         .withFieldType(FieldType.STRING)
         .withName("l2-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(3)
         .withLevel(2)
         .withCode("l2")
