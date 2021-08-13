@@ -79,5 +79,21 @@ public class PatternParserUtilTest {
         Assert.assertEquals(true,result);
     }
 
+    @Test
+    public void testNeedResetTrue4() {
+        PatternValue value1 = new PatternValue(12,"00012");
+        PatternValue value2 = new PatternValue(13,"00013");
+        boolean result = PatternParserUtil.needReset("{00000}",value1,value2);
+        Assert.assertEquals(false,result);
+    }
+
+    @Test
+    public void testNeedResetTrue5() {
+        PatternValue current = new PatternValue(36278,"20210812036278");
+        PatternValue next = new PatternValue(36279,"20210813036279");
+       boolean result =  PatternParserUtil.needReset("{yyyy}{MM}{dd}{000000}",current,next);
+       System.out.println(result);
+    }
+
 
 }

@@ -226,7 +226,7 @@ public class BizIDGeneratorTest {
             if (i == 2) {
                 LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
                 DatePatternParser spy = Mockito.spy(datePattenParser);
-                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                doReturn(localDateTime).when(spy).getLocalDate();
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }
@@ -256,7 +256,7 @@ public class BizIDGeneratorTest {
             if (i == 2) {
                 LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
                 DatePatternParser spy = Mockito.spy(datePattenParser);
-                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                doReturn(localDateTime).when(spy).getLocalDate();
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }
