@@ -85,15 +85,11 @@ public class TaskKeyValueQueue implements TaskQueue {
         String elementKey = buildNextElementKey(elementId);
         kv.save(elementKey, serializeStrategy.serialize(task));
 
-        // 第一个元素.
-        if (elementId == 0) {
-
-        }
     }
 
     @Override
     public Task get() {
-        kv.iterator()
+        return null;
     }
 
     @Override
