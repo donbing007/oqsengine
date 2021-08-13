@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog;
 
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.vavr.Tuple2;
 

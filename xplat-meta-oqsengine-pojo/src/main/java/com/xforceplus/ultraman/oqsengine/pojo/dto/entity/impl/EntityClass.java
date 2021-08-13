@@ -1,8 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

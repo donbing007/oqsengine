@@ -9,6 +9,7 @@ import java.util.Objects;
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  * @deprecated 已经被废弃.
+ * @see Relationship
  */
 public class Relation {
 
