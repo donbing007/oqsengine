@@ -51,11 +51,11 @@ public class DatePatternParserTest {
         String expression = "{yyyy}-{MM}-{dd}-{HH}";
         DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
-        Assert.assertEquals(need,true);
+        Assertions.assertEquals(need,true);
         String formatStr = parser.parse(expression,1001l);
         LocalDateTime dateTime = LocalDateTime.now();
         String pre = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
-        Assert.assertEquals(pre,formatStr);
+        Assertions.assertEquals(pre,formatStr);
     }
 
     @Test

@@ -26,7 +26,7 @@ public interface Pattern {
     String DAY = "{dd}";
 
     /**
-     * Hour {HH}
+     * Hour {HH}.
      */
     String HOUR = "{HH}";
 

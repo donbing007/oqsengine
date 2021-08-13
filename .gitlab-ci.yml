@@ -20,7 +20,7 @@ maven-build:
     - result=$(curl -X POST 'http://ultraman-test.phoenix-t.xforceplus.com/api/result'  -H "Content-Type:multipart/form-data"  -F "allureResults=@allure-results.zip;type=application/x-zip-compressed" | cut -c42-77)
     - report=$(curl -X POST 'http://ultraman-test.phoenix-t.xforceplus.com/api/report'  -H  "Content-Type:application/json" -d "{\"reportSpec\":{\"path\":[\"master\"]},\"results\":[\"$result\"],\"deleteResults\":false}" | cut -c71-168)
     - echo report url is:$report
-    - curl 'https://oapi.dingtalk.com/robot/send?access_token=0c6feb7b10edeb4f8a47a91f2de8ce6fd3c4f71758b434583a99ab24d3598549' -H "Content-Type:application/json" -d "{\"at\":{\"isAtAll\":true},\"msgtype\":'text',\"text\":{\"content\":\"Oqs-engine测试报告:$report   \"}}"
+    - curl 'https://oapi.dingtalk.com/robot/send?access_token=0c6feb7b10edeb4f8a47a91f2de8ce6fd3c4f71758b434583a99ab24d3598549' -H "Content-Type:application/json" -d "{\"at\":{\"isAtAll\":true},\"msgtype\":'text',\"text\":{\"content\":\"Oqs-engine单元测试报告-${CI_COMMIT_TAG} :$report   \"}}"
   except:
     - tags
 

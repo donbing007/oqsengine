@@ -4,7 +4,6 @@ import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Cons
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Pattern;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
