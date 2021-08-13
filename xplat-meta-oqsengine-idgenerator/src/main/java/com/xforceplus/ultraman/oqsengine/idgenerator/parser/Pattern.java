@@ -26,6 +26,11 @@ public interface Pattern {
     String DAY = "{dd}";
 
     /**
+     * Hour {HH}.
+     */
+    String HOUR = "{HH}";
+
+    /**
      * number.
      *
      */

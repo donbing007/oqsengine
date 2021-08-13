@@ -4,7 +4,6 @@ import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Cons
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Pattern;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -20,23 +19,26 @@ public class DatePatternParser implements PatternParser {
         return DATE_PATTEN_PARSER;
     }
 
-    public LocalDate getLocalDate() {
-        return LocalDateTime.now().toLocalDate();
+    public LocalDateTime getLocalDate() {
+        return LocalDateTime.now();
     }
 
     @Override
     public String parse(String patten, Long id) {
-        LocalDate date = getLocalDate();
+        LocalDateTime date = getLocalDate();
         String year = String.valueOf(date.getYear());
         String month = String.format("%02d", date.getMonthValue());
         String day = String.format("%02d", date.getDayOfMonth());
-        return patten.replace(Pattern.DAY, day).replace(Pattern.MONTH, month).replace(Pattern.YEAR, year);
+        String hour = String.format("%02d", date.getHour());
+        return patten.replace(Pattern.DAY, day).replace(Pattern.MONTH, month).replace(Pattern.YEAR, year)
+            .replace(Pattern.HOUR, hour);
     }
 
     @Override
     public boolean needHandle(String patten) {
         return patten.contains(Pattern.YEAR)
             || patten.contains(Pattern.MONTH)
-            || patten.contains(Pattern.DAY);
+            || patten.contains(Pattern.DAY)
+            || patten.contains(Pattern.HOUR);
     }
 }

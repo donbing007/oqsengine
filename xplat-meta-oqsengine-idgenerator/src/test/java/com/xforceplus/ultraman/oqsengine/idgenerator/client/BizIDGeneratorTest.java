@@ -5,7 +5,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.alibaba.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
@@ -25,12 +24,10 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import javax.sql.DataSource;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -58,6 +55,7 @@ public class BizIDGeneratorTest {
     private static final String BIZ_TEST = "bizTest";
     private static final String BIZ_TYPE_1 = "bizTest1";
     private static final String LINEAR_BIZ_TYPE_3 = "bizLinear3";
+    private static final String LINEAR_BIZ_TYPE_4 = "bizLinear4";
     private IDGeneratorFactoryImpl idGeneratorFactory1;
     private SegmentService segmentService1;
     private SqlSegmentStorage storage1;
@@ -140,6 +138,25 @@ public class BizIDGeneratorTest {
             .build();
         int ret3 = storage1.build(info3);
         Assertions.assertEquals(ret3, 1);
+
+        SegmentInfo info4 = SegmentInfo.builder().withBeginId(1l).withBizType(LINEAR_BIZ_TYPE_4)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}-{HH}:{00000}").withMode(1).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1l)
+            .withResetable(0)
+            .withPatternKey("")
+            .build();
+        int ret4 = storage1.build(info4);
+        Assert.assertEquals(ret4, 1);
+    }
+
+    @org.junit.Test
+    public void testIDGeneratorWithHour() {
+        String nextId = bizIDGenerator1.nextId(LINEAR_BIZ_TYPE_4);
+        LocalDateTime time = LocalDateTime.now();
+        String pre = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
+        Assert.assertEquals(pre + ":00001", nextId);
     }
 
     /**
@@ -226,7 +243,7 @@ public class BizIDGeneratorTest {
             if (i == 2) {
                 LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
                 DatePatternParser spy = Mockito.spy(datePattenParser);
-                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                doReturn(localDateTime).when(spy).getLocalDate();
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }
@@ -256,7 +273,7 @@ public class BizIDGeneratorTest {
             if (i == 2) {
                 LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
                 DatePatternParser spy = Mockito.spy(datePattenParser);
-                doReturn(localDateTime.toLocalDate()).when(spy).getLocalDate();
+                doReturn(localDateTime).when(spy).getLocalDate();
                 manager.unRegist(DATE_PATTEN_PARSER);
                 manager.registVariableParser(spy);
             }

@@ -47,6 +47,18 @@ public class DatePatternParserTest {
     }
 
     @Test
+    public void testDateParseTime() {
+        String expression = "{yyyy}-{MM}-{dd}-{HH}";
+        DatePatternParser parser = new DatePatternParser();
+        boolean need = parser.needHandle(expression);
+        Assertions.assertEquals(need,true);
+        String formatStr = parser.parse(expression,1001l);
+        LocalDateTime dateTime = LocalDateTime.now();
+        String pre = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
+        Assertions.assertEquals(pre,formatStr);
+    }
+
+    @Test
     public void testNumberParse() {
         String expression = "AP-SAP-{00000}";
         NumberPatternParser parser = new NumberPatternParser();
