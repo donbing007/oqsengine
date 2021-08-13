@@ -3,10 +3,12 @@ package com.xforceplus.ultraman.oqsengine.calculation.helper;
 import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,18 +22,35 @@ public class LookupHelperTest {
 
     @Test
     public void testBuildLookupKey() throws Exception {
-        IEntity targetEntity = Entity.Builder.anEntity().withId(Long.MAX_VALUE).build();
         IEntityField targetField = EntityField.CREATE_TIME_FILED;
         IEntity lookupEntity = Entity.Builder.anEntity().withId(Long.MAX_VALUE - 1)
             .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(Integer.MAX_VALUE).build())
             .build();
 
-        String key = LookupHelper.buildLookupLinkKey(targetEntity, targetField, lookupEntity);
-        Assert.assertEquals(
-            String.format("l-%s-%s-%s-%s",
-                NumberUtils.zeroFill(targetField.id()),
-                NumberUtils.zeroFill(targetEntity.id()),
+        String key = LookupHelper.buildLookupLinkKey(targetField, lookupEntity);
+        Assertions.assertEquals(
+            String.format("%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
+                LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX,
                 NumberUtils.zeroFill(lookupEntity.entityClassRef().getId()),
-                NumberUtils.zeroFill(lookupEntity.id())), key);
+                LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id()),
+                LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntity.id())
+            ), key);
+    }
+
+    @Test
+    public void testBuildIteratorKey() throws Exception {
+        IEntityField targetField = EntityField.CREATE_TIME_FILED;
+        IEntityClass lookupEntityClass = EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build();
+
+        String key = LookupHelper.buildIteratorPrefixLinkKey(targetField, lookupEntityClass);
+        Assertions.assertEquals(
+            String.format(
+                "%s-%s%s-%s%s",
+                LookupHelper.LINK_KEY_PREFIX,
+                LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX, NumberUtils.zeroFill(lookupEntityClass.id()),
+                LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id())
+            ),
+            key
+        );
     }
 }

@@ -25,6 +25,26 @@ public interface CalculationLogic {
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException;
 
     /**
+     * 计算字段在写事务最后需要判断是否需要维护外界关系一致性等.
+     *
+     * @param context 计算上下文.
+     * @throws CalculationLogicException 计算发生异常.
+     */
+    public default void maintain(CalculationLogicContext context) throws CalculationLogicException {
+        // do nothing
+    }
+
+    /**
+     * 是否需要在写事务中进行维护.
+     * 如果需要就需要实现 maintain 方法.
+     *
+     * @return true 需要,false不需要.
+     */
+    public default boolean needMaintenance() {
+        return false;
+    }
+
+    /**
      * 支持的计算类型.
      *
      * @return 计算类型.

@@ -163,7 +163,7 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(StringValue.class, actualValue.getClass());
         Assertions.assertEquals(lookStringLookupField.id(), actualValue.getField().id());
 
-        String linkKey = LookupHelper.buildLookupLinkKey(targetEntity, targetStringField, lookupEntity);
+        String linkKey = LookupHelper.buildLookupLinkKey(targetStringField, lookupEntity);
         Assertions.assertEquals(targetEntity.version(), ByteUtil.byteToInt(mockKvStorage.get(linkKey).get()));
     }
 

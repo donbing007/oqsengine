@@ -331,7 +331,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNACCUMULATE);
                 }
+
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
+
+                // 可能的字段维护
+                maintainField(entity, entityClass, true);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
                     ResultStatus.SUCCESS);
@@ -453,6 +457,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
+
+                // 可能的字段维护
+                maintainField(entity, entityClass, true);
 
                 //  半成功
                 if (null != hints && !hints.isEmpty()) {
@@ -764,6 +771,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         return context.getHints();
+    }
+
+    // 计算字段的维护
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, boolean build)
+        throws CalculationLogicException {
+
+        // 需要维护的字段.
+        List<IEntityField> needMaintainFields = sourceEntity.entityValue().values().stream().filter(v ->
+            calculationLogicFactory.getCalculation(v.getField().calculationType()).needMaintenance()
+        ).map(v -> sourceClass.field(v.getField().id()).get()).collect(Collectors.toList());
+
+        CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, sourceClass);
+
+        for (IEntityField field : needMaintainFields) {
+            calculationLogicFactory.getCalculation(field.calculationType()).maintain(context);
+        }
     }
 
     private CalculationLogicContext buildCalculationLogicContext(

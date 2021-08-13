@@ -25,16 +25,50 @@ import java.util.Optional;
  */
 public class DefaultCalculationLogicContext implements CalculationLogicContext {
 
+    /**
+     * 写事务类型,true创建,false更新.
+     */
     private boolean build;
+    /**
+     * 当前计算的目标entity实例.
+     * 如果是更新事务,可能不会包含所有字段.
+     */
     private IEntity entity;
+    /**
+     * 当前的交点字段.
+     */
     private IEntityField field;
+    /**
+     * 当前entity的元类型.
+     */
     private IEntityClass sourceEntityClass;
+    /**
+     * 主库储存.
+     */
     private MasterStorage masterStorage;
+    /**
+     * 元信息管理.
+     */
     private MetaManager metaManager;
+    /**
+     * kv储存.
+     */
     private KeyValueStorage keyValueStorage;
+    /**
+     * 附加属性.
+     */
     private Map<String, Object> attributes;
+    /**
+     * 计算结果提示.
+     */
     private Collection<CalculationHint> hints;
+    /**
+     * 连续并且偏序的ID生成器.
+     */
     private LongIdGenerator longContinuousPartialOrderIdGenerator;
+    /**
+     * 不连续但偏序的ID生成器.
+     */
     private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
 
     @Override

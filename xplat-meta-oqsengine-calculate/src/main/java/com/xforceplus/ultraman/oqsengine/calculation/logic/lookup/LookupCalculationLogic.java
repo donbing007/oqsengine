@@ -43,8 +43,18 @@ public class LookupCalculationLogic implements CalculationLogic {
     }
 
     @Override
+    public void maintain(CalculationLogicContext context) throws CalculationLogicException {
+
+    }
+
+    @Override
     public CalculationType supportType() {
         return CalculationType.LOOKUP;
+    }
+
+    @Override
+    public boolean needMaintenance() {
+        return true;
     }
 
     // 找到目标实体.
@@ -123,7 +133,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                 String.format("No instance field to lookup target.[entityFieldId = %d]", targetFieldId));
         }
 
-        String key = LookupHelper.buildLookupLinkKey(targetEntity, targetFieldOp.get(), context.getEntity());
+        String key = LookupHelper.buildLookupLinkKey(targetFieldOp.get(), context.getEntity());
 
         context.getKvStorage().save(key, ByteUtil.intToByte(targetEntity.version()));
     }
