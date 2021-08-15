@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
@@ -34,6 +33,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 /**
@@ -72,6 +72,18 @@ public class DiscoverDevOpsService {
             exceptionHandle(String.format("dataImport exception, [%s-%s-%s]", appId, env, version), e);
         }
         return false;
+    }
+
+    @DiscoverAction(describe = "关注某一个meta信息", retClass = int.class)
+    public int noticeMeta(@MethodParam(name = "appId", klass = String.class, required = true) String appId,
+                              @MethodParam(name = "env", klass = String.class, required = true) String env)  {
+        try {
+            return metaManager.need(appId, env);
+        } catch (Exception e) {
+            exceptionHandle(String.format("noticeMeta exception, [%s-%s]", appId, env), e);
+        }
+
+        return 0;
     }
 
     @DiscoverAction(describe = "查询meta信息", retClass = MetaMetrics.class)
@@ -146,7 +158,7 @@ public class DiscoverDevOpsService {
     }
 
     @DiscoverAction(describe = "根据seqNo查询单条CDC-ERROR错误信息", retClass = CdcErrorTask.class)
-    public CdcErrorTask queryCdcError(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo) throws SQLException {
+    public CdcErrorTask queryCdcError(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo) {
         try {
             return devOpsManagementService.queryOne(seqNo).orElse(null);
         } catch (Exception e) {

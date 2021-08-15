@@ -16,6 +16,9 @@ public class MetaMetrics {
 
     private Collection<EntityClassStorage> metas;
 
+    public MetaMetrics() {
+    }
+
     public int getVersion() {
         return version;
     }
