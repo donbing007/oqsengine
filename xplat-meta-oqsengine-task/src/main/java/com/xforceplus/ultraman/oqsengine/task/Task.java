@@ -19,6 +19,10 @@ public interface Task {
      */
     public String id();
 
+    public long location();
+
+    public void setLocation(long location);
+
     /**
      * 任务创建时间.
      *
