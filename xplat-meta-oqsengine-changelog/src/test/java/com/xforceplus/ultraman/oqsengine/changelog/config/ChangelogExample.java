@@ -61,7 +61,7 @@ public class ChangelogExample {
                         Arrays.asList(
                                 Relationship
                                         .Builder
-                                        .anOqsRelation()
+                                        .anRelationship()
                                         .withRelationType(Relationship.RelationType.ONE_TO_ONE)
                                         .withCode("A_B")
                                         .withRightEntityClassId(B_Class)

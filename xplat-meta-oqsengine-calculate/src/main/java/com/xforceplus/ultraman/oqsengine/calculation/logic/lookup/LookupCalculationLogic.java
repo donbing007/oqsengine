@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -14,7 +15,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * lookup字段计算.
@@ -42,20 +45,48 @@ public class LookupCalculationLogic implements CalculationLogic {
         return Optional.of(targetValue);
     }
 
+    /**
+     * 维护策略如下.
+     * 检查当前对像中的所有强对象,直接更新其对象的.
+     * 所以当前焦点字段应该是一个非lookup的字段.
+     *
+     * @param context 计算上下文.
+     * @throws CalculationLogicException 计算异常.
+     */
     @Override
     public void maintain(CalculationLogicContext context) throws CalculationLogicException {
+        if (!context.isReplace()) {
+            return;
+        }
+        // 这是一个lookup计算字段,本身不需要进行维护.只有其指向的字段改变才需要维护.
+        if (context.getFocusField().calculationType() == CalculationType.LOOKUP) {
+            return;
+        }
+
         IEntityClass forceClass = context.getEntityClass();
-        //forceClass.relations()
+
+        // 构造维护信息.
+        forceClass.relationship().stream().map(r -> {
+            IEntityClass relationshipClass = r.getRightEntityClass();
+
+            return relationshipClass.fields().stream().filter(f ->
+                /*
+                 * lookup字段,同时指向当前焦点字段的字段.
+                 */
+                f.calculationType() == CalculationType.LOOKUP
+                    && ((Lookup) f.config().getCalculation()).getFieldId() == context.getFocusField().id()
+
+            ).map(f ->
+                new LookupMaintaining(context.getFocusField(), context.getEntity(), relationshipClass, f, r.isStrong())
+            ).collect(Collectors.toList());
+        }).flatMap(m -> m.stream()).sorted(Comparator.comparing(LookupMaintaining::isStrong))
+            .forEach(lm -> processLookupMaintaining(lm, context));
+
     }
 
     @Override
     public CalculationType supportType() {
         return CalculationType.LOOKUP;
-    }
-
-    @Override
-    public boolean needMaintenance() {
-        return true;
     }
 
     // 找到目标实体.
@@ -103,6 +134,7 @@ public class LookupCalculationLogic implements CalculationLogic {
         return targetEntityOp.get();
     }
 
+    // 查找目标值.
     private IValue findTargetValue(CalculationLogicContext context, IEntity targetEntity) {
         long targetFieldId = ((Lookup) context.getFocusField().config().getCalculation()).getFieldId();
         Optional<IValue> targetValue = targetEntity.entityValue().getValue(targetFieldId);
@@ -134,8 +166,87 @@ public class LookupCalculationLogic implements CalculationLogic {
                 String.format("No instance field to lookup target.[entityFieldId = %d]", targetFieldId));
         }
 
-        String key = LookupHelper.buildLookupLinkKey(targetFieldOp.get(), context.getEntity());
+        LookupHelper.LookupLinkKey key = LookupHelper.buildLookupLinkKey(
+            targetEntity, targetFieldOp.get(),
+            context.getEntity(), context.getFocusField());
 
-        context.getKvStorage().save(key, ByteUtil.longToByte(targetEntity.id()));
+        context.getKvStorage().save(key.toString(), null);
     }
+
+    /**
+     * 处理单个维护信息,如果是强关系那么将会在当前事务中进行处理.
+     * 不过处理会控制在一个阀值数据量中.
+     */
+    private void processLookupMaintaining(LookupMaintaining lookupMaintaining, CalculationLogicContext context) {
+
+        LookupHelper.LookupLinkIterKey iterLinkKey = LookupHelper.buildIteratorPrefixLinkKey(
+            lookupMaintaining.getTargetEntity(),
+            lookupMaintaining.getTargetField(),
+            lookupMaintaining.getLookupClass(),
+            lookupMaintaining.getLookupField());
+
+        LookupMaintainingTask task = new LookupMaintainingTask(iterLinkKey.toString());
+
+        if (lookupMaintaining.isStrong()) {
+
+            // 强关系需要部份保证在事务内一致性,所以这里会先执行一次任务.
+
+
+        } else {
+            context.getTaskCoordinator().addTask(task);
+        }
+    }
+
+    // 维护信息
+    static class LookupMaintaining implements Comparable<LookupMaintaining> {
+        private IEntityField targetField;
+        private IEntity targetEntity;
+        private IEntityClass lookupClass;
+        private IEntityField lookupField;
+        private boolean strong;
+
+        public LookupMaintaining(IEntityField targetField,
+                                 IEntity targetEntity,
+                                 IEntityClass lookupClass,
+                                 IEntityField lookupField,
+                                 boolean strong) {
+            this.targetField = targetField;
+            this.targetEntity = targetEntity;
+            this.lookupClass = lookupClass;
+            this.lookupField = lookupField;
+            this.strong = strong;
+        }
+
+        public IEntityField getTargetField() {
+            return targetField;
+        }
+
+        public IEntity getTargetEntity() {
+            return targetEntity;
+        }
+
+        public IEntityClass getLookupClass() {
+            return lookupClass;
+        }
+
+        public IEntityField getLookupField() {
+            return lookupField;
+        }
+
+        public boolean isStrong() {
+            return strong;
+        }
+
+        @Override
+        public int compareTo(LookupMaintaining o) {
+            if (this.strong && !o.strong) {
+                return -1;
+            } else if (!this.strong && o.strong) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
 }

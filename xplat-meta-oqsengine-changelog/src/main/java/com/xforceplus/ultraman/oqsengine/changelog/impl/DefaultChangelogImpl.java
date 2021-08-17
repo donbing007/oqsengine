@@ -69,7 +69,7 @@ public class DefaultChangelogImpl implements ChangelogService {
         List<Changelog> sourceChangelog = handleEvent(changedEvent, entityClass, null);
 
         changeLogs.addAll(sourceChangelog);
-        List<Changelog> records = entityClass.oqsRelations().stream().filter(x -> x.isCompanion()).flatMap(x -> {
+        List<Changelog> records = entityClass.relationship().stream().filter(x -> x.isCompanion()).flatMap(x -> {
             /**
              * entityclass is self ? TODO
              */

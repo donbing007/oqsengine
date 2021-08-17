@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -81,6 +82,13 @@ public interface CalculationLogicContext {
      * @return 实例.
      */
     KeyValueStorage getKvStorage();
+
+    /**
+     * 获取任务协调实例.
+     *
+     * @return 任务协调实例.
+     */
+    TaskCoordinator getTaskCoordinator();
 
     /**
      * 获取属性.

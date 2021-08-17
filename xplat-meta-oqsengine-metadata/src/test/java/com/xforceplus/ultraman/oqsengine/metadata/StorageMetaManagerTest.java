@@ -279,7 +279,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         check(expectedVersion + 1, entityClassOp.get(), entityClassInfo);
 
-        Collection<Relationship> re = entityClassOp.get().oqsRelations();
+        Collection<Relationship> re = entityClassOp.get().relationship();
         if (null != re) {
             re.forEach(
                 s -> {
@@ -302,7 +302,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         Assertions.assertNotNull(entityClassInfo);
 
-        re = entityClassOp.get().oqsRelations();
+        re = entityClassOp.get().relationship();
         if (null != re) {
             re.forEach(
                 s -> {
@@ -379,8 +379,8 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         //  relations
         if (!expected.getRelationsList().isEmpty()) {
-            Assertions.assertNotNull(actual.oqsRelations());
-            Map<Long, Relationship> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
+            Assertions.assertNotNull(actual.relationship());
+            Map<Long, Relationship> actualRelations = new ArrayList<>(actual.relationship()).stream()
                 .collect(Collectors.toMap(Relationship::getId, f1 -> f1, (f1, f2) -> f1));
 
             for (int i = 0; i < expected.getRelationsList().size(); i++) {

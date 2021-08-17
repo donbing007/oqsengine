@@ -24,7 +24,7 @@ public class EntityClassHelper {
      */
     public static List<Relationship> findPropagationRelation(IEntityClass entityClass) {
         List<Relationship> relationships = new LinkedList<>();
-        entityClass.oqsRelations().forEach(oqsRelation -> {
+        entityClass.relationship().forEach(oqsRelation -> {
             if (!isRelationOwner(entityClass.id(), oqsRelation) && oqsRelation.isStrong()) {
                 relationships.add(oqsRelation);
             }
@@ -38,7 +38,7 @@ public class EntityClassHelper {
      */
     public static List<Relationship> findNextRelation(IEntityClass entityClass) {
         List<Relationship> relationships = new LinkedList<>();
-        entityClass.oqsRelations().forEach(oqsRelation -> {
+        entityClass.relationship().forEach(oqsRelation -> {
             if (isRelationOwner(entityClass.id(), oqsRelation)) {
                 relationships.add(oqsRelation);
             }
@@ -63,7 +63,7 @@ public class EntityClassHelper {
     }
 
     public static Optional<Relationship> findRelationWithFieldId(IEntityClass entityClass, long fieldId) {
-        return entityClass.oqsRelations().stream().filter(x -> x.getEntityField().id() == fieldId).findFirst();
+        return entityClass.relationship().stream().filter(x -> x.getEntityField().id() == fieldId).findFirst();
     }
 
 
@@ -80,7 +80,7 @@ public class EntityClassHelper {
 
         List<Tuple2<Relationship, Relationship>> oqsRelations = new LinkedList<>();
         Map<String, Relationship> temp = new HashMap<>();
-        entityClass.oqsRelations().forEach(oqsRelation -> {
+        entityClass.relationship().forEach(oqsRelation -> {
 
             String relName = oqsRelation.getCode();
 

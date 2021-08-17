@@ -27,7 +27,7 @@ public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Col
 
     private String lastKey;
     private int blockSize;
-    private boolean first;
+    private boolean asc;
 
     public SelectKeysTaskExecutor(String tableName,
                                   TransactionResource<Connection> resource) {
@@ -47,8 +47,8 @@ public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Col
         this.blockSize = blockSize;
     }
 
-    public void setAsc(boolean first) {
-        this.first = first;
+    public void setAsc(boolean asc) {
+        this.asc = asc;
     }
 
     @Override
@@ -64,8 +64,8 @@ public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Col
         String sql = String.format(
             SqlTemplateDefine.ITERATOR_NO_FIRST_TEMPLATE,
             getTableName(),
-            first ? ">" : "<",
-            first ? SQL_ORDER_ASC : SQL_ORDER_DESC);
+            asc ? ">" : "<",
+            asc ? SQL_ORDER_ASC : SQL_ORDER_DESC);
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
             checkTimeout(ps);
 
@@ -79,7 +79,7 @@ public class SelectKeysTaskExecutor extends AbstractJdbcTaskExecutor<String, Col
 
     private Collection<String> doFristTime(String startKey) throws SQLException {
         String sql = String.format(
-            SqlTemplateDefine.ITERATOR_FIRST_TEMPLATE, getTableName(), first ? SQL_ORDER_ASC : SQL_ORDER_DESC);
+            SqlTemplateDefine.ITERATOR_FIRST_TEMPLATE, getTableName(), asc ? SQL_ORDER_ASC : SQL_ORDER_DESC);
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
             checkTimeout(ps);
 

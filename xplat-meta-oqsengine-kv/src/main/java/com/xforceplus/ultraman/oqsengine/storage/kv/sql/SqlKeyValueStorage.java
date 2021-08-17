@@ -320,8 +320,12 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
         @Override
         public void seek(String key) {
-            this.asc = false;
             this.lastKey = key;
+        }
+
+        @Override
+        public String currentKey() {
+            return this.lastKey;
         }
 
         public static DataIterator<String> buildEmptyIterator() {

@@ -35,16 +35,6 @@ public interface CalculationLogic {
     }
 
     /**
-     * 是否需要在写事务中进行维护.
-     * 如果需要就需要实现 maintain 方法.
-     *
-     * @return true 需要,false不需要.
-     */
-    public default boolean needMaintenance() {
-        return false;
-    }
-
-    /**
      * 支持的计算类型.
      *
      * @return 计算类型.

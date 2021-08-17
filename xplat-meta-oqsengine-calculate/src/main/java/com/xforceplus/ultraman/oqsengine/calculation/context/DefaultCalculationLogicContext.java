@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,6 +55,10 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
      * kv储存.
      */
     private KeyValueStorage keyValueStorage;
+    /**
+     * 任务协调者.
+     */
+    private TaskCoordinator taskCoordinator;
     /**
      * 附加属性.
      */
@@ -117,6 +122,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     }
 
     @Override
+    public TaskCoordinator getTaskCoordinator() {
+        return this.taskCoordinator;
+    }
+
+    @Override
     public Optional<Object> getAttribute(String key) {
         return Optional.ofNullable(attributes.get(key));
     }
@@ -163,6 +173,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private MasterStorage masterStorage;
         private KeyValueStorage keyValueStorage;
         private MetaManager metaManager;
+        private TaskCoordinator taskCoordinator;
         private Map<String, Object> attributes;
         private LongIdGenerator longContinuousPartialOrderIdGenerator;
         private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
@@ -204,6 +215,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
+        public Builder withTaskCoordinator(TaskCoordinator taskCoordinator) {
+            this.taskCoordinator = taskCoordinator;
+            return this;
+        }
+
         public Builder withLongContinuousPartialOrderIdGenerator(
             LongIdGenerator longContinuousPartialOrderIdGenerator) {
             this.longContinuousPartialOrderIdGenerator = longContinuousPartialOrderIdGenerator;
@@ -240,6 +256,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             defaultCalculationLogicContext.attributes = this.attributes;
             defaultCalculationLogicContext.metaManager = this.metaManager;
             defaultCalculationLogicContext.masterStorage = this.masterStorage;
+            defaultCalculationLogicContext.taskCoordinator = this.taskCoordinator;
             defaultCalculationLogicContext.keyValueStorage = this.keyValueStorage;
             defaultCalculationLogicContext.longContinuousPartialOrderIdGenerator =
                 this.longContinuousPartialOrderIdGenerator;

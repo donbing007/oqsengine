@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -7,12 +8,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
+ * 默认协调者测试.
+ *
  * @author dongbin
  * @version 0.1 2021/08/12 17:22
  * @since 1.8
@@ -30,14 +36,23 @@ public class DefaultTaskCoordinatorTest {
     private DefaultTaskCoordinator coordinator;
     private MockTaskQueue taskQueue;
     private List<String> finishedTaskIds;
+    private ExecutorService worker;
 
     /**
      * 初始化.
      */
     @BeforeEach
     public void before() throws Exception {
+        worker = new ThreadPoolExecutor(3, 3,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(1000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
+        );
+
         coordinator = new DefaultTaskCoordinator();
         coordinator.setWorkerNumber(3);
+        coordinator.setWorker(worker);
 
         taskQueue = new MockTaskQueue();
         Field queueField = DefaultTaskCoordinator.class.getDeclaredField("taskQueue");
@@ -61,6 +76,8 @@ public class DefaultTaskCoordinatorTest {
         taskQueue = null;
 
         finishedTaskIds = null;
+
+        ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
     @Test
@@ -114,11 +131,6 @@ public class DefaultTaskCoordinatorTest {
         @Override
         public Class runnerType() {
             return MockTaskRunner.class;
-        }
-
-        @Override
-        public Map<String, String> parameter() {
-            return Collections.emptyMap();
         }
 
         public void finish() {

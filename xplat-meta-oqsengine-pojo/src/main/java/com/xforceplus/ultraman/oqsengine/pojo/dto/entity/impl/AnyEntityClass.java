@@ -54,7 +54,7 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
-    public Collection<Relationship> oqsRelations() {
+    public Collection<Relationship> relationship() {
         return null;
     }
 

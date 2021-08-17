@@ -118,7 +118,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                 .build())
             .withRelations(
                 Arrays.asList(
-                    Relationship.Builder.anOqsRelation()
+                    Relationship.Builder.anRelationship()
                         .withId(3)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
@@ -137,7 +137,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
                         .build(),
-                    Relationship.Builder.anOqsRelation()
+                    Relationship.Builder.anRelationship()
                         .withId(4)
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
@@ -178,7 +178,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
             )
             .withRelations(
                 Arrays.asList(
-                    Relationship.Builder.anOqsRelation()
+                    Relationship.Builder.anRelationship()
                         .withId(1)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
@@ -190,7 +190,7 @@ public class MockMetaManager extends com.xforceplus.ultraman.oqsengine.metadata.
                         .withRightEntityClassId(l2EntityClass.id())
                         .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
                         .build(),
-                    Relationship.Builder.anOqsRelation()
+                    Relationship.Builder.anRelationship()
                         .withId(2)
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)

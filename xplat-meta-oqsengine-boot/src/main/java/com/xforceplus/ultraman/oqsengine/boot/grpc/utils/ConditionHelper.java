@@ -299,7 +299,7 @@ public class ConditionHelper {
      * relation can be inherited.
      */
     private static Optional<Relationship> findRelation(IEntityClass mainClass, long relationId) {
-        Optional<Relationship> relationOp = mainClass.oqsRelations().stream()
+        Optional<Relationship> relationOp = mainClass.relationship().stream()
             .filter(rel -> rel.getId() == relationId)
             .findFirst();
         if (!relationOp.isPresent()) {

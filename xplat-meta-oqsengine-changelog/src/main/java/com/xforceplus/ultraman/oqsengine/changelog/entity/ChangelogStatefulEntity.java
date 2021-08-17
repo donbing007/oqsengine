@@ -340,7 +340,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                     .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2, (a, b) -> a));
 
             //amend relation many to one and
-            relatedEntity.oqsRelations().stream()
+            relatedEntity.relationship().stream()
                     .filter(x -> x.getRightEntityClassId() == entityClass.id())
                     .forEach(oqsRelation -> {
                         if (oqsRelation.getRelationType() == Relationship.RelationType.ONE_TO_ONE) {

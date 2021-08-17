@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.autofill.AutoFillCalc
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.FormulaCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,5 +46,14 @@ public class CalculationLogicFactory {
         } else {
             return calculationLogic;
         }
+    }
+
+    /**
+     * 获取所有的计算类型的计算逻辑.
+     *
+     * @return 计算逻辑实例列表.
+     */
+    public Collection<CalculationLogic> getCalculations() {
+        return calculations.values();
     }
 }

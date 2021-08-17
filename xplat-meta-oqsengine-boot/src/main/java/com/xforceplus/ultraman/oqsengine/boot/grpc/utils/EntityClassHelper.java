@@ -90,7 +90,7 @@ public class EntityClassHelper {
             return field;
         }
 
-        Optional<IEntityField> firstField = entityClass.oqsRelations().stream()
+        Optional<IEntityField> firstField = entityClass.relationship().stream()
             .filter(x -> x.getLeftEntityClassId() == entityClass.id())
             .map(x -> {
                 IEntityClass relatedEntityClass = x.getRightEntityClass();

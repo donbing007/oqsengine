@@ -347,7 +347,7 @@ public class StorageMetaManager implements MetaManager {
         if (null != relationStorageList) {
             relationStorageList.forEach(
                 r -> {
-                    Relationship.Builder builder = Relationship.Builder.anOqsRelation()
+                    Relationship.Builder builder = Relationship.Builder.anRelationship()
                         .withId(r.getId())
                         .withCode(r.getCode())
                         .withLeftEntityClassId(r.getLeftEntityClassId())

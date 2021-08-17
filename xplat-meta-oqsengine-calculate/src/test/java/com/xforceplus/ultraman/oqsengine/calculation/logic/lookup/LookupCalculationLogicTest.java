@@ -13,10 +13,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -163,8 +163,9 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(StringValue.class, actualValue.getClass());
         Assertions.assertEquals(lookStringLookupField.id(), actualValue.getField().id());
 
-        String linkKey = LookupHelper.buildLookupLinkKey(targetStringField, lookupEntity);
-        Assertions.assertEquals(targetEntity.id(), ByteUtil.byteToLong(mockKvStorage.get(linkKey).get()));
+        LookupHelper.LookupLinkKey linkKey = LookupHelper.buildLookupLinkKey(
+            targetEntity, targetStringField, lookupEntity, lookStringLookupField);
+        Assertions.assertEquals(targetEntity.id(), ByteUtil.byteToLong(mockKvStorage.get(linkKey.toString()).get()));
     }
 
     /**

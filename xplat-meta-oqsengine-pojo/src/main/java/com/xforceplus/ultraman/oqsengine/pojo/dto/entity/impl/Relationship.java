@@ -232,7 +232,6 @@ public class Relationship {
         private IEntityField entityField;
         private Boolean belongToOwner;
         private boolean strong;
-        private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
         private boolean isCompanion;
         private long companionRelation;
@@ -240,7 +239,7 @@ public class Relationship {
         private Builder() {
         }
 
-        public static Builder anOqsRelation() {
+        public static Builder anRelationship() {
             return new Builder();
         }
 

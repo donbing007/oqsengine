@@ -16,7 +16,7 @@ public class HelperTest {
         EntityClass example = EntityClass.Builder.anEntityClass()
                 .withId(2L)
                 .withRelations(Arrays.asList(
-                        Relationship.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("IIO")
                                 .withId(12123)
                                 .withLeftEntityClassId(1L)
@@ -25,7 +25,7 @@ public class HelperTest {
                                 .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                                 .withBelongToOwner(true)
                                 .build(),
-                        Relationship.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withId(1222323)
                                 .withCode("IIO")
                                 .withLeftEntityClassId(2L)
@@ -35,7 +35,7 @@ public class HelperTest {
                                 .withBelongToOwner(true)
                                 .build()
                         ,
-                        Relationship.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("SELF")
                                 .withId(666)
                                 .withLeftEntityClassId(2L)
@@ -44,7 +44,7 @@ public class HelperTest {
                                 .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                                 .withBelongToOwner(false)
                                 .build(),
-                        Relationship.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("SELFMTO")
                                 .withId(6667)
                                 .withLeftEntityClassId(2L)

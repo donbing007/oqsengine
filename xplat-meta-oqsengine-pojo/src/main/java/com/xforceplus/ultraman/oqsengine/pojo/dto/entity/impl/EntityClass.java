@@ -85,7 +85,7 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public Collection<Relationship> oqsRelations() {
+    public Collection<Relationship> relationship() {
 
         List<Relationship> relations = new ArrayList<>();
 
@@ -94,7 +94,7 @@ public class EntityClass implements IEntityClass {
         }
 
         if (null != father) {
-            relations.addAll(father.oqsRelations());
+            relations.addAll(father.relationship());
         }
 
         return relations;

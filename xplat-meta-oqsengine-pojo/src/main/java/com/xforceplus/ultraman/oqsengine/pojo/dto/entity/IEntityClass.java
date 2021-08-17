@@ -50,7 +50,7 @@ public interface IEntityClass {
      *
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
-    Collection<Relationship> oqsRelations();
+    Collection<Relationship> relationship();
 
     /**
      * 获得本对象的关联对象.

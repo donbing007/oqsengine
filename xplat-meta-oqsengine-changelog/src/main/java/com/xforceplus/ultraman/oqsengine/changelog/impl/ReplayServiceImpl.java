@@ -143,7 +143,7 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * deal every relations to find out history and current value and record in relationValues
          */
-        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).stream()
+        Optional.ofNullable(entityClass.relationship()).orElse(Collections.emptyList()).stream()
                 .filter(x -> x.isStrong() && !x.isCompanion())
                 .forEach(x -> {
                     //get value from changelogList;
@@ -396,7 +396,7 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * store relation field in reference map
          */
-        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
+        Optional.ofNullable(entityClass.relationship()).orElse(Collections.emptyList()).forEach(rel -> {
 //            if (rel.getFieldOwner() != entityClass.id()) {
                 //current entityClass do not have this field
                 List<ChangeValue> changeValues = Optional.ofNullable(finalMappedValue.get(rel.getEntityField().id())).orElseGet(Collections::emptyList);

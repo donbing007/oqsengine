@@ -1,14 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
@@ -18,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 默认的事务协调者实现.
+ * 默认的任务协调者实现.
  * 对于每一种任务都只允许一个runner.
  * 相同class的Runner只允许注册同一个,之后的将被忽略.
  *
@@ -53,6 +50,14 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
     private volatile boolean running = false;
 
+    public ExecutorService getWorker() {
+        return worker;
+    }
+
+    public void setWorker(ExecutorService worker) {
+        this.worker = worker;
+    }
+
     public int getWorkerNumber() {
         return workerNumber;
     }
@@ -67,11 +72,14 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
     @PostConstruct
     public void init() {
-        runners = new ConcurrentHashMap<>();
+        if (running) {
+            return;
+        }
+        if (worker == null) {
+            throw new IllegalArgumentException("No execution thread pool is set.");
+        }
 
-        worker = new ThreadPoolExecutor(workerNumber, workerNumber,
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>());
+        runners = new ConcurrentHashMap<>();
 
         running = true;
 
@@ -82,12 +90,12 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
     @PreDestroy
     public void destroy() {
-        running = false;
+        if (running) {
+            running = false;
 
-        ExecutorHelper.shutdownAndAwaitTermination(this.worker);
-
-        runners.clear();
-        runners = null;
+            runners.clear();
+            runners = null;
+        }
     }
 
     @Override
@@ -150,7 +158,8 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                 if (task != null) {
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
+                        logger
+                            .debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
                     }
 
                     TaskRunner runner = runners.get(task.runnerType().getSimpleName());

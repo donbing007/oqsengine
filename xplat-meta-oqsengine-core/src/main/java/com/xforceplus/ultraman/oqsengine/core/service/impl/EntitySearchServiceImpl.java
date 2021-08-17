@@ -699,7 +699,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     "An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
-            Optional<Relationship> relationOp = mainEntityClass.oqsRelations().stream()
+            Optional<Relationship> relationOp = mainEntityClass.relationship().stream()
                 .filter(r -> r.getId() == c.getRelationId()).findFirst();
             if (!relationOp.isPresent()) {
                 throw new SQLException(

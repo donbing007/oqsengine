@@ -27,6 +27,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -548,7 +549,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          * 设置万能版本,表示和所有的版本都匹配.
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+        EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+
         return delete(entity);
     }
 
@@ -773,19 +775,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return context.getHints();
     }
 
-    // 计算字段的维护
+    /**
+     * 字段维护,会迭代当前修改的字段进行维护.
+     * 主要用于计算字段的数据一致性处理.
+     */
     private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, boolean build)
         throws CalculationLogicException {
 
-        // 需要维护的字段.
-        List<IEntityField> needMaintainFields = sourceEntity.entityValue().values().stream().filter(v ->
-            calculationLogicFactory.getCalculation(v.getField().calculationType()).needMaintenance()
-        ).map(v -> sourceClass.field(v.getField().id()).get()).collect(Collectors.toList());
-
+        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculations();
         CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, sourceClass);
-
-        for (IEntityField field : needMaintainFields) {
-            calculationLogicFactory.getCalculation(field.calculationType()).maintain(context);
+        for (IValue v : sourceEntity.entityValue().values()) {
+            for (CalculationLogic logic : logics) {
+                context.focusField(v.getField());
+                logic.maintain(context);
+            }
         }
     }
 
@@ -798,7 +801,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
             .withKeyValueStorage(this.kv)
-
             .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
             .withEntityClass(entityClass)
             .withEntity(entity)
