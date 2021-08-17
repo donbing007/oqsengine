@@ -129,6 +129,16 @@ public class DefaultTaskCoordinatorTest {
         }
 
         @Override
+        public long location() {
+            return 1;
+        }
+
+        @Override
+        public void setLocation(long l) {
+
+        }
+
+        @Override
         public Class runnerType() {
             return MockTaskRunner.class;
         }

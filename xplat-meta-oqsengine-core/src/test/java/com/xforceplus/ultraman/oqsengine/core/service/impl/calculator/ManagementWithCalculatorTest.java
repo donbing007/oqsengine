@@ -4,9 +4,10 @@ import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.moc
 
 import com.xforceplus.ultraman.oqsengine.core.service.impl.TestInitTools;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
@@ -31,6 +32,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,8 +40,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +59,16 @@ public class ManagementWithCalculatorTest {
     private EntityManagementServiceImpl impl;
 
     private MasterStorage masterStorage;
+
+    private static String bizType = Long.MAX_VALUE - 4 + "";
+    private static Long TEST_OFFSET_DATA = Long.MAX_VALUE - 7;
+
+
+    @BeforeAll
+    public static void beforeAll() throws IllegalAccessException {
+        TestInitTools.bizIdGenerator(bizType);
+    }
+
     @BeforeEach
     public void before() throws Exception {
 
@@ -67,8 +80,8 @@ public class ManagementWithCalculatorTest {
         impl.init();
     }
 
-    @AfterEach
-    public void after() throws Exception {
+    @AfterAll
+    public static void after() throws Exception {
         TestInitTools.close();
     }
 
@@ -122,14 +135,18 @@ public class ManagementWithCalculatorTest {
     private final Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
     private String expectedAutoFill = null;
     private static Long idGeneratorLocal = 0L;
+    private static Long staticGeneratorSenior = 1L;
 
+    private static int startCheckYear = LocalDateTime.now().getYear();
+    private static int replaceCheckYear = 1970;
     @Test
     public void buildTest() throws SQLException {
-        expectedAutoFill = (Long.MAX_VALUE - 4) + "-" + (idGeneratorLocal++);
+        expectedAutoFill = bizType + "-" + (idGeneratorLocal++);
         Map<String, Object> params = new HashMap<>();
 
         Long expectedValue = 10000L;
         params.put("longValue0", expectedValue);
+        params.put("createTime", LocalDateTime.now());
         setExpectedResult(expectedValue);
 
         initAndAssert(expectedId, expectedValue, params, true);
@@ -149,6 +166,7 @@ public class ManagementWithCalculatorTest {
         params.put("dateValue0", 123L);
         params.put("stringAutoFill", "111");
         params.put("stringValueMix", "222");
+        params.put("createTime", LocalDateTime.of(replaceCheckYear, 01, 01, 01, 01));
 
         initAndAssert(expectedId, expectedValue, params, false);
     }
@@ -157,8 +175,9 @@ public class ManagementWithCalculatorTest {
 
     @Test
     public void buildHalfSuccessTest() throws SQLException {
-        expectedAutoFill = (Long.MAX_VALUE - 4) + "-" + (idGeneratorLocal++);
+        expectedAutoFill = bizType + "-" + (idGeneratorLocal++);
         Map<String, Object> params = new HashMap<>();
+        params.put("createTime", LocalDateTime.now());
 
         expectedResult.clear();
 
@@ -193,6 +212,10 @@ public class ManagementWithCalculatorTest {
                 new LongValue(MockCalculatorMetaManager.L0_ENTITY_CLASS.field("longValue0").get(), expectedValue));
         }
 
+        entityValue.addValue(new FormulaTypedValue(L1_ENTITY_CLASS.field("senior autoFill").get(), params));
+        entityValue.addValue(new FormulaTypedValue(L1_ENTITY_CLASS.field("offset data").get(), params));
+        entityValue.addValue(new DateTimeValue(L1_ENTITY_CLASS.field("createTime").get(), (LocalDateTime) params.get("createTime")));
+
         IEntity replaceEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
                 new EntityClassRef(L1_ENTITY_CLASS.id(), L1_ENTITY_CLASS.code()))
@@ -226,7 +249,29 @@ public class ManagementWithCalculatorTest {
                 Assertions.assertTrue(vOp.isPresent());
                 Assertions.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
                 if (vOp.get().getField().calculationType().equals(CalculationType.AUTO_FILL)) {
-                    Assertions.assertEquals(expectedAutoFill, vOp.get().getValue());
+                    AutoFill autoFill = (AutoFill) vOp.get().getField().config().getCalculation();
+                    if (autoFill.getDomainNoType().equals(AutoFill.DomainNoType.NORMAL)) {
+                        Assertions.assertEquals(expectedAutoFill, vOp.get().getValue());
+                    } else {
+                        if (insert) {
+                            String[] parts =
+                                ((String) vOp.get().getValue()).split(":");
+
+                            Assertions.assertEquals(2, parts.length);
+
+                            Assertions.assertEquals(entity.entityValue().getValue("stringValueMix").get().getValue(),
+                                parts[0]);
+                            Assertions.assertEquals(String.format("%04d", staticGeneratorSenior.intValue()), parts[1]);
+                        }
+                    }
+                } else if (vOp.get().getField().calculationType().equals(CalculationType.FORMULA)) {
+                    if (vOp.get().getField().id() == TEST_OFFSET_DATA) {
+                        if (insert) {
+                            Assertions.assertEquals(startCheckYear + 1, ((LocalDateTime) vOp.get().getValue()).getYear());
+                        } else {
+                            Assertions.assertEquals(replaceCheckYear + 1, ((LocalDateTime) vOp.get().getValue()).getYear());
+                        }
+                    }
                 }
             });
         }
@@ -248,10 +293,14 @@ public class ManagementWithCalculatorTest {
             new AbstractMap.SimpleEntry<>(TimeUtils.convert(System.currentTimeMillis()), COMPARE.NOTHING));
         expectedResult.put(Long.MAX_VALUE - 4, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
 
+        expectedResult.put(Long.MAX_VALUE - 6, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
+        expectedResult.put(Long.MAX_VALUE - 7, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
     }
 
     public static class MockMasterStorage implements MasterStorage {
+
         private final Map<Long, IEntity> entityMap = new HashMap<>();
+
         public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
             entityMap.put(entity.id(), entity);
             return 1;

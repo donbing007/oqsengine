@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 /**
- *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/18
  * @since 1.8
@@ -78,7 +77,7 @@ public class MockCalculatorMetaManager implements MetaManager {
                             .withFailedDefaultValue(1)
                             .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
                             .withArgs(Collections.singletonList("longValue1"))
-                        .build()
+                            .build()
                     ).build()
             ).build()
         )
@@ -144,7 +143,60 @@ public class MockCalculatorMetaManager implements MetaManager {
                             .build()
                     ).build()
             ).build()
-        ).withFather(L0_ENTITY_CLASS).build();
+        )
+        .withField(EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 6)
+            .withFieldType(FieldType.STRING)
+            .withName("senior autoFill")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(256)
+                    .withSearchable(true)
+                    .withRequired(true)
+                    .withCalculation(
+                        AutoFill.Builder.anAutoFill()
+                            .withLevel(3)
+                            .withExpression("stringValueMix+\":\"+getId(\"{0000}\",stringValueMix)")
+                            .withDomainNoType(AutoFill.DomainNoType.SENIOR)
+                            .withArgs(Collections.singletonList("stringValueMix"))
+                            .build()
+                    ).build()
+            ).build()
+        )
+        .withField(EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 7)
+            .withFieldType(FieldType.DATETIME)
+            .withName("offset data")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(256)
+                    .withSearchable(true)
+                    .withRequired(true)
+                    .withCalculation(
+                        Formula.Builder.anFormula()
+                            .withLevel(1)
+                            .withExpression("timeOffset(createTime,1,1)")
+                            .withFailedPolicy(Formula.FailedPolicy.THROW_EXCEPTION)
+                            .withArgs(Arrays.asList("createTime"))
+                            .build()
+                    ).build()
+            ).build()
+        )
+        .withField(EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 8)
+            .withFieldType(FieldType.DATETIME)
+            .withName("createTime")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(19)
+                    .withSearchable(true)
+                    .withRequired(true)
+                    .withCalculation(
+                        StaticCalculation.Builder.anStaticCalculation().build()
+                    ).build()
+            ).build()
+        )
+        .withFather(L0_ENTITY_CLASS).build();
 
     private final Collection<IEntityClass> entities;
 

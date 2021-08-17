@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -75,6 +76,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
      * 不连续但偏序的ID生成器.
      */
     private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
+    private BizIDGenerator bizIDGenerator;
 
     @Override
     public boolean isBuild() {
@@ -163,6 +165,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         return this.longNoContinuousPartialOrderIdGenerator;
     }
 
+    @Override
+    public BizIDGenerator getBizIDGenerator() {
+        return bizIDGenerator;
+    }
+
     /**
      * 构造器.
      */
@@ -177,6 +184,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         private Map<String, Object> attributes;
         private LongIdGenerator longContinuousPartialOrderIdGenerator;
         private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
+        private BizIDGenerator bizIDGenerator;
 
         private Builder() {
         }
@@ -232,6 +240,12 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
+        public Builder withBizIdGenerator(BizIDGenerator bizIDGenerator) {
+            this.bizIDGenerator = bizIDGenerator;
+            return this;
+        }
+
+
         /**
          * 增加新的属性.
          */
@@ -262,6 +276,7 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
                 this.longContinuousPartialOrderIdGenerator;
             defaultCalculationLogicContext.longNoContinuousPartialOrderIdGenerator =
                 this.longNoContinuousPartialOrderIdGenerator;
+            defaultCalculationLogicContext.bizIDGenerator = this.bizIDGenerator;
             return defaultCalculationLogicContext;
         }
     }

@@ -1,30 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.boot.rest;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
-import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
-import java.util.Optional;
-import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,19 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DevOpsController {
 
-    @Resource(name = "metaManager")
-    private MetaManager metaManager;
-
-    @Resource
-    private DevOpsManagementServiceImpl devOpsManagementService;
-
-    @Resource
-    private EntityManagementService entityManagementService;
-
-    @Resource
-    private EntitySearchService entitySearchService;
-
-    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    @Autowired
+    private DiscoverDevOpsService discoverDevOpsService;
 
     //  part for oqs-meta
 
@@ -67,12 +40,8 @@ public class DevOpsController {
                                              @PathVariable String env,
                                               @PathVariable Integer version,
                                               @RequestBody String data) {
-        try {
-            boolean result = metaManager.dataImport(appId, env, version, data);
-            return ResponseEntity.ok(result ? "success" : "less version than current use.");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+            discoverDevOpsService.metaImport(appId, env, version, data) ? "success" : "less version than current use.");
     }
 
     /**
@@ -80,11 +49,7 @@ public class DevOpsController {
      */
     @PutMapping("/oqs/devops/notice-meta/{appId}/{env}")
     public ResponseEntity<Integer> noticeMeta(@PathVariable String appId, @PathVariable String env) {
-        try {
-            return ResponseEntity.ok(metaManager.need(appId, env));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(discoverDevOpsService.noticeMeta(appId, env));
     }
 
     /**
@@ -92,11 +57,7 @@ public class DevOpsController {
      */
     @GetMapping("/oqs/devops/show-meta/{appId}")
     public ResponseEntity<MetaMetrics> showMeta(@PathVariable String appId) {
-        try {
-            return ResponseEntity.of(metaManager.showMeta(appId));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(discoverDevOpsService.showMeta(appId));
     }
 
 
@@ -107,8 +68,7 @@ public class DevOpsController {
      */
     @DeleteMapping("/oqs/devops/commitIds")
     public ResponseEntity<Boolean> removeCommitIds(@RequestBody Long[] ids) {
-        devOpsManagementService.removeCommitIds(ids);
-        return ResponseEntity.ok(true);
+        return ResponseEntity.ok(discoverDevOpsService.removeCommitIds(ids));
     }
 
     /**
@@ -116,66 +76,24 @@ public class DevOpsController {
      */
     @PutMapping("oqs/devops/cdc/error/recover/{seqNo}")
     public ResponseEntity<Boolean> cdcErrorRecover(@PathVariable long seqNo,
-                                                   @RequestBody String recoverString) throws SQLException {
-        if (devOpsManagementService.cdcSendErrorRecover(seqNo, recoverString)) {
-            try {
-                Optional<CdcErrorTask> cdcErrorTaskOp = devOpsManagementService.queryOne(seqNo);
-                FixedStatus fixedStatus = FixedStatus.FIX_ERROR;
-                if (cdcErrorTaskOp.isPresent()) {
-                    CdcErrorTask task = cdcErrorTaskOp.get();
-                    if (task.getErrorType() == ErrorType.DATA_FORMAT_ERROR.getType()
-                        && task.getOp() > OperationType.UNKNOWN.getValue()
-                        && task.getEntity() > UN_KNOW_ID
-                        && task.getId() > UN_KNOW_ID) {
-
-                        Optional<IEntity> entityOp =
-                            entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
-
-                        com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = null;
-                        if (entityOp.isPresent()) {
-                            IEntity entity = entityOp.get();
-                            operationResult = entityManagementService.replace(entity);
-                        } else {
-                            operationResult =
-                                entityManagementService.delete(Entity.Builder.anEntity()
-                                    .withId(task.getId())
-                                    .withVersion(task.getVersion())
-                                    .build());
-                        }
-
-                        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
-                            fixedStatus = FixedStatus.FIXED;
-                        }
-                    }
-                }
-
-                devOpsManagementService.cdcUpdateStatus(seqNo, fixedStatus);
-                if (fixedStatus == FixedStatus.FIXED) {
-                    return ResponseEntity.ok(true);
-                }
-            } catch (SQLException ex) {
-                return ResponseEntity.badRequest().build();
-            }
-        }
-
-        return ResponseEntity.badRequest().build();
+                                                   @RequestBody String recoverString) {
+        return ResponseEntity.ok(discoverDevOpsService.cdcErrorRecover(seqNo, recoverString));
     }
 
     /**
      * query cdc error by seqNo.
      */
     @GetMapping("oqs/devops/cdc/error/{seqNo}")
-    public ResponseEntity<CdcErrorTask> queryCdcError(@PathVariable long seqNo) throws SQLException {
-        return ResponseEntity.of(devOpsManagementService.queryOne(seqNo));
+    public ResponseEntity<CdcErrorTask> queryCdcError(@PathVariable long seqNo) {
+        return ResponseEntity.ok(discoverDevOpsService.queryCdcError(seqNo));
     }
 
     /**
      * query cdc error by condition.
      */
     @GetMapping("oqs/devops/cdc/errors")
-    public ResponseEntity<Collection<CdcErrorTask>> queryCdcErrors(@RequestBody CdcErrorQueryCondition cdcErrorQueryCondition)
-        throws SQLException {
-        return ResponseEntity.ok(devOpsManagementService.queryCdcError(cdcErrorQueryCondition));
+    public ResponseEntity<Collection<CdcErrorTask>> queryCdcErrors(@RequestBody CdcErrorQueryCondition cdcErrorQueryCondition) {
+        return ResponseEntity.ok(discoverDevOpsService.queryCdcErrors(cdcErrorQueryCondition));
     }
 
 
@@ -188,14 +106,8 @@ public class DevOpsController {
     public ResponseEntity<DevOpsTaskInfo> rebuildIndex(@PathVariable long entityClassId,
                                                        @PathVariable String start,
                                                        @PathVariable String end,
-                                                       @RequestParam("profile") String profile) throws Exception {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-        if (entityClassOp.isPresent()) {
-            return ResponseEntity.of(devOpsManagementService.rebuildIndex(entityClassOp.get(),
-                LocalDateTime.parse(start, dateTimeFormatter),
-                LocalDateTime.parse(end, dateTimeFormatter)));
-        }
-        return ResponseEntity.badRequest().build();
+                                                       @RequestParam("profile") String profile) {
+        return ResponseEntity.ok(discoverDevOpsService.rebuildIndex(entityClassId, start, end, profile));
     }
 
     /**
@@ -204,12 +116,8 @@ public class DevOpsController {
     @PutMapping("/oqs/devops/rebuild-index/{entityClassId}/{taskId}")
     public ResponseEntity<DevOpsTaskInfo> resumeIndex(@PathVariable long entityClassId,
                                                       @PathVariable String taskId,
-                                                      @RequestParam("profile") String profile) throws Exception {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-        if (entityClassOp.isPresent()) {
-            return ResponseEntity.of(devOpsManagementService.resumeRebuild(entityClassOp.get(), taskId));
-        }
-        return ResponseEntity.badRequest().build();
+                                                      @RequestParam("profile") String profile) {
+        return ResponseEntity.ok(discoverDevOpsService.resumeIndex(entityClassId, taskId, profile));
     }
 
     /**
@@ -220,12 +128,7 @@ public class DevOpsController {
         @RequestParam("pageIndex") long pageIndex,
         @RequestParam("pageSize")  long pageSize,
         @RequestParam("isActive")  boolean isActive) throws SQLException {
-        Page page = new Page(pageIndex, pageSize);
-        if (isActive) {
-            return ResponseEntity.ok(devOpsManagementService.listActiveTasks(page));
-        } else {
-            return ResponseEntity.ok(devOpsManagementService.listAllTasks(page));
-        }
+        return ResponseEntity.ok(discoverDevOpsService.listActiveTasks(pageIndex, pageSize, isActive));
     }
 
     /**
@@ -233,11 +136,7 @@ public class DevOpsController {
      */
     @GetMapping("/oqs/devops/rebuild-index/{entityClassId}")
     ResponseEntity<DevOpsTaskInfo> activeTask(@PathVariable long entityClassId, @RequestParam("profile") String profile) throws SQLException {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-        if (entityClassOp.isPresent()) {
-            return ResponseEntity.of(devOpsManagementService.getActiveTask(entityClassOp.get()));
-        }
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.ok(discoverDevOpsService.activeTask(entityClassId, profile));
     }
 
     /**
@@ -245,7 +144,6 @@ public class DevOpsController {
      */
     @PutMapping("/oqs/devops/rebuild-index/cancel/{taskId}")
     ResponseEntity<Boolean> cancel(String taskId) throws SQLException {
-        devOpsManagementService.cancel(taskId);
-        return ResponseEntity.ok(true);
+        return ResponseEntity.ok(discoverDevOpsService.cancel(taskId));
     }
 }

@@ -24,7 +24,10 @@
             <artifactId>xplat-meta-oqsengine-synchronizer</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>ultraman-discover-server-sdk</artifactId>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-lock</artifactId>

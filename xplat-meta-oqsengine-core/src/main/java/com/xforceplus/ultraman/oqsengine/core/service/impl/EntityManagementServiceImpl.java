@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -63,6 +64,7 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 
 /**
  * entity 管理服务实现.
@@ -101,6 +103,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private EventBus eventBus;
+
+    @Resource
+    private BizIDGenerator bizIDGenerator;
 
     /**
      * 字段校验器工厂.
@@ -804,6 +809,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
             .withEntityClass(entityClass)
             .withEntity(entity)
+            .withBizIdGenerator(this.bizIDGenerator)
             .build();
     }
 

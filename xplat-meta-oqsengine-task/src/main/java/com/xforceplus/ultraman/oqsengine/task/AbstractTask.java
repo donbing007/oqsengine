@@ -13,6 +13,7 @@ public abstract class AbstractTask implements Task {
 
     private String id;
     private long createTime;
+    private long location;
 
     public AbstractTask() {
         id = UUIDGenerator.getInstance().next();
@@ -27,5 +28,15 @@ public abstract class AbstractTask implements Task {
     @Override
     public long createTime() {
         return createTime;
+    }
+
+    @Override
+    public long location() {
+        return this.location;
+    }
+
+    @Override
+    public void setLocation(long location) {
+        this.location = location;
     }
 }

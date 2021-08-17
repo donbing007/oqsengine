@@ -5,7 +5,6 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALT
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.Collection;
 import java.util.Collections;

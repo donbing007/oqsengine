@@ -5,36 +5,52 @@ instance:
 
 grpc:
   server:
-    port: 8090
+    port: 8081
 server:
   port: 8086
 
 logging:
   level:
-    root: info
+    root: debug
     io:
       lettuce: info
-    com.xforceplus.ultraman.oqsengine.changelog: debug
+  pattern:
+    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
 
 transaction:
-  timeoutMs: 3000
+  timeoutMs: 3000000
 
 threadPool:
-  io:
-    # 服务响应线程池.
+  # 0 or not exist use cpu core + 1
+  call:
+    read:
+      worker: 0
+      queue: 1000
+    write:
+      worker: 0
+      queue: 1000
+    rebuild:
+      worker: 0
+      queue: 1000
+  cdc:
     worker: 0
-    queue: 1000
-  task:
-    # 后端任务,或者IO线程池中放入的任务执行线程池.
-    worker: 0
+  event:
+    worker: 3
     queue: 1000
 
-maxVisibleNumber: 10000
-
-ignoreCDCStatusCheck: false
 sync:
+  ignoreCDCStatusCheck: false
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
+
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
 
 storage:
   tokenizer:
@@ -45,7 +61,7 @@ storage:
   debug:
     showsql: true
   timeoutMs:
-    query: 3000
+    query: 10000
   master:
     name: "oqsbigentity"
     shard:
@@ -60,8 +76,8 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: false
-        size: 3
+        enabled: true
+        size: 2
   devOps:
     cdc:
       errors:
@@ -74,6 +90,8 @@ storage:
           size: 2000
       execution:
         timeout: 300000
+      update:
+        frequency: 100
       cache:
         expire: 30
         maxsize: 500
@@ -92,8 +110,7 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
-  #uri: "redis://q1w2e3r4@127.0.0.1:6379"
-  uri: "redis://127.0.0.1:6379"
+  uri: "redis://${REDIS_HOST}:${REDIS_PORT}"
   maxReqQueue: 10000
 
 management:
@@ -121,58 +138,36 @@ management:
 cdc:
   connect:
     type: single
-    host: 127.0.0.1
-    port: 11111
-    destination: oqsengine
+    host: "${CANAL_HOST}"
+    port: ${CANAL_PORT}
+    destination: "${CANAL_DESTINATION}"
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
   consumer:
     checkCommitReady: true
-    skipCommitId: -1
 
 meta:
   grpc:
-    # client 启动客户端、server 启动服务端、offline 离线模式、mock
-    type: client
-    host: ultraman.xforcecloud.com
-    #    host: 120.55.249.44
-    #host: 169.254.106.127
-    #    host: localhost
-    #    port: 8081
-    #    port: 23111
-    port: 23120
-    seconds:
-      heartbeatTimeout: 30
-      delaytaskTimeout: 30
-      keepAliveDuration: 5
-      monitorDuration: 1
-      reconnectDuration: 5
+    type: mock
   load:
     path: "-"
 
 discover:
   sdk:
-    enable: false
+    enable: true
     connection:
-      host: ultraman.xforcecloud.com
+      host: localhost
       port: 8916
     time:
       heartbeat:
         expired: 60000
         duration: 5000
     agent:
-      serviceName: oqs-engine
-      serviceGroup: oqs-engine-group
       serviceId: ${discover.sdk.agent.serviceGroup}-${instance.id}
+      serviceGroup: oqs-engine-unit-test
+      serviceName: oqs-engine
     threadPool:
       task: 5
       queue: 100
-
-changelog:
-  enabled: false
-  queue: local
-
-metadata:
-  enhanced: false
