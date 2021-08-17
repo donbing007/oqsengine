@@ -18,6 +18,8 @@ import javax.annotation.Resource;
  */
 public class TaskKeyValueQueue implements TaskQueue {
 
+    private static final String DEFAULT_NAME = "default";
+
     @Resource
     private ResourceLocker locker;
 
@@ -59,14 +61,16 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private String indexKey;
 
+    public TaskKeyValueQueue() {
+        this(DEFAULT_NAME);
+    }
+
     /**
      * 初始化.
      *
      * @param name 队列名称.
-     * @param kv   kv储存实例.
      */
-    public TaskKeyValueQueue(String name, KeyValueStorage kv) {
-        this.kv = kv;
+    public TaskKeyValueQueue(String name) {
         this.name = name;
         this.anyLock = "anyLock-" + name;
 

@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMai
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
+import com.xforceplus.ultraman.oqsengine.task.queue.TaskKeyValueQueue;
+import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,11 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class TaskConfiguration {
+
+    @Bean
+    public TaskQueue taskQueue() {
+        return new TaskKeyValueQueue();
+    }
 
     /**
      * 任务协调者.

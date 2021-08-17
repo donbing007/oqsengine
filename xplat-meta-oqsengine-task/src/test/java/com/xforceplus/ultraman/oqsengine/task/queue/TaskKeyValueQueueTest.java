@@ -7,21 +7,21 @@ import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
+ * 基于KV的任务队列实现.
+ *
  * @author weikai
  * @version 1.0 2021/8/13 18:06
  * @since 1.8
@@ -34,14 +34,18 @@ class TaskKeyValueQueueTest {
 
     @BeforeEach
     void before() throws NoSuchFieldException, IllegalAccessException {
-        instance = new TaskKeyValueQueue(NAME, new MockKv());
+        instance = new TaskKeyValueQueue(NAME);
+        Field taskField = TaskKeyValueQueue.class.getDeclaredField("kv");
+        taskField.setAccessible(true);
+        taskField.set(instance, new MockKv());
+
         Field locker = TaskKeyValueQueue.class.getDeclaredField("locker");
         locker.setAccessible(true);
         locker.set(instance, new LocalResourceLocker());
 
         Field serializeStrategy = TaskKeyValueQueue.class.getDeclaredField("serializeStrategy");
         serializeStrategy.setAccessible(true);
-        serializeStrategy.set(instance, new mockSerializeStrategy());
+        serializeStrategy.set(instance, new MockSerializeStrategy());
 
         Field elementKeyPrefix = TaskKeyValueQueue.class.getDeclaredField("elementKeyPrefix");
         elementKeyPrefix.setAccessible(true);
@@ -98,14 +102,9 @@ class TaskKeyValueQueueTest {
         public Class runnerType() {
             return null;
         }
-
-        @Override
-        public Map<String, String> parameter() {
-            return Collections.emptyMap();
-        }
     }
 
-    static class mockSerializeStrategy implements SerializeStrategy {
+    static class MockSerializeStrategy implements SerializeStrategy {
 
         @Override
         public byte[] serialize(Object source) throws CanNotBeSerializedException {
