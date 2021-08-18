@@ -1,13 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
-import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
+import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
-import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+
+import javax.annotation.Resource;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Resource;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * 一个基于key-value储存的队列实现.
@@ -21,7 +22,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     private static final String DEFAULT_NAME = "default";
 
     @Resource
-    private ResourceLocker locker;
+    private IdGenerator idGenerator;
 
     @Resource
     private KeyValueStorage kv;
@@ -29,7 +30,6 @@ public class TaskKeyValueQueue implements TaskQueue {
     @Resource
     private SerializeStrategy serializeStrategy;
 
-    private static final String INDEX_KEY = "task-queue-i";
     /**
      * 队列元素key.
      */
@@ -39,10 +39,6 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private static final String POINT_KEY = "task-queue-p";
 
-    /**
-     * 任意锁名称，构造器初始化.
-     */
-    private String anyLock;
 
     /**
      * 队列名称.
@@ -56,10 +52,6 @@ public class TaskKeyValueQueue implements TaskQueue {
      * 队列元素key的前辍.
      */
     private String elementKeyPrefix;
-    /**
-     * 队列当前最大序号.
-     */
-    private String indexKey;
 
     public TaskKeyValueQueue() {
         this(DEFAULT_NAME);
@@ -72,80 +64,57 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     public TaskKeyValueQueue(String name) {
         this.name = name;
-        this.anyLock = "anyLock-" + name;
 
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
-        this.indexKey = String.format("%s-%s", this.name, INDEX_KEY);
-
-        if (!kv.exist(pointKey)) {
-
-            updatePointKey(-1L);
-
-            kv.save(indexKey, ByteUtil.longToByte(-1L));
-        }
-
-
     }
 
     @Override
-    public void append(Task task) {
+    public void append(Task task) throws Exception {
         if (task == null) {
             return;
         }
-        try {
-            locker.lock(anyLock);
-            long elementId = nextId();
-            task.setLocation(elementId);
-            String elementKey = buildNextElementKey(elementId);
-            kv.save(elementKey, serializeStrategy.serialize(task));
-            // 第一个元素.
-            if (elementId == 0) {
-                kv.save(POINT_KEY, ByteUtil.longToByte(elementId));
-            }
-        } finally {
-            locker.unlock(anyLock);
+        long elementId = nextId();
+        task.setLocation(elementId);
+        String elementKey = buildNextElementKey(elementId);
+        kv.save(elementKey, serializeStrategy.serialize(task));
+        // 第一个元素.
+        if (elementId == 0) {
+            kv.incr(pointKey, 0);
         }
     }
 
     @Override
-    public Task get() {
-        Optional<byte[]> bytes;
-        String elementKey;
+    public Task get() throws Exception {
+        Task task = null;
+        long nextElementId;
+
         try {
-            locker.lock(anyLock);
-            bytes = kv.get(POINT_KEY);
-            if (bytes.isPresent()) {
-                long elementId = ByteUtil.byteToLong(bytes.get());
-                elementKey = buildNextElementKey(elementId);
-                kv.save(POINT_KEY, ByteUtil.longToByte(elementId + 1));
-            } else {
-                return null;
-            }
-        } finally {
-            locker.unlock(anyLock);
+            nextElementId = kv.incr(pointKey);
+        } catch (Exception e) {
+            throw new Exception(String.format("pointKey %s incr failed. ", pointKey));
         }
-        return getTask(elementKey);
+        String elementKey = buildNextElementKey(nextElementId - 1);
+
+        int count = 0;
+        while (count <= 3) {
+            task = getTask(elementKey);
+            if (task != null) {
+                break;
+            } else {
+                if (count++ >= 3) {
+                    throw new Exception(String.format("Task not found where elementKey equals %s .", elementKey));
+                } else {
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                }
+            }
+        }
+        return task;
     }
 
     @Override
-    public Task get(long awaitTimeMs) {
-        Optional<byte[]> bytes;
-        String elementKey;
-        try {
-            locker.tryLock(anyLock, awaitTimeMs, TimeUnit.MICROSECONDS);
-            bytes = kv.get(POINT_KEY);
-            if (bytes.isPresent()) {
-                long elementId = ByteUtil.byteToLong(bytes.get());
-                elementKey = buildNextElementKey(elementId);
-                kv.save(POINT_KEY, ByteUtil.longToByte(elementId + 1));
-            } else {
-                return null;
-            }
-        } finally {
-            locker.unlock(anyLock);
-        }
-        return getTask(elementKey);
+    public Task get(long awaitTimeMs) throws Exception {
+        return get();
     }
 
     private Task getTask(String elementKey) {
@@ -159,7 +128,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     }
 
     @Override
-    public void ack(Task task) {
+    public void ack(Task task) throws Exception {
         if (task == null) {
             return;
         }
@@ -170,7 +139,11 @@ public class TaskKeyValueQueue implements TaskQueue {
                 kv.delete(buildNextElementKey(location));
                 break;
             } catch (Exception e) {
-                count++;
+                if (count++ >= 3){
+                    throw new Exception(String.format("Task ack failed taskLocation = %s",buildNextElementKey(location)));
+                }else {
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                }
             }
         }
     }
@@ -183,24 +156,12 @@ public class TaskKeyValueQueue implements TaskQueue {
         return buff.toString();
     }
 
-    private long nextId() {
-        Optional<byte[]> indexOp;
-        indexOp = kv.get(indexKey);
-        long index = -1;
-        if (indexOp.isPresent()) {
-            index = ByteUtil.byteToLong(indexOp.get());
+    private long nextId() throws Exception {
+        if (idGenerator.supportNameSpace()) {
+            return (long) idGenerator.next(name);
+        }else {
+            throw new Exception(idGenerator.getClass().getName() + "idGenerator do not support namespace ");
         }
-        index++;
-        kv.save(indexKey, ByteUtil.longToByte(index));
-        return index;
-    }
-
-    private void updatePointKey(long point) {
-        kv.save(pointKey, ByteUtil.longToByte(point));
-    }
-
-    private void updateIndexKey(long index) {
-        kv.save(indexKey, ByteUtil.longToByte(index));
     }
 
 }

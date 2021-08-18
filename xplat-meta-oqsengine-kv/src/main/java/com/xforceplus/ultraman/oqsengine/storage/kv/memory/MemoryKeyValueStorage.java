@@ -91,8 +91,23 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
+    public KeyIterator iterator(String keyPrefix) {
+        return KeyValueStorage.super.iterator(keyPrefix);
+    }
+
+    @Override
     public KeyIterator iterator(String keyPrefix, boolean asc) {
         return new MemoryKeyIterator(keyPrefix, asc);
+    }
+
+    @Override
+    public long incr(String key) {
+        return KeyValueStorage.super.incr(key);
+    }
+
+    @Override
+    public long incr(String key, long step) {
+        return 0;
     }
 
     class MemoryKeyIterator implements KeyIterator {

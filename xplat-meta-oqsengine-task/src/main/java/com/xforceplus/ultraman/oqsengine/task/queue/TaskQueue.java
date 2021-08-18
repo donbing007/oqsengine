@@ -16,7 +16,7 @@ public interface TaskQueue {
      *
      * @param task 任务.
      */
-    public void append(Task task);
+    public void append(Task task) throws Exception;
 
     /**
      * 获取队列中的第一个任务.<br>
@@ -25,7 +25,7 @@ public interface TaskQueue {
      *
      * @return 任务.
      */
-    public Task get();
+    public Task get() throws Exception;
 
     /**
      * 获取队列中的第一个任务.<br>
@@ -35,14 +35,14 @@ public interface TaskQueue {
      * @param awaitTimeMs 等待的毫秒数.
      * @return 任务.
      */
-    public Task get(long awaitTimeMs);
+    public Task get(long awaitTimeMs) throws Exception;
 
     /**
      * 任务完成确认.
      *
      * @param task 任务.
      */
-    public void ack(Task task);
+    public void ack(Task task) throws Exception;
 
     /*public boolean ack(Task task , long awaitTimeMS);*/
 }
