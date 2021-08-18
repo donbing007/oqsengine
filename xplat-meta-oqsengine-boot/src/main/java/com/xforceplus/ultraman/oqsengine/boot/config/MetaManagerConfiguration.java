@@ -66,6 +66,7 @@ public class MetaManagerConfiguration {
      * 增加的SyncExecutor会记录bocp同步过来的原始数据内容，供测试项目进行assert比较.
      */
     @Bean("grpcSyncExecutor")
+    @DependsOn("bizIDGenerator")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public SyncExecutor grpcSyncExecutor(
         @Value("${meta.load.path:}") String loadPath,
