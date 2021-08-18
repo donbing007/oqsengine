@@ -77,6 +77,8 @@ public class MetaManagerConfiguration {
         }
         logger.info("init EntityClassSyncExecutor success.");
         EntityClassSyncExecutor entityClassSyncExecutor = new EntityClassSyncExecutor();
+
+        //  离线加载
         if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
             logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
             entityClassSyncExecutor.setLoadPath(loadPath);
