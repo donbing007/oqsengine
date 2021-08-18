@@ -9,8 +9,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAccumulator;
 
 /**
  * 基于内存的KV实现,数据不过时行持久化.
@@ -23,9 +26,12 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
 
     private static final byte[] EMPTY_VALUE = new byte[0];
     private ConcurrentMap<String, byte[]> data;
+    private ConcurrentMap<String, AtomicLong> numberData;
+
 
     public MemoryKeyValueStorage() {
         this.data = new ConcurrentSkipListMap<>();
+        this.numberData = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -93,6 +99,17 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
     @Override
     public KeyIterator iterator(String keyPrefix, boolean asc) {
         return new MemoryKeyIterator(keyPrefix, asc);
+    }
+
+    @Override
+    public long incr(String key, long step) {
+        long useStep = step < 0 ? 0 : step;
+        AtomicLong old = numberData.putIfAbsent(key, new AtomicLong(useStep));
+        if (old != null) {
+            return old.addAndGet(useStep);
+        } else {
+            return useStep;
+        }
     }
 
     class MemoryKeyIterator implements KeyIterator {

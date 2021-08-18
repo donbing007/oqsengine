@@ -34,6 +34,34 @@ public abstract class AbstractKVTest {
     public abstract KeyValueStorage getKv();
 
     @Test
+    public void testIncr() throws Exception {
+        final int size = 100;
+        final String key = "incr";
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch finishLatch = new CountDownLatch(size);
+        ExecutorService worker = Executors.newFixedThreadPool(size);
+        for (int i = 0; i < size; i++) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    startLatch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                getKv().incr(key);
+                finishLatch.countDown();
+            }, worker);
+        }
+
+        startLatch.countDown();
+        finishLatch.await();
+
+        Assertions.assertEquals(size, getKv().incr(key, 0));
+
+        ExecutorHelper.shutdownAndAwaitTermination(worker);
+    }
+
+    @Test
     public void testGetAndGets() throws Exception {
         int size = 100;
 

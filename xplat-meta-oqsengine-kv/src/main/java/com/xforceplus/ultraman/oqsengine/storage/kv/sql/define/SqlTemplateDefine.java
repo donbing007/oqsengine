@@ -13,11 +13,27 @@ public final class SqlTemplateDefine {
     }
 
     /**
+     * 查询数字.<br>
+     * {1} KEY<br>
+     */
+    public static final String SELECT_NUMBER_TEMPLATE =
+        String.format("SELECT %s FROM %s WHERE %s = ? LIMIT 0, 1", FieldDefine.VALUE, "%s", FieldDefine.KEY);
+
+    /**
+     * 更新已有数字KEY的值.<br>
+     * {1} 增加的数量<br>
+     * {2} KEY<br>
+     */
+    public static final String UPDATE_NUMBER_TEMPLATE =
+        String.format("UPDATE %s set %s = %s + ? WHERE %s = ?",
+            "%s", FieldDefine.VALUE, FieldDefine.VALUE, FieldDefine.KEY);
+
+    /**
      * 增加一个KEY-VALUE.<p></p>
      * {1}  key<p></p>
      * {2}  value<p></p>
      */
-    public static String INSERT_TEMPLATE =
+    public static final String INSERT_TEMPLATE =
         String.format("INSERT INTO %s (%s, %s) values (?, ?)", "%s", FieldDefine.KEY, FieldDefine.VALUE);
 
     /**

@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
+import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.AbstractKVTest;
@@ -74,6 +76,9 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
         Collection<Field> fields = ReflectionUtils.printAllMembers(storage);
         ReflectionUtils.reflectionFieldValue(fields, "transactionExecutor", storage, executor);
 
+        ResourceLocker locker = new LocalResourceLocker();
+        fields = ReflectionUtils.printAllMembers(storage);
+        ReflectionUtils.reflectionFieldValue(fields, "locker", storage, locker);
     }
 
     /**
