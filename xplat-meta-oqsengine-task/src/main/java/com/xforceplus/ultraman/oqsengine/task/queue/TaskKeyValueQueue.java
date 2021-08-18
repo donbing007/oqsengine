@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.task.queue;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 
@@ -22,6 +23,9 @@ public class TaskKeyValueQueue implements TaskQueue {
     private static final String DEFAULT_NAME = "default";
 
     @Resource
+    private ResourceLocker locker;
+
+    @Resource
     private IdGenerator idGenerator;
 
     @Resource
@@ -39,6 +43,9 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private static final String POINT_KEY = "task-queue-p";
 
+    private String anyLock;
+
+    private long size;
 
     /**
      * 队列名称.
@@ -64,6 +71,7 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     public TaskKeyValueQueue(String name) {
         this.name = name;
+        this.anyLock = "anyLock-" + name;
 
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
@@ -82,13 +90,16 @@ public class TaskKeyValueQueue implements TaskQueue {
         if (elementId == 0) {
             kv.incr(pointKey, 0);
         }
+        incrSize();
     }
 
     @Override
     public Task get() throws Exception {
+        if (!hasNext()){
+            return null;
+        }
         Task task = null;
         long nextElementId;
-
         try {
             nextElementId = kv.incr(pointKey);
         } catch (Exception e) {
@@ -100,6 +111,7 @@ public class TaskKeyValueQueue implements TaskQueue {
         while (count <= 3) {
             task = getTask(elementKey);
             if (task != null) {
+                descSize();
                 break;
             } else {
                 if (count++ >= 3) {
@@ -111,6 +123,7 @@ public class TaskKeyValueQueue implements TaskQueue {
         }
         return task;
     }
+
 
     @Override
     public Task get(long awaitTimeMs) throws Exception {
@@ -161,6 +174,28 @@ public class TaskKeyValueQueue implements TaskQueue {
             return (long) idGenerator.next(name);
         }else {
             throw new Exception(idGenerator.getClass().getName() + "idGenerator do not support namespace ");
+        }
+    }
+
+    private boolean hasNext() {
+        return size > 0 ? true:false;
+    }
+
+    private void incrSize(){
+        try {
+            locker.lock(anyLock);
+            size++;
+        }finally {
+            locker.unlock(anyLock);
+        }
+    }
+
+    private void descSize(){
+        try {
+            locker.lock(anyLock);
+            size--;
+        }finally {
+            locker.unlock(anyLock);
         }
     }
 
