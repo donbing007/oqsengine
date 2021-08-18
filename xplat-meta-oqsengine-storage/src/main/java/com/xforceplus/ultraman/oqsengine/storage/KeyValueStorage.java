@@ -98,4 +98,22 @@ public interface KeyValueStorage {
      * @return 迭代器.
      */
     public KeyIterator iterator(String keyPrefix, boolean asc);
+
+    /**
+     * 自增类型KV,原子性的增加数字1,从0开始.
+     *
+     * @return 增加后的值.
+     */
+    public default long incr() {
+        return incr(1L);
+    }
+
+    /**
+     * 原子性的增加指定数字,最小值为0.
+     * 接受负数,但是不允许减少到小于0.
+     *
+     * @param step 增加的数字.
+     * @return 增加后的结果.
+     */
+    public long incr(long step);
 }
