@@ -1,15 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
-import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-
-import javax.annotation.Resource;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * 一个基于key-value储存的队列实现.
@@ -21,12 +23,13 @@ import java.util.concurrent.locks.LockSupport;
 public class TaskKeyValueQueue implements TaskQueue {
 
     private static final String DEFAULT_NAME = "default";
+    private Logger logger = LoggerFactory.getLogger(TaskKeyValueQueue.class);
 
     @Resource
     private ResourceLocker locker;
 
     @Resource
-    private IdGenerator idGenerator;
+    private LongIdGenerator idGenerator;
 
     @Resource
     private KeyValueStorage kv;
@@ -47,7 +50,11 @@ public class TaskKeyValueQueue implements TaskQueue {
 
     private String anyLock;
 
-    private long size;
+    /**
+     * init point.
+     */
+    private long initPoint;
+
 
     /**
      * 队列名称.
@@ -63,7 +70,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     private String elementKeyPrefix;
 
     /**
-     * unused task in queue
+     * unused task size in queue.
      */
     private String unusedTask;
 
@@ -77,13 +84,25 @@ public class TaskKeyValueQueue implements TaskQueue {
      * @param name 队列名称.
      */
     public TaskKeyValueQueue(String name) {
+        this(name, 1L);
+    }
+
+    /**
+     * 初始化.
+     *
+     * @param name 队列名称.
+     * @param initPoint .
+     */
+    public TaskKeyValueQueue(String name, long initPoint) {
         this.name = name;
         this.anyLock = "anyLock-" + name;
 
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
-        this.unusedTask = String.format("%s--%s", this.name, UNUSED);
+        this.unusedTask = String.format("%s-%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
+        this.initPoint = initPoint;
     }
+
 
     @Override
     public void append(Task task) {
@@ -93,12 +112,22 @@ public class TaskKeyValueQueue implements TaskQueue {
         long elementId = nextId();
         task.setLocation(elementId);
         String elementKey = buildNextElementKey(elementId);
-        kv.save(elementKey, serializeStrategy.serialize(task));
-        // 第一个元素.
-        if (elementId == 0) {
-            kv.incr(pointKey, 0);
+        try {
+            kv.save(elementKey, serializeStrategy.serialize(task));
+        } catch (RuntimeException e) {
+            logger.error("save task {} failed", elementKey);
+            throw new RuntimeException(String.format("append task %s failed caused by kv save failure", elementKey));
         }
-        kv.incr(unusedTask);
+        // 第一个元素.
+        if (elementId == initPoint) {
+            kv.incr(pointKey, 0);
+            kv.incr(pointKey, elementId);
+        }
+        try {
+            kv.incr(unusedTask);
+        } catch (RuntimeException e) {
+            logger.error("incr {} failed when append task {}", unusedTask, elementKey);
+        }
     }
 
     @Override
@@ -113,6 +142,9 @@ public class TaskKeyValueQueue implements TaskQueue {
                 }
             }
             kv.incr(unusedTask, -1L);
+        } catch (RuntimeException runtimeException) {
+            logger.error("incr unusedTask {} failed when get task", unusedTask);
+            return null;
         } finally {
             locker.unlock(anyLock);
         }
@@ -136,18 +168,23 @@ public class TaskKeyValueQueue implements TaskQueue {
                 }
             }
             kv.incr(unusedTask, -1L);
+        } catch (RuntimeException runtimeException) {
+            logger.error("incr unusedTask {} failed when get task", unusedTask);
+            return null;
         } finally {
             locker.unlock(anyLock);
         }
         return getTask();
     }
 
-    private Task getTask(){
+    private Task getTask() {
         Task task = null;
         long nextElementId;
         try {
             nextElementId = kv.incr(pointKey);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            logger.error("incr pointKey {} failed when get task", pointKey);
+            kv.incr(unusedTask);
             throw new RuntimeException(String.format("pointKey %s incr failed. ", pointKey));
         }
         String elementKey = buildNextElementKey(nextElementId - 1);
@@ -191,6 +228,7 @@ public class TaskKeyValueQueue implements TaskQueue {
                 break;
             } catch (Exception e) {
                 if (count++ >= 3) {
+                    logger.error(e.getMessage());
                     throw new RuntimeException(String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
@@ -208,10 +246,11 @@ public class TaskKeyValueQueue implements TaskQueue {
     }
 
     private long nextId() {
-        if (idGenerator.supportNameSpace()) {
-            return (long) idGenerator.next(name);
+        if (idGenerator.supportNameSpace() && idGenerator.isContinuous()) {
+            return idGenerator.next(name);
         } else {
-            throw new RuntimeException(idGenerator.getClass().getName() + "idGenerator do not support namespace ");
+            logger.error(idGenerator.getClass().getName() + " do not support namespace ");
+            throw new RuntimeException(idGenerator.getClass().getName() + " do not support namespace ");
         }
     }
 
