@@ -303,7 +303,6 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     @Override
     public long incr(String key, long step) {
         String useKey = String.format("%s-%s", NUMBER_KEY_PREIFIX, key);
-        long useStep = step < 0 ? 0 : step;
 
         locker.lock(useKey);
         try {
@@ -312,7 +311,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws Exception {
                     IncrTaskExecutor executor = new IncrTaskExecutor(tableName, resource, timeout, useKey);
-                    return executor.execute(useStep);
+                    return executor.execute(step);
                 }
 
                 @Override

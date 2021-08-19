@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAccumulator;
 
 /**
  * 基于内存的KV实现,数据不过时行持久化.
@@ -103,12 +102,14 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
 
     @Override
     public long incr(String key, long step) {
-        long useStep = step < 0 ? 0 : step;
-        AtomicLong old = numberData.putIfAbsent(key, new AtomicLong(useStep));
+        AtomicLong old = numberData.putIfAbsent(key, new AtomicLong(step));
         if (old != null) {
-            return old.addAndGet(useStep);
+            return old.accumulateAndGet(step, (left, right) -> {
+                return left + right;
+            });
         } else {
-            return useStep;
+
+            return step;
         }
     }
 

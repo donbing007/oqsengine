@@ -110,8 +110,8 @@ public interface KeyValueStorage {
     }
 
     /**
-     * 原子性的增加指定数字,最小值为0.
-     * 接受负数,但是不允许减少到小于0.
+     * 原子性的增加指定数字,如果key不存在将从0开始.
+     * 允许接受负数.
      *
      * @param key  目标key.
      * @param step 增加的数字.

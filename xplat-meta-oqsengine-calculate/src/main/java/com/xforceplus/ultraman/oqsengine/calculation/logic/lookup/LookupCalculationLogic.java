@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTaskRunner;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -14,10 +15,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * lookup字段计算.
@@ -27,6 +31,8 @@ import java.util.stream.Collectors;
  * @since 1.8
  */
 public class LookupCalculationLogic implements CalculationLogic {
+
+    final Logger logger = LoggerFactory.getLogger(LookupCalculationLogic.class);
 
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
@@ -47,7 +53,7 @@ public class LookupCalculationLogic implements CalculationLogic {
 
     /**
      * 维护策略如下.
-     * 检查当前对像中的所有强对象,直接更新其对象的.
+     * 检查当前对像中的所有关系对象,直接更新其对象的.
      * 所以当前焦点字段应该是一个非lookup的字段.
      *
      * @param context 计算上下文.
@@ -81,7 +87,6 @@ public class LookupCalculationLogic implements CalculationLogic {
             ).collect(Collectors.toList());
         }).flatMap(m -> m.stream()).sorted(Comparator.comparing(LookupMaintaining::isStrong))
             .forEach(lm -> processLookupMaintaining(lm, context));
-
     }
 
     @Override
@@ -191,6 +196,13 @@ public class LookupCalculationLogic implements CalculationLogic {
 
             // 强关系需要部份保证在事务内一致性,所以这里会先执行一次任务.
 
+            Optional<TaskRunner> runnerOp = context.getTaskCoordinator().getRunner(task.getClass());
+            if (!runnerOp.isPresent()) {
+                logger.warn("Unable to find task Runner of type {}.", task.getClass());
+                return;
+            }
+            TaskRunner runner = runnerOp.get();
+            runner.run(context.getTaskCoordinator(), task);
 
         } else {
             context.getTaskCoordinator().addTask(task);

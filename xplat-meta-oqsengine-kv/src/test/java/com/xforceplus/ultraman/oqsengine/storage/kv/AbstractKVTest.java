@@ -58,6 +58,27 @@ public abstract class AbstractKVTest {
 
         Assertions.assertEquals(size, getKv().incr(key, 0));
 
+        final String negativeKey = "negative.incr";
+        final CountDownLatch negativeStartLatch = new CountDownLatch(1);
+        final CountDownLatch negativeFinishLatch = new CountDownLatch(size);
+        for (int i = 0; i < size; i++) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    negativeStartLatch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                getKv().incr(negativeKey, -1);
+                negativeFinishLatch.countDown();
+            }, worker);
+        }
+
+        negativeStartLatch.countDown();
+        negativeFinishLatch.await();
+
+        Assertions.assertEquals(-1 * size, getKv().incr(negativeKey, 0));
+
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 

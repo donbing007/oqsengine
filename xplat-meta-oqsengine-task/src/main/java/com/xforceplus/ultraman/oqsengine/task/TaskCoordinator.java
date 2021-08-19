@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
+import java.util.Optional;
+
 /**
  * 任务协调者.
  * 用以管理任务的执行调度.
@@ -18,6 +20,14 @@ public interface TaskCoordinator {
      * @return true 成功,false 失败,注册冲突.
      */
     public boolean registerRunner(TaskRunner runner);
+
+    /**
+     * 获得指定任务类型的相应Runner.
+     *
+     * @param clazz 目标任务类型.
+     * @return runner 实例.
+     */
+    public Optional<TaskRunner> getRunner(Class clazz);
 
     /**
      * 增加任务.

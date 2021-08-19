@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.task;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -109,6 +110,11 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
     }
 
     @Override
+    public Optional<TaskRunner> getRunner(Class clazz) {
+        return Optional.ofNullable(runners.get(clazz.getSimpleName()));
+    }
+
+    @Override
     public boolean addTask(Task task) {
         checkRunning();
 
@@ -178,7 +184,13 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
 
                         } finally {
-                            taskQueue.ack(task);
+                            try {
+
+                                taskQueue.ack(task);
+
+                            } catch (Exception ex) {
+                                logger.error(ex.getMessage(), ex);
+                            }
                         }
                     } else {
                         logger.warn("Task {} will be abandoned if the runner {} is not found.",
