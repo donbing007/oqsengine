@@ -43,6 +43,8 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private static final String POINT_KEY = "task-queue-p";
 
+    private static final String UNUSED = "unused";
+
     private String anyLock;
 
     private long size;
@@ -60,6 +62,11 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private String elementKeyPrefix;
 
+    /**
+     * unused task in queue
+     */
+    private String unusedTask;
+
     public TaskKeyValueQueue() {
         this(DEFAULT_NAME);
     }
@@ -74,11 +81,12 @@ public class TaskKeyValueQueue implements TaskQueue {
         this.anyLock = "anyLock-" + name;
 
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
+        this.unusedTask = String.format("%s--%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
     }
 
     @Override
-    public void append(Task task) throws Exception {
+    public void append(Task task) {
         if (task == null) {
             return;
         }
@@ -90,20 +98,57 @@ public class TaskKeyValueQueue implements TaskQueue {
         if (elementId == 0) {
             kv.incr(pointKey, 0);
         }
-        incrSize();
+        kv.incr(unusedTask);
     }
 
     @Override
-    public Task get() throws Exception {
-        if (!hasNext()){
-            return null;
+    public Task get() {
+        try {
+            locker.lock(anyLock);
+            while (true) {
+                if (kv.incr(unusedTask, 0) <= 0) {
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                } else {
+                    break;
+                }
+            }
+            kv.incr(unusedTask, -1L);
+        } finally {
+            locker.unlock(anyLock);
         }
+        return getTask();
+    }
+
+
+    @Override
+    public Task get(long awaitTimeMs) {
+        try {
+            long timeMillis = System.currentTimeMillis();
+            locker.lock(anyLock);
+            while (true) {
+                if (System.currentTimeMillis() - timeMillis >= awaitTimeMs) {
+                    return null;
+                }
+                if (kv.incr(unusedTask, 0) <= 0) {
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                } else {
+                    break;
+                }
+            }
+            kv.incr(unusedTask, -1L);
+        } finally {
+            locker.unlock(anyLock);
+        }
+        return getTask();
+    }
+
+    private Task getTask(){
         Task task = null;
         long nextElementId;
         try {
             nextElementId = kv.incr(pointKey);
         } catch (Exception e) {
-            throw new Exception(String.format("pointKey %s incr failed. ", pointKey));
+            throw new RuntimeException(String.format("pointKey %s incr failed. ", pointKey));
         }
         String elementKey = buildNextElementKey(nextElementId - 1);
 
@@ -111,23 +156,16 @@ public class TaskKeyValueQueue implements TaskQueue {
         while (count <= 3) {
             task = getTask(elementKey);
             if (task != null) {
-                descSize();
                 break;
             } else {
                 if (count++ >= 3) {
-                    throw new Exception(String.format("Task not found where elementKey equals %s .", elementKey));
+                    throw new RuntimeException(String.format("Task not found where elementKey equals %s .", elementKey));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
             }
         }
         return task;
-    }
-
-
-    @Override
-    public Task get(long awaitTimeMs) throws Exception {
-        return get();
     }
 
     private Task getTask(String elementKey) {
@@ -141,7 +179,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     }
 
     @Override
-    public void ack(Task task) throws Exception {
+    public void ack(Task task) {
         if (task == null) {
             return;
         }
@@ -152,9 +190,9 @@ public class TaskKeyValueQueue implements TaskQueue {
                 kv.delete(buildNextElementKey(location));
                 break;
             } catch (Exception e) {
-                if (count++ >= 3){
-                    throw new Exception(String.format("Task ack failed taskLocation = %s",buildNextElementKey(location)));
-                }else {
+                if (count++ >= 3) {
+                    throw new RuntimeException(String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
+                } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
             }
@@ -169,33 +207,11 @@ public class TaskKeyValueQueue implements TaskQueue {
         return buff.toString();
     }
 
-    private long nextId() throws Exception {
+    private long nextId() {
         if (idGenerator.supportNameSpace()) {
             return (long) idGenerator.next(name);
-        }else {
-            throw new Exception(idGenerator.getClass().getName() + "idGenerator do not support namespace ");
-        }
-    }
-
-    private boolean hasNext() {
-        return size > 0 ? true:false;
-    }
-
-    private void incrSize(){
-        try {
-            locker.lock(anyLock);
-            size++;
-        }finally {
-            locker.unlock(anyLock);
-        }
-    }
-
-    private void descSize(){
-        try {
-            locker.lock(anyLock);
-            size--;
-        }finally {
-            locker.unlock(anyLock);
+        } else {
+            throw new RuntimeException(idGenerator.getClass().getName() + "idGenerator do not support namespace ");
         }
     }
 
