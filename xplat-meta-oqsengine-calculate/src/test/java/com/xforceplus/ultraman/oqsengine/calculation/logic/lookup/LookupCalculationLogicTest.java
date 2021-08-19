@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -102,6 +103,12 @@ public class LookupCalculationLogicTest {
         mockKvStorage.reset();
     }
 
+    //TODO: 还未实现数据维护测试. by dongbin 2020/08/19
+    @Test
+    public void testMaintain() throws Exception {
+
+    }
+
     @Test
     public void testCalculate() throws Exception {
         // 目标被lookup的实体.
@@ -147,7 +154,7 @@ public class LookupCalculationLogicTest {
 
 
         DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-            .withBuild(true)
+            .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
             .withKeyValueStorage(mockKvStorage)
@@ -200,7 +207,7 @@ public class LookupCalculationLogicTest {
         ).thenReturn(Optional.empty());
 
         DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-            .withBuild(true)
+            .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
             .withKeyValueStorage(mockKvStorage)
@@ -263,7 +270,7 @@ public class LookupCalculationLogicTest {
 
 
         DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-            .withBuild(true)
+            .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
             .withKeyValueStorage(mockKvStorage)
@@ -298,8 +305,7 @@ public class LookupCalculationLogicTest {
 
         @Override
         public boolean add(String key, byte[] value) {
-            // 不使用此实现.
-            return false;
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -334,6 +340,11 @@ public class LookupCalculationLogicTest {
         @Override
         public KeyIterator iterator(String keyPrefix, boolean asc) {
             return null;
+        }
+
+        @Override
+        public long incr(String key, long step) {
+            throw new UnsupportedOperationException();
         }
     }
 }

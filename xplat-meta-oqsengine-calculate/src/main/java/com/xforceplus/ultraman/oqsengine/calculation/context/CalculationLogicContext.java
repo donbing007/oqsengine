@@ -1,5 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.calculation.dto;
+package com.xforceplus.ultraman.oqsengine.calculation.context;
 
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -22,18 +23,11 @@ import java.util.Optional;
 public interface CalculationLogicContext {
 
     /**
-     * 计算触发是否为创建场景.
+     * 计算触发场景.
      *
-     * @return true 是创建场景, false 不是.
+     * @return 场景标识.
      */
-    boolean isBuild();
-
-    /**
-     * 计算触发是否为更新场景.
-     *
-     * @return true 是更新场景, false 不是.
-     */
-    boolean isReplace();
+    Scenarios getScenariso();
 
     /**
      * 当前处理的entity实例.

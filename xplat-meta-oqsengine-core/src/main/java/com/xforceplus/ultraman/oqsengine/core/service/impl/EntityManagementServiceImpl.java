@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -28,7 +29,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -64,7 +64,6 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 
 /**
  * entity 管理服务实现.
@@ -290,7 +289,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         // 计算字段的计算动作.
         Collection<CalculationHint> hints;
         try {
-            hints = processCalculationField(entity, entityClass, true);
+            hints = processCalculationField(entity, entityClass, Scenarios.BUILD);
         } catch (CalculationLogicException ex) {
             logger.warn(ex.getMessage(), ex);
             return new OperationResult(
@@ -341,7 +340,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 // 可能的字段维护
-                maintainField(entity, entityClass, true);
+                maintainField(entity, entityClass, Scenarios.BUILD);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
                     ResultStatus.SUCCESS);
@@ -415,7 +414,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 Collection<CalculationHint> hints;
                 try {
-                    hints = processCalculationField(targetEntity, entityClass, false);
+                    hints = processCalculationField(targetEntity, entityClass, Scenarios.REPLACE);
                 } catch (CalculationLogicException ex) {
                     logger.warn(ex.getMessage(), ex);
                     return new OperationResult(
@@ -465,7 +464,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
                 // 可能的字段维护
-                maintainField(entity, entityClass, true);
+                maintainField(entity, entityClass, Scenarios.DELETE);
 
                 //  半成功
                 if (null != hints && !hints.isEmpty()) {
@@ -738,7 +737,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private Collection<CalculationHint> processCalculationField(
-        IEntity sourceEntity, IEntityClass entityClass, boolean build)
+        IEntity sourceEntity, IEntityClass entityClass, Scenarios scenarios)
         throws CalculationLogicException {
 
         /*
@@ -748,7 +747,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         List<IEntityField> calculationFields = entityClass.fields().stream()
             .filter(
                 f -> {
-                    if (build) {
+                    if (Scenarios.BUILD == scenarios) {
                         return CalculationType.UNKNOWN != f.calculationType()
                             && CalculationType.STATIC != f.calculationType();
                     } else {
@@ -763,7 +762,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return Collections.emptyList();
         }
 
-        CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, entityClass);
+        CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, entityClass, scenarios);
 
         for (IEntityField field : calculationFields) {
             context.focusField(field);
@@ -784,11 +783,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 字段维护,会迭代当前修改的字段进行维护.
      * 主要用于计算字段的数据一致性处理.
      */
-    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, boolean build)
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
         throws CalculationLogicException {
 
         Collection<CalculationLogic> logics = calculationLogicFactory.getCalculations();
-        CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, sourceClass);
+        CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
         for (IValue v : sourceEntity.entityValue().values()) {
             for (CalculationLogic logic : logics) {
                 context.focusField(v.getField());
@@ -797,12 +796,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private CalculationLogicContext buildCalculationLogicContext(
-        boolean build,
-        IEntity entity,
-        IEntityClass entityClass) {
+    private CalculationLogicContext buildCalculationLogicContext(IEntity entity, IEntityClass entityClass,
+                                                                 Scenarios scenarios) {
         return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-            .withBuild(build)
+            .withScenarios(scenarios)
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
             .withKeyValueStorage(this.kv)

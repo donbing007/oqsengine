@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -28,9 +27,9 @@ import java.util.Optional;
 public class DefaultCalculationLogicContext implements CalculationLogicContext {
 
     /**
-     * 写事务类型,true创建,false更新.
+     * 写事务场景.
      */
-    private boolean build;
+    private Scenarios scenarios;
     /**
      * 当前计算的目标entity实例.
      * 如果是更新事务,可能不会包含所有字段.
@@ -79,13 +78,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     private BizIDGenerator bizIDGenerator;
 
     @Override
-    public boolean isBuild() {
-        return this.build;
-    }
-
-    @Override
-    public boolean isReplace() {
-        return !this.build;
+    public Scenarios getScenariso() {
+        return this.scenarios;
     }
 
     @Override
@@ -174,7 +168,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
      * 构造器.
      */
     public static final class Builder {
-        private boolean build;
+        // 场景
+        private Scenarios scenarios = Scenarios.UNKNOWN;
         private IEntity entity;
         private IEntityClass entityClass;
         private MasterStorage masterStorage;
@@ -193,8 +188,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return new Builder();
         }
 
-        public Builder withBuild(boolean build) {
-            this.build = build;
+        public Builder withScenarios(Scenarios scenarios) {
+            this.scenarios = scenarios;
             return this;
         }
 
@@ -263,8 +258,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
          * @return 实例.
          */
         public DefaultCalculationLogicContext build() {
+            if (Scenarios.UNKNOWN == this.scenarios) {
+                throw new IllegalStateException("You have to set the scene.");
+            }
             DefaultCalculationLogicContext defaultCalculationLogicContext = new DefaultCalculationLogicContext();
-            defaultCalculationLogicContext.build = this.build;
+            defaultCalculationLogicContext.scenarios = this.scenarios;
             defaultCalculationLogicContext.entity = this.entity;
             defaultCalculationLogicContext.sourceEntityClass = this.entityClass;
             defaultCalculationLogicContext.attributes = this.attributes;

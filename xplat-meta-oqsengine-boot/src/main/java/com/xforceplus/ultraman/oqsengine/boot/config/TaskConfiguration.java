@@ -47,6 +47,7 @@ public class TaskConfiguration {
         return coordinator;
     }
 
+    @Bean
     public TaskRunner lookupMaintainingTaskRunner() {
         return new LookupMaintainingTaskRunner();
     }
