@@ -339,6 +339,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
+                // TODO: 需要过滤出被改变的字段.
                 // 可能的字段维护
                 maintainField(entity, entityClass, Scenarios.BUILD);
 

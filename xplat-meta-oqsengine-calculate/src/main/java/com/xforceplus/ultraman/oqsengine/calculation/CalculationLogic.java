@@ -28,10 +28,11 @@ public interface CalculationLogic {
      * 计算字段在写事务最后需要判断是否需要维护外界关系一致性等.
      *
      * @param context 计算上下文.
+     * @return true 进行了当前焦点字段的维护,false没有维护.
      * @throws CalculationLogicException 计算发生异常.
      */
-    public default void maintain(CalculationLogicContext context) throws CalculationLogicException {
-        // do nothing
+    public default boolean maintain(CalculationLogicContext context) throws CalculationLogicException {
+        return false;
     }
 
     /**
