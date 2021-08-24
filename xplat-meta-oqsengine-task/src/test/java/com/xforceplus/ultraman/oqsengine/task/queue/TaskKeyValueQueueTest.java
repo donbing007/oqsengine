@@ -7,12 +7,6 @@ import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -24,6 +18,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * 基于KV的任务队列.
@@ -41,7 +42,7 @@ class TaskKeyValueQueueTest {
 
     @BeforeEach
     void before() throws Exception {
-        worker = new ThreadPoolExecutor(3, 3,
+        worker = new ThreadPoolExecutor(5, 5,
                 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue(10000),
                 ExecutorHelper.buildNameThreadFactory("task", false),
@@ -50,9 +51,9 @@ class TaskKeyValueQueueTest {
 
         instance = new TaskKeyValueQueue(NAME);
         keyValueStorage = new MemoryKeyValueStorage();
-        Field taskField = TaskKeyValueQueue.class.getDeclaredField("kv");
-        taskField.setAccessible(true);
-        taskField.set(instance, keyValueStorage);
+        Field kvField = TaskKeyValueQueue.class.getDeclaredField("kv");
+        kvField.setAccessible(true);
+        kvField.set(instance, keyValueStorage);
 
         Field locker = TaskKeyValueQueue.class.getDeclaredField("locker");
         locker.setAccessible(true);
@@ -77,8 +78,55 @@ class TaskKeyValueQueueTest {
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
+    /**
+     * 测试添加单个任务.
+     *
+     * @throws NoSuchFieldException .
+     * @throws IllegalAccessException .
+     */
     @Test
-    void append() throws InterruptedException, IllegalAccessException, NoSuchFieldException {
+    public void testAppendOne() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        instance.append(new MockTask());
+        Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
+        data.setAccessible(true);
+        ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
+
+        Field elementKeyPrefix = instance.getClass().getDeclaredField("elementKeyPrefix");
+        elementKeyPrefix.setAccessible(true);
+        String prefix = (String) elementKeyPrefix.get(instance);
+
+        TimeUnit.SECONDS.sleep(5);
+        Assertions.assertTrue(dataMap.containsKey(prefix + "-" + 1));
+        Assertions.assertEquals(dataMap.size(), 1);
+        instance.destroy();
+    }
+
+    /**
+     * 测试添加空任务，任务队列应该为空.
+     *
+     * @throws NoSuchFieldException .
+     * @throws IllegalAccessException .
+     */
+    @Test
+    public void testAppendNull() throws NoSuchFieldException, IllegalAccessException {
+        instance.append(null);
+        Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
+        data.setAccessible(true);
+        ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
+
+        Assertions.assertEquals(dataMap.size(), 0);
+        instance.destroy();
+    }
+
+    /**
+     * 并发添加任务，断言任务队列elementKey是否符合预期，断言任务数.
+     *
+     * @throws InterruptedException .
+     * @throws IllegalAccessException .
+     * @throws NoSuchFieldException .
+     */
+    @Test
+    public void testAppend() throws InterruptedException, IllegalAccessException, NoSuchFieldException {
         int count = 10000;
         CountDownLatch latch = new CountDownLatch(count);
         for (int i = 0; i < count; i++) {
@@ -91,9 +139,7 @@ class TaskKeyValueQueueTest {
             });
         }
         latch.await();
-        Field kv = instance.getClass().getDeclaredField("kv");
-        kv.setAccessible(true);
-        KeyValueStorage keyValueStorage = (KeyValueStorage) kv.get(instance);
+
         Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
         data.setAccessible(true);
         ConcurrentMap map = (ConcurrentMap) data.get(keyValueStorage);
@@ -102,30 +148,47 @@ class TaskKeyValueQueueTest {
         elementKeyPrefix.setAccessible(true);
         String prefix = (String) elementKeyPrefix.get(instance);
 
+        TimeUnit.SECONDS.sleep(5);
         for (int i = 0; i < count; i++) {
             Assertions.assertTrue(map.containsKey(prefix + "-" + (i + 1)));
         }
         Assertions.assertEquals(map.size(), count);
-
+        instance.destroy();
     }
 
+    /**
+     * 并发添加任务，并发取出任务（没有任务阻塞），pointKey指向位置断言.
+     *
+     * @throws Exception .
+     */
     @Test
-    void get() throws Exception {
+    public void testGet() throws Exception {
+        ReentrantLock lock = new ReentrantLock();
         int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
-        worker.submit(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    instance.get();
-                    logger.info("---get task ---");
-                    latch.countDown();
-                    if (latch.getCount() == 0) {
-                        break;
+
+        for (int i = 0; i < 3; i++) {
+            worker.submit(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        instance.get();
+                        logger.info("---get task ---");
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            logger.info("latch = " + latch.getCount());
+                            if (latch.getCount() <= 2) {
+                                break;
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
         for (int i = 0; i < count; i++) {
             worker.submit(new Runnable() {
                 @Override
@@ -135,13 +198,11 @@ class TaskKeyValueQueueTest {
             });
         }
         latch.await();
-        Field kv = instance.getClass().getDeclaredField("kv");
-        kv.setAccessible(true);
-        KeyValueStorage keyValueStorage = (KeyValueStorage) kv.get(instance);
 
         Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
         data.setAccessible(true);
-        ConcurrentMap map = (ConcurrentMap) data.get(keyValueStorage);
+        ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
+        Assertions.assertEquals(dataMap.size(), count);
 
         Field numberData = MemoryKeyValueStorage.class.getDeclaredField("numberData");
         numberData.setAccessible(true);
@@ -155,28 +216,45 @@ class TaskKeyValueQueueTest {
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
-        Assertions.assertEquals(map.size(), count);
-        Assertions.assertEquals(longMap.get(point).get(), count + 1);
+
+        Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
+        instance.destroy();
     }
 
+    /**
+     * 并发添加任务，并发取出任务（阻塞指定时长），pointKey指向位置断言.
+     *
+     * @throws Exception .
+     */
     @Test
-    void testGet() throws Exception {
+    public void testGetWithTimeOut() throws Exception {
+        ReentrantLock lock = new ReentrantLock();
         int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
-        worker.submit(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    instance.get(1000L);
-                    logger.info("---get task ---");
-                    latch.countDown();
-                    if (latch.getCount() == 0) {
-                        break;
+
+        for (int i = 0; i < 3; i++) {
+            worker.submit(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        instance.get(1000L);
+                        logger.info("---get task ---");
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            logger.info("latch = " + latch.getCount());
+                            if (latch.getCount() <= 2) {
+                                break;
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
         for (int i = 0; i < count; i++) {
             worker.submit(new Runnable() {
                 @Override
@@ -186,13 +264,11 @@ class TaskKeyValueQueueTest {
             });
         }
         latch.await();
-        Field kv = instance.getClass().getDeclaredField("kv");
-        kv.setAccessible(true);
-        KeyValueStorage keyValueStorage = (KeyValueStorage) kv.get(instance);
 
         Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
         data.setAccessible(true);
-        ConcurrentMap map = (ConcurrentMap) data.get(keyValueStorage);
+        ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
+        Assertions.assertEquals(dataMap.size(), count);
 
         Field numberData = MemoryKeyValueStorage.class.getDeclaredField("numberData");
         numberData.setAccessible(true);
@@ -206,28 +282,46 @@ class TaskKeyValueQueueTest {
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
-        Assertions.assertEquals(map.size(), count);
-        Assertions.assertEquals(longMap.get(point).get(), count + 1);
+
+        Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
+        instance.destroy();
     }
 
+    /**
+     * 并发添加任务，并发取出任务（没有任务阻塞），取出任务后队列为空，pointKey指向位置断言.
+     *
+     * @throws Exception .
+     */
     @Test
-    void ack() throws Exception {
+    public void testAck() throws Exception {
+        ReentrantLock lock = new ReentrantLock();
         int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
-        worker.submit(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    Task task = instance.get();
-                    instance.ack(task);
-                    latch.countDown();
-                    if (latch.getCount() == 0) {
-                        break;
+
+        for (int i = 0; i < 3; i++) {
+            worker.submit(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        Task task = instance.get();
+                        logger.info("---get task ---");
+                        instance.ack(task);
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            logger.info("latch = " + latch.getCount());
+                            if (latch.getCount() <= 2) {
+                                break;
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
         for (int i = 0; i < count; i++) {
             worker.submit(new Runnable() {
                 @Override
@@ -238,13 +332,11 @@ class TaskKeyValueQueueTest {
         }
 
         latch.await();
-        Field kv = instance.getClass().getDeclaredField("kv");
-        kv.setAccessible(true);
-        KeyValueStorage keyValueStorage = (KeyValueStorage) kv.get(instance);
 
         Field data = MemoryKeyValueStorage.class.getDeclaredField("data");
         data.setAccessible(true);
-        ConcurrentMap map = (ConcurrentMap) data.get(keyValueStorage);
+        ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
+        Assertions.assertEquals(dataMap.size(), 0);
 
         Field numberData = MemoryKeyValueStorage.class.getDeclaredField("numberData");
         numberData.setAccessible(true);
@@ -258,9 +350,9 @@ class TaskKeyValueQueueTest {
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
-        Assertions.assertEquals(map.size(), 0);
-        Assertions.assertEquals(longMap.get(point).get(), count + 1);
+        Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
+        instance.destroy();
     }
 
     public static class MockTask implements Task, Serializable {

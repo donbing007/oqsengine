@@ -1,17 +1,24 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * 一个基于key-value储存的队列实现.
@@ -37,6 +44,9 @@ public class TaskKeyValueQueue implements TaskQueue {
     @Resource
     private SerializeStrategy serializeStrategy;
 
+    private ExecutorService worker;
+
+
     /**
      * 队列元素key.
      */
@@ -46,6 +56,9 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private static final String POINT_KEY = "task-queue-p";
 
+    /**
+     * 未使用任务标识.
+     */
     private static final String UNUSED = "unused";
 
     private String anyLock;
@@ -54,6 +67,12 @@ public class TaskKeyValueQueue implements TaskQueue {
      * init point.
      */
     private long initPoint;
+
+
+    /**
+     * 内存暂存任务列表.
+     */
+    private ConcurrentHashMap<String, byte[]> unSubmitTask;
 
 
     /**
@@ -74,6 +93,12 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     private String unusedTask;
 
+    private volatile boolean running;
+
+    private volatile boolean exit;
+
+    private long syncGapTime;
+
     public TaskKeyValueQueue() {
         this(DEFAULT_NAME);
     }
@@ -90,7 +115,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     /**
      * 初始化.
      *
-     * @param name 队列名称.
+     * @param name      队列名称.
      * @param initPoint .
      */
     public TaskKeyValueQueue(String name, long initPoint) {
@@ -101,33 +126,54 @@ public class TaskKeyValueQueue implements TaskQueue {
         this.unusedTask = String.format("%s-%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
         this.initPoint = initPoint;
+        this.running = true;
+        this.exit = false;
+        this.syncGapTime = 30L;
+
+        this.unSubmitTask = new ConcurrentHashMap();
+        worker = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue(10000),
+                ExecutorHelper.buildNameThreadFactory("task", false),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+        worker.submit(new TaskBatchSave());
     }
 
 
+    /**
+     * 停止append任务,结束插入磁盘任务.
+     */
+    public void destroy() {
+        running = false;
+        while (!exit) {
+
+        }
+        ExecutorHelper.shutdownAndAwaitTermination(worker);
+    }
+
+    private void destroyNow() {
+        running = false;
+        worker.shutdownNow();
+    }
+
     @Override
     public void append(Task task) {
+        if (!running) {
+            throw new RuntimeException("当前任务队列不可用");
+        }
         if (task == null) {
             return;
         }
         long elementId = nextId();
-        task.setLocation(elementId);
-        String elementKey = buildNextElementKey(elementId);
-        try {
-            kv.save(elementKey, serializeStrategy.serialize(task));
-        } catch (RuntimeException e) {
-            logger.error("save task {} failed", elementKey);
-            throw new RuntimeException(String.format("append task %s failed caused by kv save failure", elementKey));
-        }
         // 第一个元素.
         if (elementId == initPoint) {
             kv.incr(pointKey, 0);
-            kv.incr(pointKey, elementId);
+            kv.incr(pointKey, initPoint - 1);
         }
-        try {
-            kv.incr(unusedTask);
-        } catch (RuntimeException e) {
-            logger.error("incr {} failed when append task {}", unusedTask, elementKey);
-        }
+        task.setLocation(elementId);
+        String elementKey = buildNextElementKey(elementId);
+        unSubmitTask.put(elementKey, serializeStrategy.serialize(task));
     }
 
     @Override
@@ -187,7 +233,7 @@ public class TaskKeyValueQueue implements TaskQueue {
             kv.incr(unusedTask);
             throw new RuntimeException(String.format("pointKey %s incr failed. ", pointKey));
         }
-        String elementKey = buildNextElementKey(nextElementId - 1);
+        String elementKey = buildNextElementKey(nextElementId);
 
         int count = 0;
         while (count <= 3) {
@@ -251,6 +297,34 @@ public class TaskKeyValueQueue implements TaskQueue {
         } else {
             logger.error(idGenerator.getClass().getName() + " do not support namespace ");
             throw new RuntimeException(idGenerator.getClass().getName() + " do not support namespace ");
+        }
+    }
+
+    private class TaskBatchSave implements Runnable {
+
+        @Override
+        public void run() {
+            ConcurrentHashMap temp;
+            Set<Map.Entry<String, byte[]>> tempSet;
+
+            while (running) {
+                try {
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(syncGapTime));
+                    if (unSubmitTask.size() > 0) {
+                        temp = new ConcurrentHashMap(unSubmitTask);
+                        tempSet = temp.entrySet();
+                        kv.save(tempSet);
+                        kv.incr(unusedTask, temp.size());
+                        for (Map.Entry<String, byte[]> entry : tempSet) {
+                            unSubmitTask.remove(entry.getKey());
+                        }
+                    }
+                } catch (RuntimeException e) {
+                    logger.error(String.format("kv error when batchSave or incr unusedTask.source[{}]", e.getMessage()), e);
+                }
+            }
+
+            exit = true;
         }
     }
 
