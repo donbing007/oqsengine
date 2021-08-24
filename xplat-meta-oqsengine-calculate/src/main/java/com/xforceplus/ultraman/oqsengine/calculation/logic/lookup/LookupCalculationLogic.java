@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
@@ -59,13 +60,13 @@ public class LookupCalculationLogic implements CalculationLogic {
      * @throws CalculationLogicException 计算异常.
      */
     @Override
-    public void maintain(CalculationLogicContext context) throws CalculationLogicException {
-        if (!context.isReplace()) {
-            return;
+    public boolean maintain(CalculationLogicContext context) throws CalculationLogicException {
+        if (context.getScenariso() != Scenarios.REPLACE) {
+            return false;
         }
         // 这是一个lookup计算字段,本身不需要进行维护.只有其指向的字段改变才需要维护.
         if (context.getFocusField().calculationType() == CalculationType.LOOKUP) {
-            return;
+            return false;
         }
 
         IEntityClass forceClass = context.getEntityClass();
@@ -86,6 +87,8 @@ public class LookupCalculationLogic implements CalculationLogic {
             ).collect(Collectors.toList());
         }).flatMap(m -> m.stream()).sorted(Comparator.comparing(LookupMaintaining::isStrong))
             .forEach(lm -> processLookupMaintaining(lm, context));
+
+        return true;
     }
 
     @Override

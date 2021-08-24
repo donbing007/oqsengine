@@ -11,6 +11,7 @@ import java.util.function.Function;
  * A -> B
  * 这里有两个对象,分别定义为"左"对象和"右对象.
  * 这里左边是关系的持有者(owner),右边是被关联对象.
+ * 左关系指向本身,右关系指向关联对象.
  *
  * @author xujia 2021/2/18
  * @since 1.8

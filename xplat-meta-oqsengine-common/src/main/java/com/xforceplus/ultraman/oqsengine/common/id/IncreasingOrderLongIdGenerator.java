@@ -35,4 +35,9 @@ public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
     public boolean isPartialOrder() {
         return true;
     }
+
+    @Override
+    public void reset() {
+        id.set(0);
+    }
 }

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Optional;
  * @version 0.1 2021/08/16 14:54
  * @since 1.8
  */
-public class LookupMaintainingTask extends AbstractTask {
+public class LookupMaintainingTask extends AbstractTask implements Serializable {
 
     private static final int DEFAULT_SIZE = 100;
 

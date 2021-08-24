@@ -5,8 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
-import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
-import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTaskRunner;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -17,23 +16,24 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
-import java.util.AbstractMap;
-import java.util.ArrayList;
+import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.task.queue.MemoryTaskKeyQueue;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -45,38 +45,65 @@ import org.junit.jupiter.api.Test;
  */
 public class LookupCalculationLogicTest {
 
+    private long targetClassId = Long.MAX_VALUE;
+    private long strongClassId = Long.MAX_VALUE - 1;
+    private long weakClassId = Long.MAX_VALUE - 2;
+    private long fieldId = Long.MAX_VALUE;
+
+    // 目标对象.
     private IEntityField targetLongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE)
+        .withId(fieldId--)
         .withFieldType(FieldType.LONG)
         .withName("target-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField targetStringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withId(fieldId--)
         .withFieldType(FieldType.STRING)
         .withName("target-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass targetEntityClass = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE)
-        .withLevel(1)
+        .withId(targetClassId)
         .withCode("l1")
         .withField(targetLongField)
         .withField(targetStringField)
+        .withRelations(
+            Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(0)
+                    .withLeftEntityClassId(targetClassId)
+                    .withRightEntityClassId(strongClassId)
+                    .withIdentity(true)
+                    .withBelongToOwner(false)
+                    .withStrong(true)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .build()
+            )
+        )
         .build();
 
-    private IEntityField lookLongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 2)
+    // 强关系对象.
+    private IEntityField strongLookLongField = EntityField.Builder.anEntityField()
+        .withId(fieldId--)
         .withFieldType(FieldType.LONG)
-        .withName("look-long")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField lookStringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 3)
+        .withName("strong-long")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withCalculation(
+                StaticCalculation.Builder.anStaticCalculation().build()
+            ).build()
+        ).build();
+    private IEntityField strongLookStringField = EntityField.Builder.anEntityField()
+        .withId(fieldId--)
         .withFieldType(FieldType.STRING)
-        .withName("look-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField lookStringLookupField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withName("strong-string")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withCalculation(
+                StaticCalculation.Builder.anStaticCalculation().build()
+            ).build()
+        ).build();
+    private IEntityField strongStringLookupField = EntityField.Builder.anEntityField()
+        .withId(fieldId--)
         .withFieldType(FieldType.STRING)
-        .withName("look-string-lookup")
+        .withName("strong-string-lookup")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
@@ -87,25 +114,153 @@ public class LookupCalculationLogicTest {
                 )
                 .build()
         ).build();
-    private IEntityClass lookupEntityClass = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE - 1)
+    private IEntityClass strongLookupEntityClass = EntityClass.Builder.anEntityClass()
+        .withId(strongClassId)
         .withLevel(0)
-        .withCode("lookupClass")
-        .withField(lookLongField)
-        .withField(lookStringField)
-        .withField(lookStringLookupField)
-        .build();
+        .withCode("strongLookupClass")
+        .withField(strongLookLongField)
+        .withField(strongLookStringField)
+        .withField(strongStringLookupField)
+        .withRelations(
+            Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(0)
+                    .withLeftEntityClassId(targetClassId)
+                    .withRightEntityClassId(strongClassId)
+                    .withIdentity(true)
+                    .withBelongToOwner(false)
+                    .withStrong(true)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .build()
+            )
+        ).build();
 
-    private MockKvStorage mockKvStorage = new MockKvStorage();
+    // 弱关系对象.
+    private IEntityField weakLongField = EntityField.Builder.anEntityField()
+        .withId(fieldId--)
+        .withFieldType(FieldType.LONG)
+        .withName("weak-look-long")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withCalculation(StaticCalculation.Builder.anStaticCalculation().build()).build()
+        ).build();
+    private IEntityField weakLongLookupField = EntityField.Builder.anEntityField()
+        .withId(fieldId--)
+        .withFieldType(FieldType.LONG)
+        .withName("weak-long-lookup")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withCalculation(
+                Lookup.Builder.anLookup()
+                    .withFieldId(targetLongField.id())
+                    .withClassId(targetClassId).build()
+
+            ).build()
+        ).build();
+    private IEntityClass weakEntityClass = EntityClass.Builder.anEntityClass()
+        .withId(weakClassId)
+        .withLevel(0)
+        .withCode("weakLookupClass")
+        .withField(weakLongField)
+        .withField(weakLongLookupField)
+        .withRelations(
+            Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(0)
+                    .withLeftEntityClassId(targetClassId)
+                    .withRightEntityClassId(weakClassId)
+                    .withIdentity(true)
+                    .withBelongToOwner(false)
+                    .withStrong(false)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .build()
+            )
+        ).build();
+
+    private KeyValueStorage kv;
+
+    @BeforeEach
+    public void before() throws Exception {
+        kv = new MemoryKeyValueStorage();
+    }
 
     @AfterEach
     public void after() throws Exception {
-        mockKvStorage.reset();
+        kv = null;
     }
 
-    //TODO: 还未实现数据维护测试. by dongbin 2020/08/19
+    /**
+     * 非replace场景不需要维护.
+     */
     @Test
-    public void testMaintain() throws Exception {
+    public void testMaintainOnlyReplace() throws Exception {
+
+        DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+            .withScenarios(Scenarios.BUILD).build();
+        context.focusField(strongStringLookupField);
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+
+        // 非replace场景,跳过.
+        Assertions.assertFalse(logic.maintain(context));
+    }
+
+    /**
+     * 本身就是lookup字段,不需要维护.
+     */
+    @Test
+    public void testMaintainFourceLookupFiled() throws Exception {
+        DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+            .withScenarios(Scenarios.REPLACE).build();
+        context.focusField(strongStringLookupField);
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+
+        Assertions.assertFalse(logic.maintain(context));
+    }
+
+    /**
+     * 非 lookup 字段,replace场景需要对字段进行维护.
+     * 当前测试强关系的情况.
+     */
+    @Test
+    public void testMaintainStrong() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(targetEntityClass.ref())
+            .withVersion(0)
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(
+                EntityValue.build().addValues(
+                    Arrays.asList(
+                        new StringValue(targetStringField, "targetValue"),
+                        new LongValue(targetLongField, 100L)
+                    )
+                )
+            ).build();
+        IEntity lookupEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE - 1)
+            .withEntityClassRef(strongLookupEntityClass.ref())
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(
+                EntityValue.build().addValues(
+                    Arrays.asList(
+                        new StringValue(strongStringLookupField, "targetValue")
+                    )
+                )
+            ).build();
+
+
+        MemoryTaskKeyQueue queue = new MemoryTaskKeyQueue();
+        ExecutorService worker = Executors.newFixedThreadPool(3);
+        DefaultTaskCoordinator coordinator = new DefaultTaskCoordinator();
+        coordinator.setWorker(worker);
+        coordinator.setWorkerNumber(3);
+        coordinator.setTaskQueue(queue);
+
+
+        LookupMaintainingTaskRunner runner = new LookupMaintainingTaskRunner();
+
+
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+
 
     }
 
@@ -129,13 +284,13 @@ public class LookupCalculationLogicTest {
         // 发起lookup的实体.
         IEntity lookupEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE - 1)
-            .withEntityClassRef(lookupEntityClass.ref())
+            .withEntityClassRef(strongLookupEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withEntityValue(
                 EntityValue.build().addValues(
                     Arrays.asList(
-                        new LongValue(lookStringLookupField, 1000),
-                        new LongValue(lookLongField, 2000L)
+                        new LongValue(strongStringLookupField, 1000),
+                        new LongValue(strongLookLongField, 2000L)
                     )
                 )
             ).build();
@@ -143,7 +298,7 @@ public class LookupCalculationLogicTest {
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
+                ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 
@@ -157,9 +312,9 @@ public class LookupCalculationLogicTest {
             .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
-            .withKeyValueStorage(mockKvStorage)
+            .withKeyValueStorage(kv)
             .withEntity(lookupEntity).build();
-        context.focusField(lookStringLookupField);
+        context.focusField(strongStringLookupField);
         LookupCalculationLogic logic = new LookupCalculationLogic();
         Optional<IValue> actualValueOp = logic.calculate(context);
 
@@ -168,11 +323,7 @@ public class LookupCalculationLogicTest {
         IValue actualValue = actualValueOp.get();
         Assertions.assertEquals("targetValue", actualValue.getValue());
         Assertions.assertEquals(StringValue.class, actualValue.getClass());
-        Assertions.assertEquals(lookStringLookupField.id(), actualValue.getField().id());
-
-        LookupHelper.LookupLinkKey linkKey = LookupHelper.buildLookupLinkKey(
-            targetEntity, targetStringField, lookupEntity, lookStringLookupField);
-        Assertions.assertEquals(targetEntity.id(), ByteUtil.byteToLong(mockKvStorage.get(linkKey.toString()).get()));
+        Assertions.assertEquals(strongStringLookupField.id(), actualValue.getField().id());
     }
 
     /**
@@ -184,20 +335,20 @@ public class LookupCalculationLogicTest {
         // 发起lookup的实体.
         IEntity lookupEntity = Entity.Builder.anEntity()
             .withId(100)
-            .withEntityClassRef(lookupEntityClass.ref())
+            .withEntityClassRef(strongLookupEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withEntityValue(
                 EntityValue.build().addValues(
                     Arrays.asList(
-                        new LongValue(lookStringLookupField, 1000),
-                        new LongValue(lookLongField, 2000L)
+                        new LongValue(strongStringLookupField, 1000),
+                        new LongValue(strongLookLongField, 2000L)
                     )
                 )
             ).build();
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
+                ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 
@@ -210,9 +361,9 @@ public class LookupCalculationLogicTest {
             .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
-            .withKeyValueStorage(mockKvStorage)
+            .withKeyValueStorage(kv)
             .withEntity(lookupEntity).build();
-        context.focusField(lookStringLookupField);
+        context.focusField(strongStringLookupField);
         LookupCalculationLogic logic = new LookupCalculationLogic();
 
         try {
@@ -245,13 +396,13 @@ public class LookupCalculationLogicTest {
         // 发起lookup的实体.
         IEntity lookupEntity = Entity.Builder.anEntity()
             .withId(100)
-            .withEntityClassRef(lookupEntityClass.ref())
+            .withEntityClassRef(strongLookupEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withEntityValue(
                 EntityValue.build().addValues(
                     Arrays.asList(
-                        new LongValue(lookStringLookupField, 1000),
-                        new LongValue(lookLongField, 2000L)
+                        new LongValue(strongStringLookupField, 1000),
+                        new LongValue(strongLookLongField, 2000L)
                     )
                 )
             ).build();
@@ -259,7 +410,7 @@ public class LookupCalculationLogicTest {
         MetaManager metaManager = mock(MetaManager.class);
         when(
             metaManager.load(
-                ((Lookup) (lookStringLookupField.config().getCalculation())).getClassId()
+                ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
             )
         ).thenReturn(Optional.of(targetEntityClass));
 
@@ -273,78 +424,11 @@ public class LookupCalculationLogicTest {
             .withScenarios(Scenarios.BUILD)
             .withMasterStorage(masterStorage)
             .withMetaManager(metaManager)
-            .withKeyValueStorage(mockKvStorage)
+            .withKeyValueStorage(kv)
             .withEntity(lookupEntity).build();
-        context.focusField(lookStringLookupField);
+        context.focusField(strongStringLookupField);
         LookupCalculationLogic logic = new LookupCalculationLogic();
         Optional<IValue> actualValueOp = logic.calculate(context);
         Assertions.assertFalse(actualValueOp.isPresent());
-    }
-
-    // mock的kv.
-    static class MockKvStorage implements KeyValueStorage {
-
-        private Map<String, byte[]> cache = new ConcurrentHashMap<>();
-
-        public void reset() {
-            cache.clear();
-        }
-
-        @Override
-        public void save(String key, byte[] value) {
-            cache.put(key, value);
-        }
-
-        @Override
-        public long save(Collection<Map.Entry<String, byte[]>> kvs) {
-            for (Map.Entry<String, byte[]> kv : kvs) {
-                cache.put(kv.getKey(), kv.getValue());
-            }
-            return kvs.size();
-        }
-
-        @Override
-        public boolean add(String key, byte[] value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean exist(String key) {
-            return cache.containsKey(key);
-        }
-
-        @Override
-        public Optional<byte[]> get(String key) {
-            return Optional.ofNullable(cache.get(key));
-        }
-
-        @Override
-        public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
-            List<Map.Entry<String, byte[]>> result = new ArrayList<>(keys.length);
-            for (String key : keys) {
-                result.add(new AbstractMap.SimpleEntry<>(key, cache.get(key)));
-            }
-            return result;
-        }
-
-        @Override
-        public void delete(String key) {
-            cache.remove(key);
-        }
-
-        @Override
-        public void delete(String[] keys) {
-            Arrays.stream(keys).forEach(k -> cache.remove(k));
-        }
-
-        @Override
-        public KeyIterator iterator(String keyPrefix, boolean asc) {
-            return null;
-        }
-
-        @Override
-        public long incr(String key, long step) {
-            throw new UnsupportedOperationException();
-        }
     }
 }

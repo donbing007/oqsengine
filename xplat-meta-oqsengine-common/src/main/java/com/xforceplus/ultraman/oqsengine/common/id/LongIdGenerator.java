@@ -26,4 +26,20 @@ public interface LongIdGenerator extends IdGenerator<Long> {
     default boolean isPartialOrder() {
         return false;
     }
+
+    /**
+     * 重置,从0开始计数.
+     */
+    void reset();
+
+    /**
+     * 重置指定namespace的计数.
+     *
+     * @param ns 目标ns.
+     */
+    default void reset(String ns) {
+        throw new UnsupportedOperationException(
+            String
+                .format("The current ID generator(%s) does not support namespaces.", this.getClass().getSimpleName()));
+    }
 }
