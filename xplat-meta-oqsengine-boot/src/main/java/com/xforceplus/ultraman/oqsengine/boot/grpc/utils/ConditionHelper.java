@@ -479,6 +479,23 @@ public class ConditionHelper {
             .collect(Collectors.toList());
     }
 
+    private static boolean isRelationBelongsToEntityClass(OqsRelation relation, IEntityClass entityClass) {
+
+        boolean isMatched = entityClass.id() == relation.getLeftEntityClassId();
+
+        if (!isMatched) {
+            IEntityClass ptr = entityClass;
+            while (ptr.father() != null && ptr.father().isPresent()) {
+                ptr = ptr.father().get();
+                if (relation.getLeftEntityClassId() == ptr.id()) {
+                    isMatched = true;
+                    break;
+                }
+            }
+        }
+
+        return isMatched;
+    }
 
     private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldOp(long relationId, FieldUp field,
                                                                             IEntityClass mainClass,
@@ -493,7 +510,8 @@ public class ConditionHelper {
 
             if (relationOp.isPresent()) {
                 OqsRelation relation = relationOp.get();
-                if (relation.getLeftEntityClassId() == mainClass.id()) {
+
+                if (isRelationBelongsToEntityClass(relation, mainClass)) {
                     Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
                     if (relatedEntityClassOp.isPresent()) {
                         fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
