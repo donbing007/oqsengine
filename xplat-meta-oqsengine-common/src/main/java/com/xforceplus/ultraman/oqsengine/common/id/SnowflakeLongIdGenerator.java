@@ -7,6 +7,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * snowflake 的 ID 算法生成.
  * 结果是一个64位的长整形. 组合方式如下.
+ * 重置不会有任何改变.
  *
  * @author luyi
  * @version 0.1 2020/2/16 22:39
@@ -99,5 +100,10 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
     @Override
     public boolean isPartialOrder() {
         return true;
+    }
+
+    @Override
+    public void reset() {
+
     }
 }

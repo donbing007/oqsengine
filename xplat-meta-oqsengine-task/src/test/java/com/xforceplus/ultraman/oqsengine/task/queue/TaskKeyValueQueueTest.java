@@ -7,12 +7,6 @@ import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -24,6 +18,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 基于KV的任务队列.
@@ -333,6 +333,11 @@ class TaskKeyValueQueueTest {
         @Override
         public boolean isPartialOrder() {
             return true;
+        }
+
+        @Override
+        public void reset() {
+            id.set(0);
         }
     }
 }

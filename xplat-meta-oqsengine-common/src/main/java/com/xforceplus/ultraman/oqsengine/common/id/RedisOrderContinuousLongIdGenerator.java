@@ -77,4 +77,10 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     public boolean isPartialOrder() {
         return true;
     }
+
+    @Override
+    public void reset() {
+        RedisStringCommands<String, String> sync = connection.sync();
+        sync.set(ns, "0");
+    }
 }

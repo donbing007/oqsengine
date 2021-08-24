@@ -31,6 +31,9 @@ public class RedisOrderContinuousLongIdGeneratorTest {
 
     private RedisClient redisClient;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -41,6 +44,9 @@ public class RedisOrderContinuousLongIdGeneratorTest {
         conn = redisClient.connect();
     }
 
+    /**
+     * 清理
+     */
     @AfterEach
     public void after() throws Exception {
         idGenerator.destroy();
@@ -74,6 +80,42 @@ public class RedisOrderContinuousLongIdGeneratorTest {
         latch.await();
 
         Assertions.assertEquals(100, buff.size());
+    }
+
+    @Test
+    public void testNextWithNs() throws Exception {
+        String ns0 = "ns0";
+        String ns1 = "ns1";
+
+        CountDownLatch latch = new CountDownLatch(200);
+        for (int i = 0; i < 100; i++) {
+            CompletableFuture.runAsync(() -> {
+                idGenerator.next(ns0);
+                latch.countDown();
+            });
+        }
+
+        for (int i = 0; i < 100; i++) {
+            CompletableFuture.runAsync(() -> {
+                idGenerator.next(ns1);
+                latch.countDown();
+            });
+        }
+
+        latch.await();
+        Assertions.assertEquals(101, idGenerator.next(ns0));
+        Assertions.assertEquals(101, idGenerator.next(ns1));
+    }
+
+    @Test
+    public void testReset() throws Exception {
+        Assertions.assertEquals(1L, idGenerator.next().longValue());
+        Assertions.assertEquals(2L, idGenerator.next().longValue());
+        Assertions.assertEquals(3L, idGenerator.next().longValue());
+
+        idGenerator.reset();
+
+        Assertions.assertEquals(1L, idGenerator.next().longValue());
     }
 
 }
