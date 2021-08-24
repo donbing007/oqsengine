@@ -191,30 +191,34 @@ public class ManagementWithCalculatorTest {
             .build();
         OperationResult operationResult = insert ? impl.build(replaceEntity) : impl.replace(replaceEntity);
         if (null == expectedValue) {
-            Assert.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus());
-            Assert.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
-            expectedFailed.forEach(
-                failed -> {
-                    Assert.assertTrue(operationResult.getFailedMap().containsKey(failed));
-                }
-            );
+            Assert.assertNotEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
+            if (operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+                Assert.assertEquals(expectedFailed.size(), operationResult.getFailedMap().size());
+                expectedFailed.forEach(
+                    failed -> {
+                        Assert.assertTrue(operationResult.getFailedMap().containsKey(failed));
+                    }
+                );
+            }
         } else {
             Assert.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
         }
 
+        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS) ||
+            operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+            Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
+            Assert.assertTrue(eOp.isPresent());
+            IEntity entity = eOp.get();
 
-        Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
-        Assert.assertTrue(eOp.isPresent());
-        IEntity entity = eOp.get();
-
-        expectedResult.forEach((key, value) -> {
-            Optional<IValue> vOp = entity.entityValue().getValue(key);
-            Assert.assertTrue(vOp.isPresent());
-            Assert.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
-            if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
-                Assert.assertEquals(expectedAutoFill, vOp.get().getValue());
-            }
-        });
+            expectedResult.forEach((key, value) -> {
+                Optional<IValue> vOp = entity.entityValue().getValue(key);
+                Assert.assertTrue(vOp.isPresent());
+                Assert.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
+                if (vOp.get().getField().calculateType().equals(Calculator.Type.AUTO_FILL)) {
+                    Assert.assertEquals(expectedAutoFill, vOp.get().getValue());
+                }
+            });
+        }
     }
 
     private void setExpectedResult(Long expectedValue) {

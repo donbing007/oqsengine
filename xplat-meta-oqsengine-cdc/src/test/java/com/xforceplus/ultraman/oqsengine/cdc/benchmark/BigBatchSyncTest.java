@@ -33,7 +33,7 @@ public class BigBatchSyncTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
     private static int expectedSize = 0;
-    private static int maxTestSize = 10;
+    private static final int maxTestSize = 10;
 
     private ConsumerRunner consumerRunner;
 
@@ -93,11 +93,13 @@ public class BigBatchSyncTest extends AbstractCDCContainer {
                 break;
             }
         }
+        try {
+            Assert.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
+            logger.info("total build use time, {}", duration);
+        } finally {
+            mockRedisCallbackService.reset();
+        }
 
-        Assert.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
-        logger.info("total build use time, {}", duration);
-
-        mockRedisCallbackService.reset();
         Thread.sleep(5_000);
         Assert.assertEquals(ZERO, mockRedisCallbackService.getExecuted().get());
     }

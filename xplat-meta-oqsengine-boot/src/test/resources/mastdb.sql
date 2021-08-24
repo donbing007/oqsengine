@@ -26,6 +26,7 @@ create table oqsbigentity (
 create table cdcerrors
 (
     seqno           bigint                      not null comment '数据主键',
+    unikey          varchar(512)                not null comment '唯一约束',
     batchid         bigint                      not null comment '批次ID',
     id              bigint                               comment '业务主键ID',
     entity          bigint                               comment 'entity 的类型 id.',
@@ -33,15 +34,16 @@ create table cdcerrors
     op              tinyint                              comment '最后操作类型,0(插入),1(更新),2(删除)',
     commitid        bigint                               comment '提交号',
     type            tinyint                     not null comment '错误类型,1-单条数据格式错误,2-批次数据插入失败',
-    status          tinyint                     not null comment '处理状态,0(未处理),1(已提交处理),2(处理成功),3(处理失败)',
+    status          tinyint                     not null comment '处理状态,1(未处理),2(已提交处理),3(处理成功),4(处理失败)',
     operationobject json                                 comment '当前操作的对象(已序列化)',
     message         varchar(1024)                        comment '出错信息',
     executetime     bigint                      not null comment '出错时间戳',
     fixedtime       bigint                      not null comment '修复时间.',
     constraint cdcerror_pk primary key (seqno),
+    unique key unikey_upk (unikey),
     key cdcerrors_k0 (batchid)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8;
+  DEFAULT CHARSET = utf8mb4;
 
 create TABLE changeversion (
   vid BIGINT(20) NOT NULL AUTO_INCREMENT,
@@ -78,3 +80,17 @@ create TABLE changelog (
   comment VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (cid)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+create table entityfaileds
+(
+    id          bigint                      not null comment '业务主键ID',
+    entity      bigint                      not null comment 'entity 的类型 id.',
+    errors      text                                 comment '错误字段摘要',
+    executetime bigint default 0            not null comment '出错时间戳',
+    fixedtime   bigint default 0            not null comment '修复时间.',
+    status      tinyint default 1           not null comment '处理状态,1(未处理),2(已提交处理),3(处理成功),4(处理失败)',
+    primary key (id),
+    key entityfaileds_k1 (entity),
+    key entityfaileds_k2 (executetime)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;

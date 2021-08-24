@@ -12,6 +12,7 @@
     <artifactId>xplat-meta-oqsengine-idgenerator</artifactId>
 
     <properties>
+        <test.skip>true</test.skip>
         <hazelcast.version>4.2</hazelcast.version>
     </properties>
     <dependencies>
@@ -65,10 +66,6 @@
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito2</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.xforceplus</groupId>
-            <artifactId>ultraman-test-tools</artifactId>
         </dependency>
     </dependencies>
 </project>
