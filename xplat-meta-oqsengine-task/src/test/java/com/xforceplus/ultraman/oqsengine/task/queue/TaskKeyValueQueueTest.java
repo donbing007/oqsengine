@@ -426,5 +426,15 @@ class TaskKeyValueQueueTest {
         public boolean isPartialOrder() {
             return true;
         }
+
+        @Override
+        public void reset() {
+
+        }
+
+        @Override
+        public void reset(String ns) {
+            LongIdGenerator.super.reset(ns);
+        }
     }
 }

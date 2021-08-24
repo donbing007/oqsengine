@@ -18,15 +18,6 @@ import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -43,6 +34,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 /**
@@ -62,7 +62,6 @@ public class TaskKeyValueQueueSQLTest {
     private DataSource ds;
     private RedisClient redisClient;
     private RedisOrderContinuousLongIdGenerator redisOrderContinuousLongIdGenerator;
-    private int initCount;
 
     /**
      * 初始化测试实例.
@@ -109,7 +108,8 @@ public class TaskKeyValueQueueSQLTest {
         idGenerator.setAccessible(true);
 
         redisClient = CommonInitialization.getInstance().getRedisClient();
-        redisOrderContinuousLongIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, NAME + (initCount++));
+        redisOrderContinuousLongIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, NAME);
+        redisOrderContinuousLongIdGenerator.init();
         idGenerator.set(instance, redisOrderContinuousLongIdGenerator);
 
         Field serializeStrategy = TaskKeyValueQueue.class.getDeclaredField("serializeStrategy");
@@ -127,12 +127,11 @@ public class TaskKeyValueQueueSQLTest {
                 st.execute("truncate table kv");
             }
         }
+        redisOrderContinuousLongIdGenerator.reset();
         ds = null;
         instance.destroy();
         keyValueStorage = null;
         instance = null;
-        redisOrderContinuousLongIdGenerator.destroy();
-        redisClient = null;
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
@@ -197,7 +196,7 @@ public class TaskKeyValueQueueSQLTest {
      */
     @Test
     public void testAppend() throws InterruptedException, IllegalAccessException, NoSuchFieldException {
-        int count = 10000;
+        int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
         long start;
         start = System.currentTimeMillis();
@@ -236,7 +235,7 @@ public class TaskKeyValueQueueSQLTest {
     @Test
     public void testGet() throws Exception {
         ReentrantLock lock = new ReentrantLock();
-        int count = 10000;
+        int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
@@ -300,7 +299,7 @@ public class TaskKeyValueQueueSQLTest {
     @Test
     public void testGetWithTimeOut() throws Exception {
         ReentrantLock lock = new ReentrantLock();
-        int count = 10000;
+        int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
@@ -365,7 +364,7 @@ public class TaskKeyValueQueueSQLTest {
     @Test
     public void testAck() throws Exception {
         ReentrantLock lock = new ReentrantLock();
-        int count = 10000;
+        int count = 1000;
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
@@ -434,11 +433,9 @@ public class TaskKeyValueQueueSQLTest {
      */
     @Test
     public void testShutdown() throws InterruptedException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        int count = 10000;
+        int count = 1000;
         AtomicLong appendCount = new AtomicLong(0);
         CountDownLatch latch = new CountDownLatch(count);
-        long start;
-        start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
             worker.submit(new Runnable() {
                 @Override
