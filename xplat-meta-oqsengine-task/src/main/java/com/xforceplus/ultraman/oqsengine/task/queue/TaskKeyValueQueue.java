@@ -159,9 +159,7 @@ public class TaskKeyValueQueue implements TaskQueue {
 
     @Override
     public void append(Task task) {
-        if (!running) {
-            throw new RuntimeException("当前任务队列不可用");
-        }
+        checkRunning();
         if (task == null) {
             return;
         }
@@ -178,6 +176,7 @@ public class TaskKeyValueQueue implements TaskQueue {
 
     @Override
     public Task get() {
+        checkRunning();
         try {
             locker.lock(anyLock);
             while (true) {
@@ -200,6 +199,7 @@ public class TaskKeyValueQueue implements TaskQueue {
 
     @Override
     public Task get(long awaitTimeMs) {
+        checkRunning();
         try {
             long timeMillis = System.currentTimeMillis();
             locker.lock(anyLock);
@@ -263,6 +263,7 @@ public class TaskKeyValueQueue implements TaskQueue {
 
     @Override
     public void ack(Task task) {
+        checkRunning();
         if (task == null) {
             return;
         }
@@ -297,6 +298,12 @@ public class TaskKeyValueQueue implements TaskQueue {
         } else {
             logger.error(idGenerator.getClass().getName() + " do not support namespace ");
             throw new RuntimeException(idGenerator.getClass().getName() + " do not support namespace ");
+        }
+    }
+
+    private void checkRunning() {
+        if (!running) {
+            throw new RuntimeException("当前任务队列不可用");
         }
     }
 
