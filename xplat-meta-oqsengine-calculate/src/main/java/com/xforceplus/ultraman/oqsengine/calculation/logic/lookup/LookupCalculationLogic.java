@@ -83,8 +83,11 @@ public class LookupCalculationLogic implements CalculationLogic {
                     && ((Lookup) f.config().getCalculation()).getFieldId() == context.getFocusField().id()
 
             ).map(f ->
+
                 new LookupMaintaining(context.getFocusField(), context.getEntity(), relationshipClass, f, r.isStrong())
+
             ).collect(Collectors.toList());
+
         }).flatMap(m -> m.stream()).sorted(Comparator.comparing(LookupMaintaining::isStrong))
             .forEach(lm -> processLookupMaintaining(lm, context));
 
@@ -198,7 +201,7 @@ public class LookupCalculationLogic implements CalculationLogic {
 
             // 强关系需要部份保证在事务内一致性,所以这里会先执行一次任务.
 
-            Optional<TaskRunner> runnerOp = context.getTaskCoordinator().getRunner(task.getClass());
+            Optional<TaskRunner> runnerOp = context.getTaskCoordinator().getRunner(task.runnerType());
             if (!runnerOp.isPresent()) {
                 logger.warn("Unable to find task Runner of type {}.", task.getClass());
                 return;

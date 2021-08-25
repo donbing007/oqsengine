@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
+import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.GetIDFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.UnknownCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
@@ -21,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
@@ -28,12 +32,15 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransacti
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import io.lettuce.core.RedisClient;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Disabled;
 import org.mockito.MockedStatic;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
+ * 测试帮助类.
  *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/18
@@ -64,6 +71,7 @@ public class TestInitTools {
         ReflectionTestUtils.setField(impl, "longContinuousPartialOrderIdGenerator", redisIDGenerator);
         ReflectionTestUtils.setField(impl, "longNoContinuousPartialOrderIdGenerator", idGenerator());
         ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
+        ReflectionTestUtils.setField(impl, "calculationLogicFactory", calculationLogicFactory());
         ReflectionTestUtils.setField(impl, "bizIDGenerator", bizIDGenerator);
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
@@ -95,7 +103,7 @@ public class TestInitTools {
         IDGeneratorFactory idGeneratorFactory = new IDGeneratorFactory() {
             @Override
             public IDGenerator getIdGenerator(String bizType) {
-                return  idGenerator;
+                return idGenerator;
             }
         };
 
@@ -112,6 +120,20 @@ public class TestInitTools {
         RedisOrderContinuousLongIdGenerator redisIDGenerator = new RedisOrderContinuousLongIdGenerator(redisClient);
 
         return redisIDGenerator;
+    }
+
+    private static CalculationLogicFactory calculationLogicFactory() throws IllegalAccessException {
+        return new CalculationLogicFactory() {
+            @Override
+            public CalculationLogic getCalculation(CalculationType type) {
+                return UnknownCalculationLogic.getInstance();
+            }
+
+            @Override
+            public Collection<CalculationLogic> getCalculations() {
+                return Collections.emptyList();
+            }
+        };
     }
 
     public static LongIdGenerator idGenerator() {

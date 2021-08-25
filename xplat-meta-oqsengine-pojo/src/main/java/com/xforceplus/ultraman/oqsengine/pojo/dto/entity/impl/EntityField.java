@@ -231,17 +231,12 @@ public class EntityField implements IEntityField, Serializable {
             return false;
         }
         EntityField entityField = (EntityField) o;
-        return id == entityField.id
-            && Objects.equals(name, entityField.name)
-            && fieldType == entityField.fieldType
-            && Objects.equals(dictId, entityField.dictId)
-            && Objects.equals(defaultValue, entityField.defaultValue)
-            && Objects.equals(config, entityField.config);
+        return id == entityField.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fieldType, dictId, defaultValue, config);
+        return Objects.hash(id);
     }
 
     @Override

@@ -140,18 +140,12 @@ public class Entity implements IEntity, Serializable {
             return false;
         }
         Entity entity = (Entity) o;
-        return id == entity.id
-            && time == entity.time
-            && version == entity.version
-            && maintainid == entity.maintainid
-            && major == entity.major
-            && entityClassRef.equals(entity.entityClassRef)
-            && entityValue.equals(entity.entityValue);
+        return id == entity.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, time, entityClassRef, entityValue, version, maintainid, major);
+        return Objects.hash(id);
     }
 
     /**
