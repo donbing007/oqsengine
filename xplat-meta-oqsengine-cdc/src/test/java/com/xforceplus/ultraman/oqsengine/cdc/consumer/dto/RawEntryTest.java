@@ -27,6 +27,9 @@ public class RawEntryTest {
 
     private int expectedSize = 4;
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void before() {
         rawEntries = new LinkedHashMap<>();

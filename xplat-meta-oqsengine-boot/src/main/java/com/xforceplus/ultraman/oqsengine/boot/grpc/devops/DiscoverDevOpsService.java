@@ -22,7 +22,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 /**
@@ -60,6 +58,15 @@ public class DiscoverDevOpsService {
     @Autowired
     private EntitySearchService entitySearchService;
 
+    /**
+     * 导入meta信息.
+     *
+     * @param appId   应用标识.
+     * @param env     环境编码.
+     * @param version 版本.
+     * @param data    数据.
+     * @return true成功, 失败.
+     */
     @DiscoverAction(describe = "元数据导入", retClass = boolean.class)
     public boolean metaImport(@MethodParam(name = "appId", klass = String.class, required = true) String appId,
                               @MethodParam(name = "env", klass = String.class, required = true) String env,
@@ -74,9 +81,16 @@ public class DiscoverDevOpsService {
         return false;
     }
 
+    /**
+     * 关注某个meta信息.
+     *
+     * @param appId 应用标识.
+     * @param env   环境编码.
+     * @return 版本号.
+     */
     @DiscoverAction(describe = "关注某一个meta信息", retClass = int.class)
     public int noticeMeta(@MethodParam(name = "appId", klass = String.class, required = true) String appId,
-                              @MethodParam(name = "env", klass = String.class, required = true) String env)  {
+                          @MethodParam(name = "env", klass = String.class, required = true) String env) {
         try {
             return metaManager.need(appId, env);
         } catch (Exception e) {
@@ -86,6 +100,12 @@ public class DiscoverDevOpsService {
         return 0;
     }
 
+    /**
+     * 查询指定应用的元信息.
+     *
+     * @param appId 应用标识.
+     * @return 元信息.
+     */
     @DiscoverAction(describe = "查询meta信息", retClass = MetaMetrics.class)
     public MetaMetrics showMeta(@MethodParam(name = "appId", klass = String.class, required = true) String appId) {
         try {
@@ -97,6 +117,12 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 清理提交号.
+     *
+     * @param ids 目标提交号列表.
+     * @return true成功, false失败.
+     */
     @DiscoverAction(describe = "删除commitId", retClass = boolean.class)
     public boolean removeCommitIds(@MethodParam(name = "ids", klass = Long[].class, required = true) Long[] ids) {
         try {
@@ -105,14 +131,23 @@ public class DiscoverDevOpsService {
             }
             devOpsManagementService.removeCommitIds(ids);
         } catch (Exception e) {
-            exceptionHandle(String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
+            exceptionHandle(
+                String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
         }
-        return false;
+        return true;
     }
 
+    /**
+     * 修复CDC-ERROR中的错误.
+     *
+     * @param seqNo         序号.
+     * @param recoverString 消息.
+     * @return true成功, false失败.
+     */
     @DiscoverAction(describe = "修复CDC-ERROR中错误的记录", retClass = boolean.class)
     public boolean cdcErrorRecover(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo,
-                                   @MethodParam(name = "recoverString", klass = String.class, required = true) String recoverString) {
+                                   @MethodParam(name = "recoverString", klass = String.class, required = true)
+                                       String recoverString) {
         try {
             if (devOpsManagementService.cdcSendErrorRecover(seqNo, recoverString)) {
                 Optional<CdcErrorTask> cdcErrorTaskOp = devOpsManagementService.queryOne(seqNo);
@@ -181,10 +216,11 @@ public class DiscoverDevOpsService {
     }
 
     @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
-    public DevOpsTaskInfo rebuildIndex(@MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-                                @MethodParam(name = "start", klass = String.class, required = true) String start,
-                                @MethodParam(name = "end", klass = String.class, required = true) String end,
-                                @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
+    public DevOpsTaskInfo rebuildIndex(
+        @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+        @MethodParam(name = "start", klass = String.class, required = true) String start,
+        @MethodParam(name = "end", klass = String.class, required = true) String end,
+        @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
         try {
             Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
             if (entityClassOp.isPresent()) {
@@ -195,15 +231,16 @@ public class DiscoverDevOpsService {
             return null;
         } catch (Exception e) {
             exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s-%s]",
-                            entityClassId, profile == null ? "" : profile, start, end), e);
+                entityClassId, profile == null ? "" : profile, start, end), e);
         }
         return null;
     }
 
     @DiscoverAction(describe = "失败的重建索引任务在checkpoint处重试并完成余下任务", retClass = DevOpsTaskInfo.class)
-    public DevOpsTaskInfo resumeIndex(@MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-                                      @MethodParam(name = "taskId", klass = String.class, required = true) String taskId,
-                                      @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
+    public DevOpsTaskInfo resumeIndex(
+        @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+        @MethodParam(name = "taskId", klass = String.class, required = true) String taskId,
+        @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
         try {
             Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
             if (entityClassOp.isPresent()) {
@@ -212,7 +249,7 @@ public class DiscoverDevOpsService {
             return null;
         } catch (Exception e) {
             exceptionHandle(String.format("resumeIndex exception, [%d-%s-%s]",
-                            entityClassId, profile == null ? "" : profile, taskId), e);
+                entityClassId, profile == null ? "" : profile, taskId), e);
         }
 
         return null;

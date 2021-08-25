@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * 计算字段配置.
+ *
  * @author dongbin
  * @version 0.1 2021/08/24 14:59
  * @since 1.8

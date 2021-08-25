@@ -80,7 +80,7 @@ public class TaskKeyValueQueueSQLTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:kv/oqsengine-ds.conf");
         keyValueStorage = new SqlKeyValueStorage();
         keyValueStorage.setTableName("kv");
-        keyValueStorage.setTimeout(200);
+        keyValueStorage.setTimeoutMs(200);
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(

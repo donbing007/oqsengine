@@ -48,6 +48,9 @@ public class DevOpsControllerTest {
 
     private MockMvc mockMvc;
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);

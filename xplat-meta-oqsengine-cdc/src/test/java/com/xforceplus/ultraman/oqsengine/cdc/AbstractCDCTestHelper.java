@@ -19,7 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  *
  * @since 1.8
  */
-public abstract class CDCTestHelper extends AbstractContainerExtends {
+public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
     protected ConsumerRunner consumerRunner;
 
     protected MockRedisCallbackService mockRedisCallbackService;

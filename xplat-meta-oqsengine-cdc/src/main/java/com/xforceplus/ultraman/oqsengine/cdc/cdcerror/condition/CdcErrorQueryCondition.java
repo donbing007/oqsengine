@@ -259,20 +259,21 @@ public class CdcErrorQueryCondition {
 
     @Override
     public String toString() {
-        return "CdcErrorQueryCondition{" +
-            "seqNo=" + seqNo +
-            ", uniKey='" + uniKey + '\'' +
-            ", batchId=" + batchId +
-            ", id=" + id +
-            ", entity=" + entity +
-            ", commitId=" + commitId +
-            ", status=" + status +
-            ", isEqualStatus=" + isEqualStatus +
-            ", type=" + type +
-            ", rangeLeExecuteTime=" + rangeLeExecuteTime +
-            ", rangeGeExecuteTime=" + rangeGeExecuteTime +
-            ", rangeLeFixedTime=" + rangeLeFixedTime +
-            ", rangeGeFixedTime=" + rangeGeFixedTime +
-            '}';
+        final StringBuffer sb = new StringBuffer("CdcErrorQueryCondition{");
+        sb.append("seqNo=").append(seqNo);
+        sb.append(", uniKey='").append(uniKey).append('\'');
+        sb.append(", batchId=").append(batchId);
+        sb.append(", id=").append(id);
+        sb.append(", entity=").append(entity);
+        sb.append(", commitId=").append(commitId);
+        sb.append(", status=").append(status);
+        sb.append(", isEqualStatus=").append(isEqualStatus);
+        sb.append(", type=").append(type);
+        sb.append(", rangeLeExecuteTime=").append(rangeLeExecuteTime);
+        sb.append(", rangeGeExecuteTime=").append(rangeGeExecuteTime);
+        sb.append(", rangeLeFixedTime=").append(rangeLeFixedTime);
+        sb.append(", rangeGeFixedTime=").append(rangeGeFixedTime);
+        sb.append('}');
+        return sb.toString();
     }
 }
