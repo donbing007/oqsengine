@@ -363,6 +363,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 for (IEntityField entityField : storage.getFields()) {
                     try {
                         String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                        // TODO avg init.
                         syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);

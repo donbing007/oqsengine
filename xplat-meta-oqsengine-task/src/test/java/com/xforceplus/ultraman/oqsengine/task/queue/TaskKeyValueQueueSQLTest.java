@@ -243,17 +243,17 @@ public class TaskKeyValueQueueSQLTest {
                 @Override
                 public void run() {
                     while (true) {
-                        instance.get();
-                        logger.info("---get task ---");
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        Task task = instance.get();
+                        if (task != null) {
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
                     }
                 }
@@ -307,17 +307,17 @@ public class TaskKeyValueQueueSQLTest {
                 @Override
                 public void run() {
                     while (true) {
-                        instance.get(1000L);
-                        logger.info("---get task ---");
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        Task task = instance.get(1000L);
+                        if (task != null) {
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
                     }
                 }
@@ -373,19 +373,19 @@ public class TaskKeyValueQueueSQLTest {
                 public void run() {
                     while (true) {
                         Task task = instance.get();
-                        logger.info("---get task ---");
-                        instance.ack(task);
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        if (task != null) {
+                            instance.ack(task);
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                logger.info("latch = " + latch.getCount());
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
-
                     }
                 }
             });

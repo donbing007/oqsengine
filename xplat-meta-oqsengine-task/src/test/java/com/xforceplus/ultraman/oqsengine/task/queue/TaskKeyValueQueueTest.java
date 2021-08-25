@@ -172,17 +172,18 @@ class TaskKeyValueQueueTest {
                 @Override
                 public void run() {
                     while (true) {
-                        instance.get();
-                        logger.info("---get task ---");
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        Task task = instance.get();
+                        if (task != null) {
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                logger.info("latch = " + latch.getCount());
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
                     }
                 }
@@ -212,7 +213,7 @@ class TaskKeyValueQueueTest {
         pointKey.setAccessible(true);
         String point = (String) pointKey.get(instance);
 
-        Field unusedTask = instance.getClass().getDeclaredField("unusedTask");
+        Field unusedTask = instance.getClass().getDeclaredField("unusedTaskSize");
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
@@ -238,17 +239,18 @@ class TaskKeyValueQueueTest {
                 @Override
                 public void run() {
                     while (true) {
-                        instance.get(1000L);
-                        logger.info("---get task ---");
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        Task task = instance.get(1000L);
+                        if (task != null) {
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                logger.info("latch = " + latch.getCount());
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
                     }
                 }
@@ -278,7 +280,7 @@ class TaskKeyValueQueueTest {
         pointKey.setAccessible(true);
         String point = (String) pointKey.get(instance);
 
-        Field unusedTask = instance.getClass().getDeclaredField("unusedTask");
+        Field unusedTask = instance.getClass().getDeclaredField("unusedTaskSize");
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
@@ -305,18 +307,20 @@ class TaskKeyValueQueueTest {
                 public void run() {
                     while (true) {
                         Task task = instance.get();
-                        logger.info("---get task ---");
-                        instance.ack(task);
-                        try {
-                            lock.lock();
-                            latch.countDown();
-                            logger.info("latch = " + latch.getCount());
-                            if (latch.getCount() <= 2) {
-                                break;
+                        if (task != null) {
+                            instance.ack(task);
+                            try {
+                                lock.lock();
+                                latch.countDown();
+                                logger.info("latch = " + latch.getCount());
+                                if (latch.getCount() <= 2) {
+                                    break;
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
+
                     }
                 }
             });
@@ -346,7 +350,7 @@ class TaskKeyValueQueueTest {
         pointKey.setAccessible(true);
         String point = (String) pointKey.get(instance);
 
-        Field unusedTask = instance.getClass().getDeclaredField("unusedTask");
+        Field unusedTask = instance.getClass().getDeclaredField("unusedTaskSize");
         unusedTask.setAccessible(true);
         String unused = (String) unusedTask.get(instance);
 
