@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -334,7 +335,7 @@ public class TaskKeyValueQueue implements TaskQueue {
 
         @Override
         public void run() {
-            ConcurrentHashMap temp;
+            HashMap temp;
             Set<Map.Entry<String, byte[]>> tempSet;
 
             /*
@@ -344,7 +345,7 @@ public class TaskKeyValueQueue implements TaskQueue {
                 try {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(syncGapTimeMs));
                     if (unSubmitTask.size() > 0) {
-                        temp = new ConcurrentHashMap(unSubmitTask);
+                        temp = new HashMap(unSubmitTask);
                         tempSet = temp.entrySet();
                         kv.save(tempSet);
                         kv.incr(unusedTaskSize, temp.size());
