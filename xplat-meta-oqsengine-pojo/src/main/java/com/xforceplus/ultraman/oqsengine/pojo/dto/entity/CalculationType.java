@@ -30,7 +30,11 @@ public enum CalculationType {
     /*
     lookup 字段.
      */
-    LOOKUP((byte) 4, (byte) 1);
+    LOOKUP((byte) 4, (byte) 1),
+    /*
+    聚合字段.
+    */
+    AGGREGATION((byte) 5, (byte) 2);
 
     private byte symbol;
     private byte priority;
