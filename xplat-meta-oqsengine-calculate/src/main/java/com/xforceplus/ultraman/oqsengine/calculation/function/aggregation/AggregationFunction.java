@@ -19,4 +19,11 @@ public interface AggregationFunction {
      *
      */
     public Optional<IValue> excute(IValue agg, IValue o, IValue n);
+
+    /**
+     * 聚合初始化方法.
+     * @param values
+     * @return
+     */
+    public Optional<IValue> init(IValue agg, List<IValue> values);
 }

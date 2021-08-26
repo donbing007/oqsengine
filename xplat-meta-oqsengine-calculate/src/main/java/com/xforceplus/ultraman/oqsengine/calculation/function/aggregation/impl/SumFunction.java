@@ -27,18 +27,31 @@ public class SumFunction implements AggregationFunction {
         if (!(agg != null & o != null && n != null)) {
             return Optional.empty();
         }
-        if (o instanceof DecimalValue) {
+        if (agg instanceof DecimalValue) {
             BigDecimal temp = ((DecimalValue)agg).getValue()
                     .add(((DecimalValue)n).getValue())
                     .subtract(((DecimalValue)o).getValue());
             agg.setStringValue(temp.toString());
             return Optional.of(agg);
-        } else if (o instanceof LongValue) {
+        } else if (agg instanceof LongValue) {
             Long temp = agg.valueToLong() + n.valueToLong() - o.valueToLong();
             agg.setStringValue(temp.toString());
             return Optional.of(agg);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<IValue> init(IValue agg, List<IValue> values) {
+        if (agg instanceof DecimalValue) {
+            BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue)v).getValue())
+                    .collect(BigDecimalSummaryStatistics.statistics());
+            agg.setStringValue(temp.getSum().toString());
+        } else if (agg instanceof LongValue) {
+            LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(IValue::valueToLong));
+            agg.setStringValue(String.valueOf(temp.getSum()));
+        }
+        return Optional.of(agg);
     }
 
 //    public static void main(String[] args) {
