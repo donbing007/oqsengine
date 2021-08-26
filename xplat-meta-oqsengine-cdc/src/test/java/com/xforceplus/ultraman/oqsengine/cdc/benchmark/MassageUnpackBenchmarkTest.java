@@ -4,12 +4,11 @@ import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2020/11/13
  * @since : 1.8
  */
-public class MassageUnpackBenchmarkTest extends CDCTestHelper {
+public class MassageUnpackBenchmarkTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
@@ -34,8 +33,9 @@ public class MassageUnpackBenchmarkTest extends CDCTestHelper {
     private static int size = 1000;
     private static long startId = 1;
 
-
-
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         super.init(true);

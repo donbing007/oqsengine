@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -162,6 +163,24 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     @Override
     public BizIDGenerator getBizIDGenerator() {
         return bizIDGenerator;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DefaultCalculationLogicContext that = (DefaultCalculationLogicContext) o;
+        return scenarios == that.scenarios && Objects.equals(getEntity(), that.getEntity()) && Objects
+            .equals(field, that.field);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(scenarios, getEntity(), field);
     }
 
     /**

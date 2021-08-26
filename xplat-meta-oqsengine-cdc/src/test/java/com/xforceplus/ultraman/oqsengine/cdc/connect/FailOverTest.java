@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
@@ -26,7 +27,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2020/11/11
  * @since : 1.8
  */
-public class FailOverTest extends CDCTestHelper {
+public class FailOverTest extends AbstractCDCTestHelper {
     private static CDCDaemonService cdcDaemonService;
 
     private static final int PARTITION = 2000000;

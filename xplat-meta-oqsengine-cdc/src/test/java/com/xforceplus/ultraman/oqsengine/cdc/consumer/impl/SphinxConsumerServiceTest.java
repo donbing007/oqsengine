@@ -6,7 +6,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildTransac
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
@@ -38,7 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/9
  * @since : 1.8
  */
-public class SphinxConsumerServiceTest extends CDCTestHelper {
+public class SphinxConsumerServiceTest extends AbstractCDCTestHelper {
 
     private static final Long EXPECTED_PREF = Long.MAX_VALUE - 1;
     private static final Long EXPECTED_CREF = Long.MAX_VALUE - 2;
@@ -64,23 +64,10 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
         super.destroy(false);
     }
 
-    private void before(boolean isMock) throws Exception {
-        cdcMetricsService = new CDCMetricsService();
-        if (isMock) {
-            CdcInitialization.getInstance().useMock();
-        } else {
-            CdcInitialization.getInstance().useReal();
-        }
-        ReflectionTestUtils
-            .setField(cdcMetricsService, "cdcMetricsCallback",
-                new MockRedisCallbackService(StorageInitialization.getInstance()
-                    .getCommitIdStatusService()));
-    }
-
 
     @Test
     public void errorTest() throws Exception {
-        before(true);
+        doBefore(true);
 
         List<CanalEntry.Entry> badEntries = new ArrayList<>();
 
@@ -185,7 +172,7 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
     @Test
     public void havePrefCrefTest() throws Exception {
 
-        before(false);
+        doBefore(false);
 
         expectedSize = 0;
 
@@ -222,7 +209,7 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
      */
     @Test
     public void overBatchTest1() throws Exception {
-        before(false);
+        doBefore(false);
 
         expectedSize = 0;
 
@@ -258,7 +245,7 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
      */
     @Test
     public void overBatchTest2() throws Exception {
-        before(false);
+        doBefore(false);
 
         expectedSize = 0;
 
@@ -303,9 +290,9 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
 
         expectedSize = 0;
         entries.clear();
-            /*
-            这里将子类设定为比父类先到，在批次1中，父类在批次二中，模拟了真实情况的不确定性
-            */
+        /*
+           这里将子类设定为比父类先到，在批次1中，父类在批次二中，模拟了真实情况的不确定性
+         */
         //  build father
         CanalEntry.Entry fatherEntryUnCommit =
             buildRow(
@@ -399,6 +386,19 @@ public class SphinxConsumerServiceTest extends CDCTestHelper {
         if (commitId != Long.MAX_VALUE) {
             expectedSize++;
         }
+    }
+
+    private void doBefore(boolean mock) throws Exception {
+        cdcMetricsService = new CDCMetricsService();
+        if (mock) {
+            CdcInitialization.getInstance().useMock();
+        } else {
+            CdcInitialization.getInstance().useReal();
+        }
+        ReflectionTestUtils
+            .setField(cdcMetricsService, "cdcMetricsCallback",
+                new MockRedisCallbackService(StorageInitialization.getInstance()
+                    .getCommitIdStatusService()));
     }
 
 }

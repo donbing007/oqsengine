@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2020/11/9
  * @since : 1.8
  */
-public class ConsumerRunnerTest extends CDCTestHelper {
+public class ConsumerRunnerTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
 
     private long startId = 0;

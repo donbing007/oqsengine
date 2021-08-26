@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.rest;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.boot.rest.DevOpsController;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
-import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import java.util.ArrayList;
@@ -49,6 +48,9 @@ public class DevOpsControllerTest {
 
     private MockMvc mockMvc;
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);

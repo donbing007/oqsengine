@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionE
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -88,7 +89,7 @@ public class CustomTransactionConfiguration {
     @Bean
     @Primary
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-            @Value("${storage.master.name:oqsbigentity}") String tableName) {
+        @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
@@ -103,6 +104,21 @@ public class CustomTransactionConfiguration {
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource),
             new NoSelector(tableName));
+    }
+
+    @Bean
+    public SqlKvConnectionTransactionResourceFactory sqlKvConnectionTransactionResourceFactory() {
+        return new SqlKvConnectionTransactionResourceFactory();
+    }
+
+    @Bean
+    public TransactionExecutor kvStorageJDBCTransactionExecutor(
+        SqlKvConnectionTransactionResourceFactory factory,
+        TransactionManager tm,
+        DataSource masterDataSource,
+        @Value("${storage.kv.name:kv}") String tableName) {
+        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector<>(masterDataSource),
+            new NoSelector<>(tableName));
     }
 
     /**

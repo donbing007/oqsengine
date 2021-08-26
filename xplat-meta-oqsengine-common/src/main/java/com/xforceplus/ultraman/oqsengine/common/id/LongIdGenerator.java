@@ -30,7 +30,9 @@ public interface LongIdGenerator extends IdGenerator<Long> {
     /**
      * 重置,从0开始计数.
      */
-    void reset();
+    default void reset() {
+
+    }
 
     /**
      * 重置指定namespace的计数.

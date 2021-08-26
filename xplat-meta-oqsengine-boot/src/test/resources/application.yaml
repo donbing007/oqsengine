@@ -62,6 +62,8 @@ storage:
     showsql: true
   timeoutMs:
     query: 10000
+  kv:
+    name: "kv"
   master:
     name: "oqsbigentity"
     shard:

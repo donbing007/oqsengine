@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -55,5 +56,23 @@ public class LookupMaintainingTask extends AbstractTask implements Serializable 
 
     public int getMaxSize() {
         return maxSize;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        LookupMaintainingTask that = (LookupMaintainingTask) o;
+        return getMaxSize() == that.getMaxSize() && Objects.equals(getIterKey(), that.getIterKey())
+            && Objects.equals(getPointKey(), that.getPointKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getIterKey(), getPointKey(), getMaxSize());
     }
 }

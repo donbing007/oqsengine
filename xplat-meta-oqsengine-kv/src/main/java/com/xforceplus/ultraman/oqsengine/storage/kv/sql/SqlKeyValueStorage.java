@@ -74,7 +74,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         this.tableName = tableName;
     }
 
-    public void setTimeout(long timeout) {
+    public void setTimeoutMs(long timeout) {
         this.timeout = timeout;
     }
 

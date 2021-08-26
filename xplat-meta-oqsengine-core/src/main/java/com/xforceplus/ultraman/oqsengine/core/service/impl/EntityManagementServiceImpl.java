@@ -100,6 +100,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private MetaManager metaManager;
 
+    /**
+     * 计算字段计算逻辑工厂.
+     */
+    @Resource
+    private CalculationLogicFactory calculationLogicFactory;
+
     @Resource
     private EventBus eventBus;
 
@@ -110,11 +116,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 字段校验器工厂.
      */
     private VerifierFactory verifierFactory;
-
-    /**
-     * 计算字段计算逻辑工厂.
-     */
-    private CalculationLogicFactory calculationLogicFactory;
 
     /*
     只读的原因.
@@ -263,7 +264,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         verifierFactory = new VerifierFactory();
-        calculationLogicFactory = new CalculationLogicFactory();
     }
 
     @PreDestroy
@@ -339,7 +339,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
-                // TODO: 需要过滤出被改变的字段.
                 // 可能的字段维护
                 maintainField(entity, entityClass, Scenarios.BUILD);
 
@@ -405,7 +404,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         ResultStatus.NOT_FOUND);
                 }
 
-                // 合并需要修改的字段值.
                 entity.entityValue().values().stream()
                     // 自增编号无法重复计算
                     .filter(f -> !CalculationType.AUTO_FILL.equals(f.getField().calculationType()))
@@ -464,8 +462,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
-                // 可能的字段维护
-                maintainField(entity, entityClass, Scenarios.DELETE);
+                /*
+                维护字段只关心真实被改变的字段.
+                 */
+                long[] maintainFields = buildReplaceMaintainFields(oldEntity, targetEntity);
+
+                maintainField(entity, entityClass, maintainFields, Scenarios.REPLACE);
 
                 //  半成功
                 if (null != hints && !hints.isEmpty()) {
@@ -489,6 +491,27 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             //  处理半成功，将插入一条失败的Message
             handleHalfSuccessOrRecover(entity.maintainId(), entityClass.id(), operationResult);
         }
+    }
+
+    private long[] buildReplaceMaintainFields(IEntity oldEntity, IEntity targetEntity) {
+        return targetEntity.entityValue().values().stream().filter(v ->
+            // 只有静态字段和公式字段会被lookup.
+            v.getField().calculationType() == CalculationType.STATIC
+                || v.getField().calculationType() == CalculationType.FORMULA)
+
+            .filter(v -> {
+                Optional<IValue> oldOp = oldEntity.entityValue().getValue(v.getField().id());
+                if (oldOp.isPresent()) {
+
+                    // 和原值不相等才需要处理.
+                    return !v.equals(oldOp.get());
+
+                } else {
+
+                    return false;
+
+                }
+            }).mapToLong(v -> v.getField().id()).toArray();
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
@@ -780,18 +803,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return context.getHints();
     }
 
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+        throws CalculationLogicException {
+        long[] fields = sourceClass.fields().stream().mapToLong(IEntityField::id).toArray();
+        maintainField(sourceEntity, sourceClass, fields, scenarios);
+    }
+
     /**
      * 字段维护,会迭代当前修改的字段进行维护.
      * 主要用于计算字段的数据一致性处理.
      */
-    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, long[] fieldIds, Scenarios scenarios)
         throws CalculationLogicException {
 
         Collection<CalculationLogic> logics = calculationLogicFactory.getCalculations();
         CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
-        for (IValue v : sourceEntity.entityValue().values()) {
+        for (long fieldId : fieldIds) {
+            context.focusField(sourceClass.field(fieldId).get());
             for (CalculationLogic logic : logics) {
-                context.focusField(v.getField());
+                // 字段一定存在的.
                 logic.maintain(context);
             }
         }

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2020/11/19
  * @since : 1.8
  */
-public class ConnectorTest extends CDCTestHelper {
+public class ConnectorTest extends AbstractCDCTestHelper {
 
     private CDCDaemonService cdcDaemonService;
 

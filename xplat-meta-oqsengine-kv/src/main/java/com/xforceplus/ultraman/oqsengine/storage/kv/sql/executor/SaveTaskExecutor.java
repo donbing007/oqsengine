@@ -22,6 +22,14 @@ public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.En
     private boolean add = false;
     private boolean number = false;
 
+    /**
+     * 实例化.
+     *
+     * @param tableName 表名.
+     * @param resource  资源.
+     * @param add       true表示有即错误,false表示覆盖.
+     * @param number    true 是一个数字,false不是.
+     */
     public SaveTaskExecutor(String tableName,
                             TransactionResource<Connection> resource, boolean add, boolean number) {
         super(tableName, resource);
@@ -29,6 +37,15 @@ public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.En
         this.number = number;
     }
 
+    /**
+     * 实例化.
+     *
+     * @param tableName 表名.
+     * @param resource  资源.
+     * @param timeoutMs 操作的超时时间.
+     * @param add       true表示有即错误,false表示覆盖.
+     * @param number    true 是一个数字,false不是.
+     */
     public SaveTaskExecutor(String tableName,
                             TransactionResource<Connection> resource, long timeoutMs, boolean add, boolean number) {
         super(tableName, resource, timeoutMs);

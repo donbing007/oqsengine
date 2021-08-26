@@ -3,12 +3,12 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.BOOL_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.DATE_TIME_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.DECIMAL_FIELD;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.LONG_FIELD;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRINGS_FIELD;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRING_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_0;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_1;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_2;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.LONG_FIELD;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRINGS_FIELD;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRING_FIELD;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;

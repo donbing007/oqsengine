@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @since : 1.8
  */
 
-public class BigBatchSyncTest extends CDCTestHelper {
+public class BigBatchSyncTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
     private static int expectedSize = 0;

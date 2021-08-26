@@ -1,10 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql;
 
-import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
@@ -13,25 +11,12 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExe
 import com.xforceplus.ultraman.oqsengine.storage.kv.AbstractKVTest;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -62,7 +47,7 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
 
         storage = new SqlKeyValueStorage();
         storage.setTableName("kv");
-        storage.setTimeout(200);
+        storage.setTimeoutMs(200);
 
 
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();

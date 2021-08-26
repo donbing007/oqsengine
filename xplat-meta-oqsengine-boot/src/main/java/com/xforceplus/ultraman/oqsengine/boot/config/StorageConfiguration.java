@@ -4,11 +4,13 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.SqlKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
@@ -33,6 +35,23 @@ import org.springframework.context.annotation.Configuration;
 public class StorageConfiguration {
 
     /**
+     * kv储存.
+     *
+     * @param tableName 表名.
+     * @param timeoutMs 超时时间.
+     * @return 实例.
+     */
+    @Bean
+    public KeyValueStorage keyValueStorage(
+        @Value("${storage.kv.name:kv}") String tableName,
+        @Value("${storage.timeoutMs.query:3000}") long timeoutMs) {
+        SqlKeyValueStorage storage = new SqlKeyValueStorage();
+        storage.setTableName(tableName);
+        storage.setTimeoutMs(timeoutMs);
+        return storage;
+    }
+
+    /**
      * 主库存储存.
      */
     @Bean
@@ -46,19 +65,6 @@ public class StorageConfiguration {
         storage.setQueryTimeout(masterQueryTimeout);
         return storage;
     }
-
-    ///**
-    // * 业务主键储存.
-    // */
-    //@Bean
-    //public UniqueMasterStorage masterUniqueStorage(
-    //    @Value("${storage.master.unique.name:oqsunique}") String tableName,
-    //    @Value("${storage.timeoutMs.query:3000}") long queryTimeout) {
-    //    MasterUniqueStorage storage = new MasterUniqueStorage();
-    //    storage.setTableName(tableName);
-    //    storage.setQueryTimeout(queryTimeout);
-    //    return storage;
-    //}
 
     /**
      * 索引存储存.

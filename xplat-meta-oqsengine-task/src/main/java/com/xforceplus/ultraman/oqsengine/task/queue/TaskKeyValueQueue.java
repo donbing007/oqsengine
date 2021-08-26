@@ -6,16 +6,17 @@ import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,13 +92,13 @@ public class TaskKeyValueQueue implements TaskQueue {
     /**
      * unused task size in queue.
      */
-    private String unusedTask;
+    private String unusedTaskSize;
 
     private volatile boolean running;
 
-    private volatile boolean exit;
+    private CountDownLatch latch;
 
-    private long syncGapTime;
+    private long syncGapTimeMs;
 
     public TaskKeyValueQueue() {
         this(DEFAULT_NAME);
@@ -123,12 +124,12 @@ public class TaskKeyValueQueue implements TaskQueue {
         this.anyLock = "anyLock-" + name;
 
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
-        this.unusedTask = String.format("%s-%s", this.name, UNUSED);
+        this.unusedTaskSize = String.format("%s-%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
         this.initPoint = initPoint;
         this.running = true;
-        this.exit = false;
-        this.syncGapTime = 30L;
+        this.latch = new CountDownLatch(1);
+        this.syncGapTimeMs = 30L;
 
         this.unSubmitTask = new ConcurrentHashMap();
         worker = new ThreadPoolExecutor(1, 1,
@@ -146,12 +147,17 @@ public class TaskKeyValueQueue implements TaskQueue {
      */
     public void destroy() {
         running = false;
-        while (!exit) {
-
+        try {
+            latch.await(60, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            // 不做处理
         }
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
+    /**
+     * 模拟断电，仅供测试使用.
+     */
     private void destroyNow() {
         running = false;
         worker.shutdownNow();
@@ -164,13 +170,16 @@ public class TaskKeyValueQueue implements TaskQueue {
             return;
         }
         long elementId = nextId();
-        // 第一个元素.
+        /*
+            判断队列是否第一次添加任务，初始化待取出指针位置，指向当前任务前一个索引。
+         */
         if (elementId == initPoint) {
             kv.incr(pointKey, 0);
             kv.incr(pointKey, initPoint - 1);
         }
         task.setLocation(elementId);
         String elementKey = buildNextElementKey(elementId);
+        // 将任务暂存在内存中，经过syncGapTimeMs时长后持久化
         unSubmitTask.put(elementKey, serializeStrategy.serialize(task));
     }
 
@@ -179,16 +188,20 @@ public class TaskKeyValueQueue implements TaskQueue {
         checkRunning();
         try {
             locker.lock(anyLock);
+            /*
+                判断当前队列是否有任务，没有任务则等待
+             */
             while (true) {
-                if (kv.incr(unusedTask, 0) <= 0) {
+                if (kv.incr(unusedTaskSize, 0) <= 0) {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 } else {
                     break;
                 }
             }
-            kv.incr(unusedTask, -1L);
+            // 取出任务后将未取出任务数减一
+            kv.incr(unusedTaskSize, -1L);
         } catch (RuntimeException runtimeException) {
-            logger.error("incr unusedTask {} failed when get task", unusedTask);
+            logger.error("incr unusedTask {} failed when get task", unusedTaskSize);
             return null;
         } finally {
             locker.unlock(anyLock);
@@ -203,19 +216,23 @@ public class TaskKeyValueQueue implements TaskQueue {
         try {
             long timeMillis = System.currentTimeMillis();
             locker.lock(anyLock);
+            /*
+                判断当前队列是否有任务，没有任务则等待awaitTimeMs
+             */
             while (true) {
                 if (System.currentTimeMillis() - timeMillis >= awaitTimeMs) {
                     return null;
                 }
-                if (kv.incr(unusedTask, 0) <= 0) {
+                if (kv.incr(unusedTaskSize, 0) <= 0) {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 } else {
                     break;
                 }
             }
-            kv.incr(unusedTask, -1L);
+            // 取出任务后将未取出任务数减一
+            kv.incr(unusedTaskSize, -1L);
         } catch (RuntimeException runtimeException) {
-            logger.error("incr unusedTask {} failed when get task", unusedTask);
+            logger.error("incr unusedTask {} failed when get task", unusedTaskSize);
             return null;
         } finally {
             locker.unlock(anyLock);
@@ -227,14 +244,18 @@ public class TaskKeyValueQueue implements TaskQueue {
         Task task = null;
         long nextElementId;
         try {
+            // 待取出任务索引值加一
             nextElementId = kv.incr(pointKey);
         } catch (RuntimeException e) {
             logger.error("incr pointKey {} failed when get task", pointKey);
-            kv.incr(unusedTask);
+            kv.incr(unusedTaskSize);
             throw new RuntimeException(String.format("pointKey %s incr failed. ", pointKey));
         }
         String elementKey = buildNextElementKey(nextElementId);
 
+        /*
+        取出任务
+         */
         int count = 0;
         while (count <= 3) {
             task = getTask(elementKey);
@@ -268,6 +289,9 @@ public class TaskKeyValueQueue implements TaskQueue {
             return;
         }
         long location = task.location();
+        /*
+            从磁盘中删除任务
+         */
         int count = 0;
         while (count <= 3) {
             try {
@@ -311,17 +335,20 @@ public class TaskKeyValueQueue implements TaskQueue {
 
         @Override
         public void run() {
-            ConcurrentHashMap temp;
+            HashMap temp;
             Set<Map.Entry<String, byte[]>> tempSet;
 
+            /*
+                将内存暂存任务持久化至磁盘，每syncGapTimeMs时长同步一次
+             */
             while (running) {
                 try {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(syncGapTime));
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(syncGapTimeMs));
                     if (unSubmitTask.size() > 0) {
-                        temp = new ConcurrentHashMap(unSubmitTask);
+                        temp = new HashMap(unSubmitTask);
                         tempSet = temp.entrySet();
                         kv.save(tempSet);
-                        kv.incr(unusedTask, temp.size());
+                        kv.incr(unusedTaskSize, temp.size());
                         for (Map.Entry<String, byte[]> entry : tempSet) {
                             unSubmitTask.remove(entry.getKey());
                         }
@@ -331,7 +358,7 @@ public class TaskKeyValueQueue implements TaskQueue {
                 }
             }
 
-            exit = true;
+            latch.countDown();
         }
     }
 

@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -22,27 +22,33 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * Created by justin.xu on 05/2021
  */
-public class ConsumerErrorTest extends CDCTestHelper {
+public class ConsumerErrorTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
 
-    private static final boolean ifTest = true;
+    private static final boolean IF_TEST = true;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             super.init(true);
         }
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             super.destroy(true);
         }
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             CDCMetricsService cdcMetricsService = new CDCMetricsService();
             mockRedisCallbackService = new MockRedisCallbackService(StorageInitialization.getInstance()
                 .getCommitIdStatusService());
@@ -56,7 +62,7 @@ public class ConsumerErrorTest extends CDCTestHelper {
 
     @Test
     public void syncBad() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
             TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
             Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());

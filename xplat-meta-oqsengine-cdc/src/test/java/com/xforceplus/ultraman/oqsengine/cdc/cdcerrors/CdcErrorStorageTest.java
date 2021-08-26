@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 import static com.xforceplus.ultraman.oqsengine.cdc.cdcerror.tools.CdcErrorUtils.uniKeyGenerate;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 
-import com.xforceplus.ultraman.oqsengine.cdc.CDCTestHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2020/11/22
  * @since : 1.8
  */
-public class CdcErrorStorageTest extends CDCTestHelper {
+public class CdcErrorStorageTest extends AbstractCDCTestHelper {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;

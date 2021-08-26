@@ -1,10 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTaskRunner;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -25,12 +30,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
-import com.xforceplus.ultraman.oqsengine.task.queue.MemoryTaskKeyQueue;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,9 +49,13 @@ import org.junit.jupiter.api.Test;
 public class LookupCalculationLogicTest {
 
     private long targetClassId = Long.MAX_VALUE;
-    private long strongClassId = Long.MAX_VALUE - 1;
-    private long weakClassId = Long.MAX_VALUE - 2;
+    private long strongLookupClassId = Long.MAX_VALUE - 1;
+    private long weakLookupClassId = Long.MAX_VALUE - 2;
     private long fieldId = Long.MAX_VALUE;
+
+    private IEntityClass targetEntityClass;
+    private IEntityClass strongLookupEntityClass;
+    private IEntityClass weakLookupEntityClass;
 
     // 目标对象.
     private IEntityField targetLongField = EntityField.Builder.anEntityField()
@@ -61,25 +68,7 @@ public class LookupCalculationLogicTest {
         .withFieldType(FieldType.STRING)
         .withName("target-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass targetEntityClass = EntityClass.Builder.anEntityClass()
-        .withId(targetClassId)
-        .withCode("l1")
-        .withField(targetLongField)
-        .withField(targetStringField)
-        .withRelations(
-            Arrays.asList(
-                Relationship.Builder.anRelationship()
-                    .withId(0)
-                    .withLeftEntityClassId(targetClassId)
-                    .withRightEntityClassId(strongClassId)
-                    .withIdentity(true)
-                    .withBelongToOwner(false)
-                    .withStrong(true)
-                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                    .build()
-            )
-        )
-        .build();
+
 
     // 强关系对象.
     private IEntityField strongLookLongField = EntityField.Builder.anEntityField()
@@ -109,30 +98,10 @@ public class LookupCalculationLogicTest {
                 .withSearchable(true)
                 .withCalculation(
                     Lookup.Builder.anLookup()
-                        .withClassId(targetEntityClass.id())
+                        .withClassId(targetClassId)
                         .withFieldId(targetStringField.id()).build()
                 )
                 .build()
-        ).build();
-    private IEntityClass strongLookupEntityClass = EntityClass.Builder.anEntityClass()
-        .withId(strongClassId)
-        .withLevel(0)
-        .withCode("strongLookupClass")
-        .withField(strongLookLongField)
-        .withField(strongLookStringField)
-        .withField(strongStringLookupField)
-        .withRelations(
-            Arrays.asList(
-                Relationship.Builder.anRelationship()
-                    .withId(0)
-                    .withLeftEntityClassId(targetClassId)
-                    .withRightEntityClassId(strongClassId)
-                    .withIdentity(true)
-                    .withBelongToOwner(false)
-                    .withStrong(true)
-                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                    .build()
-            )
         ).build();
 
     // 弱关系对象.
@@ -156,31 +125,90 @@ public class LookupCalculationLogicTest {
 
             ).build()
         ).build();
-    private IEntityClass weakEntityClass = EntityClass.Builder.anEntityClass()
-        .withId(weakClassId)
-        .withLevel(0)
-        .withCode("weakLookupClass")
-        .withField(weakLongField)
-        .withField(weakLongLookupField)
-        .withRelations(
-            Arrays.asList(
-                Relationship.Builder.anRelationship()
-                    .withId(0)
-                    .withLeftEntityClassId(targetClassId)
-                    .withRightEntityClassId(weakClassId)
-                    .withIdentity(true)
-                    .withBelongToOwner(false)
-                    .withStrong(false)
-                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                    .build()
-            )
-        ).build();
+
 
     private KeyValueStorage kv;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         kv = new MemoryKeyValueStorage();
+
+        targetEntityClass = EntityClass.Builder.anEntityClass()
+            .withId(targetClassId)
+            .withCode("targetClass")
+            .withField(targetLongField)
+            .withField(targetStringField)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(0)
+                        .withLeftEntityClassId(targetClassId)
+                        .withRightEntityClassId(strongLookupClassId)
+                        .withRightEntityClassLoader(id -> Optional.of(strongLookupEntityClass))
+                        .withIdentity(true)
+                        .withBelongToOwner(true)
+                        .withStrong(true)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(1)
+                        .withLeftEntityClassId(targetClassId)
+                        .withRightEntityClassId(weakLookupClassId)
+                        .withRightEntityClassLoader(id -> Optional.of(weakLookupEntityClass))
+                        .withIdentity(true)
+                        .withBelongToOwner(true)
+                        .withStrong(false)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .build()
+                )
+            )
+            .build();
+
+        strongLookupEntityClass = EntityClass.Builder.anEntityClass()
+            .withId(strongLookupClassId)
+            .withLevel(0)
+            .withCode("strongLookupClass")
+            .withField(strongLookLongField)
+            .withField(strongLookStringField)
+            .withField(strongStringLookupField)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(0)
+                        .withLeftEntityClassId(strongLookupClassId)
+                        .withRightEntityClassId(targetClassId)
+                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withIdentity(true)
+                        .withBelongToOwner(false)
+                        .withStrong(true)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .build()
+                )
+            ).build();
+
+        weakLookupEntityClass = EntityClass.Builder.anEntityClass()
+            .withId(weakLookupClassId)
+            .withLevel(0)
+            .withCode("weakLookupClass")
+            .withField(weakLongField)
+            .withField(weakLongLookupField)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(0)
+                        .withLeftEntityClassId(weakLookupClassId)
+                        .withRightEntityClassId(targetClassId)
+                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withIdentity(true)
+                        .withBelongToOwner(false)
+                        .withStrong(false)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .build()
+                )
+            ).build();
     }
 
     @AfterEach
@@ -235,32 +263,78 @@ public class LookupCalculationLogicTest {
                     )
                 )
             ).build();
-        IEntity lookupEntity = Entity.Builder.anEntity()
-            .withId(Long.MAX_VALUE - 1)
-            .withEntityClassRef(strongLookupEntityClass.ref())
+
+        TaskCoordinator mockCoordinator = mock(TaskCoordinator.class);
+        TaskRunner mockRunner = mock(TaskRunner.class);
+
+        String iterKey = LookupHelper.buildIteratorPrefixLinkKey(
+            targetEntity,
+            targetStringField,
+            strongLookupEntityClass,
+            strongStringLookupField).toString();
+
+        doNothing().when(mockRunner).run(mockCoordinator, new LookupMaintainingTask(iterKey));
+
+
+        when(mockCoordinator.getRunner(LookupMaintainingTaskRunner.class)).thenReturn(Optional.of(mockRunner));
+
+
+        DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+            .withScenarios(Scenarios.REPLACE)
+            .withEntityClass(targetEntityClass)
+            .withTaskCoordinator(mockCoordinator)
+            .withEntity(targetEntity)
+            .build();
+        context.focusField(targetStringField);
+
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+        Assertions.assertTrue(logic.maintain(context));
+
+        verify(mockRunner, times(1)).run(mockCoordinator, new LookupMaintainingTask(iterKey));
+        verify(mockCoordinator, times(1)).getRunner(LookupMaintainingTaskRunner.class);
+    }
+
+    @Test
+    public void testMaintainWeak() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(targetEntityClass.ref())
+            .withVersion(0)
             .withTime(System.currentTimeMillis())
             .withEntityValue(
                 EntityValue.build().addValues(
                     Arrays.asList(
-                        new StringValue(strongStringLookupField, "targetValue")
+                        new StringValue(targetStringField, "targetValue"),
+                        new LongValue(targetLongField, 100L)
                     )
                 )
             ).build();
 
+        TaskCoordinator mockCoordinator = mock(TaskCoordinator.class);
 
-        MemoryTaskKeyQueue queue = new MemoryTaskKeyQueue();
-        ExecutorService worker = Executors.newFixedThreadPool(3);
-        DefaultTaskCoordinator coordinator = new DefaultTaskCoordinator();
-        coordinator.setWorker(worker);
-        coordinator.setWorkerNumber(3);
-        coordinator.setTaskQueue(queue);
+        String iterKey = LookupHelper.buildIteratorPrefixLinkKey(
+            targetEntity,
+            targetLongField,
+            weakLookupEntityClass,
+            weakLongLookupField).toString();
+
+        when(mockCoordinator.addTask(new LookupMaintainingTask(iterKey))).thenReturn(true);
 
 
-        LookupMaintainingTaskRunner runner = new LookupMaintainingTaskRunner();
-
+        DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+            .withScenarios(Scenarios.REPLACE)
+            .withEntityClass(targetEntityClass)
+            .withTaskCoordinator(mockCoordinator)
+            .withEntity(targetEntity)
+            .build();
+        context.focusField(targetLongField);
 
         LookupCalculationLogic logic = new LookupCalculationLogic();
+        Assertions.assertTrue(logic.maintain(context));
 
+        LookupMaintainingTask task = new LookupMaintainingTask(iterKey);
+
+        verify(mockCoordinator, times(1)).addTask(task);
 
     }
 
