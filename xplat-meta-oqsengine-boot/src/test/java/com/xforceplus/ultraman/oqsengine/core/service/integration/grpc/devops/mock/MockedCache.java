@@ -5,14 +5,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.Assertions;
 
 /**
  * Created by justin.xu on 08/2021.
@@ -31,8 +27,11 @@ public class MockedCache {
         }
     }
 
+    /**
+     * 元信息储存保存.
+     */
     public static void entityClassStorageSave(String expectedAppId,
-        int expectedVersion) throws JsonProcessingException {
+                                              int expectedVersion) throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
         List<ExpectedEntityStorage> expectedEntityStorageList = new ArrayList<>();

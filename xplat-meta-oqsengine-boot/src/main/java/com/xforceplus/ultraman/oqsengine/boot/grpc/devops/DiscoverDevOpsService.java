@@ -192,6 +192,12 @@ public class DiscoverDevOpsService {
         return false;
     }
 
+    /**
+     * 根据seqNo查询单条CDC-ERROR错误信息.
+     *
+     * @param seqNo 编号.
+     * @return 查询到的任务.
+     */
     @DiscoverAction(describe = "根据seqNo查询单条CDC-ERROR错误信息", retClass = CdcErrorTask.class)
     public CdcErrorTask queryCdcError(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo) {
         try {
@@ -203,6 +209,12 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 根据condition查询CDC-ERROR错误信息列表.
+     *
+     * @param condition 查询条件.
+     * @return 任务列表.
+     */
     @DiscoverAction(describe = "根据condition查询CDC-ERROR错误信息列表", retClass = Collection.class, retInner = CdcErrorTask.class)
     public Collection<CdcErrorTask> queryCdcErrors(
         @MethodParam(name = "condition", klass = CdcErrorQueryCondition.class) CdcErrorQueryCondition condition) {
@@ -215,6 +227,15 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 重建索引.
+     *
+     * @param entityClassId 目标entityClassId.
+     * @param start         开始时间.
+     * @param end           结束时间.
+     * @param profile       可能的替身信息.
+     * @return 任务详情.
+     */
     @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo rebuildIndex(
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
@@ -236,6 +257,14 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 失败的重建索引任务在checkpoint处重试并完成余下任务.
+     *
+     * @param entityClassId 目标entityClass标识.
+     * @param taskId        任务id.
+     * @param profile       替换信息.比如租户.
+     * @return 任务详情.
+     */
     @DiscoverAction(describe = "失败的重建索引任务在checkpoint处重试并完成余下任务", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo resumeIndex(
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
@@ -255,6 +284,14 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 重建索引任务列表页查询.
+     *
+     * @param pageIndex 目标页号.
+     * @param pageSize  分页大小.
+     * @param isActive  true 正在运行,false运行结束的.
+     * @return 任务列表.
+     */
     @DiscoverAction(describe = "重建索引任务列表页查询", retClass = Collection.class, retInner = DevOpsTaskInfo.class)
     public Collection<DevOpsTaskInfo> listActiveTasks(
         @MethodParam(name = "pageIndex", klass = long.class, required = true) long pageIndex,
@@ -273,6 +310,13 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 查询活动中的任务.
+     *
+     * @param entityClassId 目标元信息标识.
+     * @param profile       替身.
+     * @return 任务信息.
+     */
     @DiscoverAction(describe = "查询活动任务", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo activeTask(
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
@@ -290,6 +334,12 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+    /**
+     * 取消任务.
+     *
+     * @param taskId 任务标识.
+     * @return true取消成功, false取消失败.
+     */
     @DiscoverAction(describe = "取消任务", retClass = boolean.class)
     public boolean cancel(
         @MethodParam(name = "taskId", klass = String.class, required = true) String taskId) {

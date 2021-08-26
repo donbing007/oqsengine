@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * 元信息同步MOCk.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/14
  * @since 1.8
@@ -45,6 +47,9 @@ public class EntityClassSyncProtoBufMocker {
         new GeneralConstant.FourTa<>(10, FieldType.LONG.name(),
             CalculationType.FORMULA, true);
 
+    /**
+     * 响应.
+     */
     public static class Response {
         /**
          * 将生成随机的3层父子类结构[爷爷、父亲、儿子].
@@ -113,17 +118,20 @@ public class EntityClassSyncProtoBufMocker {
             .addAllEntityFields(entityFieldInfos)
             .addAllRelations(relationInfos)
             .addProfiles(
-                profileInfo(GeneralConstant.PROFILE_CODE_1.getValue() * id, GeneralConstant.PROFILE_CODE_1.getKey(), EXPECTED_PROFILE_FOUR_TA)
+                profileInfo(GeneralConstant.PROFILE_CODE_1.getValue() * id, GeneralConstant.PROFILE_CODE_1.getKey(),
+                    EXPECTED_PROFILE_FOUR_TA)
             )
             .addProfiles(
-                profileInfo(GeneralConstant.PROFILE_CODE_2.getValue() * id, GeneralConstant.PROFILE_CODE_2.getKey(), EXPECTED_PROFILE_FOUR_TA))
+                profileInfo(GeneralConstant.PROFILE_CODE_2.getValue() * id, GeneralConstant.PROFILE_CODE_2.getKey(),
+                    EXPECTED_PROFILE_FOUR_TA))
             .build();
     }
 
     /**
      * 生成profileInfo.
      */
-    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
+    public static ProfileInfo profileInfo(long id, String code,
+                                          GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
         return ProfileInfo.newBuilder().setCode(code)
             .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id,
                 GeneralConstant.DEFAULT_RELATION_TYPE, id))
@@ -133,7 +141,7 @@ public class EntityClassSyncProtoBufMocker {
     }
 
     /**
-     * 生成通用calculator
+     * 生成通用calculator.
      */
     public static Calculator genericCalculator() {
         return Calculator.newBuilder()
@@ -142,7 +150,7 @@ public class EntityClassSyncProtoBufMocker {
     }
 
     /**
-     * 生成formula-calculator
+     * 生成formula-calculator.
      */
     public static Calculator formulaCalculator(String expression, int level, FieldType fieldType) {
         Optional<Any> result = ProtoAnyHelper.toAnyValue(defaultValue(fieldType));
@@ -157,9 +165,16 @@ public class EntityClassSyncProtoBufMocker {
     }
 
     /**
-     * 生成autoFill-calculator
+     * 生成autoFill-calculator.
      */
-    public static Calculator autoFillCalculator(String patten, String express, int type, int level, List<String> args, String model, String min, int step) {
+    public static Calculator autoFillCalculator(String patten,
+                                                String express,
+                                                int type,
+                                                int level,
+                                                List<String> args,
+                                                String model,
+                                                String min,
+                                                int step) {
         return Calculator.newBuilder()
             .setCalculateType(CalculationType.AUTO_FILL.getSymbol())
             .setPatten(patten).setModel(model)
@@ -207,10 +222,11 @@ public class EntityClassSyncProtoBufMocker {
                 break;
             }
             case AUTO_FILL: {
-                builder.setCalculator(autoFillCalculator(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_SENIOR_EXPRESSION,
-                    GeneralConstant.MOCK_DOMAIN_NOT_TYPE, GeneralConstant.MOCK_LEVEL,
-                    GeneralConstant.MOCK_SENIOR_ARGS, GeneralConstant.MOCK_MODEL,
-                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP));
+                builder.setCalculator(
+                    autoFillCalculator(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_SENIOR_EXPRESSION,
+                        GeneralConstant.MOCK_DOMAIN_NOT_TYPE, GeneralConstant.MOCK_LEVEL,
+                        GeneralConstant.MOCK_SENIOR_ARGS, GeneralConstant.MOCK_MODEL,
+                        GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP));
                 break;
             }
             default: {
@@ -244,7 +260,8 @@ public class EntityClassSyncProtoBufMocker {
      * 生成.
      */
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(
-        boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        boolean searchable,
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)

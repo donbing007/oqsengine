@@ -44,6 +44,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -111,6 +112,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private BizIDGenerator bizIDGenerator;
+
+    @Resource
+    private TaskCoordinator taskCoordinator;
 
     /**
      * 字段校验器工厂.
@@ -286,6 +290,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        if (entity.id() <= 0) {
+            long newId = longNoContinuousPartialOrderIdGenerator.next();
+            entity.resetId(newId);
+        }
+        entity.resetVersion(0);
+        entity.restMaintainId(0);
+
         // 计算字段的计算动作.
         Collection<CalculationHint> hints;
         try {
@@ -318,13 +329,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         OperationResult operationResult = null;
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
-
-                if (entity.id() <= 0) {
-                    long newId = longNoContinuousPartialOrderIdGenerator.next();
-                    entity.resetId(newId);
-                }
-                entity.resetVersion(0);
-                entity.restMaintainId(0);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -833,6 +837,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withScenarios(scenarios)
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
+            .withTaskCoordinator(this.taskCoordinator)
             .withKeyValueStorage(this.kv)
             .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
             .withEntityClass(entityClass)

@@ -66,6 +66,8 @@ class TaskKeyValueQueueTest {
         Field serializeStrategy = TaskKeyValueQueue.class.getDeclaredField("serializeStrategy");
         serializeStrategy.setAccessible(true);
         serializeStrategy.set(instance, new HessianSerializeStrategy());
+
+        instance.init();
     }
 
     /**
@@ -73,6 +75,7 @@ class TaskKeyValueQueueTest {
      */
     @AfterEach
     public void after() throws Exception {
+        instance.destroy();
         keyValueStorage = null;
         instance = null;
         ExecutorHelper.shutdownAndAwaitTermination(worker);
@@ -98,7 +101,6 @@ class TaskKeyValueQueueTest {
         TimeUnit.SECONDS.sleep(5);
         Assertions.assertTrue(dataMap.containsKey(prefix + "-" + 1));
         Assertions.assertEquals(dataMap.size(), 1);
-        instance.destroy();
     }
 
     /**
@@ -115,7 +117,6 @@ class TaskKeyValueQueueTest {
         ConcurrentMap dataMap = (ConcurrentMap) data.get(keyValueStorage);
 
         Assertions.assertEquals(dataMap.size(), 0);
-        instance.destroy();
     }
 
     /**
@@ -153,7 +154,6 @@ class TaskKeyValueQueueTest {
             Assertions.assertTrue(map.containsKey(prefix + "-" + (i + 1)));
         }
         Assertions.assertEquals(map.size(), count);
-        instance.destroy();
     }
 
     /**
@@ -220,7 +220,6 @@ class TaskKeyValueQueueTest {
 
         Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
-        instance.destroy();
     }
 
     /**
@@ -287,7 +286,6 @@ class TaskKeyValueQueueTest {
 
         Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
-        instance.destroy();
     }
 
     /**
@@ -356,7 +354,6 @@ class TaskKeyValueQueueTest {
 
         Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
-        instance.destroy();
     }
 
     public static class MockTask implements Task, Serializable {

@@ -15,7 +15,7 @@ import javax.annotation.PreDestroy;
  */
 public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
 
-    private static final String DEFAULT_NAMESPACE = "com.xforceplus.ultraman.oqsengine.id";
+    private static final String DEFAULT_NAMESPACE = "com.xforceplus.ultraman.oqsengine.default";
 
 
     private StatefulRedisConnection<String, String> connection;

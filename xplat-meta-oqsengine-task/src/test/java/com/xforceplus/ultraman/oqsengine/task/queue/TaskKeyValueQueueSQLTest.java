@@ -115,6 +115,7 @@ public class TaskKeyValueQueueSQLTest {
         Field serializeStrategy = TaskKeyValueQueue.class.getDeclaredField("serializeStrategy");
         serializeStrategy.setAccessible(true);
         serializeStrategy.set(instance, new HessianSerializeStrategy());
+        instance.init();
     }
 
     /**
@@ -122,6 +123,7 @@ public class TaskKeyValueQueueSQLTest {
      */
     @AfterEach
     public void after() throws Exception {
+        instance.destroy();
         try (Connection conn = ds.getConnection()) {
             try (Statement st = conn.createStatement()) {
                 st.execute("truncate table kv");
@@ -156,7 +158,7 @@ public class TaskKeyValueQueueSQLTest {
         long initPoint = (long) initPointField.get(instance);
 
         Optional<byte[]> bytes = keyValueStorage.get(prefix + "-" + initPoint);
-        Task task = (Task) new HessianSerializeStrategy().unserialize(bytes.get());
+        Task task = new HessianSerializeStrategy().unserialize(bytes.get(), Task.class);
         Assertions.assertEquals(task.location(), initPoint);
         Assertions.assertTrue(keyValueStorage.exist(prefix + "-" + initPoint));
 

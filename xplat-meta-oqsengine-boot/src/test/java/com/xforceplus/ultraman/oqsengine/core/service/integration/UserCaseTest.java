@@ -140,6 +140,9 @@ public class UserCaseTest extends AbstractContainerExtends {
         Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id(), null))
             .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
 
+        Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id()))
+            .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
+
         Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id(), null))
             .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
 
@@ -406,7 +409,8 @@ public class UserCaseTest extends AbstractContainerExtends {
                     ))
                 ).build();
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
+            Assertions
+                .assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
@@ -799,7 +803,7 @@ public class UserCaseTest extends AbstractContainerExtends {
     }
 
     @Test
-    public void testReplaceMaintenance() throws Exception {
+    public void testlookup() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
             .withEntityValue(
@@ -850,10 +854,47 @@ public class UserCaseTest extends AbstractContainerExtends {
             ).build();
         entityManagementService.replace(newTargetEntity);
 
-        queryLookupEntities = entitySearchService.selectMultiple(
-            lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.lookupEntityClass.ref());
-        queryLookupEntities.forEach(e -> {
-            System.out.println(e.entityValue().getValue("lookup-l2-string").get().valueToString());
-        });
+        boolean success = false;
+        long successSize = 0;
+        for (int i = 0; i < 10000; i++) {
+            queryLookupEntities = entitySearchService.selectMultiple(
+                lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
+                MockEntityClassDefine.lookupEntityClass.ref());
+
+            successSize =
+                queryLookupEntities.stream()
+                    .filter(
+                        e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2"))
+                    .count();
+
+            if (lookupSize != successSize) {
+                logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
+                    lookupSize, successSize, lookupSize - successSize);
+            } else {
+                success = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
+            lookupSize, successSize));
+
+        Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(), "v2"))
+                ),
+            MockEntityClassDefine.lookupEntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(200)).build()
+        );
+
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
+            e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2")
+        ).count());
     }
 }

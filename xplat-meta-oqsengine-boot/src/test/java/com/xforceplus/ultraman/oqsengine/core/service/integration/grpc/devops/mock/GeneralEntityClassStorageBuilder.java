@@ -24,124 +24,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 生成EntityClass的储存器.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/14
  * @since 1.8
  */
 public class GeneralEntityClassStorageBuilder {
-
-
-    /**
-     * 生成.
-     */
-    public static RelationStorage relationLong(long id, long entityId, long fieldId) {
-
-        return relationStorage(id, entityId, fieldId, FieldType.STRING);
-    }
-
-    /**
-     * 生成.
-     */
-    public static RelationStorage relationString(long id, long entityId, long fieldId) {
-
-        return relationStorage(id, entityId, fieldId, FieldType.STRING);
-    }
-
-    /**
-     * 生成.
-     */
-    public static RelationStorage relationStorage(long id, long entityId, long fieldId, FieldType fieldType) {
-        RelationStorage r = new RelationStorage();
-        r.setId(id);
-        r.setCode(GeneralEntityUtils.RelationHelper.code(id));
-        r.setRightEntityClassId(entityId);
-        r.setLeftEntityClassId(id);
-        r.setRelationType(GeneralConstant.DEFAULT_RELATION_TYPE);
-        r.setEntityField(EntityField.Builder.anEntityField()
-            .withId(fieldId)
-            .withFieldType(fieldType)
-            .withName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-            .withConfig(fieldConfig(null))
-            .build());
-        r.setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id));
-        return r;
-    }
-
-    public static <T extends AbstractCalculation> FieldConfig fieldConfig(T calculation) {
-        FieldConfig.Builder builder = FieldConfig.Builder.anFieldConfig()
-            .withFieldSense(FieldConfig.FieldSense.NORMAL)
-            .withSearchable(true)
-            .withRequired(true)
-            .withIdentifie(false);
-
-        if (null != calculation) {
-            builder.withCalculation(calculation);
-        }
-
-        return builder.build();
-    }
-
-    public static StaticCalculation staticCalculation() {
-        return StaticCalculation.Builder.anStaticCalculation().build();
-    }
-
-    public static Formula formula(String expression, int level, FieldType fieldType) {
-        return Formula.Builder.anFormula()
-            .withExpression(expression)
-            .withLevel(level)
-            .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
-            .withFailedDefaultValue(defaultValue(fieldType))
-            .withArgs(DEFAULT_ARGS)
-            .build();
-    }
-
-    public static AutoFill autoFill(String patten, String model, String min, int step) {
-        return AutoFill.Builder.anAutoFill()
-            .withStep(step)
-            .withDomainNoType(AutoFill.DomainNoType.instance(GeneralConstant.MOCK_DOMAIN_NOT_TYPE))
-            .withLevel(GeneralConstant.MOCK_LEVEL)
-            .withExpression(GeneralConstant.MOCK_SENIOR_EXPRESSION)
-            .withArgs(GeneralConstant.MOCK_SENIOR_ARGS)
-            .withMin(min)
-            .withPatten(patten)
-            .withModel(model)
-            .build();
-    }
-
-    public static EntityField genericEntityField(long id,
-                                                 GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
-
-        FieldType fieldType = FieldType.fromRawType(fourTa.getB());
-
-
-        EntityField.Builder builder = EntityField.Builder.anEntityField()
-            .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
-            .withName(GeneralEntityUtils.EntityFieldHelper.name(id))
-            .withCnName(GeneralEntityUtils.EntityFieldHelper.cname(id))
-            .withDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .withFieldType(fieldType);
-
-        switch (fourTa.getC()) {
-            case STATIC: {
-                builder.withConfig(fieldConfig(staticCalculation()));
-                break;
-            }
-            case FORMULA: {
-                builder.withConfig(fieldConfig(formula(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType)));
-                break;
-            }
-            case AUTO_FILL: {
-                builder.withConfig(fieldConfig(autoFill(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
-                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP)));
-                break;
-            }
-            default: {
-                throw new IllegalArgumentException("not support generate unknown-type calculator");
-            }
-        }
-
-        return builder.build();
-    }
 
     /**
      * 生成.
@@ -158,8 +47,9 @@ public class GeneralEntityClassStorageBuilder {
         if (null != expectedEntityStorage.getRelationIds() && !expectedEntityStorage.getRelationIds().isEmpty()) {
             relations[0] = relationLong(expectedEntityStorage.getSelf(), expectedEntityStorage.getRelationIds().get(0),
                 expectedEntityStorage.getSelf());
-            relations[1] = relationString(expectedEntityStorage.getSelf() + 1, expectedEntityStorage.getRelationIds().get(0),
-                expectedEntityStorage.getSelf());
+            relations[1] =
+                relationString(expectedEntityStorage.getSelf() + 1, expectedEntityStorage.getRelationIds().get(0),
+                    expectedEntityStorage.getSelf());
         }
 
         EntityClassStorage entityClassStorage = new EntityClassStorage();
@@ -192,22 +82,155 @@ public class GeneralEntityClassStorageBuilder {
         return entityClassStorage;
     }
 
-    public static Map<String, ProfileStorage> profileStorage(long id) {
+
+    /**
+     * 生成.
+     */
+    private static RelationStorage relationLong(long id, long entityId, long fieldId) {
+
+        return relationStorage(id, entityId, fieldId, FieldType.STRING);
+    }
+
+    /**
+     * 生成.
+     */
+    private static RelationStorage relationString(long id, long entityId, long fieldId) {
+
+        return relationStorage(id, entityId, fieldId, FieldType.STRING);
+    }
+
+    /**
+     * 生成.
+     */
+    private static RelationStorage relationStorage(long id, long entityId, long fieldId, FieldType fieldType) {
+        RelationStorage r = new RelationStorage();
+        r.setId(id);
+        r.setCode(GeneralEntityUtils.RelationHelper.code(id));
+        r.setRightEntityClassId(entityId);
+        r.setLeftEntityClassId(id);
+        r.setRelationType(GeneralConstant.DEFAULT_RELATION_TYPE);
+        r.setEntityField(EntityField.Builder.anEntityField()
+            .withId(fieldId)
+            .withFieldType(fieldType)
+            .withName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
+            .withConfig(fieldConfig(null))
+            .build());
+        r.setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id));
+        return r;
+    }
+
+    /**
+     * 构造字段配置.
+     */
+    private static <T extends AbstractCalculation> FieldConfig fieldConfig(T calculation) {
+        FieldConfig.Builder builder = FieldConfig.Builder.anFieldConfig()
+            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+            .withSearchable(true)
+            .withRequired(true)
+            .withIdentifie(false);
+
+        if (null != calculation) {
+            builder.withCalculation(calculation);
+        }
+
+        return builder.build();
+    }
+
+    private static StaticCalculation staticCalculation() {
+        return StaticCalculation.Builder.anStaticCalculation().build();
+    }
+
+    /**
+     * 构造公式计算字段信息.
+     */
+    private static Formula formula(String expression, int level, FieldType fieldType) {
+        return Formula.Builder.anFormula()
+            .withExpression(expression)
+            .withLevel(level)
+            .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+            .withFailedDefaultValue(defaultValue(fieldType))
+            .withArgs(DEFAULT_ARGS)
+            .build();
+    }
+
+    /**
+     * 构造自动ID的计算信息.
+     */
+    private static AutoFill autoFill(String patten, String model, String min, int step) {
+        return AutoFill.Builder.anAutoFill()
+            .withStep(step)
+            .withDomainNoType(AutoFill.DomainNoType.instance(GeneralConstant.MOCK_DOMAIN_NOT_TYPE))
+            .withLevel(GeneralConstant.MOCK_LEVEL)
+            .withExpression(GeneralConstant.MOCK_SENIOR_EXPRESSION)
+            .withArgs(GeneralConstant.MOCK_SENIOR_ARGS)
+            .withMin(min)
+            .withPatten(patten)
+            .withModel(model)
+            .build();
+    }
+
+    /**
+     * 生成字段.
+     */
+    private static EntityField genericEntityField(long id,
+                                                  GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
+
+        FieldType fieldType = FieldType.fromRawType(fourTa.getB());
+
+
+        EntityField.Builder builder = EntityField.Builder.anEntityField()
+            .withId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
+            .withName(GeneralEntityUtils.EntityFieldHelper.name(id))
+            .withCnName(GeneralEntityUtils.EntityFieldHelper.cname(id))
+            .withDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
+            .withFieldType(fieldType);
+
+        switch (fourTa.getC()) {
+            case STATIC: {
+                builder.withConfig(fieldConfig(staticCalculation()));
+                break;
+            }
+            case FORMULA: {
+                builder.withConfig(
+                    fieldConfig(formula(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType)));
+                break;
+            }
+            case AUTO_FILL: {
+                builder.withConfig(fieldConfig(autoFill(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
+                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP)));
+                break;
+            }
+            default: {
+                throw new IllegalArgumentException("not support generate unknown-type calculator");
+            }
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * 替身储存.
+     */
+    private static Map<String, ProfileStorage> profileStorage(long id) {
         Map<String, ProfileStorage> profileStorageMap = new HashMap<>();
 
         profileStorageMap.put(PROFILE_CODE_1.getKey(),
-                toProfile(PROFILE_CODE_1.getValue() * id, PROFILE_CODE_1.getKey()));
+            toProfile(PROFILE_CODE_1.getValue() * id, PROFILE_CODE_1.getKey()));
         profileStorageMap.put(PROFILE_CODE_2.getKey(),
             toProfile(PROFILE_CODE_2.getValue() * id, PROFILE_CODE_2.getKey()));
 
         return profileStorageMap;
     }
 
-    public static ProfileStorage toProfile(long id, String code) {
+    /**
+     * 构造替身储存.
+     */
+    private static ProfileStorage toProfile(long id, String code) {
         RelationStorage relationStorage = relationLong(id, id + GeneralConstant.MOCK_PROFILE_E_DISTANCE, id);
         EntityField entityField = genericEntityField(id, EXPECTED_PROFILE_FOUR_TA);
 
-        return new ProfileStorage(code, Collections.singletonList(entityField), Collections.singletonList(relationStorage));
+        return new ProfileStorage(code, Collections.singletonList(entityField),
+            Collections.singletonList(relationStorage));
     }
 
 

@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.discover.server.common.utils.JsonUtils;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
@@ -10,16 +9,12 @@ import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import javax.annotation.Resource;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +48,9 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
 
-
+    /**
+     * 每个测试前初始化.
+     */
     @BeforeEach
     public void before() throws IllegalAccessException {
         MetaManager metaManager = new StorageMetaManager();
