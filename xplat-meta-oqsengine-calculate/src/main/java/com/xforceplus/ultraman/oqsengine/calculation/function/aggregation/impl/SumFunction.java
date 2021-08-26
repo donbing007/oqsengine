@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -21,16 +23,20 @@ import java.util.stream.Collectors;
  */
 public class SumFunction implements AggregationFunction {
     @Override
-    public Optional<IValue> excute(List<IValue> values) {
-        if (values.size() < 2) {
+    public Optional<IValue> excute(IValue agg, IValue o, IValue n) {
+        if (!(agg != null & o != null && n != null)) {
             return Optional.empty();
         }
-        //取第一个value的字段类型作为转换
-        if (values.get(0) instanceof DecimalValue) {
-            BigDecimalSummaryStatistics bds = values.stream().map(v -> ((DecimalValue)v).getValue()).collect(Collectors.toList())
-                    .stream().collect(BigDecimalSummaryStatistics.statistics());
-        } else if (values.get(0) instanceof LongValue) {
-            LongSummaryStatistics lss = values.stream().collect(Collectors.summarizingLong(IValue::valueToLong));
+        if (o instanceof DecimalValue) {
+            BigDecimal temp = ((DecimalValue)agg).getValue()
+                    .add(((DecimalValue)n).getValue())
+                    .subtract(((DecimalValue)o).getValue());
+            agg.setStringValue(temp.toString());
+            return Optional.of(agg);
+        } else if (o instanceof LongValue) {
+            Long temp = agg.valueToLong() + n.valueToLong() - o.valueToLong();
+            agg.setStringValue(temp.toString());
+            return Optional.of(agg);
         }
         return Optional.empty();
     }

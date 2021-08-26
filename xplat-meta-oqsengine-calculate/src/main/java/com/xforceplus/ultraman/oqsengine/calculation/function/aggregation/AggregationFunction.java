@@ -18,5 +18,5 @@ public interface AggregationFunction {
      * 聚合执行.
      *
      */
-    public Optional<IValue> excute(List<IValue> values);
+    public Optional<IValue> excute(IValue agg, IValue o, IValue n);
 }

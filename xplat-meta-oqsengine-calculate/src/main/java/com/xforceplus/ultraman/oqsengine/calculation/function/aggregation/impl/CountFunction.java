@@ -16,7 +16,7 @@ import java.util.Optional;
 public class CountFunction implements AggregationFunction {
 
     @Override
-    public Optional<IValue> excute(List<IValue> values) {
+    public Optional<IValue> excute(IValue agg, IValue o, IValue n) {
         return Optional.empty();
     }
 
