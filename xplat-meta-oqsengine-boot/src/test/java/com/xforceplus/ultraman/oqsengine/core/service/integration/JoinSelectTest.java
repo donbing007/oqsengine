@@ -86,6 +86,9 @@ public class JoinSelectTest extends AbstractContainerExtends {
     public JoinSelectTest() throws IllegalAccessException {
     }
 
+    /**
+     * 每个测试的初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -120,6 +123,9 @@ public class JoinSelectTest extends AbstractContainerExtends {
         initialization = true;
     }
 
+    /**
+     * 每个测试后的清理.
+     */
     @AfterEach
     public void after() throws Exception {
         if (initialization) {

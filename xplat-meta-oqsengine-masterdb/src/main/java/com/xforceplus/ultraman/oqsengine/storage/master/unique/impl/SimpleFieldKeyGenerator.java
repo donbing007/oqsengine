@@ -41,7 +41,8 @@ public class SimpleFieldKeyGenerator implements UniqueKeyGenerator {
 
     @Override
     public Map<String, UniqueIndexValue> generator(IEntity entity) {
-        Optional<IEntityClass> entityClass = metaManager.load(entity.entityClassRef().getId());
+        Optional<IEntityClass> entityClass =
+            metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
         if (!entityClass.isPresent()) {
             throw new RuntimeException(String.format("Can not find andy EntityClass with id %s", entity.id()));
         }

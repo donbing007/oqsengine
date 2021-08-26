@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +19,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2021/08/05 14:22
  * @since 1.8
  */
-public class TaskKeyValueQueue implements TaskQueue {
+public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
 
     private static final String DEFAULT_NAME = "default";
     private Logger logger = LoggerFactory.getLogger(TaskKeyValueQueue.class);
@@ -36,7 +40,7 @@ public class TaskKeyValueQueue implements TaskQueue {
     @Resource
     private ResourceLocker locker;
 
-    @Resource
+    @Resource(name = "longContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource
@@ -123,6 +127,11 @@ public class TaskKeyValueQueue implements TaskQueue {
         this.name = name;
         this.anyLock = "anyLock-" + name;
 
+    }
+
+    @PostConstruct
+    @Override
+    public void init() throws Exception {
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
         this.unusedTaskSize = String.format("%s-%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
@@ -133,19 +142,19 @@ public class TaskKeyValueQueue implements TaskQueue {
 
         this.unSubmitTask = new ConcurrentHashMap();
         worker = new ThreadPoolExecutor(1, 1,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue(10000),
-                ExecutorHelper.buildNameThreadFactory("task", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(10000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
         worker.submit(new TaskBatchSave());
     }
 
-
     /**
      * 停止append任务,结束插入磁盘任务.
      */
-    public void destroy() {
+    @PreDestroy
+    public void destroy() throws Exception {
         running = false;
         try {
             latch.await(60, TimeUnit.SECONDS);
@@ -180,33 +189,12 @@ public class TaskKeyValueQueue implements TaskQueue {
         task.setLocation(elementId);
         String elementKey = buildNextElementKey(elementId);
         // 将任务暂存在内存中，经过syncGapTimeMs时长后持久化
-        unSubmitTask.put(elementKey, serializeStrategy.serialize(task));
+        unSubmitTask.put(elementKey, serializeStrategy.serialize((Serializable) task));
     }
 
     @Override
     public Task get() {
-        checkRunning();
-        try {
-            locker.lock(anyLock);
-            /*
-                判断当前队列是否有任务，没有任务则等待
-             */
-            while (true) {
-                if (kv.incr(unusedTaskSize, 0) <= 0) {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
-                } else {
-                    break;
-                }
-            }
-            // 取出任务后将未取出任务数减一
-            kv.incr(unusedTaskSize, -1L);
-        } catch (RuntimeException runtimeException) {
-            logger.error("incr unusedTask {} failed when get task", unusedTaskSize);
-            return null;
-        } finally {
-            locker.unlock(anyLock);
-        }
-        return getTask();
+        return get(Long.MAX_VALUE);
     }
 
 
@@ -224,15 +212,15 @@ public class TaskKeyValueQueue implements TaskQueue {
                     return null;
                 }
                 if (kv.incr(unusedTaskSize, 0) <= 0) {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000L));
                 } else {
                     break;
                 }
             }
             // 取出任务后将未取出任务数减一
             kv.incr(unusedTaskSize, -1L);
-        } catch (RuntimeException runtimeException) {
-            logger.error("incr unusedTask {} failed when get task", unusedTaskSize);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             return null;
         } finally {
             locker.unlock(anyLock);
@@ -263,7 +251,8 @@ public class TaskKeyValueQueue implements TaskQueue {
                 break;
             } else {
                 if (count++ >= 3) {
-                    throw new RuntimeException(String.format("Task not found where elementKey equals %s .", elementKey));
+                    throw new RuntimeException(
+                        String.format("Task not found where elementKey equals %s .", elementKey));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
@@ -276,7 +265,7 @@ public class TaskKeyValueQueue implements TaskQueue {
         Task task;
         Optional<byte[]> optionalBytes = kv.get(elementKey);
         if (optionalBytes.isPresent()) {
-            task = (Task) serializeStrategy.unserialize(optionalBytes.get());
+            task = serializeStrategy.unserialize(optionalBytes.get(), Task.class);
             return task;
         }
         return null;
@@ -300,7 +289,8 @@ public class TaskKeyValueQueue implements TaskQueue {
             } catch (Exception e) {
                 if (count++ >= 3) {
                     logger.error(e.getMessage());
-                    throw new RuntimeException(String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
+                    throw new RuntimeException(
+                        String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
@@ -311,8 +301,8 @@ public class TaskKeyValueQueue implements TaskQueue {
     private String buildNextElementKey(long id) {
         StringBuilder buff = new StringBuilder();
         buff.append(this.elementKeyPrefix)
-                .append('-')
-                .append(id);
+            .append('-')
+            .append(id);
         return buff.toString();
     }
 
@@ -354,7 +344,8 @@ public class TaskKeyValueQueue implements TaskQueue {
                         }
                     }
                 } catch (RuntimeException e) {
-                    logger.error(String.format("kv error when batchSave or incr unusedTask.source[{}]", e.getMessage()), e);
+                    logger.error(String.format("kv error when batchSave or incr unusedTask.source[{}]", e.getMessage()),
+                        e);
                 }
             }
 

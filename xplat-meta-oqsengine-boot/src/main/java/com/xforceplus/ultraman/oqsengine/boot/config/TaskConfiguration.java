@@ -24,7 +24,7 @@ public class TaskConfiguration {
 
     @Bean
     public TaskQueue taskQueue() {
-        return new TaskKeyValueQueue();
+        return new TaskKeyValueQueue("com.xforceplus.ultraman.queue");
     }
 
     /**
@@ -38,11 +38,10 @@ public class TaskConfiguration {
         DefaultTaskCoordinator coordinator = new DefaultTaskCoordinator();
         coordinator.setWorker(taskThreadPool);
         coordinator.setWorkerNumber(number);
+
         for (TaskRunner runner : taskRunners) {
             coordinator.registerRunner(runner);
         }
-
-        coordinator.init();
 
         return coordinator;
     }

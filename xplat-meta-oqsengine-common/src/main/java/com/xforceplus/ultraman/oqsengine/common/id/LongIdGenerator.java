@@ -41,7 +41,7 @@ public interface LongIdGenerator extends IdGenerator<Long> {
      */
     default void reset(String ns) {
         throw new UnsupportedOperationException(
-            String
-                .format("The current ID generator(%s) does not support namespaces.", this.getClass().getSimpleName()));
+            String.format("The current ID generator(%s) does not support namespaces.",
+                this.getClass().getSimpleName()));
     }
 }

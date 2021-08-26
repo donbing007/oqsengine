@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.common.serializable;
 
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * 默认的序列化策略实现，使用JDK提供的默认序列化方案.
@@ -16,7 +17,7 @@ public class JdkSerializeStrategy implements SerializeStrategy {
     }
 
     @Override
-    public byte[] serialize(Object source) throws CanNotBeSerializedException {
+    public byte[] serialize(Serializable source) throws CanNotBeSerializedException {
         try {
             return ByteUtil.objectToByte(source);
         } catch (IOException ex) {
@@ -25,9 +26,9 @@ public class JdkSerializeStrategy implements SerializeStrategy {
     }
 
     @Override
-    public Object unserialize(byte[] datas) throws CanNotBeUnSerializedException {
+    public <T> T unserialize(byte[] datas, Class<T> clazz) throws CanNotBeUnSerializedException {
         try {
-            return ByteUtil.byteToObject(datas);
+            return clazz.cast(ByteUtil.byteToObject(datas));
         } catch (Exception ex) {
             throw new CanNotBeUnSerializedException(ex.getMessage(), ex);
         }

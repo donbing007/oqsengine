@@ -80,6 +80,10 @@ public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
         return new HashMap<>(runners);
     }
 
+    public DefaultTaskCoordinator() {
+        runners = new ConcurrentHashMap<>();
+    }
+
     @PostConstruct
     public void init() {
         if (running) {
@@ -88,8 +92,6 @@ public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
         if (worker == null) {
             throw new IllegalArgumentException("No execution thread pool is set.");
         }
-
-        runners = new ConcurrentHashMap<>();
 
         running = true;
 
@@ -110,8 +112,6 @@ public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Override
     public boolean registerRunner(TaskRunner runner) {
-        checkRunning();
-
         Class clazz = runner.getClass();
 
         TaskRunner oldRunner = runners.putIfAbsent(clazz.getSimpleName(), runner);
@@ -120,6 +120,8 @@ public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Override
     public Optional<TaskRunner> getRunner(Class clazz) {
+        checkRunning();
+
         return Optional.ofNullable(runners.get(clazz.getSimpleName()));
     }
 
@@ -154,7 +156,7 @@ public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 1000L;
+        private final long checkTimeoutMs = 5000L;
 
         @Override
         public void run() {

@@ -8,18 +8,18 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.m
 public class GeneralEntityUtils {
 
     /**
-     * entityClassHelper
+     * entityClassHelper.
      */
     public static class EntityClassHelper {
         /**
-         * 产生父ID
+         * 产生父ID.
          */
         public static long fatherId(long id) {
             return id + GeneralConstant.MOCK_FATHER_DISTANCE;
         }
 
         /**
-         * 产生祖先ID
+         * 产生祖先ID.
          */
         public static long ancId(long id) {
             return id + GeneralConstant.MOCK_ANC_DISTANCE;
@@ -27,33 +27,33 @@ public class GeneralEntityUtils {
     }
 
     /**
-     * entityFieldHelper
+     * entityFieldHelper.
      */
     public static class EntityFieldHelper {
 
         /**
-         *  产生id
+         * 产生id.
          */
         public static long id(long id, boolean isProfile) {
             return isProfile ? id + GeneralConstant.MOCK_PROFILE_E_DISTANCE : id;
         }
 
         /**
-         * 产生 name
+         * 产生 name.
          */
         public static String name(long id) {
             return id + GeneralConstant.E + GeneralConstant.NAME_SUFFIX;
         }
 
         /**
-         * 产生 cname
+         * 产生 cname.
          */
         public static String cname(long id) {
             return id + GeneralConstant.E + GeneralConstant.CNAME_SUFFIX;
         }
 
         /**
-         * 产生 dictId
+         * 产生 dictId.
          */
         public static String dictId(long id) {
             return id + GeneralConstant.E + GeneralConstant.DICT_ID_SUFFIX;
@@ -61,19 +61,19 @@ public class GeneralEntityUtils {
     }
 
     /**
-     * relationHelper
+     * relationHelper.
      */
     public static class RelationHelper {
 
         /**
-         * 产生belongTo
+         * 产生belongTo.
          */
         public static boolean belongTo(long id) {
             return id % 2 == 0;
         }
 
         /**
-         * 产生code
+         * 产生code.
          */
         public static String code(long id) {
             return id + GeneralConstant.R + GeneralConstant.CODE_SUFFIX;

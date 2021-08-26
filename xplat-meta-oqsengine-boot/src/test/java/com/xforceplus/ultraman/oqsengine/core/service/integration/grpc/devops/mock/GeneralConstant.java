@@ -20,7 +20,8 @@ public class GeneralConstant {
     public static final int DEFAULT_RELATION_TYPE = 1;
     public static final int MOCK_PROFILE_R_DISTANCE = 200101;
     public static final int MOCK_PROFILE_E_DISTANCE = 100101;
-    public static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense MOCK_SYSTEM_FIELD_TYPE =
+    public static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense
+        MOCK_SYSTEM_FIELD_TYPE =
         FieldConfig.MetaFieldSense.NORMAL;
 
     public static final String MOCK_EXPRESSION = "return 1 + 1;";
@@ -55,15 +56,19 @@ public class GeneralConstant {
         new AbstractMap.SimpleEntry<>("PROFILE_CODE_2", 3L);
 
     /**
-     * 提供一个4元组
-     * @param <A>
-     * @param <B>
-     * @param <C>
-     * @param <D>
+     * 提供一个4元组.
+     *
+     * @param <A> 第一个元素.
+     * @param <B> 第二个元素.
+     * @param <C> 第三个元素.
+     * @param <D> 第四个元素.
      */
     public static class FourTa<A, B, C, D> {
         private final Object[] fourTa;
 
+        /**
+         * 实例化.
+         */
         public FourTa(A a, B b, C c, D d) {
             this.fourTa = new Object[4];
             this.fourTa[0] = a;
@@ -89,6 +94,12 @@ public class GeneralConstant {
         }
     }
 
+    /**
+     * 根据字面类型决定其默认值.
+     *
+     * @param fieldType 逻辑字段类型.
+     * @return 值.
+     */
     public static Object defaultValue(FieldType fieldType) {
         switch (fieldType) {
             case LONG: {

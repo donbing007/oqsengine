@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -11,19 +13,40 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
 
-    private AtomicLong id;
+    private static final String DEFAULT_NS = "com.xforceplus.ultraman.oqsengine.default";
+
+    private ConcurrentMap<String, AtomicLong> pool;
+    private long initId;
 
     public IncreasingOrderLongIdGenerator() {
         this(0);
     }
 
+    /**
+     * 实例化.
+     *
+     * @param initId 初始值.
+     */
     public IncreasingOrderLongIdGenerator(long initId) {
-        id = new AtomicLong(initId);
+        initId = this.initId;
+        pool = new ConcurrentHashMap<>();
+        pool.put(DEFAULT_NS, new AtomicLong(initId));
     }
 
     @Override
     public Long next() {
-        return id.incrementAndGet();
+        return next(DEFAULT_NS);
+    }
+
+    @Override
+    public Long next(String nameSpace) {
+        AtomicLong newLong = new AtomicLong(initId);
+        AtomicLong old = pool.putIfAbsent(nameSpace, newLong);
+        if (old == null) {
+            return newLong.incrementAndGet();
+        } else {
+            return old.incrementAndGet();
+        }
     }
 
     @Override
@@ -38,6 +61,19 @@ public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
 
     @Override
     public void reset() {
-        id.set(0);
+        reset(DEFAULT_NS);
+    }
+
+    @Override
+    public void reset(String ns) {
+        AtomicLong old = pool.putIfAbsent(ns, new AtomicLong(initId));
+        if (old != null) {
+            old.set(0);
+        }
+    }
+
+    @Override
+    public boolean supportNameSpace() {
+        return true;
     }
 }
