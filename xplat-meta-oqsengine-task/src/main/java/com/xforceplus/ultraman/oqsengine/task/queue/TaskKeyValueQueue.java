@@ -126,7 +126,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     public TaskKeyValueQueue(String name, long initPoint) {
         this.name = name;
         this.anyLock = "anyLock-" + name;
-
+        this.initPoint = initPoint;
     }
 
     @PostConstruct
@@ -135,7 +135,6 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         this.pointKey = String.format("%s-%s", this.name, POINT_KEY);
         this.unusedTaskSize = String.format("%s-%s", this.name, UNUSED);
         this.elementKeyPrefix = String.format("%s-%s", this.name, ELEMENT_KEY);
-        this.initPoint = initPoint;
         this.running = true;
         this.latch = new CountDownLatch(1);
         this.syncGapTimeMs = 30L;
