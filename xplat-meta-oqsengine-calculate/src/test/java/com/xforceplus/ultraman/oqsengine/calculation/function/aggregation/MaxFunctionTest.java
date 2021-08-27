@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.function;
+package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.MaxFunction;
@@ -133,16 +133,16 @@ public class MaxFunctionTest {
     @Test
     public void excute() {
         MaxFunction maxFunction = new MaxFunction();
-        DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
+        DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
-        DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
+        DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3000.10"));
         Optional<IValue> a = maxFunction.excute(agg, o, n);
         System.out.println(a.get().getValue());
 
 
-        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
+        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
-        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
+        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 1900);
         Optional<IValue> a1 = maxFunction.excute(agg1, o1, n1);
         System.out.println(a1.get().getValue());
     }
@@ -150,16 +150,16 @@ public class MaxFunctionTest {
     @Test
     public void init() {
         MaxFunction maxFunction = new MaxFunction();
-        DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
+        DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
-        DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
+        DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3000.10"));
         Optional<IValue> a = maxFunction.init(agg, Arrays.asList(o, n));
         System.out.println(a.get().getValue());
 
 
-        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
+        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
-        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
+        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 1900);
         Optional<IValue> a1 = maxFunction.init(agg1, Arrays.asList(o1, n1));
         System.out.println(a1.get().getValue());
     }
