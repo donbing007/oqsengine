@@ -18,7 +18,7 @@ public interface AggregationFunction {
      * 聚合执行.
      *
      */
-    public Optional<IValue> excute(IValue agg, IValue o, IValue n);
+    Optional<IValue> excute(IValue agg, IValue o, IValue n);
 
     /**
      * 聚合初始化方法.
@@ -26,5 +26,5 @@ public interface AggregationFunction {
      * @param values 需要计算的值集合.
      * @return 返回计算值.
      */
-    public Optional<IValue> init(IValue agg, List<IValue> values);
+    Optional<IValue> init(IValue agg, List<IValue> values);
 }
