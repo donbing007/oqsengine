@@ -217,5 +217,10 @@ public class DefaultTaskCoordinatorTest {
         public void ack(Task task) {
             waitAckTasks.remove(task.id());
         }
+
+        @Override
+        public void destroy() {
+
+        }
     }
 }

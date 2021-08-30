@@ -64,7 +64,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     /**
      * 未使用任务标识.
      */
-    private static final String UNUSED = "unused";
+    public static final String UNUSED = "unused";
 
     private String anyLock;
 
@@ -153,7 +153,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
      * 停止append任务,结束插入磁盘任务.
      */
     @PreDestroy
-    public void destroy() throws Exception {
+    public void destroy() {
         running = false;
         try {
             latch.await(60, TimeUnit.SECONDS);
