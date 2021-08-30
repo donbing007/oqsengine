@@ -29,7 +29,17 @@ public class BigDecimalSummaryStatistics implements Consumer<BigDecimal> {
     /**
      * 运算数字.
      */
-    private BigDecimal sum = BigDecimal.ZERO, min, max;
+    private BigDecimal sum = BigDecimal.ZERO;
+
+    /**
+     * 运算数字.
+     */
+    private BigDecimal min = BigDecimal.ZERO;
+
+    /**
+     * 运算数字.
+     */
+    private BigDecimal max = BigDecimal.ZERO;
 
     /**
      * 总数.
@@ -38,7 +48,8 @@ public class BigDecimalSummaryStatistics implements Consumer<BigDecimal> {
 
     /**
      * 说明.
-     * @param t 数字
+     *
+     * @param t 数字.
      */
     public void accept(BigDecimal t) {
         if (count == 0) {
@@ -61,6 +72,7 @@ public class BigDecimalSummaryStatistics implements Consumer<BigDecimal> {
 
     /**
      * 合并结果.
+     *
      * @param s 计算单元.
      * @return 返回结果集.
      */
