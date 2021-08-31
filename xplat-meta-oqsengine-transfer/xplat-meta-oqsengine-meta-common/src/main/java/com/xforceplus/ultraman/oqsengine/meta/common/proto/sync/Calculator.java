@@ -33,6 +33,11 @@ private static final long serialVersionUID = 0L;
     lookupEntityFieldId_ = 0L;
     resetType_ = 0;
     domainNoSenior_ = 0;
+    aggregationBoId_ = 0;
+    aggregationFieldId_ = 0;
+    aggregationType_ = 0;
+    aggregationRelationId_ = 0;
+    domainCondition_ = "";
   }
 
   @java.lang.Override
@@ -174,6 +179,32 @@ private static final long serialVersionUID = 0L;
           case 144: {
 
             domainNoSenior_ = input.readInt32();
+            break;
+          }
+          case 152: {
+
+            aggregationBoId_ = input.readInt32();
+            break;
+          }
+          case 160: {
+
+            aggregationFieldId_ = input.readInt32();
+            break;
+          }
+          case 168: {
+
+            aggregationType_ = input.readInt32();
+            break;
+          }
+          case 176: {
+
+            aggregationRelationId_ = input.readInt32();
+            break;
+          }
+          case 186: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            domainCondition_ = s;
             break;
           }
         }
@@ -598,6 +629,76 @@ private static final long serialVersionUID = 0L;
     return domainNoSenior_;
   }
 
+  public static final int AGGREGATIONBOID_FIELD_NUMBER = 19;
+  private int aggregationBoId_;
+  /**
+   * <code>int32 aggregationBoId = 19;</code>
+   */
+  public int getAggregationBoId() {
+    return aggregationBoId_;
+  }
+
+  public static final int AGGREGATIONFIELDID_FIELD_NUMBER = 20;
+  private int aggregationFieldId_;
+  /**
+   * <code>int32 aggregationFieldId = 20;</code>
+   */
+  public int getAggregationFieldId() {
+    return aggregationFieldId_;
+  }
+
+  public static final int AGGREGATIONTYPE_FIELD_NUMBER = 21;
+  private int aggregationType_;
+  /**
+   * <code>int32 aggregationType = 21;</code>
+   */
+  public int getAggregationType() {
+    return aggregationType_;
+  }
+
+  public static final int AGGREGATIONRELATIONID_FIELD_NUMBER = 22;
+  private int aggregationRelationId_;
+  /**
+   * <code>int32 aggregationRelationId = 22;</code>
+   */
+  public int getAggregationRelationId() {
+    return aggregationRelationId_;
+  }
+
+  public static final int DOMAINCONDITION_FIELD_NUMBER = 23;
+  private volatile java.lang.Object domainCondition_;
+  /**
+   * <code>string domainCondition = 23;</code>
+   */
+  public java.lang.String getDomainCondition() {
+    java.lang.Object ref = domainCondition_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      domainCondition_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string domainCondition = 23;</code>
+   */
+  public com.google.protobuf.ByteString
+      getDomainConditionBytes() {
+    java.lang.Object ref = domainCondition_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      domainCondition_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -663,6 +764,21 @@ private static final long serialVersionUID = 0L;
     }
     if (domainNoSenior_ != 0) {
       output.writeInt32(18, domainNoSenior_);
+    }
+    if (aggregationBoId_ != 0) {
+      output.writeInt32(19, aggregationBoId_);
+    }
+    if (aggregationFieldId_ != 0) {
+      output.writeInt32(20, aggregationFieldId_);
+    }
+    if (aggregationType_ != 0) {
+      output.writeInt32(21, aggregationType_);
+    }
+    if (aggregationRelationId_ != 0) {
+      output.writeInt32(22, aggregationRelationId_);
+    }
+    if (!getDomainConditionBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 23, domainCondition_);
     }
     unknownFields.writeTo(output);
   }
@@ -740,6 +856,25 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(18, domainNoSenior_);
     }
+    if (aggregationBoId_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(19, aggregationBoId_);
+    }
+    if (aggregationFieldId_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(20, aggregationFieldId_);
+    }
+    if (aggregationType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(21, aggregationType_);
+    }
+    if (aggregationRelationId_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(22, aggregationRelationId_);
+    }
+    if (!getDomainConditionBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, domainCondition_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -795,6 +930,16 @@ private static final long serialVersionUID = 0L;
         == other.getResetType());
     result = result && (getDomainNoSenior()
         == other.getDomainNoSenior());
+    result = result && (getAggregationBoId()
+        == other.getAggregationBoId());
+    result = result && (getAggregationFieldId()
+        == other.getAggregationFieldId());
+    result = result && (getAggregationType()
+        == other.getAggregationType());
+    result = result && (getAggregationRelationId()
+        == other.getAggregationRelationId());
+    result = result && getDomainCondition()
+        .equals(other.getDomainCondition());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -848,6 +993,16 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getResetType();
     hash = (37 * hash) + DOMAINNOSENIOR_FIELD_NUMBER;
     hash = (53 * hash) + getDomainNoSenior();
+    hash = (37 * hash) + AGGREGATIONBOID_FIELD_NUMBER;
+    hash = (53 * hash) + getAggregationBoId();
+    hash = (37 * hash) + AGGREGATIONFIELDID_FIELD_NUMBER;
+    hash = (53 * hash) + getAggregationFieldId();
+    hash = (37 * hash) + AGGREGATIONTYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getAggregationType();
+    hash = (37 * hash) + AGGREGATIONRELATIONID_FIELD_NUMBER;
+    hash = (53 * hash) + getAggregationRelationId();
+    hash = (37 * hash) + DOMAINCONDITION_FIELD_NUMBER;
+    hash = (53 * hash) + getDomainCondition().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -1017,6 +1172,16 @@ private static final long serialVersionUID = 0L;
 
       domainNoSenior_ = 0;
 
+      aggregationBoId_ = 0;
+
+      aggregationFieldId_ = 0;
+
+      aggregationType_ = 0;
+
+      aggregationRelationId_ = 0;
+
+      domainCondition_ = "";
+
       return this;
     }
 
@@ -1067,6 +1232,11 @@ private static final long serialVersionUID = 0L;
       result.lookupEntityFieldId_ = lookupEntityFieldId_;
       result.resetType_ = resetType_;
       result.domainNoSenior_ = domainNoSenior_;
+      result.aggregationBoId_ = aggregationBoId_;
+      result.aggregationFieldId_ = aggregationFieldId_;
+      result.aggregationType_ = aggregationType_;
+      result.aggregationRelationId_ = aggregationRelationId_;
+      result.domainCondition_ = domainCondition_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -1177,6 +1347,22 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getDomainNoSenior() != 0) {
         setDomainNoSenior(other.getDomainNoSenior());
+      }
+      if (other.getAggregationBoId() != 0) {
+        setAggregationBoId(other.getAggregationBoId());
+      }
+      if (other.getAggregationFieldId() != 0) {
+        setAggregationFieldId(other.getAggregationFieldId());
+      }
+      if (other.getAggregationType() != 0) {
+        setAggregationType(other.getAggregationType());
+      }
+      if (other.getAggregationRelationId() != 0) {
+        setAggregationRelationId(other.getAggregationRelationId());
+      }
+      if (!other.getDomainCondition().isEmpty()) {
+        domainCondition_ = other.domainCondition_;
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -2173,6 +2359,179 @@ private static final long serialVersionUID = 0L;
     public Builder clearDomainNoSenior() {
       
       domainNoSenior_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int aggregationBoId_ ;
+    /**
+     * <code>int32 aggregationBoId = 19;</code>
+     */
+    public int getAggregationBoId() {
+      return aggregationBoId_;
+    }
+    /**
+     * <code>int32 aggregationBoId = 19;</code>
+     */
+    public Builder setAggregationBoId(int value) {
+      
+      aggregationBoId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 aggregationBoId = 19;</code>
+     */
+    public Builder clearAggregationBoId() {
+      
+      aggregationBoId_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int aggregationFieldId_ ;
+    /**
+     * <code>int32 aggregationFieldId = 20;</code>
+     */
+    public int getAggregationFieldId() {
+      return aggregationFieldId_;
+    }
+    /**
+     * <code>int32 aggregationFieldId = 20;</code>
+     */
+    public Builder setAggregationFieldId(int value) {
+      
+      aggregationFieldId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 aggregationFieldId = 20;</code>
+     */
+    public Builder clearAggregationFieldId() {
+      
+      aggregationFieldId_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int aggregationType_ ;
+    /**
+     * <code>int32 aggregationType = 21;</code>
+     */
+    public int getAggregationType() {
+      return aggregationType_;
+    }
+    /**
+     * <code>int32 aggregationType = 21;</code>
+     */
+    public Builder setAggregationType(int value) {
+      
+      aggregationType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 aggregationType = 21;</code>
+     */
+    public Builder clearAggregationType() {
+      
+      aggregationType_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int aggregationRelationId_ ;
+    /**
+     * <code>int32 aggregationRelationId = 22;</code>
+     */
+    public int getAggregationRelationId() {
+      return aggregationRelationId_;
+    }
+    /**
+     * <code>int32 aggregationRelationId = 22;</code>
+     */
+    public Builder setAggregationRelationId(int value) {
+      
+      aggregationRelationId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 aggregationRelationId = 22;</code>
+     */
+    public Builder clearAggregationRelationId() {
+      
+      aggregationRelationId_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object domainCondition_ = "";
+    /**
+     * <code>string domainCondition = 23;</code>
+     */
+    public java.lang.String getDomainCondition() {
+      java.lang.Object ref = domainCondition_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        domainCondition_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string domainCondition = 23;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDomainConditionBytes() {
+      java.lang.Object ref = domainCondition_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        domainCondition_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string domainCondition = 23;</code>
+     */
+    public Builder setDomainCondition(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      domainCondition_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string domainCondition = 23;</code>
+     */
+    public Builder clearDomainCondition() {
+      
+      domainCondition_ = getDefaultInstance().getDomainCondition();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string domainCondition = 23;</code>
+     */
+    public Builder setDomainConditionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      domainCondition_ = value;
       onChanged();
       return this;
     }

@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTRoot;
 
+import java.util.List;
+
 /**
  * 聚合解析树
  *
@@ -25,4 +27,10 @@ public interface ParseTree {
     PTCondition showNodeCondition();
 
     int treeLevel();
+
+    List<ParseTree> getTrees(String appId);
+
+    boolean saveTrees(List<ParseTree> trees);
+
+
 }

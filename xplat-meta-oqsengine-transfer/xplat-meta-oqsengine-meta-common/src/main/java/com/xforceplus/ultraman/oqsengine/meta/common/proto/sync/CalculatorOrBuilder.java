@@ -158,4 +158,34 @@ public interface CalculatorOrBuilder extends
    * <code>int32 domainNoSenior = 18;</code>
    */
   int getDomainNoSenior();
+
+  /**
+   * <code>int32 aggregationBoId = 19;</code>
+   */
+  int getAggregationBoId();
+
+  /**
+   * <code>int32 aggregationFieldId = 20;</code>
+   */
+  int getAggregationFieldId();
+
+  /**
+   * <code>int32 aggregationType = 21;</code>
+   */
+  int getAggregationType();
+
+  /**
+   * <code>int32 aggregationRelationId = 22;</code>
+   */
+  int getAggregationRelationId();
+
+  /**
+   * <code>string domainCondition = 23;</code>
+   */
+  java.lang.String getDomainCondition();
+  /**
+   * <code>string domainCondition = 23;</code>
+   */
+  com.google.protobuf.ByteString
+      getDomainConditionBytes();
 }
