@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
+import java.util.List;
+
 /**
  * 解析树节点.
  *
@@ -38,4 +40,14 @@ public class PTNode {
      * 节点条件信息.
      */
     private Condition condition;
+
+    /**
+     * 子节点.
+     */
+    private List<PTNode> nextNodes;
+
+    /**
+     * 父节点.
+     */
+    private PTNode preNode;
 }

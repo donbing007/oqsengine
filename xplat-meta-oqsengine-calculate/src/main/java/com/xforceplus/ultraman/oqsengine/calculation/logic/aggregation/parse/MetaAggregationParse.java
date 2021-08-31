@@ -38,7 +38,7 @@ public class MetaAggregationParse implements AggregationParse {
     }
 
     @Override
-    public ParseTree find(String code) {
+    public ParseTree find(String id) {
         return null;
     }
 
