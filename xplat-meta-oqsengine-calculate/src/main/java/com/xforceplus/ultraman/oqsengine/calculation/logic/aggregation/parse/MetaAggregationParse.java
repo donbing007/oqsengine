@@ -4,7 +4,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;

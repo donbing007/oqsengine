@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree;
 
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTCondition;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTRoot;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 
 import java.util.List;
 
@@ -22,9 +21,9 @@ public interface ParseTree {
 
     PTNode getNode();
 
-    PTRoot root();
+    PTNode root();
 
-    PTCondition showNodeCondition();
+    Condition showNodeCondition();
 
     int treeLevel();
 

@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+
+import java.util.List;
 
 /**
  * 元数据解析树.
@@ -28,12 +31,12 @@ public class MetaParseTree implements ParseTree {
     }
 
     @Override
-    public PTRoot root() {
+    public PTNode root() {
         return null;
     }
 
     @Override
-    public PTCondition showNodeCondition() {
+    public Condition showNodeCondition() {
 
         return null;
     }
@@ -42,5 +45,15 @@ public class MetaParseTree implements ParseTree {
     public int treeLevel() {
 
         return 0;
+    }
+
+    @Override
+    public List<ParseTree> getTrees(String appId) {
+        return null;
+    }
+
+    @Override
+    public boolean saveTrees(List<ParseTree> trees) {
+        return false;
     }
 }
