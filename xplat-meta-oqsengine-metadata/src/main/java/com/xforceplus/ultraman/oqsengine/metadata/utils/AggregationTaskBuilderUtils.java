@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
-import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -29,7 +28,6 @@ public class AggregationTaskBuilderUtils {
                 preStorageList.stream().map(s -> preEntityFields.addAll(s.getFields().stream().filter(f ->
                         f.calculationType().equals(CalculationType.AGGREGATION)
                 ).collect(Collectors.toList()))).collect(Collectors.toList());
-
 
 
             } else {
