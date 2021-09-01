@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
  */
 public class AggregationTaskBuilderUtils {
 
-    public static void buildTask(String appId, int version, List<EntityClassStorage> preStorageList, List<EntityClassStorage> storageList){
+    public static void buildTask(String appId, int version, List<EntityClassStorage> preStorageList,
+                                 List<EntityClassStorage> storageList){
         if (storageList != null && storageList.size() > 0) {
             List<EntityField> entityFields = new ArrayList<>();
             storageList.stream().map(s -> entityFields.addAll(s.getFields().stream().filter(f ->
@@ -28,8 +29,7 @@ public class AggregationTaskBuilderUtils {
                 preStorageList.stream().map(s -> preEntityFields.addAll(s.getFields().stream().filter(f ->
                         f.calculationType().equals(CalculationType.AGGREGATION)
                 ).collect(Collectors.toList()))).collect(Collectors.toList());
-
-
+                    
             } else {
 
             }

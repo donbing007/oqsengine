@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.imp
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 
 import java.util.List;
 
@@ -40,6 +41,11 @@ public class PTNode {
      * 节点条件信息.
      */
     private Condition condition;
+
+    /**
+     * 关系信息
+     */
+    private Relationship relationship;
 
     /**
      * 子节点.

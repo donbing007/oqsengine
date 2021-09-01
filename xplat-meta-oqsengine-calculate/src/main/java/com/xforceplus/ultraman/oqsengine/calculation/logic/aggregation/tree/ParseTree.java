@@ -31,5 +31,6 @@ public interface ParseTree {
 
     boolean saveTrees(List<ParseTree> trees);
 
+    List<PTNode> toList();
 
 }

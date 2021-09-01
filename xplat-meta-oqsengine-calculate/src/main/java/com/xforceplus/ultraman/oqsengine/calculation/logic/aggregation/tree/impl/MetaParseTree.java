@@ -56,4 +56,10 @@ public class MetaParseTree implements ParseTree {
     public boolean saveTrees(List<ParseTree> trees) {
         return false;
     }
+
+    @Override
+    public List<PTNode> toList() {
+
+        return null;
+    }
 }
