@@ -30,7 +30,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -310,27 +309,25 @@ public class QueryConditionExecutor
         }
 
         Sort sort = queryCondition._3().getSort();
-        Sort useSort = sort;
+        Sort secondSort = queryCondition._3.getSecondarySort();
+        Sort thirdSort = queryCondition._3.getThirdSort();
         StorageStrategy storageStrategy = null;
         String orderBySqlSegment = "";
         String sortSelectValuesSegment = "";
         List<SortField> sortFields = null;
-        if (useSort == null) {
-            useSort = Sort.buildOutOfSort();
-        }
 
         /*
          * 空页要求时不需要进行排序.
          */
         if (!page.isEmptyPage()) {
-            if (!useSort.isOutOfOrder()) {
+            if (!sort.isOutOfOrder()) {
                 // id 排序处理.
-                if (useSort.getField().config().isIdentifie()) {
+                if (sort.getField().config().isIdentifie()) {
                     StringBuilder buff = new StringBuilder();
                     buff.append(SqlKeywordDefine.ORDER);
                     buff.append(" ").append(FieldDefine.ID);
                     buff.append(" ");
-                    if (useSort.isAsc()) {
+                    if (sort.isAsc()) {
                         buff.append(SqlKeywordDefine.ORDER_TYPE_ASC);
                     } else {
                         buff.append(SqlKeywordDefine.ORDER_TYPE_DESC);
@@ -341,9 +338,9 @@ public class QueryConditionExecutor
 
                 } else {
                     // 普通属性
-                    storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
-                    sortFields = buildSortValues(useSort);
-                    orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
+                    storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
+                    sortFields = buildSortValues(sort);
+                    orderBySqlSegment = buildOrderBySqlSegment(sortFields, sort.isDes());
                     sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
                 }
             }
@@ -374,12 +371,13 @@ public class QueryConditionExecutor
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());
 
                 while (rs.next()) {
-                    EntityRef entityRef = new EntityRef();
-                    entityRef.setId(rs.getLong(FieldDefine.ID));
+                    EntityRef.Builder entityRefBuilder = EntityRef.Builder.anEntityRef();
+                    long id = rs.getLong(FieldDefine.ID);
+                    entityRefBuilder.withId(id);
 
-                    if (!useSort.isOutOfOrder()) {
-                        if (useSort.getField().config().isIdentifie()) {
-                            entityRef.setOrderValue(Long.toString(entityRef.getId()));
+                    if (!sort.isOutOfOrder()) {
+                        if (sort.getField().config().isIdentifie()) {
+                            entityRefBuilder.withOrderValue(Long.toString(id));
                         } else {
                             ResultSet finalRs = rs;
                             AtomicInteger index = new AtomicInteger(0);
@@ -410,21 +408,21 @@ public class QueryConditionExecutor
 
                             if (reduce.isPresent()) {
 
-                                IValue logicValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
+                                IValue logicValue = storageStrategy.toLogicValue(sort.getField(), reduce.get());
 
                                 if (logicValue.getValue() == null) {
-                                    entityRef.setOrderValue(null);
+                                    entityRefBuilder.withOrderValue(null);
                                 } else {
                                     if (logicValue.compareByString()) {
-                                        entityRef.setOrderValue(logicValue.valueToString());
+                                        entityRefBuilder.withOrderValue(logicValue.valueToString());
                                     } else {
-                                        entityRef.setOrderValue(Long.toString(logicValue.valueToLong()));
+                                        entityRefBuilder.withOrderValue(Long.toString(logicValue.valueToLong()));
                                     }
                                 }
                             }
                         }
                     }
-                    refs.add(entityRef);
+                    refs.add(entityRefBuilder.build());
                 }
 
                 if (!page.isSinglePage()) {

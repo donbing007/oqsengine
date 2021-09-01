@@ -14,9 +14,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -167,7 +166,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
     public SQLMasterStorageQueryTest() throws Exception {
     }
 
-
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(l2EntityClass));
@@ -675,7 +676,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                 }
             ),
             // emtpy condition data access
-            new Case(Conditions.buildEmtpyConditions(),
+            new Case(
+                Conditions.buildEmtpyConditions(),
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
                         l2EntityClass.field("l2-string").get(),
@@ -689,6 +691,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                     };
                     assertSelect(expectedIds, result, false);
                 },
+                Sort.buildOutOfSort(),
+                Sort.buildOutOfSort(),
                 Sort.buildOutOfSort()
             ),
             // stringsField in with condition data access
@@ -720,6 +724,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                     };
                     assertSelect(expectedIds, result, false);
                 },
+                Sort.buildOutOfSort(),
+                Sort.buildOutOfSort(),
                 Sort.buildOutOfSort()
             ),
             // bigint eq
@@ -759,15 +765,31 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
         private Conditions filterConditions;
         private IEntityClass entityClass;
         private Sort sort;
+        private Sort secondSort;
+        private Sort thirdSort;
         private Consumer<? super Collection<EntityRef>> check;
 
         public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check) {
-            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check, Sort.buildOutOfSort());
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check,
+                Sort.buildOutOfSort(), Sort.buildOutOfSort(), Sort.buildOutOfSort());
         }
 
         public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check,
                     Sort sort) {
-            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check, sort);
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check,
+                sort, Sort.buildOutOfSort(), Sort.buildOutOfSort());
+        }
+
+        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check,
+                    Sort sort, Sort secondSort) {
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check,
+                sort, secondSort, Sort.buildOutOfSort());
+        }
+
+        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check,
+                    Sort sort, Sort secondSort, Sort thridSort) {
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check,
+                sort, secondSort, thridSort);
         }
 
         public Case(
@@ -775,7 +797,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
             Conditions filterConditions,
             IEntityClass entityClass,
             Consumer<? super Collection<EntityRef>> check,
-            Sort sort) {
+            Sort sort,
+            Sort secondSort,
+            Sort thirdSort) {
             this.conditions = conditions;
             this.filterConditions = filterConditions;
             this.entityClass = entityClass;
@@ -784,6 +808,18 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                 this.sort = Sort.buildOutOfSort();
             } else {
                 this.sort = sort;
+            }
+
+            if (secondSort == null) {
+                this.secondSort = Sort.buildOutOfSort();
+            } else {
+                this.secondSort = secondSort;
+            }
+
+            if (thirdSort == null) {
+                this.thirdSort = Sort.buildOutOfSort();
+            } else {
+                this.thirdSort = thirdSort;
             }
         }
     }

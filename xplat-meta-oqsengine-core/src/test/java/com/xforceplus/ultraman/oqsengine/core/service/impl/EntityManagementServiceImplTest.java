@@ -107,6 +107,36 @@ public class EntityManagementServiceImplTest {
     }
 
     @Test
+    public void testBuildBatch() throws Exception {
+        MasterStorage masterStorage = mock(MasterStorage.class);
+
+        IEntity[] targetEntities = new IEntity[1000];
+        for (int i = 0; i <= 1000; i++) {
+
+            targetEntities[i] = Entity.Builder.anEntity()
+                .withEntityClassRef(
+                    new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
+                .withId(i + 1)
+                .withTime(System.currentTimeMillis())
+                .withEntityValue(EntityValue.build()
+                    .addValue(
+                        new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), i))
+                    .addValue(
+                        new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
+                    .addValue(
+                        new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
+                    )
+                )
+                .build();
+
+            when(masterStorage.build(targetEntities[i], EntityClassDefine.l2EntityClass)).thenReturn(1);
+
+        }
+
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+    }
+
+    @Test
     public void testBuildSuccess() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 

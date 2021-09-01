@@ -104,8 +104,9 @@ public class SearchExecutor
             try (ResultSet rs = st.executeQuery()) {
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());
                 while (rs.next()) {
-                    EntityRef entityRef = new EntityRef();
-                    entityRef.setId(rs.getLong(FieldDefine.ID));
+                    EntityRef entityRef = EntityRef.Builder.anEntityRef()
+                        .withId(rs.getLong(FieldDefine.ID))
+                        .build();
                     refs.add(entityRef);
                 }
 

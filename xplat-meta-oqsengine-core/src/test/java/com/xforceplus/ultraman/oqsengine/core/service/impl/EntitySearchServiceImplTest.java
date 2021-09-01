@@ -96,8 +96,14 @@ public class EntitySearchServiceImplTest {
             SelectConfig.Builder.anSelectConfig().withCommitId(1).withSort(
                 Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
             .thenReturn(Arrays.asList(
-                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR)
+                EntityRef.Builder.anEntityRef()
+                    .withId(1)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build(),
+                EntityRef.Builder.anEntityRef()
+                    .withId(2)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build()
             ));
 
         Page indexPage = Page.emptyPage();
@@ -154,10 +160,22 @@ public class EntitySearchServiceImplTest {
             })
 
         )).thenReturn(Arrays.asList(
-            new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-            new EntityRef(2, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-            new EntityRef(3, OperationType.DELETE.getValue(), OqsVersion.MAJOR),
-            new EntityRef(4, OperationType.UPDATE.getValue(), OqsVersion.MAJOR)
+            EntityRef.Builder.anEntityRef()
+                .withId(1)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(2)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(3)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(4)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build()
         ));
         when(masterStorage.selectMultiple(new long[] {1, 2, 4}, EntityClassDefine.l2EntityClass)).thenReturn(
             Arrays.asList(
@@ -268,8 +286,14 @@ public class EntitySearchServiceImplTest {
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         )).thenReturn(Arrays.asList(
-            new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-            new EntityRef(2, OperationType.DELETE.getValue(), OqsVersion.MAJOR)
+            EntityRef.Builder.anEntityRef()
+                .withId(1)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(2)
+                .withOp(OperationType.CREATE.getValue())
+                .withMajor(OqsVersion.MAJOR).build()
         ));
 
         when(indexStorage.select(
@@ -283,8 +307,14 @@ public class EntitySearchServiceImplTest {
                 .build()
         )).thenReturn(
             Arrays.asList(
-                new EntityRef(3, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
-                new EntityRef(4, OperationType.CREATE.getValue(), OqsVersion.MAJOR)
+                EntityRef.Builder.anEntityRef()
+                    .withId(3)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build(),
+                EntityRef.Builder.anEntityRef()
+                    .withId(4)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build()
             )
         );
 

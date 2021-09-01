@@ -17,6 +17,8 @@ import java.util.Optional;
 public class ServiceSelectConfig {
     private Page page;
     private Sort sort;
+    private Sort secondarySort;
+    private Sort thirdSort;
     private Facet facet;
     private Conditions filter;
 
@@ -39,6 +41,14 @@ public class ServiceSelectConfig {
         return Optional.ofNullable(filter);
     }
 
+    public Optional<Sort> getSecondarySort() {
+        return Optional.ofNullable(secondarySort);
+    }
+
+    public Optional<Sort> getThirdSort() {
+        return Optional.ofNullable(thirdSort);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -50,23 +60,28 @@ public class ServiceSelectConfig {
         ServiceSelectConfig that = (ServiceSelectConfig) o;
         return Objects.equals(page, that.page)
             && Objects.equals(sort, that.sort)
+            && Objects.equals(secondarySort, that.secondarySort)
+            && Objects.equals(thirdSort, that.thirdSort)
             && Objects.equals(facet, that.facet)
             && Objects.equals(filter, that.filter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(page, sort, facet, filter);
+        return Objects.hash(getPage(), getSort(), getSecondarySort(), getThirdSort(), getFacet(), getFilter());
     }
 
     @Override
     public String toString() {
-        return "SearchConfig{"
-            + "page=" + page
-            + ", sort=" + sort
-            + ", facet=" + facet
-            + ", secondFilter=" + filter
-            + '}';
+        final StringBuffer sb = new StringBuffer("ServiceSelectConfig{");
+        sb.append("page=").append(page);
+        sb.append(", sort=").append(sort);
+        sb.append(", secondarySort=").append(secondarySort);
+        sb.append(", thirdSort=").append(thirdSort);
+        sb.append(", facet=").append(facet);
+        sb.append(", filter=").append(filter);
+        sb.append('}');
+        return sb.toString();
     }
 
     /**
@@ -75,6 +90,8 @@ public class ServiceSelectConfig {
     public static final class Builder {
         private Page page;
         private Sort sort;
+        private Sort secondarySort;
+        private Sort thirdSort;
         private Facet facet;
         private Conditions filter;
 
@@ -92,6 +109,16 @@ public class ServiceSelectConfig {
 
         public Builder withSort(Sort sort) {
             this.sort = sort;
+            return this;
+        }
+
+        public Builder withSecondarySort(Sort sort) {
+            this.secondarySort = sort;
+            return this;
+        }
+
+        public Builder withThridSort(Sort sort) {
+            this.thirdSort = sort;
             return this;
         }
 
@@ -114,6 +141,8 @@ public class ServiceSelectConfig {
             ServiceSelectConfig serviceSelectConfig = new ServiceSelectConfig();
             serviceSelectConfig.filter = this.filter;
             serviceSelectConfig.sort = this.sort;
+            serviceSelectConfig.secondarySort = this.secondarySort;
+            serviceSelectConfig.thirdSort = this.thirdSort;
             serviceSelectConfig.page = this.page;
             serviceSelectConfig.facet = this.facet;
             return serviceSelectConfig;

@@ -24,47 +24,47 @@ public class StreamMergerTest {
 
         AtomicLong al = new AtomicLong(0);
 
-        EntityRef entityRef = new EntityRef();
-        entityRef.setId(al.getAndIncrement());
-        entityRef.setOrderValue("-0.46");
+        EntityRef entityRef = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("-0.46").build();
         masterRefs.add(entityRef);
 
-        EntityRef entityRef2 = new EntityRef();
-        entityRef2.setId(al.getAndIncrement());
-        entityRef2.setOrderValue("-0.32");
+        EntityRef entityRef2 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("-0.32").build();
         masterRefs.add(entityRef2);
 
-        EntityRef entityRef3 = new EntityRef();
-        entityRef3.setId(al.getAndIncrement());
-        entityRef3.setOrderValue("0.32");
+        EntityRef entityRef3 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("0.32").build();
         masterRefs.add(entityRef3);
 
-        EntityRef entityRef4 = new EntityRef();
-        entityRef4.setId(al.getAndIncrement());
-        entityRef4.setOrderValue("0.46");
+        EntityRef entityRef4 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("0.46").build();
         masterRefs.add(entityRef4);
 
         List<EntityRef> indexRefs = new LinkedList<>();
 
 
-        EntityRef ientityRef = new EntityRef();
-        ientityRef.setId(al.getAndIncrement());
-        ientityRef.setOrderValue("-1232.32");
+        EntityRef ientityRef = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("-1232.32").build();
         indexRefs.add(ientityRef);
 
-        EntityRef ientityRef2 = new EntityRef();
-        ientityRef2.setId(al.getAndIncrement());
-        ientityRef2.setOrderValue("-1232.12");
+        EntityRef ientityRef2 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("-1232.12").build();
         indexRefs.add(ientityRef2);
 
-        EntityRef ientityRef3 = new EntityRef();
-        ientityRef3.setId(al.getAndIncrement());
-        ientityRef3.setOrderValue("100.50");
+        EntityRef ientityRef3 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("100.50").build();
         indexRefs.add(ientityRef3);
 
-        EntityRef ientityRef4 = new EntityRef();
-        ientityRef4.setId(al.getAndIncrement());
-        ientityRef4.setOrderValue("1232.12");
+        EntityRef ientityRef4 = EntityRef.Builder.anEntityRef()
+            .withId(al.getAndIncrement())
+            .withOrderValue("1232.12").build();
         indexRefs.add(ientityRef4);
 
         StreamMerger<EntityRef> streamMerger = new StreamMerger<>();

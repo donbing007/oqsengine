@@ -32,7 +32,9 @@ import java.util.Collection;
 public class QueryLimitCommitidByConditionsExecutor
     extends AbstractJdbcTaskExecutor<Conditions, Collection<EntityRef>> {
 
-    private static final String SELECT_SORT_COLUMN = "sort";
+    private static final String SELECT_SORT_COLUMN0 = "sort0";
+    private static final String SELECT_SORT_COLUMN1 = "sort1";
+    private static final String SELECT_SORT_COLUMN2 = "sort2";
 
     private SelectConfig config;
     private IEntityClass entityClass;
@@ -113,7 +115,7 @@ public class QueryLimitCommitidByConditionsExecutor
             try (ResultSet rs = st.executeQuery()) {
                 Collection<EntityRef> refs = new ArrayList<>();
                 while (rs.next()) {
-                    refs.add(buildEntityRef(rs, config.getSort()));
+                    refs.add(buildEntityRef(rs, config.getSort(), config.getSecondarySort(), config.getThirdSort()));
                 }
 
                 return refs;
@@ -121,19 +123,37 @@ public class QueryLimitCommitidByConditionsExecutor
         }
     }
 
-    private EntityRef buildEntityRef(ResultSet rs, Sort sort) throws SQLException {
-        EntityRef ref = new EntityRef();
-        ref.setId(rs.getLong(FieldDefine.ID));
-        ref.setOp(rs.getInt(FieldDefine.OP));
-        ref.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
-        if (sort != null && !sort.isOutOfOrder()) {
+    private EntityRef buildEntityRef(ResultSet rs, Sort sort, Sort secondSort, Sort thridSort) throws SQLException {
+        long id = rs.getLong(FieldDefine.ID);
+        EntityRef.Builder refBuilder = EntityRef.Builder.anEntityRef();
+        refBuilder.withId(id)
+            .withOp(rs.getInt(FieldDefine.OP))
+            .withMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+
+        if (!sort.isOutOfOrder()) {
             if (sort.getField().config().isIdentifie()) {
-                ref.setOrderValue(Long.toString(ref.getId()));
+                refBuilder.withOrderValue(Long.toString(id));
             } else {
-                ref.setOrderValue(rs.getString(SELECT_SORT_COLUMN));
+                refBuilder.withOrderValue(rs.getString(SELECT_SORT_COLUMN0));
             }
         }
-        return ref;
+
+        if (!secondSort.isOutOfOrder()) {
+            if (secondSort.getField().config().isIdentifie()) {
+                refBuilder.withSecondOrderValue(Long.toString(id));
+            } else {
+                refBuilder.withSecondOrderValue(rs.getString(SELECT_SORT_COLUMN1));
+            }
+        }
+
+        if (!thridSort.isOutOfOrder()) {
+            if (thridSort.getField().config().isIdentifie()) {
+                refBuilder.withThridOrderValue(Long.toString(id));
+            } else {
+                refBuilder.withThridOrderValue(rs.getString(SELECT_SORT_COLUMN2));
+            }
+        }
+        return refBuilder.build();
     }
 
     private String buildSQL(String where) {
@@ -150,23 +170,11 @@ public class QueryLimitCommitidByConditionsExecutor
                     FieldDefine.ID,
                     FieldDefine.OP,
                     FieldDefine.OQS_MAJOR));
-        Sort sort = config.getSort();
-        if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 
-            /*
-             * 这里没有使用mysql的->>符号原因是,shard-jdbc解析会出现错误.
-             * JSON_UNQUOTE(JSON_EXTRACT())
-             * 两个函数的连用结果和->>符号是等价的.
-             */
-            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-            sql.append(", JSON_UNQUOTE(JSON_EXTRACT(")
-                .append(FieldDefine.ATTRIBUTE)
-                .append(", '$.")
-                .append(AnyStorageValue.ATTRIBUTE_PREFIX)
-                .append(storageStrategy.toStorageNames(sort.getField()).stream().findFirst().get())
-                .append("')) AS ").append(SELECT_SORT_COLUMN);
+        buildSortSelect(sql, config.getSort(), SELECT_SORT_COLUMN0);
+        buildSortSelect(sql, config.getSecondarySort(), SELECT_SORT_COLUMN1);
+        buildSortSelect(sql, config.getThirdSort(), SELECT_SORT_COLUMN2);
 
-        }
         /*
         要注意,这里依赖一个索引 commitid_entity_class (commitid, entityclass0....)
         这样一个多级索引.
@@ -181,5 +189,23 @@ public class QueryLimitCommitidByConditionsExecutor
             sql.append(" AND (").append(where).append(")");
         }
         return sql.toString();
+    }
+
+    private void buildSortSelect(StringBuilder buff, Sort sort, String sortFieldName) {
+        if (!sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
+
+            /*
+             * 这里没有使用mysql的->>符号原因是,shard-jdbc解析会出现错误.
+             * JSON_UNQUOTE(JSON_EXTRACT())
+             * 两个函数的连用结果和->>符号是等价的.
+             */
+            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
+            buff.append(", JSON_UNQUOTE(JSON_EXTRACT(")
+                .append(FieldDefine.ATTRIBUTE)
+                .append(", '$.")
+                .append(AnyStorageValue.ATTRIBUTE_PREFIX)
+                .append(storageStrategy.toStorageNames(sort.getField()).stream().findFirst().get())
+                .append("')) AS ").append(SELECT_SORT_COLUMN0);
+        }
     }
 }

@@ -972,7 +972,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         // 如果排序,但是查询结果没有值.
         private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort sort) {
-            if (sort != null && !sort.isOutOfOrder()) {
+            if (!sort.isOutOfOrder()) {
                 refs.parallelStream().forEach(r -> {
                     if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
                         if (sort.getField().config().isIdentifie()) {
