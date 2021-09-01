@@ -125,6 +125,11 @@ message Calculator {
   int64 lookupEntityFieldId = 16;
   int32 resetType = 17;
   int32 domainNoSenior = 18;
+  int32 aggregationBoId = 19;
+  int32 aggregationFieldId = 20;
+  int32 aggregationType = 21;
+  int32 aggregationRelationId = 22;
+  string domainCondition = 23;
 }
 
 message ProfileInfo {

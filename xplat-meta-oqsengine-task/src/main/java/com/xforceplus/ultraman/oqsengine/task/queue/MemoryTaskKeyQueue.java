@@ -43,4 +43,9 @@ public class MemoryTaskKeyQueue implements TaskQueue {
     public void ack(Task task) {
 
     }
+
+    @Override
+    public void destroy() {
+
+    }
 }

@@ -21,35 +21,35 @@ import java.util.stream.Collectors;
  */
 public class SumFunction implements AggregationFunction {
     @Override
-    public Optional<IValue> excute(IValue agg, IValue o, IValue n) {
-        if (!(agg != null & o != null && n != null)) {
+    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+        if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }
-        if (agg instanceof DecimalValue) {
-            BigDecimal temp = ((DecimalValue) agg).getValue()
-                    .add(((DecimalValue) n).getValue())
-                    .subtract(((DecimalValue) o).getValue());
-            agg.setStringValue(temp.toString());
-            return Optional.of(agg);
-        } else if (agg instanceof LongValue) {
-            Long temp = agg.valueToLong() + n.valueToLong() - o.valueToLong();
-            agg.setStringValue(temp.toString());
-            return Optional.of(agg);
+        if (agg.get() instanceof DecimalValue) {
+            BigDecimal temp = ((DecimalValue) agg.get()).getValue()
+                    .add(((DecimalValue) n.get()).getValue())
+                    .subtract(((DecimalValue) o.get()).getValue());
+            agg.get().setStringValue(temp.toString());
+            return Optional.of(agg.get());
+        } else if (agg.get() instanceof LongValue) {
+            Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
+            agg.get().setStringValue(temp.toString());
+            return Optional.of(agg.get());
         }
         return Optional.empty();
     }
 
     @Override
-    public Optional<IValue> init(IValue agg, List<IValue> values) {
-        if (agg instanceof DecimalValue) {
-            BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v).getValue())
+    public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        if (agg.get() instanceof DecimalValue) {
+            BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
                     .collect(BigDecimalSummaryStatistics.statistics());
-            agg.setStringValue(temp.getSum().toString());
-        } else if (agg instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.setStringValue(String.valueOf(temp.getSum()));
+            agg.get().setStringValue(temp.getSum().toString());
+        } else if (agg.get() instanceof LongValue) {
+            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            agg.get().setStringValue(String.valueOf(temp.getSum()));
         }
-        return Optional.of(agg);
+        return Optional.of(agg.get());
     }
 
 }

@@ -138,4 +138,11 @@ public interface CacheExecutor {
      * 设置本地缓存无效.
      */
     void invalidateLocal();
+
+    /**
+     * 读取内存中应用下的配置信息.
+     * @param appId 应用标识.
+     * @return
+     */
+    List<EntityClassStorage> read(String appId);
 }

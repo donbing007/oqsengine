@@ -136,14 +136,14 @@ public class CountFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2"));
-        Optional<IValue> a = countFunction.excute(agg, o, n);
+        Optional<IValue> a = countFunction.excute(Optional.of(agg), Optional.of(o), Optional.of(n));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2);
-        Optional<IValue> a1 = countFunction.excute(agg1, o1, n1);
+        Optional<IValue> a1 = countFunction.excute(Optional.of(agg1), Optional.of(o1), Optional.of(n1));
         System.out.println(a1.get().getValue());
     }
 
@@ -153,14 +153,14 @@ public class CountFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2"));
-        Optional<IValue> a = countFunction.init(agg, Arrays.asList(o, n));
+        Optional<IValue> a = countFunction.init(Optional.of(agg), Arrays.asList(Optional.of(o), Optional.of(n)));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2);
-        Optional<IValue> a1 = countFunction.init(agg1, Arrays.asList(o1, n1));
+        Optional<IValue> a1 = countFunction.init(Optional.of(agg1), Arrays.asList(Optional.of(o1), Optional.of(n1)));
         System.out.println(a1.get().getValue());
     }
 

@@ -19,26 +19,26 @@ import java.util.stream.Collectors;
 public class CountFunction implements AggregationFunction {
 
     @Override
-    public Optional<IValue> excute(IValue agg, IValue o, IValue n) {
-        if (n == null) {
-            return Optional.of(agg);
+    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+        if (!n.isPresent()) {
+            return Optional.of(agg.get());
         }
-        if (agg instanceof LongValue) {
-            if (o == null) {
-                Long temp = agg.valueToLong() + 1;
-                agg.setStringValue(temp.toString());
+        if (agg.get() instanceof LongValue) {
+            if (!o.isPresent()) {
+                Long temp = agg.get().valueToLong() + 1;
+                agg.get().setStringValue(temp.toString());
             }
         }
-        return Optional.of(agg);
+        return Optional.of(agg.get());
     }
 
     @Override
-    public Optional<IValue> init(IValue agg, List<IValue> values) {
-        if (agg instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.setStringValue(String.valueOf(temp.getCount()));
+    public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        if (agg.get() instanceof LongValue) {
+            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            agg.get().setStringValue(String.valueOf(temp.getCount()));
         }
-        return Optional.of(agg);
+        return Optional.of(agg.get());
     }
 
 }

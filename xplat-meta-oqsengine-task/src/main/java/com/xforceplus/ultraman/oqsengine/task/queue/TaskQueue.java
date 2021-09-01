@@ -44,5 +44,7 @@ public interface TaskQueue {
      */
     public void ack(Task task);
 
+    public void destroy();
+
     /*public boolean ack(Task task , long awaitTimeMS);*/
 }

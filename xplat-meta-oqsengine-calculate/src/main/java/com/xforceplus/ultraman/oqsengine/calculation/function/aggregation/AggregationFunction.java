@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,13 +20,14 @@ public interface AggregationFunction {
      * 聚合执行.
      *
      */
-    public Optional<IValue> excute(IValue agg, IValue o, IValue n);
+    Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n);
 
     /**
-     * 聚合初始化方法.
+     * 合初始化方法.
      *
+     * @param agg 聚合字段值.
      * @param values 需要计算的值集合.
      * @return 返回计算值.
      */
-    public Optional<IValue> init(IValue agg, List<IValue> values);
+    Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values);
 }

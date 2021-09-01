@@ -136,14 +136,14 @@ public class SumFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("6000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
-        Optional<IValue> a = sumFunction.excute(agg, o, n);
+        Optional<IValue> a = sumFunction.excute(Optional.of(agg), Optional.of(o), Optional.of(n));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 6000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
-        Optional<IValue> a1 = sumFunction.excute(agg1, o1, n1);
+        Optional<IValue> a1 = sumFunction.excute(Optional.of(agg1), Optional.of(o1), Optional.of(n1));
         System.out.println(a1.get().getValue());
     }
 
@@ -153,14 +153,14 @@ public class SumFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("6000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
-        Optional<IValue> a = sumFunction.init(agg, Arrays.asList(o, n));
+        Optional<IValue> a = sumFunction.init(Optional.of(agg), Arrays.asList(Optional.of(o), Optional.of(n)));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 6000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
-        Optional<IValue> a1 = sumFunction.init(agg1, Arrays.asList(o1, n1));
+        Optional<IValue> a1 = sumFunction.init(Optional.of(agg1), Arrays.asList(Optional.of(o1), Optional.of(n1)));
         System.out.println(a1.get().getValue());
     }
 

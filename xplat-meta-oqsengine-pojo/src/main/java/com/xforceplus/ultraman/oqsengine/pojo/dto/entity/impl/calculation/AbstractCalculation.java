@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
     @JsonSubTypes.Type(value = Formula.class, name = "FORMULA"),
     @JsonSubTypes.Type(value = AutoFill.class, name = "AUTO_FILL"),
     @JsonSubTypes.Type(value = Lookup.class, name = "LOOKUP"),
+    @JsonSubTypes.Type(value = Aggregation.class, name = "AGGREGATION"),
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "STATIC"),
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "UNKNOWN"),
 })
