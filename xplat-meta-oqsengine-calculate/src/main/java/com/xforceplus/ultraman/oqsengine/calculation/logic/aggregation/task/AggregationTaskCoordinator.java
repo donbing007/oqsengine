@@ -1,16 +1,18 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskKeyValueQueue;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
+import io.vavr.Tuple2;
 import jodd.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+
 
 /**
  * 聚合任务协调者.
@@ -116,6 +119,9 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     }
 
 
+    /**
+     * 初始化.
+     */
     public AggregationTaskCoordinator() {
         runners = new ConcurrentHashMap<>();
         taskQueueMap = new ConcurrentHashMap<>();
@@ -152,21 +158,23 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @return 添加是否成功.
      */
     public boolean addTask(String prefix, Task task) {
-        TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
-        try {
-            taskKeyValueQueue.init();
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+        TaskQueue queue;
+        if (!taskQueueMap.contains(prefix)) {
+            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
+            try {
+                taskKeyValueQueue.init();
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            taskQueueMap.putIfAbsent(prefix, taskKeyValueQueue);
         }
-        taskQueueMap.putIfAbsent(prefix, taskKeyValueQueue);
-        TaskQueue queue = taskQueueMap.get(prefix);
+        queue = taskQueueMap.get(prefix);
         try {
             queue.append(task);
         } catch (RuntimeException e) {
             logger.error(e.getMessage(), e);
         }
         return true;
-
     }
 
 
@@ -210,7 +218,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @param prefix appId-version.
      * @return 是否成功.
      */
-    private boolean addInitAppInfo(String prefix, List<List<IEntityClass>> list) {
+    private boolean addInitAppInfo(String prefix, List<List<Tuple2<IEntityClass, IEntityField>>> list) {
         try {
             // 判断是否已有节点添加任务
             if (kv.exist(buildQueueName(prefix))) {
@@ -331,8 +339,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                     } else {
 
                         if (logger.isDebugEnabled()) {
-                            logger
-                                    .debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
+                            logger.debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
                         }
 
                         TaskRunner runner = runners.get(task.runnerType().getSimpleName());
@@ -408,7 +415,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         String[] split = orderStr.split(",");
                         if (split.length > 1) {
                             for (int i = 1; i < split.length; i++) {
-                                deleteOrderHead.append(split[i]);
+                                deleteOrderHead.append(split[i]).append(",");
                             }
                         }
                     }

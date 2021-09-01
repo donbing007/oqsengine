@@ -1,7 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
+import io.vavr.Tuple2;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -14,7 +17,7 @@ import java.util.List;
  */
 public class AggregationTask extends AbstractTask implements Serializable {
 
-    private static final int DEFAULT_SIZE = 100;
+    public static final int DEFAULT_SIZE = 100;
 
     /**
      * 聚合任务初始化.
@@ -22,7 +25,7 @@ public class AggregationTask extends AbstractTask implements Serializable {
      * @param prefix 聚合任务前缀 (appId-version).
      * @param avgEntity EntityClass信息（包括聚合对象和被聚合对象的信息）.
      */
-    public AggregationTask(String prefix, List<IEntityClass> avgEntity) {
+    public AggregationTask(String prefix, List<Tuple2<IEntityClass, IEntityField>> avgEntity) {
         this.prefix = prefix;
         this.avgEntitys = avgEntity;
     }
@@ -37,13 +40,6 @@ public class AggregationTask extends AbstractTask implements Serializable {
         this.prefix = prefix;
     }
 
-    public List<IEntityClass> getAvgEntity() {
-        return avgEntitys;
-    }
-
-    public void setAvgEntity(List<IEntityClass> avgEntity) {
-        this.avgEntitys = avgEntity;
-    }
 
     public List<Long> getRelationIds() {
         return relationIds;
@@ -53,13 +49,21 @@ public class AggregationTask extends AbstractTask implements Serializable {
         this.relationIds = relationIds;
     }
 
-    private List<IEntityClass> avgEntitys;
+    public List<Tuple2<IEntityClass, IEntityField>> getAvgEntitys() {
+        return avgEntitys;
+    }
+
+    public void setAvgEntitys(List<Tuple2<IEntityClass, IEntityField>> avgEntitys) {
+        this.avgEntitys = avgEntitys;
+    }
+
+    private List<Tuple2<IEntityClass, IEntityField>> avgEntitys;
 
     private List<Long> relationIds;
 
 
     @Override
     public Class runnerType() {
-        return null;
+        return AggregationTaskRunner.class;
     }
 }
