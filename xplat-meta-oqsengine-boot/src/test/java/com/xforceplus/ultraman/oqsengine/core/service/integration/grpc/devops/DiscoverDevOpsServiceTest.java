@@ -3,14 +3,21 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -43,7 +50,32 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
-    private boolean waitForDebug = true;
+//    // mockBean below need to delete
+//    @MockBean(name = "longContinuousPartialOrderIdGenerator")
+//    private LongIdGenerator longIdGenerator;
+//
+//    @MockBean(name = "longNoContinuousPartialOrderIdGenerator")
+//    private LongIdGenerator longPartitionIdGenerator;
+//
+//    @MockBean
+//    private EntitySearchService entitySearchService;
+//
+//    @MockBean
+//    private TransactionManager transactionManager;
+//
+//    @MockBean
+//    private IndexStorage indexStorage;
+//
+//    @MockBean
+//    private MasterStorage masterStorage;
+//
+//    @MockBean
+//    private TaskQueue taskQueue;
+//
+//    @MockBean
+//    private TaskCoordinator taskCoordinator;
+
+    private boolean waitForDebug = false;
 
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
