@@ -136,14 +136,14 @@ public class MinFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3000.10"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
-        Optional<IValue> a = minFunction.excute(agg, o, n);
+        Optional<IValue> a = minFunction.excute(Optional.of(agg), Optional.of(o), Optional.of(n));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 4000);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 3300);
-        Optional<IValue> a1 = minFunction.excute(agg1, o1, n1);
+        Optional<IValue> a1 = minFunction.excute(Optional.of(agg1), Optional.of(o1), Optional.of(n1));
         System.out.println(a1.get().getValue());
     }
 
@@ -153,14 +153,14 @@ public class MinFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3000.10"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
-        Optional<IValue> a = minFunction.init(agg, Arrays.asList(o, n));
+        Optional<IValue> a = minFunction.init(Optional.of(agg), Arrays.asList(Optional.of(o), Optional.of(n)));
         System.out.println(a.get().getValue());
 
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 4000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 5000);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 4400);
-        Optional<IValue> a1 = minFunction.init(agg1, Arrays.asList(o1, n1));
+        Optional<IValue> a1 = minFunction.init(Optional.of(agg1), Arrays.asList(Optional.of(o1), Optional.of(n1)));
         System.out.println(a1.get().getValue());
     }
 

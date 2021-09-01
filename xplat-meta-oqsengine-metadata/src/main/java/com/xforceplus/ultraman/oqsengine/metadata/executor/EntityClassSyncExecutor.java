@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+
+import com.xforceplus.ultraman.oqsengine.metadata.utils.AggregationTaskBuilderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +95,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
+                List<EntityClassStorage> preEntityClassStorageList = cacheExecutor.read(appId);
                 try {
                     // step3 update new Hash in redis
                     if (!cacheExecutor.save(appId, version, entityClassStorageList, payloads)) {
@@ -100,6 +103,9 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                             String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
                         );
                     }
+
+                    // step3.1 send new AggregationTask add by wz
+                    AggregationTaskBuilderUtils.buildTask(appId, version, preEntityClassStorageList, entityClassStorageList);
 
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {
