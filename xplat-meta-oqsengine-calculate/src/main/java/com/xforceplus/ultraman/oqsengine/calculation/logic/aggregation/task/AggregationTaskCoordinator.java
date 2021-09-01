@@ -216,9 +216,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * 每个OQS节点只会有一个节点添加对应app的聚合初始化任务.
      *
      * @param prefix appId-version.
+     * @param list 要更新的聚合字段信息集合.
      * @return 是否成功.
      */
-    private boolean addInitAppInfo(String prefix, List<List<Tuple2<IEntityClass, IEntityField>>> list) {
+    public boolean addInitAppInfo(String prefix, List<List<Tuple2<IEntityClass, IEntityField>>> list) {
         try {
             // 判断是否已有节点添加任务
             if (kv.exist(buildQueueName(prefix))) {
