@@ -165,9 +165,9 @@ discover:
         expired: 60000
         duration: 5000
     agent:
-      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
+      erviceName: oqs-engine
       serviceGroup: ${HOSTNAME}
-      serviceName: oqs-engine
+      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
     threadPool:
       task: 5
       queue: 100
