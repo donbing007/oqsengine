@@ -144,7 +144,6 @@ data:
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
 
-
         discover:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}
