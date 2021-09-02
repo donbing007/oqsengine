@@ -105,7 +105,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     }
 
                     // step3.1 send new AggregationTask add by wz
-                    AggregationTaskBuilderUtils.buildTask(appId, version, preEntityClassStorageList, entityClassStorageList);
+                    AggregationTaskBuilderUtils.buildTask(appId, version, preEntityClassStorageList, entityClassStorageList, payloads);
 
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {

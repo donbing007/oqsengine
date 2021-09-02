@@ -47,7 +47,11 @@ public enum EventType {
     /**
      * 自动填充字段更新.
      */
-    AUTO_FILL_UPGRADE(9);
+    AUTO_FILL_UPGRADE(9),
+    /**
+     * 聚合字段解析树更新.
+     */
+    AGGREGATION_TREE_UPGRADE(10);
 
     private int value;
 

@@ -1,5 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AggregationTreePayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -18,7 +23,7 @@ import java.util.stream.Collectors;
 public class AggregationTaskBuilderUtils {
 
     public static void buildTask(String appId, int version, List<EntityClassStorage> preStorageList,
-                                 List<EntityClassStorage> storageList){
+                                 List<EntityClassStorage> storageList, List<Event<?>> payLoads){
         if (storageList != null && storageList.size() > 0) {
             List<EntityField> entityFields = new ArrayList<>();
             storageList.stream().map(s -> entityFields.addAll(s.getFields().stream().filter(f ->
@@ -29,7 +34,8 @@ public class AggregationTaskBuilderUtils {
                 preStorageList.stream().map(s -> preEntityFields.addAll(s.getFields().stream().filter(f ->
                         f.calculationType().equals(CalculationType.AGGREGATION)
                 ).collect(Collectors.toList()))).collect(Collectors.toList());
-                    
+//                payLoads.add(new ActualEvent<>(EventType.AGGREGATION_TREE_UPGRADE,
+//                        new AggregationTreePayload(appId,version,)));
             } else {
 
             }

@@ -17,24 +17,29 @@ import java.util.Map;
  * @date: 2021/8/30 14:57
  */
 public class MetaParseTree implements ParseTree {
+
+    private String prefix;
+
     private PTNode node;
 
-    public MetaParseTree (PTNode ptNode) {
-        this.node = ptNode;
+    public String getPrefix() {
+        return prefix;
     }
 
-    @Override
-    public PTNode next() {
-        return null;
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
     }
 
-    @Override
-    public ParseTree getTree() {
-        return this;
-    }
-
-    @Override
     public PTNode getNode() {
+        return node;
+    }
+
+    public void setNode(PTNode node) {
+        this.node = node;
+    }
+
+    @Override
+    public List<PTNode> next() {
         return null;
     }
 
@@ -44,25 +49,8 @@ public class MetaParseTree implements ParseTree {
     }
 
     @Override
-    public Condition showNodeCondition() {
-
-        return null;
-    }
-
-    @Override
     public int treeLevel() {
-
         return 0;
-    }
-
-    @Override
-    public List<ParseTree> getTrees(String appId) {
-        return null;
-    }
-
-    @Override
-    public boolean saveTrees(List<ParseTree> trees) {
-        return false;
     }
 
     @Override
@@ -76,12 +64,12 @@ public class MetaParseTree implements ParseTree {
     }
 
     @Override
-    public ParseTree getSubTree(IEntityClass entityClass, IEntityField entityField) {
+    public List<ParseTree> getSubTree(IEntityClass entityClass, IEntityField entityField) {
         return null;
     }
 
     @Override
-    public ParseTree generateTree(Map map) {
+    public ParseTree generateTree(List<PTNode> nodes) {
         return null;
     }
 }

@@ -14,18 +14,17 @@ import java.util.List;
 public interface AggregationParse {
 
     /**
-     * 构建聚合解析器信息.
-     * @param appId 应用id.
-     * @return
-     */
-    List<ParseTree> build(String appId);
-
-    /**
      * 查找聚合树.
      *
-     * @param id 对象id
+     * @param entityClassId 元信息标识.
+     * @param fieldId 字段id
      * @return 聚合树
      */
-    ParseTree find(String id);
+    ParseTree find(Long entityClassId, Long fieldId, String profileCode);
+
+    /**
+     * 追加最新聚合树.
+     */
+    void appendTree(ParseTree parseTree);
 
 }

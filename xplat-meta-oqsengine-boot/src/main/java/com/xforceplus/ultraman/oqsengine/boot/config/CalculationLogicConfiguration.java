@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.DefaultCalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.MetaAggregationParse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,5 +20,10 @@ public class CalculationLogicConfiguration {
     @Bean
     public CalculationLogicFactory calculationLogicFactory() {
         return new DefaultCalculationLogicFactory();
+    }
+
+    @Bean
+    public AggregationParse aggregationParse() {
+        return new MetaAggregationParse();
     }
 }

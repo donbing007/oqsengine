@@ -28,6 +28,10 @@ public class PTNode {
      */
     private int level;
 
+    /**
+     * 版本信息.
+     */
+    private int version;
 
 
     /**
@@ -153,4 +157,22 @@ public class PTNode {
         this.aggEntityField = aggEntityField;
     }
 
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public Relationship getRelationship() {
+        return relationship;
+    }
+
+    public void setRelationship(Relationship relationship) {
+        this.relationship = relationship;
+    }
+
+    public PTNode() {
+    }
 }

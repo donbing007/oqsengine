@@ -18,28 +18,18 @@ import java.util.Map;
  */
 public interface ParseTree {
 
-    PTNode next();
-
-    ParseTree getTree();
-
-    PTNode getNode();
+    List<PTNode> next();
 
     PTNode root();
 
-    Condition showNodeCondition();
-
     int treeLevel();
-
-    List<ParseTree> getTrees(String appId);
-
-    boolean saveTrees(List<ParseTree> trees);
 
     List<PTNode> toList();
 
     void add(PTNode node);
 
-    ParseTree getSubTree(IEntityClass entityClass, IEntityField entityField);
+    List<ParseTree> getSubTree(IEntityClass entityClass, IEntityField entityField);
 
-    ParseTree generateTree(Map map);
+    ParseTree generateTree(List<PTNode> nodes);
 
 }
