@@ -20,10 +20,6 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -32,6 +28,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -81,7 +80,7 @@ public class AggregationTaskRunner implements TaskRunner {
                         Condition condition = new Condition(ptNode.getAggEntityField(),  ConditionOperator.EQUALS, new LongValue(ptNode.getEntityField(), entity.get().id()));
                         Collection<IEntity> entities = entitySearchService.selectByConditions(new Conditions(condition), ptNode.getAggEntityClass().ref(), ServiceSelectConfig.Builder.anSearchConfig().build());
 
-                        if(entities.size() > 0) {
+                        if (entities.size() > 0) {
                             //获取符合条件的所有明细值
                             List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(ptNode.getAggEntityField().id())).collect(Collectors.toList());
 
@@ -98,7 +97,7 @@ public class AggregationTaskRunner implements TaskRunner {
                                     try {
                                         masterStorage.replace(entity.get(), ptNode.getEntityClass());
                                         break;
-                                    }catch (SQLException e) {
+                                    } catch (SQLException e) {
                                         logger.error(e.getMessage(), e);
                                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                                     }

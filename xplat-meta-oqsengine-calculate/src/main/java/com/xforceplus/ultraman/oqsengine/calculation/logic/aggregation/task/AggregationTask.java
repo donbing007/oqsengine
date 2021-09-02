@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
-
 import java.io.Serializable;
 import java.util.List;
 
