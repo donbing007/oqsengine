@@ -157,7 +157,7 @@ data:
             agent:
               serviceId: {{ .Values.discover.sdk.agent.serviceId }}
               serviceGroup: {{ .Values.discover.sdk.agent.serviceGroup }}
-              serviceName: {{ .Values.discover.sdk.agent.serviceGroup | default "oqs-engine" | quote }}
+              serviceName: {{ .Values.discover.sdk.agent.serviceName | default "oqs-engine" | quote }}
             threadPool:
               task: {{ .Values.discover.sdk.threadPool.task | default "5" | quote }}
               queue: {{ .Values.discover.sdk.threadPool.queue | default "100" | quote }}
