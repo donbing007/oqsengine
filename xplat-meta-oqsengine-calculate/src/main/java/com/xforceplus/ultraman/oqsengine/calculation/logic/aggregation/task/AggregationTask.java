@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
-import io.vavr.Tuple2;
 
 import java.io.Serializable;
 import java.util.List;
@@ -23,11 +21,11 @@ public class AggregationTask extends AbstractTask implements Serializable {
      * 聚合任务初始化.
      *
      * @param prefix 聚合任务前缀 (appId-version).
-     * @param avgEntity EntityClass信息（包括聚合对象和被聚合对象的信息）.
+     * @param parseTree EntityClass信息（包括聚合对象和被聚合对象的信息）.
      */
-    public AggregationTask(String prefix, List<Tuple2<IEntityClass, IEntityField>> avgEntity) {
+    public AggregationTask(String prefix, ParseTree parseTree) {
         this.prefix = prefix;
-        this.avgEntitys = avgEntity;
+        this.parseTree = parseTree;
     }
 
     private String prefix;
@@ -49,15 +47,15 @@ public class AggregationTask extends AbstractTask implements Serializable {
         this.relationIds = relationIds;
     }
 
-    public List<Tuple2<IEntityClass, IEntityField>> getAvgEntitys() {
-        return avgEntitys;
+    public ParseTree getParseTree() {
+        return parseTree;
     }
 
-    public void setAvgEntitys(List<Tuple2<IEntityClass, IEntityField>> avgEntitys) {
-        this.avgEntitys = avgEntitys;
+    public void setParseTree(ParseTree parseTree) {
+        this.parseTree = parseTree;
     }
 
-    private List<Tuple2<IEntityClass, IEntityField>> avgEntitys;
+    private ParseTree parseTree;
 
     private List<Long> relationIds;
 

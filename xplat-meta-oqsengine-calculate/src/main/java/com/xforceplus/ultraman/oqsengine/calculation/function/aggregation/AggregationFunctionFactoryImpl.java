@@ -12,10 +12,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
  * @author: wangzheng
  * @date: 2021/8/31 16:47
  */
-public class AggregationFunctionFactoryImpl implements AggregationFunctionFactory{
+public class AggregationFunctionFactoryImpl{
 
-    @Override
-    public AggregationFunction getAggregationFunction(AggregationType aggregationType) {
+
+    public static AggregationFunction getAggregationFunction(AggregationType aggregationType) {
         switch (aggregationType) {
             case COUNT:
                 return new CountFunction();

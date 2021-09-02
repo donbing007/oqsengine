@@ -1,23 +1,25 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
-import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
-import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +45,7 @@ public class AggregationTaskRunner implements TaskRunner {
     final Logger logger = LoggerFactory.getLogger(AggregationTaskRunner.class);
 
     @Resource
-    private KeyValueStorage kv;
+    private MetaManager metaManager;
 
     @Resource
     private MasterStorage masterStorage;
@@ -55,48 +57,57 @@ public class AggregationTaskRunner implements TaskRunner {
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
-        // TODO 执行聚合初始化，step 1: 查询被聚合  Step 2: 调用聚合函数 Step 3: 乐观锁更新
+        // 执行聚合初始化，step 1: 查询被聚合  Step 2: 调用聚合函数 Step 3: 乐观锁更新
         AggregationTask aggregationTask = (AggregationTask) task;
-        List<Tuple2<IEntityClass, IEntityField>> avgEntity = aggregationTask.getAvgEntitys();
+        List<PTNode> ptNodes = aggregationTask.getParseTree().toList();
 
-        for (int i = 0; i < avgEntity.size(); i++) {
-            doInit(avgEntity.get(i));
+        for (int i = 0; i < ptNodes.size(); i++) {
+            doInit(ptNodes.get(i));
         }
     }
 
-    private void doInit(Tuple2<IEntityClass, IEntityField> classIEntityFieldTuple2) {
+    private void doInit(PTNode ptNode) {
         DataIterator<OriginalEntity> iterator;
         int count = 0;
         try {
-            iterator = masterStorage.iterator(classIEntityFieldTuple2._1(), 0, System.currentTimeMillis(), 0);
+            iterator = masterStorage.iterator(ptNode.getEntityClass(), 0, System.currentTimeMillis(), 0);
             while (iterator.hasNext()) {
-                while (true) {
-                    try {
-                        // TODO 获取主信息id，根据relationCode构建明细查询条件
-                        OriginalEntity originalEntity = iterator.next();
-                        Optional<IEntity> entity = entitySearchService.selectOne(originalEntity.getId(), classIEntityFieldTuple2._1().ref());
-                        if (entity.isPresent()) {
-                            //TODO 入参要改成明细的
-                            Collection<IEntity> entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), classIEntityFieldTuple2._1.ref(), ServiceSelectConfig.Builder.anSearchConfig().build());
+                try {
+                    // 获取主信息id，得到entity信息
+                    OriginalEntity originalEntity = iterator.next();
+                    Optional<IEntity> entity = entitySearchService.selectOne(originalEntity.getId(), ptNode.getEntityClass().ref());
+                    if (entity.isPresent()) {
+                        //构造查询被聚合信息条件
+                        Condition condition = new Condition(ptNode.getAggEntityField(),  ConditionOperator.EQUALS, new LongValue(ptNode.getEntityField(), entity.get().id()));
+                        Collection<IEntity> entities = entitySearchService.selectByConditions(new Conditions(condition), ptNode.getAggEntityClass().ref(), ServiceSelectConfig.Builder.anSearchConfig().build());
 
-                            //TODO fieldId 要改成明细的
-                            List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(classIEntityFieldTuple2._2().id())).collect(Collectors.toList());
+                        if(entities.size() > 0) {
+                            //获取符合条件的所有明细值
+                            List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(ptNode.getAggEntityField().id())).collect(Collectors.toList());
 
 
-                            // TODO 工厂获取聚合函数，执行运算
-                            AvgFunction avgFunction = new AvgFunction();
+                            // 工厂获取聚合函数，执行运算
+                            AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(ptNode.getAggregationType());
 
-                            Optional<IValue> ivalue = avgFunction.init(Optional.of(IValueUtils.toIValue(classIEntityFieldTuple2._2(), classIEntityFieldTuple2._2().type().equals(FieldType.DATETIME) ? LocalDateTime.now() : 0)), ivalues);
+                            Optional<IValue> ivalue = function.init(Optional.of(IValueUtils.toIValue(ptNode.getEntityField(), ptNode.getEntityField().type().equals(FieldType.DATETIME) ? LocalDateTime.now() : 0)), ivalues);
 
+                            // 乐观锁更新聚合信息,不成功会重试
                             if (ivalue.isPresent()) {
                                 entity.get().entityValue().addValue(ivalue.get());
-                                masterStorage.replace(entity.get(), classIEntityFieldTuple2._1());
+                                while (true) {
+                                    try {
+                                        masterStorage.replace(entity.get(), ptNode.getEntityClass());
+                                        break;
+                                    }catch (SQLException e) {
+                                        logger.error(e.getMessage(), e);
+                                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                                    }
+                                }
                             }
-                            break;
                         }
-                    } catch (Exception   e) {
-                        logger.error(e.getMessage(), e);
                     }
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
                 }
 
 

@@ -2,8 +2,11 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 聚合解析树
@@ -32,5 +35,11 @@ public interface ParseTree {
     boolean saveTrees(List<ParseTree> trees);
 
     List<PTNode> toList();
+
+    void add(PTNode node);
+
+    ParseTree getSubTree(IEntityClass entityClass, IEntityField entityField);
+
+    ParseTree generateTree(Map map);
 
 }
