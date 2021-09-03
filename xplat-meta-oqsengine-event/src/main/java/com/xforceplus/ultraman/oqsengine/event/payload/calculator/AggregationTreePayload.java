@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.payload.calculator;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 import java.io.Serializable;
 import java.util.List;
@@ -26,19 +26,13 @@ public class AggregationTreePayload implements Serializable {
     private int version;
 
     /**
-     * 上一版本的结构.
-     */
-    private List<EntityClass> preEntityList;
-
-    /**
      * 当前版本的结构.
      */
-    private List<EntityClass> entityList;
+    private List<IEntityClass> entityList;
 
-    public AggregationTreePayload(String appId, int version, List<EntityClass> preEntityList, List<EntityClass> entityList) {
+    public AggregationTreePayload(String appId, int version, List<IEntityClass> entityList) {
         this.appId = appId;
         this.version = version;
-        this.preEntityList = preEntityList;
         this.entityList = entityList;
     }
 
@@ -58,19 +52,11 @@ public class AggregationTreePayload implements Serializable {
         this.version = version;
     }
 
-    public List<EntityClass> getPreEntityList() {
-        return preEntityList;
-    }
-
-    public void setPreEntityList(List<EntityClass> preEntityList) {
-        this.preEntityList = preEntityList;
-    }
-
-    public List<EntityClass> getEntityList() {
+    public List<IEntityClass> getEntityList() {
         return entityList;
     }
 
-    public void setEntityList(List<EntityClass> entityList) {
+    public void setEntityList(List<IEntityClass> entityList) {
         this.entityList = entityList;
     }
 
@@ -81,13 +67,12 @@ public class AggregationTreePayload implements Serializable {
         AggregationTreePayload that = (AggregationTreePayload) o;
         return getVersion() == that.getVersion() &&
                 Objects.equals(getAppId(), that.getAppId()) &&
-                Objects.equals(getPreEntityList(), that.getPreEntityList()) &&
                 Objects.equals(getEntityList(), that.getEntityList());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAppId(), getVersion(), getPreEntityList(), getEntityList());
+        return Objects.hash(getAppId(), getVersion(), getEntityList());
     }
 
     @Override
@@ -95,7 +80,6 @@ public class AggregationTreePayload implements Serializable {
         return "AggregationTreePayload{" +
                 "appId='" + appId + '\'' +
                 ", version=" + version +
-                ", preEntityList=" + preEntityList +
                 ", entityList=" + entityList +
                 '}';
     }

@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.AggregationEventBuilder;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import java.util.ArrayList;
@@ -22,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-
-import com.xforceplus.ultraman.oqsengine.metadata.utils.AggregationTaskBuilderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +94,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
-                List<EntityClassStorage> preEntityClassStorageList = cacheExecutor.read(appId);
+
                 try {
                     // step3 update new Hash in redis
                     if (!cacheExecutor.save(appId, version, entityClassStorageList, payloads)) {
@@ -104,8 +103,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                         );
                     }
 
-                    // step3.1 send new AggregationTask add by wz
-                    AggregationTaskBuilderUtils.buildTask(appId, version, preEntityClassStorageList, entityClassStorageList, payloads);
+                    // step3.1 send new buildAggEvent
+                    new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorageList, payloads);
 
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {

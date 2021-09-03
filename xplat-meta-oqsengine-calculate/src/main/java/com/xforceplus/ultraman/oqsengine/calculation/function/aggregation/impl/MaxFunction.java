@@ -6,6 +6,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.LongSummaryStatistics;
@@ -64,6 +69,26 @@ public class MaxFunction implements AggregationFunction {
             agg.get().setStringValue(String.valueOf(temp.getMax()));
         }
         return Optional.of(agg.get());
+    }
+
+    @Override
+    public Optional<Long> init(long agg, List<Long> values) {
+        LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(Long::longValue));
+        return Optional.of(temp.getMax());
+    }
+
+    @Override
+    public Optional<BigDecimal> init(BigDecimal agg, List<BigDecimal> values) {
+        BigDecimalSummaryStatistics temp = values.stream().collect(BigDecimalSummaryStatistics.statistics());
+        return Optional.of(temp.getMax());
+    }
+
+    @Override
+    public Optional<LocalDateTime> init(LocalDateTime agg, List<LocalDateTime> values) {
+        ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
+        LongSummaryStatistics temp = values.stream().map(v -> v.toEpochSecond(zone))
+                .collect(Collectors.summarizingLong(Long::longValue));
+        return Optional.of(LocalDateTime.ofEpochSecond(temp.getMax(),0,zone));
     }
 
 }
