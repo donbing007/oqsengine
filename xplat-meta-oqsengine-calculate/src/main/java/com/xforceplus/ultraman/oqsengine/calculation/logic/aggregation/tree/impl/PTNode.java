@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,7 +61,7 @@ public class PTNode {
     private Condition condition;
 
     /**
-     * 关系信息
+     * 关系信息.
      */
     private Relationship relationship;
 
@@ -126,7 +126,7 @@ public class PTNode {
     }
 
     public List<PTNode> getNextNodes() {
-        return nextNodes;
+        return nextNodes == null ? new ArrayList<>() : nextNodes;
     }
 
     public void setNextNodes(List<PTNode> nextNodes) {

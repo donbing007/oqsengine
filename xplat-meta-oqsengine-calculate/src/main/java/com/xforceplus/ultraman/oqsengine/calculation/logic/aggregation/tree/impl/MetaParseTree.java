@@ -156,7 +156,7 @@ public class MetaParseTree implements ParseTree {
             }
             // 表示遍历完最后一层树
             // 之后没有任何叶子节点可以加，但是集合中还有未添加node
-            if (size <= 0 && nodes.size() > 0) {
+            if (queue.size() <= 0 && nodes.size() > 0) {
                 logger.error(String.format("this nodeLists has some node without relation."));
                 return null;
             }

@@ -77,7 +77,7 @@ public class AggregationTaskRunner implements TaskRunner {
                     Optional<IEntity> entity = entitySearchService.selectOne(originalEntity.getId(), ptNode.getEntityClass().ref());
                     if (entity.isPresent()) {
                         //构造查询被聚合信息条件
-                        Condition condition = new Condition(ptNode.getAggEntityField(),  ConditionOperator.EQUALS, new LongValue(ptNode.getEntityField(), entity.get().id()));
+                        Condition condition = new Condition(ptNode.getRelationship().getEntityField(),  ConditionOperator.EQUALS, new LongValue(ptNode.getEntityField(), entity.get().id()));
                         Collection<IEntity> entities = entitySearchService.selectByConditions(new Conditions(condition), ptNode.getAggEntityClass().ref(), ServiceSelectConfig.Builder.anSearchConfig().build());
 
                         if (entities.size() > 0) {
@@ -98,6 +98,8 @@ public class AggregationTaskRunner implements TaskRunner {
                                         masterStorage.replace(entity.get(), ptNode.getEntityClass());
                                         break;
                                     } catch (SQLException e) {
+                                        entity = entitySearchService.selectOne(originalEntity.getId(), ptNode.getEntityClass().ref());
+                                        entity.get().entityValue().addValue(ivalue.get());
                                         logger.error(e.getMessage(), e);
                                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                                     }
