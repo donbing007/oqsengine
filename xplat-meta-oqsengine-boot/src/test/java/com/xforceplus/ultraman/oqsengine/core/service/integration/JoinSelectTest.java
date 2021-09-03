@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -97,10 +98,16 @@ public class JoinSelectTest extends AbstractContainerExtends {
         Mockito.when(metaManager.load(MockEntityClassDefine.l0EntityClass.id()))
             .thenReturn(Optional.of(MockEntityClassDefine.l0EntityClass));
 
+        Mockito.when(metaManager.load(MockEntityClassDefine.l0EntityClass.id(), null))
+            .thenReturn(Optional.of(MockEntityClassDefine.l0EntityClass));
+
         Mockito.when(metaManager.load(MockEntityClassDefine.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockEntityClassDefine.l0EntityClass));
 
         Mockito.when(metaManager.load(MockEntityClassDefine.l1EntityClass.id()))
+            .thenReturn(Optional.of(MockEntityClassDefine.l1EntityClass));
+
+        Mockito.when(metaManager.load(MockEntityClassDefine.l1EntityClass.id(), null))
             .thenReturn(Optional.of(MockEntityClassDefine.l1EntityClass));
 
         Mockito.when(metaManager.load(MockEntityClassDefine.l1EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
@@ -109,14 +116,29 @@ public class JoinSelectTest extends AbstractContainerExtends {
         Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id()))
             .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
 
+        Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id(), null))
+            .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
+
         Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
 
         Mockito.when(metaManager.load(MockEntityClassDefine.driverEntityClass.id()))
             .thenReturn(Optional.of(MockEntityClassDefine.driverEntityClass));
 
+        Mockito.when(metaManager.load(MockEntityClassDefine.driverEntityClass.id(), null))
+            .thenReturn(Optional.of(MockEntityClassDefine.driverEntityClass));
+
         Mockito.when(metaManager.load(MockEntityClassDefine.driverEntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockEntityClassDefine.driverEntityClass));
+
+        Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id()))
+            .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
+
+        Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id(), null))
+            .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
+
+        Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
 
         initData();
 
@@ -188,7 +210,8 @@ public class JoinSelectTest extends AbstractContainerExtends {
 
         Page page = Page.newSinglePage(100);
         Collection<IEntity> results =
-            entitySearchService.selectByConditions(conditions, MockEntityClassDefine.l2EntityClass.ref(), page);
+            entitySearchService.selectByConditions(conditions, MockEntityClassDefine.l2EntityClass.ref(),
+                ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
         Assertions.assertEquals(1, results.size());
         Assertions.assertEquals(1, page.getTotalCount());
 
