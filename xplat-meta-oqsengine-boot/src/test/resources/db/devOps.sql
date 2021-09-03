@@ -1,3 +1,4 @@
+create database if not exists oqsengine;
 use oqsengine;
 create table devopstasks
 (

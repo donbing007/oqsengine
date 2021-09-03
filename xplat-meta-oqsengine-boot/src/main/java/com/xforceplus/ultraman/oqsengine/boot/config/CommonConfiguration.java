@@ -54,24 +54,6 @@ public class CommonConfiguration {
     }
 
     /**
-     * default redis client.
-     *
-     * @param configuration lettuce 配置.
-     * @return redisClient 实例.
-     */
-    @Bean(destroyMethod = "shutdown")
-    public RedisClient redisClient(RedisConfiguration configuration) {
-        RedisClient redisClient = RedisClient.create(configuration.uriWithStateDb());
-
-        redisClient.setOptions(ClientOptions.builder()
-            .autoReconnect(true)
-            .requestQueueSize(configuration.getMaxReqQueue())
-            .build()
-        );
-        return redisClient;
-    }
-
-    /**
      * redis client构造.
      *
      * @param configuration lettuce 配置.
