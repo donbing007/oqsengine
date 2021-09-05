@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -869,5 +871,26 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             masterStorage.writeError(errorStorageEntity);
         }
+    }
+
+    private IEntity callAggregationReplace(IEntity entity, AggregationParse aggregationParse) throws SQLException {
+        //1、update  2、处理next节点  3、查找是否有其他关联树list<ParseTree>
+
+        // replace entity
+        OperationResult replace = replace(entity);
+        Optional<IEntityClass> entityClass =
+                metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
+        if (entityClass.isPresent()) {
+            //find trees
+            List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
+                    entity.entityClassRef().getProfile());
+
+            parseTrees.forEach(parseTree -> {
+                //find next
+
+
+            });
+        }
+        return null;
     }
 }

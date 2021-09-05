@@ -10,12 +10,11 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -28,6 +27,8 @@ import java.util.stream.Collectors;
  * @date: 2021/8/30 12:04
  */
 public class MetaAggregationParse implements AggregationParse {
+
+    final Logger logger = LoggerFactory.getLogger(MetaAggregationParse.class);
 
     @Resource
     private CacheExecutor cacheExecutor;
@@ -66,6 +67,21 @@ public class MetaAggregationParse implements AggregationParse {
             parseTree = reBuild(entityClassId,fieldId,profileCode);
         }
         return parseTree;
+    }
+
+    @Override
+    public List<ParseTree> find(Long entityClassId, String profileCode) {
+        List<ParseTree> findTrees = new ArrayList<>();
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassId,profileCode);
+        if (entityClass.isPresent()) {
+            entityClass.get().fields().forEach(f -> {
+                ParseTree parseTree = parseTrees.get(f.id());
+                if (parseTree != null) {
+                    findTrees.add(parseTree);
+                }
+            });
+        }
+        return findTrees;
     }
 
     @Override
