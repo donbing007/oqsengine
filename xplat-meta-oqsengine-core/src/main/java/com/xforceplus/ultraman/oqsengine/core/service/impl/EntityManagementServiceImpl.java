@@ -32,9 +32,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
@@ -44,8 +46,10 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
@@ -135,6 +139,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      */
     @Resource
     private AggregationParse aggregationParse;
+
+    @Resource
+    private IndexStorage indexStorage;
 
     /*
     只读的原因.
@@ -922,8 +929,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long relationAggId = 0;
                 if (relationId.isPresent()) {
                     relationAggId = relationId.get().valueToLong();
-                    List<Condition> conditions = ptNode.getConditions();
-
+                    Conditions conditions = ptNode.getConditions();
+                    boolean checkCondition = checkEntityByCondition(entity, entityClass.get(), conditions);
+                    if (!checkCondition) {
+                        return;
+                    }
                 } else {
                     logger.info("relationId is empty!");
                 }
@@ -950,6 +960,32 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             });
         }
         return entity;
+    }
+
+    /**
+     * 根据条件和id来判断这条数据是否符合聚合范围.
+     *
+     * @param entity 被聚合数据.
+     * @param entityClass 被聚合对象.
+     * @param conditions 条件信息.
+     * @return 是否符合.
+     */
+    private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass, Conditions conditions) {
+        if (conditions == null || conditions.size() == 0) {
+            return true;
+        }
+        conditions.addAnd(new Condition(entityClass.field("id").get(),
+                ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
+        Collection<EntityRef> entityRefs = null;
+        try {
+            entityRefs = indexStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (entityRefs != null && entityRefs.size() > 0) {
+            return true;
+        }
+        return false;
     }
 
     /**

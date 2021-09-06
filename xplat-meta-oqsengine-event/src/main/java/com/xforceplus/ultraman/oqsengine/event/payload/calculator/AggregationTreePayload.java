@@ -29,13 +29,6 @@ public class AggregationTreePayload implements Serializable {
     private List<IEntityClass> entityList;
 
     /**
-     * 初始化.
-     *
-     * @param appId appid
-     * @param version 版本
-     * @param entityList entity集合
-     */
-    /**
      * 聚合树构建事件.
      *
      * @param appId 应用id.

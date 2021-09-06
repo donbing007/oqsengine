@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -58,7 +59,7 @@ public class PTNode {
     /**
      * 节点条件信息.
      */
-    private List<Condition> conditions;
+    private Conditions conditions;
 
     /**
      * 关系信息.
@@ -117,11 +118,11 @@ public class PTNode {
         this.entityField = entityField;
     }
 
-    public List<Condition> getConditions() {
+    public Conditions getConditions() {
         return conditions;
     }
 
-    public void setConditions(List<Condition> conditions) {
+    public void setConditions(Conditions conditions) {
         this.conditions = conditions;
     }
 
