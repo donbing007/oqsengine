@@ -84,7 +84,6 @@ public class ToIValueTest {
         for (int i = 0; i < collect.size(); i++) {
             Assertions.assertTrue(collect.get(i).intValue() == (i+1));
         }
-
-
     }
+
 }
