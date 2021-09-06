@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.Aggreg
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;

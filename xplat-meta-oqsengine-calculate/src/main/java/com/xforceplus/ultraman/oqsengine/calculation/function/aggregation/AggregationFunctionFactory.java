@@ -14,9 +14,11 @@ public interface AggregationFunctionFactory {
 
     /**
      * 获取聚合函数实现.
+     *
      * @param aggregationType 函数类型.
      * @return 函数实现.
      */
+
     AggregationFunction getAggregationFunction(AggregationType aggregationType);
 
 }

@@ -47,8 +47,12 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -418,6 +422,27 @@ public class DefaultCacheExecutor implements CacheExecutor {
             storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
     }
 
+    @Override
+    public List<EntityClassStorage> read(String appId) {
+        int version = version(appId);
+        if (version == NOT_EXIST_VERSION) {
+            return Collections.emptyList();
+        }
+
+        Collection<Long> ids = appEntityIdList(appId, version);
+        List<EntityClassStorage> entityClass = new ArrayList<>();
+        try {
+            for (Long id : ids) {
+                EntityClassStorage entityClassStorage = entityClassStorageCache.getIfPresent(generateEntityCacheKey(id, version));
+                entityClass.add(entityClassStorage);
+            }
+        } catch (Exception e) {
+            logger.warn("{}", e.toString());
+        }
+
+        return entityClass;
+    }
+
     /**
      * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象.
      */
@@ -703,26 +728,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         entityClassStorageCache.invalidateAll();
     }
 
-    @Override
-    public List<EntityClassStorage> read(String appId) {
-        int version = version(appId);
-        if (version == NOT_EXIST_VERSION) {
-            return Collections.emptyList();
-        }
 
-        Collection<Long> ids = appEntityIdList(appId, version);
-        List<EntityClassStorage> entityClass = new ArrayList<>();
-        try {
-            for (Long id : ids) {
-                EntityClassStorage entityClassStorage = entityClassStorageCache.getIfPresent(generateEntityCacheKey(id, version));
-                entityClass.add(entityClassStorage);
-            }
-        } catch (Exception e) {
-            logger.warn("{}", e.toString());
-        }
-
-        return entityClass;
-    }
 
     /**
      * 删除过期版本的EntityClass信息.

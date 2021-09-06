@@ -33,8 +33,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
@@ -68,7 +70,6 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * entity 管理服务实现.
  *
@@ -76,6 +77,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/2/18 14:12
  * @since 1.8
  */
+
 public class EntityManagementServiceImpl implements EntityManagementService {
 
     final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
@@ -905,6 +907,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     /**
      * 迭代更新受影响的entity.
+     *
      * @param entity 计算后的entity.
      * @return 返回受影响的entity.
      */
@@ -953,10 +956,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     /**
-     * 暂时废弃这个调用方式.
-     * @param entity
-     * @return
-     * @throws SQLException
+     * 暂时废弃这个方式.
+     *
+     * @param entity 数据.
+     * @return 数据.
      */
     private IEntity callAggregationReplace(IEntity entity) throws SQLException {
         //1、update  2、查找所有关联树 3、处理next节点
