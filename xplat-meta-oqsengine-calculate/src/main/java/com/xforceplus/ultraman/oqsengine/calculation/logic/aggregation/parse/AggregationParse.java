@@ -25,6 +25,7 @@ public interface AggregationParse {
 
     /**
      * 查找这个对象下有多少个需要更新的聚合树.
+     *
      * @param entityClassId 元信息标识.
      * @param profileCode 租户信息.
      * @return 聚合树集合.

@@ -35,6 +35,15 @@ public interface CacheExecutor {
      */
     Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
+
+    /**
+     * 读取内存中应用下的配置信息.
+     *
+     * @param appId 应用标识.
+     * @return entityStorage集合.
+     */
+    List<EntityClassStorage> read(String appId);
+
     /**
      * 批量读取.
      *
@@ -139,10 +148,5 @@ public interface CacheExecutor {
      */
     void invalidateLocal();
 
-    /**
-     * 读取内存中应用下的配置信息.
-     * @param appId 应用标识.
-     * @return
-     */
-    List<EntityClassStorage> read(String appId);
+
 }

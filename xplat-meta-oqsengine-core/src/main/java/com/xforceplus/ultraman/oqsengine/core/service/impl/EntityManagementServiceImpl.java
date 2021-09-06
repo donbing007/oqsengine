@@ -36,7 +36,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
@@ -72,7 +77,6 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * entity 管理服务实现.
  *
@@ -80,6 +84,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/2/18 14:12
  * @since 1.8
  */
+
 public class EntityManagementServiceImpl implements EntityManagementService {
 
     final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
@@ -816,6 +821,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         for (IEntityField field : calculationFields) {
             context.focusField(field);
+            // 如果是求平均值的聚合，需要先把被聚合对象的记录count出来
+            if (field.config().getCalculation().equals(CalculationType.AGGREGATION)) {
+                Aggregation aggregation = (Aggregation) field.config().getCalculation();
+                if (aggregation.getAggregationType().equals(AggregationType.AVG)) {
+                    // 得到count值
+                    int count = countAggregationEntity(aggregation, sourceEntity, entityClass);
+                    // 没找到context set attr的方法，重新构建context-只适用于avg聚合
+                    context = buildCalculationLogicContextWithCount(sourceEntity, entityClass, scenarios, count);
+                }
+            }
+
             CalculationLogic logic = calculationLogicFactory.getCalculation(field.calculationType());
 
             Optional<IValue> newValueOp = logic.calculate(context);
@@ -876,6 +892,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .build();
     }
 
+    private CalculationLogicContext buildCalculationLogicContextWithCount(IEntity entity, IEntityClass entityClass,
+                                                                 Scenarios scenarios, int count) {
+        return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+                .withScenarios(scenarios)
+                .withMetaManager(this.metaManager)
+                .withMasterStorage(this.masterStorage)
+                .withTaskCoordinator(this.taskCoordinator)
+                .withKeyValueStorage(this.kv)
+                .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
+                .withEntityClass(entityClass)
+                .withEntity(entity)
+                .withBizIdGenerator(this.bizIDGenerator)
+                .withAttribute("count", count)
+                .build();
+    }
+
     private void handleHalfSuccessOrRecover(long maintainId, long entityClassId, OperationResult operationResult) {
         if (null != operationResult && (maintainId > 0 && operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
             || operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS))) {
@@ -901,6 +933,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
+    /**
+     * 判断该记录是否影响到其他对象记录.
+     *
+     * @param entity 记录信息.
+     * @return 是否影响.
+     */
     private boolean checkAggregation(IEntity entity) {
         List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
                 entity.entityClassRef().getProfile());
@@ -910,8 +948,36 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return false;
     }
 
+    private int countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass) {
+        // 得到count值
+        Optional<IEntityClass> aggEntityClass =
+                metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
+        int count = 1;
+        if (aggEntityClass.isPresent()) {
+            Conditions conditions = aggregation.getConditions();
+            // 根据关系id得到关系字段
+            Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
+            if (entityField.isPresent()) {
+                conditions.addAnd(new Condition(aggEntityClass.get().ref(), entityField.get(),
+                        ConditionOperator.EQUALS, aggregation.getRelationId(),
+                        sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
+            }
+            Collection<EntityRef> entityRefs = null;
+            try {
+                entityRefs = indexStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if (entityRefs != null && entityRefs.size() > 0) {
+                count = entityRefs.size();
+            }
+        }
+        return count;
+    }
+
     /**
      * 迭代更新受影响的entity.
+     *
      * @param entity 计算后的entity.
      * @return 返回受影响的entity.
      */
@@ -989,10 +1055,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     /**
-     * 暂时废弃这个调用方式.
-     * @param entity
-     * @return
-     * @throws SQLException
+     * 暂时废弃这个方式.
+     *
+     * @param entity 数据.
+     * @return 数据.
      */
     private IEntity callAggregationReplace(IEntity entity) throws SQLException {
         //1、update  2、查找所有关联树 3、处理next节点

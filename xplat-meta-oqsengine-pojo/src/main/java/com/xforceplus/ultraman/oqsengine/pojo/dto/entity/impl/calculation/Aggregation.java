@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.Map;
@@ -35,8 +36,8 @@ public class Aggregation extends AbstractCalculation {
     /**
      * 聚合字段条件信息.
      */
-    @JsonProperty(value = "condition")
-    private String condition;
+    @JsonProperty(value = "conditions")
+    private Conditions conditions;
 
     /**
      * 聚合字段类型.
@@ -82,12 +83,12 @@ public class Aggregation extends AbstractCalculation {
         this.relationId = relationId;
     }
 
-    public String getCondition() {
-        return condition;
+    public Conditions getConditions() {
+        return conditions;
     }
 
-    public void setCondition(String condition) {
-        this.condition = condition;
+    public void setConditions(Conditions conditions) {
+        this.conditions = conditions;
     }
 
     public Map<Long, Long> getAggregationByFields() {
@@ -113,7 +114,7 @@ public class Aggregation extends AbstractCalculation {
         aggregation.fieldId = this.fieldId;
         aggregation.level = this.level;
         aggregation.aggregationByFields = this.aggregationByFields;
-        aggregation.condition = this.condition;
+        aggregation.conditions = this.conditions;
         aggregation.relationId = this.relationId;
         aggregation.aggregationType = this.aggregationType;
         return aggregation;
@@ -126,7 +127,7 @@ public class Aggregation extends AbstractCalculation {
         private long classId;
         private long fieldId;
         private long relationId;
-        private String condition;
+        private Conditions conditions;
         private AggregationType aggregationType;
         private Map<Long, Long> aggregationByFields;
 
@@ -157,7 +158,7 @@ public class Aggregation extends AbstractCalculation {
             aggregation.fieldId = this.fieldId;
             aggregation.level = StaticCalculation.DEFAULT_LEVEL;
             aggregation.aggregationByFields = this.aggregationByFields;
-            aggregation.condition = this.condition;
+            aggregation.conditions = this.conditions;
             aggregation.relationId = this.relationId;
             aggregation.aggregationType = this.aggregationType;
             return aggregation;

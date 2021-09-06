@@ -1,22 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
 
 /**
  * 元数据聚合解析器.
@@ -64,7 +63,7 @@ public class MetaAggregationParse implements AggregationParse {
     public ParseTree find(Long entityClassId, Long fieldId, String profileCode) {
         ParseTree parseTree = parseTrees.get(fieldId);
         if (parseTree == null) {
-            parseTree = reBuild(entityClassId,fieldId,profileCode);
+            parseTree = reBuild(entityClassId, fieldId, profileCode);
         }
         return parseTree;
     }
@@ -72,7 +71,7 @@ public class MetaAggregationParse implements AggregationParse {
     @Override
     public List<ParseTree> find(Long entityClassId, String profileCode) {
         List<ParseTree> findTrees = new ArrayList<>();
-        Optional<IEntityClass> entityClass = metaManager.load(entityClassId,profileCode);
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassId, profileCode);
         if (entityClass.isPresent()) {
             entityClass.get().fields().forEach(f -> {
                 ParseTree parseTree = parseTrees.get(f.id());
@@ -87,15 +86,15 @@ public class MetaAggregationParse implements AggregationParse {
     @Override
     public void appendTree(ParseTree parseTree) {
         if (parseTrees.size() > 0) {
-            parseTrees.put(parseTree.root().getEntityField().id(),parseTree);
+            parseTrees.put(parseTree.root().getEntityField().id(), parseTree);
         } else {
             if (parseTrees.containsKey(parseTree.root().getEntityField().id())) {
                 int version = parseTrees.get(parseTree.root().getEntityField().id()).root().getVersion();
                 if (version < parseTree.root().getVersion()) {
-                    parseTrees.replace(parseTree.root().getEntityField().id(),parseTree);
+                    parseTrees.replace(parseTree.root().getEntityField().id(), parseTree);
                 }
             } else {
-                parseTrees.put(parseTree.root().getEntityField().id(),parseTree);
+                parseTrees.put(parseTree.root().getEntityField().id(), parseTree);
             }
         }
 
@@ -106,10 +105,10 @@ public class MetaAggregationParse implements AggregationParse {
      *
      * @param entityClassId 应用id
      * @param fieldId 字段id
-     * @return
+     * @return parseTree.
      */
     private ParseTree reBuild(Long entityClassId, Long fieldId, String profileCode) {
-        Optional<IEntityClass> entityClass = metaManager.load(entityClassId,profileCode);
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassId, profileCode);
         if (entityClass.isPresent()) {
             Optional<IEntityField> entityField = entityClass.get().field(fieldId);
             if (entityField.isPresent()) {

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.factory;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.UnknownCalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.AggregationCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.autofill.AutoFillCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.FormulaCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogic;
@@ -30,6 +31,7 @@ public class DefaultCalculationLogicFactory implements CalculationLogicFactory {
         calculations.put(CalculationType.LOOKUP, new LookupCalculationLogic());
         calculations.put(CalculationType.FORMULA, new FormulaCalculationLogic());
         calculations.put(CalculationType.AUTO_FILL, new AutoFillCalculationLogic());
+        calculations.put(CalculationType.AGGREGATION, new AggregationCalculationLogic());
     }
 
     /**

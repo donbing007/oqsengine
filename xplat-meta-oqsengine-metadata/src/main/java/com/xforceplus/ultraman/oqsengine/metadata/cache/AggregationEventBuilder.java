@@ -11,10 +11,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
-
-import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 
 /**
  * 聚合字段初始化字段任务.
@@ -29,13 +31,14 @@ public class AggregationEventBuilder {
 
     /**
      * 构建聚合事件.
+     *
      * @param appId 应用id.
      * @param version 应用版本.
      * @param storageList 最新版本结构.
      * @param payLoads 事件.
      */
     public void buildAggEvent(String appId, int version,
-                                 List<EntityClassStorage> storageList, List<Event<?>> payLoads){
+                                 List<EntityClassStorage> storageList, List<Event<?>> payLoads) {
         if (storageList != null && storageList.size() > 0) {
             List<IEntityClass> entityClasses = this.getAggEntityClass(storageList);
 
@@ -47,9 +50,10 @@ public class AggregationEventBuilder {
 
     /**
      * 将EntityClassStorage集合转成IEntityClass集合.
+     *
      * @param storageList 集合.
      */
-    private List<IEntityClass> getAggEntityClass(List<EntityClassStorage> storageList){
+    private List<IEntityClass> getAggEntityClass(List<EntityClassStorage> storageList) {
         List<IEntityClass> entityClasses = new ArrayList<>();
         if (storageList != null && storageList.size() > 0) {
             List<EntityField> entityFields = new ArrayList<>();
@@ -64,7 +68,7 @@ public class AggregationEventBuilder {
                 if (sf.size() > 0) {
                     entityClasses.add(metaManager.load(s.getId()).get());
                     sf.forEach(ef -> {
-                        Aggregation aggregation = (Aggregation)ef.config().getCalculation();
+                        Aggregation aggregation = (Aggregation) ef.config().getCalculation();
                         Optional<IEntityClass> entityClassOptional = profileByField(aggregation.getClassId(),
                                 aggregation.getFieldId(), storageList);
                         entityClasses.add(entityClassOptional.get());
@@ -78,10 +82,10 @@ public class AggregationEventBuilder {
                             f.calculationType().equals(CalculationType.AGGREGATION))
                             .collect(Collectors.toList());
                     if (mf.size() > 0) {
-                        Optional<IEntityClass> entityClassOptional = metaManager.load(s.getId(),entry.getKey());
+                        Optional<IEntityClass> entityClassOptional = metaManager.load(s.getId(), entry.getKey());
                         entityClasses.add(entityClassOptional.get());
                         mf.forEach(ef -> {
-                            Aggregation aggregation = (Aggregation)ef.config().getCalculation();
+                            Aggregation aggregation = (Aggregation) ef.config().getCalculation();
                             Optional<IEntityClass> profileEntityClassOptional = profileByField(aggregation.getClassId(),
                                     aggregation.getFieldId(), storageList);
                             entityClasses.add(profileEntityClassOptional.get());
@@ -100,7 +104,7 @@ public class AggregationEventBuilder {
      * @param fieldId 字段id.
      * @param storageList 元数据.
      */
-    private Optional<IEntityClass> profileByField(long entityClassId, long fieldId, List<EntityClassStorage> storageList){
+    private Optional<IEntityClass> profileByField(long entityClassId, long fieldId, List<EntityClassStorage> storageList) {
         if (storageList != null && storageList.size() > 0) {
             List<EntityClassStorage> entityClassStorages = storageList.stream().filter(s -> s.getId() == entityClassId)
                     .collect(Collectors.toList());
@@ -112,7 +116,7 @@ public class AggregationEventBuilder {
                         List<EntityField> mf = entry.getValue().getEntityFieldList().stream().filter(f -> f.id() == fieldId)
                                 .collect(Collectors.toList());
                         if (mf.size() == 1) {
-                            return metaManager.load(entityClassId,entry.getKey());
+                            return metaManager.load(entityClassId, entry.getKey());
                         }
                     }
                 }

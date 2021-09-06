@@ -6,10 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -87,7 +84,7 @@ public class MinFunction implements AggregationFunction {
         ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
         LongSummaryStatistics temp = values.stream().map(v -> v.toEpochSecond(zone))
                 .collect(Collectors.summarizingLong(Long::longValue));
-        return Optional.of(LocalDateTime.ofEpochSecond(temp.getMin(),0,zone));
+        return Optional.of(LocalDateTime.ofEpochSecond(temp.getMin(), 0, zone));
     }
 
 }

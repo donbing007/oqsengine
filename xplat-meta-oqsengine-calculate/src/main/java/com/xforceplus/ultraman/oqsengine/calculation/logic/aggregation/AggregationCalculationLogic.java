@@ -6,7 +6,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicE
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.sql.SQLException;
@@ -40,9 +43,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
         // 获取当前的原始版本.
         Optional<IValue> o = Optional.empty();
         try {
-            Optional<IEntity> oEntity = context.getMasterStorage().selectOne(entity.id(), context.getEntityClass());
-            if (oEntity.isPresent()) {
-                o = oEntity.get().entityValue().getValue(targetFieldId);
+            Optional<IEntity> entityOptional = context.getMasterStorage().selectOne(entity.id(), context.getEntityClass());
+            if (entityOptional.isPresent()) {
+                o = entityOptional.get().entityValue().getValue(targetFieldId);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -51,6 +54,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
         Optional<IValue> targetValue;
         if (aggregationType.equals(AggregationType.AVG)) {
             int count = 1;
+            Optional<Object> countOp = context.getAttribute("count");
+            if (countOp.isPresent()) {
+                count = (int) countOp.get();
+            }
             // 求平均值需要count信息
             targetValue = ((AvgFunction) function).excuteAvg(n, n, o, count);
         } else {
