@@ -28,6 +28,13 @@ public class AggregationTreePayload implements Serializable {
      */
     private List<IEntityClass> entityList;
 
+    /**
+     * 聚合树构建事件.
+     *
+     * @param appId 应用id.
+     * @param version 应用版本.
+     * @param entityList 对象列表.
+     */
     public AggregationTreePayload(String appId, int version, List<IEntityClass> entityList) {
         this.appId = appId;
         this.version = version;
@@ -60,12 +67,16 @@ public class AggregationTreePayload implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AggregationTreePayload)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AggregationTreePayload)) {
+            return false;
+        }
         AggregationTreePayload that = (AggregationTreePayload) o;
-        return getVersion() == that.getVersion() &&
-                Objects.equals(getAppId(), that.getAppId()) &&
-                Objects.equals(getEntityList(), that.getEntityList());
+        return getVersion() == that.getVersion()
+                && Objects.equals(getAppId(), that.getAppId())
+                && Objects.equals(getEntityList(), that.getEntityList());
     }
 
     @Override
@@ -73,12 +84,4 @@ public class AggregationTreePayload implements Serializable {
         return Objects.hash(getAppId(), getVersion(), getEntityList());
     }
 
-    @Override
-    public String toString() {
-        return "AggregationTreePayload{" +
-                "appId='" + appId + '\'' +
-                ", version=" + version +
-                ", entityList=" + entityList +
-                '}';
-    }
 }

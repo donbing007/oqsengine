@@ -3,10 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-
 import java.util.Map;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
 /**
  * 聚合字段属性.
@@ -51,7 +48,7 @@ public class Aggregation extends AbstractCalculation {
      * 被聚合信息Map fieldId,entityClassId.
      */
     @JsonProperty(value = "condition")
-    private Map<Long,Long> aggregationByFields;
+    private Map<Long, Long> aggregationByFields;
 
     public Aggregation(CalculationType calculationType) {
         super(calculationType);
@@ -158,7 +155,7 @@ public class Aggregation extends AbstractCalculation {
             aggregation.calculationType = CalculationType.AGGREGATION;
             aggregation.classId = this.classId;
             aggregation.fieldId = this.fieldId;
-            aggregation.level = DEFAULT_LEVEL;
+            aggregation.level = StaticCalculation.DEFAULT_LEVEL;
             aggregation.aggregationByFields = this.aggregationByFields;
             aggregation.condition = this.condition;
             aggregation.relationId = this.relationId;
