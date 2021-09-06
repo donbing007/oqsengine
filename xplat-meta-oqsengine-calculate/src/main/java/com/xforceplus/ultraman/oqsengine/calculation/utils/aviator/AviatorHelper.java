@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AviatorHelper {
 
-    private static final Logger logger = LoggerFactory.getLogger(AviatorHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AviatorHelper.class);
 
     private static final String REGEX_META = "(#\\{[^#${}]*\\})";
     private static final String REGEX_ENUM = "(\\$\\{[^#${}]*\\})";
@@ -54,7 +54,7 @@ public class AviatorHelper {
      */
     public static Expression compile(ExpressionWrapper expressionWrapper) {
         String functionBody = AviatorHelper.parseRule(expressionWrapper.getExpression());
-        logger.info("Function body : {]", functionBody);
+        LOGGER.info("Function body : {]", functionBody);
         return INSTANCE.compile(expressionWrapper.getCode(), functionBody, expressionWrapper.isCached());
     }
 
