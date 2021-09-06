@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -16,6 +17,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/13 15:30
  * @since 1.8
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EntityField implements IEntityField, Serializable {
 
     /**

@@ -136,13 +136,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 聚合计算函数工厂.
      */
-    @Resource
+//    @Resource
     private AggregationFunctionFactory aggregationFunctionFactory;
 
     /**
      * 聚合字段解析器.
      */
-    @Resource
+//    @Resource
     private AggregationParse aggregationParse;
 
     @Resource
