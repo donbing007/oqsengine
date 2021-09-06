@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.payload.calculator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
@@ -9,10 +8,9 @@ import java.util.Objects;
 /**
  * Aggregation类型的payload.
  *
- * @className: AggregationTreePayload
- * @package: com.xforceplus.ultraman.oqsengine.event.payload.calculator
- * @author: wangzheng
- * @date: 2021/9/1 16:57
+ * @className: AggregationTreePayload.
+ * @author: wangzheng.
+ * @date: 2021/9/1 16:57.
  */
 public class AggregationTreePayload implements Serializable {
     /**

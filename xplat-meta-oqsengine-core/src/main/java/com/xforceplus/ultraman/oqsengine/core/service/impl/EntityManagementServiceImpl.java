@@ -7,8 +7,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
@@ -30,10 +32,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
@@ -122,6 +123,18 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 字段校验器工厂.
      */
     private VerifierFactory verifierFactory;
+
+    /**
+     * 聚合计算函数工厂.
+     */
+    @Resource
+    private AggregationFunctionFactory aggregationFunctionFactory;
+
+    /**
+     * 聚合字段解析器.
+     */
+    @Resource
+    private AggregationParse aggregationParse;
 
     /*
     只读的原因.
@@ -806,6 +819,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
 
+        //预先校验下是否有受影响的树信息.
+        boolean aggResult = checkAggregation(sourceEntity);
+
+        // 处理受影响的聚合信息,需要判断该数据是否符合聚合条件.
+        if (aggResult) {
+            findAggregationAndReplace(sourceEntity);
+        }
+
         return context.getHints();
     }
 
@@ -873,24 +894,124 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private IEntity callAggregationReplace(IEntity entity, AggregationParse aggregationParse) throws SQLException {
-        //1、update  2、处理next节点  3、查找是否有其他关联树list<ParseTree>
+    private boolean checkAggregation(IEntity entity) {
+        List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
+                entity.entityClassRef().getProfile());
+        if (parseTrees != null && parseTrees.size() > 0) {
+            return true;
+        }
+        return false;
+    }
 
-        // replace entity
-        OperationResult replace = replace(entity);
+    /**
+     * 迭代更新受影响的entity.
+     * @param entity 计算后的entity.
+     * @return 返回受影响的entity.
+     */
+    private IEntity findAggregationAndReplace(IEntity entity) {
         Optional<IEntityClass> entityClass =
                 metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
         if (entityClass.isPresent()) {
             //find trees
             List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
                     entity.entityClassRef().getProfile());
-
             parseTrees.forEach(parseTree -> {
-                //find next
+                Optional<IEntity> findEntity = null;
+                PTNode ptNode = parseTree.root();
+                Optional<IValue> relationId = entity.entityValue().getValue(ptNode.getEntityField().id());
+                long relationAggId = 0;
+                if (relationId.isPresent()) {
+                    relationAggId = relationId.get().valueToLong();
+                    List<Condition> conditions = ptNode.getConditions();
 
-
+                } else {
+                    logger.info("relationId is empty!");
+                }
+                try {
+                    findEntity = masterStorage.selectOne(relationAggId, parseTree.root().getEntityClass());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                if (findEntity.isPresent()) {
+                    IEntity targetEntity = findEntity.get();
+                    Optional<IValue> value = aggregationFunctionFactory.getAggregationFunction(ptNode.getAggregationType())
+                            .excute(targetEntity.entityValue().getValue(ptNode.getEntityField().id()),
+                                    targetEntity.entityValue().getValue(ptNode.getEntityField().id()),
+                                    entity.entityValue().getValue(ptNode.getAggEntityField().id()));
+                    if (value.isPresent()) {
+                        targetEntity.entityValue().addValue(value.get());
+                    }
+                    try {
+                        replace(entity);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             });
         }
-        return null;
+        return entity;
+    }
+
+    /**
+     * 暂时废弃这个调用方式.
+     * @param entity
+     * @return
+     * @throws SQLException
+     */
+    private IEntity callAggregationReplace(IEntity entity) throws SQLException {
+        //1、update  2、查找所有关联树 3、处理next节点
+        Optional<IEntityClass> entityClass =
+                metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
+
+        // replace entity
+        OperationResult replace = replace(entity);
+        Optional<IEntity> replaceEntity = null;
+        if (entityClass.isPresent()) {
+
+            if (ResultStatus.SUCCESS.equals(replace.getResultStatus())) {
+                replaceEntity = masterStorage.selectOne(replace.getEntityId(), entityClass.get());
+            }
+            if (!replaceEntity.isPresent()) {
+
+                //抛出异常
+            }
+
+            //find trees
+            List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
+                    entity.entityClassRef().getProfile());
+
+            Optional<IEntity> finalReplaceEntity = replaceEntity;
+            parseTrees.forEach(parseTree -> {
+                //find next
+                List<PTNode> nodes = parseTree.root().getNextNodes();
+                nodes.forEach(n -> {
+                    n.getRelationship().getEntityField();
+                    Optional<IEntity> targetEntityOp = null;
+                    Optional<IValue> relationValue = finalReplaceEntity.get().entityValue().getValue(n.getRelationship().getId());
+                    if (relationValue.isPresent()) {
+                        try {
+                            targetEntityOp = masterStorage.selectOne(relationValue.get().valueToLong(), n.getEntityClass());
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    IEntity targetEntity = targetEntityOp.get();
+                    Optional<IValue> value = aggregationFunctionFactory.getAggregationFunction(n.getAggregationType())
+                            .excute(targetEntity.entityValue().getValue(n.getEntityField().id()),
+                                    targetEntity.entityValue().getValue(n.getEntityField().id()),
+                                    finalReplaceEntity.get().entityValue().getValue(n.getEntityField().id()));
+                    if (value.isPresent()) {
+                        targetEntity.entityValue().addValue(value.get());
+                    }
+                    // 继续传递下去
+                    try {
+                        callAggregationReplace(targetEntity);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+        }
+        return replaceEntity.get();
     }
 }

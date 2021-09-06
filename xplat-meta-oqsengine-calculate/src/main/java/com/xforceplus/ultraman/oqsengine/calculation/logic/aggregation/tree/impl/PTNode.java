@@ -58,7 +58,7 @@ public class PTNode {
     /**
      * 节点条件信息.
      */
-    private Condition condition;
+    private List<Condition> conditions;
 
     /**
      * 关系信息.
@@ -117,12 +117,12 @@ public class PTNode {
         this.entityField = entityField;
     }
 
-    public Condition getCondition() {
-        return condition;
+    public List<Condition> getConditions() {
+        return conditions;
     }
 
-    public void setCondition(Condition condition) {
-        this.condition = condition;
+    public void setConditions(List<Condition> conditions) {
+        this.conditions = conditions;
     }
 
     public List<PTNode> getNextNodes() {

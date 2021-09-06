@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 
 import java.util.Map;
@@ -39,6 +40,12 @@ public class Aggregation extends AbstractCalculation {
      */
     @JsonProperty(value = "condition")
     private String condition;
+
+    /**
+     * 聚合字段类型.
+     */
+    @JsonProperty(value = "aggregationType")
+    private AggregationType aggregationType = AggregationType.UNKNOWN;
 
     /**
      * 被聚合信息Map fieldId,entityClassId.
@@ -94,6 +101,14 @@ public class Aggregation extends AbstractCalculation {
         this.aggregationByFields = aggregationByFields;
     }
 
+    public AggregationType getAggregationType() {
+        return aggregationType;
+    }
+
+    public void setAggregationType(AggregationType aggregationType) {
+        this.aggregationType = aggregationType;
+    }
+
     @Override
     public AbstractCalculation clone() {
         Aggregation aggregation = new Aggregation();
@@ -103,6 +118,7 @@ public class Aggregation extends AbstractCalculation {
         aggregation.aggregationByFields = this.aggregationByFields;
         aggregation.condition = this.condition;
         aggregation.relationId = this.relationId;
+        aggregation.aggregationType = this.aggregationType;
         return aggregation;
     }
 
@@ -114,6 +130,7 @@ public class Aggregation extends AbstractCalculation {
         private long fieldId;
         private long relationId;
         private String condition;
+        private AggregationType aggregationType;
         private Map<Long, Long> aggregationByFields;
 
         private Builder() {
@@ -145,6 +162,7 @@ public class Aggregation extends AbstractCalculation {
             aggregation.aggregationByFields = this.aggregationByFields;
             aggregation.condition = this.condition;
             aggregation.relationId = this.relationId;
+            aggregation.aggregationType = this.aggregationType;
             return aggregation;
         }
     }
