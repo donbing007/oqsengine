@@ -93,7 +93,9 @@ public class MetaParseTree implements ParseTree {
                             break;
                         }
                     }
-                    queue.addAll(ptNode.getNextNodes());
+                    if (ptNode.getNextNodes() != null) {
+                        queue.addAll(ptNode.getNextNodes());
+                    }
                 }
             }
             logger.error(String.format("can not find relation node in the tree by entityClassId %d and entityField %d", node.getAggEntityClass().id(), node.getAggEntityField().id()));
@@ -116,7 +118,9 @@ public class MetaParseTree implements ParseTree {
                         trees.add(new MetaParseTree(ptNode));
                     }
                 }
-                queue.addAll(ptNode.getNextNodes());
+                if (ptNode.getNextNodes() != null) {
+                    queue.addAll(ptNode.getNextNodes());
+                }
             }
         }
         return trees;
@@ -180,7 +184,9 @@ public class MetaParseTree implements ParseTree {
                 PTNode node = queue.poll();
                 // 添加到下一层
                 level.add(node);
-                queue.addAll(node.getNextNodes());
+                if (node.getNextNodes() != null) {
+                    queue.addAll(node.getNextNodes());
+                }
             }
             // 将每层node列表加到集合
             nodes.add(level);

@@ -29,6 +29,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -56,9 +57,6 @@ class AggregationTaskRunnerTest {
 
     private long aggFieldId = 1000;
     private long targetFieldId = 1001;
-
-    private Map<Long, List<EntityRef>> indexData = new HashMap<>();
-
 
     private IEntityField aggField = EntityField.Builder.anEntityField()
             .withId(aggFieldId)
@@ -127,6 +125,8 @@ class AggregationTaskRunnerTest {
     private IndexStorage indexStorage;
     private MasterStorage masterStorage;
     private long avgEntityId;
+    private Map<Long, List<EntityRef>> indexData;
+
 
     @BeforeEach
     public void before() throws Exception{
@@ -136,8 +136,20 @@ class AggregationTaskRunnerTest {
         ptNode.setEntityClass(targetEntityClass);
         ptNode.setEntityField(targetField);
         ptNode.setAggregationType(AggregationType.MAX);
+        ptNode.setRelationship(Relationship.Builder.anRelationship()
+                .withId(1)
+                .withLeftEntityClassId(targetEntityClassId)
+                .withRightEntityClassId(aggEntityClassId)
+                .withRightEntityClassLoader(id -> Optional.of(aggEntityClass))
+                .withEntityField(aggField)
+                .withIdentity(true)
+                .withBelongToOwner(true)
+                .withStrong(false)
+                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                .build());
         nodes = new ArrayList<>();
         nodes.add(ptNode);
+        indexData = new ConcurrentHashMap<>();
 
         runner = new AggregationTaskRunner();
         indexStorage = new MockIndexStorage();
@@ -174,38 +186,42 @@ class AggregationTaskRunnerTest {
 
     @Test
     void run() throws Exception {
-        buildData(10);
+        long size = 10;
+        buildData(size);
         runner.run(new AggregationTaskCoordinator(), new AggregationTask("testAgg", new MetaParseTree(ptNode)));
         Optional<IEntity> iEntity = masterStorage.selectOne(avgEntityId);
-        System.out.println(iEntity);
+        if (iEntity.isPresent()) {
+            Long value = (Long) iEntity.get().entityValue().getValue(targetFieldId).get().getValue();
+            Assertions.assertTrue((size - 1) == value.longValue());
+        }
     }
 
 
-    private void buildData(int size) throws Exception {
+    private void buildData(long size) throws Exception {
         IValue entityValue = new LongValue(targetField, 0);
-        IEntity aggEntity = Entity.Builder.anEntity()
+        IEntity targetEntity = Entity.Builder.anEntity()
                 .withId(10000)
-                .withEntityClassRef(aggEntityClass.ref())
+                .withEntityClassRef(targetEntityClass.ref())
                 .withTime(System.currentTimeMillis())
                 .withVersion(0)
                 .withEntityValue(EntityValue.build().addValue(entityValue))
                 .build();
 
-        avgEntityId = aggEntity.id();
-        masterStorage.build(aggEntity, aggEntityClass);
+        avgEntityId = targetEntity.id();
+        masterStorage.build(targetEntity, targetEntityClass);
 
         long baseId = 20000;
         for (int i = 0; i < size; i++) {
-            IEntity targetEntity = Entity.Builder.anEntity()
+            IEntity aggEntity = Entity.Builder.anEntity()
                     .withId(baseId++)
-                    .withEntityClassRef(targetEntityClass.ref())
+                    .withEntityClassRef(aggEntityClass.ref())
                     .withTime(System.currentTimeMillis())
                     .withVersion(0)
                     .withEntityValue(
-                            EntityValue.build().addValue(new LongValue(targetField, i ))
+                            EntityValue.build().addValue(new LongValue(aggField, i ))
                     ).build();
 
-            masterStorage.build(targetEntity, targetEntityClass);
+            masterStorage.build(aggEntity, aggEntityClass);
         }
     }
 
@@ -214,13 +230,11 @@ class AggregationTaskRunnerTest {
 
         private Map<Long, IEntity> data;
 
-
-        private Map<Long, List<IEntity>> relationData;
-
         private Map<Long, List<OriginalEntity>> masterData;
 
         public MockMasterStorage() {
             data = new ConcurrentHashMap<>();
+            masterData = new ConcurrentHashMap<>();
         }
 
 
@@ -234,10 +248,10 @@ class AggregationTaskRunnerTest {
             List<EntityRef> indexList = new ArrayList<>();
 
 
-            if (!masterData.isEmpty()) {
+            if (masterData.containsKey(entityClass.id())) {
                 masterList = masterData.get(entityClass.id());
             }
-            if (!indexData.isEmpty()) {
+            if (indexData.containsKey(entityClass.id())) {
                 indexList = indexData.get(entityClass.id());
             }
 
@@ -312,7 +326,7 @@ class AggregationTaskRunnerTest {
 
         @Override
         public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-            throw new UnsupportedOperationException();
+            return Optional.ofNullable(data.get(id));
         }
 
         @Override
