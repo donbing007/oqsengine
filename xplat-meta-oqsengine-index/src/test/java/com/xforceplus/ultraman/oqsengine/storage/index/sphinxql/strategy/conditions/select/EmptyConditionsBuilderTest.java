@@ -4,14 +4,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.EmptyConditionsBuilder;
-import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * EmptyConditionsBuilder Tester.
@@ -22,14 +19,13 @@ import org.slf4j.LoggerFactory;
  */
 public class EmptyConditionsBuilderTest {
 
-    final Logger logger = LoggerFactory.getLogger(EmptyConditionsBuilderTest.class);
-
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
-    private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(longField));
+    private static IEntityClass entityClass = EntityClass.Builder.anEntityClass()
+        .withId(Long.MAX_VALUE)
+        .withCode("test")
+        .withField(longField)
+        .build();
 
-    /**
-     * Method: build(IEntityClass entityClass, Conditions conditions)
-     */
     @Test
     public void testBuild() throws Exception {
 

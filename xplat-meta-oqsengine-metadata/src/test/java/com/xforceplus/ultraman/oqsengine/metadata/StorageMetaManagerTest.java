@@ -22,7 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -279,7 +279,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         check(expectedVersion + 1, entityClassOp.get(), entityClassInfo);
 
-        Collection<OqsRelation> re = entityClassOp.get().oqsRelations();
+        Collection<Relationship> re = entityClassOp.get().relationship();
         if (null != re) {
             re.forEach(
                 s -> {
@@ -302,7 +302,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         Assertions.assertNotNull(entityClassInfo);
 
-        re = entityClassOp.get().oqsRelations();
+        re = entityClassOp.get().relationship();
         if (null != re) {
             re.forEach(
                 s -> {
@@ -379,14 +379,14 @@ public class StorageMetaManagerTest extends MetaTestHelper {
 
         //  relations
         if (!expected.getRelationsList().isEmpty()) {
-            Assertions.assertNotNull(actual.oqsRelations());
-            Map<Long, OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations()).stream()
-                .collect(Collectors.toMap(OqsRelation::getId, f1 -> f1, (f1, f2) -> f1));
+            Assertions.assertNotNull(actual.relationship());
+            Map<Long, Relationship> actualRelations = new ArrayList<>(actual.relationship()).stream()
+                .collect(Collectors.toMap(Relationship::getId, f1 -> f1, (f1, f2) -> f1));
 
             for (int i = 0; i < expected.getRelationsList().size(); i++) {
 
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
-                OqsRelation actualRelation = actualRelations.get(expectedRelation.getId());
+                Relationship actualRelation = actualRelations.get(expectedRelation.getId());
                 Assertions.assertNotNull(actualRelation);
                 Assertions.assertEquals(expectedRelation.getCode(), actualRelation.getCode());
                 Assertions.assertEquals(expectedRelation.getRightEntityClassId(), actualRelation.getRightEntityClassId());

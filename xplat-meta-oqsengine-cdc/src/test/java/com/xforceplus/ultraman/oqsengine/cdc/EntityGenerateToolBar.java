@@ -3,12 +3,12 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.BOOL_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.DATE_TIME_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.DECIMAL_FIELD;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_0;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_1;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.ENTITY_CLASS_2;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.LONG_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRINGS_FIELD;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRING_FIELD;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass0;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass1;
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass2;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -51,8 +51,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass0.id())
-                    .withEntityClassCode(entityClass0.code())
+                    .withEntityClassId(ENTITY_CLASS_0.id())
+                    .withEntityClassCode(ENTITY_CLASS_0.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -92,8 +92,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass0.id())
-                    .withEntityClassCode(entityClass0.code())
+                    .withEntityClassId(ENTITY_CLASS_0.id())
+                    .withEntityClassCode(ENTITY_CLASS_0.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -114,8 +114,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass1.id())
-                    .withEntityClassCode(entityClass1.code())
+                    .withEntityClassId(ENTITY_CLASS_1.id())
+                    .withEntityClassCode(ENTITY_CLASS_1.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -135,8 +135,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass1.id())
-                    .withEntityClassCode(entityClass1.code())
+                    .withEntityClassId(ENTITY_CLASS_1.id())
+                    .withEntityClassCode(ENTITY_CLASS_1.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -160,8 +160,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass2.id())
-                    .withEntityClassCode(entityClass2.code())
+                    .withEntityClassId(ENTITY_CLASS_2.id())
+                    .withEntityClassCode(ENTITY_CLASS_2.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -183,8 +183,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass2.id())
-                    .withEntityClassCode(entityClass2.code())
+                    .withEntityClassId(ENTITY_CLASS_2.id())
+                    .withEntityClassCode(ENTITY_CLASS_2.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -203,8 +203,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass0.id())
-                    .withEntityClassCode(entityClass0.code())
+                    .withEntityClassId(ENTITY_CLASS_0.id())
+                    .withEntityClassCode(ENTITY_CLASS_0.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -224,8 +224,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass0.id())
-                    .withEntityClassCode(entityClass0.code())
+                    .withEntityClassId(ENTITY_CLASS_0.id())
+                    .withEntityClassCode(ENTITY_CLASS_0.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -246,8 +246,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass2.id())
-                    .withEntityClassCode(entityClass2.code())
+                    .withEntityClassId(ENTITY_CLASS_2.id())
+                    .withEntityClassCode(ENTITY_CLASS_2.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -268,8 +268,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass2.id())
-                    .withEntityClassCode(entityClass2.code())
+                    .withEntityClassId(ENTITY_CLASS_2.id())
+                    .withEntityClassCode(ENTITY_CLASS_2.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)
@@ -290,8 +290,8 @@ public class EntityGenerateToolBar {
                 EntityClassRef
                     .Builder
                     .anEntityClassRef()
-                    .withEntityClassId(entityClass2.id())
-                    .withEntityClassCode(entityClass2.code())
+                    .withEntityClassId(ENTITY_CLASS_2.id())
+                    .withEntityClassCode(ENTITY_CLASS_2.code())
                     .build()
             )
             .withMajor(OqsVersion.MAJOR)

@@ -1,14 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
@@ -18,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 默认的事务协调者实现.
+ * 默认的任务协调者实现.
  * 对于每一种任务都只允许一个runner.
  * 相同class的Runner只允许注册同一个,之后的将被忽略.
  *
@@ -26,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2021/08/12 15:02
  * @since 1.8
  */
-public class DefaultTaskCoordinator implements TaskCoordinator {
+public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     final Logger logger = LoggerFactory.getLogger(DefaultTaskCoordinator.class);
 
@@ -53,6 +52,14 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
     private volatile boolean running = false;
 
+    public ExecutorService getWorker() {
+        return worker;
+    }
+
+    public void setWorker(ExecutorService worker) {
+        this.worker = worker;
+    }
+
     public int getWorkerNumber() {
         return workerNumber;
     }
@@ -61,17 +68,30 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
         this.workerNumber = workerNumber;
     }
 
+    public TaskQueue getTaskQueue() {
+        return taskQueue;
+    }
+
+    public void setTaskQueue(TaskQueue taskQueue) {
+        this.taskQueue = taskQueue;
+    }
+
     public Map<String, TaskRunner> getRunners() {
         return new HashMap<>(runners);
     }
 
+    public DefaultTaskCoordinator() {
+        runners = new ConcurrentHashMap<>();
+    }
+
     @PostConstruct
     public void init() {
-        runners = new ConcurrentHashMap<>();
-
-        worker = new ThreadPoolExecutor(workerNumber, workerNumber,
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>());
+        if (running) {
+            return;
+        }
+        if (worker == null) {
+            throw new IllegalArgumentException("No execution thread pool is set.");
+        }
 
         running = true;
 
@@ -82,22 +102,27 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
     @PreDestroy
     public void destroy() {
-        running = false;
+        if (running) {
+            running = false;
 
-        ExecutorHelper.shutdownAndAwaitTermination(this.worker);
-
-        runners.clear();
-        runners = null;
+            runners.clear();
+            runners = null;
+        }
     }
 
     @Override
     public boolean registerRunner(TaskRunner runner) {
-        checkRunning();
-
         Class clazz = runner.getClass();
 
         TaskRunner oldRunner = runners.putIfAbsent(clazz.getSimpleName(), runner);
         return oldRunner == null ? true : false;
+    }
+
+    @Override
+    public Optional<TaskRunner> getRunner(Class clazz) {
+        checkRunning();
+
+        return Optional.ofNullable(runners.get(clazz.getSimpleName()));
     }
 
     @Override
@@ -131,7 +156,7 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 1000L;
+        private final long checkTimeoutMs = 5000L;
 
         @Override
         public void run() {
@@ -150,7 +175,8 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                 if (task != null) {
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
+                        logger
+                            .debug("Task [{}, {}] is obtained and ready to be executed.", task.id(), task.runnerType());
                     }
 
                     TaskRunner runner = runners.get(task.runnerType().getSimpleName());
@@ -169,7 +195,13 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
 
                         } finally {
-                            taskQueue.ack(task);
+                            try {
+
+                                taskQueue.ack(task);
+
+                            } catch (Exception ex) {
+                                logger.error(ex.getMessage(), ex);
+                            }
                         }
                     } else {
                         logger.warn("Task {} will be abandoned if the runner {} is not found.",

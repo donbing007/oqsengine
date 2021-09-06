@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.serializable;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,7 +23,7 @@ public abstract class AbstractSerializeStrategyTest {
         for (Case c : buildCase()) {
             byte[] bytes = serializeStrategy.serialize(c.getValue());
 
-            Object unSerizlizeObj = serializeStrategy.unserialize(bytes);
+            Object unSerizlizeObj = serializeStrategy.unserialize(bytes, c.value.getClass());
 
             Assertions.assertEquals(c.getValue().getClass(), unSerizlizeObj.getClass());
             if (c.isArray()) {
@@ -54,17 +55,17 @@ public abstract class AbstractSerializeStrategyTest {
     }
 
     static class Case {
-        private Object value;
+        private Serializable value;
 
-        public Case(Object value) {
+        public Case(Serializable value) {
             this.value = value;
         }
 
-        public Case(Supplier supplier) {
+        public Case(Supplier<Serializable> supplier) {
             this.value = supplier.get();
         }
 
-        public Object getValue() {
+        public Serializable getValue() {
             return value;
         }
 
@@ -85,7 +86,7 @@ public abstract class AbstractSerializeStrategyTest {
                 Map<String, String> map = new HashMap<>();
                 map.put("1", "1");
                 map.put("2", "2");
-                return map;
+                return (Serializable) map;
             }),
             new Case(Long.MAX_VALUE),
             new Case(() -> new String[] {"abc", "bcd"}),

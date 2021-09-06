@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
-import java.util.Map;
-
 /**
  * 任务实体.
  *
  * @author dongbin
- *
  * @version 0.1 2021/08/05 15:27
  * @since 1.8
  */
@@ -18,6 +15,10 @@ public interface Task {
      * @return 任务标识.
      */
     public String id();
+
+    public long location();
+
+    public void setLocation(long location);
 
     /**
      * 任务创建时间.
@@ -32,11 +33,4 @@ public interface Task {
      * @return 可运行此任务的类型信息.
      */
     public Class runnerType();
-
-    /**
-     * 任务参数.
-     *
-     * @return 任务参数.
-     */
-    public Map<String, String> parameter();
 }

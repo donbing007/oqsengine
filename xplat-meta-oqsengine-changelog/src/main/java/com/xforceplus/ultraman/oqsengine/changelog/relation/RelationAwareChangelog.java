@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.relation;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface RelationAwareChangelog {
 
-    boolean require(OqsRelation relation);
+    boolean require(Relationship relation);
 
     /**
      * @param relation
@@ -21,7 +21,7 @@ public interface RelationAwareChangelog {
      * @return
      */
     List<Changelog> generateOuterChangelog(
-            OqsRelation relation, IEntityClass entityClass
+        Relationship relation, IEntityClass entityClass
             , ChangedEvent changedEvent);
 
     /**

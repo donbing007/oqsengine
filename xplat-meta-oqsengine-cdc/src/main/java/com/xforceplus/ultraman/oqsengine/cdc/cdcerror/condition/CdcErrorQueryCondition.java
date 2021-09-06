@@ -256,4 +256,24 @@ public class CdcErrorQueryCondition {
         this.uniKey = uniKey;
         return this;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("CdcErrorQueryCondition{");
+        sb.append("seqNo=").append(seqNo);
+        sb.append(", uniKey='").append(uniKey).append('\'');
+        sb.append(", batchId=").append(batchId);
+        sb.append(", id=").append(id);
+        sb.append(", entity=").append(entity);
+        sb.append(", commitId=").append(commitId);
+        sb.append(", status=").append(status);
+        sb.append(", isEqualStatus=").append(isEqualStatus);
+        sb.append(", type=").append(type);
+        sb.append(", rangeLeExecuteTime=").append(rangeLeExecuteTime);
+        sb.append(", rangeGeExecuteTime=").append(rangeGeExecuteTime);
+        sb.append(", rangeLeFixedTime=").append(rangeLeFixedTime);
+        sb.append(", rangeGeFixedTime=").append(rangeGeFixedTime);
+        sb.append('}');
+        return sb.toString();
+    }
 }

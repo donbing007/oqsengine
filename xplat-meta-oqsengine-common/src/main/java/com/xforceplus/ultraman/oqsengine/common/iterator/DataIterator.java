@@ -17,7 +17,9 @@ public interface DataIterator<E> extends Iterator<E> {
      *
      * @return 数据量.
      */
-    long size();
+    default long size() {
+        return 0;
+    }
 
     /**
      * 表示是否提供数据总量.

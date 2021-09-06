@@ -21,34 +21,32 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorag
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import org.springframework.context.annotation.DependsOn;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+/**
+ * change log 配置.
+ */
 @Configuration
 public class ChangelogConfiguration {
 
+    /**
+     * redis.
+     */
     @Bean
     public RedisClient redisClient() {
 
@@ -65,7 +63,8 @@ public class ChangelogConfiguration {
     }
 
     @Bean("longNoContinuousPartialOrderIdGenerator")
-    public LongIdGenerator longNoContinuousPartialOrderIdGenerator(@Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
+    public LongIdGenerator longNoContinuousPartialOrderIdGenerator(
+        @Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
         return new SnowflakeLongIdGenerator(nodeIdGenerator);
     }
 
@@ -134,6 +133,11 @@ public class ChangelogConfiguration {
             @Override
             public boolean isPartialOrder() {
                 return false;
+            }
+
+            @Override
+            public void reset(String ns) {
+                LongIdGenerator.super.reset(ns);
             }
 
             @Override

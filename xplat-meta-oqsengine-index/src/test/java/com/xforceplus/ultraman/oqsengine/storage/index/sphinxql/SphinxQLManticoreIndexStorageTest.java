@@ -13,7 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -80,7 +80,7 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         .withFieldType(FieldType.STRINGS)
         .withName("l0-strings")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
         .withLevel(0)
         .withCode("l0")
@@ -103,7 +103,7 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
-    private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("l1")
@@ -133,7 +133,7 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+    private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(2)
         .withCode("l2")

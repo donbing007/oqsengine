@@ -6,6 +6,7 @@ import com.caucho.hessian.io.SerializerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * 基于Hessian2.0协议的序列化策略实现类.
@@ -21,7 +22,7 @@ public class HessianSerializeStrategy implements SerializeStrategy {
     private static final SerializerFactory SERIALIZER_FACTORY = new SerializerFactory();
 
     @Override
-    public byte[] serialize(Object source) throws CanNotBeSerializedException {
+    public byte[] serialize(Serializable source) throws CanNotBeSerializedException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Hessian2Output out = new Hessian2Output(os);
         //这里调用方法的原因是hessian内部没有为此设定一个默认値,每个实例都会创建SerializerFactory.
@@ -38,7 +39,7 @@ public class HessianSerializeStrategy implements SerializeStrategy {
     }
 
     @Override
-    public Object unserialize(byte[] datas) throws CanNotBeUnSerializedException {
+    public <T> T unserialize(byte[] datas, Class<T> clazz) throws CanNotBeUnSerializedException {
         ByteArrayInputStream os = new ByteArrayInputStream(datas);
         Hessian2Input input = new Hessian2Input(os);
         input.setSerializerFactory(SERIALIZER_FACTORY);
@@ -49,6 +50,6 @@ public class HessianSerializeStrategy implements SerializeStrategy {
             throw new CanNotBeUnSerializedException(ex.getMessage(), ex);
         }
 
-        return obj;
+        return clazz.cast(obj);
     }
 }

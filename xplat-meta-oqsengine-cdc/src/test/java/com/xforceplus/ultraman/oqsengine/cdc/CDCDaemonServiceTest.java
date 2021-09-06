@@ -7,13 +7,12 @@ import org.junit.jupiter.api.Test;
 
 /**
  * desc :
- * name : CDCDaemonServiceTest
+ * name : CDCDaemonServiceTest.
  *
- * @author : xujia
- * date : 2020/11/5
+ * @author : xujia 2020/11/5
  * @since : 1.8
  */
-public class CDCDaemonServiceTest extends CDCTestHelper {
+public class CDCDaemonServiceTest extends AbstractCDCTestHelper {
 
     private CDCDaemonService cdcDaemonService;
 
@@ -21,6 +20,9 @@ public class CDCDaemonServiceTest extends CDCTestHelper {
 
     private MockRedisCallbackService testCallbackService;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         if (isTest) {
@@ -30,6 +32,9 @@ public class CDCDaemonServiceTest extends CDCTestHelper {
         }
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
         if (isTest) {

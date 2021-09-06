@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.changelog;
 
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.vavr.Tuple2;
 
 import java.util.Arrays;
@@ -13,50 +13,50 @@ public class HelperTest {
 
     @Test
     public void testFindAssociateRelation(){
-        OqsEntityClass example = OqsEntityClass.Builder.anEntityClass()
+        EntityClass example = EntityClass.Builder.anEntityClass()
                 .withId(2L)
                 .withRelations(Arrays.asList(
-                        OqsRelation.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("IIO")
                                 .withId(12123)
                                 .withLeftEntityClassId(1L)
                                 .withRightEntityClassId(2L)
                                 .withIdentity(true)
-                                .withRelationType(OqsRelation.RelationType.ONE_TO_MANY)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                                 .withBelongToOwner(true)
                                 .build(),
-                        OqsRelation.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withId(1222323)
                                 .withCode("IIO")
                                 .withLeftEntityClassId(2L)
                                 .withRightEntityClassId(1L)
                                 .withIdentity(true)
-                                .withRelationType(OqsRelation.RelationType.MANY_TO_ONE)
+                                .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                                 .withBelongToOwner(true)
                                 .build()
                         ,
-                        OqsRelation.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("SELF")
                                 .withId(666)
                                 .withLeftEntityClassId(2L)
                                 .withRightEntityClassId(2L)
                                 .withIdentity(true)
-                                .withRelationType(OqsRelation.RelationType.ONE_TO_MANY)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                                 .withBelongToOwner(false)
                                 .build(),
-                        OqsRelation.Builder.anOqsRelation()
+                        Relationship.Builder.anRelationship()
                                 .withCode("SELFMTO")
                                 .withId(6667)
                                 .withLeftEntityClassId(2L)
                                 .withRightEntityClassId(2L)
                                 .withIdentity(true)
-                                .withRelationType(OqsRelation.RelationType.MANY_TO_ONE)
+                                .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                                 .withBelongToOwner(true)
                                 .build()
                 ))
                 .build();
 
-        List<Tuple2<OqsRelation, OqsRelation>> associatedRelations = EntityClassHelper.findAssociatedRelations(example);
+        List<Tuple2<Relationship, Relationship>> associatedRelations = EntityClassHelper.findAssociatedRelations(example);
         associatedRelations.forEach(rel -> System.out.println("found:" + rel._1.getId() + " -> " + rel._2.getId()));
     }
 }

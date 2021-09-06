@@ -127,7 +127,7 @@ public class CommonConfiguration {
     }
 
     /**
-     * 自动编号使用的redisson客户端.
+     * 锁使用的redisson实现.
      *
      * @param configuration redis配置.
      * @return 实例.

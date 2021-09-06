@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -11,11 +11,12 @@ import java.util.function.Function;
  * A -> B
  * 这里有两个对象,分别定义为"左"对象和"右对象.
  * 这里左边是关系的持有者(owner),右边是被关联对象.
+ * 左关系指向本身,右关系指向关联对象.
  *
  * @author xujia 2021/2/18
  * @since 1.8
  */
-public class OqsRelation {
+public class Relationship {
 
     /**
      * 关系类型.
@@ -122,7 +123,7 @@ public class OqsRelation {
 
     private long companionRelation;
 
-    public OqsRelation() {
+    public Relationship() {
 
     }
 
@@ -208,7 +209,7 @@ public class OqsRelation {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OqsRelation that = (OqsRelation) o;
+        Relationship that = (Relationship) o;
         return id == that.id
             && Objects.equals(code, that.code);
     }
@@ -232,7 +233,6 @@ public class OqsRelation {
         private IEntityField entityField;
         private Boolean belongToOwner;
         private boolean strong;
-        private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
         private boolean isCompanion;
         private long companionRelation;
@@ -240,7 +240,7 @@ public class OqsRelation {
         private Builder() {
         }
 
-        public static Builder anOqsRelation() {
+        public static Builder anRelationship() {
             return new Builder();
         }
 
@@ -289,12 +289,12 @@ public class OqsRelation {
             return this;
         }
 
-        public OqsRelation.Builder withCompanion(boolean isCompanion) {
+        public Relationship.Builder withCompanion(boolean isCompanion) {
             this.isCompanion = isCompanion;
             return this;
         }
 
-        public OqsRelation.Builder withCompanionRelation(long relationId) {
+        public Relationship.Builder withCompanionRelation(long relationId) {
             this.companionRelation = relationId;
             return this;
         }
@@ -315,23 +315,23 @@ public class OqsRelation {
          *
          * @return 实例.
          */
-        public OqsRelation build() {
-            OqsRelation oqsRelation = new OqsRelation();
-            oqsRelation.belongToOwner = this.belongToOwner;
-            oqsRelation.relationType = this.relationType;
-            oqsRelation.id = this.id;
-            oqsRelation.code = this.code;
-            oqsRelation.leftEntityClassId = this.leftEntityClassId;
-            oqsRelation.rightEntityClassId = this.rightEntityClassId;
-            oqsRelation.identity = this.identity;
-            oqsRelation.rightEntityClassLoader = this.entityClassLoader;
-            oqsRelation.entityField = this.entityField;
-            oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
-            oqsRelation.strong = this.strong;
-            oqsRelation.belongToOwner = this.belongToOwner;
-            oqsRelation.isCompanion = this.isCompanion;
-            oqsRelation.companionRelation = this.companionRelation;
-            return oqsRelation;
+        public Relationship build() {
+            Relationship relationship = new Relationship();
+            relationship.belongToOwner = this.belongToOwner;
+            relationship.relationType = this.relationType;
+            relationship.id = this.id;
+            relationship.code = this.code;
+            relationship.leftEntityClassId = this.leftEntityClassId;
+            relationship.rightEntityClassId = this.rightEntityClassId;
+            relationship.identity = this.identity;
+            relationship.rightEntityClassLoader = this.entityClassLoader;
+            relationship.entityField = this.entityField;
+            relationship.leftEntityClassCode = this.leftEntityClassCode;
+            relationship.strong = this.strong;
+            relationship.belongToOwner = this.belongToOwner;
+            relationship.isCompanion = this.isCompanion;
+            relationship.companionRelation = this.companionRelation;
+            return relationship;
         }
     }
 }

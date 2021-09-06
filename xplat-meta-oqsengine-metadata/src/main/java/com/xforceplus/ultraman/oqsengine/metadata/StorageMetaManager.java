@@ -22,9 +22,9 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.FileReaderUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.micrometer.core.annotation.Timed;
 import java.io.File;
 import java.sql.SQLException;
@@ -284,7 +284,7 @@ public class StorageMetaManager implements MetaManager {
             throw new SQLException(String.format("entity class [%d] not found.", id));
         }
 
-        List<OqsRelation> oqsRelations = toQqsRelation(entityClassStorage.getRelations());
+        List<Relationship> relationships = toQqsRelation(entityClassStorage.getRelations());
 
         List<IEntityField> entityFields = new ArrayList<>();
         if (null != entityClassStorage.getFields()) {
@@ -316,19 +316,19 @@ public class StorageMetaManager implements MetaManager {
                 }
 
                 if (null != profileStorage.getRelationStorageList()) {
-                    oqsRelations.addAll(toQqsRelation(profileStorage.getRelationStorageList()));
+                    relationships.addAll(toQqsRelation(profileStorage.getRelationStorageList()));
                 }
             }
         }
 
-        OqsEntityClass.Builder builder =
-            OqsEntityClass.Builder.anEntityClass()
+        EntityClass.Builder builder =
+            EntityClass.Builder.anEntityClass()
                 .withId(entityClassStorage.getId())
                 .withCode(entityClassStorage.getCode())
                 .withName(entityClassStorage.getName())
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
-                .withRelations(oqsRelations)
+                .withRelations(relationships)
                 .withFields(entityFields);
         //   加载父类.
         if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
@@ -342,17 +342,17 @@ public class StorageMetaManager implements MetaManager {
     /**
      * 加载relation.
      */
-    private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
-        List<OqsRelation> oqsRelations = new ArrayList<>();
+    private List<Relationship> toQqsRelation(List<RelationStorage> relationStorageList) {
+        List<Relationship> relationships = new ArrayList<>();
         if (null != relationStorageList) {
             relationStorageList.forEach(
                 r -> {
-                    OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
+                    Relationship.Builder builder = Relationship.Builder.anRelationship()
                         .withId(r.getId())
                         .withCode(r.getCode())
                         .withLeftEntityClassId(r.getLeftEntityClassId())
                         .withLeftEntityClassCode(r.getLeftEntityClassCode())
-                        .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
+                        .withRelationType(Relationship.RelationType.getInstance(r.getRelationType()))
                         .withIdentity(r.isIdentity())
                         .withStrong(r.isStrong())
                         .withRightEntityClassId(r.getRightEntityClassId())
@@ -360,11 +360,11 @@ public class StorageMetaManager implements MetaManager {
                         .withEntityField(cloneEntityField(r.getEntityField()))
                         .withBelongToOwner(r.isBelongToOwner());
 
-                    oqsRelations.add(builder.build());
+                    relationships.add(builder.build());
                 }
             );
         }
-        return oqsRelations;
+        return relationships;
     }
 
     private IEntityField cloneEntityField(IEntityField entityField) {

@@ -23,7 +23,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -699,13 +699,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     "An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
-            Optional<OqsRelation> relationOp = mainEntityClass.oqsRelations().stream()
+            Optional<Relationship> relationOp = mainEntityClass.relationship().stream()
                 .filter(r -> r.getId() == c.getRelationId()).findFirst();
             if (!relationOp.isPresent()) {
                 throw new SQLException(
                     String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));
             }
-            OqsRelation relation = relationOp.get();
+            Relationship relation = relationOp.get();
             relationField = relation.getEntityField();
             if (relationField != null) {
                 key = new DriverEntityKey(driverEntityClass, relationField);

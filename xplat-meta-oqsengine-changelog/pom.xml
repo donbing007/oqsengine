@@ -55,10 +55,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.xforceplus</groupId>
-            <artifactId>ultraman-test-tools-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.xforceplus.ultraman</groupId>
             <artifactId>xplat-meta-oqsengine-testcontainer</artifactId>
             <version>${project.version}</version>

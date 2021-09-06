@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 /**
  * 项目名称: 票易通
@@ -44,7 +43,6 @@ public class UpdateUniqueExecutor extends AbstractJdbcTaskExecutor<StorageUnique
 
     private String buildSQL(StorageUniqueEntity storageUniqueEntity) {
 
-        // todo update entityClass ?
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")

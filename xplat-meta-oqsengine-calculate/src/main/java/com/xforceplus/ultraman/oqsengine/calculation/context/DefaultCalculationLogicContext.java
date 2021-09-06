@@ -1,19 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -26,9 +28,9 @@ import java.util.Optional;
 public class DefaultCalculationLogicContext implements CalculationLogicContext {
 
     /**
-     * 写事务类型,true创建,false更新.
+     * 写事务场景.
      */
-    private boolean build;
+    private Scenarios scenarios;
     /**
      * 当前计算的目标entity实例.
      * 如果是更新事务,可能不会包含所有字段.
@@ -55,6 +57,10 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
      */
     private KeyValueStorage keyValueStorage;
     /**
+     * 任务协调者.
+     */
+    private TaskCoordinator taskCoordinator;
+    /**
      * 附加属性.
      */
     private Map<String, Object> attributes;
@@ -70,15 +76,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
      * 不连续但偏序的ID生成器.
      */
     private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
+    private BizIDGenerator bizIDGenerator;
 
     @Override
-    public boolean isBuild() {
-        return this.build;
-    }
-
-    @Override
-    public boolean isReplace() {
-        return !this.build;
+    public Scenarios getScenariso() {
+        return this.scenarios;
     }
 
     @Override
@@ -114,6 +116,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
     @Override
     public KeyValueStorage getKvStorage() {
         return this.keyValueStorage;
+    }
+
+    @Override
+    public TaskCoordinator getTaskCoordinator() {
+        return this.taskCoordinator;
     }
 
     @Override
@@ -153,19 +160,45 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
         return this.longNoContinuousPartialOrderIdGenerator;
     }
 
+    @Override
+    public BizIDGenerator getBizIDGenerator() {
+        return bizIDGenerator;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DefaultCalculationLogicContext that = (DefaultCalculationLogicContext) o;
+        return scenarios == that.scenarios && Objects.equals(getEntity(), that.getEntity()) && Objects
+            .equals(field, that.field);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(scenarios, getEntity(), field);
+    }
+
     /**
      * 构造器.
      */
     public static final class Builder {
-        private boolean build;
+        // 场景
+        private Scenarios scenarios = Scenarios.UNKNOWN;
         private IEntity entity;
         private IEntityClass entityClass;
         private MasterStorage masterStorage;
         private KeyValueStorage keyValueStorage;
         private MetaManager metaManager;
+        private TaskCoordinator taskCoordinator;
         private Map<String, Object> attributes;
         private LongIdGenerator longContinuousPartialOrderIdGenerator;
         private LongIdGenerator longNoContinuousPartialOrderIdGenerator;
+        private BizIDGenerator bizIDGenerator;
 
         private Builder() {
         }
@@ -174,8 +207,8 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return new Builder();
         }
 
-        public Builder withBuild(boolean build) {
-            this.build = build;
+        public Builder withScenarios(Scenarios scenarios) {
+            this.scenarios = scenarios;
             return this;
         }
 
@@ -204,6 +237,11 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             return this;
         }
 
+        public Builder withTaskCoordinator(TaskCoordinator taskCoordinator) {
+            this.taskCoordinator = taskCoordinator;
+            return this;
+        }
+
         public Builder withLongContinuousPartialOrderIdGenerator(
             LongIdGenerator longContinuousPartialOrderIdGenerator) {
             this.longContinuousPartialOrderIdGenerator = longContinuousPartialOrderIdGenerator;
@@ -215,6 +253,12 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
             this.longNoContinuousPartialOrderIdGenerator = longNoContinuousPartialOrderIdGenerator;
             return this;
         }
+
+        public Builder withBizIdGenerator(BizIDGenerator bizIDGenerator) {
+            this.bizIDGenerator = bizIDGenerator;
+            return this;
+        }
+
 
         /**
          * 增加新的属性.
@@ -233,18 +277,23 @@ public class DefaultCalculationLogicContext implements CalculationLogicContext {
          * @return 实例.
          */
         public DefaultCalculationLogicContext build() {
+            if (Scenarios.UNKNOWN == this.scenarios) {
+                throw new IllegalStateException("You have to set the scene.");
+            }
             DefaultCalculationLogicContext defaultCalculationLogicContext = new DefaultCalculationLogicContext();
-            defaultCalculationLogicContext.build = this.build;
+            defaultCalculationLogicContext.scenarios = this.scenarios;
             defaultCalculationLogicContext.entity = this.entity;
             defaultCalculationLogicContext.sourceEntityClass = this.entityClass;
             defaultCalculationLogicContext.attributes = this.attributes;
             defaultCalculationLogicContext.metaManager = this.metaManager;
             defaultCalculationLogicContext.masterStorage = this.masterStorage;
+            defaultCalculationLogicContext.taskCoordinator = this.taskCoordinator;
             defaultCalculationLogicContext.keyValueStorage = this.keyValueStorage;
             defaultCalculationLogicContext.longContinuousPartialOrderIdGenerator =
                 this.longContinuousPartialOrderIdGenerator;
             defaultCalculationLogicContext.longNoContinuousPartialOrderIdGenerator =
                 this.longNoContinuousPartialOrderIdGenerator;
+            defaultCalculationLogicContext.bizIDGenerator = this.bizIDGenerator;
             return defaultCalculationLogicContext;
         }
     }

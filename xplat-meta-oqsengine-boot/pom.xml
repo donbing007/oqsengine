@@ -18,43 +18,40 @@
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-synchronizer</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>ultraman-devops-service-sdk</artifactId>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-lock</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-storage</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-tokenizer</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-index</artifactId>
@@ -66,7 +63,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>com.xforceplus.ultraman.common</groupId>
             <artifactId>oqsengine-sdk-server</artifactId>
@@ -77,13 +73,11 @@
             <artifactId>xplat-meta-oqsengine-masterdb</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-status</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-meta-springboot-starter</artifactId>
@@ -105,12 +99,6 @@
             <artifactId>xplat-meta-oqsengine-idgenerator</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>${project.groupId}</groupId>-->
-<!--            <artifactId>xplat-meta-oqsengine-sdk-server</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

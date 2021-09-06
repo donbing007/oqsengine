@@ -17,7 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -76,7 +76,7 @@ public class EntityClassHelper {
             .build();
     }
 
-    public static boolean isRelatedField(Tuple2<OqsRelation, IEntityField> tuple) {
+    public static boolean isRelatedField(Tuple2<Relationship, IEntityField> tuple) {
         return tuple._1 != null;
     }
 
@@ -90,7 +90,7 @@ public class EntityClassHelper {
             return field;
         }
 
-        Optional<IEntityField> firstField = entityClass.oqsRelations().stream()
+        Optional<IEntityField> firstField = entityClass.relationship().stream()
             .filter(x -> x.getLeftEntityClassId() == entityClass.id())
             .map(x -> {
                 IEntityClass relatedEntityClass = x.getRightEntityClass();

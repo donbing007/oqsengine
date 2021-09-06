@@ -46,6 +46,12 @@ public class MultiLocalTransaction implements Transaction {
 
     private static AtomicLong COMMIT_ID_NUMBER = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
 
+    /**
+     * 提交号生成时的命名空间.
+     * 此值用以和其他生成的ID序列区分开.
+     */
+    private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.id";
+
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
@@ -103,7 +109,7 @@ public class MultiLocalTransaction implements Transaction {
         try {
             long commitId = 0;
             if (!isReadyOnly()) {
-                commitId = longIdGenerator.next();
+                commitId = longIdGenerator.next(COMMIT_ID_NS);
                 if (!CommitHelper.isLegal(commitId)) {
                     throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
                 }

@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 
 import java.time.LocalDateTime;
@@ -54,15 +54,15 @@ public class ChangelogExample {
 
     public ChangelogExample(IdGenerator<Long> versionIdGenerator) {
         this.versionIdGenerator = versionIdGenerator;
-        A = OqsEntityClass.Builder.anEntityClass()
+        A = EntityClass.Builder.anEntityClass()
                 .withId(A_Class)
                 .withCode("A")
                 .withRelations(
                         Arrays.asList(
-                                OqsRelation
+                                Relationship
                                         .Builder
-                                        .anOqsRelation()
-                                        .withRelationType(OqsRelation.RelationType.ONE_TO_ONE)
+                                        .anRelationship()
+                                        .withRelationType(Relationship.RelationType.ONE_TO_ONE)
                                         .withCode("A_B")
                                         .withRightEntityClassId(B_Class)
                                         .withId(A_B_OTO)
@@ -92,7 +92,7 @@ public class ChangelogExample {
                         ))
                 .build();
 
-        B = OqsEntityClass.Builder.anEntityClass()
+        B = EntityClass.Builder.anEntityClass()
                 .withId(B_Class)
                 .withCode("B")
                 .withFields(

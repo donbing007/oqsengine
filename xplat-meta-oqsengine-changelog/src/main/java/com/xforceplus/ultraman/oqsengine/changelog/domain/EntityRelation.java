@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 
 import java.util.Collection;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class EntityRelation {
 
     private long entityClassId;
 
-    private Map<OqsRelation, Collection<ValueLife>> relatedIds;
+    private Map<Relationship, Collection<ValueLife>> relatedIds;
 
     public long getId() {
         return id;
@@ -36,11 +36,11 @@ public class EntityRelation {
         this.entityClassId = entityClassId;
     }
 
-    public Map<OqsRelation, Collection<ValueLife>> getRelatedIds() {
+    public Map<Relationship, Collection<ValueLife>> getRelatedIds() {
         return relatedIds;
     }
 
-    public void setRelatedIds(Map<OqsRelation, Collection<ValueLife>> relatedIds) {
+    public void setRelatedIds(Map<Relationship, Collection<ValueLife>> relatedIds) {
         this.relatedIds = relatedIds;
     }
 }

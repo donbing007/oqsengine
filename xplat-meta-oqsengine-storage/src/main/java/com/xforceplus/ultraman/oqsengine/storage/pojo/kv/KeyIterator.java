@@ -12,9 +12,16 @@ import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 public interface KeyIterator extends DataIterator<String> {
 
     /**
-     * 移动到指定的KEY.
+     * 移动到指定的KEY,下次迭代从此key后面开始.
      *
      * @param key 目标key.
      */
     public abstract void seek(String key);
+
+    /**
+     * 得到当前指向的key.
+     *
+     * @return 当前的key.
+     */
+    public abstract String currentKey();
 }

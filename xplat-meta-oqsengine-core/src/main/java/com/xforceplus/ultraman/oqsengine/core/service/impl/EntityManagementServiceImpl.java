@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationLogicContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -21,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -42,6 +44,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -98,18 +101,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private MetaManager metaManager;
 
+    /**
+     * 计算字段计算逻辑工厂.
+     */
+    @Resource
+    private CalculationLogicFactory calculationLogicFactory;
+
     @Resource
     private EventBus eventBus;
+
+    @Resource
+    private BizIDGenerator bizIDGenerator;
+
+    @Resource
+    private TaskCoordinator taskCoordinator;
 
     /**
      * 字段校验器工厂.
      */
     private VerifierFactory verifierFactory;
-
-    /**
-     * 计算字段计算逻辑工厂.
-     */
-    private CalculationLogicFactory calculationLogicFactory;
 
     /*
     只读的原因.
@@ -258,7 +268,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         verifierFactory = new VerifierFactory();
-        calculationLogicFactory = new CalculationLogicFactory();
     }
 
     @PreDestroy
@@ -281,10 +290,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        if (entity.id() <= 0) {
+            long newId = longNoContinuousPartialOrderIdGenerator.next();
+            entity.resetId(newId);
+        }
+        entity.resetVersion(0);
+        entity.restMaintainId(0);
+
         // 计算字段的计算动作.
         Collection<CalculationHint> hints;
         try {
-            hints = processCalculationField(entity, entityClass, true);
+            hints = processCalculationField(entity, entityClass, Scenarios.BUILD);
         } catch (CalculationLogicException ex) {
             logger.warn(ex.getMessage(), ex);
             return new OperationResult(
@@ -314,13 +330,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
-                if (entity.id() <= 0) {
-                    long newId = longNoContinuousPartialOrderIdGenerator.next();
-                    entity.resetId(newId);
-                }
-                entity.resetVersion(0);
-                entity.restMaintainId(0);
-
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNCREATED);
@@ -335,7 +344,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 // 可能的字段维护
-                maintainField(entity, entityClass, true);
+                maintainField(entity, entityClass, Scenarios.BUILD);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
                     ResultStatus.SUCCESS);
@@ -399,7 +408,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         ResultStatus.NOT_FOUND);
                 }
 
-                // 合并需要修改的字段值.
                 entity.entityValue().values().stream()
                     // 自增编号无法重复计算
                     .filter(f -> !CalculationType.AUTO_FILL.equals(f.getField().calculationType()))
@@ -409,7 +417,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 Collection<CalculationHint> hints;
                 try {
-                    hints = processCalculationField(targetEntity, entityClass, false);
+                    hints = processCalculationField(targetEntity, entityClass, Scenarios.REPLACE);
                 } catch (CalculationLogicException ex) {
                     logger.warn(ex.getMessage(), ex);
                     return new OperationResult(
@@ -458,8 +466,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
-                // 可能的字段维护
-                maintainField(entity, entityClass, true);
+                /*
+                维护字段只关心真实被改变的字段.
+                 */
+                long[] maintainFields = buildReplaceMaintainFields(oldEntity, targetEntity);
+
+                maintainField(entity, entityClass, maintainFields, Scenarios.REPLACE);
 
                 //  半成功
                 if (null != hints && !hints.isEmpty()) {
@@ -483,6 +495,27 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             //  处理半成功，将插入一条失败的Message
             handleHalfSuccessOrRecover(entity.maintainId(), entityClass.id(), operationResult);
         }
+    }
+
+    private long[] buildReplaceMaintainFields(IEntity oldEntity, IEntity targetEntity) {
+        return targetEntity.entityValue().values().stream().filter(v ->
+            // 只有静态字段和公式字段会被lookup.
+            v.getField().calculationType() == CalculationType.STATIC
+                || v.getField().calculationType() == CalculationType.FORMULA)
+
+            .filter(v -> {
+                Optional<IValue> oldOp = oldEntity.entityValue().getValue(v.getField().id());
+                if (oldOp.isPresent()) {
+
+                    // 和原值不相等才需要处理.
+                    return !v.equals(oldOp.get());
+
+                } else {
+
+                    return false;
+
+                }
+            }).mapToLong(v -> v.getField().id()).toArray();
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
@@ -548,7 +581,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
          * 设置万能版本,表示和所有的版本都匹配.
          */
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+        EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
+
         return delete(entity);
     }
 
@@ -731,7 +765,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private Collection<CalculationHint> processCalculationField(
-        IEntity sourceEntity, IEntityClass entityClass, boolean build)
+        IEntity sourceEntity, IEntityClass entityClass, Scenarios scenarios)
         throws CalculationLogicException {
 
         /*
@@ -741,7 +775,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         List<IEntityField> calculationFields = entityClass.fields().stream()
             .filter(
                 f -> {
-                    if (build) {
+                    if (Scenarios.BUILD == scenarios) {
                         return CalculationType.UNKNOWN != f.calculationType()
                             && CalculationType.STATIC != f.calculationType();
                     } else {
@@ -756,7 +790,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return Collections.emptyList();
         }
 
-        CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, entityClass);
+        CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, entityClass, scenarios);
 
         for (IEntityField field : calculationFields) {
             context.focusField(field);
@@ -773,35 +807,42 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return context.getHints();
     }
 
-    // 计算字段的维护
-    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, boolean build)
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+        throws CalculationLogicException {
+        long[] fields = sourceClass.fields().stream().mapToLong(IEntityField::id).toArray();
+        maintainField(sourceEntity, sourceClass, fields, scenarios);
+    }
+
+    /**
+     * 字段维护,会迭代当前修改的字段进行维护.
+     * 主要用于计算字段的数据一致性处理.
+     */
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, long[] fieldIds, Scenarios scenarios)
         throws CalculationLogicException {
 
-        // 需要维护的字段.
-        List<IEntityField> needMaintainFields = sourceEntity.entityValue().values().stream().filter(v ->
-            calculationLogicFactory.getCalculation(v.getField().calculationType()).needMaintenance()
-        ).map(v -> sourceClass.field(v.getField().id()).get()).collect(Collectors.toList());
-
-        CalculationLogicContext context = buildCalculationLogicContext(build, sourceEntity, sourceClass);
-
-        for (IEntityField field : needMaintainFields) {
-            calculationLogicFactory.getCalculation(field.calculationType()).maintain(context);
+        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculations();
+        CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
+        for (long fieldId : fieldIds) {
+            context.focusField(sourceClass.field(fieldId).get());
+            for (CalculationLogic logic : logics) {
+                // 字段一定存在的.
+                logic.maintain(context);
+            }
         }
     }
 
-    private CalculationLogicContext buildCalculationLogicContext(
-        boolean build,
-        IEntity entity,
-        IEntityClass entityClass) {
+    private CalculationLogicContext buildCalculationLogicContext(IEntity entity, IEntityClass entityClass,
+                                                                 Scenarios scenarios) {
         return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-            .withBuild(build)
+            .withScenarios(scenarios)
             .withMetaManager(this.metaManager)
             .withMasterStorage(this.masterStorage)
+            .withTaskCoordinator(this.taskCoordinator)
             .withKeyValueStorage(this.kv)
-
             .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
             .withEntityClass(entityClass)
             .withEntity(entity)
+            .withBizIdGenerator(this.bizIDGenerator)
             .build();
     }
 

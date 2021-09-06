@@ -47,15 +47,6 @@ public class Shutdown {
     private CDCDaemonService cdcDaemonService;
 
     @Resource
-    private RedisClient redisClientState;
-
-    @Resource
-    private RedisClient redisClientChangeLog;
-
-    @Resource
-    private RedisClient redisClientCacheEvent;
-
-    @Resource
     private DataSourcePackage dataSourcePackage;
 
     @Resource
@@ -104,18 +95,6 @@ public class Shutdown {
         logger.info("Start closing the cdc consumer service...");
         cdcDaemonService.stopDaemon();
         logger.info("Succeed closing thd cdc consumer service...ok!");
-
-        logger.info("Start closing the redis client...");
-        redisClientState.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client...ok!");
-
-        logger.info("Start closing the redis client for change-log...");
-        redisClientChangeLog.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client for change-log...ok!");
-
-        logger.info("Start closing the redis client for cache-event...");
-        redisClientCacheEvent.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client for cache-event...ok!");
 
         logger.info("Start closing the datasource...");
         dataSourcePackage.close();

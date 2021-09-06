@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 
 /**
  * 基于kryo 的序列化策略.
@@ -22,11 +23,11 @@ public class KryoSerializeStrategy implements SerializeStrategy {
     }
 
     @Override
-    public byte[] serialize(Object source) throws CanNotBeSerializedException {
+    public byte[] serialize(Serializable source) throws CanNotBeSerializedException {
         ByteArrayOutputStream buff = new ByteArrayOutputStream();
         try (Output output = new Output(buff)) {
             try {
-                kryo.writeClassAndObject(output, source);
+                kryo.writeObject(output, source);
             } catch (Exception ex) {
                 throw new CanNotBeSerializedException(ex.getMessage(), ex);
             }
@@ -36,10 +37,10 @@ public class KryoSerializeStrategy implements SerializeStrategy {
     }
 
     @Override
-    public Object unserialize(byte[] datas) throws CanNotBeUnSerializedException {
+    public <T> T unserialize(byte[] datas, Class<T> clazz) throws CanNotBeUnSerializedException {
         try (Input input = new Input(new ByteArrayInputStream(datas))) {
             try {
-                return kryo.readClassAndObject(input);
+                return kryo.readObject(input, clazz);
             } catch (Exception ex) {
                 throw new CanNotBeUnSerializedException(ex.getMessage(), ex);
             }

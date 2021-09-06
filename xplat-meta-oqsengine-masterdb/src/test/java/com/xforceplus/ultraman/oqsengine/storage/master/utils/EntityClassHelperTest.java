@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ public class EntityClassHelperTest {
     @Test
     public void testBuildEntityClassQuerySql() throws Exception {
 
-        IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+        IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
             .withId(1)
             .withLevel(0)
             .withCode("l0")
@@ -30,7 +30,7 @@ public class EntityClassHelperTest {
                 .withFieldType(FieldType.LONG)
                 .withName("l0-long").build())
             .build();
-        IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+        IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
             .withId(2)
             .withLevel(1)
             .withCode("l1")
@@ -40,7 +40,7 @@ public class EntityClassHelperTest {
                 .withFieldType(FieldType.LONG)
                 .withName("l1-long").build())
             .build();
-        IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+        IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
             .withId(3)
             .withLevel(2)
             .withCode("l2")

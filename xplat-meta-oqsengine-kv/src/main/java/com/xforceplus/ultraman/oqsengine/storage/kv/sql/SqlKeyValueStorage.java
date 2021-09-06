@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.kv.sql;
 
 import com.xforceplus.ultraman.oqsengine.common.iterator.AbstractDataIterator;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -10,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.DeleteTaskExecu
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.ExistTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetsTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.IncrTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SaveTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
@@ -56,9 +58,13 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
     private static final byte[] EMPTY_VALUES = new byte[0];
     private static final char DISABLE_SYMBOL = '%';
+    private static final String NUMBER_KEY_PREIFIX = "@n";
 
     @Resource(name = "kvStorageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
+
+    @Resource
+    private ResourceLocker locker;
 
     private String tableName;
 
@@ -68,7 +74,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         this.tableName = tableName;
     }
 
-    public void setTimeout(long timeout) {
+    public void setTimeoutMs(long timeout) {
         this.timeout = timeout;
     }
 
@@ -82,7 +88,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                 @Override
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws Exception {
-                    return new SaveTaskExecutor(tableName, resource, timeout, false).execute(
+                    return new SaveTaskExecutor(tableName, resource, timeout, false, false).execute(
                         Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
                 }
 
@@ -103,7 +109,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
     @Override
     public long save(Collection<Map.Entry<String, byte[]>> kvs) {
-        Collection<Map.Entry<String, byte[]>> keyValues = new ArrayList<>(kvs.size());
+        Collection<Map.Entry<String, Object>> keyValues = new ArrayList<>(kvs.size());
         for (Map.Entry<String, byte[]> kv : kvs) {
             checkKey(kv.getKey());
             keyValues
@@ -115,7 +121,8 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                 @Override
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws Exception {
-                    return new SaveTaskExecutor(tableName, resource, timeout, false).execute(keyValues);
+                    return new SaveTaskExecutor(tableName, resource, timeout, false, false)
+                        .execute(keyValues);
                 }
 
                 @Override
@@ -138,7 +145,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                 @Override
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws Exception {
-                    return new SaveTaskExecutor(tableName, resource, timeout, true).execute(
+                    return new SaveTaskExecutor(tableName, resource, timeout, true, isNumber(key)).execute(
                         Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
                 }
 
@@ -293,6 +300,36 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         return iterator;
     }
 
+    @Override
+    public long incr(String key, long step) {
+        String useKey = String.format("%s-%s", NUMBER_KEY_PREIFIX, key);
+
+        locker.lock(useKey);
+        try {
+            return (long) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws Exception {
+                    IncrTaskExecutor executor = new IncrTaskExecutor(tableName, resource, timeout, useKey);
+                    return executor.execute(step);
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        } finally {
+            locker.unlock(useKey);
+        }
+    }
+
+    private boolean isNumber(String key) {
+        return key.startsWith(NUMBER_KEY_PREIFIX);
+    }
+
     /**
      * key 迭代器.
      */
@@ -320,8 +357,12 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
         @Override
         public void seek(String key) {
-            this.asc = false;
             this.lastKey = key;
+        }
+
+        @Override
+        public String currentKey() {
+            return this.lastKey;
         }
 
         public static DataIterator<String> buildEmptyIterator() {

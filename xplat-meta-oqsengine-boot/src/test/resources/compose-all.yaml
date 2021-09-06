@@ -8,7 +8,7 @@ services:
       - MYSQL_ROOT_USERNAME=root
       - MYSQL_ROOT_PASSWORD=root
     volumes:
-      - "./mastdb.sql:/docker-entrypoint-initdb.d/1.sql"
+      - "./master.sql:/docker-entrypoint-initdb.d/1.sql"
       - "./mysql.cnf:/etc/my.cnf"
 
   canal-server:

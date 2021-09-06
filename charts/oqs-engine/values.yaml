@@ -135,6 +135,8 @@ storage:
     timeoutMs: 3000
   timeoutMs:
     query: 3000
+  kv:
+    name: "kv"
   master:
     name: "oqsbigentity"
     shard:

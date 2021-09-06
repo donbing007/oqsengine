@@ -33,7 +33,7 @@ public class EntityClassBuilder {
         new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
     // level 1
-    public static final IEntityClass entityClass0 =
+    public static final IEntityClass ENTITY_CLASS_0 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
             .withVersion(1)
@@ -43,22 +43,22 @@ public class EntityClassBuilder {
             ).build();
 
     // level 2
-    public static final IEntityClass entityClass1 =
+    public static final IEntityClass ENTITY_CLASS_1 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 1)
             .withVersion(1)
             .withCode("c1")
-            .withFather(entityClass0)
+            .withFather(ENTITY_CLASS_0)
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
     // level 3
-    public static final IEntityClass entityClass2 =
+    public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withVersion(1)
             .withCode("c2")
-            .withFather(entityClass1)
+            .withFather(ENTITY_CLASS_1)
             .withFields(
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
@@ -70,8 +70,8 @@ public class EntityClassBuilder {
     }
 
     static {
-        entityClassMap.put(entityClass0.id(), entityClass0);
-        entityClassMap.put(entityClass1.id(), entityClass1);
-        entityClassMap.put(entityClass2.id(), entityClass2);
+        entityClassMap.put(ENTITY_CLASS_0.id(), ENTITY_CLASS_0);
+        entityClassMap.put(ENTITY_CLASS_1.id(), ENTITY_CLASS_1);
+        entityClassMap.put(ENTITY_CLASS_2.id(), ENTITY_CLASS_2);
     }
 }

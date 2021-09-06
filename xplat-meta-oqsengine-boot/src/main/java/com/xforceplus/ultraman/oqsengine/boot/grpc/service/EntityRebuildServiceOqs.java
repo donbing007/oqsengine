@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -68,6 +69,9 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Autowired
     private EntitySearchService entitySearchService;
 
+    @Resource
+    private MetaManager metaManager;
+
     @Resource(name = "ioThreadPool")
     private ExecutorService asyncDispatcher;
 
@@ -86,7 +90,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         return async(() -> {
             EntityUp entityUp = in.getEntity();
 
-            IEntityClass entityClass = toEntityClass(entityUp);
+            IEntityClass entityClass = toEntityClass(entityUp, metaManager);
 
             try {
                 Optional<DevOpsTaskInfo> devOpsTaskInfo = devOpsManagementService.rebuildIndex(
@@ -130,7 +134,8 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     public CompletionStage<RebuildTaskInfo> getActiveTask(EntityUp in, Metadata metadata) {
         return async(() -> {
             try {
-                return devOpsManagementService.getActiveTask(toEntityClass(in)).map(this::toTaskInfo).orElse(empty);
+                return devOpsManagementService.getActiveTask(toEntityClass(in, metaManager))
+                    .map(this::toTaskInfo).orElse(empty);
             } catch (SQLException e) {
                 logger.error("{}", e);
                 return RebuildTaskInfo.newBuilder().setErrCode("-1").setMessage(e.getMessage()).buildPartial();

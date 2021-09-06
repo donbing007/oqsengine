@@ -386,6 +386,9 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    /**
+     * 准备数据.
+     */
     public static class Prepared {
         public static String[] attrs = {
             "{\"1L\":73550,\"2S\":\"1\",\"3L\":0}",

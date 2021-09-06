@@ -6,19 +6,17 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityRelation;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO
@@ -37,8 +35,8 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
 
     //TODO
     @Override
-    public boolean require(OqsRelation relation) {
-        return relation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE;
+    public boolean require(Relationship relation) {
+        return relation.getRelationType() == Relationship.RelationType.MANY_TO_ONE;
     }
 
     /**
@@ -49,7 +47,8 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
      * @param comment
      * @return
      */
-    private Changelog changelogForOuter(long entityClassId, Long objId, long fieldId, long relatedObjId, long commitId, long timestamp, String comment, ChangeValue.Op op) {
+    private Changelog changelogForOuter(long entityClassId, Long objId, long fieldId, long relatedObjId, long commitId,
+                                        long timestamp, String comment, ChangeValue.Op op) {
 
         Changelog changelog = new Changelog();
         changelog.setcId(idGenerator.next());
@@ -67,7 +66,7 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
         return changelog;
     }
 
-    private boolean noChanges(OqsRelation relation, ChangedEvent changedEvent) {
+    private boolean noChanges(Relationship relation, ChangedEvent changedEvent) {
         long changedEntityClass = changedEvent.getEntityClassId();
         return relation.getRightEntityClassId() != changedEntityClass;
     }
@@ -78,7 +77,8 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
      * @return
      */
     @Override
-    public List<Changelog> generateOuterChangelog(OqsRelation relation, IEntityClass entityClass, ChangedEvent changedEvent) {
+    public List<Changelog> generateOuterChangelog(Relationship relation, IEntityClass entityClass,
+                                                  ChangedEvent changedEvent) {
 
         //TODO
         //return no changes value
@@ -108,9 +108,9 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
         }
 
         Optional<IValue> beforeOuter = Optional.ofNullable(beforeChange).flatMap(change -> change.entityValue()
-                .values().stream().filter(x -> x.getField().id() == fieldId).findFirst());
+            .values().stream().filter(x -> x.getField().id() == fieldId).findFirst());
         Optional<IValue> afterOuter = Optional.ofNullable(afterChange).flatMap(change -> change.entityValue()
-                .values().stream().filter(x -> x.getField().id() == fieldId).findFirst());
+            .values().stream().filter(x -> x.getField().id() == fieldId).findFirst());
 
         /**
          * three case
@@ -127,7 +127,7 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
             //remove old and add new
             long relatedObjIdAfter = afterOuter.get().valueToLong();
             Optional<Changelog> changelog = genChangelogForRelatedEntity(relatedObjIdAfter, entityClass, id
-                    , companionFieldId, ChangeValue.Op.ADD, commitId, timestamp, comment);
+                , companionFieldId, ChangeValue.Op.ADD, commitId, timestamp, comment);
             if (changelog.isPresent()) {
                 return Collections.singletonList(changelog.get());
             }
@@ -145,20 +145,20 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
                 //remove old and add new
                 long relatedObjIdAfter = afterOuter.get().valueToLong();
                 genChangelogForRelatedEntity(relatedObjIdAfter, entityClass, id, companionFieldId, ChangeValue.Op.ADD
-                        , commitId, timestamp, comment)
-                        .ifPresent(changelogs::add);
+                    , commitId, timestamp, comment)
+                    .ifPresent(changelogs::add);
 
                 long relatedObjIdBefore = beforeOuter.get().valueToLong();
                 genChangelogForRelatedEntity(relatedObjIdBefore, entityClass, id, companionFieldId, ChangeValue.Op.DEL
-                        , commitId, timestamp, comment)
-                        .ifPresent(changelogs::add);
+                    , commitId, timestamp, comment)
+                    .ifPresent(changelogs::add);
 
                 return changelogs;
             }
         } else if (before && !after) {
             long relatedObjIdBefore = beforeOuter.get().valueToLong();
             Optional<Changelog> changelog = genChangelogForRelatedEntity(relatedObjIdBefore
-                    , entityClass, id, companionFieldId, ChangeValue.Op.DEL, commitId, timestamp, comment);
+                , entityClass, id, companionFieldId, ChangeValue.Op.DEL, commitId, timestamp, comment);
 
             if (changelog.isPresent()) {
                 return Collections.singletonList(changelog.get());
@@ -174,14 +174,14 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
      * @return
      */
     private Optional<Changelog> genChangelogForRelatedEntity(long relatedObjId
-            , IEntityClass relatedEntityClass, long selfId, long fieldId, ChangeValue.Op op
-            , long commitId, long timestamp, String comment
+        , IEntityClass relatedEntityClass, long selfId, long fieldId, ChangeValue.Op op
+        , long commitId, long timestamp, String comment
     ) {
 
         Optional<EntityRelation> entityRelation = findEntityByOuterKey(relatedEntityClass, relatedObjId);
         if (entityRelation.isPresent()) {
             Changelog changelog = changelogForOuter(relatedEntityClass.id(), selfId, fieldId, relatedObjId
-                    , commitId, timestamp, comment, op);
+                , commitId, timestamp, comment, op);
             return Optional.ofNullable(changelog);
         }
         return Optional.empty();

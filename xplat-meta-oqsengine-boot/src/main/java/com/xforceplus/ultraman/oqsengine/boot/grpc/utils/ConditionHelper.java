@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
@@ -298,8 +298,8 @@ public class ConditionHelper {
     /**
      * relation can be inherited.
      */
-    private static Optional<OqsRelation> findRelation(IEntityClass mainClass, long relationId) {
-        Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
+    private static Optional<Relationship> findRelation(IEntityClass mainClass, long relationId) {
+        Optional<Relationship> relationOp = mainClass.relationship().stream()
             .filter(rel -> rel.getId() == relationId)
             .findFirst();
         if (!relationOp.isPresent()) {
@@ -489,10 +489,10 @@ public class ConditionHelper {
         //TODO relation is inherited
         if (relationId > 0) {
             //find in related
-            Optional<OqsRelation> relationOp = findRelation(mainClass, relationId);
+            Optional<Relationship> relationOp = findRelation(mainClass, relationId);
 
             if (relationOp.isPresent()) {
-                OqsRelation relation = relationOp.get();
+                Relationship relation = relationOp.get();
                 if (relation.getLeftEntityClassId() == mainClass.id()) {
                     Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
                     if (relatedEntityClassOp.isPresent()) {

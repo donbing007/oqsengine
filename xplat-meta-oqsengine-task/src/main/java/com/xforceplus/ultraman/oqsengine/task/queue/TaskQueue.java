@@ -43,4 +43,6 @@ public interface TaskQueue {
      * @param task 任务.
      */
     public void ack(Task task);
+
+    /*public boolean ack(Task task , long awaitTimeMS);*/
 }

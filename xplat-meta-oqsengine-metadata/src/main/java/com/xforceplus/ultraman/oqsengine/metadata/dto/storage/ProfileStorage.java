@@ -11,9 +11,12 @@ import java.util.List;
  * @since 1.8
  */
 public class ProfileStorage {
-    private final String code;
-    private final List<EntityField> entityFieldList;
+    private String code;
+    private List<EntityField> entityFieldList;
     private List<RelationStorage> relationStorageList;
+
+    public ProfileStorage() {
+    }
 
     /**
      * 构造函数.

@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -32,7 +32,11 @@ import org.junit.jupiter.api.Test;
 public class NoOrNoRanageConditionsBuilderTest {
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
-    private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(longField));
+    private static IEntityClass entityClass = EntityClass.Builder.anEntityClass()
+        .withId(Long.MAX_VALUE)
+        .withCode("test")
+        .withField(longField)
+        .build();
 
     /**
      * Method: build(Conditions conditions).

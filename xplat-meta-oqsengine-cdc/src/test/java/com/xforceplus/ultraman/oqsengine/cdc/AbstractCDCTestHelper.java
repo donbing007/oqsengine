@@ -19,7 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  *
  * @since 1.8
  */
-public abstract class CDCTestHelper extends AbstractContainerExtends {
+public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
     protected ConsumerRunner consumerRunner;
 
     protected MockRedisCallbackService mockRedisCallbackService;
@@ -27,7 +27,7 @@ public abstract class CDCTestHelper extends AbstractContainerExtends {
     protected CDCMetricsService cdcMetricsService;
 
     protected void init(boolean isStartRunner) throws Exception {
-        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(EntityClassBuilder.entityClass2));
+        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(EntityClassBuilder.ENTITY_CLASS_2));
         if (isStartRunner) {
             consumerRunner = initConsumerRunner();
             consumerRunner.start();
@@ -37,6 +37,9 @@ public abstract class CDCTestHelper extends AbstractContainerExtends {
     protected void destroy(boolean isStopRunner) throws Exception {
         if (isStopRunner) {
             consumerRunner.shutdown();
+        }
+        if (null != mockRedisCallbackService) {
+            mockRedisCallbackService.reset();
         }
         InitializationHelper.clearAll();
     }

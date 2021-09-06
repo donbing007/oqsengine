@@ -70,7 +70,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     final Logger logger = LoggerFactory.getLogger(DefaultCacheExecutor.class);
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
 
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
@@ -363,6 +363,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 for (IEntityField entityField : storage.getFields()) {
                     try {
                         String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                        // TODO avg init.
                         syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);

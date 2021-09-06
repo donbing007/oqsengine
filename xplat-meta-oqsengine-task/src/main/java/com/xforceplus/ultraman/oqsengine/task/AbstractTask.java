@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
 import com.xforceplus.ultraman.oqsengine.common.id.UUIDGenerator;
+import java.io.Serializable;
 
 /**
  * 任务的抽像实现.
@@ -9,10 +10,11 @@ import com.xforceplus.ultraman.oqsengine.common.id.UUIDGenerator;
  * @version 0.1 2021/08/12 14:50
  * @since 1.8
  */
-public abstract class AbstractTask implements Task {
+public abstract class AbstractTask implements Task, Serializable {
 
     private String id;
     private long createTime;
+    private long location;
 
     public AbstractTask() {
         id = UUIDGenerator.getInstance().next();
@@ -27,5 +29,15 @@ public abstract class AbstractTask implements Task {
     @Override
     public long createTime() {
         return createTime;
+    }
+
+    @Override
+    public long location() {
+        return this.location;
+    }
+
+    @Override
+    public void setLocation(long location) {
+        this.location = location;
     }
 }

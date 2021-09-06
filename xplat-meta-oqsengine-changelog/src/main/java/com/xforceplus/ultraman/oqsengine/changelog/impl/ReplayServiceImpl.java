@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.changelog.impl;
 
-import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
-import com.xforceplus.ultraman.oqsengine.changelog.entity.StatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
@@ -15,13 +13,11 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +133,7 @@ public class ReplayServiceImpl implements ReplayService {
         entityRelation.setId(id);
 
         Map<Long, List<HistoryValue>> historyValueMapping = ChangelogHelper.getMappedHistoryValue(changelogList);
-        Map<OqsRelation, Collection<ValueLife>> relationValues = new HashMap<>();
+        Map<Relationship, Collection<ValueLife>> relationValues = new HashMap<>();
 
         entityRelation.setRelatedIds(relationValues);
 
@@ -147,7 +143,7 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * deal every relations to find out history and current value and record in relationValues
          */
-        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).stream()
+        Optional.ofNullable(entityClass.relationship()).orElse(Collections.emptyList()).stream()
                 .filter(x -> x.isStrong() && !x.isCompanion())
                 .forEach(x -> {
                     //get value from changelogList;
@@ -270,16 +266,16 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * current id, currentDomain, preview AggDomain
          */
-        Queue<Tuple3<Long, EntityAggDomain, Tuple2<OqsRelation, EntityAggDomain>>> taskIdQueue = new LinkedList<>();
+        Queue<Tuple3<Long, EntityAggDomain, Tuple2<Relationship, EntityAggDomain>>> taskIdQueue = new LinkedList<>();
 
         taskIdQueue.offer(Tuple.of(id, head, null));
         //BFS
         while (!taskIdQueue.isEmpty()) {
-            Tuple3<Long, EntityAggDomain, Tuple2<OqsRelation, EntityAggDomain>> task = taskIdQueue.poll();
+            Tuple3<Long, EntityAggDomain, Tuple2<Relationship, EntityAggDomain>> task = taskIdQueue.poll();
 
             Long currentNodeId = task._1;
             EntityAggDomain currentEntityAgg = task._2;
-            Tuple2<OqsRelation, EntityAggDomain> previewEntityRelToAgg = task._3;
+            Tuple2<Relationship, EntityAggDomain> previewEntityRelToAgg = task._3;
 
             EntityDomain entityDomain = map.get(currentNodeId);
             if (entityDomain != null) {
@@ -329,7 +325,7 @@ public class ReplayServiceImpl implements ReplayService {
                         .build())
                 .withEntityValue(entityValue).build();
 
-        Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
+        Map<Relationship, List<Long>> referenceMap = new HashMap<>();
 
         EntityDomain entityDomain;
         if(!changelogs.isEmpty()) {
@@ -346,7 +342,7 @@ public class ReplayServiceImpl implements ReplayService {
              * init reference map with snapshot
              */
             changeSnapshot.getReferenceMap().forEach((k, v) -> {
-                Optional<OqsRelation> relationWithFieldId = EntityClassHelper.findRelationWithFieldId(entityClass, k);
+                Optional<Relationship> relationWithFieldId = EntityClassHelper.findRelationWithFieldId(entityClass, k);
                 relationWithFieldId.ifPresent(x -> {
                     referenceMap.put(x, v);
                 });
@@ -400,7 +396,7 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * store relation field in reference map
          */
-        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
+        Optional.ofNullable(entityClass.relationship()).orElse(Collections.emptyList()).forEach(rel -> {
 //            if (rel.getFieldOwner() != entityClass.id()) {
                 //current entityClass do not have this field
                 List<ChangeValue> changeValues = Optional.ofNullable(finalMappedValue.get(rel.getEntityField().id())).orElseGet(Collections::emptyList);
