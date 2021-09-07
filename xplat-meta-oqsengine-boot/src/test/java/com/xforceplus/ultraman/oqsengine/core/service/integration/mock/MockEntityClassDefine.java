@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Disabled;
 @Disabled("explanation")
 public class MockEntityClassDefine {
 
+    private static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
     /**
      * 类型标识的开始值,依次递减.
      */
@@ -28,7 +29,7 @@ public class MockEntityClassDefine {
     /**
      * 字段的标识开始值,依次递减.
      */
-    private static long baseFieldId = Long.MAX_VALUE;
+    private static long baseFieldId = Long.MAX_VALUE - 1;
 
     private static long l0EntityClassId = baseClassId--;
     private static long l1EntityClassId = baseClassId--;
@@ -122,7 +123,7 @@ public class MockEntityClassDefine {
                 .withName("l2-dec")
                 .withConfig(FieldConfig.build().searchable(true)).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(DRIVCER_ID_FEILD_ID)
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
@@ -139,7 +140,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(0)
+                                .withId(DRIVCER_ID_FEILD_ID)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
@@ -158,7 +159,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(0)
+                                .withId(DRIVCER_ID_FEILD_ID)
                                 .withFieldType(FieldType.LONG)
                                 .withName("driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())

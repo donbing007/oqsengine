@@ -2,9 +2,9 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 
-import com.xforceplus.ultraman.discover.server.common.exception.DiscoverClientException;
-import com.xforceplus.ultraman.discover.server.sdk.annotation.DiscoverAction;
-import com.xforceplus.ultraman.discover.server.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
+import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
+import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
@@ -130,11 +130,12 @@ public class DiscoverDevOpsService {
                 return false;
             }
             devOpsManagementService.removeCommitIds(ids);
+            return true;
         } catch (Exception e) {
             exceptionHandle(
                 String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
         }
-        return true;
+        return false;
     }
 
     /**

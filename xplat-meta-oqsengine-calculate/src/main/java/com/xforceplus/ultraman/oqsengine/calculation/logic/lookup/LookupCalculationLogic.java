@@ -37,10 +37,23 @@ public class LookupCalculationLogic implements CalculationLogic {
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
         IEntity targetEntity = findTargetEntity(context);
+        if (targetEntity == null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("No target object found, ignoring the current lookup field ({}-{}) calculation.",
+                    context.getFocusField().id(), context.getFocusField().name());
+            }
+            return Optional.empty();
+        }
+
         IValue targetValue = findTargetValue(context, targetEntity);
 
         if (targetValue == null) {
             // 表示目标对象没有此字段,lookup本身也不需要此值.
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The target entity ({}) was found, but the value of the target field ({}-{}) could not be found in the entity.",
+                    targetEntity.id(), context.getFocusField().id(), context.getFocusField().name());
+            }
             return Optional.empty();
         }
 

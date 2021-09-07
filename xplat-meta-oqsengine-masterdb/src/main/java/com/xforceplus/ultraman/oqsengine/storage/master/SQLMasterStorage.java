@@ -18,8 +18,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
@@ -168,12 +170,15 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
+
+        SelectConfig useConfig = optimizeToOrder(config);
+
         return (Collection<EntityRef>) transactionExecutor.execute((tx, resource, hint) -> {
             return QueryLimitCommitidByConditionsExecutor.build(
                 tableName,
                 resource,
                 entityClass,
-                config,
+                useConfig,
                 queryTimeout,
                 conditionsBuilderFactory,
                 storageStrategyFactory).execute(conditions);
@@ -806,5 +811,28 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         return Arrays.copyOf(newIds, slow);
+    }
+
+    /**
+     * 一个查询排序优化.
+     * 1. 如果只按ID排序,且只有ID排序那么整个排序将被去掉.
+     */
+    private SelectConfig optimizeToOrder(SelectConfig config) {
+        if (config.getSecondarySort().isOutOfOrder() && config.getThirdSort().isOutOfOrder()) {
+            if (!config.getSort().isOutOfOrder()) {
+                if (config.getSort().getField() == EntityField.ID_ENTITY_FIELD) {
+                    return SelectConfig.Builder.anSelectConfig()
+                        .withCommitId(config.getCommitId())
+                        .withPage(config.getPage())
+                        .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
+                        .withExcludedIds(config.getExcludedIds())
+                        .withFacet(config.getFacet())
+                        .withSort(Sort.buildOutOfSort())
+                        .withSecondarySort(config.getSecondarySort())
+                        .withThirdSort(config.getThirdSort()).build();
+                }
+            }
+        }
+        return config;
     }
 }

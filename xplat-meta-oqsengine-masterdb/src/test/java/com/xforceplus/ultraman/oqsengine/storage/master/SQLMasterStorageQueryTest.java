@@ -283,7 +283,12 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
             try {
                 refs = storage.select(c.conditions, c.entityClass,
                     SelectConfig.Builder.anSelectConfig()
-                        .withDataAccessFitlerCondtitons(c.filterConditions).withCommitId(0).withSort(c.sort).build());
+                        .withDataAccessFitlerCondtitons(c.filterConditions)
+                        .withCommitId(0)
+                        .withSort(c.sort)
+                        .withSecondarySort(c.secondSort)
+                        .withThirdSort(c.thirdSort)
+                        .build());
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -295,7 +300,7 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
     private Collection<Case> buildSelectCase() {
 
         return Arrays.asList(
-            // sort asc
+            // sort asc,按照id排序应该被优化掉.
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
@@ -309,9 +314,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                     long[] expectedIds = {
                         1001, 1002, 1003, 1004
                     };
-                    assertSelect(expectedIds, r, true);
+                    assertSelect(expectedIds, r, false);
                 },
-                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)
+                Sort.buildOutOfSort()
             ),
             // id eq
             new Case(
@@ -745,6 +750,51 @@ public class SQLMasterStorageQueryTest extends AbstractContainerExtends {
                     };
                     assertSelect(expectedIds, result, false);
                 }
+            ),
+            // Joint sorting
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY"))),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {
+                        1000, 1001, 1003
+                    };
+                    EntityRef[] expectedRefs = new EntityRef[] {
+                        EntityRef.Builder.anEntityRef()
+                            .withId(1000)
+                            .withOrderValue("87011006")
+                            .withSecondOrderValue("-2037817147")
+                            .withThridOrderValue("5088141692596524950").build(),
+                        EntityRef.Builder.anEntityRef()
+                            .withId(1001)
+                            .withOrderValue("443531115")
+                            .withSecondOrderValue("-251454086")
+                            .withThridOrderValue("5088141692596524949").build(),
+                        EntityRef.Builder.anEntityRef()
+                            .withId(1003)
+                            .withOrderValue("647147145")
+                            .withSecondOrderValue("2032249908")
+                            .withThridOrderValue("5088141692596524947").build()
+
+                    };
+                    assertSelect(expectedIds, result, false);
+                    List<EntityRef> targetRefs = new ArrayList(result);
+                    for (int i = 0; i < expectedIds.length; i++) {
+                        EntityRef targetRef = targetRefs.get(i);
+                        EntityRef expectedRef = expectedRefs[i];
+
+                        Assertions.assertEquals(expectedRef.getId(), targetRef.getId());
+                        Assertions.assertEquals(expectedRef.getOrderValue(), targetRef.getOrderValue());
+                        Assertions.assertEquals(expectedRef.getSecondOrderValue(), targetRef.getSecondOrderValue());
+                        Assertions.assertEquals(expectedRef.getThridOrderValue(), targetRef.getThridOrderValue());
+                    }
+                },
+                Sort.buildAscSort(l2EntityClass.field("l1-long").get()),
+                Sort.buildAscSort(l2EntityClass.field("l2-long").get()),
+                Sort.buildAscSort(l2EntityClass.field("l2-bigint").get())
             )
         );
     }

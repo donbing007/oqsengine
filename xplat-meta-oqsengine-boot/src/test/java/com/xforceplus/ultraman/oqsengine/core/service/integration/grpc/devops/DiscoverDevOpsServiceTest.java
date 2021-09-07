@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ActiveProfiles("discover")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@Disabled("不是常用的测试,平时忽略.")
 public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
 
     @Autowired
@@ -43,7 +45,32 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
-    private boolean waitForDebug = true;
+//    // mockBean below need to delete
+//    @MockBean(name = "longContinuousPartialOrderIdGenerator")
+//    private LongIdGenerator longIdGenerator;
+//
+//    @MockBean(name = "longNoContinuousPartialOrderIdGenerator")
+//    private LongIdGenerator longPartitionIdGenerator;
+//
+//    @MockBean
+//    private EntitySearchService entitySearchService;
+//
+//    @MockBean
+//    private TransactionManager transactionManager;
+//
+//    @MockBean
+//    private IndexStorage indexStorage;
+//
+//    @MockBean
+//    private MasterStorage masterStorage;
+//
+//    @MockBean
+//    private TaskQueue taskQueue;
+//
+//    @MockBean
+//    private TaskCoordinator taskCoordinator;
+
+    private boolean waitForDebug = false;
 
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
