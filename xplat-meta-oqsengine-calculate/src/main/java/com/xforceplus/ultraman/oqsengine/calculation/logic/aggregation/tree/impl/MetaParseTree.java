@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.imp
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author: wangzheng
  * @date: 2021/8/30 14:57
  */
-public class MetaParseTree implements ParseTree {
+public class MetaParseTree implements ParseTree, Serializable {
     private Logger logger = LoggerFactory.getLogger(MetaParseTree.class);
 
     private String prefix;
