@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import java.sql.SQLException;
@@ -128,6 +129,11 @@ public class LookupCalculationLogic implements CalculationLogic {
         }
 
         IValue<Long> sourceValue = sourceValueOp.get();
+        if (!LongValue.class.isInstance(sourceValue)) {
+            throw new CalculationLogicException(String.format(
+                "The Lookup field pointer is expected to be a number, but is %s.",
+                sourceValue.getClass().getSimpleName()));
+        }
         MetaManager metaManager = context.getMetaManager();
         Optional<IEntityClass> targetEntityClassOp = metaManager.load(
             lookup.getClassId());
