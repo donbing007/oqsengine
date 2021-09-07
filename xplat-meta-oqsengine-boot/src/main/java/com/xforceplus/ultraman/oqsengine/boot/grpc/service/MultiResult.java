@@ -3,6 +3,9 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * multi result.
+ */
 public class MultiResult {
 
     private Integer successCount;
