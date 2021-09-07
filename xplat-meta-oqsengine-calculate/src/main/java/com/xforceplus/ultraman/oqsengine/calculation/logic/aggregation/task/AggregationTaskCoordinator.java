@@ -1,26 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskKeyValueQueue;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
-import io.vavr.Tuple2;
-import jodd.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +22,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import jodd.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 /**
@@ -47,6 +46,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * 所有聚合初始化标识.
      */
     public static final String AVG_UNINIT = "avg-uninit";
+
+    public static final String APPENDING = "appending";
 
     /**
      * 元数据连接顺序标识.
@@ -157,23 +158,15 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @param task   任务
      * @return 添加是否成功.
      */
-    public boolean addTask(String prefix, Task task) {
+    public boolean addTask(String prefix, Task task) throws Exception {
         TaskQueue queue;
         if (!taskQueueMap.contains(prefix)) {
             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
-            try {
-                taskKeyValueQueue.init();
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-            taskQueueMap.putIfAbsent(prefix, taskKeyValueQueue);
+            taskKeyValueQueue.init();
+            taskQueueMap.put(prefix, taskKeyValueQueue);
         }
         queue = taskQueueMap.get(prefix);
-        try {
-            queue.append(task);
-        } catch (RuntimeException e) {
-            logger.error(e.getMessage(), e);
-        }
+        queue.append(task);
         return true;
     }
 
@@ -219,26 +212,34 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @param list 要更新的聚合字段信息集合.
      * @return 是否成功.
      */
-    public boolean addInitAppInfo(String prefix, List<List<Tuple2<IEntityClass, IEntityField>>> list) {
+    public boolean addInitAppInfo(String prefix, List<ParseTree> list) {
         try {
             // 判断是否已有节点添加任务
-            if (kv.exist(buildQueueName(prefix))) {
+            if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
-                return false;
-            } else if (kv.incr(buildQueueName(prefix)) == 1) {
+                return true;
+            } else if (kv.incr(buildAppendingAppName(prefix)) == 1) {
                 for (int i = 0; i < list.size(); i++) {
-                    addTask(prefix, new AggregationTask(prefix, list.get(i)));
+                    if (!addTask(prefix, new AggregationTask(prefix, list.get(i)))) {
+                        return false;
+                    }
                 }
             } else {
-                logger.error("buildQueueName by prefix not equals 1 for unknown reason.");
+                logger.error(String.format("buildAppendingAppName by prefix not equals 1 for unknown reason.Maybe last addInitAppInfo failed ,but already incr this prefix %s", prefix));
                 return false;
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return false;
         }
+        kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
         return true;
+    }
+
+    // 每个版本的全量树持久化
+    public void addFullTree(String prefix, ArrayList<ParseTree> trees) {
+        kv.save(prefix, serializeStrategy.serialize(trees));
     }
 
     /**
@@ -263,7 +264,6 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         } finally {
             locker.unlock(APP_INIT_ORDER);
         }
-
     }
 
     /**
@@ -272,7 +272,14 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @param prefix appId-version.
      * @return 唯一标识以avg-uninit开头
      */
-    private String buildQueueName(String prefix) {
+    private String buildAppendingAppName(String prefix) {
+        StringBuilder sb = new StringBuilder();
+        return sb.append(APPENDING)
+                .append("-")
+                .append(prefix).toString();
+    }
+
+    private String buildUnInitAppName(String prefix) {
         StringBuilder sb = new StringBuilder();
         return sb.append(AVG_UNINIT)
                 .append("-")
@@ -287,8 +294,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
         @Override
         public void run() {
+            Task task = null;
+            TaskQueue queue = null;
             while (running) {
-                Task task = null;
+
 
                 if (usingApp.size() < 0) {
                     /*
@@ -314,7 +323,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                     }
                 } else {
-                    TaskQueue queue = usingApp.entrySet().iterator().next().getValue();
+                    queue = usingApp.entrySet().iterator().next().getValue();
                     try {
                         task = queue.get(1000L);
                     } catch (RuntimeException e) {
@@ -323,15 +332,17 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                     if (task == null) {
                         String prefix = usingApp.entrySet().iterator().next().getKey();
+                        // 判断当前app-version是否初始化完成
                         if (kv.exist(prefix)) {
                             if (getProcessingAppInfo().equals(prefix)) {
-                                kv.delete(prefix);
+                                removeAppInfoFromOrderList(prefix);
                                 logger.warn("appInfo %s init is done ,but not delete from the appOrderInfo", prefix);
                             }
                             taskQueueMap.get(prefix).destroy();
                             taskQueueMap.remove(prefix);
                             usingApp.clear();
                         } else {
+                            // 判断当前app-version队列是否还有任务
                             if (kv.incr(String.format("%s-%s", prefix, TaskKeyValueQueue.UNUSED)) == 0) {
                                 kv.incr(prefix);
                                 removeAppInfoFromOrderList(prefix);

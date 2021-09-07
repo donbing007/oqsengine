@@ -1,12 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.List;
 
 /**
- * 聚合解析树
+ * 聚合解析树.
  *
  * @className: AggTree
  * @package: com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree
@@ -15,22 +15,55 @@ import java.util.List;
  */
 public interface ParseTree {
 
-    PTNode next();
-
-    ParseTree getTree();
-
-    PTNode getNode();
-
+    /**
+     * 树的根节点，非空.
+     *
+     * @return 根节点.
+     */
     PTNode root();
-
-    Condition showNodeCondition();
 
     int treeLevel();
 
-    List<ParseTree> getTrees(String appId);
 
-    boolean saveTrees(List<ParseTree> trees);
-
+    /**
+     * 将当前树转化成节点集合，层次遍历.
+     *
+     * @return 树的所有节点的集合.
+     */
     List<PTNode> toList();
+
+
+    /**
+     * 添加node到树中， 若无依赖关系添加失败.
+     *
+     * @param node 指定节点.
+     */
+    void add(PTNode node);
+
+
+    /**
+     * 根据被聚合entityClass和entityField信息查找子树.
+     *
+     * @param entityClass  被聚合entityClass.
+     * @param entityField  被聚合entityField.
+     * @return 子树列表.
+     */
+    List<ParseTree> getSubTree(IEntityClass entityClass, IEntityField entityField);
+
+
+    /**
+     * 根据node集合生成树，若有node没有依赖关系无法添加到树中，会返回null.
+     *
+     * @param nodes PTNode集合.
+     * @return 返回ParseTree树.
+     */
+    ParseTree generateTree(List<PTNode> nodes);
+
+    /**
+     * 获取树的所有层级的node集合.
+     *
+     * @return 层级node集合.
+     */
+    public List<List<PTNode>> getLevelList();
 
 }

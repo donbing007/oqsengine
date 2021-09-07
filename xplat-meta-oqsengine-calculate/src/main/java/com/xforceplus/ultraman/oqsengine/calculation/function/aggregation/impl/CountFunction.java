@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -39,6 +42,23 @@ public class CountFunction implements AggregationFunction {
             agg.get().setStringValue(String.valueOf(temp.getCount()));
         }
         return Optional.of(agg.get());
+    }
+
+    @Override
+    public Optional<Long> init(long agg, List<Long> values) {
+        LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(Long::longValue));
+        return Optional.of(temp.getCount());
+    }
+
+    @Override
+    public Optional<BigDecimal> init(BigDecimal agg, List<BigDecimal> values) {
+        BigDecimalSummaryStatistics temp = values.stream().collect(BigDecimalSummaryStatistics.statistics());
+        return Optional.of(BigDecimal.valueOf(temp.getCount()));
+    }
+
+    @Override
+    public Optional<LocalDateTime> init(LocalDateTime agg, List<LocalDateTime> values) {
+        return Optional.empty();
     }
 
 }

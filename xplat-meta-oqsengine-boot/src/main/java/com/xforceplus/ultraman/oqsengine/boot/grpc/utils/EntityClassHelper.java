@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityMultiUp;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
@@ -66,6 +67,20 @@ public class EntityClassHelper {
     }
 
     /**
+     * convert entityUp to EntityRef.
+     */
+    public static EntityClassRef toEntityClassRef(EntityMultiUp entityUp, String profile) {
+        EntityClassRef entityClassRef = EntityClassRef
+            .Builder
+            .anEntityClassRef()
+            .withEntityClassProfile(profile)
+            .withEntityClassId(entityUp.getId())
+            .withEntityClassCode(entityUp.getCode())
+            .build();
+        return entityClassRef;
+    }
+
+    /**
      * 构造实体实例.
      */
     public static IEntity toEntity(EntityClassRef entityClassRef, IEntityClass entityClass, EntityUp in) {
@@ -74,6 +89,19 @@ public class EntityClassHelper {
             .withEntityClassRef(entityClassRef)
             .withEntityValue(toEntityValue(entityClass, in))
             .build();
+    }
+
+    /**
+     * 构造实体实例.
+     */
+    public static List<IEntity> toEntity(EntityClassRef entityClassRef, IEntityClass entityClass, EntityMultiUp in) {
+        return in.getValuesList().stream().map(value -> {
+            return Entity.Builder.anEntity()
+                .withId(value.getObjId())
+                .withEntityClassRef(entityClassRef)
+                .withEntityValue(toEntityValue(entityClass, value.getValuesList()))
+                .build();
+        }).collect(Collectors.toList());
     }
 
     public static boolean isRelatedField(Tuple2<Relationship, IEntityField> tuple) {
@@ -126,11 +154,12 @@ public class EntityClassHelper {
         return typedContextMap;
     }
 
+
     /**
      * 构造实体字段值实例.
      */
-    private static EntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
-        List<IValue> valueList = entityUp.getValuesList().stream()
+    private static EntityValue toEntityValue(IEntityClass entityClass, List<ValueUp> valueUpList) {
+        List<IValue> valueList = valueUpList.stream()
             .flatMap(y -> {
                 //TODO cannot find field like this
                 Optional<? extends IEntityField> entityFieldOp = entityClass.field(y.getFieldId());
@@ -177,6 +206,14 @@ public class EntityClassHelper {
         entityValue.addValues(values);
 
         return entityValue;
+    }
+
+
+    /**
+     * 构造实体字段值实例.
+     */
+    private static EntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
+        return EntityClassHelper.toEntityValue(entityClass, entityUp.getValuesList());
     }
 
     /**

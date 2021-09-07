@@ -61,10 +61,17 @@
         </dependency>
         <dependency>
             <groupId>com.xforceplus.ultraman</groupId>
-            <artifactId>xplat-meta-oqsengine-core</artifactId>
+            <artifactId>xplat-meta-oqsengine-index</artifactId>
             <version>1.2.3-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>xplat-meta-oqsengine-index</artifactId>
+            <version>1.2.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

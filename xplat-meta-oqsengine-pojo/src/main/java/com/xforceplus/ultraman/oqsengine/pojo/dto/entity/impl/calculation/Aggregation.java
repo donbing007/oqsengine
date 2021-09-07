@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-
 import java.util.Map;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
 /**
  * 聚合字段属性.
@@ -37,14 +36,20 @@ public class Aggregation extends AbstractCalculation {
     /**
      * 聚合字段条件信息.
      */
-    @JsonProperty(value = "condition")
-    private String condition;
+    @JsonProperty(value = "conditions")
+    private Conditions conditions;
+
+    /**
+     * 聚合字段类型.
+     */
+    @JsonProperty(value = "aggregationType")
+    private AggregationType aggregationType = AggregationType.UNKNOWN;
 
     /**
      * 被聚合信息Map fieldId,entityClassId.
      */
     @JsonProperty(value = "condition")
-    private Map<Long,Long> aggregationByFields;
+    private Map<Long, Long> aggregationByFields;
 
     public Aggregation(CalculationType calculationType) {
         super(calculationType);
@@ -78,12 +83,12 @@ public class Aggregation extends AbstractCalculation {
         this.relationId = relationId;
     }
 
-    public String getCondition() {
-        return condition;
+    public Conditions getConditions() {
+        return conditions;
     }
 
-    public void setCondition(String condition) {
-        this.condition = condition;
+    public void setConditions(Conditions conditions) {
+        this.conditions = conditions;
     }
 
     public Map<Long, Long> getAggregationByFields() {
@@ -94,6 +99,14 @@ public class Aggregation extends AbstractCalculation {
         this.aggregationByFields = aggregationByFields;
     }
 
+    public AggregationType getAggregationType() {
+        return aggregationType;
+    }
+
+    public void setAggregationType(AggregationType aggregationType) {
+        this.aggregationType = aggregationType;
+    }
+
     @Override
     public AbstractCalculation clone() {
         Aggregation aggregation = new Aggregation();
@@ -101,8 +114,9 @@ public class Aggregation extends AbstractCalculation {
         aggregation.fieldId = this.fieldId;
         aggregation.level = this.level;
         aggregation.aggregationByFields = this.aggregationByFields;
-        aggregation.condition = this.condition;
+        aggregation.conditions = this.conditions;
         aggregation.relationId = this.relationId;
+        aggregation.aggregationType = this.aggregationType;
         return aggregation;
     }
 
@@ -113,7 +127,8 @@ public class Aggregation extends AbstractCalculation {
         private long classId;
         private long fieldId;
         private long relationId;
-        private String condition;
+        private Conditions conditions;
+        private AggregationType aggregationType;
         private Map<Long, Long> aggregationByFields;
 
         private Builder() {
@@ -141,10 +156,11 @@ public class Aggregation extends AbstractCalculation {
             aggregation.calculationType = CalculationType.AGGREGATION;
             aggregation.classId = this.classId;
             aggregation.fieldId = this.fieldId;
-            aggregation.level = DEFAULT_LEVEL;
+            aggregation.level = StaticCalculation.DEFAULT_LEVEL;
             aggregation.aggregationByFields = this.aggregationByFields;
-            aggregation.condition = this.condition;
+            aggregation.conditions = this.conditions;
             aggregation.relationId = this.relationId;
+            aggregation.aggregationType = this.aggregationType;
             return aggregation;
         }
     }
