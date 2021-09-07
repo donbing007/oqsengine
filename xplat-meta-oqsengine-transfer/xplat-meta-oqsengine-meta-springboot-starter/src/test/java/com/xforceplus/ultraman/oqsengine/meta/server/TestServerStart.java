@@ -1,14 +1,28 @@
 package com.xforceplus.ultraman.oqsengine.meta.server;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_HEAR_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_HEART_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.keyAppWithEnv;
+
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
-import com.xforceplus.ultraman.oqsengine.meta.listener.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
+import com.xforceplus.ultraman.oqsengine.meta.listener.dto.AppUpdateEvent;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,15 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import javax.annotation.Resource;
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Set;
-
-import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
-import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.keyAppWithEnv;
 
 /**
  * desc :
@@ -64,9 +69,9 @@ public class TestServerStart {
     @BeforeEach
     public void before() {
         if (IF_TEST) {
-            executors[0] = ThreadUtils.create(() -> heartBeatTest(caseHeartBeat, watchElementHeartBeat));
-            executors[1] = ThreadUtils.create(() -> registerPullTest(caseRegisterPull, watchElementRegisterPull));
-            executors[2] = ThreadUtils.create(() -> registerPushTest(caseRegisterPush, watchElementRegisterPush));
+            executors[0] = ThreadUtils.create(() -> heartBeatTest(CASE_HEAR_BEAT, WATCH_ELEMENT_HEART_BEAT));
+            executors[1] = ThreadUtils.create(() -> registerPullTest(CASE_REGISTER_PULL, WATCH_ELEMENT_REGISTER_PULL));
+            executors[2] = ThreadUtils.create(() -> registerPushTest(CASE_REGISTER_PUSH, WATCH_ELEMENT_REGISTER_PUSH));
 
             for (Thread exec : executors) {
                 exec.start();

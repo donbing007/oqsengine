@@ -1,16 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.metadata.integeration.recover;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IF_TEST_LOCAL;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_CLIENT_CLOSED;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_SERVER_OK;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_APP_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_ENTITY_CLASS_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_ENV;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_START_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_CLIENT_CLOSED;
-import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_SERVER_OK;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MockerRequestClientHelper;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.integeration.recover.server.CacheRecoverMockServer;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +29,9 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
 
     private CacheRecoverMockServer cacheRecoverMockServer = new CacheRecoverMockServer();
 
+    /**
+     * 准备.
+     */
     @BeforeEach
     public void before() throws Exception {
         if (IF_TEST_LOCAL) {
@@ -59,6 +62,9 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
         }
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
         if (IF_TEST_LOCAL) {

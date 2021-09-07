@@ -25,11 +25,11 @@ public class MockEntityClassDefine {
     /**
      * 类型标识的开始值,依次递减.
      */
-    private static long baseClassId = Long.MAX_VALUE - 1;
+    private static long baseClassId = Long.MAX_VALUE;
     /**
      * 字段的标识开始值,依次递减.
      */
-    private static long baseFieldId = Long.MAX_VALUE;
+    private static long baseFieldId = Long.MAX_VALUE - 1;
 
     private static long l0EntityClassId = baseClassId--;
     private static long l1EntityClassId = baseClassId--;

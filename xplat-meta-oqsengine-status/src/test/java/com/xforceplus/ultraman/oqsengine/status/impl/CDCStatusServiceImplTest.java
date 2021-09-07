@@ -34,6 +34,9 @@ public class CDCStatusServiceImplTest {
     private String notReadyKey = "cdc-commitId-notReady";
     private StatefulRedisConnection<String, String> conn;
 
+    /**
+     * 准备.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -48,6 +51,9 @@ public class CDCStatusServiceImplTest {
         conn = redisClient.connect();
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
         impl.destroy();
