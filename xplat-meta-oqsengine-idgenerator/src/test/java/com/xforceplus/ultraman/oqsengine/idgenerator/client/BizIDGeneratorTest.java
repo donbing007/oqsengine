@@ -151,7 +151,7 @@ public class BizIDGeneratorTest {
         Assert.assertEquals(ret4, 1);
     }
 
-    @org.junit.Test
+    @Test
     public void testIDGeneratorWithHour() {
         String nextId = bizIDGenerator1.nextId(LINEAR_BIZ_TYPE_4);
         LocalDateTime time = LocalDateTime.now();

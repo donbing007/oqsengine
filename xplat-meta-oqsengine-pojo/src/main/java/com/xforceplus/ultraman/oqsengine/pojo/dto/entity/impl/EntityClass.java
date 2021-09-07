@@ -234,7 +234,7 @@ public class EntityClass implements IEntityClass {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("OqsEntityClass{");
+        final StringBuffer sb = new StringBuffer("EntityClass{");
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", code='").append(code).append('\'');

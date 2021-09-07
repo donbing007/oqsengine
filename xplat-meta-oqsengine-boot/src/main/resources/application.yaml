@@ -156,18 +156,18 @@ meta:
 
 discover:
   sdk:
-    enable: false
+    enable: true
     connection:
-      host: ultraman.xforcecloud.com
+      host: ultraman-devops-service-test.n01103-oqs-cdc
       port: 8916
     time:
       heartbeat:
         expired: 60000
         duration: 5000
     agent:
-      serviceName: oqs-engine
-      serviceGroup: oqs-engine-group
-      serviceId: ${discover.sdk.agent.serviceGroup}-${instance.id}
+      erviceName: oqs-engine
+      serviceGroup: ${HOSTNAME}
+      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
     threadPool:
       task: 5
       queue: 100

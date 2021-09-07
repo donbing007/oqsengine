@@ -74,28 +74,28 @@ data:
           maxVisibleTotalCount: {{ .Values.query.maxVisibleTotalCount | default "10000" }}
           join:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
-          maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
-      storage:
-        tokenizer:
-          segmentation:
-            lexicon:
-              url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
-        debug:
-          showsql: {{ .Values.storage.debug.showsql | default "false" }}
-        timeoutMs:
-          query: {{ .Values.storage.timeoutMs.query | default "3000" }}
-        kv:
-          name: {{ .Values.storage.kv.name | default "kv" | quote }}
-        master:
-          name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
-          shard:
-            table:
-              enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
-              size: {{ .Values.storage.master.shard.table.size | default "3" }}
-        index:
-          search:
-            name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
-            maxQueryTimeMs: {{ .Values.storage.index.search.maxQueryTimeMs | default "0" }}
+            maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
+        storage:
+          tokenizer:
+            segmentation:
+              lexicon:
+                url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
+          debug:
+            showsql: {{ .Values.storage.debug.showsql | default "false" }}
+          timeoutMs:
+            query: {{ .Values.storage.timeoutMs.query | default "3000" }}
+          kv:
+            name: {{ .Values.storage.kv.name | default "kv" | quote }}
+          master:
+            name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
+            shard:
+              table:
+                enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
+                size: {{ .Values.storage.master.shard.table.size | default "3" }}
+          index:
+            search:
+              name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
+              maxQueryTimeMs: {{ .Values.storage.index.search.maxQueryTimeMs | default "0" }}
               maxBatchSize: {{ .Values.storage.index.search.maxBatchSize | default "50" }}
             write:
               name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
@@ -144,6 +144,23 @@ data:
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
 
+        discover:
+          sdk:
+            enable: {{ .Values.discover.sdk.enable | default "true" }}
+            connection:
+              host: {{ .Values.discover.sdk.connection.host | default "http://ultraman-devops-service-test.n01103-oqs-cdc" | quote }}
+              port: {{ .Values.discover.sdk.connection.port | default "8916" | quote }}
+            time:
+              heartbeat:
+                expired: {{ .Values.discover.sdk.time.expired | default "60000" | quote }}
+                duration: {{ .Values.discover.sdk.time.duration | default "5000" | quote }}
+            agent:
+              serviceId: {{ .Values.discover.sdk.agent.serviceId }}
+              serviceGroup: {{ .Values.discover.sdk.agent.serviceGroup }}
+              serviceName: {{ .Values.discover.sdk.agent.serviceName | default "oqs-engine" | quote }}
+            threadPool:
+              task: {{ .Values.discover.sdk.threadPool.task | default "5" | quote }}
+              queue: {{ .Values.discover.sdk.threadPool.queue | default "100" | quote }}
     oqsengine-ds.conf: |
         {
           "dataSources": {

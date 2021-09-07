@@ -1,7 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata.integeration.recover.server;
 
 
-import static com.xforceplus.ultraman.oqsengine.metadata.Constant.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_CLIENT_CLOSED;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_SERVER_OK;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.LOCAL_PORT;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_ENTITY_CLASS_ID;
+import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_START_VERSION;
 
 /**
  * desc :.

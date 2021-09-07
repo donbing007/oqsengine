@@ -87,10 +87,10 @@ public class GetIDFunctionTest {
             .withExpression("tenantId+\":\"+date_to_string(sysdate(),\"yyyy-MM-dd\")+\":\"+getId(\"{0000}\",tenantId)")
             .build();
         Map<String, Object> params = Maps.newHashMap();
-        params.put("tenantId", "vanke");
+        params.put("tenantId", "vanke1");
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        Assertions.assertEquals("vanke:" + dateStr + ":0001", result.toString());
+        Assertions.assertEquals("vanke1:" + dateStr + ":0001", result.toString());
     }
 
 
