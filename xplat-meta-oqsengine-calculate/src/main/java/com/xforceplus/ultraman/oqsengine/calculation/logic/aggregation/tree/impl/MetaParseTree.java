@@ -1,11 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.List;
+import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -192,6 +197,53 @@ public class MetaParseTree implements ParseTree {
             nodes.add(level);
         }
         return nodes;
+    }
+
+    @Override
+    public ParseTree buildTree(List<IEntityClass> entityClasses, IEntityClass rootEntityClass, IEntityField rootEntityField,
+                               IEntityClass aggEntityClass, IEntityField aggEntityField) {
+        Aggregation aggregation = (Aggregation) rootEntityField.config().getCalculation();
+        PTNode root = new PTNode();
+        root.setRootFlag(true);
+        root.setEntityClass(rootEntityClass);
+        root.setEntityField(rootEntityField);
+        root.setAggregationType(aggregation.getAggregationType());
+        root.setConditions(aggregation.getConditions());
+        root.setLevel(aggregation.getLevel());
+        root.setAggEntityClass(aggEntityClass);
+        root.setAggEntityField(aggEntityField);
+        Collection<Relationship> relationships = rootEntityClass.relationship().stream()
+                .filter(r -> r.getId() == aggregation.getRelationId())
+                .collect(Collectors.toList());
+        if (relationships != null && relationships.size() == 1) {
+            root.setRelationship(relationships.iterator().next());
+        }
+        MetaParseTree parseTree = new MetaParseTree();
+        parseTree.setRoot(root);
+
+        return null;
+    }
+
+    /**
+     * 根据对象id和字段id找到被聚合的对象信息.
+     *
+     * @param entityClass 对象.
+     * @param field 字段.
+     * @param entityList 元数据.
+     */
+    private Optional<IEntityClass> findAggNextEntity(IEntityClass entityClass, IEntityField field, List<IEntityClass> entityList) {
+        if (entityList != null && entityList.size() > 0) {
+            for (IEntityClass etc : entityList) {
+                Collection<IEntityField> entityFields = etc.fields();
+                for (IEntityField entityField : entityFields) {
+                    if (entityField.calculationType() != null
+                            && entityField.calculationType().equals(CalculationType.AGGREGATION)) {
+                        Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
+                    }
+                }
+            }
+        }
+        return Optional.empty();
     }
 
 }

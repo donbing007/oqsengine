@@ -66,4 +66,17 @@ public interface ParseTree {
      */
     public List<List<PTNode>> getLevelList();
 
+    /**
+     * 根据根节点构建tree.
+     *
+     * @param entityClasses 对象集合.
+     * @param rootEntityClass 根对象.
+     * @param rootEntityField 根字段.
+     * @param aggEntityClass 被聚合对象.
+     * @param aggEntityField 被聚合字段.
+     * @return ParseTree.
+     */
+    ParseTree buildTree(List<IEntityClass> entityClasses, IEntityClass rootEntityClass, IEntityField rootEntityField,
+                        IEntityClass aggEntityClass, IEntityField aggEntityField);
+
 }

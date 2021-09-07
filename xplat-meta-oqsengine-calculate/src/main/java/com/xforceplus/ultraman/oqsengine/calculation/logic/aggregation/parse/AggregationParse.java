@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.List;
 
 /**
@@ -36,5 +37,14 @@ public interface AggregationParse {
      * 追加最新聚合树.
      */
     void appendTree(ParseTree parseTree);
+
+    /**
+     * 构建解析器.
+     *
+     * @param appId 应用id.
+     * @param version 应用版本.
+     * @param entityClasses 对象列表.
+     */
+    void builder(String appId, int version, List<IEntityClass> entityClasses);
 
 }
