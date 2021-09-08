@@ -153,6 +153,15 @@ public class EntityClassHelper {
                             }
                             FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
                             return Collections.singletonList(retValue);
+                        } else if (CalculationType.LOOKUP.equals(x.calculationType())) {
+                            try {
+                                String value = y.getValue();
+                                long longValue = Long.parseLong(value);
+                                LongValue typedLongValue = new LongValue(x,longValue);
+                                return  Collections.singletonList(typedLongValue);
+                            } catch (Exception ex) {
+                                throw new RuntimeException("Lookup value [{}]cannot convert to Long", value);
+                            }
                         } else {
                             return toTypedValue(x, y.getValue());
                         }
