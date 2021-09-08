@@ -6,7 +6,9 @@ import com.googlecode.aviator.runtime.function.FunctionUtils;
 import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.xforceplus.ultraman.oqsengine.calculation.function.constant.TimeUnit;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -61,6 +63,8 @@ public class TimeOffsetFunction extends AbstractFunction {
                 result = dateTime;
                 break;
         }
-        return FunctionUtils.wrapReturn(result);
+        ZoneId zoneId = ZoneId.systemDefault();
+        Date newDate = Date.from(result.atZone(zoneId).toInstant());
+        return FunctionUtils.wrapReturn(newDate);
     }
 }

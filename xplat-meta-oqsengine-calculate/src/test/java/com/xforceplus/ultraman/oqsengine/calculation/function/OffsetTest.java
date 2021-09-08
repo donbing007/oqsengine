@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,8 +39,10 @@ public class OffsetTest {
         Map<String, Object> params = Maps.newHashMap();
         params.put("createTime", LocalDateTime.now());
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
-        Assertions.assertTrue(result instanceof LocalDateTime);
-        Assertions.assertEquals(((LocalDateTime) result).getYear(), LocalDateTime.now().getYear() + 1);
+        Assertions.assertTrue(result instanceof Date);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime((Date) result);
+        Assertions.assertEquals(calendar.get(Calendar.YEAR), LocalDateTime.now().getYear() + 1);
         System.out.println(result);
     }
 
@@ -49,7 +53,9 @@ public class OffsetTest {
         TimeOffsetFunction function = new TimeOffsetFunction();
         Object result = function.call(params, FunctionUtils.wrapReturn(LocalDateTime.now())
             , new AviatorBigInt(1), new AviatorBigInt(1));
-        LocalDateTime expect = (LocalDateTime) ((AviatorRuntimeJavaType) result).getValue(params);
-        Assertions.assertEquals(expect.getYear(), LocalDateTime.now().getYear() + 1);
+        Date expect = (Date) ((AviatorRuntimeJavaType) result).getValue(params);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime((Date) expect);
+        Assertions.assertEquals(calendar.get(Calendar.YEAR), LocalDateTime.now().getYear() + 1);
     }
 }

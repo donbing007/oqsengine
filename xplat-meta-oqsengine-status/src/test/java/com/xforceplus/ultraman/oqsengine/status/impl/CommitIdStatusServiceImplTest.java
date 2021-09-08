@@ -33,6 +33,9 @@ public class CommitIdStatusServiceImplTest {
     private String key = "test";
     private String statusKeyPreifx = "test.status";
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         redisClient = CommonInitialization.getInstance().getRedisClient();
@@ -44,6 +47,9 @@ public class CommitIdStatusServiceImplTest {
         TimeUnit.MILLISECONDS.sleep(100L);
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
         impl.destroy();
