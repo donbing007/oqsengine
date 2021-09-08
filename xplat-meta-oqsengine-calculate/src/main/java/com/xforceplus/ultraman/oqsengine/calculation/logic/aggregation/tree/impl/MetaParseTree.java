@@ -1,13 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @date: 2021/8/30 14:57
  */
 public class MetaParseTree implements ParseTree, Serializable {
-    private Logger logger = LoggerFactory.getLogger(MetaParseTree.class);
+    private static Logger logger = LoggerFactory.getLogger(MetaParseTree.class);
 
     private String prefix;
 
@@ -89,9 +97,12 @@ public class MetaParseTree implements ParseTree, Serializable {
                     PTNode ptNode = queue.poll();
                     if (ptNode != null) {
                         // 如果找到对应聚合当前entityClass和entityField节点，将该节点加入到找到节点的子节点集合中
-                        if (ptNode.getEntityClass().equals(node.getAggEntityClass()) && ptNode.getEntityField().equals(node.getEntityField())) {
+                        if (!checkNodeInfo(ptNode, node)) {
+                            return;
+                        }
+                        if (ptNode.getEntityClass().equals(node.getAggEntityClass()) && ptNode.getEntityField().equals(node.getAggEntityField())) {
                             ptNode.getNextNodes().add(node);
-                            break;
+                            return;
                         }
                     }
                     if (ptNode.getNextNodes() != null) {
@@ -123,9 +134,13 @@ public class MetaParseTree implements ParseTree, Serializable {
                 PTNode ptNode = queue.poll();
                 if (ptNode != null) {
                     // 如果找到对应聚合当前entityClass和entityField节点，将该节点子树加入到结果树集合中
+                    if (!checkNodeInfo(ptNode)) {
+                        return null;
+                    }
                     if (ptNode.getAggEntityClass().equals(entityClass) && ptNode.getAggEntityField().equals(entityField)) {
                         trees.add(new MetaParseTree(ptNode));
                     }
+
                 }
                 if (ptNode.getNextNodes() != null) {
                     queue.addAll(ptNode.getNextNodes());
@@ -135,8 +150,14 @@ public class MetaParseTree implements ParseTree, Serializable {
         return trees;
     }
 
-    @Override
-    public ParseTree generateTree(List<PTNode> nodes) {
+
+    /**
+     * 根据node集合生成树，若有node没有依赖关系无法添加到树中，会返回null.
+     *
+     * @param nodes PTNode集合.
+     * @return 返回ParseTree树.
+     */
+    public static ParseTree generateTree(List<PTNode> nodes) {
         List<PTNode> collect = nodes.stream().filter(PTNode::isRootFlag).collect(Collectors.toList());
         if (collect.size() != 1) {
             logger.error("nodesList's rootNode size not equals 1, must have only one rootNode");
@@ -148,6 +169,23 @@ public class MetaParseTree implements ParseTree, Serializable {
 
         Queue<PTNode> queue = new LinkedList<>();
         queue.add(root);
+        if (parsingNode(nodes, queue)) {
+            return null;
+        }
+        return new MetaParseTree(root);
+    }
+
+    private static boolean checkNodeInfo(PTNode... nodes) {
+        for (int i = 0; i < nodes.length; i++) {
+            if (nodes[i].getAggEntityField() == null || nodes[i].getAggEntityClass() == null || nodes[i].getEntityField() == null || nodes[i].getEntityClass() == null) {
+                logger.error("node info is unCompleted, please ensure entityField、entityClass、aggEntityField、aggEntityClass isPresent.");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean parsingNode(List<PTNode> nodes, Queue<PTNode> queue) {
         while (nodes.size() > 0) {
             int size = queue.size();
             for (int i = 0; i < size; i++) {
@@ -155,6 +193,9 @@ public class MetaParseTree implements ParseTree, Serializable {
 
                 // 构建下一层node
                 for (int j = 0; j < nodes.size(); j++) {
+                    if (!checkNodeInfo(ptNode, nodes.get(j))) {
+                        return false;
+                    }
                     if (nodes.get(j).getAggEntityClass().equals(ptNode.getEntityClass()) && nodes.get(j).getAggEntityField().equals(ptNode.getEntityField())) {
                         ptNode.getNextNodes().add(nodes.get(j));
                         queue.add(nodes.get(j));
@@ -171,10 +212,34 @@ public class MetaParseTree implements ParseTree, Serializable {
             // 之后没有任何叶子节点可以加，但是集合中还有未添加node
             if (queue.size() <= 0 && nodes.size() > 0) {
                 logger.error(String.format("this nodeLists has some node without relation."));
-                return null;
+                return true;
             }
         }
-        return new MetaParseTree(root);
+        return false;
+    }
+
+
+    /**
+     * 根据node集合生成多颗树，若有node没有依赖关系无法添加到树中,会返回null.
+     *
+     * @param nodes PTNode集合.
+     * @return 返回ParseTree树.
+     */
+    public static List<ParseTree> generateMultipleTress(List<PTNode> nodes) {
+        List<PTNode> collect = nodes.stream().filter(PTNode::isRootFlag).collect(Collectors.toList());
+        if (collect.size() <= 0) {
+            logger.info("nodes list can not find root node, should have more than one root node");
+            return null;
+        }
+
+        Queue<PTNode> queue = new LinkedList();
+        queue.addAll(collect);
+        nodes.removeAll(collect);
+
+        if (parsingNode(nodes, queue)) {
+            return null;
+        }
+        return collect.stream().map(MetaParseTree::new).collect(Collectors.toList());
     }
 
     // 获取每层Node集合
@@ -272,7 +337,7 @@ public class MetaParseTree implements ParseTree, Serializable {
                             if (!node.isRootFlag()) {
                                 parseTree.add(node);
                             }
-                            parseTree = findAggNextEntity(parseTree, node,entityList).get();
+                            parseTree = findAggNextEntity(parseTree, node, entityList).get();
                         }
                     }
                 }

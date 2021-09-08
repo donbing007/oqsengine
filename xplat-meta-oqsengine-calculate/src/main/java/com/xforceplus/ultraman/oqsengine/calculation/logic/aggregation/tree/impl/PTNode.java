@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -18,7 +17,6 @@ import java.util.List;
  * @date: 2021/8/30 14:49
  */
 public class PTNode {
-
     /**
      * 根节点标识.
      */
@@ -175,5 +173,6 @@ public class PTNode {
     }
 
     public PTNode() {
+        nextNodes = new ArrayList<>();
     }
 }

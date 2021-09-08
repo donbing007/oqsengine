@@ -226,7 +226,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                     }
                 }
             } else {
-                logger.warn(String.format("buildAppendingAppName by prefix not equals 1.Maybe other node already incr this prefix %s", prefix));
+                logger.warn(String.format("kv incr this prefix: %s not equals 1.  Maybe other oqs node already incr %s", prefix, prefix));
                 return false;
             }
         } catch (Exception e) {
@@ -359,20 +359,25 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             Task task = null;
             TaskQueue queue = null;
             while (running) {
-
-
                 if (usingApp.size() <= 0) {
                     /*
                      * appId-version
                      */
                     String processingPrefix = getProcessingAppInfo();
                     if (StringUtil.isEmpty(processingPrefix)) {
-                        logger.info("当前无初始化聚合任务");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("当前无初始化聚合任务");
+                        }
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                     } else {
                         // 添加usingApp
                         if (taskQueueMap.containsKey(processingPrefix)) {
                             usingApp.put(processingPrefix, taskQueueMap.get(processingPrefix));
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(String.format("current usingApp is %s"), processingPrefix);
+                                logger.debug(String.format("current taskQueue is %s"), usingApp.get(processingPrefix).toString());
+                            }
+                            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                         } else {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
                             try {

@@ -58,13 +58,6 @@ public interface ParseTree {
     List<ParseTree> getSubTree(IEntityClass entityClass, IEntityField entityField);
 
 
-    /**
-     * 根据node集合生成树，若有node没有依赖关系无法添加到树中，会返回null.
-     *
-     * @param nodes PTNode集合.
-     * @return 返回ParseTree树.
-     */
-    ParseTree generateTree(List<PTNode> nodes);
 
     /**
      * 获取树的所有层级的node集合.
