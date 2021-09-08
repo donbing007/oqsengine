@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
-import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -29,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +41,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.commons.collections.set.ListOrderedSet;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -117,6 +119,7 @@ class AggregationTaskCoordinatorTest {
 
     @AfterEach
     public void destroy() {
+        aggregationTaskCoordinator.destroy();
         worker.shutdown();
         aggregationTaskCoordinator = null;
         kv = null;
@@ -280,7 +283,7 @@ class AggregationTaskCoordinatorTest {
         List<String> exceptedTaskIds = new ArrayList<>(size);
         MockTask newTask;
         for (int i = 0; i < size; i++) {
-            newTask = new MockTask(latch);
+            newTask = new MockTask(latch, TEST0);
             newTask.setPrefix(TEST0);
             exceptedTaskIds.add(newTask.id());
             Assertions.assertTrue(aggregationTaskCoordinator.addTask(TEST0, newTask));
@@ -294,7 +297,7 @@ class AggregationTaskCoordinatorTest {
         addOrderInfo.invoke(aggregationTaskCoordinator, TEST0);
 
         for (int i = 0; i < size; i++) {
-            newTask = new MockTask(latch1);
+            newTask = new MockTask(latch1, TEST1);
             newTask.setPrefix(TEST1);
             exceptedTaskIds.add(newTask.id());
             Assertions.assertTrue(aggregationTaskCoordinator.addTask(TEST1, newTask));
@@ -370,16 +373,16 @@ class AggregationTaskCoordinatorTest {
 
         @Override
         public void append(Task task) {
-            MockTask mockTask = (MockTask) task;
+            AggregationTask mockTask = (AggregationTask) task;
             kv.incr(String.format("%s-%s", mockTask.getPrefix(), TaskKeyValueQueue.UNUSED));
             tasks.add(task);
         }
 
         @Override
         public Task get() {
-            MockTask task = null;
+            AggregationTask task = null;
             try {
-                task = (MockTask) tasks.take();
+                task = (AggregationTask) tasks.take();
             } catch (InterruptedException e) {
                 return null;
             } finally {
@@ -394,9 +397,9 @@ class AggregationTaskCoordinatorTest {
 
         @Override
         public Task get(long awaitTimeMs) {
-            MockTask task = null;
+            AggregationTask task = null;
             try {
-                task = (MockTask) tasks.poll(awaitTimeMs, TimeUnit.MILLISECONDS);
+                task = (AggregationTask) tasks.poll(awaitTimeMs, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 return null;
             } finally {
@@ -593,7 +596,7 @@ class AggregationTaskCoordinatorTest {
         }
     }
 
-    static class MockTask extends AbstractTask {
+    static class MockTask extends AggregationTask {
 
         private CountDownLatch latch;
 
@@ -607,7 +610,9 @@ class AggregationTaskCoordinatorTest {
 
         private String prefix;
 
-        public MockTask(CountDownLatch latch) {
+        public MockTask(CountDownLatch latch, String prefix) {
+            super(prefix, new MetaParseTree());
+            this.prefix = prefix;
             this.latch = latch;
         }
 
