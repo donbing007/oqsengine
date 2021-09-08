@@ -2,9 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;

@@ -18,11 +18,14 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
@@ -243,6 +246,9 @@ public class EntityClassStorageBuilderUtils {
             case LOOKUP: {
                 return toLookup(calculator);
             }
+            case AGGREGATION: {
+                return toAggregation(calculator);
+            }
             default: {
                 return StaticCalculation.Builder.anStaticCalculation().build();
             }
@@ -373,6 +379,32 @@ public class EntityClassStorageBuilderUtils {
         return builder.build();
     }
 
+    private static Aggregation toAggregation(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+
+        Conditions conditions = null;
+        if (!calculator.getCondition().isEmpty()) {
+            conditions = converConditions(calculator.getCondition());
+        }
+        Aggregation.Builder builder = Aggregation.Builder.anAggregation()
+                .withClassId(calculator.getAggregationBoId())
+                .withFieldId(calculator.getAggregationFieldId())
+                .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
+                .withRelationId(calculator.getAggregationRelationId())
+                .withAggregationByFields(calculator.getAggregationByFieldsMap())
+                .withConditions(conditions);
+        return builder.build();
+    }
+
+    /**
+     * 转换条件信息.
+     */
+    private static Conditions converConditions(String condition) {
+        String[] conditionArray = condition.substring(1, condition.length() - 1).split("\\[\\]");
+        for (String s : conditionArray) {
+            String [] array = s.split("\\s+");
+        }
+        return null;
+    }
 
     /**
      * 转换FieldConfig.
