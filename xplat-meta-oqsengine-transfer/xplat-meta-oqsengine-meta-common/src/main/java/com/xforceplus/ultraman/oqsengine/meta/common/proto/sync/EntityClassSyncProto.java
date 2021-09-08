@@ -50,6 +50,11 @@ public final class EntityClassSyncProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Calculator_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Calculator_AggregationByFieldsEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_Calculator_AggregationByFieldsEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ProfileInfo_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -106,7 +111,7 @@ public final class EntityClassSyncProto {
       "_ID\020\002\022\017\n\013TENANT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022" +
       "\017\n\013UPDATE_TIME\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016" +
       "UPDATE_USER_ID\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024" +
-      "\n\020UPDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\220\004" +
+      "\n\020UPDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\217\005" +
       "\n\nCalculator\022\025\n\rcalculateType\030\001 \001(\005\022\022\n\ne" +
       "xpression\030\002 \001(\t\022\021\n\tvalidator\030\003 \001(\t\022\013\n\003mi" +
       "n\030\004 \001(\t\022\013\n\003max\030\005 \001(\t\022\021\n\tcondition\030\006 \001(\t\022" +
@@ -120,20 +125,23 @@ public final class EntityClassSyncProto {
       "gregationBoId\030\023 \001(\005\022\032\n\022aggregationFieldI" +
       "d\030\024 \001(\005\022\027\n\017aggregationType\030\025 \001(\005\022\035\n\025aggr" +
       "egationRelationId\030\026 \001(\005\022\027\n\017domainConditi" +
-      "on\030\027 \001(\t\"k\n\013ProfileInfo\022\014\n\004code\030\001 \001(\t\022)\n" +
-      "\017entityFieldInfo\030\002 \003(\0132\020.EntityFieldInfo" +
-      "\022#\n\014relationInfo\030\003 \003(\0132\r.RelationInfo\"\362\001" +
-      "\n\014RelationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t" +
-      "\022\032\n\022rightEntityClassId\030\003 \001(\003\022\031\n\021leftEnti" +
-      "tyClassId\030\004 \001(\003\022\033\n\023leftEntityClassCode\030\005" +
-      " \001(\t\022\024\n\014relationType\030\006 \001(\005\022\020\n\010identity\030\007" +
-      " \001(\010\022%\n\013entityField\030\010 \001(\0132\020.EntityFieldI" +
-      "nfo\022\025\n\rbelongToOwner\030\t \001(\010\022\016\n\006strong\030\n \001" +
-      "(\0102V\n\017EntityClassSync\022C\n\010register\022\027.Enti" +
-      "tyClassSyncRequest\032\030.EntityClassSyncResp" +
-      "onse\"\000(\0010\001BR\n8com.xforceplus.ultraman.oq" +
-      "sengine.meta.common.proto.syncB\024EntityCl" +
-      "assSyncProtoP\001b\006proto3"
+      "on\030\027 \001(\t\022A\n\023aggregationByFields\030\030 \003(\0132$." +
+      "Calculator.AggregationByFieldsEntry\032:\n\030A" +
+      "ggregationByFieldsEntry\022\013\n\003key\030\001 \001(\003\022\r\n\005" +
+      "value\030\002 \001(\003:\0028\001\"k\n\013ProfileInfo\022\014\n\004code\030\001" +
+      " \001(\t\022)\n\017entityFieldInfo\030\002 \003(\0132\020.EntityFi" +
+      "eldInfo\022#\n\014relationInfo\030\003 \003(\0132\r.Relation" +
+      "Info\"\362\001\n\014RelationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004cod" +
+      "e\030\002 \001(\t\022\032\n\022rightEntityClassId\030\003 \001(\003\022\031\n\021l" +
+      "eftEntityClassId\030\004 \001(\003\022\033\n\023leftEntityClas" +
+      "sCode\030\005 \001(\t\022\024\n\014relationType\030\006 \001(\005\022\020\n\010ide" +
+      "ntity\030\007 \001(\010\022%\n\013entityField\030\010 \001(\0132\020.Entit" +
+      "yFieldInfo\022\025\n\rbelongToOwner\030\t \001(\010\022\016\n\006str" +
+      "ong\030\n \001(\0102V\n\017EntityClassSync\022C\n\010register" +
+      "\022\027.EntityClassSyncRequest\032\030.EntityClassS" +
+      "yncResponse\"\000(\0010\001BR\n8com.xforceplus.ultr" +
+      "aman.oqsengine.meta.common.proto.syncB\024E" +
+      "ntityClassSyncProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -189,7 +197,13 @@ public final class EntityClassSyncProto {
     internal_static_Calculator_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Calculator_descriptor,
-        new java.lang.String[] { "CalculateType", "Expression", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", "Patten", "Model", "Step", "Level", "Args", "FailedPolicy", "FailedDefaultValue", "LookupEntityClassId", "LookupEntityFieldId", "ResetType", "DomainNoSenior", "AggregationBoId", "AggregationFieldId", "AggregationType", "AggregationRelationId", "DomainCondition", });
+        new java.lang.String[] { "CalculateType", "Expression", "Validator", "Min", "Max", "Condition", "EmptyValueTransfer", "Patten", "Model", "Step", "Level", "Args", "FailedPolicy", "FailedDefaultValue", "LookupEntityClassId", "LookupEntityFieldId", "ResetType", "DomainNoSenior", "AggregationBoId", "AggregationFieldId", "AggregationType", "AggregationRelationId", "DomainCondition", "AggregationByFields", });
+    internal_static_Calculator_AggregationByFieldsEntry_descriptor =
+      internal_static_Calculator_descriptor.getNestedTypes().get(0);
+    internal_static_Calculator_AggregationByFieldsEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_Calculator_AggregationByFieldsEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
     internal_static_ProfileInfo_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_ProfileInfo_fieldAccessorTable = new

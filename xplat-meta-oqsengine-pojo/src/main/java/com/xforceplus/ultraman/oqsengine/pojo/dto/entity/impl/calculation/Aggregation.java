@@ -138,13 +138,33 @@ public class Aggregation extends AbstractCalculation {
             return new Aggregation.Builder();
         }
 
+        public Aggregation.Builder withFieldId(long fieldId) {
+            this.fieldId = fieldId;
+            return this;
+        }
+
         public Aggregation.Builder withClassId(long classId) {
             this.classId = classId;
             return this;
         }
 
-        public Aggregation.Builder withFieldId(long fieldId) {
-            this.fieldId = fieldId;
+        public Aggregation.Builder withRelationId(long relationId) {
+            this.relationId = relationId;
+            return this;
+        }
+
+        public Aggregation.Builder withConditions(Conditions conditions) {
+            this.conditions = conditions;
+            return this;
+        }
+
+        public Aggregation.Builder withAggregationType(AggregationType aggregationType) {
+            this.aggregationType = aggregationType;
+            return this;
+        }
+
+        public Aggregation.Builder withAggregationByFields(Map<Long, Long> aggregationByFields) {
+            this.aggregationByFields = aggregationByFields;
             return this;
         }
 

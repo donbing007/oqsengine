@@ -2,9 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -75,7 +73,6 @@ public class MetaAggregationParse implements AggregationParse {
         ParseTree parseTree = parseTrees.get(fieldId);
         if (parseTree == null) {
             logger.warn("parseTree is empty!");
-//            parseTree = reBuild(entityClassId, fieldId, profileCode);
         }
         return parseTree;
     }
@@ -147,10 +144,6 @@ public class MetaAggregationParse implements AggregationParse {
         Optional<IEntityClass> entityClass = metaManager.load(entityClassId, profileCode);
         if (entityClass.isPresent()) {
             Optional<IEntityField> entityField = entityClass.get().field(fieldId);
-//            if (entityField.isPresent()) {
-//                ParseTree pt = parseTree.buildTree(entityClasses, entityClass.get(), entityField.get(),
-//                        aggEntityClass, entityFieldOp.get());
-//            }
         }
         return null;
     }

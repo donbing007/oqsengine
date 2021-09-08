@@ -1,13 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -272,11 +277,10 @@ public class MetaParseTree implements ParseTree, Serializable {
                             if (!node.isRootFlag()) {
                                 parseTree.add(node);
                             }
-                            parseTree = findAggNextEntity(parseTree, node,entityList).get();
+                            parseTree = findAggNextEntity(parseTree, node, entityList).get();
                         }
                     }
                 }
-
             }
         }
         return Optional.of(parseTree);

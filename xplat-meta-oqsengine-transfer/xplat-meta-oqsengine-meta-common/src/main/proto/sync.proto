@@ -130,6 +130,7 @@ message Calculator {
   int32 aggregationType = 21;
   int32 aggregationRelationId = 22;
   string domainCondition = 23;
+  map<int64, int64> aggregationByFields = 24;
 }
 
 message ProfileInfo {
