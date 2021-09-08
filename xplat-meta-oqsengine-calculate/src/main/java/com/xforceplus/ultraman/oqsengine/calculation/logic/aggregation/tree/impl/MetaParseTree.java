@@ -7,12 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,6 +100,14 @@ public class MetaParseTree implements ParseTree, Serializable {
                 }
             }
             logger.error(String.format("can not find relation node in the tree by entityClassId %d and entityField %d", node.getAggEntityClass().id(), node.getAggEntityField().id()));
+        }
+    }
+
+    @Override
+    public void replace(PTNode node) {
+        if (node == null) {
+            logger.warn("add a null node,refuse");
+            return;
         }
     }
 
@@ -221,30 +224,62 @@ public class MetaParseTree implements ParseTree, Serializable {
         }
         MetaParseTree parseTree = new MetaParseTree();
         parseTree.setRoot(root);
-
-        return null;
+        Optional<ParseTree> parseTreeOp = findAggNextEntity(parseTree, root, entityClasses);
+        if (parseTreeOp.isPresent()) {
+            return parseTreeOp.get();
+        }
+        return parseTree;
     }
 
     /**
      * 根据对象id和字段id找到被聚合的对象信息.
      *
-     * @param entityClass 对象.
-     * @param field 字段.
+     * @param parseTree 树对象.
      * @param entityList 元数据.
      */
-    private Optional<IEntityClass> findAggNextEntity(IEntityClass entityClass, IEntityField field, List<IEntityClass> entityList) {
-        if (entityList != null && entityList.size() > 0) {
-            for (IEntityClass etc : entityList) {
-                Collection<IEntityField> entityFields = etc.fields();
-                for (IEntityField entityField : entityFields) {
-                    if (entityField.calculationType() != null
-                            && entityField.calculationType().equals(CalculationType.AGGREGATION)) {
-                        Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
+    private Optional<ParseTree> findAggNextEntity(ParseTree parseTree, PTNode ptNode, List<IEntityClass> entityList) {
+        IEntityClass entityClass = ptNode.getEntityClass();
+        IEntityField field = ptNode.getEntityField();
+        Aggregation aggregation = (Aggregation) field.config().getCalculation();
+        Map<Long, Long> aggMap = aggregation.getAggregationByFields();
+        if (aggMap != null && aggMap.size() > 0) {
+            List<PTNode> nextNodes = new ArrayList<>();
+            for (Map.Entry<Long, Long> entry : aggMap.entrySet()) {
+                List<IEntityClass> aggEtcs = entityList.stream().filter(e -> e.id() == entry.getValue())
+                        .collect(Collectors.toList());
+                if (aggEtcs != null && aggEtcs.size() > 0) {
+                    for (IEntityClass aggEtc : aggEtcs) {
+                        Optional<IEntityField> entityFieldOp = aggEtc.field(entry.getKey());
+                        if (entityFieldOp.isPresent()) {
+                            Aggregation aggFieldAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
+                            PTNode node = new PTNode();
+                            node.setRootFlag(false);
+                            Collection<Relationship> relationships = aggEtc.relationship().stream()
+                                    .filter(r -> r.getId() == aggFieldAggregation.getRelationId())
+                                    .collect(Collectors.toList());
+                            if (relationships != null && relationships.size() == 1) {
+                                node.setRelationship(relationships.iterator().next());
+                            }
+                            node.setAggEntityField(field);
+                            node.setAggEntityClass(entityClass);
+                            node.setLevel(1);
+                            node.setAggregationType(aggregation.getAggregationType());
+                            node.setConditions(aggregation.getConditions());
+                            node.setLevel(aggregation.getLevel());
+                            nextNodes.add(node);
+                            ptNode.setNextNodes(nextNodes);
+                            parseTree.replace(ptNode);
+                            if (!node.isRootFlag()) {
+                                parseTree.add(node);
+                            }
+                            parseTree = findAggNextEntity(parseTree, node,entityList).get();
+                        }
                     }
                 }
+
             }
         }
-        return Optional.empty();
+        return Optional.of(parseTree);
     }
 
 }

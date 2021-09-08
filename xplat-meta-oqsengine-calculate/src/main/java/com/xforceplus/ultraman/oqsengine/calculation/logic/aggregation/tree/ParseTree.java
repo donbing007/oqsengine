@@ -40,6 +40,13 @@ public interface ParseTree {
      */
     void add(PTNode node);
 
+    /**
+     * 替换树中节点信息.
+     *
+     * @param node 指定节点.
+     */
+    void replace(PTNode node);
+
 
     /**
      * 根据被聚合entityClass和entityField信息查找子树.

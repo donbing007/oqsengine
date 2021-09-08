@@ -34,9 +34,6 @@ public class MetaAggregationParse implements AggregationParse {
     final Logger logger = LoggerFactory.getLogger(MetaAggregationParse.class);
 
     @Resource
-    private CacheExecutor cacheExecutor;
-
-    @Resource
     private MetaManager metaManager;
 
     @Resource
@@ -46,6 +43,16 @@ public class MetaAggregationParse implements AggregationParse {
      * 内存暂存解析树列表.
      */
     private ConcurrentHashMap<Long, ParseTree> parseTrees;
+
+    private List<IEntityClass> entityClasses;
+
+    public List<IEntityClass> getEntityClasses() {
+        return entityClasses;
+    }
+
+    public void setEntityClasses(List<IEntityClass> entityClasses) {
+        this.entityClasses = entityClasses;
+    }
 
     public ConcurrentHashMap<Long, ParseTree> getParseTrees() {
         return parseTrees;
@@ -67,7 +74,8 @@ public class MetaAggregationParse implements AggregationParse {
     public ParseTree find(Long entityClassId, Long fieldId, String profileCode) {
         ParseTree parseTree = parseTrees.get(fieldId);
         if (parseTree == null) {
-            parseTree = reBuild(entityClassId, fieldId, profileCode);
+            logger.warn("parseTree is empty!");
+//            parseTree = reBuild(entityClassId, fieldId, profileCode);
         }
         return parseTree;
     }
@@ -106,6 +114,7 @@ public class MetaAggregationParse implements AggregationParse {
 
     @Override
     public void builder(String appId, int version, List<IEntityClass> entityClasses) {
+        this.entityClasses = entityClasses;
         entityClasses.forEach(entityClass -> {
             Collection<IEntityField> entityFields = entityClass.fields();
             entityFields.forEach(f -> {
@@ -138,10 +147,10 @@ public class MetaAggregationParse implements AggregationParse {
         Optional<IEntityClass> entityClass = metaManager.load(entityClassId, profileCode);
         if (entityClass.isPresent()) {
             Optional<IEntityField> entityField = entityClass.get().field(fieldId);
-            if (entityField.isPresent()) {
-                ParseTree parseTree = new MetaParseTree();
-
-            }
+//            if (entityField.isPresent()) {
+//                ParseTree pt = parseTree.buildTree(entityClasses, entityClass.get(), entityField.get(),
+//                        aggEntityClass, entityFieldOp.get());
+//            }
         }
         return null;
     }
