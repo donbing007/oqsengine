@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 public class TimeOffsetFunction extends AbstractFunction {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeOffsetFunction.class);
+
     @Override
     public String getName() {
         return "timeOffset";
@@ -30,7 +31,7 @@ public class TimeOffsetFunction extends AbstractFunction {
 
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject date, AviatorObject no, AviatorObject amount) {
-        LOGGER.info("INPUT DATA is {}",date.getValue(env).toString());
+        LOGGER.info("INPUT DATA is {}", date.getValue(env).toString());
         Preconditions.checkNotNull(env);
         Preconditions.checkNotNull(amount);
         Preconditions.checkArgument(date.getValue(env) instanceof LocalDateTime, "must be LocalDateTime instance!");
@@ -68,7 +69,7 @@ public class TimeOffsetFunction extends AbstractFunction {
                 break;
         }
         ZoneId zoneId = ZoneId.systemDefault();
-        LOGGER.info("ZoneID is {}",zoneId);
+        LOGGER.info("ZoneID is {}", zoneId);
         Date newDate = Date.from(result.atZone(zoneId).toInstant());
         return FunctionUtils.wrapReturn(newDate);
     }
