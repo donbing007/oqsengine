@@ -91,6 +91,17 @@ public class GetIDFunctionTest {
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         Assertions.assertEquals("vanke1:" + dateStr + ":0001", result.toString());
+        Object result1 = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+        Assertions.assertEquals("vanke1:" + dateStr + ":0002", result1.toString());
+        params.put("tenantId", "vanke2");
+        Object result3 = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+        Assertions.assertEquals("vanke2:" + dateStr + ":0001", result3.toString());
+
+
+
+
+
+
     }
 
 
