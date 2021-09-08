@@ -75,7 +75,7 @@ public class MetaAggregationParse implements AggregationParse {
         ParseTree parseTree = parseTrees.get(fieldId);
         if (parseTree == null) {
             logger.warn("parseTree is empty!");
-//            parseTree = reBuild(entityClassId, fieldId, profileCode);
+            /*parseTree = reBuild(entityClassId, fieldId, profileCode);*/
         }
         return parseTree;
     }
@@ -147,10 +147,10 @@ public class MetaAggregationParse implements AggregationParse {
         Optional<IEntityClass> entityClass = metaManager.load(entityClassId, profileCode);
         if (entityClass.isPresent()) {
             Optional<IEntityField> entityField = entityClass.get().field(fieldId);
-//            if (entityField.isPresent()) {
-//                ParseTree pt = parseTree.buildTree(entityClasses, entityClass.get(), entityField.get(),
-//                        aggEntityClass, entityFieldOp.get());
-//            }
+            /*if (entityField.isPresent()) {
+                ParseTree pt = parseTree.buildTree(entityClasses, entityClass.get(), entityField.get(),
+                        aggEntityClass, entityFieldOp.get());
+            }*/
         }
         return null;
     }
