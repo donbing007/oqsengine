@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
