@@ -138,6 +138,11 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
+    public long[] showCommitIds() {
+        return commitIdRepairExecutor.allCommitIds();
+    }
+
+    @Override
     public void initNewCommitId(Optional<Long> commitId) throws SQLException {
         commitIdRepairExecutor.repair(commitId);
     }

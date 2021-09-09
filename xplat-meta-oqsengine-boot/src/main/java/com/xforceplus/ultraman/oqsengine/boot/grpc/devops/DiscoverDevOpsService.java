@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -116,6 +117,26 @@ public class DiscoverDevOpsService {
 
         return null;
     }
+
+    /**
+     * 获取当前活动的commitIds列表
+     */
+    @DiscoverAction(describe = "查询当前commitIds列表信息", retClass = List.class, retInner = Long.class)
+    public Collection<Long> showAllCommitIds() {
+        List<Long> result = new ArrayList<>();
+        try {
+            long[] ids = devOpsManagementService.showCommitIds();
+
+            if (null != ids && ids.length > 0) {
+                Arrays.stream(ids).sorted().forEach(result::add);
+            }
+        } catch (Exception e) {
+            exceptionHandle("showAllCommitIds exception", e);
+        }
+
+        return result;
+    }
+
 
     /**
      * 清理提交号.
