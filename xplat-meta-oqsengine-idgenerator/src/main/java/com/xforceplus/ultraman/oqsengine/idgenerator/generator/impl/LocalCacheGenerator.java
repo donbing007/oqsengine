@@ -56,11 +56,11 @@ public class LocalCacheGenerator implements IDGenerator {
             if (next == null) {
                 SegmentId segmentId = querySegmentId();
                 this.current = segmentId;
-                logger.info("加载next号段", segmentId);
+                logger.info("next 为空 {}");
             } else {
                 current = next;
                 next = null;
-                logger.info("赋值next号段{}", current);
+                logger.info("可用了{}", current);
             }
         }
     }
