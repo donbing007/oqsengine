@@ -89,7 +89,7 @@ public interface DevOpsManagementService {
     void removeCommitIds(Long... ids);
 
     /**
-     * 查询当前Redis中未过期的CommitIds
+     * 查询当前Redis中未过期的CommitIds.
      */
     long[] showCommitIds();
 

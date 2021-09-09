@@ -119,7 +119,7 @@ public class DiscoverDevOpsService {
     }
 
     /**
-     * 获取当前活动的commitIds列表
+     * 获取当前活动的commitIds列表.
      */
     @DiscoverAction(describe = "查询当前commitIds列表信息", retClass = List.class, retInner = Long.class)
     public Collection<Long> showAllCommitIds() {

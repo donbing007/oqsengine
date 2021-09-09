@@ -32,8 +32,8 @@ public class GetIDFunction extends AbstractFunction {
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject numberFormat, AviatorObject bizTag) {
         LongIdGenerator generator = (LongIdGenerator) SpringContextUtil.getBean(ID_GENERATOR_NAME);
-        String fieldId = String.valueOf(((IEntityField)env.get(FORMULA_CTX_PARAM)).id());
-        String bizTagValue = String.format("%s:%s",fieldId,String.valueOf(bizTag.getValue(env)));
+        String fieldId = String.valueOf(((IEntityField) env.get(FORMULA_CTX_PARAM)).id());
+        String bizTagValue = String.format("%s:%s", fieldId, String.valueOf(bizTag.getValue(env)));
         String numverFormatValue = String.valueOf(numberFormat.getValue(env));
         Preconditions.checkNotNull(generator);
         Preconditions.checkArgument(!StringUtils.isBlank(bizTagValue), "BizTag must not be empty!");

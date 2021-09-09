@@ -65,7 +65,7 @@ public class TimeOffsetFunction extends AbstractFunction {
                 result = dateTime.plus(offset, ChronoUnit.MILLIS);
                 break;
             case WEEK:
-                result = dateTime.plus(offset,ChronoUnit.WEEKS);
+                result = dateTime.plus(offset, ChronoUnit.WEEKS);
                 break;
             default:
                 result = dateTime;
