@@ -64,13 +64,21 @@ public class TaskConfiguration {
     @Bean("aggregationTaskCoordinator")
     public TaskCoordinator aggregationTaskCoordinator(
             @Value("${task.worker.number:3}") int number,
-            ExecutorService taskThreadPool) {
+            ExecutorService taskThreadPool,
+            List<TaskRunner> taskRunners) {
         AggregationTaskCoordinator aggregationTaskCoordinator = new AggregationTaskCoordinator();
         aggregationTaskCoordinator.setWorker(taskThreadPool);
         aggregationTaskCoordinator.setWorkerNumber(number);
 
-        aggregationTaskCoordinator.registerRunner(new AggregationTaskRunner());
+        for (TaskRunner runner : taskRunners) {
+            aggregationTaskCoordinator.registerRunner(runner);
+        }
 
         return aggregationTaskCoordinator;
+    }
+
+    @Bean
+    public TaskRunner aggregationTaskRunner() {
+        return new AggregationTaskRunner();
     }
 }
