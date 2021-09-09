@@ -12,8 +12,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -144,6 +144,9 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         .withFather(l1EntityClass)
         .build();
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -359,7 +362,8 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(Arrays.asList(target));
 
         List<String> attrs;
-        try (Connection conn = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexSearch().get(0).getConnection()) {
+        try (Connection conn = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexSearch().get(0)
+            .getConnection()) {
             try (Statement st = conn.createStatement()) {
                 try (ResultSet rs = st.executeQuery(
                     String.format(
@@ -375,7 +379,8 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         }
 
         ShortStorageName shortStorageName = l0StorageValue.shortStorageName();
-        Tokenizer tokenizer = IndexInitialization.getInstance().getTokenizerFactory().getTokenizer(l2EntityClass.field("l0-string").get());
+        Tokenizer tokenizer = IndexInitialization.getInstance().getTokenizerFactory()
+            .getTokenizer(l2EntityClass.field("l0-string").get());
         Iterator<String> words = tokenizer.tokenize(l0StorageValue.value().toString());
         while (words.hasNext()) {
             String word = words.next();
@@ -388,7 +393,8 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         Assertions.assertTrue(attrs.contains(expected));
 
         shortStorageName = l1StorageValue.shortStorageName();
-        tokenizer = IndexInitialization.getInstance().getTokenizerFactory().getTokenizer(l2EntityClass.field("l1-string").get());
+        tokenizer = IndexInitialization.getInstance().getTokenizerFactory()
+            .getTokenizer(l2EntityClass.field("l1-string").get());
         words = tokenizer.tokenize(l1StorageValue.value().toString());
         while (words.hasNext()) {
             String word = words.next();
@@ -409,9 +415,10 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
 
         // 查询id降序
         Page page = Page.newSinglePage(1000);
-        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
+        Collection<EntityRef> refs =
+            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
         Assertions.assertEquals(initDatas.size(), refs.size());
         Assertions.assertEquals(initDatas.size(), page.getTotalCount());
 
@@ -480,9 +487,10 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(processDatas);
 
         page = Page.newSinglePage(1000);
-        refs = IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
+        refs =
+            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
         Assertions.assertEquals(10 + 2 - 3, refs.size());
         Assertions.assertEquals(10 + 2 - 3, page.getTotalCount());
     }
@@ -496,8 +504,9 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
 
         Page page = Page.newSinglePage(1000);
-        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
+        Collection<EntityRef> refs =
+            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
+                SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
         Assertions.assertEquals(0, refs.size());
         Assertions.assertEquals(0, page.getTotalCount());
 
@@ -508,8 +517,9 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
         IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
 
         page = Page.newSinglePage(1000);
-        refs = IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-            SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
+        refs =
+            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
+                SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
         Assertions.assertEquals(initDatas.size(), refs.size());
         Assertions.assertEquals(initDatas.size(), page.getTotalCount());
     }

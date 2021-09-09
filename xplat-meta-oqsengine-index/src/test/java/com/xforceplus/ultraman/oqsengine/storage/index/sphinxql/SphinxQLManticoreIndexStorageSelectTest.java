@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -49,6 +49,19 @@ import org.junit.jupiter.api.Test;
  * @since 1.8
  */
 public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerExtends {
+
+    /*
+    使用的字段名和其id.
+    l2-string 9223372036854775802
+    l2-time 9223372036854775801
+    l2-enum 9223372036854775800
+    l2-dec 9223372036854775799
+    l1-long 9223372036854775804
+    l1-string 9223372036854775803
+    l0-long 9223372036854775807
+    l0-string 9223372036854775806
+    l0-strings 9223372036854775805
+     */
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -130,6 +143,9 @@ public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerEx
         .withFather(l1EntityClass)
         .build();
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -142,6 +158,141 @@ public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerEx
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+    }
+
+    /**
+     * 测试多级排序.
+     */
+    @Test
+    public void testSort() throws Exception {
+        // 预期的结果.
+        List<EntityRef> expectRefs = Arrays.asList(
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775807L).withOrderValue("100").withSecondOrderValue("-2388650104").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775799L).withOrderValue("113").withSecondOrderValue("1046465945666").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775800L).withOrderValue("117").withSecondOrderValue("163808529746").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775804L).withOrderValue("119").withSecondOrderValue("517935305040").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775803L).withOrderValue("121").withSecondOrderValue("-121983894946").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775801L).withOrderValue("153").withSecondOrderValue("998526632168").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775805L).withOrderValue("162").withSecondOrderValue("-44449910669").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775806L).withOrderValue("162").withSecondOrderValue("975409638673").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775798L).withOrderValue("190").withSecondOrderValue("-196941314110").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775802L).withOrderValue("193").withSecondOrderValue("761631653530").build()
+        );
+        SelectConfig config = SelectConfig.Builder.anSelectConfig()
+            .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+            .withSecondarySort(Sort.buildAscSort(l2EntityClass.field("l2-time").get()))
+            .withPage(Page.newSinglePage(100)).build();
+
+        SphinxQLManticoreIndexStorage storage = IndexInitialization.getInstance().getIndexStorage();
+        List<EntityRef> refs = new ArrayList<>(storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            config
+        ));
+
+        Assertions.assertEquals(expectRefs.size(), refs.size());
+
+        for (int i = 0; i < refs.size(); i++) {
+            EntityRef ref = refs.get(i);
+            EntityRef expectedRef = expectRefs.get(i);
+            Assertions.assertEquals(expectedRef.getId(), ref.getId());
+            Assertions.assertEquals(expectedRef.getOrderValue(), ref.getOrderValue());
+            Assertions.assertEquals(expectedRef.getSecondOrderValue(), ref.getSecondOrderValue());
+        }
+
+
+        expectRefs = Arrays.asList(
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775807L).withOrderValue("100").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775799L).withOrderValue("113").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775800L).withOrderValue("117").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775804L).withOrderValue("119").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775803L).withOrderValue("121").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775801L).withOrderValue("153").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775805L).withOrderValue("162").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775806L).withOrderValue("162").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775798L).withOrderValue("190").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775802L).withOrderValue("193").build()
+        );
+        config = SelectConfig.Builder.anSelectConfig()
+            .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+            .withPage(Page.newSinglePage(100)).build();
+
+        refs = new ArrayList<>(storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            config
+        ));
+
+        Assertions.assertEquals(expectRefs.size(), refs.size());
+
+        for (int i = 0; i < refs.size(); i++) {
+            EntityRef ref = refs.get(i);
+            EntityRef expectedRef = expectRefs.get(i);
+            Assertions.assertEquals(expectedRef.getId(), ref.getId());
+            Assertions.assertEquals(expectedRef.getOrderValue(), ref.getOrderValue());
+        }
+
+        // 单个浮点字段.
+        expectRefs = Arrays.asList(
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775801L).withOrderValue("5910.412727589000000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775798L).withOrderValue("13354.099203446200000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775807L).withOrderValue("16507.168923797500000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775804L).withOrderValue("25155.917007414000000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775800L).withOrderValue("30472.189513653100000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775806L).withOrderValue("37574.332230891300000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775802L).withOrderValue("41077.388130479000000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775803L).withOrderValue("56388.810397345000000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775799L).withOrderValue("61894.976727655200000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775805L).withOrderValue("84730.454610377100000000").build()
+        );
+        config = SelectConfig.Builder.anSelectConfig()
+            .withSort(Sort.buildAscSort(l2EntityClass.field("l2-dec").get()))
+            .withPage(Page.newSinglePage(100)).build();
+
+        refs = new ArrayList<>(storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            config
+        ));
+
+        Assertions.assertEquals(expectRefs.size(), refs.size());
+
+        for (int i = 0; i < refs.size(); i++) {
+            EntityRef ref = refs.get(i);
+            EntityRef expectedRef = expectRefs.get(i);
+            Assertions.assertEquals(expectedRef.getId(), ref.getId());
+            Assertions.assertEquals(expectedRef.getOrderValue(), ref.getOrderValue());
+        }
     }
 
     /**
@@ -291,9 +442,15 @@ public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerEx
 
     @Test
     public void testSelect() throws Exception {
-        Collection<EntityRef> refs;
+        Collection<EntityRef> refs = null;
+        SphinxQLManticoreIndexStorage storage = IndexInitialization.getInstance().getIndexStorage();
         for (Case c : buildSelectCases()) {
-            refs = IndexInitialization.getInstance().getIndexStorage().select(c.conditions, c.entityClass, c.selectConfig);
+            try {
+                refs = storage.select(c.conditions, c.entityClass, c.selectConfig);
+            } catch (Exception ex) {
+                String msg = String.format("%s faild, message is %s.", c.description, ex.getMessage());
+                throw new Exception(msg, ex);
+            }
 
             long[] expectedIds = c.expectedIds;
             if (expectedIds == null) {
