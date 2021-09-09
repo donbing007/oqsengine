@@ -200,7 +200,6 @@ public class MetaAggregationParse implements AggregationParse {
      * @return 被聚合字段id集合.
      */
     private Optional<Set<Long>> parseFieldIds(List<MetaParseTree> trees) {
-        List<List<PTNode>> collect = trees.stream().map(MetaParseTree::toList).collect(Collectors.toList());
-        return Optional.of(collect.stream().flatMap(l -> l.stream().map(p -> p.getAggEntityField().id())).collect(Collectors.toSet()));
+        return Optional.of(trees.stream().flatMap(l -> l.toList().stream().map(p -> p.getAggEntityField().id())).collect(Collectors.toSet()));
     }
 }
