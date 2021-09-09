@@ -444,4 +444,5 @@
         <aspectj.version>1.9.1</aspectj.version>
         <allure.version>2.13.10</allure.version>
     </properties>
+
 </project>
