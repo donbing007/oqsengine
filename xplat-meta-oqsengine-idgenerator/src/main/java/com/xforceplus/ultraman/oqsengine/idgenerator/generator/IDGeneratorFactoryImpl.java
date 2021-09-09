@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.generator;
 
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.alibaba.google.common.collect.Maps;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
