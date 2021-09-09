@@ -205,7 +205,7 @@ public class QueryLimitCommitidByConditionsExecutor
                 .append(", '$.")
                 .append(AnyStorageValue.ATTRIBUTE_PREFIX)
                 .append(storageStrategy.toStorageNames(sort.getField()).stream().findFirst().get())
-                .append("')) AS ").append(SELECT_SORT_COLUMN0);
+                .append("')) AS ").append(sortFieldName);
         }
     }
 }

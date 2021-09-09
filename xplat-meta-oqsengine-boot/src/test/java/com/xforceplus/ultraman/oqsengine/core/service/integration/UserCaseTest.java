@@ -206,6 +206,7 @@ public class UserCaseTest extends AbstractContainerExtends {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
         );
         Assertions.assertEquals(1, entities.size());
+        Assertions.assertTrue(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
         Assertions.assertEquals(99L,
             entities.stream().findFirst().get().entityValue().getValue("l0-long").get().getValue());
 

@@ -12,9 +12,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -52,7 +52,9 @@ public class SimpleFieldKeyGeneratorTest {
         metaManager = mock(MetaManager.class);
         IEntityClass entityClass = buildEntityClass(1008);
         when(metaManager.load(1008)).thenReturn(Optional.of(entityClass));
-        ReflectionTestUtils.setField(keyGenerator,"metaManager",metaManager);
+        when(metaManager.load(1008, null)).thenReturn(Optional.of(entityClass));
+        when(metaManager.load(1008, "")).thenReturn(Optional.of(entityClass));
+        ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);
 
     }
 
@@ -65,7 +67,6 @@ public class SimpleFieldKeyGeneratorTest {
 
     @Test
     public void testKeyGenerator1() {
-        IEntity entity = buildEntity(1008);
         BusinessKey key1 = new BusinessKey();
         key1.setFieldName("f1");
         key1.setValue("f1Value");
@@ -78,7 +79,6 @@ public class SimpleFieldKeyGeneratorTest {
         Map<String, UniqueIndexValue> resultKeys = keyGenerator.generator(keys, buildEntityClass(1008));
         Assertions.assertEquals(((UniqueIndexValue) resultKeys.values().toArray()[0]).getValue(), "f2Value-f1Value");
     }
-
 
 
     private IEntity buildEntity(long baseId) {

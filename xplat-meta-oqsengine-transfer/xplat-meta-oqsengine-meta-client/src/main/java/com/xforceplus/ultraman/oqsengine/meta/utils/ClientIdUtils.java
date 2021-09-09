@@ -18,6 +18,11 @@ public class ClientIdUtils {
 
     private static final String DEFAULT_HOST_NAME = "OQS-ENGINE";
 
+    /**
+     * 生成client id.
+     *
+     * @return 客户端标识.
+     */
     public static String generate() {
         String clientId = "";
         try {
@@ -50,7 +55,8 @@ public class ClientIdUtils {
                 while (addresses.hasMoreElements()) {
                     ipHost = (InetAddress) addresses.nextElement();
                     if (ipHost instanceof Inet4Address) {
-                        LOGGER.info("getInetAddress hostIp : {}, hostName : {}", ipHost.getHostAddress(), ipHost.getHostName());
+                        LOGGER.info("getInetAddress hostIp : {}, hostName : {}", ipHost.getHostAddress(),
+                            ipHost.getHostName());
                         return ipHost;
                     }
                 }

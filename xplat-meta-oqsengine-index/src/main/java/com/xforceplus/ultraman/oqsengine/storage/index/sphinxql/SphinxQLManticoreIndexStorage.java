@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -154,6 +153,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             SelectConfig useConfig = SelectConfig.Builder.anSelectConfig()
                 .withCommitId(config.getCommitId())
                 .withSort(config.getSort())
+                .withSecondarySort(config.getSecondarySort())
+                .withThirdSort(config.getThirdSort())
                 .withPage(config.getPage())
                 .withExcludedIds(useFilterIds)
                 .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())

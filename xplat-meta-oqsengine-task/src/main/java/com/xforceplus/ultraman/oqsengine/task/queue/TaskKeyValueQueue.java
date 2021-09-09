@@ -271,6 +271,11 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     }
 
     @Override
+    public String toString() {
+        return "TaskKeyValueQueue{" + "name='" + name + '\'' + '}';
+    }
+
+    @Override
     public void ack(Task task) {
         checkRunning();
         if (task == null) {

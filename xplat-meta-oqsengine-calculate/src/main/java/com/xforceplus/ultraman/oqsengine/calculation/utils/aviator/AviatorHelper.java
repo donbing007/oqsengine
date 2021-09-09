@@ -13,11 +13,15 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.TimeOffsetFunction
 import java.math.MathContext;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * aviator辅助类.
  */
 public class AviatorHelper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AviatorHelper.class);
 
     private static final String REGEX_META = "(#\\{[^#${}]*\\})";
     private static final String REGEX_ENUM = "(\\$\\{[^#${}]*\\})";
@@ -50,6 +54,7 @@ public class AviatorHelper {
      */
     public static Expression compile(ExpressionWrapper expressionWrapper) {
         String functionBody = AviatorHelper.parseRule(expressionWrapper.getExpression());
+        LOGGER.info("Function body : {]", functionBody);
         return INSTANCE.compile(expressionWrapper.getCode(), functionBody, expressionWrapper.isCached());
     }
 

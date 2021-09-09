@@ -5,8 +5,6 @@ import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AggregationTreePayload;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -45,15 +43,8 @@ public class AggregationTreeBuilderListener {
         LOGGER.info("Aggregation event :{}", event);
         if (event.payload().isPresent()) {
             AggregationTreePayload payload = (AggregationTreePayload) event.payload().get();
-            String appId = payload.getAppId();
-            int version = payload.getVersion();
-            List<IEntityClass> entityList = payload.getEntityList();
-            if (entityList.size() > 0) {
-                entityList.forEach(e -> {
-
-                });
-            }
-
+            aggregationParse.builder(payload.getAppId(), payload.getVersion(),  payload.getEntityList());
         }
     }
+
 }

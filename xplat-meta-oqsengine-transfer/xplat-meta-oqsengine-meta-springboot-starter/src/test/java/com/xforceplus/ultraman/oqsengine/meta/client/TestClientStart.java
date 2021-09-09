@@ -1,5 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_HEAR_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.assertWatchElement;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+
 import com.xforceplus.ultraman.oqsengine.meta.Commons;
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
@@ -7,6 +14,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
+import javax.annotation.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,14 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiFunction;
-
-import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 
 /**
  * desc :
@@ -58,9 +61,9 @@ public class TestClientStart {
         if (IF_TEST) {
             Thread.sleep(1_000);
 
-            functions.put(caseHeartBeat, this::heartBeatTest);
-            functions.put(caseRegisterPull, this::registerPullTest);
-            functions.put(caseRegisterPush, this::registerPushTest);
+            functions.put(CASE_HEAR_BEAT, this::heartBeatTest);
+            functions.put(CASE_REGISTER_PULL, this::registerPullTest);
+            functions.put(CASE_REGISTER_PUSH, this::registerPushTest);
         }
     }
 
@@ -75,7 +78,7 @@ public class TestClientStart {
     public void test() throws InterruptedException {
         if (IF_TEST) {
             Thread.sleep(5_000);
-            for (Map.Entry<String, WatchElement> e : Commons.cases.entrySet()) {
+            for (Map.Entry<String, WatchElement> e : Commons.CASES.entrySet()) {
                 BiFunction<String, WatchElement, Boolean> f = functions.get(e.getKey());
                 ThreadUtils.create(() -> {
                     try {
@@ -120,8 +123,8 @@ public class TestClientStart {
 
         Assertions.assertEquals(uid, requestWatchExecutor.watcher().uid());
 
-        return assertWatchElement(caseHeartBeat, Confirmed,
-                requestHandler.watchExecutor().watcher().watches().get(caseName));
+        return assertWatchElement(CASE_HEAR_BEAT, Confirmed,
+            requestHandler.watchExecutor().watcher().watches().get(caseName));
     }
     /**
      * case registerPull

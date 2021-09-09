@@ -59,7 +59,7 @@ public class CommonConfiguration {
      * @param configuration lettuce 配置.
      * @return redisClient 实例.
      */
-    @Bean(value = {"redisClient", "redisClientState"}, destroyMethod = "shutdown")
+    @Bean(value = {"redisClientState", "redisClient"}, destroyMethod = "shutdown")
     public RedisClient redisClientState(RedisConfiguration configuration) {
         RedisClient redisClient = RedisClient.create(configuration.uriWithStateDb());
 

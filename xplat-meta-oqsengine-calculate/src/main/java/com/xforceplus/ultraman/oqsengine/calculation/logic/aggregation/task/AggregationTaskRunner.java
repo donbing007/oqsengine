@@ -82,9 +82,12 @@ public class AggregationTaskRunner implements TaskRunner {
                         OriginalEntity originalEntity = iterator.next();
                         Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), ptNode.getEntityClass());
                         if (aggMainEntity.isPresent()) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(String.format("start aggregate , entityClassId is %s , entityId is %s ", aggMainEntity.get().entityClassRef().getId(), aggMainEntity.get().id()));
+                            }
                             //构造查询被聚合信息条件
                             Condition condition = new Condition(ptNode.getRelationship().getEntityField(), ConditionOperator.EQUALS, new LongValue(ptNode.getRelationship().getEntityField(), aggMainEntity.get().id()));
-                            Conditions conditions = new Conditions(condition);
+                            Conditions conditions = ptNode.getConditions().addAnd(condition);
                             //获取未提交最小commitId号
                             long minUnSyncCommitId = getMinCommitId();
 
@@ -92,6 +95,9 @@ public class AggregationTaskRunner implements TaskRunner {
                             Collection<EntityRef> entityRefs = masterStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
                                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withCommitId(minUnSyncCommitId).build());
                             Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(String.format("select by conditions , entityClassId is %s, mainEntityId is %s, result id list is %s ", ptNode.getAggEntityClass().id(), aggMainEntity.get().id(), ids));
+                            }
                             entityRefs = null;
 
 

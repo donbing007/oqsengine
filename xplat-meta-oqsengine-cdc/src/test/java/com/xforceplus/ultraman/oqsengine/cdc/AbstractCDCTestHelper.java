@@ -38,6 +38,9 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
         if (isStopRunner) {
             consumerRunner.shutdown();
         }
+        if (null != mockRedisCallbackService) {
+            mockRedisCallbackService.reset();
+        }
         InitializationHelper.clearAll();
     }
 

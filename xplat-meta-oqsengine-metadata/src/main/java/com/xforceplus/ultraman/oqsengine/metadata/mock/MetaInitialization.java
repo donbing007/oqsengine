@@ -68,17 +68,17 @@ public class MetaInitialization implements BeanInitialization {
 
             @Override
             public void watch(EventType type, Consumer<Event> listener) {
-                if (!type.equals(EventType.AUTO_FILL_UPGRADE)) {
+                if (!(type.equals(EventType.AUTO_FILL_UPGRADE) || type.equals(EventType.AGGREGATION_TREE_UPGRADE))) {
                     throw new IllegalArgumentException(
-                        String.format("type %s not equals to %s", type, EventType.AUTO_FILL_UPGRADE));
+                        String.format("type %s not equals to %s", type, EventType.AUTO_FILL_UPGRADE + "or" + EventType.AGGREGATION_TREE_UPGRADE));
                 }
             }
 
             @Override
             public void notify(Event event) {
-                if (!event.type().equals(EventType.AUTO_FILL_UPGRADE)) {
+                if (!(event.type().equals(EventType.AUTO_FILL_UPGRADE) || event.type().equals(EventType.AGGREGATION_TREE_UPGRADE))) {
                     throw new IllegalArgumentException(
-                        String.format("type %s not equals to %s", event.type(), EventType.AUTO_FILL_UPGRADE));
+                        String.format("type %s not equals to %s", event.type(), EventType.AUTO_FILL_UPGRADE + "or" + EventType.AGGREGATION_TREE_UPGRADE));
                 }
             }
         });

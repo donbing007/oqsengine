@@ -1,5 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Init;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -7,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.connect.MockGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import io.grpc.stub.StreamObserver;
-
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
 
 /**
  * desc :
@@ -45,7 +46,7 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", gRpcParams);
+        ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", grpcParams);
     }
 
     @AfterEach
@@ -69,7 +70,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         int max = 40;
         while (i < max) {
             Assertions.assertTrue(System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat()
-                    < gRpcParams.getDefaultHeartbeatTimeout());
+                < grpcParams.getDefaultHeartbeatTimeout());
 
             logger.debug("current - heartBeat : {}", System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
             i++;
