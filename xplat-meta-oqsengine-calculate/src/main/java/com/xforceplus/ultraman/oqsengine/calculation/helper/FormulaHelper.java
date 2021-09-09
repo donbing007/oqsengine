@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FormulaHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(FormulaHelper.class);
+    public static final String FORMULA_CTX_PARAM = "FORMULA_CTX_PARAM";
 
     private static ExecutionWrapper<?> toExecutionWrapper(String expression, List<String> args, IEntity entity)
         throws CalculationLogicException {
@@ -68,6 +69,8 @@ public class FormulaHelper {
         //  获取公式执行对象
         ExecutionWrapper<?> executionWrapper =
             toExecutionWrapper(expression, args, context.getEntity());
+
+        executionWrapper.getParams().put(FORMULA_CTX_PARAM, context.getFocusField());
 
         Object object = AviatorHelper.execute(executionWrapper);
         if (null == object) {
