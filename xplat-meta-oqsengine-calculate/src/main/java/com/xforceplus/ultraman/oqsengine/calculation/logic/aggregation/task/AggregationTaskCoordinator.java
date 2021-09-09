@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * 聚合任务协调者.
+ * 聚合任务协调者,后期会和defaultCoordinator合并.
  *
  * @author weikai
  * @version 1.0 2021/8/27 11:42
@@ -370,14 +370,13 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         }
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                     } else {
-                        // 添加usingApp
+                        // 添加usingApp,多oqs节点中只有添加聚合任务的oqs节点包含当前任务队列，其它oqs节点需在本地进程中新建属性相同的taskQueue后再获取任务执行
                         if (taskQueueMap.containsKey(processingPrefix)) {
                             usingApp.put(processingPrefix, taskQueueMap.get(processingPrefix));
                             if (logger.isDebugEnabled()) {
-                                logger.debug(String.format("current usingApp is %s"), processingPrefix);
-                                logger.debug(String.format("current taskQueue is %s"), usingApp.get(processingPrefix).toString());
+                                logger.debug(String.format("current usingApp is %s", processingPrefix));
+                                logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
-                            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                         } else {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
                             try {

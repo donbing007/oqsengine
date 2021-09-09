@@ -28,25 +28,25 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
+ * 聚合任务执行测试.
+ *
  * @author weikai
  * @version 1.0 2021/9/6 13:37
  * @since 1.8
@@ -129,7 +129,7 @@ class AggregationTaskRunnerTest {
 
 
     @BeforeEach
-    public void before() throws Exception{
+    public void before() throws Exception {
         ptNode = new PTNode();
         ptNode.setAggEntityClass(aggEntityClass);
         ptNode.setAggEntityField(aggField);
@@ -147,6 +147,7 @@ class AggregationTaskRunnerTest {
                 .withStrong(false)
                 .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                 .build());
+        ptNode.setConditions(Conditions.buildEmtpyConditions());
         nodes = new ArrayList<>();
         nodes.add(ptNode);
         indexData = new ConcurrentHashMap<>();
@@ -186,12 +187,12 @@ class AggregationTaskRunnerTest {
 
     @Test
     void run() throws Exception {
-        long size = 10;
+        long size = 1000;
         buildData(size);
         runner.run(new AggregationTaskCoordinator(), new AggregationTask("testAgg", new MetaParseTree(ptNode)));
-        Optional<IEntity> iEntity = masterStorage.selectOne(avgEntityId);
-        if (iEntity.isPresent()) {
-            Long value = (Long) iEntity.get().entityValue().getValue(targetFieldId).get().getValue();
+        Optional<IEntity> entity = masterStorage.selectOne(avgEntityId);
+        if (entity.isPresent()) {
+            Long value = (Long) entity.get().entityValue().getValue(targetFieldId).get().getValue();
             Assertions.assertTrue((size - 1) == value.longValue());
         }
     }
@@ -218,7 +219,7 @@ class AggregationTaskRunnerTest {
                     .withTime(System.currentTimeMillis())
                     .withVersion(0)
                     .withEntityValue(
-                            EntityValue.build().addValue(new LongValue(aggField, i ))
+                            EntityValue.build().addValue(new LongValue(aggField, i))
                     ).build();
 
             masterStorage.build(aggEntity, aggEntityClass);
@@ -379,6 +380,7 @@ class AggregationTaskRunnerTest {
          * 初始化.
          *
          */
+
         public MockAbstractDataIterator() {
             this.buffer = new ArrayList<>();
         }
@@ -408,7 +410,7 @@ class AggregationTaskRunnerTest {
         }
 
         public void load(List<OriginalEntity> buff) throws NoSuchFieldException, IllegalAccessException {
-           buffer.addAll(buff);
+            buffer.addAll(buff);
         }
     }
 

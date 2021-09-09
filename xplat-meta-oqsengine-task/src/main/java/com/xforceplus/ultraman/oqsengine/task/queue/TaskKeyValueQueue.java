@@ -302,6 +302,11 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         }
     }
 
+    public boolean isEmpty() {
+        return kv.incr(unusedTaskSize, 0) <= 0;
+    }
+
+
     private String buildNextElementKey(long id) {
         StringBuilder buff = new StringBuilder();
         buff.append(this.elementKeyPrefix)
