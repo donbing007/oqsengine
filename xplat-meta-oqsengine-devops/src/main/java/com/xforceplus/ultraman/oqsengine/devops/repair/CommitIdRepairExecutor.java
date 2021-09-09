@@ -21,6 +21,11 @@ public interface CommitIdRepairExecutor {
     long[] rangeOfCommitId();
 
     /**
+     * 获取当前所有的commitIds.
+     */
+    long[] allCommitIds();
+
+    /**
      * 删除比传入commitId小的所有commitId.
      */
     void cleanLessThan(long id);

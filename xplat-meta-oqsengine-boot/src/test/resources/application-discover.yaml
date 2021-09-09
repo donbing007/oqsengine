@@ -158,7 +158,7 @@ discover:
   sdk:
     enable: true
     connection:
-      host: http://ultraman-devops-service-test.n01103-oqs-cdc
+      host: localhost
       port: 8916
     time:
       heartbeat:
