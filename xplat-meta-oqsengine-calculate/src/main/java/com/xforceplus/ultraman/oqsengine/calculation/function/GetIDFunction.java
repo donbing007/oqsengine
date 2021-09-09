@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function;
 
+import static com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper.FORMULA_CTX_PARAM;
+
 import com.alibaba.google.common.base.Preconditions;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
 import com.googlecode.aviator.runtime.function.FunctionUtils;
@@ -7,6 +9,7 @@ import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.NumberFormatUtils;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 
@@ -29,7 +32,8 @@ public class GetIDFunction extends AbstractFunction {
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject numberFormat, AviatorObject bizTag) {
         LongIdGenerator generator = (LongIdGenerator) SpringContextUtil.getBean(ID_GENERATOR_NAME);
-        String bizTagValue = String.valueOf(bizTag.getValue(env));
+        String fieldId = String.valueOf(((IEntityField)env.get(FORMULA_CTX_PARAM)).id());
+        String bizTagValue = String.format("%s:%s",fieldId,String.valueOf(bizTag.getValue(env)));
         String numverFormatValue = String.valueOf(numberFormat.getValue(env));
         Preconditions.checkNotNull(generator);
         Preconditions.checkArgument(!StringUtils.isBlank(bizTagValue), "BizTag must not be empty!");
