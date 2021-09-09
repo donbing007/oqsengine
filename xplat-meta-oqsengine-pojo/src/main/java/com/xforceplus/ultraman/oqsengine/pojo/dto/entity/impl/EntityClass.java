@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
@@ -42,6 +43,11 @@ public class EntityClass implements IEntityClass {
     private int level;
 
     /*
+     * profile信息
+     */
+    private String profile;
+
+    /*
      * 关系信息
      */
     private Collection<Relationship> relations;
@@ -82,6 +88,15 @@ public class EntityClass implements IEntityClass {
     @Override
     public int level() {
         return level;
+    }
+
+    @Override
+    public EntityClassRef ref() {
+        return EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(id())
+            .withEntityClassCode(code())
+            .withEntityClassProfile(profile)
+            .build();
     }
 
     @Override
@@ -256,6 +271,7 @@ public class EntityClass implements IEntityClass {
         private String code;
         private int version;
         private int level;
+        private String profile;
         private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
@@ -267,8 +283,14 @@ public class EntityClass implements IEntityClass {
             return new EntityClass.Builder();
         }
 
+
         public EntityClass.Builder withId(long id) {
             this.id = id;
+            return this;
+        }
+
+        public EntityClass.Builder withProfile(String profile) {
+            this.profile = profile;
             return this;
         }
 
@@ -338,6 +360,7 @@ public class EntityClass implements IEntityClass {
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
+            entityClass.profile = this.profile;
             return entityClass;
         }
     }
