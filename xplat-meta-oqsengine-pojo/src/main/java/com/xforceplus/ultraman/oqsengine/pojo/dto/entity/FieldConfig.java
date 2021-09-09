@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/26 14:32
  * @since 1.8
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FieldConfig implements Serializable {
 
     /**

@@ -240,6 +240,7 @@ public class StorageMetaManager implements MetaManager {
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
                 .withRelations(oqsRelations)
+                .withProfile(profileCode)
                 .withFields(entityFields);
         //   加载父类.
         if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {

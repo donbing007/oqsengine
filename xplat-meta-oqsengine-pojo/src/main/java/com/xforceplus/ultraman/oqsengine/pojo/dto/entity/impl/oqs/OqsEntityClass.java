@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +43,11 @@ public class OqsEntityClass implements IEntityClass {
      * 元信息处于的继承层级
      */
     private int level;
+
+    /*
+     * profile
+     */
+    private String profile;
 
     /*
      * 关系信息
@@ -105,6 +112,15 @@ public class OqsEntityClass implements IEntityClass {
         }
 
         return relations;
+    }
+
+    @Override
+    public EntityClassRef ref() {
+        return EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(id())
+            .withEntityClassCode(code())
+            .withEntityClassProfile(profile)
+            .build();
     }
 
     @Deprecated
@@ -251,6 +267,7 @@ public class OqsEntityClass implements IEntityClass {
         private String code;
         private int version;
         private int level;
+        private String profile;
         private Collection<OqsRelation> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
@@ -302,6 +319,12 @@ public class OqsEntityClass implements IEntityClass {
             return this;
         }
 
+
+        public OqsEntityClass.Builder withProfile(String profile) {
+            this.profile = profile;
+            return this;
+        }
+
         /**
          * 增加新的字段.
          *
@@ -333,6 +356,7 @@ public class OqsEntityClass implements IEntityClass {
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
+            entityClass.profile = this.profile;
             return entityClass;
         }
     }

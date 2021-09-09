@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
@@ -47,6 +48,11 @@ public class EntityClass implements IEntityClass {
      * 元信息处于的继承层级
      */
     private int level;
+
+    /*
+     * profile信息
+     */
+    private String profile;
 
     /*
      * 关系信息
@@ -184,6 +190,15 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public EntityClassRef ref() {
+        return EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(id())
+            .withEntityClassCode(code())
+            .withEntityClassProfile(profile)
+            .build();
+    }
+
+    @Override
     public Collection<Relation> relations() {
         return relations;
     }
@@ -282,6 +297,8 @@ public class EntityClass implements IEntityClass {
         private int level;
         private List<Relation> relations;
         private Set<IEntityClass> relationsEntityClasses;
+        private String profile;
+
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
 
@@ -294,6 +311,11 @@ public class EntityClass implements IEntityClass {
 
         public Builder withId(long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder withProfile(String profile) {
+            this.profile = profile;
             return this;
         }
 
@@ -367,6 +389,7 @@ public class EntityClass implements IEntityClass {
             entityClass.fields = fields;
             entityClass.relationsEntityClasses = this.relationsEntityClasses;
             entityClass.relations = this.relations;
+            entityClass.profile = this.profile;
             return entityClass;
         }
     }
