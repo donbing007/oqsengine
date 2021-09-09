@@ -200,8 +200,9 @@ class MetaParseTreeTest {
         PTNode treeRoot1 = new PTNode();
         treeRoot1.setEntityField(fields.get(0));
         treeRoot1.setEntityClass(entityClasses.get(0));
-        treeRoot1.setAggEntityField(fields.get(0));
-        treeRoot1.setAggEntityClass(entityClasses.get(0));
+        EntityField build = EntityField.Builder.anEntityField().withId(100).build();
+        treeRoot1.setAggEntityClass(EntityClass.Builder.anEntityClass().withId(100).withField(build).build());
+        treeRoot1.setAggEntityField(build);
         treeRoot1.setRootFlag(true);
         treeNodes.add(treeRoot1);
 
@@ -215,8 +216,8 @@ class MetaParseTreeTest {
         PTNode treeRoot2 = new PTNode();
         treeRoot2.setEntityClass(entityClasses.get(2));
         treeRoot2.setEntityField(fields.get(2));
-        treeRoot2.setAggEntityClass(entityClasses.get(2));
-        treeRoot2.setAggEntityField(fields.get(2));
+        treeRoot2.setAggEntityClass(EntityClass.Builder.anEntityClass().withId(100).withField(build).build());
+        treeRoot2.setAggEntityField(build);
         treeRoot2.setRootFlag(true);
         treeNodes.add(treeRoot2);
 
