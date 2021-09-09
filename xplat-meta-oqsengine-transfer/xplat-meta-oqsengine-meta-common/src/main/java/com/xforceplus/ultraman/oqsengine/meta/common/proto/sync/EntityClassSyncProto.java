@@ -122,9 +122,9 @@ public final class EntityClassSyncProto {
       ".protobuf.Any\022\033\n\023lookupEntityClassId\030\017 \001" +
       "(\003\022\033\n\023lookupEntityFieldId\030\020 \001(\003\022\021\n\treset" +
       "Type\030\021 \001(\005\022\026\n\016domainNoSenior\030\022 \001(\005\022\027\n\017ag" +
-      "gregationBoId\030\023 \001(\005\022\032\n\022aggregationFieldI" +
-      "d\030\024 \001(\005\022\027\n\017aggregationType\030\025 \001(\005\022\035\n\025aggr" +
-      "egationRelationId\030\026 \001(\005\022\027\n\017domainConditi" +
+      "gregationBoId\030\023 \001(\003\022\032\n\022aggregationFieldI" +
+      "d\030\024 \001(\003\022\027\n\017aggregationType\030\025 \001(\005\022\035\n\025aggr" +
+      "egationRelationId\030\026 \001(\003\022\027\n\017domainConditi" +
       "on\030\027 \001(\t\022A\n\023aggregationByFields\030\030 \003(\0132$." +
       "Calculator.AggregationByFieldsEntry\032:\n\030A" +
       "ggregationByFieldsEntry\022\013\n\003key\030\001 \001(\003\022\r\n\005" +

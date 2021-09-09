@@ -85,6 +85,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             int expiredVersion = -1;
             try {
                 List<Event<?>> payloads = new ArrayList<>();
+                List<Event<?>> aggPayloads = new ArrayList<>();
                 try {
                     expiredVersion = version(appId);
                 } catch (Exception e) {
@@ -104,7 +105,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     }
 
                     // step3.1 send new buildAggEvent
-                    new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorageList, payloads);
+                    new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorageList, aggPayloads);
 
                     //  step4 set into expired clean task
                     if (expiredVersion != NOT_EXIST_VERSION) {
@@ -115,10 +116,12 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     return true;
                 } catch (Exception e) {
                     payloads.clear();
+                    aggPayloads.clear();
                     logger.warn("sync-error, message[{}]", e.toString());
                     return false;
                 } finally {
                     publish(payloads);
+                    publish(aggPayloads);
                 }
             } finally {
                 cacheExecutor.endPrepare(appId);

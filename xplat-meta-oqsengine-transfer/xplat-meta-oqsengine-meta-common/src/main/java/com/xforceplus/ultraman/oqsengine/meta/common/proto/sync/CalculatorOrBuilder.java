@@ -160,14 +160,14 @@ public interface CalculatorOrBuilder extends
   int getDomainNoSenior();
 
   /**
-   * <code>int32 aggregationBoId = 19;</code>
+   * <code>int64 aggregationBoId = 19;</code>
    */
-  int getAggregationBoId();
+  long getAggregationBoId();
 
   /**
-   * <code>int32 aggregationFieldId = 20;</code>
+   * <code>int64 aggregationFieldId = 20;</code>
    */
-  int getAggregationFieldId();
+  long getAggregationFieldId();
 
   /**
    * <code>int32 aggregationType = 21;</code>
@@ -175,9 +175,9 @@ public interface CalculatorOrBuilder extends
   int getAggregationType();
 
   /**
-   * <code>int32 aggregationRelationId = 22;</code>
+   * <code>int64 aggregationRelationId = 22;</code>
    */
-  int getAggregationRelationId();
+  long getAggregationRelationId();
 
   /**
    * <code>string domainCondition = 23;</code>
