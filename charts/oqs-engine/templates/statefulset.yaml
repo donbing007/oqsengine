@@ -57,6 +57,7 @@ spec:
         - -Djava.rmi.server.hostname={{ .Values.jmx.hostname | default "127.0.0.1" }}
           {{- end }}
         - -Dds=/xplat/oqsengine-ds.conf
+        - -Duser.timezone=GMT+8
         - /xplat/xplat-meta-oqsengine.jar
         - --spring.config.location=/xplat/application.yml
         ports:
