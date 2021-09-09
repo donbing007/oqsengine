@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -132,6 +134,70 @@ public class MetaAggregationParse implements AggregationParse {
                 }
             });
         });
+    }
+
+    @Override
+    public void builderTrees(String appId, int version, List<IEntityClass> entityClasses) {
+        List<PTNode> nodes = new ArrayList<>();
+        entityClasses.forEach(entityClass -> {
+            Collection<IEntityField> entityFields = entityClass.fields().stream()
+                    .filter(f -> f.calculationType().equals(CalculationType.AGGREGATION)).collect(Collectors.toList());
+            entityFields.forEach(f -> {
+                if (f.calculationType().equals(CalculationType.AGGREGATION)) {
+                    Aggregation aggregation = (Aggregation) f.config().getCalculation();
+                    Optional<IEntityClass> entityClassOp = entityByField(aggregation.getClassId(), aggregation.getFieldId(), entityClasses);
+                    if (entityClassOp.isPresent()) {
+                        Optional<IEntityField> entityFieldOp = entityClassOp.get().field(aggregation.getFieldId());
+                        if (entityFieldOp.isPresent()) {
+                            if (entityFieldOp.get().calculationType().equals(CalculationType.AGGREGATION)) {
+                                //放置其他节点
+                                PTNode ptNode = new PTNode();
+                                ptNode.setRootFlag(false);
+                                ptNode.setEntityField(f);
+                                ptNode.setEntityClass(entityClass);
+                                ptNode.setConditions(aggregation.getConditions());
+                                ptNode.setAggregationType(aggregation.getAggregationType());
+                                ptNode.setAggEntityClass(entityClassOp.get());
+                                ptNode.setAggEntityField(entityFieldOp.get());
+                                nodes.add(ptNode);
+
+//                                Aggregation nextAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
+//                                PTNode ptNode = new PTNode();
+//                                ptNode.setEntityField(entityFieldOp.get());
+//                                ptNode.setRootFlag(false);
+//                                ptNode.setEntityClass(entityClassOp.get());
+//                                ptNode.setConditions(nextAggregation.getConditions());
+//                                Optional<IEntityClass> entityClass1Op = entityByField(nextAggregation.getClassId(), nextAggregation.getFieldId(), entityClasses);
+//                                ptNode.setAggregationType(nextAggregation.getAggregationType());
+//                                if (entityClass1Op.isPresent()) {
+//                                    Optional<IEntityField> entityField1Op = entityClassOp.get().field(aggregation.getFieldId());
+//                                    ptNode.setAggEntityClass(entityClass1Op.get());
+//                                    ptNode.setAggEntityField(entityField1Op.get());
+//                                }
+//                                nodes.add(ptNode);
+                            } else {
+                                //放置root节点
+                                PTNode ptNode = new PTNode();
+                                ptNode.setRootFlag(true);
+                                ptNode.setEntityField(f);
+                                ptNode.setEntityClass(entityClass);
+                                ptNode.setConditions(aggregation.getConditions());
+                                ptNode.setAggregationType(aggregation.getAggregationType());
+                                ptNode.setAggEntityClass(entityClassOp.get());
+                                ptNode.setAggEntityField(entityFieldOp.get());
+                                nodes.add(ptNode);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        if (nodes.size() > 0) {
+            List<ParseTree> parseTrees = MetaParseTree.generateMultipleTress(nodes);
+            parseTrees.forEach(pt -> {
+                appendTree(pt);
+            });
+        }
     }
 
     /**

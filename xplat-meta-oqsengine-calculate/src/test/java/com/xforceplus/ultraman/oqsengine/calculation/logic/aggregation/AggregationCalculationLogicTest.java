@@ -1,33 +1,37 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
 
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.google.protobuf.Value;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import javax.annotation.Resource;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * 聚合树解析器.
+ * 测试类.
  *
- * @author: wangzheng.
- * @date: 2021/9/8 17:33
  */
-public class AggregationParseTest {
+public class AggregationCalculationLogicTest {
 
-    @Resource
-    AggregationParse aggregationParse;
+    private AggregationFunctionFactory aggregationFunctionFactory;
 
     private List<IEntityClass> entityClasses = new ArrayList<>();
 
@@ -252,51 +256,52 @@ public class AggregationParseTest {
         entityClasses.add(c1);
         entityClasses.add(d);
         entityClasses.add(e);
+//        aggregationFunctionFactory = (AggregationFunctionFactory) new AggregationFunctionFactoryImpl();
     }
 
-    /**
-     * 查找聚合树.
-     *
-     */
     @Test
-    public void find() {
-        aggregationParse = new MetaAggregationParse();
-        aggregationParse.builderTrees("7",100001, entityClasses);
-        ParseTree parseTree = aggregationParse.find(2l,21l,"");
-        Assertions.assertNotNull(parseTree);
-    };
+    public void calculate() {
 
-    /**
-     * 查找这个对象下有多少个需要更新的聚合树.
-     *
-     */
-    @Test
-    public void findTrees() {
-        aggregationParse = new MetaAggregationParse();
-        aggregationParse.builderTrees("7",100001, entityClasses);
-        //List<ParseTree> parseTrees = aggregationParse.find(2l,"");
-        //Assertions.assertNotNull(parseTrees);
-        //Assertions.assertEquals(parseTrees.size(), 3);
-    };
+        IEntity entity = Entity.Builder.anEntity()
+                .withId(1)
+                .withVersion(1)
+                .withEntityClassRef(entityClasses.get(0).ref())
+                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
+                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                        new LongValue(entityClasses.get(0).field(11).get(), 100),
+                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
+                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
+                ))).build();
+        IEntityField targetField = entityClasses.get(1).field(21).get();
+        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
+        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
 
-    /**
-     * 追加最新聚合树.
-     *
-     */
-    @Test
-    public void appendTree() {
+        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
 
-    };
-
-    /**
-     * 构建解析器.
-     *
-     */
-    @Test
-    public void builder() {
-        aggregationParse = new MetaAggregationParse();
-        aggregationParse.builderTrees("7",100001, entityClasses);
-        Assertions.assertNotNull(aggregationParse);
-    };
-
+        // 获取当前的原始版本.
+        Optional<IValue> o = Optional.empty();
+        Optional<IEntity> entityOptional = Optional.of(Entity.Builder.anEntity()
+                .withId(1)
+                .withVersion(1)
+                .withEntityClassRef(entityClasses.get(0).ref())
+                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
+                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                        new LongValue(entityClasses.get(0).field(11).get(), 200),
+                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
+                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
+                ))).build());
+        if (entityOptional.isPresent()) {
+            o = entityOptional.get().entityValue().getValue(targetFieldId);
+        }
+        Optional<IValue> targetValue;
+        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
+        if (aggregationType.equals(AggregationType.AVG)) {
+            int count = 1;
+            // 求平均值需要count信息
+            targetValue = ((AvgFunction) function).excuteAvg(o, o, n, count);
+        } else {
+            targetValue = function.excute(o, o, n);
+        }
+        Assertions.assertNotNull(targetValue.get());
+    }
 }

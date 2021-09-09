@@ -47,4 +47,13 @@ public interface AggregationParse {
      */
     void builder(String appId, int version, List<IEntityClass> entityClasses);
 
+    /**
+     * 构建解析器.
+     *
+     * @param appId 应用id.
+     * @param version 应用版本.
+     * @param entityClasses 对象列表.
+     */
+    void builderTrees(String appId, int version, List<IEntityClass> entityClasses);
+
 }
