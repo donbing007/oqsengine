@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLCons
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SortField;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -31,13 +32,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,59 +94,35 @@ public class QueryConditionExecutor
             maxQueryTimeMs);
     }
 
-
-    // 排序中间结果.
-    private static class SortField {
-        private String fieldName;
-        private String alias;
-        private boolean number;
-        private boolean system;
-
-        public SortField(String fieldName, String alias, boolean number) {
-            this(fieldName, alias, number, false);
-        }
-
-        public SortField(String fieldName, String alias, boolean number, boolean system) {
-            this.fieldName = fieldName;
-            this.alias = alias;
-            this.number = number;
-            this.system = system;
-        }
-
-        public String getFieldName() {
-            return fieldName;
-        }
-
-        public String getAlias() {
-            return alias;
-        }
-
-        public boolean isNumber() {
-            return number;
-        }
-
-        public boolean isSystem() {
-            return system;
-        }
-    }
-
     // 构造排序查询语句段.
-    private String buildOrderBySqlSegment(List<SortField> sortFields, boolean desc) {
+    private String buildOrderBySqlSegment(List<SortField> sortFields) {
+        if (sortFields.isEmpty()) {
+            return "";
+        }
+
         StringBuilder buff = new StringBuilder();
 
-        buff.append(SqlKeywordDefine.ORDER);
+        buff.append(SqlKeywordDefine.ORDER).append(' ');
 
         boolean first = true;
-        for (SortField field : sortFields) {
+        int index = 0;
+        for (SortField sortField : sortFields) {
 
             if (!first && buff.length() > 0) {
                 buff.append(",");
             }
+
             first = false;
-            buff.append(' ')
-                .append(field.getAlias())
-                .append(' ')
-                .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+
+            if (sortField.isIdentifie()) {
+                buff.append(FieldDefine.ID)
+                    .append(' ')
+                    .append(sortField.isDesc() ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+            } else {
+                buff.append(FieldDefine.SORT_FIELD_ALIAS_PREFIX).append(index++)
+                    .append(' ')
+                    .append(sortField.isDesc() ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+            }
 
         }
         return buff.toString();
@@ -156,26 +131,36 @@ public class QueryConditionExecutor
     // 构造排序要用到的字段在select段.
     // select id,cref,pref, attr.123123L as sort1 from
     private String buildSortSelectValuesSegment(List<SortField> sortFields) {
+        if (sortFields.isEmpty()) {
+            return "";
+        }
+
         StringBuilder buff = new StringBuilder();
         String fieldName;
-        for (SortField field : sortFields) {
+        int index = 0;
+        for (SortField sortField : sortFields) {
             if (buff.length() > 0) {
                 buff.append(',');
             }
 
-            if (field.isNumber()) {
-                if (!field.isSystem()) {
-                    fieldName = "bigint(" + field.getFieldName() + ")";
+            // id 不需要额外增加排序字段.
+            if (sortField.isIdentifie()) {
+                continue;
+            }
+
+            if (sortField.isNumber()) {
+                if (!sortField.isSystem()) {
+                    fieldName = "bigint(" + sortField.getFieldName() + ")";
                 } else {
-                    fieldName = field.getFieldName();
+                    fieldName = sortField.getFieldName();
                 }
             } else {
-                fieldName = field.getFieldName();
+                fieldName = sortField.getFieldName();
             }
 
             buff.append(fieldName)
                 .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
-                .append(field.getAlias());
+                .append(FieldDefine.SORT_FIELD_ALIAS_PREFIX).append(index++);
         }
 
         if (buff.length() > 0) {
@@ -187,15 +172,21 @@ public class QueryConditionExecutor
 
     // 构造排序字段信息.
     private List<SortField> buildSortValues(Sort sort) {
-        List<SortField> sortFields;
+        List<SortField> sortFields = null;
         if (!sort.isOutOfOrder()) {
+
+            if (sortFields == null) {
+                sortFields = new ArrayList<>();
+            }
+
 
             /*
              * optimize: 这里进行一个可能的优化,尝试将排序字段优化成原生字段.
              *           如果可以使用原生字段字段,即非 NORMAL 类型的字段.
              */
-            sortFields = new ArrayList<>(tryNativeFieldSorting(sort.getField()));
-            if (!sortFields.isEmpty()) {
+            List<SortField> nativeSortFields = tryNativeFieldSorting(sort.getField(), sort.isDes());
+            if (!nativeSortFields.isEmpty()) {
+                sortFields.addAll(nativeSortFields);
                 return sortFields;
             }
 
@@ -203,18 +194,12 @@ public class QueryConditionExecutor
             Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField(), true);
 
             String fieldName;
-            String alias;
             boolean number;
-            int aliasIndex = 0;
             StringBuilder buff = new StringBuilder();
             for (String storageName : storageNames) {
                 buff.delete(0, buff.length());
                 buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageName);
                 fieldName = buff.toString();
-
-                buff.delete(0, buff.length());
-                buff.append(FieldDefine.SORT_FIELD_ALIAS_PREFIX).append(aliasIndex++);
-                alias = buff.toString();
 
                 if (storageStrategy.storageType() == StorageType.LONG) {
                     number = true;
@@ -222,17 +207,34 @@ public class QueryConditionExecutor
                     number = false;
                 }
 
-                sortFields.add(new SortField(fieldName, alias, number));
+                sortFields.add(
+                    SortField.Builder.anSortField()
+                        .withFieldName(fieldName)
+                        .withNumber(number)
+                        .withDesc(sort.isDes())
+                        .withStick(storageStrategy.isMultipleStorageValue())
+                        .withField(sort.getField()).build());
             }
-        } else {
-            sortFields = Collections.emptyList();
+
+            return sortFields;
         }
 
-        return sortFields;
+        return Collections.emptyList();
     }
 
     // 尝试使用原生的字段排序.
-    private List<SortField> tryNativeFieldSorting(IEntityField field) {
+    private List<SortField> tryNativeFieldSorting(IEntityField field, boolean desc) {
+        // 如果是主键.
+        if (field.config().isIdentifie()) {
+            return Arrays.asList(
+                SortField.Builder.anSortField()
+                    .withFieldName("id")
+                    .withIdentifie(true)
+                    .withDesc(desc)
+                    .build()
+            );
+        }
+
         FieldConfig.FieldSense sence = field.config().getFieldSense();
         // 中会有一个排序字段.
         final int onlyOne = 1;
@@ -240,16 +242,24 @@ public class QueryConditionExecutor
         switch (sence) {
             case CREATE_TIME: {
                 sortFields.add(
-                    new SortField(
-                        FieldDefine.CREATE_TIME,
-                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                    SortField.Builder.anSortField()
+                        .withFieldName(FieldDefine.CREATE_TIME)
+                        .withField(field)
+                        .withNumber(true)
+                        .withSystem(true)
+                        .withDesc(desc)
+                        .build());
                 break;
             }
             case UPDATE_TIME: {
                 sortFields.add(
-                    new SortField(
-                        FieldDefine.UPDATE_TIME,
-                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                    SortField.Builder.anSortField()
+                        .withFieldName(FieldDefine.UPDATE_TIME)
+                        .withField(field)
+                        .withNumber(true)
+                        .withSystem(true)
+                        .withDesc(desc)
+                        .build());
                 break;
             }
             default: {
@@ -308,42 +318,24 @@ public class QueryConditionExecutor
             return Collections.emptyList();
         }
 
-        Sort sort = queryCondition._3().getSort();
-        Sort secondSort = queryCondition._3.getSecondarySort();
-        Sort thirdSort = queryCondition._3.getThirdSort();
-        StorageStrategy storageStrategy = null;
+        Sort[] sorts = new Sort[] {
+            queryCondition._3().getSort(),
+            queryCondition._3.getSecondarySort(),
+            queryCondition._3.getThirdSort()
+        };
         String orderBySqlSegment = "";
         String sortSelectValuesSegment = "";
-        List<SortField> sortFields = null;
+        List<SortField> sortFields = new ArrayList<>(3);
 
         /*
          * 空页要求时不需要进行排序.
          */
         if (!page.isEmptyPage()) {
-            if (!sort.isOutOfOrder()) {
-                // id 排序处理.
-                if (sort.getField().config().isIdentifie()) {
-                    StringBuilder buff = new StringBuilder();
-                    buff.append(SqlKeywordDefine.ORDER);
-                    buff.append(" ").append(FieldDefine.ID);
-                    buff.append(" ");
-                    if (sort.isAsc()) {
-                        buff.append(SqlKeywordDefine.ORDER_TYPE_ASC);
-                    } else {
-                        buff.append(SqlKeywordDefine.ORDER_TYPE_DESC);
-                    }
-                    sortFields = Collections.emptyList();
-                    orderBySqlSegment = buff.toString();
-                    sortSelectValuesSegment = "";
-
-                } else {
-                    // 普通属性
-                    storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-                    sortFields = buildSortValues(sort);
-                    orderBySqlSegment = buildOrderBySqlSegment(sortFields, sort.isDes());
-                    sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
-                }
+            for (Sort sort : sorts) {
+                sortFields.addAll(buildSortValues(sort));
             }
+            orderBySqlSegment = buildOrderBySqlSegment(sortFields);
+            sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
         }
 
         String sql = String.format(
@@ -375,54 +367,9 @@ public class QueryConditionExecutor
                     long id = rs.getLong(FieldDefine.ID);
                     entityRefBuilder.withId(id);
 
-                    if (!sort.isOutOfOrder()) {
-                        if (sort.getField().config().isIdentifie()) {
-                            entityRefBuilder.withOrderValue(Long.toString(id));
-                        } else {
-                            ResultSet finalRs = rs;
-                            AtomicInteger index = new AtomicInteger(0);
-
-                            StorageStrategy finalStorageStrategy = storageStrategy;
-                            Optional<StorageValue> reduce = sortFields.stream().map(x -> {
-                                //get sort value
-                                try {
-                                    switch (finalStorageStrategy.storageType()) {
-                                        case LONG:
-                                            return StorageValueFactory.buildStorageValue(
-                                                finalStorageStrategy.storageType(),
-                                                x.fieldName,
-                                                finalRs.getLong("sort" + index.getAndIncrement()));
-                                        case STRING:
-                                            return StorageValueFactory.buildStorageValue(
-                                                finalStorageStrategy.storageType(),
-                                                x.fieldName,
-                                                finalRs.getString("sort" + index.getAndIncrement()));
-                                        default:
-                                            return null;
-                                    }
-                                } catch (Exception ex) {
-                                    logger.error(ex.getMessage(), ex);
-                                    return null;
-                                }
-                            }).filter(Objects::nonNull).reduce(StorageValue::stick);
-
-                            if (reduce.isPresent()) {
-
-                                IValue logicValue = storageStrategy.toLogicValue(sort.getField(), reduce.get());
-
-                                if (logicValue.getValue() == null) {
-                                    entityRefBuilder.withOrderValue(null);
-                                } else {
-                                    if (logicValue.compareByString()) {
-                                        entityRefBuilder.withOrderValue(logicValue.valueToString());
-                                    } else {
-                                        entityRefBuilder.withOrderValue(Long.toString(logicValue.valueToLong()));
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    processSort(id, rs, entityRefBuilder, sortFields);
                     refs.add(entityRefBuilder.build());
+
                 }
 
                 if (!page.isSinglePage()) {
@@ -433,6 +380,106 @@ public class QueryConditionExecutor
                 }
 
                 return refs;
+            }
+        }
+    }
+
+    private void processSort(long id, ResultSet rs, EntityRef.Builder entityRefBuilder, List<SortField> sortFields)
+        throws SQLException {
+        StorageValue lastStorageValue = null;
+        int sortIndex = 0;
+        SortField sortField = null;
+        for (int s = 0; s < sortFields.size(); s++) {
+            sortField = sortFields.get(s);
+            if (sortField.isIdentifie()) {
+                setOrderValue(sortIndex++, Long.toString(id), entityRefBuilder);
+                continue;
+            }
+
+            StorageStrategy storageStrategy =
+                storageStrategyFactory.getStrategy(sortField.getField().type());
+            String sortFieldName =
+                String.format("%s%d", FieldDefine.SORT_FIELD_ALIAS_PREFIX, s);
+
+            StorageValue currentStorageValue;
+            switch (storageStrategy.storageType()) {
+                case LONG: {
+                    currentStorageValue = StorageValueFactory.buildStorageValue(
+                        storageStrategy.storageType(),
+                        sortFieldName,
+                        rs.getLong(sortFieldName)
+                    );
+                    break;
+                }
+                case STRING: {
+                    currentStorageValue = StorageValueFactory.buildStorageValue(
+                        storageStrategy.storageType(),
+                        sortFieldName,
+                        rs.getString(sortFieldName)
+                    );
+                    break;
+                }
+                default: {
+                    throw new SQLException(String.format("Unrecognized physical field type.[%s]",
+                        storageStrategy.storageType().name()));
+                }
+            }
+
+            if (sortField.isStick()) {
+                if (lastStorageValue == null) {
+                    lastStorageValue = currentStorageValue;
+                    lastStorageValue.locate(0);
+                } else {
+                    StorageValue point = lastStorageValue;
+                    while (point.haveNext()) {
+                        point = lastStorageValue.next();
+                    }
+                    int loc = point.location();
+                    currentStorageValue.locate(loc + 1);
+                    lastStorageValue.stick(currentStorageValue);
+                }
+            } else {
+                IValue logicValue;
+                /*
+                 * 发现了一个非需要粘合的搜索结果字段,所以把之前积累的 lastStorageValue 转换成IValue.
+                 */
+                if (lastStorageValue != null) {
+                    logicValue =
+                        storageStrategy.toLogicValue(sortFields.get(s - 1).getField(), lastStorageValue);
+                    setOrderValue(sortIndex++, logicValue.valueToString(), entityRefBuilder);
+                }
+
+                logicValue = storageStrategy.toLogicValue(sortFields.get(s).getField(), currentStorageValue);
+                setOrderValue(sortIndex++, logicValue.valueToString(), entityRefBuilder);
+
+                lastStorageValue = null;
+            }
+        }
+
+        if (lastStorageValue != null) {
+            StorageStrategy storageStrategy =
+                storageStrategyFactory.getStrategy(sortField.getField().type());
+            IValue logicValue = storageStrategy.toLogicValue(sortField.getField(), lastStorageValue);
+            setOrderValue(sortIndex++, logicValue.valueToString(), entityRefBuilder);
+        }
+    }
+
+    private void setOrderValue(int i, String value, EntityRef.Builder entityRefBuilder) {
+        switch (i) {
+            case 0: {
+                entityRefBuilder.withOrderValue(value);
+                break;
+            }
+            case 1: {
+                entityRefBuilder.withSecondOrderValue(value);
+                break;
+            }
+            case 2: {
+                entityRefBuilder.withThridOrderValue(value);
+                break;
+            }
+            default: {
+                // nothing
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -48,6 +47,11 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     public long valueToLong() {
         Instant instant = getValue().atZone(ZONE_ID).toInstant();
         return instant.toEpochMilli();
+    }
+
+    @Override
+    public String valueToString() {
+        return Long.toString(valueToLong());
     }
 
     @Override
