@@ -9,6 +9,9 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
@@ -58,4 +61,21 @@ public class OffsetTest {
         calendar.setTime((Date) expect);
         Assertions.assertEquals(calendar.get(Calendar.YEAR), LocalDateTime.now().getYear() + 1);
     }
+
+    //@Test
+    //public void testOffsetDataHours() throws CalculationLogicException {
+    //    ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
+    //        .withCached(true)
+    //        .withExpression("timeOffset(createTime,4,1)").build();
+    //    Map<String, Object> params = Maps.newHashMap();
+    //    params.put("createTime", LocalDateTime.now());
+    //
+    //    Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+    //    Assertions.assertTrue(result instanceof Date);
+    //    System.out.println(result.toString());
+    //    Calendar calendar = Calendar.getInstance();
+    //    calendar.setTime((Date) result);
+    //    Assertions.assertEquals(calendar.get(Calendar.HOUR), LocalDateTime.now().getHour() + 1);
+    //    System.out.println(result);
+    //}
 }
