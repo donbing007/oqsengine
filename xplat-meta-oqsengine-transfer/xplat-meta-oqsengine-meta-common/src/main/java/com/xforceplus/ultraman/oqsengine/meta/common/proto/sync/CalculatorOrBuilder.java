@@ -188,4 +188,38 @@ public interface CalculatorOrBuilder extends
    */
   com.google.protobuf.ByteString
       getDomainConditionBytes();
+
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+  int getAggregationByFieldsCount();
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+  boolean containsAggregationByFields(
+      long key);
+  /**
+   * Use {@link #getAggregationByFieldsMap()} instead.
+   */
+  @java.lang.Deprecated
+  java.util.Map<java.lang.Long, java.lang.Long>
+  getAggregationByFields();
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+  java.util.Map<java.lang.Long, java.lang.Long>
+  getAggregationByFieldsMap();
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  long getAggregationByFieldsOrDefault(
+      long key,
+      long defaultValue);
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  long getAggregationByFieldsOrThrow(
+      long key);
 }

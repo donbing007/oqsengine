@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 
-import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
+import com.xforceplus.ultraman.devops.service.common.exceptionk.DiscoverClientException;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;

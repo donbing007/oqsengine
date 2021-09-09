@@ -207,6 +207,19 @@ private static final long serialVersionUID = 0L;
             domainCondition_ = s;
             break;
           }
+          case 194: {
+            if (!((mutable_bitField0_ & 0x00800000) == 0x00800000)) {
+              aggregationByFields_ = com.google.protobuf.MapField.newMapField(
+                  AggregationByFieldsDefaultEntryHolder.defaultEntry);
+              mutable_bitField0_ |= 0x00800000;
+            }
+            com.google.protobuf.MapEntry<java.lang.Long, java.lang.Long>
+            aggregationByFields__ = input.readMessage(
+                AggregationByFieldsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+            aggregationByFields_.getMutableMap().put(
+                aggregationByFields__.getKey(), aggregationByFields__.getValue());
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -227,6 +240,17 @@ private static final long serialVersionUID = 0L;
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
   }
 
+  @SuppressWarnings({"rawtypes"})
+  protected com.google.protobuf.MapField internalGetMapField(
+      int number) {
+    switch (number) {
+      case 24:
+        return internalGetAggregationByFields();
+      default:
+        throw new RuntimeException(
+            "Invalid map field number: " + number);
+    }
+  }
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
@@ -699,6 +723,82 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int AGGREGATIONBYFIELDS_FIELD_NUMBER = 24;
+  private static final class AggregationByFieldsDefaultEntryHolder {
+    static final com.google.protobuf.MapEntry<
+        java.lang.Long, java.lang.Long> defaultEntry =
+            com.google.protobuf.MapEntry
+            .<java.lang.Long, java.lang.Long>newDefaultInstance(
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_AggregationByFieldsEntry_descriptor, 
+                com.google.protobuf.WireFormat.FieldType.INT64,
+                0L,
+                com.google.protobuf.WireFormat.FieldType.INT64,
+                0L);
+  }
+  private com.google.protobuf.MapField<
+      java.lang.Long, java.lang.Long> aggregationByFields_;
+  private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
+  internalGetAggregationByFields() {
+    if (aggregationByFields_ == null) {
+      return com.google.protobuf.MapField.emptyMapField(
+          AggregationByFieldsDefaultEntryHolder.defaultEntry);
+    }
+    return aggregationByFields_;
+  }
+
+  public int getAggregationByFieldsCount() {
+    return internalGetAggregationByFields().getMap().size();
+  }
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  public boolean containsAggregationByFields(
+      long key) {
+    
+    return internalGetAggregationByFields().getMap().containsKey(key);
+  }
+  /**
+   * Use {@link #getAggregationByFieldsMap()} instead.
+   */
+  @java.lang.Deprecated
+  public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFields() {
+    return getAggregationByFieldsMap();
+  }
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
+    return internalGetAggregationByFields().getMap();
+  }
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  public long getAggregationByFieldsOrDefault(
+      long key,
+      long defaultValue) {
+    
+    java.util.Map<java.lang.Long, java.lang.Long> map =
+        internalGetAggregationByFields().getMap();
+    return map.containsKey(key) ? map.get(key) : defaultValue;
+  }
+  /**
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   */
+
+  public long getAggregationByFieldsOrThrow(
+      long key) {
+    
+    java.util.Map<java.lang.Long, java.lang.Long> map =
+        internalGetAggregationByFields().getMap();
+    if (!map.containsKey(key)) {
+      throw new java.lang.IllegalArgumentException();
+    }
+    return map.get(key);
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -780,6 +880,12 @@ private static final long serialVersionUID = 0L;
     if (!getDomainConditionBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 23, domainCondition_);
     }
+    com.google.protobuf.GeneratedMessageV3
+      .serializeLongMapTo(
+        output,
+        internalGetAggregationByFields(),
+        AggregationByFieldsDefaultEntryHolder.defaultEntry,
+        24);
     unknownFields.writeTo(output);
   }
 
@@ -875,6 +981,16 @@ private static final long serialVersionUID = 0L;
     if (!getDomainConditionBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, domainCondition_);
     }
+    for (java.util.Map.Entry<java.lang.Long, java.lang.Long> entry
+         : internalGetAggregationByFields().getMap().entrySet()) {
+      com.google.protobuf.MapEntry<java.lang.Long, java.lang.Long>
+      aggregationByFields__ = AggregationByFieldsDefaultEntryHolder.defaultEntry.newBuilderForType()
+          .setKey(entry.getKey())
+          .setValue(entry.getValue())
+          .build();
+      size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(24, aggregationByFields__);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -940,6 +1056,8 @@ private static final long serialVersionUID = 0L;
         == other.getAggregationRelationId());
     result = result && getDomainCondition()
         .equals(other.getDomainCondition());
+    result = result && internalGetAggregationByFields().equals(
+        other.internalGetAggregationByFields());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -1003,6 +1121,10 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getAggregationRelationId();
     hash = (37 * hash) + DOMAINCONDITION_FIELD_NUMBER;
     hash = (53 * hash) + getDomainCondition().hashCode();
+    if (!internalGetAggregationByFields().getMap().isEmpty()) {
+      hash = (37 * hash) + AGGREGATIONBYFIELDS_FIELD_NUMBER;
+      hash = (53 * hash) + internalGetAggregationByFields().hashCode();
+    }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -1108,6 +1230,28 @@ private static final long serialVersionUID = 0L;
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
     }
 
+    @SuppressWarnings({"rawtypes"})
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 24:
+          return internalGetAggregationByFields();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @SuppressWarnings({"rawtypes"})
+    protected com.google.protobuf.MapField internalGetMutableMapField(
+        int number) {
+      switch (number) {
+        case 24:
+          return internalGetMutableAggregationByFields();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
@@ -1182,6 +1326,7 @@ private static final long serialVersionUID = 0L;
 
       domainCondition_ = "";
 
+      internalGetMutableAggregationByFields().clear();
       return this;
     }
 
@@ -1237,6 +1382,8 @@ private static final long serialVersionUID = 0L;
       result.aggregationType_ = aggregationType_;
       result.aggregationRelationId_ = aggregationRelationId_;
       result.domainCondition_ = domainCondition_;
+      result.aggregationByFields_ = internalGetAggregationByFields();
+      result.aggregationByFields_.makeImmutable();
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -1364,6 +1511,8 @@ private static final long serialVersionUID = 0L;
         domainCondition_ = other.domainCondition_;
         onChanged();
       }
+      internalGetMutableAggregationByFields().mergeFrom(
+          other.internalGetAggregationByFields());
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
       return this;
@@ -2533,6 +2682,129 @@ private static final long serialVersionUID = 0L;
       
       domainCondition_ = value;
       onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.MapField<
+        java.lang.Long, java.lang.Long> aggregationByFields_;
+    private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
+    internalGetAggregationByFields() {
+      if (aggregationByFields_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            AggregationByFieldsDefaultEntryHolder.defaultEntry);
+      }
+      return aggregationByFields_;
+    }
+    private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
+    internalGetMutableAggregationByFields() {
+      onChanged();;
+      if (aggregationByFields_ == null) {
+        aggregationByFields_ = com.google.protobuf.MapField.newMapField(
+            AggregationByFieldsDefaultEntryHolder.defaultEntry);
+      }
+      if (!aggregationByFields_.isMutable()) {
+        aggregationByFields_ = aggregationByFields_.copy();
+      }
+      return aggregationByFields_;
+    }
+
+    public int getAggregationByFieldsCount() {
+      return internalGetAggregationByFields().getMap().size();
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public boolean containsAggregationByFields(
+        long key) {
+      
+      return internalGetAggregationByFields().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getAggregationByFieldsMap()} instead.
+     */
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFields() {
+      return getAggregationByFieldsMap();
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
+      return internalGetAggregationByFields().getMap();
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public long getAggregationByFieldsOrDefault(
+        long key,
+        long defaultValue) {
+      
+      java.util.Map<java.lang.Long, java.lang.Long> map =
+          internalGetAggregationByFields().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public long getAggregationByFieldsOrThrow(
+        long key) {
+      
+      java.util.Map<java.lang.Long, java.lang.Long> map =
+          internalGetAggregationByFields().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    public Builder clearAggregationByFields() {
+      internalGetMutableAggregationByFields().getMutableMap()
+          .clear();
+      return this;
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public Builder removeAggregationByFields(
+        long key) {
+      
+      internalGetMutableAggregationByFields().getMutableMap()
+          .remove(key);
+      return this;
+    }
+    /**
+     * Use alternate mutation accessors instead.
+     */
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.Long, java.lang.Long>
+    getMutableAggregationByFields() {
+      return internalGetMutableAggregationByFields().getMutableMap();
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+    public Builder putAggregationByFields(
+        long key,
+        long value) {
+      
+      
+      internalGetMutableAggregationByFields().getMutableMap()
+          .put(key, value);
+      return this;
+    }
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     */
+
+    public Builder putAllAggregationByFields(
+        java.util.Map<java.lang.Long, java.lang.Long> values) {
+      internalGetMutableAggregationByFields().getMutableMap()
+          .putAll(values);
       return this;
     }
     public final Builder setUnknownFields(

@@ -26,6 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import jodd.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     /**
      * 元数据连接顺序标识.
      */
-    public static final String APP_INIT_ORDER = "app-Init-Order";
+    public static final String APP_INIT_ORDER = "agg-app-Init-Order";
 
     @Resource
     private KeyValueStorage kv;
@@ -160,7 +161,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      */
     public boolean addTask(String prefix, Task task) throws Exception {
         TaskQueue queue;
-        if (!taskQueueMap.contains(prefix)) {
+        if (!taskQueueMap.containsKey(prefix)) {
             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
             taskKeyValueQueue.init();
             taskQueueMap.put(prefix, taskKeyValueQueue);
@@ -225,7 +226,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                     }
                 }
             } else {
-                logger.error(String.format("buildAppendingAppName by prefix not equals 1 for unknown reason.Maybe last addInitAppInfo failed ,but already incr this prefix %s", prefix));
+                logger.warn(String.format("kv incr this prefix: %s not equals 1.  Maybe other oqs node already incr %s", prefix, prefix));
                 return false;
             }
         } catch (Exception e) {
@@ -257,6 +258,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 if (bytes.isPresent()) {
                     String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
                     kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(orderStr + prefix + ",", StandardCharsets.UTF_8));
+                    logger.info(String.format("add appId-version to the appOrder %s", orderStr));
                 }
             }
         } catch (RuntimeException e) {
@@ -267,19 +269,79 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     }
 
     /**
-     * 构建未初始化完成标识.
+     * 构建正在添加任务完成标识.
      *
      * @param prefix appId-version.
-     * @return 唯一标识以avg-uninit开头
+     * @return 唯一标识以avg-appending开头
      */
-    private String buildAppendingAppName(String prefix) {
+    public String buildAppendingAppName(String prefix) {
         StringBuilder sb = new StringBuilder();
         return sb.append(APPENDING)
                 .append("-")
                 .append(prefix).toString();
     }
 
-    private String buildUnInitAppName(String prefix) {
+
+    /**
+     * 获取当前待初始化or正在初始化的appID-version应用.
+     *
+     * @return appId-version
+     */
+    private String getProcessingAppInfo() {
+        if (kv.exist(APP_INIT_ORDER)) {
+            Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
+            if (bytes.isPresent()) {
+
+                /*
+                 * orderStr: appId-version,appId-version,....
+                 * 123456-1,123456-2,1234567-1,1234567-2...
+                 */
+                String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
+                String[] split = orderStr.split(",");
+                if (split.length > 0) {
+                    return split[0];
+                }
+            }
+            return null;
+        }
+        return null;
+    }
+
+    private void removeAppInfoFromOrderList(String prefix) {
+        try {
+            locker.lock(APP_INIT_ORDER);
+            if (prefix.equals(getProcessingAppInfo())) {
+                Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
+                String deleteOrderHead = "";
+                if (bytes.isPresent()) {
+
+                    /*
+                     * orderStr: appId-version,appId-version,....
+                     * 123456-1,123456-2,1234567-1,1234567-2...
+                     */
+                    String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
+                    deleteOrderHead = StringUtils.substringAfter(orderStr, ",");
+                }
+                kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(deleteOrderHead, StandardCharsets.UTF_8));
+                logger.info(String.format("%s app has been completed, and  has removed from the orderList ", prefix));
+            } else {
+                logger.warn(prefix + " appInfo not equals the head of the appOrderInfo, maybe other node had delete this appInfo");
+            }
+        } catch (RuntimeException e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            locker.unlock(APP_INIT_ORDER);
+        }
+
+    }
+
+    /**
+     * 构建未初始化完成标识.
+     *
+     * @param prefix appId-version.
+     * @return 唯一标识以avg-uninit开头
+     */
+    public String buildUnInitAppName(String prefix) {
         StringBuilder sb = new StringBuilder();
         return sb.append(AVG_UNINIT)
                 .append("-")
@@ -290,26 +352,32 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 5000L;
+        private final long checkTimeoutMs = 500L;
 
         @Override
         public void run() {
             Task task = null;
             TaskQueue queue = null;
             while (running) {
-
-
-                if (usingApp.size() < 0) {
+                if (usingApp.size() <= 0) {
                     /*
                      * appId-version
                      */
                     String processingPrefix = getProcessingAppInfo();
                     if (StringUtil.isEmpty(processingPrefix)) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("当前无初始化聚合任务");
+                        }
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                     } else {
-                        // TODO 添加usingApp
-                        if (taskQueueMap.contains(processingPrefix)) {
+                        // 添加usingApp
+                        if (taskQueueMap.containsKey(processingPrefix)) {
                             usingApp.put(processingPrefix, taskQueueMap.get(processingPrefix));
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(String.format("current usingApp is %s"), processingPrefix);
+                                logger.debug(String.format("current taskQueue is %s"), usingApp.get(processingPrefix).toString());
+                            }
+                            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
                         } else {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
                             try {
@@ -336,16 +404,16 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         if (kv.exist(prefix)) {
                             if (getProcessingAppInfo().equals(prefix)) {
                                 removeAppInfoFromOrderList(prefix);
-                                logger.warn("appInfo %s init is done ,but not delete from the appOrderInfo", prefix);
+                                logger.warn("appInfo %s init is done ,but not delete from the appOrderInfo, maybe deleted by other oqs node", prefix);
                             }
-                            taskQueueMap.get(prefix).destroy();
-                            taskQueueMap.remove(prefix);
-                            usingApp.clear();
                         } else {
                             // 判断当前app-version队列是否还有任务
-                            if (kv.incr(String.format("%s-%s", prefix, TaskKeyValueQueue.UNUSED)) == 0) {
+                            if (kv.incr(String.format("%s-%s", prefix, TaskKeyValueQueue.UNUSED), 0) == 0) {
                                 kv.incr(prefix);
                                 removeAppInfoFromOrderList(prefix);
+                                taskQueueMap.get(prefix).destroy();
+                                taskQueueMap.remove(prefix);
+                                usingApp.remove(prefix);
                             }
                         }
                     } else {
@@ -387,59 +455,6 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                 }
 
-            }
-
-        }
-
-        private String getProcessingAppInfo() {
-            if (kv.exist(APP_INIT_ORDER)) {
-                Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
-                if (bytes.isPresent()) {
-
-                    /*
-                     * orderStr: appId-version,appId-version,....
-                     * 123456-1,123456-2,1234567-1,1234567-2...
-                     */
-                    String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
-                    String[] split = orderStr.split(",");
-                    if (split.length > 0) {
-                        return split[0];
-                    }
-                }
-                return null;
-            }
-            return null;
-        }
-
-        private void removeAppInfoFromOrderList(String prefix) {
-            try {
-                locker.lock(APP_INIT_ORDER);
-                if (prefix.equals(getProcessingAppInfo())) {
-                    StringBuilder deleteOrderHead = new StringBuilder();
-                    Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
-                    if (bytes.isPresent()) {
-
-                        /*
-                         * orderStr: appId-version,appId-version,....
-                         * 123456-1,123456-2,1234567-1,1234567-2...
-                         */
-                        String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
-                        String[] split = orderStr.split(",");
-                        if (split.length > 1) {
-                            for (int i = 1; i < split.length; i++) {
-                                deleteOrderHead.append(split[i]).append(",");
-                            }
-                        }
-                    }
-                    kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(deleteOrderHead.toString(), StandardCharsets.UTF_8));
-                    logger.info(String.format("%s app has been completed, and  has removed from the orderList ", prefix));
-                } else {
-                    logger.warn(prefix + " appInfo not equals the head of the appOrderInfo, maybe other node had delete this appInfo");
-                }
-            } catch (RuntimeException e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                locker.unlock(APP_INIT_ORDER);
             }
 
         }
