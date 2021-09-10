@@ -169,21 +169,21 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
                                 nodes.add(ptNode);
-
-//                                Aggregation nextAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
-//                                PTNode ptNode = new PTNode();
-//                                ptNode.setEntityField(entityFieldOp.get());
-//                                ptNode.setRootFlag(false);
-//                                ptNode.setEntityClass(entityClassOp.get());
-//                                ptNode.setConditions(nextAggregation.getConditions());
-//                                Optional<IEntityClass> entityClass1Op = entityByField(nextAggregation.getClassId(), nextAggregation.getFieldId(), entityClasses);
-//                                ptNode.setAggregationType(nextAggregation.getAggregationType());
-//                                if (entityClass1Op.isPresent()) {
-//                                    Optional<IEntityField> entityField1Op = entityClassOp.get().field(aggregation.getFieldId());
-//                                    ptNode.setAggEntityClass(entityClass1Op.get());
-//                                    ptNode.setAggEntityField(entityField1Op.get());
-//                                }
-//                                nodes.add(ptNode);
+                                /*
+                                Aggregation nextAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
+                                PTNode ptNode = new PTNode();
+                                ptNode.setEntityField(entityFieldOp.get());
+                                ptNode.setRootFlag(false);
+                                ptNode.setEntityClass(entityClassOp.get());
+                                ptNode.setConditions(nextAggregation.getConditions());
+                                Optional<IEntityClass> entityClass1Op = entityByField(nextAggregation.getClassId(), nextAggregation.getFieldId(), entityClasses);
+                                ptNode.setAggregationType(nextAggregation.getAggregationType());
+                                if (entityClass1Op.isPresent()) {
+                                    Optional<IEntityField> entityField1Op = entityClassOp.get().field(aggregation.getFieldId());
+                                    ptNode.setAggEntityClass(entityClass1Op.get());
+                                    ptNode.setAggEntityField(entityField1Op.get());
+                                }
+                                nodes.add(ptNode);*/
                             } else {
                                 //放置root节点
                                 PTNode ptNode = new PTNode();
@@ -206,6 +206,10 @@ public class MetaAggregationParse implements AggregationParse {
             parseTrees.forEach(pt -> {
                 appendTree(pt);
             });
+            Optional<Set<Long>> longs = parseFieldIds(parseTrees);
+            if (longs.isPresent()) {
+                aggFieldIds.addAll(longs.get());
+            }
         }
     }
 
@@ -263,7 +267,12 @@ public class MetaAggregationParse implements AggregationParse {
      * @param trees 聚合树集合.
      * @return 被聚合字段id集合.
      */
-    private Optional<Set<Long>> parseFieldIds(List<MetaParseTree> trees) {
+    private Optional<Set<Long>> parseFieldIds(List<ParseTree> trees) {
         return Optional.of(trees.stream().flatMap(l -> l.toList().stream().map(p -> p.getAggEntityField().id())).collect(Collectors.toSet()));
+    }
+
+    @Override
+    public boolean checkIsAggField(Long id) {
+        return aggFieldIds.contains(id);
     }
 }

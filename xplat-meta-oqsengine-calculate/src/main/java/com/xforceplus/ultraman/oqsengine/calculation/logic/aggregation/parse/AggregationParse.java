@@ -56,4 +56,12 @@ public interface AggregationParse {
      */
     void builderTrees(String appId, int version, List<IEntityClass> entityClasses);
 
+    /**
+     * 判断当前字段是否是被聚合字段.
+     *
+     * @param id 字段id.
+     * @return boolean.
+     */
+    boolean checkIsAggField(Long id);
+
 }

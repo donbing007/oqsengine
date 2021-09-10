@@ -22,7 +22,7 @@ public class CalculationLogicConfiguration {
         return new DefaultCalculationLogicFactory();
     }
 
-//    @Bean
+    // @Bean
     public AggregationParse aggregationParse() {
         return new MetaAggregationParse();
     }
