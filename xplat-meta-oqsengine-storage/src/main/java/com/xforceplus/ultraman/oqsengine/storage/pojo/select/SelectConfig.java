@@ -73,17 +73,20 @@ public class SelectConfig implements Serializable {
             return false;
         }
         SelectConfig that = (SelectConfig) o;
-        return commitId == that.commitId
-            && Objects.equals(sort, that.sort)
-            && Objects.equals(page, that.page)
-            && Objects.equals(excludedIds, that.excludedIds)
-            && Objects.equals(dataAccessFilterCondtitions, that.dataAccessFilterCondtitions)
-            && Objects.equals(facet, that.facet);
+        return getCommitId() == that.getCommitId()
+            && Objects.equals(getSort(), that.getSort())
+            && Objects.equals(getSecondarySort(), that.getSecondarySort())
+            && Objects.equals(getThirdSort(), that.getThirdSort())
+            && Objects.equals(getPage(), that.getPage())
+            && Objects.equals(getExcludedIds(), that.getExcludedIds())
+            && Objects.equals(getDataAccessFilterCondtitions(), that.getDataAccessFilterCondtitions())
+            && Objects.equals(getFacet(), that.getFacet());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(commitId, sort, page, excludedIds, dataAccessFilterCondtitions, facet);
+        return Objects.hash(getCommitId(), getSort(), getSecondarySort(), getThirdSort(), getPage(), getExcludedIds(),
+            getDataAccessFilterCondtitions(), getFacet());
     }
 
     @Override
@@ -104,9 +107,9 @@ public class SelectConfig implements Serializable {
      */
     public static final class Builder {
         private long commitId = 0;
-        private Sort sort;
-        private Sort secondarySort;
-        private Sort thirdSort;
+        private Sort sort = Sort.buildOutOfSort();
+        private Sort secondarySort = Sort.buildOutOfSort();
+        private Sort thirdSort = Sort.buildOutOfSort();
         private Page page = Page.newSinglePage(10);
         private Set<Long> excludedIds = Collections.emptySet();
         private Facet facet = Facet.build();

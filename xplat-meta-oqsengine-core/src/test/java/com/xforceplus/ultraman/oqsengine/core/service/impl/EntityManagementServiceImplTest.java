@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -11,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -111,7 +114,7 @@ public class EntityManagementServiceImplTest {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
         IEntity[] targetEntities = new IEntity[1000];
-        for (int i = 0; i <= 1000; i++) {
+        for (int i = 0; i < 1000; i++) {
 
             targetEntities[i] = Entity.Builder.anEntity()
                 .withEntityClassRef(
@@ -134,6 +137,12 @@ public class EntityManagementServiceImplTest {
         }
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        OperationResult[] results = impl.build(targetEntities);
+        for (OperationResult r : results) {
+            Assertions.assertEquals(ResultStatus.SUCCESS, r.getResultStatus());
+        }
+
+        verify(masterStorage, times(1000)).build(any(IEntity.class), eq(EntityClassDefine.l2EntityClass));
     }
 
     @Test

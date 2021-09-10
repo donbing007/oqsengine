@@ -7,16 +7,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -35,62 +36,88 @@ public enum FieldType {
     /**
      * boolean.
      */
-    BOOLEAN("Boolean", Boolean.class, s -> {
-        try {
-            Boolean.parseBoolean(s);
-            return true;
-        } catch (Exception e) {
-            return false;
+    BOOLEAN(
+        "Boolean",
+        Boolean.class,
+        s ->
+            s.equalsIgnoreCase("TRUE") || s.equalsIgnoreCase("FALSE"),
+        () -> "false",
+        new String[] {"boolean"},
+        (f, v) ->
+            new BooleanValue(f, Boolean.parseBoolean(v)),
+        (v1, v2) -> {
+            Boolean value1 = ((BooleanValue) v1).getValue();
+            Boolean value2 = ((BooleanValue) v2).getValue();
+            return Boolean.compare(value1, value2);
         }
-    }, new String[] {"boolean"}, (f, v) ->
-        new BooleanValue(f, Boolean.parseBoolean(v)), (v1, v2) -> {
-        Boolean value1 = ((BooleanValue) v1).getValue();
-        Boolean value2 = ((BooleanValue) v2).getValue();
-        return Boolean.compare(value1, value2);
-    }),
+    ),
     /**
      * enum.
      */
-    ENUM("Enum", new String[] {"enum"}, EnumValue::new),
+    ENUM("Enum", String.class, s -> true, () -> "", new String[] {"enum"}, EnumValue::new,
+        (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
+    ),
 
     /**
      * datetime.
      */
-    DATETIME("DateTime", Long.class, s -> {
-        try {
-            Instant.ofEpochMilli(Long.parseLong(s));
-            return true;
-        } catch (Exception e) {
-            return false;
+    DATETIME(
+        "DateTime",
+        Long.class,
+        s -> {
+            try {
+                Instant.ofEpochMilli(Long.parseLong(s));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        },
+        () -> Long.toString(new Date(0).getTime()),
+        new String[] {"timestamp"},
+        (f, v) -> {
+            Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
+            return new DateTimeValue(f, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
+        },
+        (v1, v2) -> {
+            LocalDateTime value1 = ((DateTimeValue) v1).getValue();
+            LocalDateTime value2 = ((DateTimeValue) v2).getValue();
+            return value1.compareTo(value2);
         }
-    }, new String[] {"timestamp"}, (f, v) -> {
-        Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
-        return new DateTimeValue(f, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
-    }, (v1, v2) -> {
-        LocalDateTime value1 = ((DateTimeValue) v1).getValue();
-        LocalDateTime value2 = ((DateTimeValue) v2).getValue();
-        return value1.compareTo(value2);
-    }),
+    ),
     /**
      * Long.
      */
-    LONG("Long", Long.class, s -> {
-        try {
-            Long.parseLong(s);
-            return true;
-        } catch (Exception e) {
-            return false;
+    LONG(
+        "Long",
+        Long.class,
+        s -> {
+            try {
+                Long.parseLong(s);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        },
+        () -> "0",
+        new String[] {"bigint", "long", "serialNo"},
+        (f, v) -> new LongValue(f, Long.parseLong(v)),
+        (v1, v2) -> {
+            Long value1 = ((LongValue) v1).getValue();
+            Long value2 = ((LongValue) v2).getValue();
+            return Long.compare(value1, value2);
         }
-    }, new String[] {"bigint", "long", "serialNo"}, (f, v) -> new LongValue(f, Long.parseLong(v)), (v1, v2) -> {
-
-        Long value1 = ((LongValue) v1).getValue();
-        Long value2 = ((LongValue) v2).getValue();
-        return Long.compare(value1, value2);
-    }),
+    ),
     /**
      * String.
      */
-    STRING("String", new String[] {"string"}, StringValue::new),
+    STRING("String",
+        String.class,
+        s -> true,
+        () -> "",
+        new String[] {" string"},
+        StringValue::new,
+        (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
+    ),
     /**
      * strings.
      */
@@ -104,6 +131,7 @@ public enum FieldType {
                 return false;
             }
         },
+        () -> "",
         new String[] {"strings"}, (x, str) -> {
         return new StringsValue(x, str.trim().split(","));
     },
@@ -119,7 +147,7 @@ public enum FieldType {
         } catch (Exception e) {
             return false;
         }
-    }, new String[] {"double", "decimal"}, (f, v) -> {
+    }, () -> "0.0", new String[] {"double", "decimal"}, (f, v) -> {
         return new DecimalValue(f, new BigDecimal(v));
     },
         (v1, v2) -> {
@@ -132,6 +160,8 @@ public enum FieldType {
     private String type;
 
     private Predicate<String> tester;
+
+    private Supplier<String> defaultSortValue;
 
     private String[] accepts;
 
@@ -154,11 +184,13 @@ public enum FieldType {
     FieldType(String type,
               Class javaType,
               Predicate<String> tester,
+              Supplier<String> defaultSortValue,
               String[] accepts,
               BiFunction<IEntityField, String, IValue> valueConverter,
               BiFunction<IValue, IValue, Integer> comparator) {
         this.type = type;
         this.tester = tester;
+        this.defaultSortValue = defaultSortValue;
         this.accepts = accepts;
         this.valueConverter = valueConverter;
         this.javaType = javaType;
@@ -166,12 +198,12 @@ public enum FieldType {
     }
 
     FieldType(String type, Predicate<String> tester, BiFunction<IEntityField, String, IValue> valueConverter) {
-        this(type, String.class, tester, new String[] {}, valueConverter,
+        this(type, String.class, tester, () -> "0", new String[] {}, valueConverter,
             (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
     FieldType(String type, String[] accepts, BiFunction<IEntityField, String, IValue> valueConverter) {
-        this(type, String.class, s -> true, accepts, valueConverter,
+        this(type, String.class, s -> true, () -> "0", accepts, valueConverter,
             (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
@@ -183,14 +215,18 @@ public enum FieldType {
         this.type = type;
     }
 
-    public Boolean canParseFrom(String input) {
+    public boolean canParseFrom(String input) {
         return tester.test(input);
     }
 
+    public String getDefaultSortValue() {
+        return defaultSortValue.get();
+    }
+
     /**
-     * 比较.
+     * 两个以字符串表示的值进行比较.
      */
-    public int compare(String o1, String o2) {
+    public int compareFromStringValue(String o1, String o2) {
         if (comparator == null) {
             return 0;
         }

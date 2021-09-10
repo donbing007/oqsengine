@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 表示一个 entity 的指针.
@@ -29,6 +30,29 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
 
     public int getMajor() {
         return major;
+    }
+
+    /**
+     * 获取排序值.
+     *
+     * @param index 排序字段序号,从0开始,最大为2.
+     * @return 排序值.
+     */
+    public Optional<String> getSortValue(int index) {
+        switch (index) {
+            case 0: {
+                return Optional.ofNullable(getOrderValue());
+            }
+            case 1: {
+                return Optional.ofNullable(getSecondOrderValue());
+            }
+            case 2: {
+                return Optional.ofNullable(getThridOrderValue());
+            }
+            default: {
+                return Optional.empty();
+            }
+        }
     }
 
     public String getOrderValue() {
@@ -67,6 +91,32 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
         this.thridOrderValue = thridOrderValue;
     }
 
+    /**
+     * 设置排序字段.
+     *
+     * @param index     序号,从0开始,最大接爱为2.
+     * @param sortValue 排序的值.
+     */
+    public void setSortValue(int index, String sortValue) {
+        switch (index) {
+            case 0: {
+                setOrderValue(sortValue);
+                break;
+            }
+            case 1: {
+                setSecondOrderValue(sortValue);
+                break;
+            }
+            case 2: {
+                setThridOrderValue(sortValue);
+                break;
+            }
+            default: {
+
+            }
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -94,6 +144,8 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
         sb.append(", op=").append(op);
         sb.append(", major=").append(major);
         sb.append(", orderValue='").append(orderValue).append('\'');
+        sb.append(", secondOrderValue='").append(secondOrderValue).append('\'');
+        sb.append(", thridOrderValue='").append(thridOrderValue).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -155,6 +207,30 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
         public Builder withThridOrderValue(String thridOrderValue) {
             this.thridOrderValue = thridOrderValue;
             return this;
+        }
+
+        /**
+         * 根据顺序设置排序值.
+         *
+         * @param index      序号,从0开始.最大接爱的为2.
+         * @param orderValue 排序的值.
+         * @return 构造器.
+         */
+        public Builder withSortValue(int index, String orderValue) {
+            switch (index) {
+                case 0: {
+                    return withOrderValue(orderValue);
+                }
+                case 1: {
+                    return withSecondOrderValue(orderValue);
+                }
+                case 2: {
+                    return withThridOrderValue(orderValue);
+                }
+                default: {
+                    return this;
+                }
+            }
         }
 
         /**

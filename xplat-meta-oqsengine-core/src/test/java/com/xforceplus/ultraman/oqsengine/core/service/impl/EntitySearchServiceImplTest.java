@@ -40,7 +40,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -85,6 +84,165 @@ public class EntitySearchServiceImplTest {
     @AfterEach
     public void after() throws Exception {
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    /**
+     * 跳过了排序2,所以造成第三个排序字段也不会启效.
+     */
+    @Test
+    public void testMultifieldSortSkipSort() throws Exception {
+        when(masterStorage.select(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .build()
+            )
+        ).thenReturn(
+            Arrays.asList(
+                EntityRef.Builder.anEntityRef()
+                    .withId(1)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "13")
+                    .withSortValue(1, "12").build(),
+
+                EntityRef.Builder.anEntityRef()
+                    .withId(2)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "11")
+                    .withSortValue(1, "13").build()
+            )
+        );
+
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .build()
+        )).thenReturn(
+            Arrays.asList(
+                EntityRef.Builder.anEntityRef()
+                    .withId(3)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "10")
+                    .withSortValue(1, "12").build(),
+
+                EntityRef.Builder.anEntityRef()
+                    .withId(4)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "12")
+                    .withSortValue(1, "11").build()
+            )
+        );
+
+        long[] expectedIds = new long[] {
+            3, 2, 4, 1
+        };
+        when(masterStorage.selectMultiple(expectedIds, EntityClassDefine.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(3).build(),
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(4).build()
+            )
+        );
+
+        List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(10))
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .withThridSort(Sort.buildDescSort(EntityClassDefine.l2EntityClass.field("l0-long").get()))
+                .build()
+        ));
+
+        Assertions.assertEquals(expectedIds.length, entities.size());
+        for (int i = 0; i < expectedIds.length; i++) {
+            Assertions.assertEquals(expectedIds[i], entities.get(i).id());
+        }
+    }
+
+    @Test
+    public void testMultifieldSort() throws Exception {
+        when(masterStorage.select(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .withSecondarySort(Sort.buildDescSort(EntityClassDefine.l2EntityClass.field("l0-long").get()))
+                .build()
+            )
+        ).thenReturn(
+            Arrays.asList(
+                EntityRef.Builder.anEntityRef()
+                    .withId(1)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "13")
+                    .withSortValue(1, "12").build(),
+
+                EntityRef.Builder.anEntityRef()
+                    .withId(2)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "10")
+                    .withSortValue(1, "13").build()
+            )
+        );
+
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withCommitId(1)
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .withSecondarySort(Sort.buildDescSort(EntityClassDefine.l2EntityClass.field("l0-long").get()))
+                .build()
+        )).thenReturn(
+            Arrays.asList(
+                EntityRef.Builder.anEntityRef()
+                    .withId(3)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "10")
+                    .withSortValue(1, "12").build(),
+
+                EntityRef.Builder.anEntityRef()
+                    .withId(4)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withSortValue(0, "13")
+                    .withSortValue(1, "11").build()
+            )
+        );
+
+        long[] expectedIds = new long[] {
+            2, 3, 1, 4
+        };
+        when(masterStorage.selectMultiple(expectedIds, EntityClassDefine.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(3).build(),
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(4).build()
+            )
+        );
+
+        List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(10))
+                .withSort(Sort.buildAscSort(EntityClassDefine.l2EntityClass.field("l1-long").get()))
+                .withSecondarySort(Sort.buildDescSort(EntityClassDefine.l2EntityClass.field("l0-long").get()))
+                .build()
+        ));
+
+        Assertions.assertEquals(expectedIds.length, entities.size());
+        for (int i = 0; i < expectedIds.length; i++) {
+            Assertions.assertEquals(expectedIds[i], entities.get(i).id());
+        }
     }
 
     @Test
@@ -142,24 +300,14 @@ public class EntitySearchServiceImplTest {
     @Test
     public void testFilter() throws Exception {
         when(masterStorage.select(
-            Mockito.argThat(conditions -> {
-                boolean result = conditions.size() == 0;
-                return result;
-            }),
-            Mockito.argThat(entityClass -> {
-                boolean result = entityClass.id() == EntityClassDefine.l2EntityClass.id();
-                return result;
-            }),
-            Mockito.argThat(selectConfig -> {
-                boolean result = selectConfig.equals(
-                    SelectConfig.Builder.anSelectConfig()
-                        .withCommitId(1)
-                        .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                        .build());
-                return result;
-            })
-
-        )).thenReturn(Arrays.asList(
+            Conditions.buildEmtpyConditions(),
+            EntityClassDefine.l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .withCommitId(1)
+                .build()
+            )
+        ).thenReturn(Arrays.asList(
             EntityRef.Builder.anEntityRef()
                 .withId(1)
                 .withOp(OperationType.CREATE.getValue())
@@ -174,36 +322,32 @@ public class EntitySearchServiceImplTest {
                 .withMajor(OqsVersion.MAJOR).build(),
             EntityRef.Builder.anEntityRef()
                 .withId(4)
-                .withOp(OperationType.CREATE.getValue())
+                .withOp(OperationType.DELETE.getValue())
                 .withMajor(OqsVersion.MAJOR).build()
         ));
-        when(masterStorage.selectMultiple(new long[] {1, 2, 4}, EntityClassDefine.l2EntityClass)).thenReturn(
+        when(masterStorage.selectMultiple(new long[] {1, 2, 3}, EntityClassDefine.l2EntityClass)).thenReturn(
             Arrays.asList(
                 Entity.Builder.anEntity().withId(1).build(),
                 Entity.Builder.anEntity().withId(2).build(),
-                Entity.Builder.anEntity().withId(4).build()
+                Entity.Builder.anEntity().withId(3).build()
             )
         );
 
-        Page page = Page.newSinglePage(1000);
+        Page indexPage = Page.newSinglePage(100);
+        indexPage.setTotalCount(0);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
-                .withPage(page)
-                .withExcludedIds(new HashSet())
+                .withPage(indexPage)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withExcludeId(3)
                 .withExcludeId(4)
                 .build()
-        )).thenAnswer(invocation -> {
-            SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
-            selectConfig.getPage().setTotalCount(0);
-            return Collections.emptyList();
-        });
+        )).thenReturn(Collections.emptyList());
 
 
+        Page page = Page.newSinglePage(100);
         Collection<IEntity> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass.ref(),
@@ -211,7 +355,8 @@ public class EntitySearchServiceImplTest {
         );
 
         Assertions.assertEquals(3, entities.size());
-        Assertions.assertEquals(3, page.getTotalCount());
+        // 总量会多出100,是由于index没有真的查询数据.
+        Assertions.assertEquals(3 + 100, page.getTotalCount());
     }
 
     @Test
@@ -302,7 +447,6 @@ public class EntitySearchServiceImplTest {
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withExcludeId(2L)
                 .withPage(page)
                 .build()
         )).thenReturn(
@@ -318,9 +462,10 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        when(masterStorage.selectMultiple(new long[] {1, 3, 4}, EntityClassDefine.l2EntityClass)).thenReturn(
+        when(masterStorage.selectMultiple(new long[] {1, 2, 3, 4}, EntityClassDefine.l2EntityClass)).thenReturn(
             Arrays.asList(
                 Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(2).build(),
                 Entity.Builder.anEntity().withId(3).build(),
                 Entity.Builder.anEntity().withId(4).build()
             )
@@ -332,9 +477,9 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         ));
 
-        Assertions.assertEquals(3, entities.size());
+        Assertions.assertEquals(4, entities.size());
         long[] expectedIds = new long[] {
-            1, 3, 4
+            1, 2, 3, 4
         };
         for (int i = 0; i < expectedIds.length; i++) {
             Assertions.assertEquals(expectedIds[i], entities.get(i).id());

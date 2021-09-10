@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.math.BigDecimal;
 import java.util.Objects;

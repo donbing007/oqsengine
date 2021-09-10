@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
@@ -16,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  * @version 0.1 2021/06/28 10:13
  * @since 1.8
  */
+@Deprecated
 public class LookupValue extends AbstractValue<Long> {
 
     /**

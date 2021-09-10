@@ -88,7 +88,7 @@ public class ServiceSelectConfig {
      * builder.
      */
     public static final class Builder {
-        private Page page;
+        private Page page = Page.newSinglePage(10);
         private Sort sort;
         private Sort secondarySort;
         private Sort thirdSort;

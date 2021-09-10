@@ -2,28 +2,28 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 
 import static com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager.L1_ENTITY_CLASS;
 
-import com.xforceplus.ultraman.oqsengine.core.service.impl.TestInitTools;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.TestInitTools;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockCalculatorMetaManager;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
@@ -49,12 +49,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
+ * 计算字段管理测试.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/18
  * @since 1.8
  */
 @ExtendWith({RedisContainer.class})
-public class    ManagementWithCalculatorTest {
+public class ManagementWithCalculatorTest {
 
     private EntityManagementServiceImpl impl;
 
@@ -69,6 +71,9 @@ public class    ManagementWithCalculatorTest {
         TestInitTools.bizIdGenerator(bizType);
     }
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
 
@@ -85,7 +90,7 @@ public class    ManagementWithCalculatorTest {
         TestInitTools.close();
     }
 
-    private enum COMPARE {
+    private enum Compare {
         LT,
         GT,
         EQ,
@@ -95,7 +100,7 @@ public class    ManagementWithCalculatorTest {
         START_WITH,
         NOTHING;
 
-        public static boolean compareTwoValue(Object a, Object b, COMPARE compare) {
+        public static boolean compareTwoValue(Object a, Object b, Compare compare) {
             a = a instanceof Integer ? ((Integer) a).longValue() : a;
             b = b instanceof Integer ? ((Integer) b).longValue() : b;
 
@@ -109,13 +114,13 @@ public class    ManagementWithCalculatorTest {
                 case EQ: {
                     return a.equals(b);
                 }
-                case LE : {
+                case LE: {
                     return (Long) a <= (Long) b;
                 }
-                case GE : {
+                case GE: {
                     return (Long) a >= (Long) b;
                 }
-                case NOT : {
+                case NOT: {
                     return !a.equals(b);
                 }
                 case START_WITH: {
@@ -124,21 +129,23 @@ public class    ManagementWithCalculatorTest {
                 case NOTHING: {
                     return null != b;
                 }
+                default: {
+                    return false;
+                }
             }
-
-            return false;
         }
     }
 
     private final long expectedId = 2;
     private final long expectedFailedId = 20;
-    private final Map<Long, AbstractMap.SimpleEntry<Object, COMPARE>> expectedResult = new HashMap<>();
+    private final Map<Long, AbstractMap.SimpleEntry<Object, Compare>> expectedResult = new HashMap<>();
     private String expectedAutoFill = null;
     private static Long idGeneratorLocal = 0L;
     private static Long staticGeneratorSenior = 1L;
 
     private static int startCheckYear = LocalDateTime.now().getYear();
     private static int replaceCheckYear = 1970;
+
     @Test
     public void buildTest() throws SQLException {
         expectedAutoFill = bizType + "-" + (idGeneratorLocal++);
@@ -214,7 +221,8 @@ public class    ManagementWithCalculatorTest {
 
         entityValue.addValue(new FormulaTypedValue(L1_ENTITY_CLASS.field("senior autoFill").get(), params));
         entityValue.addValue(new FormulaTypedValue(L1_ENTITY_CLASS.field("offset data").get(), params));
-        entityValue.addValue(new DateTimeValue(L1_ENTITY_CLASS.field("createTime").get(), (LocalDateTime) params.get("createTime")));
+        entityValue.addValue(
+            new DateTimeValue(L1_ENTITY_CLASS.field("createTime").get(), (LocalDateTime) params.get("createTime")));
 
         IEntity replaceEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
@@ -234,28 +242,27 @@ public class    ManagementWithCalculatorTest {
                     }
                 );
             }
-        } else {
-//            Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus());
         }
 
         if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS) ||
-                operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+            operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
             Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
             Assertions.assertTrue(eOp.isPresent());
             IEntity entity = eOp.get();
 
             expectedResult.forEach((key, value) -> {
-                Optional<IValue> vOp = entity.entityValue().getValue(key);
-                Assertions.assertTrue(vOp.isPresent());
-                Assertions.assertTrue(COMPARE.compareTwoValue(value.getKey(), vOp.get().getValue(), value.getValue()));
-                if (vOp.get().getField().calculationType().equals(CalculationType.AUTO_FILL)) {
-                    AutoFill autoFill = (AutoFill) vOp.get().getField().config().getCalculation();
+                Optional<IValue> valueOp = entity.entityValue().getValue(key);
+                Assertions.assertTrue(valueOp.isPresent());
+                Assertions
+                    .assertTrue(Compare.compareTwoValue(value.getKey(), valueOp.get().getValue(), value.getValue()));
+                if (valueOp.get().getField().calculationType().equals(CalculationType.AUTO_FILL)) {
+                    AutoFill autoFill = (AutoFill) valueOp.get().getField().config().getCalculation();
                     if (autoFill.getDomainNoType().equals(AutoFill.DomainNoType.NORMAL)) {
-                        Assertions.assertEquals(expectedAutoFill, vOp.get().getValue());
+                        Assertions.assertEquals(expectedAutoFill, valueOp.get().getValue());
                     } else {
                         if (insert) {
                             String[] parts =
-                                ((String) vOp.get().getValue()).split(":");
+                                ((String) valueOp.get().getValue()).split(":");
 
                             Assertions.assertEquals(2, parts.length);
 
@@ -264,12 +271,15 @@ public class    ManagementWithCalculatorTest {
                             Assertions.assertEquals(String.format("%04d", staticGeneratorSenior.intValue()), parts[1]);
                         }
                     }
-                } else if (vOp.get().getField().calculationType().equals(CalculationType.FORMULA)) {
-                    if (vOp.get().getField().id() == TEST_OFFSET_DATA) {
+                } else if (valueOp.get().getField().calculationType().equals(CalculationType.FORMULA)) {
+                    if (valueOp.get().getField().id() == TEST_OFFSET_DATA) {
                         if (insert) {
-                            Assertions.assertEquals(startCheckYear + 1, ((LocalDateTime) vOp.get().getValue()).getYear());
+                            Assertions
+                                .assertEquals(startCheckYear + 1, ((LocalDateTime) valueOp.get().getValue()).getYear());
                         } else {
-                            Assertions.assertEquals(replaceCheckYear + 1, ((LocalDateTime) vOp.get().getValue()).getYear());
+                            Assertions
+                                .assertEquals(replaceCheckYear + 1,
+                                    ((LocalDateTime) valueOp.get().getValue()).getYear());
                         }
                     }
                 }
@@ -279,25 +289,25 @@ public class    ManagementWithCalculatorTest {
 
     private void setExpectedResult(Long expectedValue) {
         if (expectedValue != null) {
-            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(expectedValue * 3, COMPARE.EQ));
-            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(expectedValue * 3 / 2, COMPARE.EQ));
+            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(expectedValue * 3, Compare.EQ));
+            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(expectedValue * 3 / 2, Compare.EQ));
             expectedResult
-                .put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>(expectedValue + "-", COMPARE.START_WITH));
+                .put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>(expectedValue + "-", Compare.START_WITH));
         } else {
-            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(0, COMPARE.EQ));
-            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(1, COMPARE.EQ));
-            expectedResult.put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>("0", COMPARE.EQ));
+            expectedResult.put(Long.MAX_VALUE - 1, new AbstractMap.SimpleEntry<>(0, Compare.EQ));
+            expectedResult.put(Long.MAX_VALUE - 2, new AbstractMap.SimpleEntry<>(1, Compare.EQ));
+            expectedResult.put(Long.MAX_VALUE - 5, new AbstractMap.SimpleEntry<>("0", Compare.EQ));
         }
 
         expectedResult.put(Long.MAX_VALUE - 3,
-            new AbstractMap.SimpleEntry<>(TimeUtils.convert(System.currentTimeMillis()), COMPARE.NOTHING));
-        expectedResult.put(Long.MAX_VALUE - 4, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
+            new AbstractMap.SimpleEntry<>(TimeUtils.convert(System.currentTimeMillis()), Compare.NOTHING));
+        expectedResult.put(Long.MAX_VALUE - 4, new AbstractMap.SimpleEntry<>(0L, Compare.NOTHING));
 
-        expectedResult.put(Long.MAX_VALUE - 6, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
-        expectedResult.put(Long.MAX_VALUE - 7, new AbstractMap.SimpleEntry<>(0L, COMPARE.NOTHING));
+        expectedResult.put(Long.MAX_VALUE - 6, new AbstractMap.SimpleEntry<>(0L, Compare.NOTHING));
+        expectedResult.put(Long.MAX_VALUE - 7, new AbstractMap.SimpleEntry<>(0L, Compare.NOTHING));
     }
 
-    public static class MockMasterStorage implements MasterStorage {
+    private static class MockMasterStorage implements MasterStorage {
 
         private final Map<Long, IEntity> entityMap = new HashMap<>();
 
@@ -329,18 +339,18 @@ public class    ManagementWithCalculatorTest {
         }
 
         @Override
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
+            return null;
+        }
+
+        @Override
         public void writeError(ErrorStorageEntity errorStorageEntity) {
 
         }
 
         @Override
         public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
-            throws SQLException {
-            return null;
-        }
-
-        @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
             return null;
         }

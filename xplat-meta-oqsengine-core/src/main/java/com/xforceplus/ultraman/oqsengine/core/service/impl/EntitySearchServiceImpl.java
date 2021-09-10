@@ -9,8 +9,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
-import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
-import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AbstractConditionNode;
@@ -50,7 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +58,10 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -322,17 +323,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
 
         Conditions useConditions = conditions;
-        Sort useSort = null;
-        if (config.getSort().isPresent()) {
-            Sort sort = config.getSort().get();
-            if (sort.getField() != null && !sort.getField().config().isSearchable()) {
-                useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
-            } else {
-                useSort = sort;
-            }
-        } else {
-            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
-        }
 
         Page usePage;
         if (!config.getPage().isPresent()) {
@@ -417,16 +407,38 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
+            SelectConfig.Builder selectConfigBuilder = SelectConfig.Builder.anSelectConfig();
+            selectConfigBuilder.withCommitId(reviseCommitId(minUnSyncCommitId))
+                .withPage(usePage)
+                .withDataAccessFitlerCondtitons(
+                    config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions()
+                );
+            // 非排序.
+            if (!config.getSort().isPresent()
+                && !config.getSecondarySort().isPresent()
+                && !config.getThirdSort().isPresent()) {
+
+                selectConfigBuilder.withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+
+            } else {
+                // 上层不排序,后续的直接视为不排序.
+                if (config.getSort().isPresent()) {
+                    selectConfigBuilder.withSort(config.getSort().get());
+
+                    if (config.getSecondarySort().isPresent()) {
+                        selectConfigBuilder.withSecondarySort(config.getSecondarySort().get());
+
+                        if (config.getThirdSort().isPresent()) {
+                            selectConfigBuilder.withThirdSort(config.getThirdSort().get());
+                        }
+                    }
+                }
+            }
+
             Collection<EntityRef> refs = combinedStorage.select(
                 useConditions,
                 entityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withCommitId(reviseCommitId(minUnSyncCommitId))
-                    .withSort(useSort)
-                    .withPage(usePage)
-                    .withDataAccessFitlerCondtitons(
-                        config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions())
-                    .build()
+                selectConfigBuilder.build()
             );
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
@@ -819,31 +831,37 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         private IndexStorage indexStorage;
 
-        private final Map<FieldType, EntityRefComparator> refMapping;
-
-        private final Map<FieldType, String> sortDefaultValue;
+        private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
 
         public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
             this.masterStorage = masterStorage;
             this.indexStorage = indexStorage;
 
-            refMapping = new HashMap<>();
-            refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
-            refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
-            refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
-            refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
-            refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
-            refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
-            refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
+            // 比较器构建.
+            comparatorSupplier = (sorts) -> {
+                Comparator<EntityRef> comparator = null;
 
-            sortDefaultValue = new HashMap();
-            sortDefaultValue.put(FieldType.BOOLEAN, Boolean.FALSE.toString());
-            sortDefaultValue.put(FieldType.DATETIME, Long.toString(new Date(0).getTime()));
-            sortDefaultValue.put(FieldType.LONG, "0");
-            sortDefaultValue.put(FieldType.DECIMAL, "0.0");
-            sortDefaultValue.put(FieldType.ENUM, "");
-            sortDefaultValue.put(FieldType.STRING, "");
-            sortDefaultValue.put(FieldType.UNKNOWN, "0");
+                for (int i = 0; i < sorts.length; i++) {
+                    Sort sort = sorts[i];
+                    int finalI = i;
+                    Comparator<EntityRef> c =
+                        Comparator.comparing(r -> r.getSortValue(finalI).orElseGet(null), (v1, v2) -> {
+                            FieldType type = sort.getField().type();
+                            return type.compareFromStringValue(v1, v2);
+                        });
+                    if (sort.isDes()) {
+                        c = c.reversed();
+                    }
+
+                    if (comparator == null) {
+                        comparator = c;
+                    } else {
+                        comparator.thenComparing(c);
+                    }
+                }
+
+                return comparator;
+            };
         }
 
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
@@ -852,6 +870,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             long commitId = config.getCommitId();
             Sort sort = config.getSort();
+            Sort secondSort = config.getSecondarySort();
+            Sort thirdSort = config.getThirdSort();
+            Sort[] sorts = buildSorts(config);
             Page page = config.getPage();
             Conditions filterCondition = config.getDataAccessFilterCondtitions();
 
@@ -862,6 +883,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     entityClass,
                     SelectConfig.Builder.anSelectConfig()
                         .withSort(sort)
+                        .withSecondarySort(secondSort)
+                        .withThirdSort(thirdSort)
                         .withCommitId(commitId)
                         .withDataAccessFitlerCondtitons(filterCondition)
                         .build()
@@ -874,7 +897,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            masterRefs = fixNullSortValue(masterRefs, sort);
+            masterRefs = fixNullSortValue(masterRefs, sorts);
 
             /*
              * filter ids
@@ -907,25 +930,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 entityClass,
                 SelectConfig.Builder.anSelectConfig()
                     .withSort(sort)
+                    .withSecondarySort(secondSort)
+                    .withThirdSort(thirdSort)
                     .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
                     .withDataAccessFitlerCondtitons(filterCondition)
                     .withCommitId(commitId).build()
             );
-            indexRefs = fixNullSortValue(indexRefs, sort);
+            indexRefs = fixNullSortValue(indexRefs, sorts);
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream()
                 .filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
-
-            Collection<EntityRef> retRefs;
-            //combine two refs
-            if (sort != null && !sort.isOutOfOrder()) {
-                retRefs = merge(masterRefsWithoutDeleted, indexRefs, sort);
-            } else {
-                retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + indexRefs.size());
-                retRefs.addAll(masterRefsWithoutDeleted);
-                retRefs.addAll(indexRefs);
-            }
 
             page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
             if (page.isEmptyPage()) {
@@ -940,55 +955,87 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             long pageSize = page.getPageSize();
 
             long skips = scope == null ? 0 : scope.getStartLine();
-            Collection<EntityRef> limitedSelect =
-                retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
-            return limitedSelect;
+            return mergeToStream(masterRefsWithoutDeleted, indexRefs, sorts)
+                .skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
         }
 
-        private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
-            StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
-            FieldType type = sort.getField().type();
-
-            EntityRefComparator entityRefComparator = refMapping.get(type);
-
-            if (entityRefComparator == null) {
-                //default
-                logger.error("unknown field type !! fallback to string");
-                entityRefComparator = new EntityRefComparator(FieldType.STRING);
+        // 根据排序设定情况,返回一个数组包含了所有的排序字段,大小有可能是0到3不定.
+        private Sort[] buildSorts(SelectConfig config) {
+            if (config.getSort().isOutOfOrder()) {
+                return new Sort[0];
             }
 
-            //sort masterRefs first
-            List<EntityRef> sortedMasterRefs =
-                masterRefs.stream()
-                    .sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed())
-                    .collect(toList());
-            return streamMerger.merge(
-                sortedMasterRefs.stream(),
-                indexRefs.stream(),
-                refMapping.get(type),
-                sort.isAsc()).collect(toList());
+            // 最大处理的排序字段数量.
+            final int maxSortField = 3;
+            // 如果当前的排序字段为非排序,那么此排序之后的所有排序都为非排序.
+            return IntStream.range(0, maxSortField).mapToObj(i -> {
+                switch (i) {
+                    case 0:
+                        return config.getSort();
+                    case 1: {
+                        if (config.getSort().isOutOfOrder()) {
+                            return Sort.buildOutOfSort();
+                        } else {
+                            return config.getSecondarySort();
+                        }
+                    }
+                    case 2: {
+                        if (config.getThirdSort().isOutOfOrder()) {
+                            return Sort.buildOutOfSort();
+                        } else {
+                            return config.getThirdSort();
+                        }
+                    }
+                    default:
+                        return Sort.buildOutOfSort();
+                }
+            }).filter(s -> !s.isOutOfOrder()).toArray(Sort[]::new);
+        }
 
+        private Stream<EntityRef> mergeToStream(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs,
+                                                Sort[] sorts) {
+            Stream<EntityRef> refStream = Stream.concat(masterRefs.stream(), indexRefs.stream());
+            if (sorts.length == 0) {
+                return refStream;
+            }
+
+            Comparator<EntityRef> refComparator = comparatorSupplier.apply(sorts);
+
+            return refStream.sorted(refComparator);
         }
 
         // 如果排序,但是查询结果没有值.
-        private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort sort) {
-            if (!sort.isOutOfOrder()) {
-                refs.parallelStream().forEach(r -> {
-                    if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
-                        if (sort.getField().config().isIdentifie()) {
-                            r.setOrderValue(Long.toString(r.getId()));
-                        } else {
-                            r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
-                            // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
-                            if (r.getOrderValue() == null) {
-                                r.setOrderValue("0");
+        private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort[] sorts) {
+            int sortIndex = 0;
+            for (Sort sort : sorts) {
+                if (!sort.isOutOfOrder()) {
+                    for (EntityRef r : refs) {
+                        if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
+                            if (sort.getField().config().isIdentifie()) {
+                                setSortValue(sortIndex, r, Long.toString(r.getId()));
+                            } else {
+                                setSortValue(sortIndex, r, sort.getField().type().getDefaultSortValue());
                             }
                         }
                     }
-                });
+
+                    sortIndex++;
+
+                } else {
+                    break;
+                }
             }
 
             return refs;
+        }
+
+        private void setSortValue(int sortIndex, EntityRef ref, String value) {
+            // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
+            final String finalValue = "0";
+            ref.setSortValue(sortIndex, value);
+            if (ref.getSortValue(sortIndex).isPresent()) {
+                ref.setSortValue(sortIndex, finalValue);
+            }
         }
     }
 
