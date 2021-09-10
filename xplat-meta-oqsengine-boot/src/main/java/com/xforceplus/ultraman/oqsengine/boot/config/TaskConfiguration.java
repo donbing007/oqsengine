@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task.AggregationTaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task.AggregationTaskRunner;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTaskRunner;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
@@ -32,7 +34,7 @@ public class TaskConfiguration {
      */
     @Bean("taskCoordinator")
     public TaskCoordinator taskCoordinator(
-        @Value("${task.worder.number:3}") int number,
+        @Value("${task.worker.number:3}") int number,
         ExecutorService taskThreadPool,
         List<TaskRunner> taskRunners) {
         DefaultTaskCoordinator coordinator = new DefaultTaskCoordinator();
@@ -49,5 +51,34 @@ public class TaskConfiguration {
     @Bean
     public TaskRunner lookupMaintainingTaskRunner() {
         return new LookupMaintainingTaskRunner();
+    }
+
+
+    /**
+     * 聚合任务协调者,后期会和defaultCoordinator合并.
+     *
+     * @param number 线程数量.
+     * @param taskThreadPool 线程池.
+     * @return 聚合任务协调者
+     */
+    @Bean("aggregationTaskCoordinator")
+    public TaskCoordinator aggregationTaskCoordinator(
+            @Value("${task.worker.number:3}") int number,
+            ExecutorService taskThreadPool,
+            List<TaskRunner> taskRunners) {
+        AggregationTaskCoordinator aggregationTaskCoordinator = new AggregationTaskCoordinator();
+        aggregationTaskCoordinator.setWorker(taskThreadPool);
+        aggregationTaskCoordinator.setWorkerNumber(number);
+
+        for (TaskRunner runner : taskRunners) {
+            aggregationTaskCoordinator.registerRunner(runner);
+        }
+
+        return aggregationTaskCoordinator;
+    }
+
+    @Bean
+    public TaskRunner aggregationTaskRunner() {
+        return new AggregationTaskRunner();
     }
 }
