@@ -1,12 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.generator;
 
 import com.alibaba.google.common.collect.Maps;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.NamedThreadFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.LocalCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.RedisCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
+import io.micrometer.core.annotation.Timed;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,7 +44,12 @@ public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
         this.executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("oqs-id-generator"));
     }
 
+
     @Override
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "innerGenerator", "action", "getGenerator"}
+    )
     public IDGenerator getIdGenerator(String bizType) {
         IDModel model = segmentService.getIDModel(bizType);
         if (model.equals(IDModel.TREND_INC)) {

@@ -26,7 +26,7 @@ public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Option
     }
 
     @Override
-    public Optional<SegmentInfo> execute(String bizType) throws Exception {
+    public Optional<SegmentInfo> execute(String bizType) throws SQLException {
         String sql = buildSQL();
         SegmentInfo entity = null;
         try (Connection connection = getDataSource().getConnection();
@@ -56,7 +56,10 @@ public class SegmentQueryExecutor extends AbstractSegmentExecutor<String, Option
 
                 return Optional.ofNullable(entity);
             }
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     /**

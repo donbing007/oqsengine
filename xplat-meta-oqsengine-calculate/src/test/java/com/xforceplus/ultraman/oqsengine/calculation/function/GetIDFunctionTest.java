@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function;
 
+import static com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper.FORMULA_CTX_PARAM;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
@@ -14,6 +15,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.time.LocalDate;
@@ -53,6 +56,8 @@ public class GetIDFunctionTest {
     public void testGetIDFunction() throws CalculationLogicException {
         GetIDFunction function = new GetIDFunction();
         Map<String, Object> params = com.alibaba.google.common.collect.Maps.newHashMap();
+        IEntityField entityField = EntityField.Builder.anEntityField().withId(101010101).build();
+        params.put(FORMULA_CTX_PARAM, entityField);
         AviatorObject result = function.call(params, new AviatorString("{000}"), new AviatorString("testOne"));
         Assertions.assertEquals("001", result.getValue(params).toString());
     }
@@ -63,6 +68,8 @@ public class GetIDFunctionTest {
             .withCached(true)
             .withExpression("getId(\"{0000}\",\"tag1\")").build();
         Map<String, Object> params = Maps.newHashMap();
+        IEntityField entityField = EntityField.Builder.anEntityField().withId(101010101).build();
+        params.put(FORMULA_CTX_PARAM, entityField);
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         Assertions.assertEquals("0001", result.toString());
     }
@@ -76,6 +83,8 @@ public class GetIDFunctionTest {
             .withExpression("tenantId+\":\"+getId(\"{0000}\",tenantId)").build();
         Map<String, Object> params = Maps.newHashMap();
         params.put("tenantId", "vanke");
+        IEntityField entityField = EntityField.Builder.anEntityField().withId(101010101).build();
+        params.put(FORMULA_CTX_PARAM, entityField);
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         Assertions.assertEquals("vanke:0001", result.toString());
     }
@@ -88,9 +97,16 @@ public class GetIDFunctionTest {
             .build();
         Map<String, Object> params = Maps.newHashMap();
         params.put("tenantId", "vanke1");
+        IEntityField entityField = EntityField.Builder.anEntityField().withId(101010101).build();
+        params.put(FORMULA_CTX_PARAM, entityField);
         Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
         String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         Assertions.assertEquals("vanke1:" + dateStr + ":0001", result.toString());
+        Object result1 = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+        Assertions.assertEquals("vanke1:" + dateStr + ":0002", result1.toString());
+        params.put("tenantId", "vanke2");
+        Object result3 = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
+        Assertions.assertEquals("vanke2:" + dateStr + ":0001", result3.toString());
     }
 
 
