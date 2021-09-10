@@ -702,15 +702,21 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     // 校验字段.
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
         VerifierResult result;
-        for (IEntityField field : entityClass.fields()) {
+        IEntityField field;
+        for (IValue value : entity.entityValue().values()) {
+            Optional<IEntityField> fieldOp = entityClass.field(value.getField().id());
+            if (!fieldOp.isPresent()) {
+                return new AbstractMap.SimpleEntry(VerifierResult.NON_EXISTENT, value.getField());
+            }
+
+            field = fieldOp.get();
+
             // 跳过主标识类型的检查.
             if (field.config().isIdentifie()) {
                 continue;
             }
 
             ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
-            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
-            IValue value = valueOp.orElse(null);
             try {
                 result = verifier.verify(field, value);
                 if (VerifierResult.OK != result) {
@@ -721,7 +727,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
                 throw e;
             }
-
         }
 
         return new AbstractMap.SimpleEntry(VerifierResult.OK, null);
@@ -735,6 +740,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return ResultStatus.FIELD_TOO_LONG;
             case HIGH_PRECISION:
                 return ResultStatus.FIELD_HIGH_PRECISION;
+            case NON_EXISTENT:
+                return ResultStatus.FIELD_NON_EXISTENT;
             default:
                 return ResultStatus.UNKNOWN;
         }
@@ -759,6 +766,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             case HIGH_PRECISION:
                 return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.[%s]",
                     field.name(), field.config().getPrecision(), value != null ? value.getValue().toString() : "NULL");
+            case NON_EXISTENT:
+                return String.format("The %s field does not exist.", field.name());
             default:
                 return "Unknown validation failed.";
         }
