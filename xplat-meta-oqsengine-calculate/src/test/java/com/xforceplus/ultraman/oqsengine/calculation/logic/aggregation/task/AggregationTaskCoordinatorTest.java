@@ -41,8 +41,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.collections.set.ListOrderedSet;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -309,8 +307,13 @@ class AggregationTaskCoordinatorTest {
         latch.await();
         incr = kv.incr(String.format("%s-%s", TEST0, TaskKeyValueQueue.UNUSED), 0);
         Assertions.assertTrue(incr == 0);
+        int count = 0;
         while (taskQueueMap.containsKey(TEST0)) {
             TimeUnit.MILLISECONDS.sleep(1000);
+            if (count++ > 4) {
+                count = 0;
+                break;
+            }
         }
 
         Assertions.assertTrue(kv.exist(TEST0));
@@ -321,6 +324,10 @@ class AggregationTaskCoordinatorTest {
         Assertions.assertTrue(incr == 0);
         while (taskQueueMap.containsKey(TEST1)) {
             TimeUnit.MILLISECONDS.sleep(1000);
+            if (count++ > 4) {
+                count = 0;
+                break;
+            }
         }
 
         Assertions.assertTrue(kv.exist(TEST1));
@@ -419,6 +426,11 @@ class AggregationTaskCoordinatorTest {
         @Override
         public void destroy() {
 
+        }
+
+        @Override
+        public String toString() {
+            return "MockTaskQueue{" + "name='" + name + '\'' + '}';
         }
     }
 

@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -9,8 +11,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -42,6 +46,12 @@ public class MetaAggregationParse implements AggregationParse {
      */
     private ConcurrentHashMap<Long, ParseTree> parseTrees;
 
+
+    /**
+     *  内存暂存被聚合字段id集合.
+     */
+    private Set<Long> aggFieldIds;
+
     private List<IEntityClass> entityClasses;
 
     public List<IEntityClass> getEntityClasses() {
@@ -62,6 +72,7 @@ public class MetaAggregationParse implements AggregationParse {
 
     public MetaAggregationParse() {
         this.parseTrees = new ConcurrentHashMap<>();
+        this.aggFieldIds = new HashSet<>();
     }
 
     public MetaAggregationParse(ConcurrentHashMap<Long, ParseTree> parseTrees) {
@@ -134,6 +145,74 @@ public class MetaAggregationParse implements AggregationParse {
         });
     }
 
+    @Override
+    public void builderTrees(String appId, int version, List<IEntityClass> entityClasses) {
+        List<PTNode> nodes = new ArrayList<>();
+        entityClasses.forEach(entityClass -> {
+            Collection<IEntityField> entityFields = entityClass.fields().stream()
+                    .filter(f -> f.calculationType().equals(CalculationType.AGGREGATION)).collect(Collectors.toList());
+            entityFields.forEach(f -> {
+                if (f.calculationType().equals(CalculationType.AGGREGATION)) {
+                    Aggregation aggregation = (Aggregation) f.config().getCalculation();
+                    Optional<IEntityClass> entityClassOp = entityByField(aggregation.getClassId(), aggregation.getFieldId(), entityClasses);
+                    if (entityClassOp.isPresent()) {
+                        Optional<IEntityField> entityFieldOp = entityClassOp.get().field(aggregation.getFieldId());
+                        if (entityFieldOp.isPresent()) {
+                            if (entityFieldOp.get().calculationType().equals(CalculationType.AGGREGATION)) {
+                                //放置其他节点
+                                PTNode ptNode = new PTNode();
+                                ptNode.setRootFlag(false);
+                                ptNode.setEntityField(f);
+                                ptNode.setEntityClass(entityClass);
+                                ptNode.setConditions(aggregation.getConditions());
+                                ptNode.setAggregationType(aggregation.getAggregationType());
+                                ptNode.setAggEntityClass(entityClassOp.get());
+                                ptNode.setAggEntityField(entityFieldOp.get());
+                                nodes.add(ptNode);
+                                /*
+                                Aggregation nextAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
+                                PTNode ptNode = new PTNode();
+                                ptNode.setEntityField(entityFieldOp.get());
+                                ptNode.setRootFlag(false);
+                                ptNode.setEntityClass(entityClassOp.get());
+                                ptNode.setConditions(nextAggregation.getConditions());
+                                Optional<IEntityClass> entityClass1Op = entityByField(nextAggregation.getClassId(), nextAggregation.getFieldId(), entityClasses);
+                                ptNode.setAggregationType(nextAggregation.getAggregationType());
+                                if (entityClass1Op.isPresent()) {
+                                    Optional<IEntityField> entityField1Op = entityClassOp.get().field(aggregation.getFieldId());
+                                    ptNode.setAggEntityClass(entityClass1Op.get());
+                                    ptNode.setAggEntityField(entityField1Op.get());
+                                }
+                                nodes.add(ptNode);*/
+                            } else {
+                                //放置root节点
+                                PTNode ptNode = new PTNode();
+                                ptNode.setRootFlag(true);
+                                ptNode.setEntityField(f);
+                                ptNode.setEntityClass(entityClass);
+                                ptNode.setConditions(aggregation.getConditions());
+                                ptNode.setAggregationType(aggregation.getAggregationType());
+                                ptNode.setAggEntityClass(entityClassOp.get());
+                                ptNode.setAggEntityField(entityFieldOp.get());
+                                nodes.add(ptNode);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        if (nodes.size() > 0) {
+            List<ParseTree> parseTrees = MetaParseTree.generateMultipleTress(nodes);
+            parseTrees.forEach(pt -> {
+                appendTree(pt);
+            });
+            Optional<Set<Long>> longs = parseFieldIds(parseTrees);
+            if (longs.isPresent()) {
+                aggFieldIds.addAll(longs.get());
+            }
+        }
+    }
+
     /**
      * 重新构建字段解析树.
      *
@@ -179,5 +258,21 @@ public class MetaAggregationParse implements AggregationParse {
             }
         }
         return Optional.empty();
+    }
+
+
+    /**
+     * 根据聚合树生成被聚合字段id集合.
+     *
+     * @param trees 聚合树集合.
+     * @return 被聚合字段id集合.
+     */
+    private Optional<Set<Long>> parseFieldIds(List<ParseTree> trees) {
+        return Optional.of(trees.stream().flatMap(l -> l.toList().stream().map(p -> p.getAggEntityField().id())).collect(Collectors.toSet()));
+    }
+
+    @Override
+    public boolean checkIsAggField(Long id) {
+        return aggFieldIds.contains(id);
     }
 }

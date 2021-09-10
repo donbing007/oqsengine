@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityMultiUp;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
@@ -165,7 +166,6 @@ public class EntityClassHelper {
                 Optional<? extends IEntityField> entityFieldOp = entityClass.field(y.getFieldId());
                 return entityFieldOp
                     .map(x -> {
-
                         if (CalculationType.FORMULA.equals(x.calculationType())) {
                             String contextStr = y.getContextStr();
                             Map<String, Object> contextMap = Collections.emptyMap();
@@ -182,6 +182,16 @@ public class EntityClassHelper {
                             }
                             FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
                             return Collections.singletonList(retValue);
+                        } else if (CalculationType.LOOKUP.equals(x.calculationType())) {
+                            String value = y.getValue();
+                            try {
+                                long longValue = Long.parseLong(value);
+                                LongValue typedLongValue = new LongValue(x, longValue);
+                                return Collections.singletonList(typedLongValue);
+                            } catch (Exception ex) {
+                                throw new RuntimeException(
+                                    String.format("Lookup value [%s]cannot convert to Long", value));
+                            }
                         } else {
                             return toTypedValue(x, y.getValue());
                         }

@@ -125,10 +125,10 @@ message Calculator {
   int64 lookupEntityFieldId = 16;
   int32 resetType = 17;
   int32 domainNoSenior = 18;
-  int32 aggregationBoId = 19;
-  int32 aggregationFieldId = 20;
+  int64 aggregationBoId = 19;
+  int64 aggregationFieldId = 20;
   int32 aggregationType = 21;
-  int32 aggregationRelationId = 22;
+  int64 aggregationRelationId = 22;
   string domainCondition = 23;
   map<int64, int64> aggregationByFields = 24;
 }
