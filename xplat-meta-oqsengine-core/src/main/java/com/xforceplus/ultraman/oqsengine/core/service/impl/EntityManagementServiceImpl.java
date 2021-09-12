@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
@@ -36,7 +37,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -71,6 +71,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -357,6 +358,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
+                //处理聚合相关逻辑
+                processAvgCalculation(entity, entityClass, Scenarios.BUILD);
+
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
                         ResultStatus.UNCREATED);
@@ -484,6 +488,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
                 targetEntity.resetVersion(targetEntity.version() + ONE_INCREMENT_POS);
 
+                //处理聚合相关逻辑
+                processAvgCalculation(entity, entityClass, Scenarios.REPLACE);
+
                 if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
                     hint.setRollback(true);
                     return new OperationResult(
@@ -566,6 +573,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 IEntity targetEntity = targetEntityOp.get();
                 targetEntity.resetVersion(entity.version());
+
+                //处理聚合相关逻辑
+                processAvgCalculation(entity, entityClass, Scenarios.DELETE);
 
                 if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -798,17 +808,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         /*
         过滤掉所有的UNKNOWN和静态字段类型,同时按照计算的优先级从数字从小至大排序.化
         AUTO_FILL 字段为自动生成就不再变化的.所以在更新时排除.
+        AGGREGATION 字段自身数据操作时无需聚合，这里进行排除，后续方法会额外进行聚合逻辑判断.
          */
         List<IEntityField> calculationFields = entityClass.fields().stream()
             .filter(
                 f -> {
                     if (Scenarios.BUILD == scenarios) {
                         return CalculationType.UNKNOWN != f.calculationType()
-                            && CalculationType.STATIC != f.calculationType();
+                            && CalculationType.STATIC != f.calculationType()
+                            && CalculationType.AGGREGATION != f.calculationType();
                     } else {
                         return CalculationType.UNKNOWN != f.calculationType()
                             && CalculationType.STATIC != f.calculationType()
-                            && CalculationType.AUTO_FILL != f.calculationType();
+                            && CalculationType.AUTO_FILL != f.calculationType()
+                            && CalculationType.AGGREGATION != f.calculationType();
                     }
                 }
             ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
@@ -821,16 +834,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         for (IEntityField field : calculationFields) {
             context.focusField(field);
-            // 如果是求平均值的聚合，需要先把被聚合对象的记录count出来
-            if (field.config().getCalculation().equals(CalculationType.AGGREGATION)) {
-                Aggregation aggregation = (Aggregation) field.config().getCalculation();
-                if (aggregation.getAggregationType().equals(AggregationType.AVG)) {
-                    // 得到count值
-                    int count = countAggregationEntity(aggregation, sourceEntity, entityClass);
-                    // 没找到context set attr的方法，重新构建context-只适用于avg聚合
-                    context = buildCalculationLogicContextWithCount(sourceEntity, entityClass, scenarios, count);
-                }
-            }
 
             CalculationLogic logic = calculationLogicFactory.getCalculation(field.calculationType());
 
@@ -842,12 +845,30 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
 
+        return context.getHints();
+    }
+
+    /**
+     * 聚合函数处理逻辑,本数据操作时无需聚合，在本数据操作完后进行聚合检查并操作受到影响的数据.
+     *
+     * @param sourceEntity 本数据信息.
+     * @param sourceClass 对象信息.
+     * @param scenarios 场景信息.
+     * @return 返回聚合结果.
+     * @throws CalculationLogicException
+     */
+    private Collection<CalculationHint> processAvgCalculation(
+            IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+            throws CalculationLogicException {
+
         //预先校验下是否有受影响的树信息.
-        boolean aggResult = checkAggregation(sourceEntity);
+        Optional<List<ParseTree>> aggResult = checkAggregation(sourceEntity);
+
+        CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
 
         // 处理受影响的聚合信息,需要判断该数据是否符合聚合条件.
-        if (aggResult) {
-            findAggregationAndReplace(sourceEntity);
+        if (aggResult.isPresent()) {
+            findAggregationAndReplace(sourceEntity, sourceClass, aggResult.get(), scenarios);
         }
 
         return context.getHints();
@@ -939,13 +960,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * @param entity 记录信息.
      * @return 是否影响.
      */
-    private boolean checkAggregation(IEntity entity) {
+    private Optional<List<ParseTree>> checkAggregation(IEntity entity) {
         List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
                 entity.entityClassRef().getProfile());
         if (parseTrees != null && parseTrees.size() > 0) {
-            return true;
+            return Optional.of(parseTrees);
         }
-        return false;
+        return Optional.empty();
     }
 
     private int countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass) {
@@ -978,54 +999,135 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 迭代更新受影响的entity.
      *
-     * @param entity 计算后的entity.
+     * @param sourceEntity 计算后的entity.
      * @return 返回受影响的entity.
      */
-    private IEntity findAggregationAndReplace(IEntity entity) {
-        Optional<IEntityClass> entityClass =
-                metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
-        if (entityClass.isPresent()) {
-            //find trees
-            List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
-                    entity.entityClassRef().getProfile());
-            parseTrees.forEach(parseTree -> {
-                Optional<IEntity> findEntity = null;
-                PTNode ptNode = parseTree.root();
-                Optional<IValue> relationId = entity.entityValue().getValue(ptNode.getEntityField().id());
-                long relationAggId = 0;
-                if (relationId.isPresent()) {
-                    relationAggId = relationId.get().valueToLong();
-                    Conditions conditions = ptNode.getConditions();
-                    boolean checkCondition = checkEntityByCondition(entity, entityClass.get(), conditions);
-                    if (!checkCondition) {
-                        return;
-                    }
-                } else {
-                    logger.info("relationId is empty!");
+    private IEntity findAggregationAndReplace(IEntity sourceEntity, IEntityClass sourceClass, List<ParseTree> parseTrees, Scenarios scenarios) {
+//        List<IEntityField> calculationFields = sourceClass.fields().stream()
+//                .filter(
+//                        f -> {
+//                            if (Scenarios.BUILD == scenarios) {
+//                                return CalculationType.UNKNOWN != f.calculationType()
+//                                        && CalculationType.STATIC != f.calculationType()
+//                                        && CalculationType.AGGREGATION != f.calculationType();
+//                            } else {
+//                                return CalculationType.UNKNOWN != f.calculationType()
+//                                        && CalculationType.STATIC != f.calculationType()
+//                                        && CalculationType.AUTO_FILL != f.calculationType()
+//                                        && CalculationType.AGGREGATION != f.calculationType();
+//                            }
+//                        }
+//                ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
+//
+//        if (calculationFields.isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        for (IEntityField field : calculationFields) {
+//            context.focusField(field);
+//            // 如果是求平均值的聚合，需要先把被聚合对象的记录count出来
+//            if (field.config().getCalculation().equals(CalculationType.AGGREGATION)) {
+//                Aggregation aggregation = (Aggregation) field.config().getCalculation();
+//                if (aggregation.getAggregationType().equals(AggregationType.AVG)) {
+//                    // 得到count值
+//                    int count = countAggregationEntity(aggregation, sourceEntity, entityClass);
+//                    // 没找到context set attr的方法，重新构建context-只适用于avg聚合
+//                    context = buildCalculationLogicContextWithCount(sourceEntity, entityClass, scenarios, count);
+//                }
+//            }
+//
+//            CalculationLogic logic = calculationLogicFactory.getCalculation(field.calculationType());
+//
+//            Optional<IValue> newValueOp = logic.calculate(context);
+//            if (newValueOp.isPresent()) {
+//                sourceEntity.entityValue().addValue(newValueOp.get());
+//            } else {
+//                sourceEntity.entityValue().remove(field);
+//            }
+//        }
+
+        // 获取当前entity的原始版本.
+        Optional<IEntity> oldEntityOp = Optional.empty();
+        Optional<IEntity> sourceEntityOp = Optional.empty();
+        try {
+            if (Scenarios.DELETE == scenarios) {
+                oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
+                sourceEntityOp = Optional.empty();
+            } else if (Scenarios.REPLACE == scenarios){
+                oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
+                sourceEntityOp = Optional.of(sourceEntity);
+            } else {
+                sourceEntityOp = Optional.of(sourceEntity);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // 遍历出相同entitClass的字段
+        List<PTNode> rootNodes = parseTrees.stream().map(ParseTree::root).collect(Collectors.toList());
+        Map<IEntityClass, List<PTNode>> nodeMap = rootNodes.stream().collect(Collectors.groupingBy(PTNode::getEntityClass));
+
+        nodeMap.forEach((k, v) -> {
+            AtomicReference<Optional<IValue>> relationId = null;
+            v.forEach(ptNode -> {
+                Optional<IValue> relation = sourceEntity.entityValue().getValue(ptNode.getRelationship().getId());
+                if (relation.isPresent()) {
+                    relationId.set(relation);
                 }
+            });
+            Optional<IEntity> findEntity = Optional.empty();
+            if (relationId != null) {
                 try {
-                    findEntity = masterStorage.selectOne(relationAggId, parseTree.root().getEntityClass());
+                    findEntity = masterStorage.selectOne(relationId.get().get().valueToLong(), k);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
                 if (findEntity.isPresent()) {
                     IEntity targetEntity = findEntity.get();
-                    Optional<IValue> value = aggregationFunctionFactory.getAggregationFunction(ptNode.getAggregationType())
-                            .excute(targetEntity.entityValue().getValue(ptNode.getEntityField().id()),
-                                    targetEntity.entityValue().getValue(ptNode.getEntityField().id()),
-                                    entity.entityValue().getValue(ptNode.getAggEntityField().id()));
-                    if (value.isPresent()) {
-                        targetEntity.entityValue().addValue(value.get());
-                    }
-                    try {
-                        replace(entity);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    // 对所有聚合字段进行运算
+                    v.forEach(ptNode -> {
+
+                    });
                 }
-            });
-        }
-        return entity;
+            }
+        });
+
+//        parseTrees.forEach(parseTree -> {
+//            Optional<IEntity> findEntity = null;
+//            PTNode ptNode = parseTree.root();
+//            Optional<IValue> relationId = sourceEntity.entityValue().getValue(ptNode.getEntityField().id());
+//            long relationAggId = 0;
+//            if (relationId.isPresent()) {
+//                relationAggId = relationId.get().valueToLong();
+//                Conditions conditions = ptNode.getConditions();
+//                boolean checkCondition = checkEntityByCondition(sourceEntity, sourceClass, conditions);
+//                if (!checkCondition) {
+//                    return;
+//                }
+//            } else {
+//                logger.info("relationId is empty!");
+//            }
+//            try {
+//                findEntity = masterStorage.selectOne(relationAggId, parseTree.root().getEntityClass());
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//            if (findEntity.isPresent()) {
+//                IEntity targetEntity = findEntity.get();
+//                Optional<IValue> value = AggregationFunctionFactoryImpl.getAggregationFunction(ptNode.getAggregationType())
+//                        .excute(targetEntity.entityValue().getValue(ptNode.getEntityField().id()),
+//                                finalOldEntityOp.get().entityValue().getValue(ptNode.getAggEntityField().id()),
+//                                entity.entityValue().getValue(ptNode.getAggEntityField().id()));
+//                if (value.isPresent()) {
+//                    targetEntity.entityValue().addValue(value.get());
+//                }
+//                try {
+//                    replace(entity);
+//                } catch (SQLException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+        return sourceEntity;
     }
 
     /**
@@ -1116,4 +1218,5 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
         return replaceEntity.get();
     }
+
 }
