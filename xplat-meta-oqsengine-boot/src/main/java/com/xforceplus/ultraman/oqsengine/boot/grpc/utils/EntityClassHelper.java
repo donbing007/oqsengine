@@ -166,6 +166,7 @@ public class EntityClassHelper {
                 Optional<? extends IEntityField> entityFieldOp = entityClass.field(y.getFieldId());
                 return entityFieldOp
                     .map(x -> {
+
                         if (CalculationType.FORMULA.equals(x.calculationType())) {
                             String contextStr = y.getContextStr();
                             Map<String, Object> contextMap = Collections.emptyMap();

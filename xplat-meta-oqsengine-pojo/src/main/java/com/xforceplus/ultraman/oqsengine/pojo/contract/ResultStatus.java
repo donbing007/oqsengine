@@ -56,7 +56,11 @@ public enum ResultStatus {
     /**
      * 浮点字段值精度超过限制.
      */
-    FIELD_HIGH_PRECISION((byte) 10);
+    FIELD_HIGH_PRECISION((byte) 10),
+    /**
+     * 字段不存在.
+     */
+    FIELD_NON_EXISTENT((byte) 11);
 
     private byte symbol;
 

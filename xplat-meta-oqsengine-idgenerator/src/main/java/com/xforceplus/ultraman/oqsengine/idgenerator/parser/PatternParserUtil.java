@@ -91,7 +91,6 @@ public class PatternParserUtil implements ApplicationContextAware {
             start -= 2;
         }
         String value = patternValue.getValue();
-        String numberStr = value.substring(start, start + numberPatternLength);
-        return value.replace(numberStr, "");
+        return String.format("%s%s", value.substring(0, start), value.substring(start + numberPatternLength));
     }
 }

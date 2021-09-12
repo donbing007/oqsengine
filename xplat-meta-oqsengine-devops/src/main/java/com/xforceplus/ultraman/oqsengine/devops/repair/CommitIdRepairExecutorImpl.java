@@ -49,6 +49,11 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     }
 
     @Override
+    public long[] allCommitIds() {
+        return commitIdStatusService.getAll();
+    }
+
+    @Override
     public void cleanLessThan(long id) {
         long[] result = Arrays.stream(commitIdStatusService.getAll())
             .filter(s -> {

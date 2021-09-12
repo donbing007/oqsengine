@@ -28,7 +28,11 @@ public enum VerifierResult {
     /**
      * 表示字段为必须含有值.
      */
-    REQUIRED(4);
+    REQUIRED(4),
+    /**
+     * 不存在的字段.
+     */
+    NON_EXISTENT(5);
 
 
     private int symbol;

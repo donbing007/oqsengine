@@ -120,53 +120,53 @@ public class EntityClassSyncServerTest extends BaseInit {
         }
     }
 
-    @Test
-    public void failTest() throws InterruptedException {
-        StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
-        String uid = UUID.randomUUID().toString();
-        String appId = "syncFailTest";
-        String env = "test";
-        int version = 0;
-
-        int expectedVersion = version + 1;
-        long entityId = Long.MAX_VALUE - 1000;
-        entityClassGenerator.reset(expectedVersion, entityId);
-        observer.onNext(buildRequest(new WatchElement(appId, env, expectedVersion, WatchElement.ElementStatus.Register), clientId, uid, RequestStatus.REGISTER));
-
-        /**
-         * 当前版本更新失败
-         * check服务端3秒内重新推一个新版本数据
-         */
-        try {
-
-            int resetVersion = expectedVersion + 1;
-            entityClassGenerator.reset(resetVersion, entityId);
-            syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion, null), RequestStatus.SYNC);
-
-            Thread.sleep(3_000);
-
-            mockerSyncClient.releaseSuccess(appId);
-            int currentWait = 0;
-            while (true) {
-                if (currentWait % 5 == 0) {
-                    tryHeartBeat(uid, env, appId, observer);
-                }
-                WatchElement element = mockerSyncClient.getSuccess(appId);
-                if (null != element && element.getVersion() == resetVersion) {
-                    mockerSyncClient.releaseSuccess(appId);
-                    break;
-                }
-                currentWait++;
-                Thread.sleep(1_000);
-            }
-            //  mock set sync fail
-            observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, WatchElement.ElementStatus.Confirmed), clientId, uid, RequestStatus.SYNC_FAIL));
-
-            waitForResult(50, resetVersion, appId);
-        } finally {
-            ExecutorHelper.shutdownAndAwaitTermination(fixed, 10);
-        }
-    }
+    //@Test
+    //public void failTest() throws InterruptedException {
+    //    StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
+    //    String uid = UUID.randomUUID().toString();
+    //    String appId = "syncFailTest";
+    //    String env = "test";
+    //    int version = 0;
+    //
+    //    int expectedVersion = version + 1;
+    //    long entityId = Long.MAX_VALUE - 1000;
+    //    entityClassGenerator.reset(expectedVersion, entityId);
+    //    observer.onNext(buildRequest(new WatchElement(appId, env, expectedVersion, WatchElement.ElementStatus.Register), clientId, uid, RequestStatus.REGISTER));
+    //
+    //    /**
+    //     * 当前版本更新失败
+    //     * check服务端3秒内重新推一个新版本数据
+    //     */
+    //    try {
+    //
+    //        int resetVersion = expectedVersion + 1;
+    //        entityClassGenerator.reset(resetVersion, entityId);
+    //        syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion, null), RequestStatus.SYNC);
+    //
+    //        Thread.sleep(3_000);
+    //
+    //        mockerSyncClient.releaseSuccess(appId);
+    //        int currentWait = 0;
+    //        while (true) {
+    //            if (currentWait % 5 == 0) {
+    //                tryHeartBeat(uid, env, appId, observer);
+    //            }
+    //            WatchElement element = mockerSyncClient.getSuccess(appId);
+    //            if (null != element && element.getVersion() == resetVersion) {
+    //                mockerSyncClient.releaseSuccess(appId);
+    //                break;
+    //            }
+    //            currentWait++;
+    //            Thread.sleep(1_000);
+    //        }
+    //        //  mock set sync fail
+    //        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, WatchElement.ElementStatus.Confirmed), clientId, uid, RequestStatus.SYNC_FAIL));
+    //
+    //        waitForResult(50, resetVersion, appId);
+    //    } finally {
+    //        ExecutorHelper.shutdownAndAwaitTermination(fixed, 10);
+    //    }
+    //}
 
 
     @Test

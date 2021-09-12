@@ -89,6 +89,12 @@ public interface DevOpsManagementService {
     void removeCommitIds(Long... ids);
 
     /**
+     * 查询当前Redis中未过期的CommitIds.
+     */
+    long[] showCommitIds();
+
+
+    /**
      * 修复redis中的commitId，当参数commitId为NULL时，取目前数据库中最大CommitId + 1.
      */
     void initNewCommitId(Optional<Long> commitId) throws SQLException;
