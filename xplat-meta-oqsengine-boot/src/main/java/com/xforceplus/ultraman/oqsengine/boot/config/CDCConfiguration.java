@@ -82,7 +82,7 @@ public class CDCConfiguration {
         return singleCDCConnector;
     }
 
-    @Bean(destroyMethod = "stopDaemon")
+    @Bean
     public CDCDaemonService cdcDaemonService() {
         return new CDCDaemonService();
     }

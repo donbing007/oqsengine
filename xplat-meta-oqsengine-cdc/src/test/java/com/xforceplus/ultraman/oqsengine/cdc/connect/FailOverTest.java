@@ -69,11 +69,11 @@ public class FailOverTest extends AbstractCDCTestHelper {
         public Object call() throws Exception {
             System.out.println("start CDCDamonServiceCall thread.");
             while (!isTetOver) {
-                cdcDaemonService.startDaemon();
+                cdcDaemonService.init();
 
                 Thread.sleep(20_000);
 
-                cdcDaemonService.stopDaemon();
+                cdcDaemonService.destroy();
 
                 Thread.sleep(5_000);
             }

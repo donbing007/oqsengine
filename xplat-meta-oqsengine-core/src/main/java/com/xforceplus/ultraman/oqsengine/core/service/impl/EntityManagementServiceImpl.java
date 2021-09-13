@@ -729,21 +729,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     // 校验字段.
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
         VerifierResult result;
-        IEntityField field;
-        for (IValue value : entity.entityValue().values()) {
-            Optional<IEntityField> fieldOp = entityClass.field(value.getField().id());
-            if (!fieldOp.isPresent()) {
-                return new AbstractMap.SimpleEntry(VerifierResult.NON_EXISTENT, value.getField());
-            }
-
-            field = fieldOp.get();
-
+        for (IEntityField field : entityClass.fields()) {
             // 跳过主标识类型的检查.
             if (field.config().isIdentifie()) {
                 continue;
             }
 
             ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
+            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
+            IValue value = valueOp.orElse(null);
             try {
                 result = verifier.verify(field, value);
                 if (VerifierResult.OK != result) {
@@ -754,6 +748,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
                 throw e;
             }
+
         }
 
         return new AbstractMap.SimpleEntry(VerifierResult.OK, null);

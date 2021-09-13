@@ -34,7 +34,7 @@ public class DataSourceConfiguration {
 
     private static final String OQS_UNIQUE_TABLE_NAME = "oqsunique";
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public DataSourcePackage dataSourcePackage(
         @Value("${storage.debug.showsql:false}") boolean showSql) {
         return DataSourceFactory.build(showSql);

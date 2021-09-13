@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import java.util.Optional;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Optional;
  * @version 0.1 2021/08/12 14:56
  * @since 1.8
  */
-public interface TaskCoordinator {
+public interface TaskCoordinator extends Lifecycle {
 
     /**
      * 注册一个任务执行者.
