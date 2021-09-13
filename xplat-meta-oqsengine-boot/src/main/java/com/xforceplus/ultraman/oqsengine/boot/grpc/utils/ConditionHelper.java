@@ -391,7 +391,7 @@ public class ConditionHelper {
                     long relationId = fieldNode.getRelationId();
                     FieldUp fieldUp = fieldNode.getFieldUp();
                     Optional<Tuple2<IEntityClass, IEntityField>> fieldOp =
-                        findFieldOp(relationId, fieldUp, mainClass, manager);
+                        findFieldOp(relationId, fieldUp, mainClass, mainClass.ref().getProfile(), manager);
                     /*
                      * build field condition.
                      */
@@ -442,7 +442,7 @@ public class ConditionHelper {
             FieldUp field = x.getField();
             Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
 
-            fieldOp = findFieldOp(x.getRelationId(), field, mainClass, manager);
+            fieldOp = findFieldOp(x.getRelationId(), field, mainClass, mainClass.ref().getProfile(), manager);
 
             return toOneConditions(fieldOp, x);
         }).reduce((a, b) -> a.addAnd(b, true));
@@ -499,6 +499,7 @@ public class ConditionHelper {
 
     private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldOp(long relationId, FieldUp field,
                                                                             IEntityClass mainClass,
+                                                                            String profile,
                                                                             MetaManager manager) {
 
         Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
@@ -512,7 +513,8 @@ public class ConditionHelper {
                 OqsRelation relation = relationOp.get();
 
                 if (isRelationBelongsToEntityClass(relation, mainClass)) {
-                    Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
+                    Optional<IEntityClass> relatedEntityClassOp =
+                        manager.load(relation.getRightEntityClassId(), profile);
                     if (relatedEntityClassOp.isPresent()) {
                         fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
                     } else {
