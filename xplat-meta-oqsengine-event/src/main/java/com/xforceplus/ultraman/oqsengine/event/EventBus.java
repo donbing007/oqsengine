@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import java.util.function.Consumer;
 
 /**
@@ -9,7 +10,7 @@ import java.util.function.Consumer;
  * @version 0.1 2021/3/24 10:30
  * @since 1.8
  */
-public interface EventBus {
+public interface EventBus extends Lifecycle {
 
     /**
      * 关注某个事件.

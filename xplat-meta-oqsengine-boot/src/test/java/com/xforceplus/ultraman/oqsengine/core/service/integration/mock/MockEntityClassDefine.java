@@ -258,6 +258,24 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(baseFieldId--)
+                    .withName("lookup-l0-string")
+                    .withFieldType(FieldType.STRING)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withCalculation(
+                                Lookup.Builder.anLookup()
+                                    .withClassId(l2EntityClassId)
+                                    .withFieldId(l2EntityClass.field("l0-string").get().id()).build()
+                            )
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+                            .withLen(Integer.MAX_VALUE)
+                            .build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(baseFieldId--)
                     .withName("lookup-l2-dec")
                     .withFieldType(FieldType.DECIMAL)
                     .withConfig(

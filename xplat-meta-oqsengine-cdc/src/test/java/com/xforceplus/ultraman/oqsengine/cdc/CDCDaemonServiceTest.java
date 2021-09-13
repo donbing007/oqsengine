@@ -28,7 +28,7 @@ public class CDCDaemonServiceTest extends AbstractCDCTestHelper {
         if (isTest) {
             super.init(true);
             cdcDaemonService = initDaemonService();
-            cdcDaemonService.startDaemon();
+            cdcDaemonService.init();
         }
     }
 
