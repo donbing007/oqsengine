@@ -169,21 +169,6 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
                                 nodes.add(ptNode);
-                                /*
-                                Aggregation nextAggregation = (Aggregation) entityFieldOp.get().config().getCalculation();
-                                PTNode ptNode = new PTNode();
-                                ptNode.setEntityField(entityFieldOp.get());
-                                ptNode.setRootFlag(false);
-                                ptNode.setEntityClass(entityClassOp.get());
-                                ptNode.setConditions(nextAggregation.getConditions());
-                                Optional<IEntityClass> entityClass1Op = entityByField(nextAggregation.getClassId(), nextAggregation.getFieldId(), entityClasses);
-                                ptNode.setAggregationType(nextAggregation.getAggregationType());
-                                if (entityClass1Op.isPresent()) {
-                                    Optional<IEntityField> entityField1Op = entityClassOp.get().field(aggregation.getFieldId());
-                                    ptNode.setAggEntityClass(entityClass1Op.get());
-                                    ptNode.setAggEntityField(entityField1Op.get());
-                                }
-                                nodes.add(ptNode);*/
                             } else {
                                 //放置root节点
                                 PTNode ptNode = new PTNode();

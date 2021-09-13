@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicCon
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -50,7 +51,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        AggregationFunction function = aggregationFunctionFactory.getAggregationFunction(aggregationType);
+        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
         Optional<IValue> targetValue;
         if (aggregationType.equals(AggregationType.AVG)) {
             int count = 1;
@@ -70,5 +71,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
     }
+
 
 }
