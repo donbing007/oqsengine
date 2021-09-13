@@ -14,7 +14,7 @@ import java.util.Optional;
  */
 public class LookupMaintainingTask extends AbstractTask implements Serializable {
 
-    private static final int DEFAULT_SIZE = 100;
+    private static final int DEFAULT_SIZE = 10000;
 
     private String iterKey;
     private String pointKey;
