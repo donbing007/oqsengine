@@ -157,6 +157,9 @@ public class BusinessIDGeneratorConfiguration {
         String password = RedisConfigUtil.getRedisUrlPassword(url);
         logger.info("Business redis password{}", password);
         if (!StringUtils.isBlank(password)) {
+            if (password.startsWith(":")) {
+                password = password.substring(1);
+            }
             config.useSingleServer().setPassword(password);
         }
         return Redisson.create(config);
