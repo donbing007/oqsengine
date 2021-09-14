@@ -155,6 +155,7 @@ public class BusinessIDGeneratorConfiguration {
             .setAddress(lettuceConfiguration.uriWithIDGenerator());
         String url = lettuceConfiguration.uriWithIDGenerator();
         String password = RedisConfigUtil.getRedisUrlPassword(url);
+        logger.info("Business redis password{}", password);
         if (!StringUtils.isBlank(password)) {
             config.useSingleServer().setPassword(password);
         }
