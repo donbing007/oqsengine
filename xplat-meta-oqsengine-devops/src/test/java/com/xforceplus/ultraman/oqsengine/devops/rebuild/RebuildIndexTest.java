@@ -45,7 +45,7 @@ import org.junit.jupiter.api.Test;
 public class RebuildIndexTest extends DevOpsTestHelper {
 
     private int totalSize = 1024;
-    private int testResumeCount = 20000;
+    private int testResumeCount = 200;
     private int defaultSleepInterval = 3_000;
     private int maxSleepWaitLoops = 100;
     long txId = 0;
