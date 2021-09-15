@@ -25,8 +25,8 @@ public class Lookup extends AbstractCalculation {
     private long fieldId;
 
     /**
-     * lookup的关系信息
-     * @return
+     * lookup的关系信息.
+     *
      */
     @JsonProperty(value = "relationId")
     private long relationId;
@@ -46,6 +46,7 @@ public class Lookup extends AbstractCalculation {
     public void setFieldId(long fieldId) {
         this.fieldId = fieldId;
     }
+
     public long getRelationId() {
         return relationId;
     }
