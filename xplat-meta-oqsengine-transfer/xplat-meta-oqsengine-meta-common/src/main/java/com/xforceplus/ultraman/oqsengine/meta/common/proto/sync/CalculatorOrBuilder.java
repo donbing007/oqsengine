@@ -158,4 +158,9 @@ public interface CalculatorOrBuilder extends
    * <code>int32 domainNoSenior = 18;</code>
    */
   int getDomainNoSenior();
+
+  /**
+   * <code>int64 lookupRelationId = 19;</code>
+   */
+  long getLookupRelationId();
 }
