@@ -97,28 +97,28 @@ public class MultipleTimerWheelTest {
         Assertions.assertEquals(1, wheel.size());
     }
 
-    @Test
-    public void testParallelSize() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-        MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
-            @Override
-            public long notice(Object t) {
-
-                return 0;
-            }
-        });
-
-        for (int i = 0; i < 500000; i++) {
-            int finalI1 = i;
-            executorService.submit(() -> {
-                wheel.add(new Object(), 18000000);
-            });
-        }
-
-        TimeUnit.MILLISECONDS.sleep(2000);
-
-        Assertions.assertEquals(500000, wheel.size());
-    }
+    //@Test
+    //public void testParallelSize() throws InterruptedException {
+    //    ExecutorService executorService = Executors.newFixedThreadPool(10);
+    //    MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
+    //        @Override
+    //        public long notice(Object t) {
+    //
+    //            return 0;
+    //        }
+    //    });
+    //
+    //    for (int i = 0; i < 500000; i++) {
+    //        int finalI1 = i;
+    //        executorService.submit(() -> {
+    //            wheel.add(new Object(), 18000000);
+    //        });
+    //    }
+    //
+    //    TimeUnit.MILLISECONDS.sleep(2000);
+    //
+    //    Assertions.assertEquals(500000, wheel.size());
+    //}
 
     @Test
     public void testRemove() {
