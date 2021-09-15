@@ -182,13 +182,9 @@ public class EntityClass implements IEntityClass {
         Optional<IEntityField> entityFieldOp =
             fields.stream().filter(f -> id == f.id()).findFirst();
 
-        //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
-        }
-
-        // TODO: 不知道为什么有这段,先注解.半年后将被确认删除. by donbing 2021-8-24
-        else {
+        } else {
             if (relations != null) {
                 //  从关系中找
                 for (Relationship relation : relations) {
