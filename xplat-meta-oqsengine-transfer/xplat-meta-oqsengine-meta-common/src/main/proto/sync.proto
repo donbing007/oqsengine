@@ -125,12 +125,13 @@ message Calculator {
   int64 lookupEntityFieldId = 16;
   int32 resetType = 17;
   int32 domainNoSenior = 18;
-  int64 aggregationBoId = 19;
-  int64 aggregationFieldId = 20;
-  int32 aggregationType = 21;
-  int64 aggregationRelationId = 22;
-  string domainCondition = 23;
-  map<int64, int64> aggregationByFields = 24;
+  int64 lookupRelationId = 19;
+  int64 aggregationBoId = 20;
+  int64 aggregationFieldId = 21;
+  int32 aggregationType = 22;
+  int64 aggregationRelationId = 23;
+  string domainCondition = 24;
+  map<int64, int64> aggregationByFields = 25;
 }
 
 message ProfileInfo {

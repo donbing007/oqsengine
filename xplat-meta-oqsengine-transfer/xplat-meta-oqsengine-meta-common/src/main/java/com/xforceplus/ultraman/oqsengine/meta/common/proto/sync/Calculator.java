@@ -33,6 +33,7 @@ private static final long serialVersionUID = 0L;
     lookupEntityFieldId_ = 0L;
     resetType_ = 0;
     domainNoSenior_ = 0;
+    lookupRelationId_ = 0L;
     aggregationBoId_ = 0L;
     aggregationFieldId_ = 0L;
     aggregationType_ = 0;
@@ -183,35 +184,40 @@ private static final long serialVersionUID = 0L;
           }
           case 152: {
 
-            aggregationBoId_ = input.readInt64();
+            lookupRelationId_ = input.readInt64();
             break;
           }
           case 160: {
 
-            aggregationFieldId_ = input.readInt64();
+            aggregationBoId_ = input.readInt64();
             break;
           }
           case 168: {
 
-            aggregationType_ = input.readInt32();
+            aggregationFieldId_ = input.readInt64();
             break;
           }
           case 176: {
 
+            aggregationType_ = input.readInt32();
+            break;
+          }
+          case 184: {
+
             aggregationRelationId_ = input.readInt64();
             break;
           }
-          case 186: {
+          case 194: {
             java.lang.String s = input.readStringRequireUtf8();
 
             domainCondition_ = s;
             break;
           }
-          case 194: {
-            if (!((mutable_bitField0_ & 0x00800000) == 0x00800000)) {
+          case 202: {
+            if (!((mutable_bitField0_ & 0x01000000) == 0x01000000)) {
               aggregationByFields_ = com.google.protobuf.MapField.newMapField(
                   AggregationByFieldsDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00800000;
+              mutable_bitField0_ |= 0x01000000;
             }
             com.google.protobuf.MapEntry<java.lang.Long, java.lang.Long>
             aggregationByFields__ = input.readMessage(
@@ -244,7 +250,7 @@ private static final long serialVersionUID = 0L;
   protected com.google.protobuf.MapField internalGetMapField(
       int number) {
     switch (number) {
-      case 24:
+      case 25:
         return internalGetAggregationByFields();
       default:
         throw new RuntimeException(
@@ -653,46 +659,55 @@ private static final long serialVersionUID = 0L;
     return domainNoSenior_;
   }
 
-  public static final int AGGREGATIONBOID_FIELD_NUMBER = 19;
+  public static final int LOOKUPRELATIONID_FIELD_NUMBER = 19;
+  private long lookupRelationId_;
+  /**
+   * <code>int64 lookupRelationId = 19;</code>
+   */
+  public long getLookupRelationId() {
+    return lookupRelationId_;
+  }
+
+  public static final int AGGREGATIONBOID_FIELD_NUMBER = 20;
   private long aggregationBoId_;
   /**
-   * <code>int64 aggregationBoId = 19;</code>
+   * <code>int64 aggregationBoId = 20;</code>
    */
   public long getAggregationBoId() {
     return aggregationBoId_;
   }
 
-  public static final int AGGREGATIONFIELDID_FIELD_NUMBER = 20;
+  public static final int AGGREGATIONFIELDID_FIELD_NUMBER = 21;
   private long aggregationFieldId_;
   /**
-   * <code>int64 aggregationFieldId = 20;</code>
+   * <code>int64 aggregationFieldId = 21;</code>
    */
   public long getAggregationFieldId() {
     return aggregationFieldId_;
   }
 
-  public static final int AGGREGATIONTYPE_FIELD_NUMBER = 21;
+  public static final int AGGREGATIONTYPE_FIELD_NUMBER = 22;
   private int aggregationType_;
   /**
-   * <code>int32 aggregationType = 21;</code>
+   * <code>int32 aggregationType = 22;</code>
    */
   public int getAggregationType() {
     return aggregationType_;
   }
 
-  public static final int AGGREGATIONRELATIONID_FIELD_NUMBER = 22;
+  public static final int AGGREGATIONRELATIONID_FIELD_NUMBER = 23;
   private long aggregationRelationId_;
   /**
-   * <code>int64 aggregationRelationId = 22;</code>
+   * <code>int64 aggregationRelationId = 23;</code>
    */
   public long getAggregationRelationId() {
     return aggregationRelationId_;
   }
 
-  public static final int DOMAINCONDITION_FIELD_NUMBER = 23;
+  public static final int DOMAINCONDITION_FIELD_NUMBER = 24;
   private volatile java.lang.Object domainCondition_;
   /**
-   * <code>string domainCondition = 23;</code>
+   * <code>string domainCondition = 24;</code>
    */
   public java.lang.String getDomainCondition() {
     java.lang.Object ref = domainCondition_;
@@ -707,7 +722,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string domainCondition = 23;</code>
+   * <code>string domainCondition = 24;</code>
    */
   public com.google.protobuf.ByteString
       getDomainConditionBytes() {
@@ -723,7 +738,7 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int AGGREGATIONBYFIELDS_FIELD_NUMBER = 24;
+  public static final int AGGREGATIONBYFIELDS_FIELD_NUMBER = 25;
   private static final class AggregationByFieldsDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
         java.lang.Long, java.lang.Long> defaultEntry =
@@ -750,7 +765,7 @@ private static final long serialVersionUID = 0L;
     return internalGetAggregationByFields().getMap().size();
   }
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public boolean containsAggregationByFields(
@@ -766,14 +781,14 @@ private static final long serialVersionUID = 0L;
     return getAggregationByFieldsMap();
   }
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
     return internalGetAggregationByFields().getMap();
   }
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public long getAggregationByFieldsOrDefault(
@@ -785,7 +800,7 @@ private static final long serialVersionUID = 0L;
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public long getAggregationByFieldsOrThrow(
@@ -865,27 +880,30 @@ private static final long serialVersionUID = 0L;
     if (domainNoSenior_ != 0) {
       output.writeInt32(18, domainNoSenior_);
     }
+    if (lookupRelationId_ != 0L) {
+      output.writeInt64(19, lookupRelationId_);
+    }
     if (aggregationBoId_ != 0L) {
-      output.writeInt64(19, aggregationBoId_);
+      output.writeInt64(20, aggregationBoId_);
     }
     if (aggregationFieldId_ != 0L) {
-      output.writeInt64(20, aggregationFieldId_);
+      output.writeInt64(21, aggregationFieldId_);
     }
     if (aggregationType_ != 0) {
-      output.writeInt32(21, aggregationType_);
+      output.writeInt32(22, aggregationType_);
     }
     if (aggregationRelationId_ != 0L) {
-      output.writeInt64(22, aggregationRelationId_);
+      output.writeInt64(23, aggregationRelationId_);
     }
     if (!getDomainConditionBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 23, domainCondition_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 24, domainCondition_);
     }
     com.google.protobuf.GeneratedMessageV3
       .serializeLongMapTo(
         output,
         internalGetAggregationByFields(),
         AggregationByFieldsDefaultEntryHolder.defaultEntry,
-        24);
+        25);
     unknownFields.writeTo(output);
   }
 
@@ -962,24 +980,28 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(18, domainNoSenior_);
     }
+    if (lookupRelationId_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(19, lookupRelationId_);
+    }
     if (aggregationBoId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(19, aggregationBoId_);
+        .computeInt64Size(20, aggregationBoId_);
     }
     if (aggregationFieldId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(20, aggregationFieldId_);
+        .computeInt64Size(21, aggregationFieldId_);
     }
     if (aggregationType_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(21, aggregationType_);
+        .computeInt32Size(22, aggregationType_);
     }
     if (aggregationRelationId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(22, aggregationRelationId_);
+        .computeInt64Size(23, aggregationRelationId_);
     }
     if (!getDomainConditionBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, domainCondition_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(24, domainCondition_);
     }
     for (java.util.Map.Entry<java.lang.Long, java.lang.Long> entry
          : internalGetAggregationByFields().getMap().entrySet()) {
@@ -989,7 +1011,7 @@ private static final long serialVersionUID = 0L;
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(24, aggregationByFields__);
+          .computeMessageSize(25, aggregationByFields__);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -1046,6 +1068,8 @@ private static final long serialVersionUID = 0L;
         == other.getResetType());
     result = result && (getDomainNoSenior()
         == other.getDomainNoSenior());
+    result = result && (getLookupRelationId()
+        == other.getLookupRelationId());
     result = result && (getAggregationBoId()
         == other.getAggregationBoId());
     result = result && (getAggregationFieldId()
@@ -1111,6 +1135,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getResetType();
     hash = (37 * hash) + DOMAINNOSENIOR_FIELD_NUMBER;
     hash = (53 * hash) + getDomainNoSenior();
+    hash = (37 * hash) + LOOKUPRELATIONID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getLookupRelationId());
     hash = (37 * hash) + AGGREGATIONBOID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getAggregationBoId());
@@ -1237,7 +1264,7 @@ private static final long serialVersionUID = 0L;
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 24:
+        case 25:
           return internalGetAggregationByFields();
         default:
           throw new RuntimeException(
@@ -1248,7 +1275,7 @@ private static final long serialVersionUID = 0L;
     protected com.google.protobuf.MapField internalGetMutableMapField(
         int number) {
       switch (number) {
-        case 24:
+        case 25:
           return internalGetMutableAggregationByFields();
         default:
           throw new RuntimeException(
@@ -1319,6 +1346,8 @@ private static final long serialVersionUID = 0L;
 
       domainNoSenior_ = 0;
 
+      lookupRelationId_ = 0L;
+
       aggregationBoId_ = 0L;
 
       aggregationFieldId_ = 0L;
@@ -1380,6 +1409,7 @@ private static final long serialVersionUID = 0L;
       result.lookupEntityFieldId_ = lookupEntityFieldId_;
       result.resetType_ = resetType_;
       result.domainNoSenior_ = domainNoSenior_;
+      result.lookupRelationId_ = lookupRelationId_;
       result.aggregationBoId_ = aggregationBoId_;
       result.aggregationFieldId_ = aggregationFieldId_;
       result.aggregationType_ = aggregationType_;
@@ -1497,6 +1527,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getDomainNoSenior() != 0) {
         setDomainNoSenior(other.getDomainNoSenior());
+      }
+      if (other.getLookupRelationId() != 0L) {
+        setLookupRelationId(other.getLookupRelationId());
       }
       if (other.getAggregationBoId() != 0L) {
         setAggregationBoId(other.getAggregationBoId());
@@ -2515,15 +2548,41 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private long lookupRelationId_ ;
+    /**
+     * <code>int64 lookupRelationId = 19;</code>
+     */
+    public long getLookupRelationId() {
+      return lookupRelationId_;
+    }
+    /**
+     * <code>int64 lookupRelationId = 19;</code>
+     */
+    public Builder setLookupRelationId(long value) {
+      
+      lookupRelationId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 lookupRelationId = 19;</code>
+     */
+    public Builder clearLookupRelationId() {
+      
+      lookupRelationId_ = 0L;
+      onChanged();
+      return this;
+    }
+
     private long aggregationBoId_ ;
     /**
-     * <code>int64 aggregationBoId = 19;</code>
+     * <code>int64 aggregationBoId = 20;</code>
      */
     public long getAggregationBoId() {
       return aggregationBoId_;
     }
     /**
-     * <code>int64 aggregationBoId = 19;</code>
+     * <code>int64 aggregationBoId = 20;</code>
      */
     public Builder setAggregationBoId(long value) {
       
@@ -2532,7 +2591,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int64 aggregationBoId = 19;</code>
+     * <code>int64 aggregationBoId = 20;</code>
      */
     public Builder clearAggregationBoId() {
       
@@ -2543,13 +2602,13 @@ private static final long serialVersionUID = 0L;
 
     private long aggregationFieldId_ ;
     /**
-     * <code>int64 aggregationFieldId = 20;</code>
+     * <code>int64 aggregationFieldId = 21;</code>
      */
     public long getAggregationFieldId() {
       return aggregationFieldId_;
     }
     /**
-     * <code>int64 aggregationFieldId = 20;</code>
+     * <code>int64 aggregationFieldId = 21;</code>
      */
     public Builder setAggregationFieldId(long value) {
       
@@ -2558,7 +2617,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int64 aggregationFieldId = 20;</code>
+     * <code>int64 aggregationFieldId = 21;</code>
      */
     public Builder clearAggregationFieldId() {
       
@@ -2569,13 +2628,13 @@ private static final long serialVersionUID = 0L;
 
     private int aggregationType_ ;
     /**
-     * <code>int32 aggregationType = 21;</code>
+     * <code>int32 aggregationType = 22;</code>
      */
     public int getAggregationType() {
       return aggregationType_;
     }
     /**
-     * <code>int32 aggregationType = 21;</code>
+     * <code>int32 aggregationType = 22;</code>
      */
     public Builder setAggregationType(int value) {
       
@@ -2584,7 +2643,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int32 aggregationType = 21;</code>
+     * <code>int32 aggregationType = 22;</code>
      */
     public Builder clearAggregationType() {
       
@@ -2595,13 +2654,13 @@ private static final long serialVersionUID = 0L;
 
     private long aggregationRelationId_ ;
     /**
-     * <code>int64 aggregationRelationId = 22;</code>
+     * <code>int64 aggregationRelationId = 23;</code>
      */
     public long getAggregationRelationId() {
       return aggregationRelationId_;
     }
     /**
-     * <code>int64 aggregationRelationId = 22;</code>
+     * <code>int64 aggregationRelationId = 23;</code>
      */
     public Builder setAggregationRelationId(long value) {
       
@@ -2610,7 +2669,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int64 aggregationRelationId = 22;</code>
+     * <code>int64 aggregationRelationId = 23;</code>
      */
     public Builder clearAggregationRelationId() {
       
@@ -2621,7 +2680,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object domainCondition_ = "";
     /**
-     * <code>string domainCondition = 23;</code>
+     * <code>string domainCondition = 24;</code>
      */
     public java.lang.String getDomainCondition() {
       java.lang.Object ref = domainCondition_;
@@ -2636,7 +2695,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string domainCondition = 23;</code>
+     * <code>string domainCondition = 24;</code>
      */
     public com.google.protobuf.ByteString
         getDomainConditionBytes() {
@@ -2652,7 +2711,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string domainCondition = 23;</code>
+     * <code>string domainCondition = 24;</code>
      */
     public Builder setDomainCondition(
         java.lang.String value) {
@@ -2665,7 +2724,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string domainCondition = 23;</code>
+     * <code>string domainCondition = 24;</code>
      */
     public Builder clearDomainCondition() {
       
@@ -2674,7 +2733,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string domainCondition = 23;</code>
+     * <code>string domainCondition = 24;</code>
      */
     public Builder setDomainConditionBytes(
         com.google.protobuf.ByteString value) {
@@ -2715,7 +2774,7 @@ private static final long serialVersionUID = 0L;
       return internalGetAggregationByFields().getMap().size();
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public boolean containsAggregationByFields(
@@ -2731,14 +2790,14 @@ private static final long serialVersionUID = 0L;
       return getAggregationByFieldsMap();
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
       return internalGetAggregationByFields().getMap();
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public long getAggregationByFieldsOrDefault(
@@ -2750,7 +2809,7 @@ private static final long serialVersionUID = 0L;
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public long getAggregationByFieldsOrThrow(
@@ -2770,7 +2829,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public Builder removeAggregationByFields(
@@ -2789,7 +2848,7 @@ private static final long serialVersionUID = 0L;
       return internalGetMutableAggregationByFields().getMutableMap();
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
     public Builder putAggregationByFields(
         long key,
@@ -2801,7 +2860,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public Builder putAllAggregationByFields(
