@@ -188,18 +188,18 @@ public class EntityClass implements IEntityClass {
         }
 
         // TODO: 不知道为什么有这段,先注解.半年后将被确认删除. by donbing 2021-8-24
-        //else {
-        //    if (relations != null) {
-        //        //  从关系中找
-        //        for (Relationship relation : relations) {
-        //            if (null != relation
-        //                && relation.isSelfRelation(this.id)
-        //                && relation.getEntityField().id() == id) {
-        //                return Optional.of(relation.getEntityField());
-        //            }
-        //        }
-        //    }
-        //}
+        else {
+            if (relations != null) {
+                //  从关系中找
+                for (Relationship relation : relations) {
+                    if (null != relation
+                        && relation.isSelfRelation(this.id)
+                        && relation.getEntityField().id() == id) {
+                        return Optional.of(relation.getEntityField());
+                    }
+                }
+            }
+        }
 
         //  从父类找
         if (null != father) {
