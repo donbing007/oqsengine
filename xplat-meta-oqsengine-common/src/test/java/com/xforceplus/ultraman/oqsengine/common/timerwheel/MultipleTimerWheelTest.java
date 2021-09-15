@@ -48,37 +48,37 @@ public class MultipleTimerWheelTest {
         Assertions.assertEquals(1, result.get());
     }
 
-    @Test
-    public void testParallelAdd() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-        final CountDownLatch latch = new CountDownLatch(500000);
-        final AtomicInteger result = new AtomicInteger(0);
-        MultipleTimerWheel wheel = new MultipleTimerWheel(500, 100, new TimeoutNotification<Object>() {
-            @Override
-            public long notice(Object addTime) {
-                try {
-                    result.incrementAndGet();
-                    return 0;
-
-                } finally {
-                    latch.countDown();
-                }
-            }
-        });
-
-        for (int i = 0; i < 500000; i++) {
-            int finalI1 = i;
-            executorService.submit(() -> {
-                Random random = new Random();
-                wheel.add(new Object(), 100 + random.nextInt(5000));
-            });
-        }
-
-        latch.await();
-        int size = wheel.size();
-        Assertions.assertEquals(500000, result.get());
-        Assertions.assertEquals(0, size);
-    }
+    //@Test
+    //public void testParallelAdd() throws InterruptedException {
+    //    ExecutorService executorService = Executors.newFixedThreadPool(10);
+    //    final CountDownLatch latch = new CountDownLatch(500000);
+    //    final AtomicInteger result = new AtomicInteger(0);
+    //    MultipleTimerWheel wheel = new MultipleTimerWheel(500, 100, new TimeoutNotification<Object>() {
+    //        @Override
+    //        public long notice(Object addTime) {
+    //            try {
+    //                result.incrementAndGet();
+    //                return 0;
+    //
+    //            } finally {
+    //                latch.countDown();
+    //            }
+    //        }
+    //    });
+    //
+    //    for (int i = 0; i < 500000; i++) {
+    //        int finalI1 = i;
+    //        executorService.submit(() -> {
+    //            Random random = new Random();
+    //            wheel.add(new Object(), 100 + random.nextInt(5000));
+    //        });
+    //    }
+    //
+    //    latch.await();
+    //    int size = wheel.size();
+    //    Assertions.assertEquals(500000, result.get());
+    //    Assertions.assertEquals(0, size);
+    //}
 
     @Test
     public void testSize() {
