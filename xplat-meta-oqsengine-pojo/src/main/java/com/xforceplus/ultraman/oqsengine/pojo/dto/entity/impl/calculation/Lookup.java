@@ -26,7 +26,6 @@ public class Lookup extends AbstractCalculation {
 
     /**
      * lookup的关系信息.
-     *
      */
     @JsonProperty(value = "relationId")
     private long relationId;
