@@ -51,7 +51,7 @@ public class SimpleFieldKeyGeneratorTest {
         keyGenerator = new SimpleFieldKeyGenerator();
         metaManager = mock(MetaManager.class);
         IEntityClass entityClass = buildEntityClass(1008);
-        when(metaManager.load(1008)).thenReturn(Optional.of(entityClass));
+        when(metaManager.load(1008, "")).thenReturn(Optional.of(entityClass));
         when(metaManager.load(1008, null)).thenReturn(Optional.of(entityClass));
         when(metaManager.load(1008, "")).thenReturn(Optional.of(entityClass));
         ReflectionTestUtils.setField(keyGenerator, "metaManager", metaManager);

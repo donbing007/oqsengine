@@ -113,15 +113,6 @@ public class UserCaseTest extends AbstractContainerExtends {
             }
         }
 
-        Mockito.when(metaManager.load(MockEntityClassDefine.l0EntityClass.id()))
-            .thenReturn(Optional.of(MockEntityClassDefine.l0EntityClass));
-
-        Mockito.when(metaManager.load(MockEntityClassDefine.l1EntityClass.id()))
-            .thenReturn(Optional.of(MockEntityClassDefine.l1EntityClass));
-
-        Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id()))
-            .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
-
         Mockito.when(metaManager.load(MockEntityClassDefine.l0EntityClass.id(), OqsProfile.UN_DEFINE_PROFILE))
             .thenReturn(Optional.of(MockEntityClassDefine.l0EntityClass));
 
@@ -139,9 +130,6 @@ public class UserCaseTest extends AbstractContainerExtends {
 
         Mockito.when(metaManager.load(MockEntityClassDefine.l2EntityClass.id(), null))
             .thenReturn(Optional.of(MockEntityClassDefine.l2EntityClass));
-
-        Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id()))
-            .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));
 
         Mockito.when(metaManager.load(MockEntityClassDefine.lookupEntityClass.id(), null))
             .thenReturn(Optional.of(MockEntityClassDefine.lookupEntityClass));

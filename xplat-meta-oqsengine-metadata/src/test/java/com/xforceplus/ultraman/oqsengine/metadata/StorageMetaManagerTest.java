@@ -151,7 +151,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             }
         }
 
-        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L);
+        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L, "");
 
         Assertions.assertTrue(op.isPresent());
 
@@ -190,7 +190,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId);
+            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
             Assertions.assertTrue(
                 e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
@@ -258,7 +258,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId);
+            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
             Assertions.assertTrue(
                 e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
@@ -269,7 +269,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
                 .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
-        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId);
+        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         Assertions.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
@@ -283,7 +283,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
         if (null != re) {
             re.forEach(
                 s -> {
-                    IEntityClass e = s.getRightEntityClass();
+                    IEntityClass e = s.getRightEntityClass("");
                     Assertions.assertNotNull(e);
                     Assertions.assertEquals(s.getRightEntityClassId(), e.id());
                 }
@@ -294,7 +294,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
             check 自循环
          */
         long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
-        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedAnc);
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedAnc, "");
         Assertions.assertTrue(entityClassOp.isPresent());
 
         entityClassInfo =
@@ -306,7 +306,7 @@ public class StorageMetaManagerTest extends MetaTestHelper {
         if (null != re) {
             re.forEach(
                 s -> {
-                    IEntityClass e = s.getRightEntityClass();
+                    IEntityClass e = s.getRightEntityClass("");
                     Assertions.assertNotNull(e);
                     Assertions.assertEquals(s.getRightEntityClassId(), e.id());
                 }

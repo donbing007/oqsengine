@@ -97,7 +97,7 @@ public class OriginalEntityUtils {
         private long maintainid;
 
         public static OriginalEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
-            Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId());
+            Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId(), "");
             return entityClassOp.map(entityClass -> OriginalEntity.Builder
                 .anOriginalEntity()
                 .withDeleted(rawOriginalEntity.isDeleted())

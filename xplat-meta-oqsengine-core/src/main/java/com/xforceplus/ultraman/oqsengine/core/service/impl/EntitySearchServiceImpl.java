@@ -210,7 +210,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Override
     public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
-        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
+        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId(), entityClassRef.getProfile());
         if (!entityClass.isPresent()) {
             throw new RuntimeException(
                 String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));

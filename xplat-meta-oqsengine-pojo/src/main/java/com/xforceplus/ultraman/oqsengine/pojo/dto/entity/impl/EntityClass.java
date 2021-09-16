@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 一个元信息定义,OQS内部使用的对象元信息定义.
@@ -40,6 +42,11 @@ public class EntityClass implements IEntityClass {
      * 元信息处于的继承层级
      */
     private int level;
+
+    /*
+     * profile信息
+     */
+    private String profile;
 
     /*
      * 关系信息
@@ -82,6 +89,15 @@ public class EntityClass implements IEntityClass {
     @Override
     public int level() {
         return level;
+    }
+
+    @Override
+    public EntityClassRef ref() {
+        return EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(id())
+            .withEntityClassCode(code())
+            .withEntityClassProfile(profile)
+            .build();
     }
 
     @Override
@@ -252,6 +268,9 @@ public class EntityClass implements IEntityClass {
         private String code;
         private int version;
         private int level;
+        private Set<IEntityClass> relationsEntityClasses;
+        private String profile;
+
         private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
@@ -265,6 +284,11 @@ public class EntityClass implements IEntityClass {
 
         public EntityClass.Builder withId(long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder withProfile(String profile) {
+            this.profile = profile;
             return this;
         }
 
@@ -334,6 +358,7 @@ public class EntityClass implements IEntityClass {
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
+            entityClass.profile = this.profile;
             return entityClass;
         }
     }

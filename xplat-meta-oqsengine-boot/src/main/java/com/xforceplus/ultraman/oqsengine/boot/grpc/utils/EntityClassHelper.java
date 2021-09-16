@@ -87,6 +87,9 @@ public class EntityClassHelper {
      * 查找字段实例.
      */
     public static Optional<IEntityField> findFieldById(IEntityClass entityClass, long id) {
+
+        String profile = entityClass.ref().getProfile();
+
         //find current
         Optional<IEntityField> field = entityClass.field(id);
         if (field.isPresent()) {
@@ -96,7 +99,7 @@ public class EntityClassHelper {
         Optional<IEntityField> firstField = entityClass.relationship().stream()
             .filter(x -> x.getLeftEntityClassId() == entityClass.id())
             .map(x -> {
-                IEntityClass relatedEntityClass = x.getRightEntityClass();
+                IEntityClass relatedEntityClass = x.getRightEntityClass(profile);
                 Optional<IEntityField> entityField = relatedEntityClass.field(x.getId());
                 return entityField;
             }).filter(Optional::isPresent).map(Optional::get).findFirst();

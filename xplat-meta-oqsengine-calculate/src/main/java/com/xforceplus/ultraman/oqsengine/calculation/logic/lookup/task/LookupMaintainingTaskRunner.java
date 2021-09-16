@@ -157,7 +157,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
                     entities.stream().filter(e -> e.id() != finalTargetEntityId).collect(
                         Collectors.toList());
 
-                Optional<IEntityClass> lookupEntityClassOp = metaManager.load(lookupEntityClassId);
+                Optional<IEntityClass> lookupEntityClassOp = metaManager.load(lookupEntityClassId, "");
                 if (!lookupEntityClassOp.isPresent()) {
                     logger.warn("The meta information ({}) of the lookup initiator could not be found.",
                         lookupEntityClassId);

@@ -203,10 +203,6 @@ public class ChangelogConfiguration {
     @Bean
     public MetaManager metaManager(ChangelogExample example) {
         return new MetaManager() {
-            @Override
-            public Optional<IEntityClass> load(long id) {
-                return Optional.ofNullable(example.getEntityClassById(id));
-            }
 
             @Override
             public Optional<IEntityClass> load(long id, String profile) {

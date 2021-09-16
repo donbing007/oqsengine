@@ -36,6 +36,12 @@ public class LookupHelper {
      * lookup 对象的元信息标识前辍.
      */
     public static final String LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX = "lc";
+
+    /**
+     * entityclass 对象的元信息profile前缀.
+     */
+    public static final String LINK_KEY_LOOKUP_PROFILE_PREFIX = "lp";
+
     /**
      * lookup对象的实例前辍.
      */
@@ -44,6 +50,7 @@ public class LookupHelper {
      * lookup的字段标识.
      */
     public static final String LINK_KEY_LOOKUP_FIELD_PREFIX = "lf";
+
 
     /**
      * 构造lookup的link信息记录KEY.<br>
@@ -63,6 +70,7 @@ public class LookupHelper {
             targetField.id(),
             targetEntity.id(),
             lookupEntity.entityClassRef().getId(),
+            lookupEntity.entityClassRef().getProfile(),
             lookupField.id(),
             lookupEntity.id()
         );
@@ -76,7 +84,7 @@ public class LookupHelper {
      */
     public static LookupLinkKey parseLinkKey(String stringKey) {
         // key 应该按分割符分割后长度为6.
-        final int keyLen = 6;
+        final int keyLen = 7;
         String[] keys = stringKey.split(LINKE_KEY_SPACE);
         if (keys.length != keyLen) {
             throw new IllegalArgumentException(String.format("Incorrect lookup connection key.[%s]", stringKey));
@@ -87,6 +95,7 @@ public class LookupHelper {
         long lookupClassId = 0;
         long lookupFieldId = 0;
         long lookupEntityId = 0;
+        String lookupProfile = "";
         /*
         忽略共同前辍
          */
@@ -113,12 +122,17 @@ public class LookupHelper {
 
                 lookupEntityId = Long.parseLong(keyPeriod.substring(LINK_KEY_LOOKUP_ENTITY_PREFIX.length()));
 
+            } else if (keyPeriod.startsWith(LINK_KEY_LOOKUP_PROFILE_PREFIX)) {
+
+                lookupProfile = keyPeriod.substring(LINK_KEY_LOOKUP_PROFILE_PREFIX.length());
+
             } else {
                 throw new IllegalArgumentException(String.format("Incorrect lookup connection key.[%s]", stringKey));
             }
         }
 
-        return new LookupLinkKey(targetFieldId, targetEntityId, lookupClassId, lookupFieldId, lookupEntityId);
+        return new LookupLinkKey(targetFieldId, targetEntityId, lookupClassId, lookupProfile, lookupFieldId,
+            lookupEntityId);
     }
 
     /**
@@ -134,7 +148,9 @@ public class LookupHelper {
     public static LookupLinkIterKey buildIteratorPrefixLinkKey(
         IEntity targetEntity, IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField) {
 
-        return new LookupLinkIterKey(targetField.id(), targetEntity.id(), lookupEntityClass.id(), lookupField.id());
+        return new LookupLinkIterKey(targetField.id(),
+            targetEntity.id(), lookupEntityClass.id(),
+            lookupField.id());
     }
 
     /**
@@ -154,7 +170,8 @@ public class LookupHelper {
          * @param lookupClassId  lookup类型id.
          * @param lookupFieldId  lookup字段
          */
-        public LookupLinkIterKey(long targetFieldId, long targetEntityId, long lookupClassId, long lookupFieldId) {
+        public LookupLinkIterKey(long targetFieldId, long targetEntityId,
+                                 long lookupClassId, long lookupFieldId) {
             this.targetFieldId = targetFieldId;
             this.targetEntityId = targetEntityId;
             this.lookupClassId = lookupClassId;
@@ -207,6 +224,7 @@ public class LookupHelper {
         private long lookupClassId;
         private long lookupFieldId;
         private long lookupEntityId;
+        private String lookupProfile;
 
         /**
          * 实例.
@@ -220,11 +238,13 @@ public class LookupHelper {
         public LookupLinkKey(long targetFieldId,
                              long targetEntityId,
                              long lookupClassId,
+                             String lookupProfile,
                              long lookupFieldId,
                              long lookupEntityId) {
             this.targetFieldId = targetFieldId;
             this.targetEntityId = targetEntityId;
             this.lookupClassId = lookupClassId;
+            this.lookupProfile = lookupProfile;
             this.lookupFieldId = lookupFieldId;
             this.lookupEntityId = lookupEntityId;
         }
@@ -268,7 +288,10 @@ public class LookupHelper {
                 .append(NumberUtils.zeroFill(lookupFieldId))
                 .append(LINKE_KEY_SPACE)
                 .append(LINK_KEY_LOOKUP_ENTITY_PREFIX)
-                .append(NumberUtils.zeroFill(lookupEntityId));
+                .append(NumberUtils.zeroFill(lookupEntityId))
+                .append(LINKE_KEY_SPACE)
+                .append(LINK_KEY_LOOKUP_PROFILE_PREFIX)
+                .append(lookupProfile);
 
             return sb.toString();
         }

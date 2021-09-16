@@ -16,14 +16,6 @@ public interface MetaManager {
     /**
      * 加载指定的IEntityCalss实例.
      *
-     * @param id 元信息的标识.
-     * @return 元信息的实例.
-     */
-    Optional<IEntityClass> load(long id);
-
-    /**
-     * 加载指定的IEntityCalss实例.
-     *
      * @param id      元信息标识.
      * @param profile 个性化定制标识.
      * @return 元信息的实例.

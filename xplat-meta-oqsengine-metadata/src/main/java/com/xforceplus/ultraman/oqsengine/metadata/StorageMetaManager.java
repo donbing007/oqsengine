@@ -92,23 +92,6 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
-    /**
-     * 使用entityClassId获取对应的EntityClass.
-     *
-     * @param id 元信息的标识.
-     * @return 元信息实现.
-     */
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "load"})
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        try {
-            return innerLoad(id, null);
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
-            return Optional.empty();
-        }
-    }
-
     @Override
     public Optional<IEntityClass> load(long id, String profile) {
 
@@ -328,6 +311,7 @@ public class StorageMetaManager implements MetaManager {
                 .withName(entityClassStorage.getName())
                 .withLevel(entityClassStorage.getLevel())
                 .withVersion(entityClassStorage.getVersion())
+                .withProfile(profileCode)
                 .withRelations(relationships)
                 .withFields(entityFields);
         //   加载父类.

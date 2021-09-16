@@ -85,9 +85,11 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         IEntityClass forceClass = context.getEntityClass();
 
+        String profile = forceClass.ref().getProfile();
+
         // 构造维护信息.
         forceClass.relationship().stream().map(r -> {
-            IEntityClass relationshipClass = r.getRightEntityClass();
+            IEntityClass relationshipClass = r.getRightEntityClass(profile);
 
             return relationshipClass.fields().stream().filter(f ->
                 /*
@@ -117,6 +119,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     private IEntity findTargetEntity(CalculationLogicContext context) throws CalculationLogicException {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
+        IEntityClass entityClass = context.getEntityClass();
 
         /*
         定位发起lookup的entity中的指定实例值.
@@ -135,8 +138,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                 sourceValue.getClass().getSimpleName()));
         }
         MetaManager metaManager = context.getMetaManager();
-        Optional<IEntityClass> targetEntityClassOp = metaManager.load(
-            lookup.getClassId());
+        Optional<IEntityClass> targetEntityClassOp = metaManager.load(lookup.getClassId(), entityClass.ref().getProfile());
         if (!targetEntityClassOp.isPresent()) {
             throw new CalculationLogicException(
                 String.format("Invalid target meta information.[entityClassid = %d]",
@@ -180,8 +182,11 @@ public class LookupCalculationLogic implements CalculationLogic {
      * @see com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper
      */
     private void logLink(CalculationLogicContext context, IEntity targetEntity) throws CalculationLogicException {
+
+        String profile = targetEntity.entityClassRef().getProfile();
+
         Optional<IEntityClass> targetEntityClassOp = context.getMetaManager().load(
-            targetEntity.entityClassRef().getId());
+            targetEntity.entityClassRef().getId(), profile);
         if (!targetEntityClassOp.isPresent()) {
             throw new CalculationLogicException(
                 String.format("Invalid target meta information.[entityClassid = %d]",

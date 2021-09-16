@@ -328,7 +328,10 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     private Optional<PersistentEvent> updateRelation(ChangedEvent changedEvent) {
         long entityClassId = changedEvent.getEntityClassId();
 
-        Optional<IEntityClass> changeRelatedEntityOp = metaManager.load(entityClassId);
+        /*
+         * TODO profile
+         */
+        Optional<IEntityClass> changeRelatedEntityOp = metaManager.load(entityClassId, "");
         if (changeRelatedEntityOp.isPresent()) {
             IEntityClass relatedEntity = changeRelatedEntityOp.get();
 

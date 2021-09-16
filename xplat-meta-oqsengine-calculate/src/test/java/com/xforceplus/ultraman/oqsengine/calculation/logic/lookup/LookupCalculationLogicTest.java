@@ -147,7 +147,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(strongLookupClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(strongLookupEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(strongLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(true)
@@ -157,7 +157,7 @@ public class LookupCalculationLogicTest {
                         .withId(1)
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(weakLookupClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(weakLookupEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(weakLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(false)
@@ -180,7 +180,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(strongLookupClassId)
                         .withRightEntityClassId(targetClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(true)
@@ -201,7 +201,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(weakLookupClassId)
                         .withRightEntityClassId(targetClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(false)
@@ -373,7 +373,7 @@ public class LookupCalculationLogicTest {
         when(
             metaManager.load(
                 ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
-            )
+            , "")
         ).thenReturn(Optional.of(targetEntityClass));
 
         MasterStorage masterStorage = mock(MasterStorage.class);
@@ -423,7 +423,7 @@ public class LookupCalculationLogicTest {
         when(
             metaManager.load(
                 ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
-            )
+            , "")
         ).thenReturn(Optional.of(targetEntityClass));
 
         MasterStorage masterStorage = mock(MasterStorage.class);
@@ -485,7 +485,7 @@ public class LookupCalculationLogicTest {
         when(
             metaManager.load(
                 ((Lookup) (strongStringLookupField.config().getCalculation())).getClassId()
-            )
+            , "")
         ).thenReturn(Optional.of(targetEntityClass));
 
         MasterStorage masterStorage = mock(MasterStorage.class);

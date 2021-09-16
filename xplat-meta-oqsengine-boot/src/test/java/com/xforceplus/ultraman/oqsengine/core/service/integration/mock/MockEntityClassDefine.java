@@ -151,7 +151,7 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(l2EntityClass))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(4)
@@ -170,7 +170,7 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(driverEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(driverEntityClass))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(5)
@@ -182,7 +182,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(l2EntityClassId)
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(lookupEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(lookupEntityClass))
                         .build()
                 )
             )
@@ -217,7 +217,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("driver")
                         .withEntityField(l2EntityClass.field("l2-driver.id").get())
                         .withRightEntityClassId(l2EntityClass.id())
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(l2EntityClass))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(2)
@@ -229,7 +229,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode(l2EntityClass.code())
                         .withEntityField(l2EntityClass.field("l2-driver.id").get())
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(driverEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(driverEntityClass))
                         .build()
                 )
             ).build();
@@ -312,7 +312,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(lookupEntityClassId)
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(l2EntityClass))
                         .build()
                 )
             ).build();

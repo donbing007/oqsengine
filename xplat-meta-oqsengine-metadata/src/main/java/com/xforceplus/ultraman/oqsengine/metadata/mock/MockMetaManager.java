@@ -48,7 +48,6 @@ public class MockMetaManager implements MetaManager {
         }
     }
 
-    @Override
     public Optional<IEntityClass> load(long id) {
         /*
          * 找出所有版本中版本最大的.
