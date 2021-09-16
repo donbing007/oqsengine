@@ -26,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
@@ -339,6 +340,36 @@ public class LookupCalculationLogicTest {
     }
 
     @Test
+    public void testCalculateNoLookupValue() throws Exception {
+        // 发起lookup的实体.
+        IEntity lookupEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE - 1)
+            .withEntityClassRef(strongLookupEntityClass.ref())
+            .withTime(System.currentTimeMillis())
+            .withEntityValue(
+                EntityValue.build().addValues(
+                    Arrays.asList(
+                        new StringValue(strongStringLookupField, "1000"),
+                        new LongValue(strongLookLongField, 2000L)
+                    )
+                )
+            ).build();
+
+        DefaultCalculationLogicContext context = DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
+            .withScenarios(Scenarios.BUILD)
+            .withKeyValueStorage(kv)
+            .withEntity(lookupEntity).build();
+        context.focusField(strongStringLookupField);
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+        Optional<IValue> actualValueOp = logic.calculate(context);
+        Assertions.assertTrue(actualValueOp.isPresent());
+
+        IValue actualValue = actualValueOp.get();
+        Assertions.assertTrue(StringValue.class.isInstance(actualValue));
+        Assertions.assertEquals("1000", actualValue.valueToString());
+    }
+
+    @Test
     public void testCalculate() throws Exception {
         // 目标被lookup的实体.
         IEntity targetEntity = Entity.Builder.anEntity()
@@ -363,7 +394,7 @@ public class LookupCalculationLogicTest {
             .withEntityValue(
                 EntityValue.build().addValues(
                     Arrays.asList(
-                        new LongValue(strongStringLookupField, 1000),
+                        new LookupValue(strongStringLookupField, 1000),
                         new LongValue(strongLookLongField, 2000L)
                     )
                 )
