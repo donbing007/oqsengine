@@ -19,11 +19,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
@@ -160,21 +157,7 @@ public class EntityClassHelper {
                             FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
                             return Collections.singletonList(retValue);
                         } else if (CalculationType.LOOKUP.equals(x.calculationType())) {
-                            String value = y.getValue();
-
-                            if (ValueWithEmpty.isEmpty(value)) {
-                                return Collections.singletonList(new EmptyTypedValue(x));
-                            }
-
-                            try {
-                                long longValue = Long.parseLong(value);
-                                LongValue typedLongValue = new LongValue(x, longValue);
-                                return Collections.singletonList(typedLongValue);
-                            } catch (Exception ex) {
-                                LOGGER.warn(
-                                    String.format("Lookup value [%s]cannot convert to Long, only warning", value));
-                                return null;
-                            }
+                            return null;
                         } else {
                             return toTypedValue(x, y.getValue());
                         }
