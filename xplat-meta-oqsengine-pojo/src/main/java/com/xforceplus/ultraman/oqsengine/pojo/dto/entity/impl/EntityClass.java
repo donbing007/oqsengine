@@ -128,16 +128,15 @@ public class EntityClass implements IEntityClass {
         //  获取自己 + 父类的所有IEntityField
         List<IEntityField> entityFields = new ArrayList<>(fields);
 
-        // TODO: 不知道为什么有这段,先注解.半年后将被确认删除. by donbing 2021-8-24
-        //if (null != relations) {
-        //    relations.forEach(
-        //        r -> {
-        //            if (null != r && r.isSelfRelation(id)) {
-        //                entityFields.add(r.getEntityField());
-        //            }
-        //        }
-        //    );
-        //}
+        if (null != relations) {
+            relations.forEach(
+                r -> {
+                    if (null != r && r.isSelfRelation(id)) {
+                        entityFields.add(r.getEntityField());
+                    }
+                }
+            );
+        }
 
         if (null != father) {
             entityFields.addAll(father.fields());
@@ -154,21 +153,18 @@ public class EntityClass implements IEntityClass {
         //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
+        } else {
+            if (relations != null) {
+                //  从关系中找
+                for (Relationship relation : relations) {
+                    if (null != relation
+                        && relation.isSelfRelation(this.id)
+                        && relation.getEntityField().id() == id) {
+                        return Optional.of(relation.getEntityField());
+                    }
+                }
+            }
         }
-
-        // TODO: 不知道为什么有这段,先注解.半年后将被确认删除. by donbing 2021-8-24
-        //else {
-        //    if (relations != null) {
-        //        //  从关系中找
-        //        for (Relationship relation : relations) {
-        //            if (null != relation
-        //                && relation.isSelfRelation(this.id)
-        //                && relation.getEntityField().name().equals(name)) {
-        //                return Optional.of(relation.getEntityField());
-        //            }
-        //        }
-        //    }
-        //}
 
         //  从父类找
         if (null != father) {
