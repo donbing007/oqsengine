@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * desc :.
@@ -22,7 +24,7 @@ import java.util.Date;
  * @since : 1.8
  */
 public class IValueUtils {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(IValueUtils.class);
     /**
      * serialize to String.
      */
@@ -94,6 +96,7 @@ public class IValueUtils {
      */
     public static IValue<?> toIValue(IEntityField field, Object result) {
         try {
+            LOGGER.debug("raw : [{}], fieldId : [{}], config : [{}]]", result, field.id(), field.config().toString());
             switch (field.type()) {
                 case BOOLEAN: {
                     return new BooleanValue(field, (Boolean) result);
@@ -122,6 +125,9 @@ public class IValueUtils {
                     return new StringsValue(field, (String[]) result);
                 }
                 case DECIMAL: {
+                    LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]"
+                        , result, field.id(), field.config().getPrecision(), field.config().scale());
+
                     BigDecimal r;
                     if (field.config().getPrecision() > 0) {
                         Scale scale = Scale.getInstance(field.config().scale());
