@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -30,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -791,203 +793,212 @@ public class UserCaseTest extends AbstractContainerExtends {
         Assertions.assertEquals(1, entities.size());
     }
 
-    //@Test
-    //public void testlookupString() throws Exception {
-    //    IEntity targetEntity = Entity.Builder.anEntity()
-    //        .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
-    //        .withEntityValue(
-    //            EntityValue.build().addValue(
-    //                new StringValue(MockEntityClassDefine.l2EntityClass.field("l2-string").get(), "v1")
-    //            )
-    //        ).build();
-    //    OperationResult result = entityManagementService.build(targetEntity);
-    //    Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-    //
-    //    // 创建200个lookup实例.
-    //    int lookupSize = 200;
-    //    Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
-    //    for (int i = 0; i < lookupSize; i++) {
-    //        IEntity lookupEntity = Entity.Builder.anEntity()
-    //            .withEntityClassRef(MockEntityClassDefine.lookupEntityClass.ref())
-    //            .withEntityValue(
-    //                EntityValue.build().addValue(
-    //                    new LongValue(
-    //                        MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(),
-    //                        targetEntity.id())
-    //                ).addValue(
-    //                    new LongValue(MockEntityClassDefine.lookupEntityClass.field("l2-lookup.id").get(),
-    //                        targetEntity.id())
-    //                )
-    //            ).build();
-    //        lookupEntities.add(lookupEntity);
-    //
-    //        result = entityManagementService.build(lookupEntity);
-    //        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-    //    }
-    //
-    //    Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
-    //        lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.lookupEntityClass.ref());
-    //    Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
-    //    // 验证是否成功lookup.
-    //    queryLookupEntities.forEach(e -> {
-    //        Assertions.assertEquals(
-    //            targetEntity.entityValue().getValue("l2-string").get().valueToString(),
-    //            e.entityValue().getValue("lookup-l2-string").get().valueToString());
-    //    });
-    //
-    //    IEntity newTargetEntity = Entity.Builder.anEntity()
-    //        .withId(targetEntity.id())
-    //        .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
-    //        .withEntityValue(
-    //            EntityValue.build().addValue(
-    //                new StringValue(MockEntityClassDefine.l2EntityClass.field("l2-string").get(), "v2")
-    //            )
-    //        ).build();
-    //    entityManagementService.replace(newTargetEntity);
-    //
-    //    boolean success = false;
-    //    long successSize = 0;
-    //    for (int i = 0; i < 10000; i++) {
-    //        queryLookupEntities = entitySearchService.selectMultiple(
-    //            lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
-    //            MockEntityClassDefine.lookupEntityClass.ref());
-    //
-    //        successSize =
-    //            queryLookupEntities.stream()
-    //                .filter(
-    //                    e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2"))
-    //                .count();
-    //
-    //        if (lookupSize != successSize) {
-    //            logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
-    //                lookupSize, successSize, lookupSize - successSize);
-    //        } else {
-    //            success = true;
-    //            break;
-    //        }
-    //    }
-    //
-    //    Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
-    //        lookupSize, successSize));
-    //
-    //    Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
-    //        Conditions.buildEmtpyConditions()
-    //            .addAnd(
-    //                new Condition(
-    //                    MockEntityClassDefine.lookupEntityClass.field("lookup-l2").get(),
-    //                    ConditionOperator.EQUALS,
-    //                    new StringValue(MockEntityClassDefine.lookupEntityClass.field("lookup-l2").get(), "v2"))
-    //            ),
-    //        MockEntityClassDefine.lookupEntityClass.ref(),
-    //        ServiceSelectConfig.Builder.anSearchConfig()
-    //            .withPage(Page.newSinglePage(200)).build()
-    //    );
-    //
-    //    Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
-    //    Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
-    //        e -> e.entityValue().getValue("lookup-l2").get().valueToString().equals("v2")
-    //    ).count());
-    //}
+    @Test
+    public void testlookupString() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(MockEntityClassDefine.l2EntityClass.field("l2-string").get(), "v1")
+                )
+            ).build();
+        OperationResult result = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
 
-    //@Test
-    //public void testLookupDec() throws Exception {
-    //    IEntity targetEntity = Entity.Builder.anEntity()
-    //        .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
-    //        .withEntityValue(
-    //            EntityValue.build().addValue(
-    //                new DecimalValue(MockEntityClassDefine.l2EntityClass.field("l2-dec").get(),
-    //                    BigDecimal.valueOf(12.3333D))
-    //            )
-    //        ).build();
-    //    OperationResult result = entityManagementService.build(targetEntity);
-    //    Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-    //
-    //    // 创建200个lookup实例.
-    //    int lookupSize = 200;
-    //    Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
-    //    for (int i = 0; i < lookupSize; i++) {
-    //        IEntity lookupEntity = Entity.Builder.anEntity()
-    //            .withEntityClassRef(MockEntityClassDefine.lookupEntityClass.ref())
-    //            .withEntityValue(
-    //                EntityValue.build().addValue(
-    //                    new LongValue(
-    //                        MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
-    //                        targetEntity.id())
-    //                ).addValue(
-    //                    new LongValue(MockEntityClassDefine.lookupEntityClass.field("l2-lookup.id").get(),
-    //                        targetEntity.id())
-    //                )
-    //            ).build();
-    //        lookupEntities.add(lookupEntity);
-    //
-    //        result = entityManagementService.build(lookupEntity);
-    //        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-    //    }
-    //
-    //    Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
-    //        lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.lookupEntityClass.ref());
-    //    Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
-    //    // 验证是否成功lookup.
-    //    queryLookupEntities.forEach(e -> {
-    //        Assertions.assertEquals(
-    //            targetEntity.entityValue().getValue("l2-dec").get().valueToString(),
-    //            e.entityValue().getValue("lookup-l2-dec").get().valueToString());
-    //    });
-    //
-    //    IEntity newTargetEntity = Entity.Builder.anEntity()
-    //        .withId(targetEntity.id())
-    //        .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
-    //        .withEntityValue(
-    //            EntityValue.build().addValue(
-    //                new DecimalValue(MockEntityClassDefine.l2EntityClass.field("l2-dec").get(),
-    //                    BigDecimal.valueOf(13.3333D))
-    //            )
-    //        ).build();
-    //    result = entityManagementService.replace(newTargetEntity);
-    //    Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-    //
-    //    boolean success = false;
-    //    long successSize = 0;
-    //    for (int i = 0; i < 10000; i++) {
-    //        queryLookupEntities = entitySearchService.selectMultiple(
-    //            lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
-    //            MockEntityClassDefine.lookupEntityClass.ref());
-    //
-    //        successSize =
-    //            queryLookupEntities.stream()
-    //                .filter(
-    //                    e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333"))
-    //                .count();
-    //
-    //        if (lookupSize != successSize) {
-    //            logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
-    //                lookupSize, successSize, lookupSize - successSize);
-    //        } else {
-    //            success = true;
-    //            break;
-    //        }
-    //    }
-    //
-    //    Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
-    //        lookupSize, successSize));
-    //
-    //    Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
-    //        Conditions.buildEmtpyConditions()
-    //            .addAnd(
-    //                new Condition(
-    //                    MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
-    //                    ConditionOperator.EQUALS,
-    //                    new DecimalValue(MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
-    //                        BigDecimal.valueOf(13.3333D)))
-    //            ),
-    //        MockEntityClassDefine.lookupEntityClass.ref(),
-    //        ServiceSelectConfig.Builder.anSearchConfig()
-    //            .withPage(Page.newSinglePage(200)).build()
-    //    );
-    //
-    //    Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
-    //    Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
-    //        e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333")
-    //    ).count());
-    //}
+        // 创建200个lookup实例.
+        int lookupSize = 200;
+        Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
+        for (int i = 0; i < lookupSize; i++) {
+            IEntity lookupEntity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.lookupEntityClass.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LookupValue(
+                            MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(),
+                            targetEntity.id())
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.lookupEntityClass.field("l2-lookup.id").get(),
+                            targetEntity.id())
+                    )
+                ).build();
+            lookupEntities.add(lookupEntity);
+
+            result = entityManagementService.build(lookupEntity);
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        }
+
+        Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
+            lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.lookupEntityClass.ref());
+        Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
+        // 验证是否成功lookup.
+        queryLookupEntities.forEach(e -> {
+
+            // 此次更新是为了验证,已经lookup过的字段再次更新是否正确.
+            try {
+                entityManagementService.replace(e);
+            } catch (SQLException exception) {
+                throw new RuntimeException(exception.getMessage(), exception);
+            }
+
+            Assertions.assertEquals(
+                targetEntity.entityValue().getValue("l2-string").get().valueToString(),
+                e.entityValue().getValue("lookup-l2-string").get().valueToString());
+        });
+
+
+        IEntity newTargetEntity = Entity.Builder.anEntity()
+            .withId(targetEntity.id())
+            .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(MockEntityClassDefine.l2EntityClass.field("l2-string").get(), "v2")
+                )
+            ).build();
+        entityManagementService.replace(newTargetEntity);
+
+        boolean success = false;
+        long successSize = 0;
+        for (int i = 0; i < 10000; i++) {
+            queryLookupEntities = entitySearchService.selectMultiple(
+                lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
+                MockEntityClassDefine.lookupEntityClass.ref());
+
+            successSize =
+                queryLookupEntities.stream()
+                    .filter(
+                        e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2"))
+                    .count();
+
+            if (lookupSize != successSize) {
+                logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
+                    lookupSize, successSize, lookupSize - successSize);
+            } else {
+                success = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
+            lookupSize, successSize));
+
+        Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(MockEntityClassDefine.lookupEntityClass.field("lookup-l2-string").get(), "v2"))
+                ),
+            MockEntityClassDefine.lookupEntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(200)).build()
+        );
+
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
+            e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2")
+        ).count());
+    }
+
+    @Test
+    public void testLookupDec() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new DecimalValue(MockEntityClassDefine.l2EntityClass.field("l2-dec").get(),
+                        BigDecimal.valueOf(12.3333D))
+                )
+            ).build();
+        OperationResult result = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        // 创建200个lookup实例.
+        int lookupSize = 200;
+        Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
+        for (int i = 0; i < lookupSize; i++) {
+            IEntity lookupEntity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.lookupEntityClass.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(
+                            MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
+                            targetEntity.id())
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.lookupEntityClass.field("l2-lookup.id").get(),
+                            targetEntity.id())
+                    )
+                ).build();
+            lookupEntities.add(lookupEntity);
+
+            result = entityManagementService.build(lookupEntity);
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        }
+
+        Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
+            lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.lookupEntityClass.ref());
+        Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
+        // 验证是否成功lookup.
+        queryLookupEntities.forEach(e -> {
+            Assertions.assertEquals(
+                targetEntity.entityValue().getValue("l2-dec").get().valueToString(),
+                e.entityValue().getValue("lookup-l2-dec").get().valueToString());
+        });
+
+        IEntity newTargetEntity = Entity.Builder.anEntity()
+            .withId(targetEntity.id())
+            .withEntityClassRef(MockEntityClassDefine.l2EntityClass.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new DecimalValue(MockEntityClassDefine.l2EntityClass.field("l2-dec").get(),
+                        BigDecimal.valueOf(13.3333D))
+                )
+            ).build();
+        result = entityManagementService.replace(newTargetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        boolean success = false;
+        long successSize = 0;
+        for (int i = 0; i < 10000; i++) {
+            queryLookupEntities = entitySearchService.selectMultiple(
+                lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
+                MockEntityClassDefine.lookupEntityClass.ref());
+
+            successSize =
+                queryLookupEntities.stream()
+                    .filter(
+                        e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333"))
+                    .count();
+
+            if (lookupSize != successSize) {
+                logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
+                    lookupSize, successSize, lookupSize - successSize);
+            } else {
+                success = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
+            lookupSize, successSize));
+
+        Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(MockEntityClassDefine.lookupEntityClass.field("lookup-l2-dec").get(),
+                            BigDecimal.valueOf(13.3333D)))
+                ),
+            MockEntityClassDefine.lookupEntityClass.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(200)).build()
+        );
+
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
+            e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333")
+        ).count());
+    }
 }
