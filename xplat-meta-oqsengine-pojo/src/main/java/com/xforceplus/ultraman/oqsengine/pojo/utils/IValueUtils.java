@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class IValueUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(IValueUtils.class);
+
     /**
      * serialize to String.
      */
@@ -125,8 +126,8 @@ public class IValueUtils {
                     return new StringsValue(field, (String[]) result);
                 }
                 case DECIMAL: {
-                    LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]"
-                        , result, field.id(), field.config().getPrecision(), field.config().scale());
+                    LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]",
+                        result, field.id(), field.config().getPrecision(), field.config().scale());
 
                     BigDecimal r;
                     if (field.config().getPrecision() > 0) {
