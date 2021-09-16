@@ -150,7 +150,7 @@ public class FieldConfig implements Serializable {
      * 尾数处理模式.
      */
     @JsonProperty(value = "scale")
-    private int scale = 6;
+    private int scale = 0;
 
     /**
      * 是否为数据标识.
@@ -457,6 +457,7 @@ public class FieldConfig implements Serializable {
             .withWildcardMinWidth(this.getWildcardMinWidth())
             .withCrossSearch(this.isCrossSearch())
             .withLen(this.getLen())
+            .withScale(this.scale())
             .withCalculation(this.getCalculation().clone())
             .build();
     }
