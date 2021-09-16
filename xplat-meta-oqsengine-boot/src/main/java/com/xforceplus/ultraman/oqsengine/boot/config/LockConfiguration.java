@@ -51,8 +51,8 @@ public class LockConfiguration {
         if (!StringUtils.isBlank(password)) {
             if (password.startsWith(":")) {
                 password = password.substring(1);
-                configCopy.useSingleServer().setPassword(password);
             }
+            configCopy.useSingleServer().setPassword(password);
         }
         ConnectionManager connectionManager = ConfigSupport.createConnectionManager(configCopy);
         RedissonObjectBuilder objectBuilder = null;
