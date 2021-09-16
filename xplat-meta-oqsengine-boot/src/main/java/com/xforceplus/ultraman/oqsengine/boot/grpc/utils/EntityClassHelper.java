@@ -171,8 +171,9 @@ public class EntityClassHelper {
                                 LongValue typedLongValue = new LongValue(x, longValue);
                                 return Collections.singletonList(typedLongValue);
                             } catch (Exception ex) {
-                                throw new RuntimeException(
-                                    String.format("Lookup value [%s]cannot convert to Long", value));
+                                LOGGER.warn(
+                                    String.format("Lookup value [%s]cannot convert to Long, only warning", value));
+                                return null;
                             }
                         } else {
                             return toTypedValue(x, y.getValue());

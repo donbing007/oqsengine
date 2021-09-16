@@ -159,7 +159,9 @@ public class LookupCalculationLogic implements CalculationLogic {
                 sourceValue.getClass().getSimpleName()));
         }
         MetaManager metaManager = context.getMetaManager();
-        Optional<IEntityClass> targetEntityClassOp = metaManager.load(lookup.getClassId(), entityClass.ref().getProfile());
+        IEntityClass entityClass = context.getEntityClass();
+        Optional<IEntityClass> targetEntityClassOp =
+            metaManager.load(lookup.getClassId(), entityClass.ref().getProfile());
         if (!targetEntityClassOp.isPresent()) {
             throw new CalculationLogicException(
                 String.format("Invalid target meta information.[entityClassid = %d]",

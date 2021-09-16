@@ -49,7 +49,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.ChangelogCountResponse;
@@ -328,8 +329,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             removeList.add(field);
                         } else {
                             try {
-                                long id = Long.parseLong(o.toString());
-                                updatedValue.add(new LongValue(field, id));
+                                if (ValueWithEmpty.isEmpty(o.toString())) {
+                                    updatedValue.add(new EmptyTypedValue(field));
+                                } else {
+                                    long id = Long.parseLong(o.toString());
+                                    updatedValue.add(new LookupValue(field, id));
+                                }
+
                             } catch (Exception ex) {
                                 logger.error("{}", ex);
                             }
