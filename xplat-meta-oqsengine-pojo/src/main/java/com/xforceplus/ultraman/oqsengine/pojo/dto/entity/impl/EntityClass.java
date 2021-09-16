@@ -132,7 +132,9 @@ public class EntityClass implements IEntityClass {
             relations.forEach(
                 r -> {
                     if (null != r && r.isSelfRelation(id)) {
-                        entityFields.add(r.getEntityField());
+                        if (r.getEntityField() != null) {
+                            entityFields.add(r.getEntityField());
+                        }
                     }
                 }
             );
@@ -157,10 +159,10 @@ public class EntityClass implements IEntityClass {
             if (relations != null) {
                 //  从关系中找
                 for (Relationship relation : relations) {
-                    if (null != relation
-                        && relation.isSelfRelation(this.id)
-                        && relation.getEntityField().id() == id) {
-                        return Optional.of(relation.getEntityField());
+                    if (relation.isSelfRelation(this.id)) {
+                        if (relation.getEntityField() != null && relation.getEntityField().name().equals(name)) {
+                            return Optional.of(relation.getEntityField());
+                        }
                     }
                 }
             }
@@ -184,10 +186,10 @@ public class EntityClass implements IEntityClass {
             if (relations != null) {
                 //  从关系中找
                 for (Relationship relation : relations) {
-                    if (null != relation
-                        && relation.isSelfRelation(this.id)
-                        && relation.getEntityField().id() == id) {
-                        return Optional.of(relation.getEntityField());
+                    if (relation.isSelfRelation(this.id)) {
+                        if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
+                            return Optional.of(relation.getEntityField());
+                        }
                     }
                 }
             }

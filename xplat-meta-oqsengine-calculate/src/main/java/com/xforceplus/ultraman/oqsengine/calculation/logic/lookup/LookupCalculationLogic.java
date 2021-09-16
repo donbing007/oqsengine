@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import java.sql.SQLException;
@@ -37,6 +37,22 @@ public class LookupCalculationLogic implements CalculationLogic {
 
     @Override
     public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationLogicException {
+        Optional<IValue> lookupValueOp = findLookupValue(context);
+        IValue lookupValue = null;
+        if (lookupValueOp.isPresent()) {
+            lookupValue = lookupValueOp.get();
+        } else {
+            return Optional.empty();
+        }
+
+        /*
+        如果是LookupValue类型,表示此次需要重新指定lookup字段的目标.否则原样返回.
+         */
+        if (!LookupValue.class.isInstance(lookupValue)) {
+            return lookupValueOp;
+        }
+
+
         IEntity targetEntity = findTargetEntity(context);
         if (targetEntity == null) {
             if (logger.isDebugEnabled()) {
@@ -113,25 +129,30 @@ public class LookupCalculationLogic implements CalculationLogic {
         return CalculationType.LOOKUP;
     }
 
-    // 找到目标实体.
-    private IEntity findTargetEntity(CalculationLogicContext context) throws CalculationLogicException {
+    private Optional<IValue> findLookupValue(CalculationLogicContext context) {
         IEntity sourceEntity = context.getEntity();
         IEntityField sourceField = context.getFocusField();
+
+        return sourceEntity.entityValue().getValue(sourceField.id());
+    }
+
+    // 找到目标实体.
+    private IEntity findTargetEntity(CalculationLogicContext context) throws CalculationLogicException {
 
         /*
         定位发起lookup的entity中的指定实例值.
         其应该是一个long型指向目标target的id值.
          */
         Lookup lookup = (Lookup) context.getFocusField().config().getCalculation();
-        Optional<IValue> sourceValueOp = sourceEntity.entityValue().getValue(sourceField.id());
+        Optional<IValue> sourceValueOp = findLookupValue(context);
         if (!sourceValueOp.isPresent()) {
             return null;
         }
 
         IValue<Long> sourceValue = sourceValueOp.get();
-        if (!LongValue.class.isInstance(sourceValue)) {
+        if (!LookupValue.class.isInstance(sourceValue)) {
             throw new CalculationLogicException(String.format(
-                "The Lookup field pointer is expected to be a number, but is %s.",
+                "The Lookup field pointer is expected to be a lookupValue, but is %s.",
                 sourceValue.getClass().getSimpleName()));
         }
         MetaManager metaManager = context.getMetaManager();
