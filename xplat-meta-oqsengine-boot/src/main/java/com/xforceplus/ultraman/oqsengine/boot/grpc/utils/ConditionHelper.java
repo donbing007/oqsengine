@@ -529,12 +529,11 @@ public class ConditionHelper {
                         }
                     }
                 }
-            } else {
-                //find in main
-                fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
             }
+        } else {
+            //find in main
+            fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
         }
         return fieldOp;
     }
-
 }
