@@ -9,7 +9,7 @@ maven-build:
   stage: mvn-package
   coverage: '/Total.*?([0-9]{1,3})%/'
   script:
-    - uuid=$(uuidgen)
+    - uuid=$(dbus-uuidgen)
     - update_pom_version
     - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Drequest.uuid=${uuid} -Dcontainer.server.port=9898
     - result=$(curl -X GET 'http://localhost:9898/container-providers/destroy/${uuid}')
