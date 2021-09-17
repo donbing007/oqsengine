@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
-import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
@@ -37,7 +36,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -58,7 +61,13 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +79,7 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * entity 管理服务实现.
  *
@@ -77,8 +87,9 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/2/18 14:12
  * @since 1.8
  */
-
 public class EntityManagementServiceImpl implements EntityManagementService {
+
+    // TODO: 业务主键操作从masterStorage中删除了,在设计完成后将在此完成业务主键. by dongbin 2021/09/17.
 
     final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
 
@@ -848,14 +859,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 聚合函数处理逻辑,本数据操作时无需聚合，在本数据操作完后进行聚合检查并操作受到影响的数据.
      *
      * @param sourceEntity 本数据信息.
-     * @param sourceClass 对象信息.
-     * @param scenarios 场景信息.
+     * @param sourceClass  对象信息.
+     * @param scenarios    场景信息.
      * @return 返回聚合结果.
      * @throws CalculationLogicException
      */
     private Collection<CalculationHint> processAvgCalculation(
-            IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
-            throws CalculationLogicException {
+        IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+        throws CalculationLogicException {
 
         CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
 
@@ -863,7 +874,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         Optional<List<ParseTree>> aggResult = checkAggregation(sourceEntity);
         // 处理受影响的聚合信息,需要判断该数据是否符合聚合条件.
         if (aggResult.isPresent()) {
-            List<IEntity> replaceEntitys = findAggregationAndReplace(sourceEntity, sourceClass, aggResult.get(), null, scenarios);
+            List<IEntity> replaceEntitys =
+                findAggregationAndReplace(sourceEntity, sourceClass, aggResult.get(), null, scenarios);
             if (replaceEntitys != null && replaceEntitys.size() > 0) {
                 // 批量更新数据
                 try {
@@ -916,22 +928,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .build();
     }
 
-    private CalculationLogicContext buildCalculationLogicContextWithCount(IEntity sourceEntity, IEntity oldEntity, IEntity targetEntity, IEntityClass entityClass,
-                                                                 Scenarios scenarios, int count) {
+    private CalculationLogicContext buildCalculationLogicContextWithCount(IEntity sourceEntity, IEntity oldEntity,
+                                                                          IEntity targetEntity,
+                                                                          IEntityClass entityClass,
+                                                                          Scenarios scenarios, int count) {
         return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-                .withScenarios(scenarios)
-                .withMetaManager(this.metaManager)
-                .withMasterStorage(this.masterStorage)
-                .withTaskCoordinator(this.taskCoordinator)
-                .withKeyValueStorage(this.kv)
-                .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
-                .withEntityClass(entityClass)
-                .withEntity(sourceEntity)
-                .withBizIdGenerator(this.bizIDGenerator)
-                .withAttribute("count", count)
-                .withAttribute("oldEntity", oldEntity)
-                .withAttribute("targetEntity", targetEntity)
-                .build();
+            .withScenarios(scenarios)
+            .withMetaManager(this.metaManager)
+            .withMasterStorage(this.masterStorage)
+            .withTaskCoordinator(this.taskCoordinator)
+            .withKeyValueStorage(this.kv)
+            .withLongContinuousPartialOrderIdGenerator(this.longContinuousPartialOrderIdGenerator)
+            .withEntityClass(entityClass)
+            .withEntity(sourceEntity)
+            .withBizIdGenerator(this.bizIDGenerator)
+            .withAttribute("count", count)
+            .withAttribute("oldEntity", oldEntity)
+            .withAttribute("targetEntity", targetEntity)
+            .build();
     }
 
     private void handleHalfSuccessOrRecover(long maintainId, long entityClassId, OperationResult operationResult) {
@@ -967,7 +981,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      */
     private Optional<List<ParseTree>> checkAggregation(IEntity entity) {
         List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
-                entity.entityClassRef().getProfile());
+            entity.entityClassRef().getProfile());
         if (parseTrees != null && parseTrees.size() > 0) {
             return Optional.of(parseTrees);
         }
@@ -977,7 +991,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private int countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass) {
         // 得到count值
         Optional<IEntityClass> aggEntityClass =
-                metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
+            metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
         int count = 1;
         if (aggEntityClass.isPresent()) {
             Conditions conditions = aggregation.getConditions();
@@ -985,12 +999,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(aggEntityClass.get().ref(), entityField.get(),
-                        ConditionOperator.EQUALS, aggregation.getRelationId(),
-                        sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
+                    ConditionOperator.EQUALS, aggregation.getRelationId(),
+                    sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
             }
             Collection<EntityRef> entityRefs = null;
             try {
-                entityRefs = indexStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+                entityRefs =
+                    indexStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -1007,8 +1022,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * @param sourceEntity 计算后的entity.
      * @return 返回受影响的entity.
      */
-    private List<IEntity> findAggregationAndReplace(IEntity sourceEntity, IEntityClass sourceClass, List<ParseTree> parseTrees,
-                                              List<IEntity> replaceEntitys, Scenarios scenarios) {
+    private List<IEntity> findAggregationAndReplace(IEntity sourceEntity, IEntityClass sourceClass,
+                                                    List<ParseTree> parseTrees,
+                                                    List<IEntity> replaceEntitys, Scenarios scenarios) {
 
         // 获取当前entity的原始版本.
         Optional<IEntity> oldEntityOp = Optional.empty();
@@ -1017,7 +1033,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             if (Scenarios.DELETE == scenarios) {
                 oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
                 sourceEntityOp = Optional.empty();
-            } else if (Scenarios.REPLACE == scenarios){
+            } else if (Scenarios.REPLACE == scenarios) {
                 oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
                 sourceEntityOp = Optional.of(sourceEntity);
             } else {
@@ -1028,7 +1044,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
         // 遍历出相同entitClass的字段
         List<PTNode> rootNodes = parseTrees.stream().map(ParseTree::root).collect(Collectors.toList());
-        Map<IEntityClass, List<PTNode>> nodeMap = rootNodes.stream().collect(Collectors.groupingBy(PTNode::getEntityClass));
+        Map<IEntityClass, List<PTNode>> nodeMap =
+            rootNodes.stream().collect(Collectors.groupingBy(PTNode::getEntityClass));
 
         Optional<IEntity> finalOldEntityOp = oldEntityOp;
         Optional<IEntity> finalSourceEntityOp = sourceEntityOp;
@@ -1054,7 +1071,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     IEntity targetEntity = findEntity.get();
                     // 对所有聚合字段进行运算
                     for (PTNode ptNode : nd.getValue()) {
-                        boolean checkCondition = checkEntityByCondition(sourceEntity, sourceClass, ptNode.getConditions());
+                        boolean checkCondition =
+                            checkEntityByCondition(sourceEntity, sourceClass, ptNode.getConditions());
                         if (!checkCondition) {
                             break;
                         }
@@ -1066,11 +1084,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             count = countAggregationEntity(aggregation, sourceEntity, sourceClass);
                         }
                         // 没找到context set attr的方法，重新构建context
-                        CalculationLogicContext avgContext = buildCalculationLogicContextWithCount(finalSourceEntityOp.get(), finalOldEntityOp.get(),
+                        CalculationLogicContext avgContext =
+                            buildCalculationLogicContextWithCount(finalSourceEntityOp.get(), finalOldEntityOp.get(),
                                 targetEntity, sourceClass, scenarios, count);
                         avgContext.focusField(ptNode.getEntityField());
 
-                        CalculationLogic logic = calculationLogicFactory.getCalculation(ptNode.getEntityField().calculationType());
+                        CalculationLogic logic =
+                            calculationLogicFactory.getCalculation(ptNode.getEntityField().calculationType());
                         Optional<IValue> newValueOp = null;
                         try {
                             newValueOp = logic.calculate(avgContext);
@@ -1099,7 +1119,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     // 处理受影响的聚合信息,需要判断该数据是否符合聚合条件.
                     if (aggResult.isPresent()) {
                         replaceEntitys = findAggregationAndReplace(findEntity.get(), nd.getKey(), aggResult.get(),
-                                replaceEntitys, scenarios.REPLACE);
+                            replaceEntitys, scenarios.REPLACE);
                     }
                 }
             }
@@ -1120,19 +1140,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                     if (!targetEntityOp.isPresent()) {
                         return new OperationResult(
-                                tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                                ResultStatus.NOT_FOUND);
+                            tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                            ResultStatus.NOT_FOUND);
                     }
                     IEntity targetEntity = targetEntityOp.get();
                     if (!tx.getAccumulator().accumulateReplace(entity, targetEntity)) {
                         hint.setRollback(true);
                         return new OperationResult(
-                                tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                                ResultStatus.UNACCUMULATE);
+                            tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
+                            ResultStatus.UNACCUMULATE);
                     }
                     noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
                     return new OperationResult(tx.id(), entity.id(), targetEntity.version(),
-                            EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
+                        EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
                 });
                 operationResults.add(operationResult);
             } catch (Exception ex) {
@@ -1151,9 +1171,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
      *
-     * @param entity 被聚合数据.
+     * @param entity      被聚合数据.
      * @param entityClass 被聚合对象.
-     * @param conditions 条件信息.
+     * @param conditions  条件信息.
      * @return 是否符合.
      */
     private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass, Conditions conditions) {
@@ -1161,7 +1181,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return true;
         }
         conditions.addAnd(new Condition(entityClass.field("id").get(),
-                ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
+            ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
         Collection<EntityRef> entityRefs = null;
         try {
             entityRefs = indexStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
@@ -1183,7 +1203,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private IEntity callAggregationReplace(IEntity entity) throws SQLException {
         //1、update  2、查找所有关联树 3、处理next节点
         Optional<IEntityClass> entityClass =
-                metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
+            metaManager.load(entity.entityClassRef().getId(), entity.entityClassRef().getProfile());
 
         // replace entity
         OperationResult replace = replace(entity);
@@ -1200,7 +1220,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             //find trees
             List<ParseTree> parseTrees = aggregationParse.find(entity.entityClassRef().getId(),
-                    entity.entityClassRef().getProfile());
+                entity.entityClassRef().getProfile());
 
             Optional<IEntity> finalReplaceEntity = replaceEntity;
             parseTrees.forEach(parseTree -> {
@@ -1209,19 +1229,21 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 nodes.forEach(n -> {
                     n.getRelationship().getEntityField();
                     Optional<IEntity> targetEntityOp = null;
-                    Optional<IValue> relationValue = finalReplaceEntity.get().entityValue().getValue(n.getRelationship().getId());
+                    Optional<IValue> relationValue =
+                        finalReplaceEntity.get().entityValue().getValue(n.getRelationship().getId());
                     if (relationValue.isPresent()) {
                         try {
-                            targetEntityOp = masterStorage.selectOne(relationValue.get().valueToLong(), n.getEntityClass());
+                            targetEntityOp =
+                                masterStorage.selectOne(relationValue.get().valueToLong(), n.getEntityClass());
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                     }
                     IEntity targetEntity = targetEntityOp.get();
                     Optional<IValue> value = aggregationFunctionFactory.getAggregationFunction(n.getAggregationType())
-                            .excute(targetEntity.entityValue().getValue(n.getEntityField().id()),
-                                    targetEntity.entityValue().getValue(n.getEntityField().id()),
-                                    finalReplaceEntity.get().entityValue().getValue(n.getEntityField().id()));
+                        .excute(targetEntity.entityValue().getValue(n.getEntityField().id()),
+                            targetEntity.entityValue().getValue(n.getEntityField().id()),
+                            finalReplaceEntity.get().entityValue().getValue(n.getEntityField().id()));
                     if (value.isPresent()) {
                         targetEntity.entityValue().addValue(value.get());
                     }

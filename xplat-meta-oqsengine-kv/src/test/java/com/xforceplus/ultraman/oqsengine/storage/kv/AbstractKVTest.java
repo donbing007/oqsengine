@@ -99,7 +99,7 @@ public abstract class AbstractKVTest {
         }
 
 
-        Map<String, byte[]> results = getKv().get(kvs.stream().map(kv -> kv.getKey()).toArray(String[]::new))
+        Map<String, byte[]> results = getKv().get(kvs.stream().map(kv -> kv.getKey()).collect(Collectors.toList()))
             .stream().collect(Collectors.toMap(r -> r.getKey(), r -> r.getValue(), (r0, r1) -> r0));
         Assertions.assertEquals(results.size(), kvs.size());
         for (Map.Entry<String, byte[]> kv : kvs) {
@@ -123,10 +123,28 @@ public abstract class AbstractKVTest {
         getKv().delete(targetKey);
         Assertions.assertFalse(getKv().get(targetKey).isPresent());
 
-        getKv().delete(kvs.stream().map(r -> r.getKey()).toArray(String[]::new));
+        getKv().delete(kvs.stream().map(r -> r.getKey()).collect(Collectors.toList()));
         for (Map.Entry<String, byte[]> kv : kvs) {
             Assertions.assertFalse(getKv().exist(kv.getKey()));
         }
+    }
+
+    @Test
+    public void testAdds() throws Exception {
+        int size = 1000;
+        Collection<Map.Entry<String, byte[]>> kvs = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            kvs.add(new AbstractMap.SimpleEntry<>(
+                String.format("batch-%d-%d", Long.MAX_VALUE, Long.MAX_VALUE - i),
+                String.format("testvalue-%d", i).getBytes()));
+        }
+        Assertions.assertEquals(size, getKv().save(kvs));
+        Assertions.assertFalse(getKv().add(kvs));
+
+        getKv().delete(kvs.stream().map(kv -> kv.getKey()).collect(Collectors.toList()));
+
+        Assertions.assertTrue(getKv().add(kvs));
+
     }
 
     @Test

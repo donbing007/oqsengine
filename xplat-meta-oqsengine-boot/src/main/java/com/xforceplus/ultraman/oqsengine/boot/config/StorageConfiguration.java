@@ -57,11 +57,9 @@ public class StorageConfiguration {
     @Bean
     public MasterStorage masterStorage(
         @Value("${storage.master.name:oqsbigentity}") String tableName,
-        @Value("${storage.master.unique.name:oqsunique}") String uniqueTableName,
         @Value("${storage.timeoutMs.query:3000}") long masterQueryTimeout) {
         SQLMasterStorage storage = new SQLMasterStorage();
         storage.setTableName(tableName);
-        storage.setUniqueTableName(uniqueTableName);
         storage.setQueryTimeout(masterQueryTimeout);
         return storage;
     }

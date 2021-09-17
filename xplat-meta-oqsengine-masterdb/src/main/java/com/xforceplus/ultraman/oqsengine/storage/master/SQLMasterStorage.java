@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
-import com.alibaba.google.common.collect.Lists;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
@@ -20,35 +19,30 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryUniqueExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.QueryErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.ReplaceErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueIndexValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -65,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,7 +68,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,9 +100,10 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncErrorExecutor;
 
-    private String tableName;
+    @Resource
+    private KeyValueStorage kv;
 
-    private String uniqueTableName;
+    private String tableName;
 
     private String errorTable;
 
@@ -120,10 +115,6 @@ public class SQLMasterStorage implements MasterStorage {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    public void setUniqueTableName(String uniqueTableName) {
-        this.uniqueTableName = uniqueTableName;
     }
 
     public void setErrorTable(String errorTable) {
@@ -143,24 +134,6 @@ public class SQLMasterStorage implements MasterStorage {
     public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart)
         throws SQLException {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
-    }
-
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "master", "action", "bussinessKey"}
-    )
-    @Override
-    public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
-        throws SQLException {
-        if (!containUniqueConfig(businessKeys, entityClass)) {
-            return Optional.empty();
-        }
-        String uniqueKey = buildEntityUniqueKeyByBusinessKey(businessKeys, entityClass);
-        return (Optional<StorageUniqueEntity>) transactionExecutor.execute((tx, resource, hint) -> {
-            Optional<StorageUniqueEntity> seOP =
-                new QueryUniqueExecutor(uniqueTableName, resource, entityClass, queryTimeout).execute(uniqueKey);
-            return seOP;
-        });
     }
 
     @Timed(
@@ -291,36 +264,27 @@ public class SQLMasterStorage implements MasterStorage {
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
-                long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                MasterStorageEntity.Builder storageEntityBuilder;
-                try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(entity.id())
-                        /*
-                         * optimize: 创建时间和更新时间保证和系统字段同步.
-                         */
-                        .withCreateTime(createTime > 0 ? createTime : entity.time())
-                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
-                        .withDeleted(false)
-                        .withEntityClassVersion(entityClass.version())
-                        .withVersion(0)
-                        .withAttribute(toJson(entity.entityValue()))
-                        .withOp(OperationType.CREATE.getValue())
-                        .withProfile(entity.entityClassRef().getProfile());
-                } catch (Exception ex) {
-                    throw new SQLException(ex.getMessage(), ex);
-                }
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
-                MasterStorageEntity entityForBuild = storageEntityBuilder.build();
-                int ret = BuildExecutor.build(tableName, resource, queryTimeout).execute(entityForBuild);
-                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
-                if (!StringUtils.isBlank(uniqueKey)) {
-                    buildUnique(entity, uniqueKey, entityClass, resource);
-                }
-                return ret;
+                MasterStorageEntity entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
+
+                return BuildExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {entityForBuild});
             });
+    }
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
+    @Override
+    public int build(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+        return (int) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildNewMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            }
+        );
     }
 
     @Override
@@ -343,68 +307,6 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
-    private String buildEntityUniqueKeyByBusinessKey(List<BusinessKey> businessKeys, IEntityClass entityClass) {
-        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
-        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
-        return indexValue.isPresent() ? MD5Utils.encrypt(indexValue.get().getValue()) : "";
-    }
-
-    private boolean containUniqueConfig(List<BusinessKey> businessKeys, IEntityClass entityClass) {
-        Map<String, UniqueIndexValue> values = keyGenerator.generator(businessKeys, entityClass);
-        return matchUniqueConfig(entityClass, values).isPresent();
-    }
-
-    private int buildUnique(IEntity entity, String uniqueKey, IEntityClass entityClass, TransactionResource resource)
-        throws Exception {
-        StorageUniqueEntity storageUniqueEntity =
-            StorageUniqueEntity.builder().id(entity.id()).key(uniqueKey)
-                .entityClasses(getEntityClasses(entityClass)).build();
-        logger.debug("entityClasses length : {}, Unique entity : {}",
-            storageUniqueEntity.getEntityClasses().length, storageUniqueEntity);
-        int result = BuildUniqueExecutor.build(uniqueTableName, resource, queryTimeout)
-            .execute(storageUniqueEntity);
-        if (result < 1) {
-            logger.warn("Failed to build unique index record!");
-        }
-        return result;
-    }
-
-    private long[] getEntityClasses(IEntityClass entityClass) {
-        Collection<IEntityClass> family = entityClass.family();
-        long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
-        return tileEntityClassesIds;
-    }
-
-    private String buildEntityUniqueKeyByEntity(IEntity entity, IEntityClass entityClass) throws SQLException {
-        Map<String, UniqueIndexValue> values = keyGenerator.generator(entity);
-        Optional<UniqueIndexValue> indexValue = matchUniqueConfig(entityClass, values);
-        return indexValue.isPresent() ? MD5Utils.encrypt(indexValue.get().getValue()) : "";
-    }
-
-    private Optional<UniqueIndexValue> matchUniqueConfig(IEntityClass entityClass, Map<String, UniqueIndexValue> keys) {
-        List<String> codes = getAncestorCode(entityClass);
-        return keys.values().stream()
-            .filter(item -> codes.contains(item.getCode()))
-            .findAny();
-    }
-
-    private List<String> getAncestorCode(IEntityClass entityClass) {
-        List<String> codes = Lists.newArrayList(entityClass.code());
-        while (entityClass.father().isPresent()) {
-            codes.add(entityClass.father().get().code());
-            entityClass = entityClass.father().get();
-        }
-        return codes;
-    }
-
-    private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
-        OptionalLong op = entity.entityValue().values().parallelStream()
-            .filter(v -> sense == v.getField().config().getFieldSense())
-            .mapToLong(v -> v.valueToLong()).findFirst();
-
-        return op.orElse(0);
-    }
-
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
         extraTags = {"initiator", "master", "action", "replace"}
@@ -416,57 +318,32 @@ public class SQLMasterStorage implements MasterStorage {
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                /*
-                 * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
-                 */
-                if (updateTime == entity.time()) {
-                    updateTime = 0;
-                }
-                MasterStorageEntity.Builder storageEntityBuilder;
-                try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(entity.id())
-                        /*
-                         * optimize: 更新时间保证和系统字段同步.
-                         */
-                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
-                        .withVersion(entity.version())
-                        .withEntityClassVersion(entityClass.version())
-                        .withAttribute(toJson(entity.entityValue()))
-                        .withOp(OperationType.UPDATE.getValue());
-                } catch (Exception ex) {
-                    throw new SQLException(ex.getMessage(), ex);
-                }
 
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
-                MasterStorageEntity entityForBuild = storageEntityBuilder.build();
-                int ret = UpdateExecutor.build(tableName, resource, queryTimeout).execute(entityForBuild);
-                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
-                if (!StringUtils.isBlank(uniqueKey)) {
-                    //涉及到分片键的更新这里采用先删除后插入的方式
-                    int del = deleteUnique(entity, resource);
-                    int buildResult = 0;
-                    if (del > 0) {
-                        buildResult = buildUnique(entity, uniqueKey, entityClass, resource);
-                        if (buildResult < 0) {
-                            logger.warn("Failed to build unique index record! id: {}", entity.id());
-                        }
-                    } else {
-                        logger.warn("Failed to delete unique index record! id: {}", entity.id());
-                    }
-                }
-                return ret;
+                MasterStorageEntity masterStorageEntity =
+                    buildReplaceMasterStorageEntity(entity, entityClass, resource);
+
+                return UpdateExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {masterStorageEntity});
+
             });
-
     }
 
-    private int deleteUnique(IEntity entity, TransactionResource resource) throws Exception {
-        StorageUniqueEntity.StorageUniqueEntityBuilder storageEntityBuilder = StorageUniqueEntity.builder();
-        storageEntityBuilder.id(entity.id());
-        return DeleteUniqueExecutor.build(uniqueTableName, resource, queryTimeout)
-            .execute(storageEntityBuilder.build());
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "replaces"}
+    )
+    @Override
+    public int replace(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+
+        return (int) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildReplaceMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
@@ -476,29 +353,37 @@ public class SQLMasterStorage implements MasterStorage {
 
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
-                /*
-                 * 删除数据时不再关心字段信息.
-                 */
-                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                    .withId(entity.id())
-                    .withOp(OperationType.DELETE.getValue())
-                    .withUpdateTime(entity.time())
-                    .withEntityClassVersion(entityClass.version())
-                    .withDeleted(true)
-                    .withVersion(entity.version());
 
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
-                int del = DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
-                String uniqueKey = buildEntityUniqueKeyByEntity(entity, entityClass);
-                if (!StringUtils.isBlank(uniqueKey)) {
-                    int delUnique = deleteUnique(entity, resource);
-                    if (delUnique < 1) {
-                        logger.warn("Failed to delete the unique index record ! id : {}", entity.id());
-                    }
-                }
-                return del;
+                MasterStorageEntity masterStorageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
+                return DeleteExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {masterStorageEntity});
             });
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "deletes"}
+    )
+    @Override
+    public int delete(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+
+        return (int) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildDeleteMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return DeleteExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            });
+    }
+
+    private void checkId(EntityPackage entityPackage) throws SQLException {
+        Iterator<IEntity> iter = entityPackage.iterator();
+        while (iter.hasNext()) {
+            checkId(iter.next());
+        }
     }
 
     private void checkId(IEntity entity) throws SQLException {
@@ -643,9 +528,10 @@ public class SQLMasterStorage implements MasterStorage {
             entityBuilder.withTx(transactionOptional.get().id())
                 .withCommitid(CommitHelper.getUncommitId());
         } else {
-            logger.warn("With no transaction, unable to get the transaction ID.");
-            entityBuilder.withTx(0)
-                .withCommitid(0);
+            if (logger.isDebugEnabled()) {
+                logger.debug("With no transaction, unable to get the transaction ID.");
+            }
+            entityBuilder.withTx(0).withCommitid(0);
         }
 
     }
@@ -834,5 +720,97 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
         return config;
+    }
+
+    // 更新时构造.
+    private MasterStorageEntity buildReplaceMasterStorageEntity(IEntity entity, IEntityClass entityClass,
+                                                                TransactionResource resource) {
+        long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+        /*
+         * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
+         */
+        if (updateTime == entity.time()) {
+            updateTime = 0;
+        }
+
+        MasterStorageEntity.Builder storageEntityBuilder;
+        try {
+            storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+                .withId(entity.id())
+                /*
+                 * optimize: 更新时间保证和系统字段同步.
+                 */
+                .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
+                .withVersion(entity.version())
+                .withEntityClassVersion(entityClass.version())
+                .withAttribute(toJson(entity.entityValue()))
+                .withOp(OperationType.UPDATE.getValue());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex.getMessage(), ex);
+        }
+
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    // 新建时构造.
+    private MasterStorageEntity buildNewMasterStorageEntity(
+        IEntity entity, IEntityClass entityClass, TransactionResource resource) {
+
+        long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
+        long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+        MasterStorageEntity.Builder storageEntityBuilder;
+        try {
+            storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+                .withId(entity.id())
+                /*
+                 * optimize: 创建时间和更新时间保证和系统字段同步.
+                 */
+                .withCreateTime(createTime > 0 ? createTime : entity.time())
+                .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
+                .withDeleted(false)
+                .withEntityClassVersion(entityClass.version())
+                .withVersion(0)
+                .withAttribute(toJson(entity.entityValue()))
+                .withOp(OperationType.CREATE.getValue())
+                .withProfile(entity.entityClassRef().getProfile());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex.getMessage(), ex);
+        }
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    // 删除时构造.
+    private MasterStorageEntity buildDeleteMasterStorageEntity(IEntity entity, IEntityClass entityClass,
+                                                               TransactionResource resource) {
+        MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+            .withId(entity.id())
+            .withOp(OperationType.DELETE.getValue())
+            .withUpdateTime(entity.time())
+            .withEntityClassVersion(entityClass.version())
+            .withDeleted(true)
+            .withVersion(entity.version());
+
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    /**
+     * 查找系统时间.
+     *
+     * @param entity 目标对象.
+     * @param sense  字段风格.
+     * @return 时间戳, 如果没有找到返回0.
+     */
+    private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
+        OptionalLong op = entity.entityValue().values().stream()
+            .filter(v -> sense == v.getField().config().getFieldSense())
+            .mapToLong(v -> v.valueToLong()).findFirst();
+
+        return op.orElse(0);
     }
 }

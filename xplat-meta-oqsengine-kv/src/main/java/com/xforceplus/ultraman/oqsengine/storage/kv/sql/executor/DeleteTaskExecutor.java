@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * 删除任务.
@@ -15,7 +16,7 @@ import java.util.Arrays;
  * @version 0.1 2021/07/20 23:14
  * @since 1.8
  */
-public class DeleteTaskExecutor extends AbstractJdbcTaskExecutor<String[], Long> {
+public class DeleteTaskExecutor extends AbstractJdbcTaskExecutor<Collection<String>, Long> {
     public DeleteTaskExecutor(String tableName,
                               TransactionResource<Connection> resource) {
         super(tableName, resource);
@@ -27,17 +28,16 @@ public class DeleteTaskExecutor extends AbstractJdbcTaskExecutor<String[], Long>
     }
 
     @Override
-    public Long execute(String[] keys) throws SQLException {
+    public Long execute(Collection<String> keys) throws SQLException {
         String sql = String.format(SqlTemplateDefine.DELETE_TEMPLATE, getTableName());
 
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
             checkTimeout(ps);
 
             final int onlyOne = 1;
-            final int first = 0;
-            if (keys.length == onlyOne) {
+            if (keys.size() == onlyOne) {
 
-                ps.setString(1, keys[first]);
+                ps.setString(1, keys.stream().findFirst().get());
 
                 return Long.valueOf(ps.executeUpdate());
             } else {

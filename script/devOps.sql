@@ -35,8 +35,7 @@ create table cdcerrors
     constraint cdcerror_pk primary key (seqno),
     unique key unikey_upk (unikey),
     key cdcerrors_k0 (batchid)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 create table entityfaileds
 (
@@ -49,5 +48,4 @@ create table entityfaileds
     primary key (id),
     key entityfaileds_k1 (entity),
     key entityfaileds_k2 (executetime)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

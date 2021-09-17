@@ -22,7 +22,8 @@ import java.util.Map;
  * @version 0.1 2021/08/03 11:03
  * @since 1.8
  */
-public class GetsTaskExecutor extends AbstractJdbcTaskExecutor<String[], Collection<Map.Entry<String, byte[]>>> {
+public class GetsTaskExecutor
+    extends AbstractJdbcTaskExecutor<Collection<String>, Collection<Map.Entry<String, byte[]>>> {
 
     public GetsTaskExecutor(String tableName,
                             TransactionResource<Connection> resource) {
@@ -35,18 +36,19 @@ public class GetsTaskExecutor extends AbstractJdbcTaskExecutor<String[], Collect
     }
 
     @Override
-    public Collection<Map.Entry<String, byte[]>> execute(String[] keys) throws SQLException {
-        String sql = String.format(SqlTemplateDefine.SELECTS_TEMPLATE, getTableName(), buildQuestionMask(keys.length));
+    public Collection<Map.Entry<String, byte[]>> execute(Collection<String> keys) throws SQLException {
+        String sql = String.format(SqlTemplateDefine.SELECTS_TEMPLATE, getTableName(), buildQuestionMask(keys.size()));
 
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
 
             checkTimeout(ps);
 
-            for (int i = 0; i < keys.length; i++) {
-                ps.setString(i + 1, keys[i]);
+            int pos = 1;
+            for (String key : keys) {
+                ps.setString(pos++, key);
             }
 
-            List<Map.Entry<String, byte[]>> results = new ArrayList<>(keys.length);
+            List<Map.Entry<String, byte[]>> results = new ArrayList<>(keys.size());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     results.add(

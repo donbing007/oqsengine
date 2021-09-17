@@ -23,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
@@ -32,11 +33,13 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -188,6 +191,51 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
     }
 
     @Test
+    public void testBuildEntities() throws Exception {
+        EntityPackage entityPackage = new EntityPackage(l1EntityClass);
+        int expectedSize = 10000;
+        for (int i = 0; i < expectedSize; i++) {
+            entityPackage.put(
+                Entity.Builder.anEntity()
+                    .withId(100000 + i)
+                    .withEntityClassRef(l1EntityClassRef)
+                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                        new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
+                        new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
+                        new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
+                        new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                        new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
+                    )))
+                    .build());
+        }
+
+        int size = storage.build(entityPackage);
+        Assertions.assertEquals(expectedSize, size);
+
+        long[] ids = IntStream.range(0, expectedSize).mapToLong(i -> 100000 + i).toArray();
+        List<IEntity> entities = new ArrayList(storage.selectMultiple(ids));
+        Collections.sort(entities, (o1, o2) -> {
+            if (o1.id() < o2.id()) {
+                return -1;
+            } else if (o1.id() > o2.id()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        for (int i = 0; i < expectedSize; i++) {
+            IEntity entity = entities.get(i);
+            Assertions.assertEquals(100 + i, entity.entityValue().getValue("l0-long").get().valueToLong());
+            Assertions.assertEquals("l0value", entity.entityValue().getValue("l0-string").get().valueToString());
+            Assertions.assertEquals(200 + i, entity.entityValue().getValue("l1-long").get().valueToLong());
+            Assertions.assertEquals("l1value", entity.entityValue().getValue("l1-string").get().valueToString());
+            Assertions.assertEquals(0, entity.version());
+        }
+
+    }
+
+    @Test
     public void testSelectOne() throws Exception {
         List<IEntity> entities = new ArrayList<>(expectedEntitys.size());
         expectedEntitys.stream().mapToLong(e -> e.id()).forEach(id -> {
@@ -252,6 +300,46 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
     }
 
     @Test
+    public void testReplaceEntities() throws Exception {
+        EntityPackage entityPackage = new EntityPackage(l1EntityClass);
+        int expectedSize = 1000;
+        for (int i = 0; i < expectedSize; i++) {
+            entityPackage.put(
+                Entity.Builder.anEntity()
+                    .withId(100000 + i)
+                    .withEntityClassRef(l1EntityClassRef)
+                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                        new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
+                        new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
+                        new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
+                        new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                        new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
+                    )))
+                    .build());
+        }
+
+        int size = storage.build(entityPackage);
+        Assertions.assertEquals(expectedSize, size);
+
+        EntityPackage updatePackage = new EntityPackage(entityPackage.getEntityClass());
+
+        entityPackage.stream().map(e -> {
+            e.entityValue().addValue(new LongValue(l1EntityClass.father().get().field("l0-long").get(), -100));
+            return e;
+        }).forEach(e -> {
+            updatePackage.put(e);
+        });
+
+        size = storage.replace(updatePackage);
+        Assertions.assertEquals(expectedSize, size);
+
+        long[] ids = updatePackage.stream().mapToLong(e -> e.id()).toArray();
+        Collection<IEntity> entities = storage.selectMultiple(ids);
+        Assertions.assertEquals(expectedSize,
+            entities.stream().filter(e -> e.entityValue().getValue("l0-long").get().valueToLong() == -100).count());
+    }
+
+    @Test
     public void testJson() throws Exception {
         IEntity targetEntity = expectedEntitys.get(1);
         targetEntity.entityValue().addValue(
@@ -280,6 +368,17 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
     }
 
     @Test
+    public void testDeletes() throws Exception {
+        EntityPackage entityPackage = new EntityPackage(l2EntityClass);
+        expectedEntitys.stream().forEach(e -> {
+            entityPackage.put(e);
+        });
+
+        int size = storage.delete(entityPackage);
+        Assertions.assertEquals(expectedEntitys.size(), size);
+    }
+
+    @Test
     public void testDeleteWithoutVersion() throws Exception {
         IEntity targetEntity = expectedEntitys.get(2);
         storage.replace(targetEntity, l2EntityClass);
@@ -302,19 +401,16 @@ public class SQLMasterStorageTest extends AbstractContainerExtends {
     // 初始化数据
     private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
         List<IEntity> expectedEntitys = new ArrayList<>(size);
+        EntityPackage entityPackage = new EntityPackage(l2EntityClass);
         for (int i = 1; i <= size; i++) {
-            expectedEntitys.add(buildEntity(i * size));
+            IEntity entity = buildEntity(i * size);
+            expectedEntitys.add(entity);
+            entityPackage.put(entity);
         }
 
         try {
-            for (IEntity e : expectedEntitys) {
-                try {
-                    storage.build(e, l2EntityClass);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
-                StorageInitialization.getInstance().getCommitIdStatusService().obsoleteAll();
-            }
+            storage.build(entityPackage);
+            StorageInitialization.getInstance().getCommitIdStatusService().obsoleteAll();
         } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();
             throw ex;

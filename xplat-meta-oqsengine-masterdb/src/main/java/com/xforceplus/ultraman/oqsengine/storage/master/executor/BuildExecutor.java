@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -35,9 +37,9 @@ import java.util.Collections;
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity, Integer> {
+public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], Integer> {
 
-    public static Executor<MasterStorageEntity, Integer> build(
+    public static Executor<MasterStorageEntity[], Integer> build(
         String tableName, TransactionResource resource, long timeout) {
         return new BuildExecutor(tableName, resource, timeout);
     }
@@ -51,28 +53,59 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity,
     }
 
     @Override
-    public Integer execute(MasterStorageEntity masterStorageEntity) throws Exception {
-        String sql = buildSQL(masterStorageEntity.getEntityClasses().length);
+    public Integer execute(MasterStorageEntity[] masterStorageEntities) throws Exception {
+        int entityClassSize = masterStorageEntities[0].getEntityClasses().length;
+
+        String sql = buildSQL(entityClassSize);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-            int pos = 1;
-            st.setLong(pos++, masterStorageEntity.getId());
-            st.setInt(pos++, masterStorageEntity.getEntityClassVersion());
-            st.setLong(pos++, masterStorageEntity.getTx());
-            st.setLong(pos++, masterStorageEntity.getCommitid());
-            st.setInt(pos++, masterStorageEntity.getOp());
-            st.setInt(pos++, masterStorageEntity.getVersion());
-            st.setLong(pos++, masterStorageEntity.getCreateTime());
-            st.setLong(pos++, masterStorageEntity.getUpdateTime());
-            st.setBoolean(pos++, false);
-            st.setString(pos++, masterStorageEntity.getAttribute());
-            st.setInt(pos++, OqsVersion.MAJOR);
-            st.setString(pos++, masterStorageEntity.getProfile());
-            fullEntityClass(pos, st, masterStorageEntity);
-
             checkTimeout(st);
-            return st.executeUpdate();
 
+            final int onlyOne = 1;
+            if (masterStorageEntities.length == onlyOne) {
+
+                setParam(masterStorageEntities[0], st);
+
+                return st.executeUpdate();
+
+            } else {
+
+                for (MasterStorageEntity entity : masterStorageEntities) {
+
+                    setParam(entity, st);
+
+                    st.addBatch();
+
+                }
+
+                int[] flags = st.executeBatch();
+                return Math.toIntExact(Arrays.stream(flags).filter(flag -> {
+                    // 表示成功
+                    if (flag > 0) {
+                        return true;
+                    } else if (flag == Statement.SUCCESS_NO_INFO) {
+                        return true;
+                    }
+                    return false;
+                }).count());
+            }
         }
+    }
+
+    private void setParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+        int pos = 1;
+        st.setLong(pos++, entity.getId());
+        st.setInt(pos++, entity.getEntityClassVersion());
+        st.setLong(pos++, entity.getTx());
+        st.setLong(pos++, entity.getCommitid());
+        st.setInt(pos++, entity.getOp());
+        st.setInt(pos++, entity.getVersion());
+        st.setLong(pos++, entity.getCreateTime());
+        st.setLong(pos++, entity.getUpdateTime());
+        st.setBoolean(pos++, false);
+        st.setString(pos++, entity.getAttribute());
+        st.setInt(pos++, OqsVersion.MAJOR);
+        st.setString(pos++, entity.getProfile());
+        fullEntityClass(pos, st, entity);
     }
 
     private int fullEntityClass(int startPos, PreparedStatement st, MasterStorageEntity masterStorageEntity)

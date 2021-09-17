@@ -31,13 +31,29 @@ public interface KeyValueStorage {
     public long save(Collection<Map.Entry<String, byte[]>> kvs);
 
     /**
-     * 保存一下key-value,如果key已经存在那么将拒绝写入.
+     * 保存key-value,如果key已经存在那么将拒绝写入.
      *
      * @param key   需要保存的key.
      * @param value 需要保存的值.
      * @return true 增加成功, false已经有一个相同的KEY.
      */
     public boolean add(String key, byte[] value);
+
+    /**
+     * 批量保存 key-value, 如果当中某个key已经存在那么将拒绝写入.
+     *
+     * @param kvs 需要保存的kv列表.
+     * @return true 全部没有冲突, false 有冲突.
+     */
+    public default boolean add(Collection<Map.Entry<String, byte[]>> kvs) {
+        for (Map.Entry<String, byte[]> kv : kvs) {
+            if (!add(kv.getKey(), kv.getValue())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * 判断指定的key是否存在.
@@ -61,7 +77,7 @@ public interface KeyValueStorage {
      * @param keys 目标key列表.
      * @return KEY-VALUE映射列表.
      */
-    public Collection<Map.Entry<String, byte[]>> get(String[] keys);
+    public Collection<Map.Entry<String, byte[]>> get(Collection<String> keys);
 
     /**
      * 删除一个已经存在的key.
@@ -76,7 +92,7 @@ public interface KeyValueStorage {
      *
      * @param keys 需要删除的key列表.
      */
-    public void delete(String[] keys);
+    public void delete(Collection<String> keys);
 
     /**
      * 对KEY进行迭代, KEY将按顺序被迭代.

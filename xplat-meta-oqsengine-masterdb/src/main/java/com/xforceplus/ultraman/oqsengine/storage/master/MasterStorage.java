@@ -3,18 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.PreciseSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 主要储存定义.
@@ -37,16 +33,6 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      */
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId)
         throws SQLException;
-
-
-    /**
-     * select by business key.
-     *
-     * @param businessKeys businessKey
-     * @param entityClass  entityClass
-     * @return StorageUniqueEntity
-     */
-    Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass) throws SQLException;
 
     /**
      * 写入errorEntityInfo相关记录.

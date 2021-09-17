@@ -68,8 +68,8 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
-        Collection<Map.Entry<String, byte[]>> datas = new ArrayList<>(keys.length);
+    public Collection<Map.Entry<String, byte[]>> get(Collection<String> keys) {
+        Collection<Map.Entry<String, byte[]>> datas = new ArrayList<>(keys.size());
         for (String key : keys) {
             byte[] value = data.get(key);
             if (Arrays.equals(value, EMPTY_VALUE)) {
@@ -88,7 +88,7 @@ public class MemoryKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    public void delete(String[] keys) {
+    public void delete(Collection<String> keys) {
 
         for (String key : keys) {
             data.remove(key);

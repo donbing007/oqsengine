@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.SelectKeysTaskE
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.AbstractMap;
@@ -145,7 +146,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
                 @Override
                 public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
                     throws Exception {
-                    return new SaveTaskExecutor(tableName, resource, timeout, true, isNumber(key)).execute(
+                    return new SaveTaskExecutor(tableName, resource, timeout, true, false).execute(
                         Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
                 }
 
@@ -167,6 +168,47 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
         final long onlyOne = 1;
         return size == onlyOne;
+    }
+
+    @Override
+    public boolean add(Collection<Map.Entry<String, byte[]>> kvs) {
+        Collection<Map.Entry<String, Object>> keyValues = new ArrayList<>(kvs.size());
+        for (Map.Entry<String, byte[]> kv : kvs) {
+            checkKey(kv.getKey());
+            keyValues
+                .add(new AbstractMap.SimpleEntry(kv.getKey(), kv.getValue() == null ? EMPTY_VALUES : kv.getValue()));
+        }
+
+        long size = 0;
+        try {
+            size = (long) transactionExecutor.execute(new ResourceTask() {
+                @Override
+                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    throws Exception {
+                    return new SaveTaskExecutor(tableName, resource, timeout, true, false).execute(keyValues);
+                }
+
+                @Override
+                public boolean isAttachmentMaster() {
+                    return true;
+                }
+            });
+        } catch (SQLException ex) {
+            Throwable cause = ex.getCause();
+            if (BatchUpdateException.class.isInstance(cause)) {
+                cause = cause.getCause();
+                if (SQLIntegrityConstraintViolationException.class.isInstance(cause)) {
+                    return false;
+                }
+            }
+
+            throw new RuntimeException(ex.getMessage(), ex);
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
+
+        return size == kvs.size();
     }
 
     @Override
@@ -220,7 +262,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
+    public Collection<Map.Entry<String, byte[]>> get(Collection<String> keys) {
         for (String key : keys) {
             checkKey(key);
         }
@@ -251,12 +293,12 @@ public class SqlKeyValueStorage implements KeyValueStorage {
 
     @Override
     public void delete(String key) {
-        delete(new String[] {key});
+        delete(Arrays.asList(key));
     }
 
     @Override
-    public void delete(String[] keys) {
-        if (keys == null || keys.length == 0) {
+    public void delete(Collection<String> keys) {
+        if (keys == null || keys.isEmpty()) {
             return;
         }
 
@@ -324,10 +366,6 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         } finally {
             locker.unlock(useKey);
         }
-    }
-
-    private boolean isNumber(String key) {
-        return key.startsWith(NUMBER_KEY_PREIFIX);
     }
 
     /**

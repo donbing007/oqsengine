@@ -45,7 +45,6 @@ public class MasterDBInitialization implements BeanInitialization {
 
     public static final String MASTER_STORAGE_TABLE = "oqsbigentity";
     public static final String MASTER_STORAGE_FAILED_TABLE = "entityfaileds";
-    public static final String MASTER_STORAGE_UNIQUE_TABLE = "oqsunique";
 
     private MasterDBInitialization() {
     }
@@ -99,8 +98,8 @@ public class MasterDBInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRunner());
 
         masterStorage.setTableName(MASTER_STORAGE_TABLE);
+        masterStorage.setQueryTimeout(Integer.MAX_VALUE);
         masterStorage.setErrorTable(MASTER_STORAGE_FAILED_TABLE);
-        masterStorage.setUniqueTableName(MASTER_STORAGE_UNIQUE_TABLE);
         masterStorage.init();
     }
 
@@ -115,7 +114,6 @@ public class MasterDBInitialization implements BeanInitialization {
                 Statement st = conn.createStatement();
                 st.executeUpdate("truncate table " + MASTER_STORAGE_TABLE);
                 st.executeUpdate("truncate table " + MASTER_STORAGE_FAILED_TABLE);
-                st.executeUpdate("truncate table " + MASTER_STORAGE_UNIQUE_TABLE);
                 st.close();
                 conn.close();
             }
