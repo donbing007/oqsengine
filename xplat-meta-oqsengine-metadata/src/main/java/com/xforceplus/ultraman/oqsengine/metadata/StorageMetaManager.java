@@ -193,8 +193,10 @@ public class StorageMetaManager implements MetaManager {
 
         cacheExecutor.appEnvSet(appId, env);
 
-        if (!cacheExecutor.appEnvGet(appId).equals(env)) {
-            throw new RuntimeException("appId has been init with another Id, need failed...");
+        String currentEnv = cacheExecutor.appEnvGet(appId);
+        if (!currentEnv.equals(env)) {
+            throw new RuntimeException(
+                "appId has been init with another Id, need failed... current " + currentEnv + " request" + env);
         }
 
         int currentVersion = cacheExecutor.version(appId);
