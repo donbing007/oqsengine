@@ -11,9 +11,9 @@ maven-build:
   variables:
     containerServerHost: "localhost"
     containerServerPort: 9898
-  before_script:
-    - uuid=$(dbus-uuidgen)
   script:
+    - uuid=$(dbus-uuidgen)
+    - echo ${uuid}
     - update_pom_version
     - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Drequest.uuid=${uuid} -Dcontainer.server.host=${containerServerHost} -Dcontainer.server.port=${containerServerPort}
     - cat target/site/jacoco/index.html
