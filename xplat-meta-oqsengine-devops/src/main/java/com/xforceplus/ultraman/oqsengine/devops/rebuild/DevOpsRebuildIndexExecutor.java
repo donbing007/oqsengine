@@ -100,7 +100,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     }
 
     @Override
-    public void destroy() {
+    public void destroy() throws Exception {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
         }

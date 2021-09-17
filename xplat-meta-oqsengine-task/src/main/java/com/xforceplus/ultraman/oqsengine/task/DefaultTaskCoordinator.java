@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
-import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2021/08/12 15:02
  * @since 1.8
  */
-public class DefaultTaskCoordinator implements TaskCoordinator, Lifecycle {
+public class DefaultTaskCoordinator implements TaskCoordinator {
 
     final Logger logger = LoggerFactory.getLogger(DefaultTaskCoordinator.class);
 

@@ -32,11 +32,11 @@ public class ConnectorTest extends AbstractCDCTestHelper {
     }
 
     @Test
-    public void testStartFromDisConnected() throws InterruptedException {
+    public void testStartFromDisConnected() throws Exception {
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
         mockRedisCallbackService.cdcSaveLastUnCommit(cdcMetricsService.getCdcMetrics());
 
-        cdcDaemonService.startDaemon();
+        cdcDaemonService.init();
 
         Thread.sleep(10_000);
 

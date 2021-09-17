@@ -199,13 +199,14 @@ public class EntityManagementServiceImplTest {
 
     @Test
     public void testBuildFieldCheckFailure() throws Exception {
+        // 超出长度.
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(EntityClassDefine.l2EntityClass.ref())
             .withId(1)
             .withTime(System.currentTimeMillis())
             .withEntityValue(EntityValue.build()
                 .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 10000L)
+                    new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 1000L)
                 )
             )
             .build();
@@ -213,6 +214,7 @@ public class EntityManagementServiceImplTest {
         Assertions.assertEquals(ResultStatus.FIELD_TOO_LONG, impl.build(targetEntity).getResultStatus());
 
 
+        // 必须字段没有设置.
         targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(EntityClassDefine.mustEntityClass.ref())
             .withId(1)

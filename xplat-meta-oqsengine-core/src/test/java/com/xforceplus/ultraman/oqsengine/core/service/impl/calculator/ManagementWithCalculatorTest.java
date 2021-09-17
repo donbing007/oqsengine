@@ -244,11 +244,11 @@ public class ManagementWithCalculatorTest {
             }
         }
 
-        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS) ||
-            operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
-            Optional<IEntity> eOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
-            Assertions.assertTrue(eOp.isPresent());
-            IEntity entity = eOp.get();
+        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
+            || operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS)) {
+            Optional<IEntity> entityOp = masterStorage.selectOne(replaceEntity.id(), L1_ENTITY_CLASS);
+            Assertions.assertTrue(entityOp.isPresent());
+            IEntity entity = entityOp.get();
 
             expectedResult.forEach((key, value) -> {
                 Optional<IValue> valueOp = entity.entityValue().getValue(key);

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExistException;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -15,7 +16,7 @@ import java.util.Optional;
  * @author xujia 2020/11/24
  * @since 1.8
  */
-public interface RebuildIndexExecutor {
+public interface RebuildIndexExecutor extends Lifecycle {
 
     /**
      * 重新创建索引.
@@ -71,9 +72,4 @@ public interface RebuildIndexExecutor {
      * @return 任务列表.
      */
     Optional<TaskHandler> syncTask(String taskId) throws SQLException;
-
-    /**
-     * 销毁.
-     */
-    void destroy();
 }
