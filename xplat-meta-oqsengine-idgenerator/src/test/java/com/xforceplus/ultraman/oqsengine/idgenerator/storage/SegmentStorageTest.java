@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;

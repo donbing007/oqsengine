@@ -79,6 +79,19 @@ public class CdcInitialization implements BeanInitialization {
         initConsumerService();
     }
 
+    private void initTable() throws Exception {
+        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
+        if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
+            for (DataSource ds : dataSourcePackage.getMaster()) {
+                Connection conn = ds.getConnection();
+                Statement st = conn.createStatement();
+                st.execute(CdcDbScript.DROP_CDC_ERRORS);
+                st.execute(CdcDbScript.CREATE_CDC_ERRORS);
+                st.close();
+                conn.close();
+            }
+        }
+    }
     @Override
     public void clear() throws Exception {
         DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
@@ -86,7 +99,7 @@ public class CdcInitialization implements BeanInitialization {
             for (DataSource ds : dataSourcePackage.getMaster()) {
                 Connection conn = ds.getConnection();
                 Statement st = conn.createStatement();
-                st.executeUpdate("truncate table " + CDC_ERRORS);
+                st.execute("truncate table " + CDC_ERRORS);
                 st.close();
                 conn.close();
             }
@@ -123,6 +136,9 @@ public class CdcInitialization implements BeanInitialization {
 
     private void initCdcErrors() throws Exception {
         DataSource devOpsDataSource = buildDevOpsDataSource();
+
+        initTable();
+
         cdcErrorStorage = new SQLCdcErrorStorage();
         Collection<Field> fields = ReflectionUtils.printAllMembers(cdcErrorStorage);
         ReflectionUtils.reflectionFieldValue(fields, "devOpsDataSource", cdcErrorStorage, devOpsDataSource);

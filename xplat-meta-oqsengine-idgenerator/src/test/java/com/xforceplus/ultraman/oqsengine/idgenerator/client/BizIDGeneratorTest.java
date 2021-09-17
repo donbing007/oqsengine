@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.idgenerator.mock.IdGenerateDbScript;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.DatePatternParser;
@@ -17,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternPa
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -81,6 +82,13 @@ public class BizIDGeneratorTest {
         executorService = Executors.newFixedThreadPool(30);
 
         dataSource = buildDataSource("./src/test/resources/generator.conf");
+
+        try (Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate(IdGenerateDbScript.CREATE_SEGMENT);
+            st.close();
+        }
+
 
         storage1 = new SqlSegmentStorage();
         storage1.setTable("segment");
@@ -166,7 +174,7 @@ public class BizIDGeneratorTest {
     public void after() throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table segment");
+            st.executeUpdate("drop table segment");
             st.close();
         } finally {
             dataSourcePackage.close();

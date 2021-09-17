@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 

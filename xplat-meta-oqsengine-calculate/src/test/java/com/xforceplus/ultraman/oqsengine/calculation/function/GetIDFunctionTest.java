@@ -17,7 +17,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGen
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

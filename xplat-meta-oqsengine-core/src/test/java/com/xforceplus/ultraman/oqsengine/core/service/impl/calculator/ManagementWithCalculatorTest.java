@@ -30,7 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;

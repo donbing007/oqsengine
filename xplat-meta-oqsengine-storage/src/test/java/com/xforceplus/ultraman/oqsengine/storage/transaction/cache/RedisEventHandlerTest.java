@@ -18,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Method;
 import java.util.ArrayList;

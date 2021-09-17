@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Field;
 import java.sql.SQLException;

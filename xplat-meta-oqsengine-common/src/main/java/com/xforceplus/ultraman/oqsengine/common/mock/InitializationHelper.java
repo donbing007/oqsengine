@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.common.mock;
 
-import com.xforceplus.ultraman.test.tools.core.common.AbstractContainerExtension;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainerExtension;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Disabled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
+@Disabled
 public class InitializationHelper {
 
     static final Logger LOGGER = LoggerFactory.getLogger(InitializationHelper.class);
@@ -45,34 +47,38 @@ public class InitializationHelper {
     public static void registerDestroy() {
         if (clearList.isEmpty()) {
             AbstractContainerExtension.addConsumer((v) -> {
-                CommonInitialization commonInitialization = null;
-                try {
-                    for (BeanInitialization beanInitialization : clearList) {
-                        //  commonInitialization必须最后关闭
-                        if (beanInitialization instanceof CommonInitialization) {
-                            commonInitialization = (CommonInitialization) beanInitialization;
-                        } else {
-                            try {
-                                LOGGER.info("destroy beanInitialization {}...",
-                                    beanInitialization.getClass().getCanonicalName());
-                                beanInitialization.destroy();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                } finally {
+                destroy();
+            });
+        }
+    }
+
+    public static void destroy() {
+        CommonInitialization commonInitialization = null;
+        try {
+            for (BeanInitialization beanInitialization : clearList) {
+                //  commonInitialization必须最后关闭
+                if (beanInitialization instanceof CommonInitialization) {
+                    commonInitialization = (CommonInitialization) beanInitialization;
+                } else {
                     try {
-                        if (null != commonInitialization) {
-                            LOGGER.info("destroy beanInitialization {}...",
-                                commonInitialization.getClass().getCanonicalName());
-                            commonInitialization.destroy();
-                        }
-                    } finally {
-                        clearList.clear();
+                        LOGGER.info("destroy beanInitialization {}...",
+                            beanInitialization.getClass().getCanonicalName());
+                        beanInitialization.destroy();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-            });
+            }
+        } finally {
+            try {
+                if (null != commonInitialization) {
+                    LOGGER.info("destroy beanInitialization {}...",
+                        commonInitialization.getClass().getCanonicalName());
+                    commonInitialization.destroy();
+                }
+            } finally {
+                clearList.clear();
+            }
         }
     }
 }

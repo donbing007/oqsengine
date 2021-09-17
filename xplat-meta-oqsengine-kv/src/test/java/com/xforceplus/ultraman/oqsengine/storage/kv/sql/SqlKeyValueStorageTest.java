@@ -9,10 +9,11 @@ import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.AbstractKVTest;
+import com.xforceplus.ultraman.oqsengine.storage.kv.mock.KVDbScript;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -52,6 +53,13 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
 
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
 
+        try (Connection conn = ds.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.execute(KVDbScript.DROP_KV);
+                st.execute(KVDbScript.CREATE_KV);
+            }
+        }
+
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
             StorageInitialization.getInstance().getTransactionManager(),
             new SqlKvConnectionTransactionResourceFactory(),
@@ -89,6 +97,8 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
             storage.save("12%3", null);
         });
     }
+
+
 
 
     @Override
