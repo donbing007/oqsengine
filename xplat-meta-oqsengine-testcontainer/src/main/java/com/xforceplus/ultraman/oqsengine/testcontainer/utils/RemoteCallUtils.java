@@ -13,9 +13,17 @@ import org.springframework.core.ParameterizedTypeReference;
  * @since 1.8
  */
 public class RemoteCallUtils {
-    public static final String HOST  = "localhost";
-    public static int PORT = 9898;
+    public static String HOST;
+    public static int PORT;
+
     public static final Map<ContainerSupport, RemoteContainerWrapper> REMOTE_CONTAINER_PROPERTIES = new HashMap<>();
+
+    static {
+        String host = System.getProperty("container.server.host");
+        HOST = null == host ? "localhost" : host;
+        String port = System.getProperty("container.server.port");
+        PORT= null == port ? 9898 : Integer.parseInt(port);
+    }
 
     public static RemoteContainerWrapper startUseRemoteContainer(String uuid, ContainerSupport containerSupport) {
         RemoteContainerWrapper remoteContainerWrapper = REMOTE_CONTAINER_PROPERTIES.get(containerSupport);
@@ -47,17 +55,6 @@ public class RemoteCallUtils {
     }
 
     private static String defaultURL(String action, String uuid) {
-        String temp = System.getProperty("container.server.port");
-        if (null != temp) {
-            try {
-                Integer integer = Integer.parseInt(temp);
-                if (null != integer) {
-                    PORT = integer;
-                }
-            } catch (Exception e) {
-                //  ignore
-            }
-        }
         return "http://" + HOST + ":" + PORT + "/container-providers/" + action + "/" + uuid;
     }
 }
