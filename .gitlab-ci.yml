@@ -29,7 +29,7 @@ maven-build:
     - echo ${CI_JOB_ID}
     - echo ${containerServerHost}
     - echo ${containerServerPort}
-    - curl -X GET 'http://${containerServerHost}:${containerServerPort}/container-providers/destroy/${CI_JOB_ID}'
+    - curl -X GET "http://${containerServerHost}:${containerServerPort}/container-providers/destroy/${CI_JOB_ID}"
   except:
     - tags
 
