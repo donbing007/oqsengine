@@ -14,6 +14,11 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 public interface TimeoutNotification<T> {
 
     /**
+     * 返回此值表示过期.
+     */
+    public static long OVERDUE = 0;
+
+    /**
      * 通知对象过期.
      *
      * @param t 过期地象.

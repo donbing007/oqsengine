@@ -98,7 +98,7 @@ public class TimerWheel<T> {
         }
 
         if (notification == null) {
-            this.notification = t -> 0;
+            this.notification = t -> TimeoutNotification.OVERDUE;
         } else {
             this.notification = notification;
         }
@@ -327,10 +327,10 @@ public class TimerWheel<T> {
                 try {
                     for (T target : expireList) {
                         resultTime = notification.notice(target);
-                        if (resultTime > 0) {
-                            add(target, resultTime);
-                        } else {
+                        if (resultTime == TimeoutNotification.OVERDUE) {
                             removeHelp.remove(target);
+                        } else {
+                            add(target, resultTime);
                         }
                     }
                 } catch (Throwable ex) {

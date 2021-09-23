@@ -13,8 +13,23 @@ import java.util.Objects;
  */
 public class DecimalValue extends AbstractValue<BigDecimal> {
 
+    /**
+     * 构造一个新的DecimalValue实例.
+     * 会检查整数位和小数位,两者均不可以大于长整形的最大表示位数,即19位数字.
+     *
+     * @param field 目标字段.
+     * @param value 目标浮点数.
+     */
     public DecimalValue(IEntityField field, BigDecimal value) {
         super(field, value);
+
+        // 这里校验,其整形长度不能超过Long.MAX_VALUE
+        String checkValue = value.toPlainString();
+        String[] checkValues = checkValue.split("\\.");
+        Long.parseLong(checkValues[0]);
+        if (checkValues.length > 1) {
+            Long.parseLong(checkValues[1]);
+        }
     }
 
     @Override
@@ -39,6 +54,16 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
         } else {
             return value;
         }
+    }
+
+    public long integerValue() {
+        String[] values = getValue().toPlainString().split("\\.");
+        return Long.parseLong(values[0]);
+    }
+
+    public long decValue() {
+        String[] values = getValue().toPlainString().split("\\.");
+        return Long.parseLong(values[1]);
     }
 
     @Override

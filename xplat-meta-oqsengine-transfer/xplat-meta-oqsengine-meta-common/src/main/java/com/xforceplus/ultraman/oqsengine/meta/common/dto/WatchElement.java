@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
 /**
- * desc :
+ * desc :.
  * name : AppSyncElement
  *
  * @author : xujia

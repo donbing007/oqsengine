@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -63,6 +64,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     @Resource
     private ObjectMapper objectMapper;
+
+    @Resource
+    private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
     private Cache<String, EntityClassStorage> entityClassStorageCache;
 
@@ -286,19 +290,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
         /*
          * prepare
          */
-        prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
+        prepareVersionScriptSha = redisLuaScriptWatchDog.watch(PREPARE_VERSION_SCRIPT);
 
         /*
          * version get/set
          */
-        versionGetByEntityScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
-        versionResetScriptSha = syncCommands.scriptLoad(REST_VERSION);
+        versionGetByEntityScriptSha = redisLuaScriptWatchDog.watch(ACTIVE_VERSION);
+        versionResetScriptSha = redisLuaScriptWatchDog.watch(REST_VERSION);
 
         /*
          * entityClassStorage(s) get
          */
-        entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
-        entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
+        entityClassStorageScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO);
+        entityClassStorageListScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO_LIST);
     }
 
     @PreDestroy
