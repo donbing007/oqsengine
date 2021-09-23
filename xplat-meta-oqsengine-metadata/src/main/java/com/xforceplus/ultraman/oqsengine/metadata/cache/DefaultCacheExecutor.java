@@ -287,22 +287,22 @@ public class DefaultCacheExecutor implements CacheExecutor {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.metadata");
 
-        /*
-         * prepare
-         */
-        prepareVersionScriptSha = redisLuaScriptWatchDog.watch(PREPARE_VERSION_SCRIPT);
+        if (redisLuaScriptWatchDog != null) {
 
-        /*
-         * version get/set
-         */
-        versionGetByEntityScriptSha = redisLuaScriptWatchDog.watch(ACTIVE_VERSION);
-        versionResetScriptSha = redisLuaScriptWatchDog.watch(REST_VERSION);
+            prepareVersionScriptSha = redisLuaScriptWatchDog.watch(PREPARE_VERSION_SCRIPT);
+            versionGetByEntityScriptSha = redisLuaScriptWatchDog.watch(ACTIVE_VERSION);
+            versionResetScriptSha = redisLuaScriptWatchDog.watch(REST_VERSION);
+            entityClassStorageScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO);
+            entityClassStorageListScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO_LIST);
 
-        /*
-         * entityClassStorage(s) get
-         */
-        entityClassStorageScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO);
-        entityClassStorageListScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO_LIST);
+        } else {
+
+            prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
+            versionGetByEntityScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
+            versionResetScriptSha = syncCommands.scriptLoad(REST_VERSION);
+            entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
+            entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
+        }
     }
 
     @PreDestroy

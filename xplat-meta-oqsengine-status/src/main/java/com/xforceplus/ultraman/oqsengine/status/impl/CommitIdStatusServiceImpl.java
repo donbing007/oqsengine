@@ -165,9 +165,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.commitid");
 
-
-        saveLuaScriptSha = redisLuaScriptWatchDog.watch(SAVE_LUA_SCRIPT);
-        obsoleteLuaScriptSha = redisLuaScriptWatchDog.watch(OBSOLETE_LUA_SCRIPT);
+        if (redisLuaScriptWatchDog != null) {
+            saveLuaScriptSha = redisLuaScriptWatchDog.watch(SAVE_LUA_SCRIPT);
+            obsoleteLuaScriptSha = redisLuaScriptWatchDog.watch(OBSOLETE_LUA_SCRIPT);
+        } else {
+            saveLuaScriptSha = syncCommands.scriptLoad(SAVE_LUA_SCRIPT);
+            obsoleteLuaScriptSha = syncCommands.scriptLoad(OBSOLETE_LUA_SCRIPT);
+        }
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
