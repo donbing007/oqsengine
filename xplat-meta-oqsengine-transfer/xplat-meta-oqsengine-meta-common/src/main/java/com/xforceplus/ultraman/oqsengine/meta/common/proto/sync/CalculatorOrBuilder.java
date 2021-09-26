@@ -185,14 +185,28 @@ public interface CalculatorOrBuilder extends
   long getAggregationRelationId();
 
   /**
-   * <code>string domainCondition = 24;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  java.lang.String getDomainCondition();
+  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> 
+      getDomainConditionsList();
   /**
-   * <code>string domainCondition = 24;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  com.google.protobuf.ByteString
-      getDomainConditionBytes();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index);
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  int getDomainConditionsCount();
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+      getDomainConditionsOrBuilderList();
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
+      int index);
 
   /**
    * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>

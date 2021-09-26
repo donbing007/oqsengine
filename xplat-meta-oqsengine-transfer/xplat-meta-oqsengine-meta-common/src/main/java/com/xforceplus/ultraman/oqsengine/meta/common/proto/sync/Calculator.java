@@ -38,7 +38,7 @@ private static final long serialVersionUID = 0L;
     aggregationFieldId_ = 0L;
     aggregationType_ = 0;
     aggregationRelationId_ = 0L;
-    domainCondition_ = "";
+    domainConditions_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -208,9 +208,12 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 194: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            domainCondition_ = s;
+            if (!((mutable_bitField0_ & 0x00800000) == 0x00800000)) {
+              domainConditions_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>();
+              mutable_bitField0_ |= 0x00800000;
+            }
+            domainConditions_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.parser(), extensionRegistry));
             break;
           }
           case 202: {
@@ -236,6 +239,9 @@ private static final long serialVersionUID = 0L;
     } finally {
       if (((mutable_bitField0_ & 0x00000800) == 0x00000800)) {
         args_ = args_.getUnmodifiableView();
+      }
+      if (((mutable_bitField0_ & 0x00800000) == 0x00800000)) {
+        domainConditions_ = java.util.Collections.unmodifiableList(domainConditions_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -704,38 +710,39 @@ private static final long serialVersionUID = 0L;
     return aggregationRelationId_;
   }
 
-  public static final int DOMAINCONDITION_FIELD_NUMBER = 24;
-  private volatile java.lang.Object domainCondition_;
+  public static final int DOMAINCONDITIONS_FIELD_NUMBER = 24;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> domainConditions_;
   /**
-   * <code>string domainCondition = 24;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  public java.lang.String getDomainCondition() {
-    java.lang.Object ref = domainCondition_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      domainCondition_ = s;
-      return s;
-    }
+  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> getDomainConditionsList() {
+    return domainConditions_;
   }
   /**
-   * <code>string domainCondition = 24;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  public com.google.protobuf.ByteString
-      getDomainConditionBytes() {
-    java.lang.Object ref = domainCondition_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      domainCondition_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+      getDomainConditionsOrBuilderList() {
+    return domainConditions_;
+  }
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  public int getDomainConditionsCount() {
+    return domainConditions_.size();
+  }
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index) {
+    return domainConditions_.get(index);
+  }
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
+      int index) {
+    return domainConditions_.get(index);
   }
 
   public static final int AGGREGATIONBYFIELDS_FIELD_NUMBER = 25;
@@ -895,8 +902,8 @@ private static final long serialVersionUID = 0L;
     if (aggregationRelationId_ != 0L) {
       output.writeInt64(23, aggregationRelationId_);
     }
-    if (!getDomainConditionBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 24, domainCondition_);
+    for (int i = 0; i < domainConditions_.size(); i++) {
+      output.writeMessage(24, domainConditions_.get(i));
     }
     com.google.protobuf.GeneratedMessageV3
       .serializeLongMapTo(
@@ -1000,8 +1007,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(23, aggregationRelationId_);
     }
-    if (!getDomainConditionBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(24, domainCondition_);
+    for (int i = 0; i < domainConditions_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(24, domainConditions_.get(i));
     }
     for (java.util.Map.Entry<java.lang.Long, java.lang.Long> entry
          : internalGetAggregationByFields().getMap().entrySet()) {
@@ -1078,8 +1086,8 @@ private static final long serialVersionUID = 0L;
         == other.getAggregationType());
     result = result && (getAggregationRelationId()
         == other.getAggregationRelationId());
-    result = result && getDomainCondition()
-        .equals(other.getDomainCondition());
+    result = result && getDomainConditionsList()
+        .equals(other.getDomainConditionsList());
     result = result && internalGetAggregationByFields().equals(
         other.internalGetAggregationByFields());
     result = result && unknownFields.equals(other.unknownFields);
@@ -1149,8 +1157,10 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + AGGREGATIONRELATIONID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getAggregationRelationId());
-    hash = (37 * hash) + DOMAINCONDITION_FIELD_NUMBER;
-    hash = (53 * hash) + getDomainCondition().hashCode();
+    if (getDomainConditionsCount() > 0) {
+      hash = (37 * hash) + DOMAINCONDITIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getDomainConditionsList().hashCode();
+    }
     if (!internalGetAggregationByFields().getMap().isEmpty()) {
       hash = (37 * hash) + AGGREGATIONBYFIELDS_FIELD_NUMBER;
       hash = (53 * hash) + internalGetAggregationByFields().hashCode();
@@ -1302,6 +1312,7 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getDomainConditionsFieldBuilder();
       }
     }
     public Builder clear() {
@@ -1356,8 +1367,12 @@ private static final long serialVersionUID = 0L;
 
       aggregationRelationId_ = 0L;
 
-      domainCondition_ = "";
-
+      if (domainConditionsBuilder_ == null) {
+        domainConditions_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00800000);
+      } else {
+        domainConditionsBuilder_.clear();
+      }
       internalGetMutableAggregationByFields().clear();
       return this;
     }
@@ -1414,7 +1429,15 @@ private static final long serialVersionUID = 0L;
       result.aggregationFieldId_ = aggregationFieldId_;
       result.aggregationType_ = aggregationType_;
       result.aggregationRelationId_ = aggregationRelationId_;
-      result.domainCondition_ = domainCondition_;
+      if (domainConditionsBuilder_ == null) {
+        if (((bitField0_ & 0x00800000) == 0x00800000)) {
+          domainConditions_ = java.util.Collections.unmodifiableList(domainConditions_);
+          bitField0_ = (bitField0_ & ~0x00800000);
+        }
+        result.domainConditions_ = domainConditions_;
+      } else {
+        result.domainConditions_ = domainConditionsBuilder_.build();
+      }
       result.aggregationByFields_ = internalGetAggregationByFields();
       result.aggregationByFields_.makeImmutable();
       result.bitField0_ = to_bitField0_;
@@ -1543,9 +1566,31 @@ private static final long serialVersionUID = 0L;
       if (other.getAggregationRelationId() != 0L) {
         setAggregationRelationId(other.getAggregationRelationId());
       }
-      if (!other.getDomainCondition().isEmpty()) {
-        domainCondition_ = other.domainCondition_;
-        onChanged();
+      if (domainConditionsBuilder_ == null) {
+        if (!other.domainConditions_.isEmpty()) {
+          if (domainConditions_.isEmpty()) {
+            domainConditions_ = other.domainConditions_;
+            bitField0_ = (bitField0_ & ~0x00800000);
+          } else {
+            ensureDomainConditionsIsMutable();
+            domainConditions_.addAll(other.domainConditions_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.domainConditions_.isEmpty()) {
+          if (domainConditionsBuilder_.isEmpty()) {
+            domainConditionsBuilder_.dispose();
+            domainConditionsBuilder_ = null;
+            domainConditions_ = other.domainConditions_;
+            bitField0_ = (bitField0_ & ~0x00800000);
+            domainConditionsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getDomainConditionsFieldBuilder() : null;
+          } else {
+            domainConditionsBuilder_.addAllMessages(other.domainConditions_);
+          }
+        }
       }
       internalGetMutableAggregationByFields().mergeFrom(
           other.internalGetAggregationByFields());
@@ -2678,73 +2723,244 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object domainCondition_ = "";
+    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> domainConditions_ =
+      java.util.Collections.emptyList();
+    private void ensureDomainConditionsIsMutable() {
+      if (!((bitField0_ & 0x00800000) == 0x00800000)) {
+        domainConditions_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>(domainConditions_);
+        bitField0_ |= 0x00800000;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> domainConditionsBuilder_;
+
     /**
-     * <code>string domainCondition = 24;</code>
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public java.lang.String getDomainCondition() {
-      java.lang.Object ref = domainCondition_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        domainCondition_ = s;
-        return s;
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> getDomainConditionsList() {
+      if (domainConditionsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(domainConditions_);
       } else {
-        return (java.lang.String) ref;
+        return domainConditionsBuilder_.getMessageList();
       }
     }
     /**
-     * <code>string domainCondition = 24;</code>
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public com.google.protobuf.ByteString
-        getDomainConditionBytes() {
-      java.lang.Object ref = domainCondition_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        domainCondition_ = b;
-        return b;
+    public int getDomainConditionsCount() {
+      if (domainConditionsBuilder_ == null) {
+        return domainConditions_.size();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        return domainConditionsBuilder_.getCount();
       }
     }
     /**
-     * <code>string domainCondition = 24;</code>
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public Builder setDomainCondition(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      domainCondition_ = value;
-      onChanged();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index) {
+      if (domainConditionsBuilder_ == null) {
+        return domainConditions_.get(index);
+      } else {
+        return domainConditionsBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder setDomainConditions(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition value) {
+      if (domainConditionsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureDomainConditionsIsMutable();
+        domainConditions_.set(index, value);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.setMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>string domainCondition = 24;</code>
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public Builder clearDomainCondition() {
-      
-      domainCondition_ = getDefaultInstance().getDomainCondition();
-      onChanged();
+    public Builder setDomainConditions(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder builderForValue) {
+      if (domainConditionsBuilder_ == null) {
+        ensureDomainConditionsIsMutable();
+        domainConditions_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        domainConditionsBuilder_.setMessage(index, builderForValue.build());
+      }
       return this;
     }
     /**
-     * <code>string domainCondition = 24;</code>
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public Builder setDomainConditionBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      domainCondition_ = value;
-      onChanged();
+    public Builder addDomainConditions(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition value) {
+      if (domainConditionsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureDomainConditionsIsMutable();
+        domainConditions_.add(value);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.addMessage(value);
+      }
       return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder addDomainConditions(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition value) {
+      if (domainConditionsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureDomainConditionsIsMutable();
+        domainConditions_.add(index, value);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder addDomainConditions(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder builderForValue) {
+      if (domainConditionsBuilder_ == null) {
+        ensureDomainConditionsIsMutable();
+        domainConditions_.add(builderForValue.build());
+        onChanged();
+      } else {
+        domainConditionsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder addDomainConditions(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder builderForValue) {
+      if (domainConditionsBuilder_ == null) {
+        ensureDomainConditionsIsMutable();
+        domainConditions_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        domainConditionsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder addAllDomainConditions(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> values) {
+      if (domainConditionsBuilder_ == null) {
+        ensureDomainConditionsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, domainConditions_);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder clearDomainConditions() {
+      if (domainConditionsBuilder_ == null) {
+        domainConditions_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00800000);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public Builder removeDomainConditions(int index) {
+      if (domainConditionsBuilder_ == null) {
+        ensureDomainConditionsIsMutable();
+        domainConditions_.remove(index);
+        onChanged();
+      } else {
+        domainConditionsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder getDomainConditionsBuilder(
+        int index) {
+      return getDomainConditionsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
+        int index) {
+      if (domainConditionsBuilder_ == null) {
+        return domainConditions_.get(index);  } else {
+        return domainConditionsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+         getDomainConditionsOrBuilderList() {
+      if (domainConditionsBuilder_ != null) {
+        return domainConditionsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(domainConditions_);
+      }
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder addDomainConditionsBuilder() {
+      return getDomainConditionsFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder addDomainConditionsBuilder(
+        int index) {
+      return getDomainConditionsFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder> 
+         getDomainConditionsBuilderList() {
+      return getDomainConditionsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+        getDomainConditionsFieldBuilder() {
+      if (domainConditionsBuilder_ == null) {
+        domainConditionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>(
+                domainConditions_,
+                ((bitField0_ & 0x00800000) == 0x00800000),
+                getParentForChildren(),
+                isClean());
+        domainConditions_ = null;
+      }
+      return domainConditionsBuilder_;
     }
 
     private com.google.protobuf.MapField<
