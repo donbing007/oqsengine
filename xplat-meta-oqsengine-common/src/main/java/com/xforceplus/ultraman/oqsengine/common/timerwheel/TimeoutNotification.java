@@ -11,6 +11,7 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
  * @since 1.5
  * @author dongbin
  */
+@FunctionalInterface
 public interface TimeoutNotification<T> {
 
     /**

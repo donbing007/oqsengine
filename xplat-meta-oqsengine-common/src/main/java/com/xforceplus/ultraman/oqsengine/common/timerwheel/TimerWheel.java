@@ -327,7 +327,7 @@ public class TimerWheel<T> {
                 try {
                     for (T target : expireList) {
                         resultTime = notification.notice(target);
-                        if (resultTime == TimeoutNotification.OVERDUE) {
+                        if (resultTime <= TimeoutNotification.OVERDUE) {
                             removeHelp.remove(target);
                         } else {
                             add(target, resultTime);
