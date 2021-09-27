@@ -27,10 +27,25 @@ public final class ContainerStarter {
     private static GenericContainer manticore1;
     private static GenericContainer searchManticore;
     private static GenericContainer cannal;
-    private static Network network = Network.newNetwork();
+    private static Network network;
 
     static {
         System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
+
+        network = Network.NetworkImpl.builder().createNetworkCmdModifier((createNetworkCmd) -> {
+            com.github.dockerjava.api.model.Network.Ipam.Config
+                config = new com.github.dockerjava.api.model.Network.Ipam.Config();
+            com.github.dockerjava.api.model.Network.Ipam ipam = new com.github.dockerjava.api.model.Network.Ipam();
+            ipam.withConfig(new com.github.dockerjava.api.model.Network.Ipam.Config[]{config.withSubnet("10.10.10.0/16").withGateway("10.10.10.1")});
+            createNetworkCmd.withIpam(ipam);
+        }).build();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (network != null) {
+                network.close();
+            }
+        }));
+
     }
 
     private static void waitStop(GenericContainer genericContainer) {

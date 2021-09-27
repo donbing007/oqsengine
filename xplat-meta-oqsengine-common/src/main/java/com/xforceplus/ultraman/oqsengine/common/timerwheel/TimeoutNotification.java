@@ -11,7 +11,13 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
  * @since 1.5
  * @author dongbin
  */
+@FunctionalInterface
 public interface TimeoutNotification<T> {
+
+    /**
+     * 返回此值表示过期.
+     */
+    public static long OVERDUE = 0;
 
     /**
      * 通知对象过期.

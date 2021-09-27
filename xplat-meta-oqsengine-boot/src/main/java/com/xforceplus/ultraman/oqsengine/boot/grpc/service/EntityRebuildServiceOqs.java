@@ -6,12 +6,14 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -68,6 +70,11 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Autowired
     private EntitySearchService entitySearchService;
 
+    private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
+
+    @Autowired
+    private MetaManager metaManager;
+
     @Resource(name = "ioThreadPool")
     private ExecutorService asyncDispatcher;
 
@@ -81,12 +88,32 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
+    /**
+     * checkout the entityClassRef.
+     */
+    private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId());
+        if (entityClassOp.isPresent()) {
+            IEntityClass entityClass = entityClassOp.get();
+            return entityClass;
+        } else {
+            throw new RuntimeException(ENTITYCLASS_NOT_FOUND);
+        }
+    }
+
     @Override
     public CompletionStage<RebuildTaskInfo> rebuildIndex(RebuildRequest in, Metadata metadata) {
         return async(() -> {
             EntityUp entityUp = in.getEntity();
 
-            IEntityClass entityClass = toEntityClass(entityUp);
+            //check entityRef
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(entityUp);
+            IEntityClass entityClass;
+            try {
+                entityClass = checkedEntityClassRef(entityClassRef);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
 
             try {
                 Optional<DevOpsTaskInfo> devOpsTaskInfo = devOpsManagementService.rebuildIndex(
@@ -128,9 +155,19 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
 
     @Override
     public CompletionStage<RebuildTaskInfo> getActiveTask(EntityUp in, Metadata metadata) {
+
+        //check entityRef
+        EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
+        IEntityClass entityClass;
+        try {
+            entityClass = checkedEntityClassRef(entityClassRef);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
         return async(() -> {
             try {
-                return devOpsManagementService.getActiveTask(toEntityClass(in)).map(this::toTaskInfo).orElse(empty);
+                return devOpsManagementService.getActiveTask(entityClass).map(this::toTaskInfo).orElse(empty);
             } catch (SQLException e) {
                 logger.error("{}", e);
                 return RebuildTaskInfo.newBuilder().setErrCode("-1").setMessage(e.getMessage()).buildPartial();

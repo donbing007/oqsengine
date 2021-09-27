@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.exception;
 
 /**
- * desc :
+ * desc :.
  * name : Code
  *
- * @author : xujia
- * date : 2021/2/3
+ * @author : xujia date : 2021/2/3
  * @since : 1.8
  */
 public enum Code {

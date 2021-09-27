@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.constant;
 
 /**
- * desc :
+ * desc :.
  * name : Constant
  *
- * @author : xujia
- * date : 2021/2/24
+ * @author : xujia date : 2021/2/24
  * @since : 1.8
  */
 public class Constant {
