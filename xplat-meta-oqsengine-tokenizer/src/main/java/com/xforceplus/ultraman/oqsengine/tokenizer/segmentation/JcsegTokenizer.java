@@ -111,7 +111,7 @@ public class JcsegTokenizer implements Tokenizer {
             seg.reset(new StringReader(this.value));
             nextWord = seg.next();
 
-            if (nextWord.getValue().equals(value)) {
+            if (nextWord != null && nextWord.getValue().equals(value)) {
                 nextWord = null;
             }
         }
