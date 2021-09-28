@@ -52,7 +52,7 @@ public class JcsegTokenizer implements Tokenizer {
         }
     }
 
-    private final void init() throws IOException {
+    private void init() throws IOException {
         config = new SegmenterConfig(true);
         dic = DictionaryFactory.createDefaultDictionary(config, false);
 
@@ -111,9 +111,9 @@ public class JcsegTokenizer implements Tokenizer {
             seg.reset(new StringReader(this.value));
             nextWord = seg.next();
 
-            if (nextWord != null && nextWord.getValue().equals(value)) {
-                nextWord = null;
-            }
+//            if (nextWord != null && nextWord.getValue().equals(value)) {
+//                nextWord = null;
+//            }
         }
 
         @Override

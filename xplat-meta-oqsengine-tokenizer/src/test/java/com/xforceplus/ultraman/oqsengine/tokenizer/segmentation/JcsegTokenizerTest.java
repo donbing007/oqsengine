@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import org.junit.After;
@@ -30,7 +31,7 @@ public class JcsegTokenizerTest {
     @Test
     public void testTokeniz() throws Exception {
         JcsegTokenizer tokenizer = new JcsegTokenizer();
-        buildCases().stream().forEach(c -> {
+        buildCases().forEach(c -> {
             Iterator<String> words = tokenizer.tokenize(c.value);
 
             List<String> wordList = new ArrayList<>();
@@ -53,11 +54,11 @@ public class JcsegTokenizerTest {
         return Arrays.asList(
             new Case(
                 "abc",
-                Arrays.asList()
+                Collections.singletonList("abc")
             ),
             new Case(
                 "abcd",
-                Arrays.asList()
+                Collections.singletonList("abcd")
             ),
             new Case(
                 "中英文hello world混合",
@@ -105,7 +106,7 @@ public class JcsegTokenizerTest {
             ),
             new Case(
                 "我test",
-                Arrays.asList("test")
+                Collections.singletonList("test")
             )
         );
     }
