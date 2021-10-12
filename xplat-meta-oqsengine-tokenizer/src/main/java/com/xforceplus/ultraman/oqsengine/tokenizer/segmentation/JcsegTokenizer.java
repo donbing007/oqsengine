@@ -110,10 +110,6 @@ public class JcsegTokenizer implements Tokenizer {
             seg = ISegment.NLP.factory.create(config, dic);
             seg.reset(new StringReader(this.value));
             nextWord = seg.next();
-
-            if (nextWord != null && nextWord.getValue().equals(value)) {
-                nextWord = null;
-            }
         }
 
         @Override

@@ -14,32 +14,25 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * 创建数据执行器.
- * 目标字段列表如下.
- * id             bigint                not null comment '数据主键',
- * entityclassl0  bigint  default 0     not null comment '数据家族中在0层的entityclass标识',
- * entityclassl1  bigint  default 0     not null comment '数据家族中在1层的entityclass标识',
- * entityclassl2  bigint  default 0     not null comment '数据家族中在2层的entityclass标识',
- * entityclassl3  bigint  default 0     not null comment '数据家族中在3层的entityclass标识',
- * entityclassl4  bigint  default 0     not null comment '数据家族中在4层的entityclass标识',
- * entityclassver int     default 0     not null comment '产生数据的entityclass版本号.',
- * tx             bigint  default 0     not null comment '提交事务号',
- * commitid       bigint  default 0     not null comment '提交号',
- * op             tinyint default 0     not null comment '最后操作类型,0(插入),1(更新),2(删除)',
- * version        int     default 0     not null comment '当前数据版本.',
- * createtime     bigint  default 0     not null comment '数据创建时间.',
- * updatetime     bigint  default 0     not null comment '数据操作最后时间.',
- * deleted        boolean default false not null comment '是否被删除.',
- * attribute      json                  not null comment '当前 entity 的属性集合.',
- * oqsmajor       int     default 0     not null comment '产生数据的oqs主版本号',
+ * 创建数据执行器. 目标字段列表如下. id             bigint                not null comment '数据主键', entityclassl0  bigint  default 0 not
+ * null comment '数据家族中在0层的entityclass标识', entityclassl1  bigint  default 0     not null comment
+ * '数据家族中在1层的entityclass标识', entityclassl2  bigint  default 0     not null comment '数据家族中在2层的entityclass标识',
+ * entityclassl3  bigint  default 0     not null comment '数据家族中在3层的entityclass标识', entityclassl4  bigint  default 0 not
+ * null comment '数据家族中在4层的entityclass标识', entityclassver int     default 0     not null comment '产生数据的entityclass版本号.',
+ * tx             bigint  default 0     not null comment '提交事务号', commitid       bigint  default 0     not null comment
+ * '提交号', op             tinyint default 0     not null comment '最后操作类型,0(插入),1(更新),2(删除)', version        int
+ * default 0     not null comment '当前数据版本.', createtime     bigint  default 0     not null comment '数据创建时间.', updatetime
+ *     bigint  default 0     not null comment '数据操作最后时间.', deleted        boolean default false not null comment
+ * '是否被删除.', attribute      json                  not null comment '当前 entity 的属性集合.', oqsmajor int     default 0
+ * not null comment '产生数据的oqs主版本号',
  *
  * @author dongbin
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], Integer> {
+public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], int[]> {
 
-    public static Executor<MasterStorageEntity[], Integer> build(
+    public static Executor<MasterStorageEntity[], int[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new BuildExecutor(tableName, resource, timeout);
     }
@@ -53,7 +46,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
     }
 
     @Override
-    public Integer execute(MasterStorageEntity[] masterStorageEntities) throws Exception {
+    public int[] execute(MasterStorageEntity[] masterStorageEntities) throws Exception {
         int entityClassSize = masterStorageEntities[0].getEntityClasses().length;
 
         String sql = buildSQL(entityClassSize);
@@ -65,7 +58,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
 
                 setParam(masterStorageEntities[0], st);
 
-                return st.executeUpdate();
+                return new int[] {st.executeUpdate()};
 
             } else {
 
@@ -74,19 +67,16 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
                     setParam(entity, st);
 
                     st.addBatch();
-
                 }
 
                 int[] flags = st.executeBatch();
-                return Math.toIntExact(Arrays.stream(flags).filter(flag -> {
-                    // 表示成功
-                    if (flag > 0) {
-                        return true;
-                    } else if (flag == Statement.SUCCESS_NO_INFO) {
-                        return true;
+                return Arrays.stream(flags).map(f -> {
+                    if (f > 0 || f == Statement.SUCCESS_NO_INFO) {
+                        return 1;
+                    } else {
+                        return 0;
                     }
-                    return false;
-                }).count());
+                }).toArray();
             }
         }
     }
@@ -122,19 +112,19 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
         // insert into ${table}
         buff.append("INSERT INTO ").append(getTableName())
             .append(" (").append(String.join(",",
-            FieldDefine.ID,
-            FieldDefine.ENTITYCLASS_VERSION,
-            FieldDefine.TX,
-            FieldDefine.COMMITID,
-            FieldDefine.OP,
-            FieldDefine.VERSION,
-            FieldDefine.CREATE_TIME,
-            FieldDefine.UPDATE_TIME,
-            FieldDefine.DELETED,
-            FieldDefine.ATTRIBUTE,
-            FieldDefine.OQS_MAJOR,
-            FieldDefine.PROFILE)
-        );
+                FieldDefine.ID,
+                FieldDefine.ENTITYCLASS_VERSION,
+                FieldDefine.TX,
+                FieldDefine.COMMITID,
+                FieldDefine.OP,
+                FieldDefine.VERSION,
+                FieldDefine.CREATE_TIME,
+                FieldDefine.UPDATE_TIME,
+                FieldDefine.DELETED,
+                FieldDefine.ATTRIBUTE,
+                FieldDefine.OQS_MAJOR,
+                FieldDefine.PROFILE)
+            );
 
         for (int i = 0; i < entityClassSize; i++) {
             buff.append(",")

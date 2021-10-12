@@ -1,14 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
-import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 
 /**
- *  表达式.
+ * 表达式.
  *
- *  @author  j.xu
- *  @version 0.1 2021/05/2021/5/10
- *  @since 1.8
+ * @author j.xu
+ * @version 0.1 2021/05/2021/5/10
+ * @since 1.8
  */
 public class ExpressionWrapper {
 
@@ -85,9 +85,9 @@ public class ExpressionWrapper {
         /**
          * build.
          */
-        public ExpressionWrapper build() throws CalculationLogicException {
+        public ExpressionWrapper build() throws CalculationException {
             if (null == this.expression || this.expression.isEmpty()) {
-                throw new CalculationLogicException("expression can't be null in build function.");
+                throw new CalculationException("expression can't be null in build function.");
             }
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 

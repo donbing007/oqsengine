@@ -266,16 +266,19 @@ public class SQLMasterStorage implements MasterStorage {
 
                 MasterStorageEntity entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
 
-                return BuildExecutor.build(tableName, resource, queryTimeout)
+                int[] results = BuildExecutor.build(tableName, resource, queryTimeout)
                     .execute(new MasterStorageEntity[] {entityForBuild});
+
+                final int first = 0;
+                return results[first];
             });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
     @Override
-    public int build(EntityPackage entityPackage) throws SQLException {
+    public int[] build(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
-        return (int) transactionExecutor.execute(
+        return (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
@@ -322,9 +325,11 @@ public class SQLMasterStorage implements MasterStorage {
                 MasterStorageEntity masterStorageEntity =
                     buildReplaceMasterStorageEntity(entity, entityClass, resource);
 
-                return UpdateExecutor.build(tableName, resource, queryTimeout)
+                int[] results = UpdateExecutor.build(tableName, resource, queryTimeout)
                     .execute(new MasterStorageEntity[] {masterStorageEntity});
 
+                final int first = 0;
+                return results[first];
             });
     }
 
@@ -333,10 +338,10 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "replaces"}
     )
     @Override
-    public int replace(EntityPackage entityPackage) throws SQLException {
+    public int[] replace(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        return (int) transactionExecutor.execute(
+        return (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
                     .map(e -> buildReplaceMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
@@ -355,8 +360,11 @@ public class SQLMasterStorage implements MasterStorage {
             (tx, resource, hint) -> {
 
                 MasterStorageEntity masterStorageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
-                return DeleteExecutor.build(tableName, resource, queryTimeout)
+                int[] results = DeleteExecutor.build(tableName, resource, queryTimeout)
                     .execute(new MasterStorageEntity[] {masterStorageEntity});
+
+                final int first = 0;
+                return results[first];
             });
     }
 
@@ -365,10 +373,10 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "deletes"}
     )
     @Override
-    public int delete(EntityPackage entityPackage) throws SQLException {
+    public int[] delete(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        return (int) transactionExecutor.execute(
+        return (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()

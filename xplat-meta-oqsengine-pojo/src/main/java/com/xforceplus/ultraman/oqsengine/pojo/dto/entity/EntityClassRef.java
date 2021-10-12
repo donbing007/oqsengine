@@ -76,6 +76,16 @@ public class EntityClassRef implements Serializable {
         return Objects.hash(id, code, profile);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("id=").append(id);
+        sb.append(", profile=").append(profile);
+        sb.append('}');
+        return sb.toString();
+    }
+
+
     /**
      * builder.
      */

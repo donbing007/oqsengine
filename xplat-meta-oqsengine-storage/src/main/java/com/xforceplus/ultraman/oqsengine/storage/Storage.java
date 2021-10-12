@@ -29,16 +29,17 @@ public interface Storage {
      * Batch creation.
      *
      * @param entityPackage entity package.
-     * @return create a number.
+     * @return create results.
      * @throws SQLException Storage error.
      */
-    default int build(EntityPackage entityPackage) throws SQLException {
-        int size = 0;
+    default int[] build(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
         Iterator<IEntity> iter = entityPackage.iterator();
+        int index = 0;
         while (iter.hasNext()) {
-            size += build(iter.next(), entityPackage.getEntityClass());
+            results[index] = build(iter.next(), entityPackage.getEntityClass());
         }
-        return size;
+        return results;
     }
 
     /**
@@ -55,16 +56,17 @@ public interface Storage {
      * Batch replace.
      *
      * @param entityPackage entity package.
-     * @return replace a number.
+     * @return replace results.
      * @throws SQLException Storage error.
      */
-    default int replace(EntityPackage entityPackage) throws SQLException {
-        int size = 0;
+    default int[] replace(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
         Iterator<IEntity> iter = entityPackage.iterator();
+        int index = 0;
         while (iter.hasNext()) {
-            size += replace(iter.next(), entityPackage.getEntityClass());
+            results[index] = replace(iter.next(), entityPackage.getEntityClass());
         }
-        return size;
+        return results;
     }
 
     /**
@@ -81,15 +83,16 @@ public interface Storage {
      * Batch delete.
      *
      * @param entityPackage entity package.
-     * @return delete a number.
+     * @return delete results.
      * @throws SQLException Storage error.
      */
-    default int delete(EntityPackage entityPackage) throws SQLException {
-        int size = 0;
+    default int[] delete(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
         Iterator<IEntity> iter = entityPackage.iterator();
+        int index = 0;
         while (iter.hasNext()) {
-            size += delete(iter.next(), entityPackage.getEntityClass());
+            results[index] = delete(iter.next(), entityPackage.getEntityClass());
         }
-        return size;
+        return results;
     }
 }

@@ -19,9 +19,9 @@ import java.util.Arrays;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], Integer> {
+public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], int[]> {
 
-    public static Executor<MasterStorageEntity[], Integer> build(
+    public static Executor<MasterStorageEntity[], int[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new DeleteExecutor(tableName, resource, timeout);
     }
@@ -35,7 +35,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
     }
 
     @Override
-    public Integer execute(MasterStorageEntity[] masterStorageEntity) throws Exception {
+    public int[] execute(MasterStorageEntity[] masterStorageEntity) throws Exception {
         final int onlyOne = 1;
         if (masterStorageEntity.length == onlyOne) {
             MasterStorageEntity entity = masterStorageEntity[0];
@@ -48,7 +48,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
 
                     setForceParam(entity, st);
 
-                    return st.executeUpdate();
+                    return new int[] {st.executeUpdate()};
                 }
             } else {
 
@@ -58,7 +58,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
 
                     setParam(entity, st);
 
-                    return st.executeUpdate();
+                    return new int[] {st.executeUpdate()};
                 }
             }
         } else {
@@ -72,15 +72,13 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
                 }
 
                 int[] flags = st.executeBatch();
-                return Math.toIntExact(Arrays.stream(flags).filter(flag -> {
-                    // 表示成功
-                    if (flag > 0) {
-                        return true;
-                    } else if (flag == Statement.SUCCESS_NO_INFO) {
-                        return true;
+                return Arrays.stream(flags).map(f -> {
+                    if (f > 0 || f == Statement.SUCCESS_NO_INFO) {
+                        return 1;
+                    } else {
+                        return 0;
                     }
-                    return false;
-                }).count());
+                }).toArray();
             }
         }
     }

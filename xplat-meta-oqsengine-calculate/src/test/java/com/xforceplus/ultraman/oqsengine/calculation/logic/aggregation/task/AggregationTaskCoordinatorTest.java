@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -480,8 +479,8 @@ class AggregationTaskCoordinatorTest {
         }
 
         @Override
-        public Collection<Map.Entry<String, byte[]>> get(String[] keys) {
-            Collection<Map.Entry<String, byte[]>> datas = new ArrayList<>(keys.length);
+        public Collection<Map.Entry<String, byte[]>> get(Collection<String> keys) {
+            Collection<Map.Entry<String, byte[]>> datas = new ArrayList<>(keys.size());
             for (String key : keys) {
                 byte[] value = data.get(key);
                 if (Arrays.equals(value, emptyValue)) {
@@ -500,8 +499,7 @@ class AggregationTaskCoordinatorTest {
         }
 
         @Override
-        public void delete(String[] keys) {
-
+        public void delete(Collection<String> keys) {
             for (String key : keys) {
                 data.remove(key);
             }

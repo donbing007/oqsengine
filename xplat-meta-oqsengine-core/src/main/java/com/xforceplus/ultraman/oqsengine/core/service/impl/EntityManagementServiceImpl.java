@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
@@ -331,7 +329,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         // 计算字段的计算动作.
         Collection<CalculationHint> hints;
         try {
-            hints = processCalculationField(entity, entityClass, Scenarios.BUILD);
+            hints = processCalculationField(entity, entityClass, CalculationScenarios.BUILD);
         } catch (CalculationLogicException ex) {
             logger.warn(ex.getMessage(), ex);
             return new OperationResult(
@@ -362,7 +360,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 //处理聚合相关逻辑
-                processAvgCalculation(entity, entityClass, Scenarios.BUILD);
+                processAvgCalculation(entity, entityClass, CalculationScenarios.BUILD);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
@@ -378,7 +376,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 // 可能的字段维护
-                maintainField(entity, entityClass, Scenarios.BUILD);
+                maintainField(entity, entityClass, CalculationScenarios.BUILD);
 
                 return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(),
                     ResultStatus.SUCCESS);
@@ -451,7 +449,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 Collection<CalculationHint> hints;
                 try {
-                    hints = processCalculationField(targetEntity, entityClass, Scenarios.REPLACE);
+                    hints = processCalculationField(targetEntity, entityClass, CalculationScenarios.REPLACE);
                 } catch (CalculationLogicException ex) {
                     logger.warn(ex.getMessage(), ex);
                     return new OperationResult(
@@ -492,7 +490,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 targetEntity.resetVersion(targetEntity.version() + ONE_INCREMENT_POS);
 
                 //处理聚合相关逻辑
-                processAvgCalculation(entity, entityClass, Scenarios.REPLACE);
+                processAvgCalculation(entity, entityClass, CalculationScenarios.REPLACE);
 
                 if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
                     hint.setRollback(true);
@@ -508,7 +506,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  */
                 long[] maintainFields = buildReplaceMaintainFields(oldEntity, targetEntity);
 
-                maintainField(entity, entityClass, maintainFields, Scenarios.REPLACE);
+                maintainField(entity, entityClass, maintainFields, CalculationScenarios.REPLACE);
 
                 //  半成功
                 if (null != hints && !hints.isEmpty()) {
@@ -578,7 +576,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 targetEntity.resetVersion(entity.version());
 
                 //处理聚合相关逻辑
-                processAvgCalculation(entity, entityClass, Scenarios.DELETE);
+                processAvgCalculation(entity, entityClass, CalculationScenarios.DELETE);
 
                 if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -809,7 +807,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private Collection<CalculationHint> processCalculationField(
-        IEntity sourceEntity, IEntityClass entityClass, Scenarios scenarios)
+        IEntity sourceEntity, IEntityClass entityClass, CalculationScenarios scenarios)
         throws CalculationLogicException {
 
         /*
@@ -820,7 +818,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         List<IEntityField> calculationFields = entityClass.fields().stream()
             .filter(
                 f -> {
-                    if (Scenarios.BUILD == scenarios) {
+                    if (CalculationScenarios.BUILD == scenarios) {
                         return CalculationType.UNKNOWN != f.calculationType()
                             && CalculationType.STATIC != f.calculationType()
                             && CalculationType.AGGREGATION != f.calculationType();
@@ -865,7 +863,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * @throws CalculationLogicException
      */
     private Collection<CalculationHint> processAvgCalculation(
-        IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+        IEntity sourceEntity, IEntityClass sourceClass, CalculationScenarios scenarios)
         throws CalculationLogicException {
 
         CalculationLogicContext context = buildCalculationLogicContext(sourceEntity, sourceClass, scenarios);
@@ -889,17 +887,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return context.getHints();
     }
 
-    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, Scenarios scenarios)
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, CalculationScenarios scenarios)
         throws CalculationLogicException {
         long[] fields = sourceClass.fields().stream().mapToLong(IEntityField::id).toArray();
         maintainField(sourceEntity, sourceClass, fields, scenarios);
     }
 
     /**
-     * 字段维护,会迭代当前修改的字段进行维护.
-     * 主要用于计算字段的数据一致性处理.
+     * 字段维护,会迭代当前修改的字段进行维护. 主要用于计算字段的数据一致性处理.
      */
-    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, long[] fieldIds, Scenarios scenarios)
+    private void maintainField(IEntity sourceEntity, IEntityClass sourceClass, long[] fieldIds,
+                               CalculationScenarios scenarios)
         throws CalculationLogicException {
 
         Collection<CalculationLogic> logics = calculationLogicFactory.getCalculations();
@@ -914,7 +912,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private CalculationLogicContext buildCalculationLogicContext(IEntity entity, IEntityClass entityClass,
-                                                                 Scenarios scenarios) {
+                                                                 CalculationScenarios scenarios) {
         return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
             .withScenarios(scenarios)
             .withMetaManager(this.metaManager)
@@ -931,7 +929,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private CalculationLogicContext buildCalculationLogicContextWithCount(IEntity sourceEntity, IEntity oldEntity,
                                                                           IEntity targetEntity,
                                                                           IEntityClass entityClass,
-                                                                          Scenarios scenarios, int count) {
+                                                                          CalculationScenarios scenarios, int count) {
         return DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
             .withScenarios(scenarios)
             .withMetaManager(this.metaManager)
@@ -1024,16 +1022,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      */
     private List<IEntity> findAggregationAndReplace(IEntity sourceEntity, IEntityClass sourceClass,
                                                     List<ParseTree> parseTrees,
-                                                    List<IEntity> replaceEntitys, Scenarios scenarios) {
+                                                    List<IEntity> replaceEntitys, CalculationScenarios scenarios) {
 
         // 获取当前entity的原始版本.
         Optional<IEntity> oldEntityOp = Optional.empty();
         Optional<IEntity> sourceEntityOp = Optional.empty();
         try {
-            if (Scenarios.DELETE == scenarios) {
+            if (CalculationScenarios.DELETE == scenarios) {
                 oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
                 sourceEntityOp = Optional.empty();
-            } else if (Scenarios.REPLACE == scenarios) {
+            } else if (CalculationScenarios.REPLACE == scenarios) {
                 oldEntityOp = masterStorage.selectOne(sourceEntity.id(), sourceClass);
                 sourceEntityOp = Optional.of(sourceEntity);
             } else {
@@ -1104,7 +1102,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         }
                         Collection<CalculationHint> hints;
                         try {
-                            hints = processCalculationField(findEntity.get(), nd.getKey(), Scenarios.REPLACE);
+                            hints =
+                                processCalculationField(findEntity.get(), nd.getKey(), CalculationScenarios.REPLACE);
                         } catch (CalculationLogicException ex) {
                             logger.warn(ex.getMessage(), ex);
                         }

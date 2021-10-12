@@ -51,7 +51,11 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
     @Override
     public String valueToString() {
-        return value.toString();
+        if (value != null) {
+            return value.toString();
+        } else {
+            return "NULL";
+        }
     }
 
     @Override

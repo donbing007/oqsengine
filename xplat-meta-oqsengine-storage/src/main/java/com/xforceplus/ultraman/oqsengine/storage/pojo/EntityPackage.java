@@ -30,6 +30,19 @@ public class EntityPackage implements Serializable {
     }
 
     /**
+     * 包裹中的实例数量.
+     *
+     * @return 实例数量.
+     */
+    public int size() {
+        if (entities == null) {
+            return 0;
+        } else {
+            return entities.size();
+        }
+    }
+
+    /**
      * 包裹中增加一个新的IEntity实例.
      *
      * @param entity 实例.

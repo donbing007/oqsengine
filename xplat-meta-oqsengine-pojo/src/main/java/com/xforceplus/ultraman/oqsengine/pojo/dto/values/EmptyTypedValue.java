@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
- * empty value will never use in real process.
+ * 一个空值表示.
  */
 public class EmptyTypedValue extends AbstractValue {
 

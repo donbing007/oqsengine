@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.GetIDFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.UnknownCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
@@ -125,12 +125,12 @@ public class TestInitTools {
     private static CalculationLogicFactory calculationLogicFactory() throws IllegalAccessException {
         return new CalculationLogicFactory() {
             @Override
-            public CalculationLogic getCalculation(CalculationType type) {
+            public CalculationLogic getCalculationLogic(CalculationType type) {
                 return UnknownCalculationLogic.getInstance();
             }
 
             @Override
-            public Collection<CalculationLogic> getCalculations() {
+            public Collection<CalculationLogic> getCalculationLogics() {
                 return Collections.emptyList();
             }
         };

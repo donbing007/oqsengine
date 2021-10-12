@@ -7,10 +7,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.xforceplus.ultraman.oqsengine.calculation.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationLogicContext;
-import com.xforceplus.ultraman.oqsengine.calculation.context.Scenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -520,7 +519,7 @@ public class EntityManagementServiceImplTest {
         DefaultCalculationLogicContext calculationLogicContext =
             DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
                 .withEntity(targetEntity)
-                .withScenarios(Scenarios.REPLACE).build();
+                .withScenarios(CalculationScenarios.REPLACE).build();
         calculationLogicContext.focusField(EntityClassDefine.l2EntityClass.field("l2-string").get());
 
         CalculationLogic mockLookupLogic = mock(CalculationLogic.class);
@@ -528,7 +527,7 @@ public class EntityManagementServiceImplTest {
 
         // 默认的是一个没有任务逻辑片的工厂,这里重新模似一个.
         CalculationLogicFactory mockCalculationLogicFactory = mock(CalculationLogicFactory.class);
-        when(mockCalculationLogicFactory.getCalculations()).thenReturn(Arrays.asList(mockLookupLogic));
+        when(mockCalculationLogicFactory.getCalculationLogics()).thenReturn(Arrays.asList(mockLookupLogic));
 
         ReflectionTestUtils.setField(impl, "calculationLogicFactory", mockCalculationLogicFactory);
 

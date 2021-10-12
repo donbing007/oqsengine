@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 
@@ -29,6 +30,16 @@ public interface MetaManager {
      * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long id, String profile);
+
+    /**
+     * 加载指定的IEntityClass实例.
+     *
+     * @param ref entityClass指针.
+     * @return 元信息.
+     */
+    default Optional<IEntityClass> load(EntityClassRef ref) {
+        return load(ref.getId(), ref.getProfile());
+    }
 
     /**
      * 加载指定的IEntityCalss + version实例.

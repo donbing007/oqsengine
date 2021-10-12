@@ -43,11 +43,11 @@ public class JcsegTokenizerTest {
         return Arrays.asList(
             new Case(
                 "abc",
-                Arrays.asList()
+                Arrays.asList("abc")
             ),
             new Case(
                 "abcd",
-                Arrays.asList()
+                Arrays.asList("abcd")
             ),
             new Case(
                 "中英文hello world混合",

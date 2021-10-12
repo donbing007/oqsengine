@@ -9,7 +9,7 @@ import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.googlecode.aviator.runtime.type.AviatorString;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.SpringContextUtil;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
@@ -53,7 +53,7 @@ public class GetIDFunctionTest {
     }
 
     @Test
-    public void testGetIDFunction() throws CalculationLogicException {
+    public void testGetIDFunction() throws CalculationException {
         GetIDFunction function = new GetIDFunction();
         Map<String, Object> params = com.alibaba.google.common.collect.Maps.newHashMap();
         IEntityField entityField = EntityField.Builder.anEntityField().withId(101010101).build();
@@ -63,7 +63,7 @@ public class GetIDFunctionTest {
     }
 
     @Test
-    public void testIDFunction() throws CalculationLogicException {
+    public void testIDFunction() throws CalculationException {
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
             .withExpression("getId(\"{0000}\",\"tag1\")").build();
@@ -76,7 +76,7 @@ public class GetIDFunctionTest {
 
 
     @Test
-    public void testIDFunctionWithMap() throws CalculationLogicException {
+    public void testIDFunctionWithMap() throws CalculationException {
 
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
@@ -90,7 +90,7 @@ public class GetIDFunctionTest {
     }
 
     @Test
-    public void testIDFunctionWithDataMap() throws CalculationLogicException {
+    public void testIDFunctionWithDataMap() throws CalculationException {
         ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
             .withCached(true)
             .withExpression("tenantId+\":\"+date_to_string(sysdate(),\"yyyy-MM-dd\")+\":\"+getId(\"{0000}\",tenantId)")

@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.calculation.helper;
 
-import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationLogicContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
-import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationLogicException;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -24,7 +25,7 @@ public class FormulaHelper {
     public static final String FORMULA_CTX_PARAM = "FORMULA_CTX_PARAM";
 
     private static ExecutionWrapper<?> toExecutionWrapper(String expression, List<String> args, IEntity entity)
-        throws CalculationLogicException {
+        throws CalculationException {
 
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression()
             .withExpression(expression)
@@ -37,7 +38,7 @@ public class FormulaHelper {
     }
 
     private static Map<String, Object> toRuntimeParams(List<String> args, IEntity entity)
-        throws CalculationLogicException {
+        throws CalculationException {
         Map<String, Object> map = new HashMap<>();
         LOGGER.info("runtimeArgs is {}", args);
         if (null != args) {
@@ -46,7 +47,7 @@ public class FormulaHelper {
                 if (valueOp.isPresent()) {
                     map.put(arg, valueOp.get().getValue());
                 } else {
-                    throw new CalculationLogicException(
+                    throw new CalculationException(
                         String.format("[formula/seniorAutoFill] execution absence param [%s]", arg));
                 }
             }
@@ -62,19 +63,23 @@ public class FormulaHelper {
      * @param args       参数列表
      * @param context    上下文
      * @return Object the Object
-     * @throws CalculationLogicException exception
+     * @throws CalculationException exception
      */
-    public static Object calculate(String expression, List<String> args, CalculationLogicContext context)
-        throws CalculationLogicException {
+    public static Object calculate(String expression, List<String> args, CalculationContext context)
+        throws CalculationException {
         //  获取公式执行对象
         ExecutionWrapper<?> executionWrapper =
-            toExecutionWrapper(expression, args, context.getEntity());
+            toExecutionWrapper(expression, args, context.getFocusEntity());
 
-        executionWrapper.getParams().put(FORMULA_CTX_PARAM, context.getFocusField());
+        Optional<ValueChange> changeOp = context.getFocus();
+        if (!changeOp.isPresent()) {
+            throw new CalculationException("Formula no field info.");
+        }
+        executionWrapper.getParams().put(FORMULA_CTX_PARAM, changeOp.get().getField());
 
         Object object = AviatorHelper.execute(executionWrapper);
         if (null == object) {
-            throw new CalculationLogicException("formula executed, but result is null.");
+            throw new CalculationException("formula executed, but result is null.");
         }
         return object;
     }

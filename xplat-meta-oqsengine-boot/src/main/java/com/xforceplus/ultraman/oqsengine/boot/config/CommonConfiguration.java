@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedisConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.ClientOptions;
@@ -160,6 +161,23 @@ public class CommonConfiguration {
         } else {
             return new DefaultTokenizerFactory(new URL(lexUrl));
         }
+    }
+
+    /**
+     * redis的lua脚本 watch dog. 保证脚本可以正确处理.
+     *
+     * @param redisClient 操作使用redis.
+     * @return 实例.
+     */
+    @Bean(value = "redisLuaScriptWatchDog")
+    public RedisLuaScriptWatchDog redisLuaScriptWatchDog(RedisClient redisClient) {
+        // 检查时间在1分钟到10分钟之间随机,防止多结点时集中检查.
+        long minCheckTimeIntervalMs = 1000 * 60;
+        long maxCheckTimeIntervalMs = 1000 * 60 * 10;
+        long checkTimeIntervalMs =
+            minCheckTimeIntervalMs + (long) (Math.random() * (maxCheckTimeIntervalMs - minCheckTimeIntervalMs + 1));
+
+        return new RedisLuaScriptWatchDog(redisClient, checkTimeIntervalMs);
     }
 
     private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {

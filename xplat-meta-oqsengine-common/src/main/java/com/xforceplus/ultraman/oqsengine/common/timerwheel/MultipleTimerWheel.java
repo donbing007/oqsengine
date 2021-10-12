@@ -100,12 +100,7 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
         }
 
         if (notification == null) {
-            this.notification = new TimeoutNotification<T>() {
-                @Override
-                public long notice(T t) {
-                    return 0;
-                }
-            };
+            this.notification = t -> TimeoutNotification.OVERDUE;
         } else {
             this.notification = notification;
         }
@@ -516,10 +511,10 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
             long resultTime;
             for (Element element : elements) {
                 resultTime = notification.notice(element.getTarget());
-                if (resultTime > 0) {
-                    add(element.getTarget(), resultTime);
-                } else {
+                if (resultTime <= TimeoutNotification.OVERDUE) {
                     removeHelp.remove(element.getTarget());
+                } else {
+                    add(element.getTarget(), resultTime);
                 }
             }
             elements.clear();

@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -73,6 +74,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     @Resource(name = "redisClientState")
     private RedisClient redisClient;
+
+    @Resource
+    private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
         .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
@@ -296,22 +300,22 @@ public class DefaultCacheExecutor implements CacheExecutor {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.metadata");
 
-        /*
-         * prepare
-         */
-        prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
+        if (redisLuaScriptWatchDog != null) {
 
-        /*
-         * version get/set
-         */
-        versionGetByEntityScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
-        versionResetScriptSha = syncCommands.scriptLoad(REST_VERSION);
+            prepareVersionScriptSha = redisLuaScriptWatchDog.watch(PREPARE_VERSION_SCRIPT);
+            versionGetByEntityScriptSha = redisLuaScriptWatchDog.watch(ACTIVE_VERSION);
+            versionResetScriptSha = redisLuaScriptWatchDog.watch(REST_VERSION);
+            entityClassStorageScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO);
+            entityClassStorageListScriptSha = redisLuaScriptWatchDog.watch(ENTITY_CLASS_STORAGE_INFO_LIST);
 
-        /*
-         * entityClassStorage(s) get
-         */
-        entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
-        entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
+        } else {
+
+            prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
+            versionGetByEntityScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
+            versionResetScriptSha = syncCommands.scriptLoad(REST_VERSION);
+            entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
+            entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
+        }
     }
 
     @PreDestroy

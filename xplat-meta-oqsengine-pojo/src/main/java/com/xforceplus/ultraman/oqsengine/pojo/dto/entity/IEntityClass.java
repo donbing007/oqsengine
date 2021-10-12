@@ -143,4 +143,6 @@ public interface IEntityClass {
     default boolean isCompatibility(long id) {
         return family().stream().filter(e -> e.id() == id).count() >= 1;
     }
+
+
 }
