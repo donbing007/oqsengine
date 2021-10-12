@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mock;
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.mock.BeanInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
@@ -45,6 +44,7 @@ public class MasterDBInitialization implements BeanInitialization {
 
     public static final String MASTER_STORAGE_TABLE = "oqsbigentity";
     public static final String MASTER_STORAGE_FAILED_TABLE = "entityfaileds";
+    public static final String MASTER_STORAGE_UNIQUE_TABLE = "oqsunique";
 
     private MasterDBInitialization() {
     }
@@ -98,31 +98,38 @@ public class MasterDBInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRunner());
 
         masterStorage.setTableName(MASTER_STORAGE_TABLE);
-        masterStorage.setQueryTimeout(Integer.MAX_VALUE);
         masterStorage.setErrorTable(MASTER_STORAGE_FAILED_TABLE);
+        masterStorage.setUniqueTableName(MASTER_STORAGE_UNIQUE_TABLE);
         masterStorage.init();
     }
 
-    @Override
-    public void clear() throws Exception {
-        MasterDBInitialization.getInstance().resetTransactionExecutor(MASTER_STORAGE_TABLE);
+    private void initTable() throws Exception {
+        try (Connection conn = dataSource.getConnection();
+             Statement st = conn.createStatement()) {
+            st.execute(MasterDbScript.DROP_OQS_BIG_ENTITY);
+            st.execute(MasterDbScript.CREATE_OQS_BIG_ENTITY);
 
-        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
-        if (null != dataSourcePackage && null != dataSourcePackage.getMaster()) {
-            for (DataSource ds : dataSourcePackage.getMaster()) {
-                Connection conn = ds.getConnection();
-                Statement st = conn.createStatement();
-                st.executeUpdate("truncate table " + MASTER_STORAGE_TABLE);
-                st.executeUpdate("truncate table " + MASTER_STORAGE_FAILED_TABLE);
-                st.close();
-                conn.close();
-            }
+            st.execute(MasterDbScript.DROP_OQS_UNIQUE);
+            st.execute(MasterDbScript.CREATE_OQS_UNIQUE);
+
+            st.execute(MasterDbScript.DROP_OQS_ENTITY_FAILS);
+            st.execute(MasterDbScript.CREATE_OQS_ENTITY_FAILS);
         }
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
+        Connection conn = dataSource.getConnection();
+        Statement st = conn.createStatement();
+        st.execute("truncate table " + MASTER_STORAGE_TABLE);
+        st.execute("truncate table " + MASTER_STORAGE_FAILED_TABLE);
+        st.execute("truncate table " + MASTER_STORAGE_UNIQUE_TABLE);
+        st.close();
+        conn.close();
+    }
 
+    @Override
+    public void destroy() throws Exception {
         dataSource = null;
         masterTransactionExecutor = null;
         keyGenerator = null;
@@ -131,7 +138,6 @@ public class MasterDBInitialization implements BeanInitialization {
         masterStorage.destroy();
 
         instance = null;
-
     }
 
     /**

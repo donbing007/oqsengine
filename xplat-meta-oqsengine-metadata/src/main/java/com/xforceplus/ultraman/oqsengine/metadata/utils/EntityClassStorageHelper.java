@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
 import com.google.protobuf.BoolValue;
 import com.google.protobuf.DoubleValue;

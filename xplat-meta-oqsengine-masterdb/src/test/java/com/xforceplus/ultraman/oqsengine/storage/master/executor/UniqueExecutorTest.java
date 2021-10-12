@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;

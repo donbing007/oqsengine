@@ -385,9 +385,9 @@
                 <version>5.0.0</version>
             </dependency>
             <dependency>
-                <groupId>com.xforceplus</groupId>
-                <artifactId>ultraman-test-tools-core</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>1.16.0</version>
             </dependency>
             <dependency>
                 <groupId>com.xforceplus.ultraman.common</groupId>

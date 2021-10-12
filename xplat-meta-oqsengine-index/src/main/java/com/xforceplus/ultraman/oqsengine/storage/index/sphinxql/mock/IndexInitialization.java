@@ -68,6 +68,8 @@ public class IndexInitialization implements BeanInitialization {
     public void init() throws Exception {
         writeDataSourceSelector = buildWriteDataSourceSelector();
 
+        initTable();
+
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
@@ -136,6 +138,23 @@ public class IndexInitialization implements BeanInitialization {
         indexStorage = null;
 
         instance = null;
+    }
+
+    private void initTable() throws Exception {
+        List<DataSource> dataSources = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter();
+        for (DataSource ds : dataSources) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE + "0");
+            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE + "1");
+            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE);
+
+            st.executeUpdate(IndexDbScript.CREATE_INDEX_0);
+            st.executeUpdate(IndexDbScript.CREATE_INDEX_1);
+            st.executeUpdate(IndexDbScript.SEARCH_INDEX);
+            st.close();
+            conn.close();
+        }
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector() throws IllegalAccessException {

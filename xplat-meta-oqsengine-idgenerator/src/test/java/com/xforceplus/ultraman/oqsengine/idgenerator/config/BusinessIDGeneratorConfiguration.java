@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
+import com.xforceplus.ultraman.oqsengine.idgenerator.mock.IdGenerateDbScript;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
@@ -18,6 +19,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl.NumberPatternPa
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.impl.SegmentServiceImpl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.redisson.Redisson;
@@ -45,7 +48,7 @@ public class BusinessIDGeneratorConfiguration {
      * 主库存连接池.
      */
     @Bean
-    public DataSource segmentDataSource() {
+    public DataSource segmentDataSource() throws Exception {
         System.setProperty(
             "MYSQL_JDBC_ID",
             String.format(
@@ -59,6 +62,7 @@ public class BusinessIDGeneratorConfiguration {
     private DataSource buildDataSource(String file) {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
+
         return dataSourcePackage.getMaster().get(0);
     }
 

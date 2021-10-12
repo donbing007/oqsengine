@@ -3,17 +3,21 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.service.impl;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.config.BusinessIDGeneratorConfiguration;
+import com.xforceplus.ultraman.oqsengine.idgenerator.mock.IdGenerateDbScript;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +40,9 @@ public class SegmentServiceImplTest {
 
     @Resource
     private SqlSegmentStorage storage;
+
+    @Resource
+    private DataSource segmentDataSource;
 
     @Resource
     private SegmentServiceImpl service;
@@ -66,6 +73,11 @@ public class SegmentServiceImplTest {
 
     @BeforeEach
     public void before() throws Exception {
+        try (Connection conn = segmentDataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate(IdGenerateDbScript.CREATE_SEGMENT);
+            st.close();
+        }
 
         storage.build(info);
         Thread.sleep(1_000);
@@ -74,6 +86,12 @@ public class SegmentServiceImplTest {
     @AfterEach
     public void afterEach() throws Exception {
         storage.delete(info);
+
+        try (Connection conn = segmentDataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate("drop table segment");
+            st.close();
+        }
     }
 
     @Test

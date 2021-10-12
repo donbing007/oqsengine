@@ -15,8 +15,9 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.SqlKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-import com.xforceplus.ultraman.test.tools.core.container.basic.MysqlContainer;
-import com.xforceplus.ultraman.test.tools.core.container.basic.RedisContainer;
+import com.xforceplus.ultraman.oqsengine.task.mock.KVDbScript;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -82,6 +83,13 @@ public class TaskKeyValueQueueSQLTest {
         keyValueStorage.setTableName("kv");
         keyValueStorage.setTimeoutMs(200);
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
+
+        try (Connection conn = ds.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.execute(KVDbScript.DROP_KV);
+                st.execute(KVDbScript.CREATE_KV);
+            }
+        }
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
                 StorageInitialization.getInstance().getTransactionManager(),

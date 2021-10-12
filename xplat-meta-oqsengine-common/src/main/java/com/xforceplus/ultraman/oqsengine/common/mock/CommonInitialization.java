@@ -11,12 +11,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Disabled;
 
 /**
  * Created by justin.xu on 06/2021.
  *
  * @since 1.8
  */
+@Disabled
 public class CommonInitialization implements BeanInitialization {
 
     private static volatile CommonInitialization instance = null;

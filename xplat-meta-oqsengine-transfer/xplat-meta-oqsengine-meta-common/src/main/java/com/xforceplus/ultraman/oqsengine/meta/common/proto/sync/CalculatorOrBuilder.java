@@ -160,41 +160,60 @@ public interface CalculatorOrBuilder extends
   int getDomainNoSenior();
 
   /**
-   * <code>int64 aggregationBoId = 19;</code>
+   * <code>int64 lookupRelationId = 19;</code>
+   */
+  long getLookupRelationId();
+
+  /**
+   * <code>int64 aggregationBoId = 20;</code>
    */
   long getAggregationBoId();
 
   /**
-   * <code>int64 aggregationFieldId = 20;</code>
+   * <code>int64 aggregationFieldId = 21;</code>
    */
   long getAggregationFieldId();
 
   /**
-   * <code>int32 aggregationType = 21;</code>
+   * <code>int32 aggregationType = 22;</code>
    */
   int getAggregationType();
 
   /**
-   * <code>int64 aggregationRelationId = 22;</code>
+   * <code>int64 aggregationRelationId = 23;</code>
    */
   long getAggregationRelationId();
 
   /**
-   * <code>string domainCondition = 23;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  java.lang.String getDomainCondition();
+  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> 
+      getDomainConditionsList();
   /**
-   * <code>string domainCondition = 23;</code>
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  com.google.protobuf.ByteString
-      getDomainConditionBytes();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index);
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  int getDomainConditionsCount();
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+      getDomainConditionsOrBuilderList();
+  /**
+   * <code>repeated .DomainCondition domainConditions = 24;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
+      int index);
 
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
   int getAggregationByFieldsCount();
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
   boolean containsAggregationByFields(
       long key);
@@ -205,19 +224,19 @@ public interface CalculatorOrBuilder extends
   java.util.Map<java.lang.Long, java.lang.Long>
   getAggregationByFields();
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
   java.util.Map<java.lang.Long, java.lang.Long>
   getAggregationByFieldsMap();
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   long getAggregationByFieldsOrDefault(
       long key,
       long defaultValue);
   /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 24;</code>
+   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   long getAggregationByFieldsOrThrow(
