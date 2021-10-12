@@ -99,7 +99,6 @@ public class MasterDBInitialization implements BeanInitialization {
 
         masterStorage.setTableName(MASTER_STORAGE_TABLE);
         masterStorage.setErrorTable(MASTER_STORAGE_FAILED_TABLE);
-        masterStorage.setUniqueTableName(MASTER_STORAGE_UNIQUE_TABLE);
         masterStorage.init();
     }
 

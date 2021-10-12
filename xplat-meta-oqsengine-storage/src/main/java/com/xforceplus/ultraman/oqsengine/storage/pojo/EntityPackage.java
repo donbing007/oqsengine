@@ -3,9 +3,12 @@ package com.xforceplus.ultraman.oqsengine.storage.pojo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -22,12 +25,7 @@ public class EntityPackage implements Serializable {
      */
     private static int MAX_SIZE = 10000;
 
-    private List<IEntity> entities;
-    private IEntityClass entityClass;
-
-    public EntityPackage(IEntityClass entityClass) {
-        this.entityClass = entityClass;
-    }
+    private List<Map.Entry<IEntity, IEntityClass>> entities;
 
     /**
      * 包裹中的实例数量.
@@ -47,14 +45,9 @@ public class EntityPackage implements Serializable {
      *
      * @param entity 实例.
      */
-    public void put(IEntity entity) {
+    public void put(IEntity entity, IEntityClass entityClass) {
         if (entity == null) {
             throw new NullPointerException("The target IEntity instance is not valid.");
-        }
-
-        if (entity.entityClassRef().getId() != this.entityClass.id()) {
-            throw new IllegalStateException(
-                String.format("Not expected Class, expected %d-%s.", this.entityClass.id(), this.entityClass.code()));
         }
 
         lazyInit();
@@ -63,11 +56,25 @@ public class EntityPackage implements Serializable {
             throw new IllegalStateException(String.format("The maximum number of packages is %d.", MAX_SIZE));
         }
 
-        entities.add(entity);
+        entities.add(new AbstractMap.SimpleEntry<>(entity, entityClass));
     }
 
-    public IEntityClass getEntityClass() {
-        return entityClass;
+    /**
+     * 得到指定序号的实例信息.
+     *
+     * @param index 从0开始的序号.
+     * @return 实例.
+     */
+    public Optional<Map.Entry<IEntity, IEntityClass>> get(int index) {
+        if (index > this.entities.size() - 1) {
+            return Optional.empty();
+        }
+
+        if (index < 0) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(this.entities.get(index));
     }
 
     /**
@@ -75,7 +82,7 @@ public class EntityPackage implements Serializable {
      *
      * @return 实例流.
      */
-    public Stream<IEntity> stream() {
+    public Stream<Map.Entry<IEntity, IEntityClass>> stream() {
         if (entities == null) {
 
             return Stream.empty();
@@ -91,17 +98,17 @@ public class EntityPackage implements Serializable {
      *
      * @return 实例迭代器.
      */
-    public Iterator<IEntity> iterator() {
+    public Iterator<Map.Entry<IEntity, IEntityClass>> iterator() {
         if (entities == null) {
 
-            return new Iterator<IEntity>() {
+            return new Iterator<Map.Entry<IEntity, IEntityClass>>() {
                 @Override
                 public boolean hasNext() {
                     return false;
                 }
 
                 @Override
-                public IEntity next() {
+                public Map.Entry<IEntity, IEntityClass> next() {
                     return null;
                 }
             };

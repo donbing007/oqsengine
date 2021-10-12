@@ -282,7 +282,7 @@ public class SQLMasterStorage implements MasterStorage {
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .map(e -> buildNewMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .map(e -> buildNewMasterStorageEntity(e.getKey(), e.getValue(), resource))
                     .toArray(MasterStorageEntity[]::new);
 
                 return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
@@ -344,7 +344,7 @@ public class SQLMasterStorage implements MasterStorage {
         return (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .map(e -> buildReplaceMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .map(e -> buildReplaceMasterStorageEntity(e.getKey(), e.getValue(), resource))
                     .toArray(MasterStorageEntity[]::new);
 
                 return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
@@ -380,7 +380,7 @@ public class SQLMasterStorage implements MasterStorage {
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .map(e -> buildDeleteMasterStorageEntity(e, entityPackage.getEntityClass(), resource))
+                    .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
                     .toArray(MasterStorageEntity[]::new);
 
                 return DeleteExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
@@ -388,9 +388,9 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<IEntity> iter = entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         while (iter.hasNext()) {
-            checkId(iter.next());
+            checkId(iter.next().getKey());
         }
     }
 
@@ -708,8 +708,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     /**
-     * 一个查询排序优化.
-     * 1. 如果只按ID排序,且只有ID排序那么整个排序将被去掉.
+     * 一个查询排序优化. 1. 如果只按ID排序,且只有ID排序那么整个排序将被去掉.
      */
     private SelectConfig optimizeToOrder(SelectConfig config) {
         if (config.getSecondarySort().isOutOfOrder() && config.getThirdSort().isOutOfOrder()) {
