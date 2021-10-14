@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -20,15 +19,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 计算字段计算器..
@@ -38,6 +39,13 @@ import java.util.stream.Collectors;
  * @since 1.8
  */
 public class DefaultCalculationImpl implements Calculation {
+
+    /**
+     * 如果出现冲突,最大重试的次数.
+     */
+    private static int MAX_REPLAY_TIMES = 100;
+
+    final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
     @Override
     public IEntity calculate(CalculationContext context) throws CalculationException {
@@ -64,9 +72,6 @@ public class DefaultCalculationImpl implements Calculation {
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
         Infuence[] infuences = scope(context);
-
-        Map<Long, IEntity> cache = new HashMap<>();
-
         CalculationLogicFactory calculationLogicsFactory = context.getCalculationLogicFactory();
         List<IEntity> triggerEntities = new LinkedList();
         for (Infuence infuence : infuences) {
@@ -94,23 +99,25 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-            infuence.scan((parentEntityClass, entityClass, field, infuenceInner) -> {
-                CalculationLogic logic = calculationLogicsFactory.getCalculationLogic(field.calculationType());
+            infuence.scan((parentEntityClass, participant, infuenceInner) -> {
+                CalculationLogic logic =
+                    calculationLogicsFactory.getCalculationLogic(participant.getField().calculationType());
 
-                long[] affectedEntityIds = logic.getMaintainTarget(context, entityClass, field, triggerEntities);
+                long[] affectedEntityIds = logic.getMaintainTarget(context, participant, triggerEntities);
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
                 for (IEntity affectedEntitiy : affectedEntities) {
-                    context.focusEntity(affectedEntitiy, entityClass);
-                    context.focusField(field);
+                    context.focusEntity(affectedEntitiy, participant.getEntityClass());
+                    context.focusField(participant.getField());
 
                     Optional<IValue> newValueOp = logic.calculate(context);
-                    Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(field.id());
+                    Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
 
                     if (newValueOp.isPresent()) {
 
-                        IValue oldValue = oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(field);
+                        IValue oldValue =
+                            oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
                         IValue newValue = newValueOp.get();
 
                         context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
@@ -122,38 +129,76 @@ public class DefaultCalculationImpl implements Calculation {
                 return true;
             });
 
-
-            //缓存中的实例entityClass分类
-            Map<EntityClassRef, List<IEntity>> entitiesGroup =
-                context.getEntitiesFormCache().stream().collect(Collectors.groupingBy(IEntity::entityClassRef));
-
-            Optional<IEntityClass> entityClassOp;
-            IEntityClass entityClass;
-            EntityPackage entityPackage;
-            List<IEntity> classGroupEntities;
-
-            MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
-            MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
-            for (EntityClassRef ref : entitiesGroup.keySet()) {
-                entityClassOp = metaManager.load(ref);
-                if (!entityClassOp.isPresent()) {
-                    throw new CalculationException(String.format("Meta information (%s) does not exist.", ref));
-                }
-
-                entityClass = entityClassOp.get();
-
-                classGroupEntities = entitiesGroup.get(ref);
-                entityPackage = new EntityPackage(entityClass);
-                if (classGroupEntities != null) {
-                    classGroupEntities.forEach(e -> entityPackage.put());
-                }
-            }
-
-
+            persist(context);
         }
-
     }
 
+    /**
+     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
+     */
+    private void persist(CalculationContext context) throws CalculationException {
+
+        List<IEntity> entities = new ArrayList<>(context.getEntitiesFormCache());
+        final int batchSize = 1000;
+
+        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+
+        EntityPackage entityPackage = new EntityPackage();
+        for (int i = 0; i < entities.size(); i++) {
+            if (entityPackage.size() == batchSize) {
+
+                try {
+                    doPersist(context, entityPackage);
+                } catch (SQLException ex) {
+                    throw new CalculationException(ex.getMessage(), ex);
+                }
+
+                entityPackage = new EntityPackage();
+
+            } else {
+                Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
+                if (!entityClassOp.isPresent()) {
+                    throw new CalculationException(
+                        String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
+                }
+                entityPackage.put(entities.get(i), entityClassOp.get());
+            }
+        }
+    }
+
+    private void doPersist(CalculationContext context, EntityPackage entityPackage) throws SQLException {
+        MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
+        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+
+        EntityPackage replayPackage = entityPackage;
+        for (int p = 0; p < MAX_REPLAY_TIMES; p++) {
+
+            int[] results = masterStorage.replace(replayPackage);
+            EntityPackage finalReplayPackage = replayPackage;
+            long[] errEntityIds = IntStream.range(0, results.length)
+                .filter(i -> results[i] == 0)
+                .mapToLong(i -> finalReplayPackage.get(i).get().getKey().id()).toArray();
+
+            if (errEntityIds.length > 0) {
+
+                Collection<IEntity> replyEntityes = masterStorage.selectMultiple(errEntityIds);
+
+                if (replyEntityes.isEmpty()) {
+                    // 目标数据已经不存在,被其他事务删除,放弃操作.
+                    break;
+                }
+                replayPackage = new EntityPackage();
+                for (IEntity replyEntity : replyEntityes) {
+                    replayPackage.put(replyEntity, metaManager.load(replyEntity.entityClassRef()).get());
+                }
+
+            } else {
+                break;
+            }
+        }
+    }
+
+    // 加载实体,缓存+储存.
     private Collection<IEntity> loadEntities(CalculationContext context, long[] ids)
         throws CalculationException {
 
@@ -183,6 +228,7 @@ public class DefaultCalculationImpl implements Calculation {
             .map(op -> op.get()).collect(Collectors.toList());
     }
 
+    // 获取影响树列表.
     private Infuence[] scope(CalculationContext context) throws CalculationException {
         // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
         Collection<IEntityField> calculationFields = parseChangeFields(context, false);
@@ -196,50 +242,38 @@ public class DefaultCalculationImpl implements Calculation {
              被影响的元信息和字段   被影响的元信息和字段
                /           \
        被影响的元信息和字段   被影响的元信息和字段
+       注意: 每一个改变字段会由所有logic共同来构造一颗影响树.
+                               A
+                           /       \
+                      B(lookup)     C
+                         /
+                       D(sum)
+             这里 B lookup 和A,但是D又SUM了B,所以需要多个logic来共同构造这个树.
          */
-        CalculationScenarios current = context.getScenariso();
+        CalculationScenarios currentScenarios = context.getScenariso();
+
+        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculationLogics();
 
         Infuence[] infuences = calculationFields.stream().map(f -> {
-            CalculationLogic logic = calculationLogicFactory.getCalculationLogic(f.calculationType());
-            if (isSupportScenarios(current, logic)) {
-                context.focusField(f);
 
-                Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
-                if (changeOp.isPresent()) {
-                    Infuence infuence = new Infuence(
-                        context.getFocusEntity(), context.getFocusClass(), changeOp.get());
-                    logic.scope(context, infuence);
-                    return Optional.of(infuence);
+            Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
+            if (changeOp.isPresent()) {
+                Infuence infuence = new Infuence(context.getFocusEntity(), context.getFocusClass(), changeOp.get());
+
+                for (CalculationLogic logic : logics) {
+                    if (isSupportScenarios(currentScenarios, logic)) {
+                        context.focusField(f);
+
+                        logic.scope(context, infuence);
+                    }
                 }
+
+                return Optional.ofNullable(infuence);
             }
+
             return Optional.empty();
         }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
 
-        /*
-        将得到的影响树再次交由所有logic处理,处理有可能的级连影响.
-                    A           t1
-                  /   \
-                 B     C
-        由于A的改变造成的影响树如上,但是现在有一个E对象依赖B的改变,这时候需要将E也增加到树上.
-                   A            t2
-                 /   \
-                B     C
-               /
-              E
-         所以会将首次构造的影响树,即t1会交由所有的logic进行处理,其中有可能某个logic会将t1修改为t2.
-         这里会跳过生成t1树的那个logic,只交由没有处理过t1树的logic处理.
-         */
-        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculationLogics();
-
-        for (Infuence infuence : infuences) {
-
-            for (CalculationLogic logic : logics) {
-
-                if (logic.supportType() != infuence.getValueChange().getField().calculationType()) {
-                    logic.scope(context, infuence);
-                }
-            }
-        }
         return infuences;
     }
 
@@ -251,14 +285,28 @@ public class DefaultCalculationImpl implements Calculation {
      * @return 相关字段列表.
      */
     private Collection<IEntityField> parseChangeFields(CalculationContext context, boolean onlyCalculationField) {
+        IEntityClass entityClass = context.getFocusClass();
+
         if (onlyCalculationField) {
-            return context.getValueChanges().stream().map(v -> v.getField()).filter(f ->
-                    f.calculationType() != CalculationType.STATIC && f.calculationType() != CalculationType.UNKNOWN
-                )
-                .sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
+
+            return entityClass.fields().stream().filter(f ->
+                // 只处理计算字段.
+                f.calculationType() != CalculationType.STATIC || f.calculationType() != CalculationType.UNKNOWN
+
+            ).filter(f ->
+                // 只处理改变的字段.
+                context.getValueChange(context.getFocusEntity(), f).isPresent()
+
+            ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
+
         } else {
-            return context.getValueChanges().stream().map(v -> v.getField())
-                .sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
+
+            return entityClass.fields().stream().filter(f ->
+                // 只处理改变的字段.
+                context.getValueChange(context.getFocusEntity(), f).isPresent()
+
+            ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
+
         }
     }
 
