@@ -54,7 +54,8 @@ public class DefaultCalculationImpl implements Calculation {
         // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
         Collection<IEntityField> calculationFields = parseChangeFields(context, true);
         // 计算逻辑工厂.
-        CalculationLogicFactory calculationLogicFactory = context.getCalculationLogicFactory();
+        CalculationLogicFactory calculationLogicFactory =
+            context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
         for (IEntityField field : calculationFields) {
             CalculationLogic logic = calculationLogicFactory.getCalculationLogic(field.calculationType());
@@ -72,7 +73,8 @@ public class DefaultCalculationImpl implements Calculation {
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
         Infuence[] infuences = scope(context);
-        CalculationLogicFactory calculationLogicsFactory = context.getCalculationLogicFactory();
+        CalculationLogicFactory calculationLogicFactory =
+            context.getResourceWithEx(() -> context.getCalculationLogicFactory());
         List<IEntity> triggerEntities = new LinkedList();
         for (Infuence infuence : infuences) {
             triggerEntities.clear();
@@ -101,7 +103,7 @@ public class DefaultCalculationImpl implements Calculation {
              */
             infuence.scan((parentEntityClass, participant, infuenceInner) -> {
                 CalculationLogic logic =
-                    calculationLogicsFactory.getCalculationLogic(participant.getField().calculationType());
+                    calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
 
                 long[] affectedEntityIds = logic.getMaintainTarget(context, participant, triggerEntities);
 
@@ -232,7 +234,8 @@ public class DefaultCalculationImpl implements Calculation {
     private Infuence[] scope(CalculationContext context) throws CalculationException {
         // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
         Collection<IEntityField> calculationFields = parseChangeFields(context, false);
-        CalculationLogicFactory calculationLogicFactory = context.getCalculationLogicFactory();
+        CalculationLogicFactory calculationLogicFactory =
+            context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
         /*
         所有当前场景需要维护的计算逻辑片根据改变的字段最终汇聚一份影响树列表.
