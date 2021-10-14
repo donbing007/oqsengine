@@ -285,4 +285,24 @@ public class InfuenceTest {
         Assertions.assertEquals(E_CLASS.id(), results.get(4).id());
     }
 
+    @Test
+    public void testString() throws Exception {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
+            rootEntity.id(),
+            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+        ));
+
+        infuence.impact(A_CLASS, B_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
+
+        infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
+
+        System.out.println(infuence.toString());
+    }
+
 }

@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -54,6 +55,7 @@ public class EntitySearchServiceImplTest {
     private CommitIdStatusService commitIdStatusService;
     private MasterStorage masterStorage;
     private IndexStorage indexStorage;
+    private CombinedSelectStorage combinedSelectStorage;
     private ExecutorService threadPool;
     private MetaManager metaManager;
     private EntitySearchServiceImpl impl;
@@ -71,11 +73,13 @@ public class EntitySearchServiceImplTest {
 
         masterStorage = mock(MasterStorage.class);
         indexStorage = mock(IndexStorage.class);
+        combinedSelectStorage = new CombinedSelectStorage(masterStorage, indexStorage);
 
         impl = new EntitySearchServiceImpl();
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(impl, "indexStorage", indexStorage);
+        ReflectionTestUtils.setField(impl, "combinedStorage", combinedSelectStorage);
         ReflectionTestUtils.setField(impl, "threadPool", threadPool);
         ReflectionTestUtils.setField(impl, "commitIdStatusService", commitIdStatusService);
         impl.init();

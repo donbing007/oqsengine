@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
@@ -76,6 +77,14 @@ public class StorageConfiguration {
         storage.setMaxSearchTimeoutMs(maxQueryTimeMs);
         storage.setSearchIndexName(searchIndexName);
         return storage;
+    }
+
+    /**
+     * 联合查询策略储存实现.
+     */
+    @Bean
+    public CombinedSelectStorage combinedSelectStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
+        return new CombinedSelectStorage(masterStorage, indexStorage);
     }
 
     /**

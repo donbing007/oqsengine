@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 计算字段计算器..
+ * 计算字段计算器.
  *
  * @author dongbin
  * @version 0.1 2021/09/17 15:40
@@ -287,9 +287,10 @@ public class DefaultCalculationImpl implements Calculation {
     private Collection<IEntityField> parseChangeFields(CalculationContext context, boolean onlyCalculationField) {
         IEntityClass entityClass = context.getFocusClass();
 
+        Collection<IEntityField> fields;
         if (onlyCalculationField) {
 
-            return entityClass.fields().stream().filter(f ->
+            fields = entityClass.fields().stream().filter(f ->
                 // 只处理计算字段.
                 f.calculationType() != CalculationType.STATIC || f.calculationType() != CalculationType.UNKNOWN
 
@@ -301,24 +302,55 @@ public class DefaultCalculationImpl implements Calculation {
 
         } else {
 
-            return entityClass.fields().stream().filter(f ->
+            fields = entityClass.fields().stream().filter(f ->
                 // 只处理改变的字段.
                 context.getValueChange(context.getFocusEntity(), f).isPresent()
 
             ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
-
         }
+
+        if (logger.isDebugEnabled()) {
+            if (onlyCalculationField) {
+                logger.debug(
+                    "Only the fields need to be computed, and the field currently being changed is [{}].",
+                    fields.stream().map(f -> f.name()).collect(Collectors.joining(", "))
+                );
+            } else {
+                logger.debug(
+                    "All fields are required, and the field currently being changed is [{}].",
+                    fields.stream().map(f -> f.name()).collect(Collectors.joining(", "))
+                );
+            }
+        }
+
+        return fields;
     }
 
     // 判断当前计算逻辑片是否需要在当前场景下维护.
     private boolean isSupportScenarios(CalculationScenarios current, CalculationLogic logic) {
+        boolean result = false;
         CalculationScenarios[] scenarioses = logic.needMaintenanceScenarios();
         for (CalculationScenarios scenarios : scenarioses) {
             if (current == scenarios) {
-                return true;
+                result = true;
+                break;
             }
         }
 
-        return false;
+        if (logger.isDebugEnabled()) {
+            if (result) {
+                logger.debug(
+                    "The current scenario is {}, the target computing logic supports the scenario {}, so the current scenario is supported.",
+                    current.name(), Arrays.toString(scenarioses)
+                );
+            } else {
+                logger.debug(
+                    "The current scenario is {}. The target computing logic supports {}, so the current scenario is not supported.",
+                    current.name(), Arrays.toString(scenarioses)
+                );
+            }
+        }
+
+        return result;
     }
 }

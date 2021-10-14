@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -147,7 +148,14 @@ public interface CalculationContext {
      *
      * @return 字段计算逻辑.
      */
-    CalculationLogicFactory getCalculationLogicFactory();
+    Optional<CalculationLogicFactory> getCalculationLogicFactory();
+
+    /**
+     * 联合查询.
+     *
+     * @return 联合查询.
+     */
+    Optional<ConditionsSelectStorage> getCombindStorage();
 
     /**
      * 普通自增编号的生成器.

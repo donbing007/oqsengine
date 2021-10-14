@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -40,6 +41,7 @@ public class DefaultCalculationContext implements CalculationContext {
     private TaskCoordinator taskCoordinator;
     private Collection<CalculationHint> hints;
     private CalculationLogicFactory calculationLogicFactory;
+    private ConditionsSelectStorage combindedSelectStorage;
     // key为entityId.
     private Map<Long, IEntity> entityCache;
     // key为 entityId-fieldId的组合.
@@ -155,8 +157,13 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public CalculationLogicFactory getCalculationLogicFactory() {
-        return this.calculationLogicFactory;
+    public Optional<CalculationLogicFactory> getCalculationLogicFactory() {
+        return Optional.ofNullable(this.calculationLogicFactory);
+    }
+
+    @Override
+    public Optional<ConditionsSelectStorage> getCombindStorage() {
+        return Optional.ofNullable(this.combindedSelectStorage);
     }
 
     @Override
@@ -189,6 +196,7 @@ public class DefaultCalculationContext implements CalculationContext {
         private BizIDGenerator bizIDGenerator;
         private KeyValueStorage keyValueStorage;
         private TaskCoordinator taskCoordinator;
+        private ConditionsSelectStorage combindedSelectStorage;
         private Collection<ValueChange> valueChanges;
 
         private Builder() {
@@ -238,6 +246,11 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
+        public Builder withCombindedSelectStorage(ConditionsSelectStorage combindedSelectStorage) {
+            this.combindedSelectStorage = combindedSelectStorage;
+            return this;
+        }
+
         /**
          * 构造.
          */
@@ -250,6 +263,7 @@ public class DefaultCalculationContext implements CalculationContext {
             defaultCalculationContext.scenarios = this.scenarios;
             defaultCalculationContext.bizIDGenerator = this.bizIDGenerator;
             defaultCalculationContext.transaction = this.transaction;
+            defaultCalculationContext.combindedSelectStorage = this.combindedSelectStorage;
             return defaultCalculationContext;
         }
     }
