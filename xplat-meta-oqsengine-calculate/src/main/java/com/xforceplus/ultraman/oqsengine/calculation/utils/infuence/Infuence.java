@@ -75,22 +75,39 @@ public class Infuence {
      * @param consumer 对于每一个结点(不包含根结点)调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
-        bfsIter(child -> {
-            Node parent = child.getParent();
-            IEntityClass parentClass;
-            if (Root.class.isInstance(parent)) {
-                parentClass = ((Root) parent).getEntityClass();
+        bfsIter(node -> {
+            if (Root.class.isInstance(node)) {
+                Root rootNode = (Root) node;
+
+                return consumer.accept(
+                    Optional.empty(),
+                    new Participant(rootNode.getEntityClass(), rootNode.getChange().getField(),
+                        rootNode.getAttachment()),
+                    this);
+
             } else {
-                parentClass = ((Child) parent).getEntityClass();
-            }
 
-            for (IEntityField field : child.getFields()) {
-                if (!consumer.accept(parentClass, child.getEntityClass(), field, this)) {
-                    return false;
+                Child childNode = (Child) node;
+
+                Node parent = childNode.getParent();
+                IEntityClass parentClass;
+                if (Root.class.isInstance(parent)) {
+                    parentClass = parent.getEntityClass();
+                } else {
+                    parentClass = parent.getEntityClass();
                 }
-            }
 
-            return true;
+                for (IEntityField field : childNode.getFields()) {
+                    if (!consumer.accept(
+                        Optional.ofNullable(parentClass),
+                        new Participant(childNode.getEntityClass(), field, childNode.getAttachment()),
+                        this)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
         });
     }
 
@@ -113,9 +130,13 @@ public class Infuence {
     private Optional<Child> searchChild(IEntityClass targetEntityClass) {
 
         AtomicReference<Child> ref = new AtomicReference<>();
-        bfsIter(child -> {
-            if (child.getEntityClass().id() == targetEntityClass.id()) {
-                ref.set(child);
+        bfsIter(node -> {
+            if (Root.class.isInstance(node)) {
+                return true;
+            }
+
+            if (node.getEntityClass().id() == targetEntityClass.id()) {
+                ref.set((Child) node);
                 return false;
             } else {
                 return true;
@@ -126,29 +147,38 @@ public class Infuence {
     }
 
     // 广度优先方式迭代.
-    private void bfsIter(Function<Child, Boolean> nodeConsumer) {
-        Queue<Child> stack = new LinkedList<>();
-        root.getChildren().forEach(n -> stack.add((Child) n));
-        Child child;
+    private void bfsIter(Function<Node, Boolean> nodeConsumer) {
+        Queue<Node> stack = new LinkedList<>();
+        stack.add(root);
+        Node node;
         while (!stack.isEmpty()) {
-            child = stack.poll();
+            node = stack.poll();
 
-            if (!nodeConsumer.apply(child)) {
+            if (!nodeConsumer.apply(node)) {
                 return;
             }
 
-
-            child.getChildren().forEach(n -> stack.add((Child) n));
+            node.getChildren().forEach(n -> stack.add(n));
         }
     }
 
     // 树的结点.
     private static class Node {
+        private Object attachment;
+        private IEntityClass entityClass;
         private Node parent;
         private List<Node> children;
 
+        public Node(IEntityClass entityClass) {
+            this.entityClass = entityClass;
+        }
+
         public Node getParent() {
             return parent;
+        }
+
+        public IEntityClass getEntityClass() {
+            return entityClass;
         }
 
         public List<Node> getChildren() {
@@ -163,6 +193,14 @@ public class Infuence {
             this.parent = parent;
         }
 
+        public Object getAttachment() {
+            return attachment;
+        }
+
+        public void setAttachment(Object attachment) {
+            this.attachment = attachment;
+        }
+
         public void addChild(Node child) {
             if (this.children == null) {
                 this.children = new LinkedList<>();
@@ -174,20 +212,15 @@ public class Infuence {
     }
 
     private static class Root extends Node {
-        private IEntityClass entityClass;
         // 触发影响的实例.
         private IEntity entity;
         // 触发影响的实例字段值.
         private ValueChange change;
 
         public Root(IEntity entity, IEntityClass entityClass, ValueChange change) {
+            super(entityClass);
             this.entity = entity;
-            this.entityClass = entityClass;
             this.change = change;
-        }
-
-        public IEntityClass getEntityClass() {
-            return entityClass;
         }
 
         public IEntity getEntity() {
@@ -218,17 +251,11 @@ public class Infuence {
     }
 
     private static class Child extends Node implements Comparable<Child> {
-        // 被影响的类型.
-        private IEntityClass entityClass;
         // 被影响的字段列表.
         private List<IEntityField> fields;
 
         public Child(IEntityClass entityClass) {
-            this.entityClass = entityClass;
-        }
-
-        public IEntityClass getEntityClass() {
-            return entityClass;
+            super(entityClass);
         }
 
         public void addField(IEntityField field) {
@@ -247,7 +274,7 @@ public class Infuence {
 
         @Override
         public int compareTo(Child o) {
-            long ownId = entityClass.id();
+            long ownId = getEntityClass().id();
             long otherId = o.getEntityClass().id();
 
             if (ownId < otherId) {

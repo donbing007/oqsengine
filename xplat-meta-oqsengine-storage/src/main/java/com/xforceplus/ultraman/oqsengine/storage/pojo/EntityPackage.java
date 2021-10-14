@@ -50,6 +50,15 @@ public class EntityPackage implements Serializable {
             throw new NullPointerException("The target IEntity instance is not valid.");
         }
 
+        if (entityClass == null) {
+            throw new NullPointerException("The target EntityClass instance is not vaild.");
+        }
+
+        if (!entity.entityClassRef().equals(entityClass.ref())) {
+            throw new IllegalArgumentException(
+                "The type declared by the current instance does not match the specified type.");
+        }
+
         lazyInit();
 
         if (entities.size() == MAX_SIZE) {

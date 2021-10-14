@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -80,10 +81,20 @@ public class InfuenceTest {
         );
         Assertions.assertEquals(entity.id(), infuence.getSourceEntity().id());
         Assertions.assertEquals(expectedChange, infuence.getValueChange());
+
+
+        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+        infuence.scan((parentClass, participant, infuenceInner) -> {
+
+            atomicBoolean.set(true);
+            return false;
+        });
+
+        Assertions.assertTrue(atomicBoolean.get());
     }
 
     /**
-     * 测试构造树.单分支. A / B / c
+     * 测试构造树.单分支. A<br> /<br> B<br> /<br> c<br>
      */
     @Test
     public void testBuildSingleBranch() throws Exception {
@@ -103,19 +114,26 @@ public class InfuenceTest {
         infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
 
         List<IEntityClass> scanResults = new ArrayList(2);
-        infuence.scan((parentClass, entityClass, field, infuence1) -> {
+        infuence.scan((parentClass, participant, infuence1) -> {
 
-            scanResults.add(entityClass);
+            scanResults.add(participant.getEntityClass());
 
             return true;
         });
 
-        Assertions.assertEquals(B_CLASS, scanResults.get(0));
-        Assertions.assertEquals(C_CLASS, scanResults.get(1));
+        Assertions.assertEquals(A_CLASS, scanResults.get(0));
+        Assertions.assertEquals(B_CLASS, scanResults.get(1));
+        Assertions.assertEquals(C_CLASS, scanResults.get(2));
     }
 
     /**
-     * 创建多分支. A | |-----| B     D |     | C     E
+     * 创建多分支.
+     *              A<br>
+     *              |<br>
+     *           |-----|<br>
+     *           B     D<br>
+     *           |     |<br>
+     *           C     E<br>
      */
     @Test
     public void testBuildManyBranches() throws Exception {
@@ -135,9 +153,9 @@ public class InfuenceTest {
         infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
 
         List<IEntityClass> scanResults = new ArrayList(4);
-        infuence.scan((parentClass, entityClass, field, infuence1) -> {
+        infuence.scan((parentClass, participant, infuence1) -> {
 
-            scanResults.add(entityClass);
+            scanResults.add(participant.getEntityClass());
 
             return true;
         });
@@ -152,15 +170,29 @@ public class InfuenceTest {
             }
         });
 
-        Assertions.assertEquals(B_CLASS, scanResults.get(0));
-        Assertions.assertEquals(C_CLASS, scanResults.get(1));
-        Assertions.assertEquals(D_CLASS, scanResults.get(2));
-        Assertions.assertEquals(E_CLASS, scanResults.get(3));
+        Assertions.assertEquals(A_CLASS, scanResults.get(0));
+        Assertions.assertEquals(B_CLASS, scanResults.get(1));
+        Assertions.assertEquals(C_CLASS, scanResults.get(2));
+        Assertions.assertEquals(D_CLASS, scanResults.get(3));
+        Assertions.assertEquals(E_CLASS, scanResults.get(4));
 
     }
 
     /**
-     * 测试扫描的同时增加. 基础树如下. A | |-----| B     D | C 目标为 A | |-----| B     D |     | C     E
+     * 测试扫描的同时增加. 基础树如下.
+     *               A<br>
+     *               |<br>
+     *            |-----|<br>
+     *            B     D<br>
+     *            |<br>
+     *            C <br>
+     *       目标为
+     *              A<br>
+     *              |<br>
+     *           |-----|<br>
+     *           B     D<br>
+     *           |     |<br>
+     *           C     E<br>
      */
     @Test
     public void testScanWithAdd() throws Exception {
@@ -178,19 +210,19 @@ public class InfuenceTest {
         infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
 
 
-        infuence.scan((parentClass, entityClass, field, infuenceInner) -> {
+        infuence.scan((parentClass, participant, infuenceInner) -> {
 
-            if (entityClass.id() == D_CLASS.id()) {
-                infuenceInner.impact(parentClass, E_CLASS, EntityField.CREATE_TIME_FILED);
+            if (participant.getEntityClass().id() == D_CLASS.id()) {
+                infuenceInner.impact(parentClass.get(), E_CLASS, EntityField.CREATE_TIME_FILED);
             }
 
             return true;
         });
 
         List<IEntityClass> scanResults = new ArrayList(4);
-        infuence.scan((parentClass, entityClass, field, infuence1) -> {
+        infuence.scan((parentClass, participant, infuence1) -> {
 
-            scanResults.add(entityClass);
+            scanResults.add(participant.getEntityClass());
 
             return true;
         });
@@ -204,15 +236,22 @@ public class InfuenceTest {
                 return 0;
             }
         });
-        Assertions.assertEquals(B_CLASS, scanResults.get(0));
-        Assertions.assertEquals(C_CLASS, scanResults.get(1));
-        Assertions.assertEquals(D_CLASS, scanResults.get(2));
-        Assertions.assertEquals(E_CLASS, scanResults.get(3));
+        Assertions.assertEquals(A_CLASS, scanResults.get(0));
+        Assertions.assertEquals(B_CLASS, scanResults.get(1));
+        Assertions.assertEquals(C_CLASS, scanResults.get(2));
+        Assertions.assertEquals(D_CLASS, scanResults.get(3));
+        Assertions.assertEquals(E_CLASS, scanResults.get(4));
 
     }
 
     /**
-     * 测试是否以广度优先方式遍历. A | |-----| B     D |     | C     E
+     * 测试是否以广度优先方式遍历.
+     *           A<br>
+     *           |<br>
+     *        |-----|<br>
+     *        B     D<br>
+     *        |     |<br>
+     *        C     E<br>
      */
     @Test
     public void testBfsIter() throws Exception {
@@ -232,17 +271,18 @@ public class InfuenceTest {
         infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
 
         List<IEntityClass> results = new ArrayList<>();
-        infuence.scan((parentClass, entityClass, field, infuenceInner) -> {
+        infuence.scan((parentClass, participant, infuenceInner) -> {
 
-            results.add(entityClass);
+            results.add(participant.getEntityClass());
 
             return true;
         });
 
-        Assertions.assertEquals(B_CLASS.id(), results.get(0).id());
-        Assertions.assertEquals(D_CLASS.id(), results.get(1).id());
-        Assertions.assertEquals(C_CLASS.id(), results.get(2).id());
-        Assertions.assertEquals(E_CLASS.id(), results.get(3).id());
+        Assertions.assertEquals(A_CLASS.id(), results.get(0).id());
+        Assertions.assertEquals(B_CLASS.id(), results.get(1).id());
+        Assertions.assertEquals(D_CLASS.id(), results.get(2).id());
+        Assertions.assertEquals(C_CLASS.id(), results.get(3).id());
+        Assertions.assertEquals(E_CLASS.id(), results.get(4).id());
     }
 
 }

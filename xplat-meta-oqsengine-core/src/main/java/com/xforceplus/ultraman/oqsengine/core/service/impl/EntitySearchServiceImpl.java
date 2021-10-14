@@ -31,7 +31,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -211,16 +210,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Override
     public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
-        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
-        if (!entityClass.isPresent()) {
-            throw new RuntimeException(
-                String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
-        }
-        Optional<StorageUniqueEntity> uniqueStorage = masterStorage.select(key, entityClass.get());
-        if (!uniqueStorage.isPresent()) {
-            return Optional.empty();
-        }
-        return selectOne(uniqueStorage.get().getId(), entityClassRef);
+        //        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
+        //        if (!entityClass.isPresent()) {
+        //            throw new RuntimeException(
+        //                String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
+        //        }
+        //        Optional<StorageUniqueEntity> uniqueStorage = masterStorage.select(key, entityClass.get());
+        //        if (!uniqueStorage.isPresent()) {
+        //            return Optional.empty();
+        //        }
+        //        return selectOne(uniqueStorage.get().getId(), entityClassRef);
+        throw new UnsupportedOperationException();
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
@@ -487,11 +487,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
-     * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值.
-     * 这里需要修正以下情况的查询.
-     * 1. 在事务中并且未提交.
-     * 2. 之前有过写入动作.
+     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题. 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询. 1.
+     * 在事务中并且未提交. 2. 之前有过写入动作.
      */
     private long reviseCommitId(long minUnSyncCommitId) {
         if (transactionManager != null && minUnSyncCommitId == 0) {
@@ -513,10 +510,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 以下情况会空返回.
-     * 1. 字段不存在.
-     * 2. 字段非可搜索.
-     * 注意: 如果字段标示为identifie类型,那么会返回true.
+     * 以下情况会空返回. 1. 字段不存在. 2. 字段非可搜索. 注意: 如果字段标示为identifie类型,那么会返回true.
      */
     private boolean checkCanSearch(Condition c, IEntityClass entityClass) {
         if (c.getField().config().isIdentifie()) {
@@ -586,8 +580,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 将安全条件结点处理成可查询的 Conditions 实例.
-     * ignoreEntityClass 表示不需要处理的条件.
+     * 将安全条件结点处理成可查询的 Conditions 实例. ignoreEntityClass 表示不需要处理的条件.
      */
     private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode,
                                                long commitId)
@@ -675,19 +668,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } else {
             // 之前过滤掉了非 driver 的条件,这里需要加入.
             processConditions.collectCondition().stream()
-                .filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0).forEach(c -> {
-                    conditions.addAnd(c);
-                }
-            );
+                .filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0)
+                .forEach(c -> conditions.addAnd(c));
         }
 
         return conditions;
     }
 
     /**
-     * 将不同的 entityClass 的条件进行分组.
-     * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
-     * 不能处理非 driver 的 entity 查询条件.
+     * 将不同的 entityClass 的条件进行分组. 不同的 entityClass 关联不同的 Field 将认为是不同的组. 不能处理非 driver 的 entity 查询条件.
      */
     private Map<DriverEntityKey, Conditions> splitEntityClassCondition(IEntityClass mainEntityClass,
                                                                        Collection<Condition> conditionCollection)
@@ -735,8 +724,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 驱动 entity 的条件分组 key.
-     * 以 entityClass 和其关联的主 entityClass 中字段为区分.
+     * 驱动 entity 的条件分组 key. 以 entityClass 和其关联的主 entityClass 中字段为区分.
      */
     private class DriverEntityKey {
         private IEntityClass entityClass;

@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -71,11 +70,7 @@ public class FormulaHelper {
         ExecutionWrapper<?> executionWrapper =
             toExecutionWrapper(expression, args, context.getFocusEntity());
 
-        Optional<ValueChange> changeOp = context.getFocus();
-        if (!changeOp.isPresent()) {
-            throw new CalculationException("Formula no field info.");
-        }
-        executionWrapper.getParams().put(FORMULA_CTX_PARAM, changeOp.get().getField());
+        executionWrapper.getParams().put(FORMULA_CTX_PARAM, context.getFocusField());
 
         Object object = AviatorHelper.execute(executionWrapper);
         if (null == object) {

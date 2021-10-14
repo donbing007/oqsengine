@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Store generic definitions.
@@ -34,10 +35,11 @@ public interface Storage {
      */
     default int[] build(EntityPackage entityPackage) throws SQLException {
         int[] results = new int[entityPackage.size()];
-        Iterator<IEntity> iter = entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         int index = 0;
         while (iter.hasNext()) {
-            results[index] = build(iter.next(), entityPackage.getEntityClass());
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = build(entry.getKey(), entry.getValue());
         }
         return results;
     }
@@ -61,10 +63,11 @@ public interface Storage {
      */
     default int[] replace(EntityPackage entityPackage) throws SQLException {
         int[] results = new int[entityPackage.size()];
-        Iterator<IEntity> iter = entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         int index = 0;
         while (iter.hasNext()) {
-            results[index] = replace(iter.next(), entityPackage.getEntityClass());
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = replace(entry.getKey(), entry.getValue());
         }
         return results;
     }
@@ -88,10 +91,11 @@ public interface Storage {
      */
     default int[] delete(EntityPackage entityPackage) throws SQLException {
         int[] results = new int[entityPackage.size()];
-        Iterator<IEntity> iter = entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         int index = 0;
         while (iter.hasNext()) {
-            results[index] = delete(iter.next(), entityPackage.getEntityClass());
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = delete(entry.getKey(), entry.getValue());
         }
         return results;
     }

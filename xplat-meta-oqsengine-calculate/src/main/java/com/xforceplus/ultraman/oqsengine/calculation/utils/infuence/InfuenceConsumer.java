@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.util.Optional;
 
 /**
  * 迭代影响力树时的消费接口.
@@ -16,12 +16,11 @@ public interface InfuenceConsumer {
     /**
      * 消费.
      *
-     * @param parentClass   父结点元信息.
-     * @param entityClass   元信息.
-     * @param field         字段.
+     * @param parentClassOp 父结点元信息.
+     * @param participant   参与者.
      * @param infuenceInner 当前的影响树.
      * @return true 继续,false中断.
      */
-    boolean accept(IEntityClass parentClass, IEntityClass entityClass, IEntityField field, Infuence infuenceInner);
+    boolean accept(Optional<IEntityClass> parentClassOp, Participant participant, Infuence infuenceInner);
 
 }
