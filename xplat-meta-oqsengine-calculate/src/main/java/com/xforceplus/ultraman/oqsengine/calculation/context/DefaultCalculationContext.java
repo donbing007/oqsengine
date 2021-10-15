@@ -100,6 +100,8 @@ public class DefaultCalculationContext implements CalculationContext {
     public void focusEntity(IEntity entity, IEntityClass entityClass) {
         this.focusEntity = entity;
         this.focusEntityClass = entityClass;
+
+        this.putEntityToCache(entity);
     }
 
     @Override

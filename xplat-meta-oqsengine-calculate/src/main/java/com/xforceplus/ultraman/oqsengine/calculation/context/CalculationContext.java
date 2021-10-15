@@ -50,6 +50,7 @@ public interface CalculationContext {
 
     /**
      * 设置当前的焦点实例,焦点实例类型.
+     * 此焦点实例也会自动进入实例缓存池中.
      *
      * @param entity      焦点实例.
      * @param entityClass 焦点类型.

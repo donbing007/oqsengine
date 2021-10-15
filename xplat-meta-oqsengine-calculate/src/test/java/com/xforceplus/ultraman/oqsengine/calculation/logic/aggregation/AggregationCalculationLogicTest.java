@@ -256,8 +256,55 @@ public class AggregationCalculationLogicTest {
         entityClasses.add(c1);
         entityClasses.add(d);
         entityClasses.add(e);
-//        aggregationFunctionFactory = (AggregationFunctionFactory) new AggregationFunctionFactoryImpl();
+
+        // 构建context
     }
+
+//    @Test
+//    public void calculate() {
+//
+//        IEntity entity = Entity.Builder.anEntity()
+//                .withId(1)
+//                .withVersion(1)
+//                .withEntityClassRef(entityClasses.get(0).ref())
+//                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
+//                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+//                        new LongValue(entityClasses.get(0).field(11).get(), 100),
+//                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
+//                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
+//                ))).build();
+//        IEntityField targetField = entityClasses.get(1).field(21).get();
+//        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
+//        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
+//
+//        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
+//
+//        // 获取当前的原始版本.
+//        Optional<IValue> o = Optional.empty();
+//        Optional<IEntity> entityOptional = Optional.of(Entity.Builder.anEntity()
+//                .withId(1)
+//                .withVersion(1)
+//                .withEntityClassRef(entityClasses.get(0).ref())
+//                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
+//                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+//                        new LongValue(entityClasses.get(0).field(11).get(), 200),
+//                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
+//                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
+//                ))).build());
+//        if (entityOptional.isPresent()) {
+//            o = entityOptional.get().entityValue().getValue(targetFieldId);
+//        }
+//        Optional<IValue> targetValue;
+//        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
+//        if (aggregationType.equals(AggregationType.AVG)) {
+//            int count = 1;
+//            // 求平均值需要count信息
+//            targetValue = ((AvgFunction) function).excuteAvg(o, o, n, count);
+//        } else {
+//            targetValue = function.excute(o, o, n);
+//        }
+//        Assertions.assertNotNull(targetValue.get());
+//    }
 
     @Test
     public void calculate() {
@@ -304,4 +351,5 @@ public class AggregationCalculationLogicTest {
         }
         Assertions.assertNotNull(targetValue.get());
     }
+
 }
