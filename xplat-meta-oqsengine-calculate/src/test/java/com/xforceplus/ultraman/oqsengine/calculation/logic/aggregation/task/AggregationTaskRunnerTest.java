@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -16,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -23,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -35,7 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -49,7 +57,7 @@ import org.junit.jupiter.api.Test;
  * @version 1.0 2021/9/6 13:37
  * @since 1.8
  */
-class AggregationTaskRunnerTest {
+public class AggregationTaskRunnerTest {
     private long aggEntityClassId = 100;
     private long targetEntityClassId = 200;
 
@@ -174,7 +182,7 @@ class AggregationTaskRunnerTest {
 
 
     @AfterEach
-    void destroy() {
+    public void destroy() {
         runner = null;
         ptNode = null;
         masterStorage = null;
@@ -184,7 +192,7 @@ class AggregationTaskRunnerTest {
     }
 
     @Test
-    void run() throws Exception {
+    public void run() throws Exception {
         long size = 1000;
         buildData(size);
         runner.run(new AggregationTaskCoordinator(), new AggregationTask("testAgg", new MetaParseTree(ptNode)));
@@ -194,7 +202,6 @@ class AggregationTaskRunnerTest {
             Assertions.assertTrue((size - 1) == value.longValue());
         }
     }
-
 
     private void buildData(long size) throws Exception {
         IValue entityValue = new LongValue(targetField, 0);
@@ -283,6 +290,19 @@ class AggregationTaskRunnerTest {
         @Override
         public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
                                                      long lastId) throws SQLException {
+            MockAbstractDataIterator iterator = new MockAbstractDataIterator();
+            try {
+                iterator.load(masterData.get(entityClass.id()));
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return iterator;
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size) throws SQLException {
             MockAbstractDataIterator iterator = new MockAbstractDataIterator();
             try {
                 iterator.load(masterData.get(entityClass.id()));

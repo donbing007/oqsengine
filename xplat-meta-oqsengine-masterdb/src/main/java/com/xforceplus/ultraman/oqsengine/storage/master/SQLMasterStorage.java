@@ -136,6 +136,11 @@ public class SQLMasterStorage implements MasterStorage {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
+    @Override
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size) throws SQLException {
+        return new EntityIterator(entityClass, lastId, startTime, endTime, size);
+    }
+
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
         extraTags = {"initiator", "master", "action", "condition"}

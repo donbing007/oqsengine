@@ -124,7 +124,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
                 FieldDefine.ATTRIBUTE,
                 FieldDefine.OQS_MAJOR,
                 FieldDefine.PROFILE)
-            );
+        );
 
         for (int i = 0; i < entityClassSize; i++) {
             buff.append(",")

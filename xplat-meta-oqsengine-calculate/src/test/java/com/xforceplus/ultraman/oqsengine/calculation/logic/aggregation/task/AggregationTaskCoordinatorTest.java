@@ -428,6 +428,11 @@ class AggregationTaskCoordinatorTest {
         }
 
         @Override
+        public void shutDownWorker() {
+
+        }
+
+        @Override
         public String toString() {
             return "MockTaskQueue{" + "name='" + name + '\'' + '}';
         }

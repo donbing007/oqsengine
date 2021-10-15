@@ -22,23 +22,23 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     final Logger logger = LoggerFactory.getLogger(AutoFillCalculationLogic.class);
 
-//    @Override
-//    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
-//
-//        AutoFill autoFill = (AutoFill) context.getFocusField().config().getCalculation();
-//
-//        switch (autoFill.getDomainNoType()) {
-//            case NORMAL: {
-//                return onNormal(context);
-//            }
-//            case SENIOR: {
-//                return onSenior(context, autoFill);
-//            }
-//            default: {
-//                throw new CalculationException(String.format("autoFill executed failed, unSupport domainNoType-[%s].", autoFill.getDomainNoType().name()));
-//            }
-//        }
-//    }
+    //    @Override
+    //    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
+    //
+    //        AutoFill autoFill = (AutoFill) context.getFocusField().config().getCalculation();
+    //
+    //        switch (autoFill.getDomainNoType()) {
+    //            case NORMAL: {
+    //                return onNormal(context);
+    //            }
+    //            case SENIOR: {
+    //                return onSenior(context, autoFill);
+    //            }
+    //            default: {
+    //                throw new CalculationException(String.format("autoFill executed failed, unSupport domainNoType-[%s].", autoFill.getDomainNoType().name()));
+    //            }
+    //        }
+    //    }
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
@@ -61,23 +61,23 @@ public class AutoFillCalculationLogic implements CalculationLogic {
         return CalculationType.AUTO_FILL;
     }
 
-//    private Optional<IValue> onNormal(CalculationLogicContext context) throws CalculationException {
-//        Object result = context.getBizIDGenerator().nextId(String.valueOf(context.getFocusField().id()));
-//        if (null == result) {
-//            throw new CalculationException("autoFill id generate is null.");
-//        }
-//        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result.toString()));
-//    }
-//
-//    private Optional<IValue> onSenior(CalculationLogicContext context, AutoFill autoFill) throws CalculationException {
-//        try {
-//            //  调用公式执行器执行
-//            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-//                FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
-//        } catch (Exception e) {
-//            logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
-//                context.getFocusField().id(), e.getMessage());
-//            throw new CalculationException(e.getMessage(), e);
-//        }
-//    }
+    //    private Optional<IValue> onNormal(CalculationLogicContext context) throws CalculationException {
+    //        Object result = context.getBizIDGenerator().nextId(String.valueOf(context.getFocusField().id()));
+    //        if (null == result) {
+    //            throw new CalculationException("autoFill id generate is null.");
+    //        }
+    //        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result.toString()));
+    //    }
+    //
+    //    private Optional<IValue> onSenior(CalculationLogicContext context, AutoFill autoFill) throws CalculationException {
+    //        try {
+    //            //  调用公式执行器执行
+    //            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
+    //                FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
+    //        } catch (Exception e) {
+    //            logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
+    //                context.getFocusField().id(), e.getMessage());
+    //            throw new CalculationException(e.getMessage(), e);
+    //        }
+    //    }
 }

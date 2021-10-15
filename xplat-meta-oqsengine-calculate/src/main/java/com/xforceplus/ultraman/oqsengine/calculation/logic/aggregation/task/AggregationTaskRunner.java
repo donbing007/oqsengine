@@ -74,7 +74,7 @@ public class AggregationTaskRunner implements TaskRunner {
         DataIterator<OriginalEntity> iterator;
         int count = 0;
         try {
-            iterator = masterStorage.iterator(ptNode.getEntityClass(), 0, System.currentTimeMillis(), 0);
+            iterator = masterStorage.iterator(ptNode.getEntityClass(), 0, System.currentTimeMillis(), 0, 1);
             while (iterator.hasNext()) {
                 while (true) {
                     try {
@@ -121,7 +121,7 @@ public class AggregationTaskRunner implements TaskRunner {
                                 while (page.hasNextPage()) {
                                     page.getNextPage();
                                     Collection<EntityRef> refCollection = indexStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
-                                           Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
+                                            Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
                                     entities = masterStorage.selectMultiple(refCollection.stream().map(EntityRef::getId).collect(Collectors.toSet())
                                             .stream().mapToLong(Long::longValue).toArray());
                                     ivalues.addAll(entities.stream().map(i -> i.entityValue().getValue(ptNode.getAggEntityField().id())).collect(Collectors.toList()));

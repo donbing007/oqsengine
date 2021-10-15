@@ -28,40 +28,40 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogic.class);
 
-//    @Override
-//    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
-//        IEntity entity = context.getEntity();
-//        IEntityField targetField = context.getFocusField();
-//        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
-//        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
-//
-//        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
-//
-//        // 获取当前的原始版本.
-//        Optional<IValue> o = Optional.empty();
-//        try {
-//            Optional<IEntity> entityOptional = context.getMasterStorage().selectOne(entity.id(), context.getEntityClass());
-//            if (entityOptional.isPresent()) {
-//                o = entityOptional.get().entityValue().getValue(targetFieldId);
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
-//        Optional<IValue> targetValue;
-//        if (aggregationType.equals(AggregationType.AVG)) {
-//            int count = 1;
-//            Optional<Object> countOp = context.getAttribute("count");
-//            if (countOp.isPresent()) {
-//                count = (int) countOp.get();
-//            }
-//            // 求平均值需要count信息
-//            targetValue = ((AvgFunction) function).excuteAvg(n, n, o, count);
-//        } else {
-//            targetValue = function.excute(n, n, o);
-//        }
-//        return targetValue;
-//    }
+    //    @Override
+    //    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
+    //        IEntity entity = context.getEntity();
+    //        IEntityField targetField = context.getFocusField();
+    //        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
+    //        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
+    //
+    //        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
+    //
+    //        // 获取当前的原始版本.
+    //        Optional<IValue> o = Optional.empty();
+    //        try {
+    //            Optional<IEntity> entityOptional = context.getMasterStorage().selectOne(entity.id(), context.getEntityClass());
+    //            if (entityOptional.isPresent()) {
+    //                o = entityOptional.get().entityValue().getValue(targetFieldId);
+    //            }
+    //        } catch (SQLException e) {
+    //            e.printStackTrace();
+    //        }
+    //        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
+    //        Optional<IValue> targetValue;
+    //        if (aggregationType.equals(AggregationType.AVG)) {
+    //            int count = 1;
+    //            Optional<Object> countOp = context.getAttribute("count");
+    //            if (countOp.isPresent()) {
+    //                count = (int) countOp.get();
+    //            }
+    //            // 求平均值需要count信息
+    //            targetValue = ((AvgFunction) function).excuteAvg(n, n, o, count);
+    //        } else {
+    //            targetValue = function.excute(n, n, o);
+    //        }
+    //        return targetValue;
+    //    }
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {

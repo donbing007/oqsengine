@@ -37,105 +37,105 @@ public enum FieldType {
      * boolean.
      */
     BOOLEAN(
-        "Boolean",
-        Boolean.class,
-        s ->
-            s.equalsIgnoreCase("TRUE") || s.equalsIgnoreCase("FALSE"),
-        () -> "false",
-        new String[] {"boolean"},
-        (f, v) ->
-            new BooleanValue(f, Boolean.parseBoolean(v)),
-        (v1, v2) -> {
-            Boolean value1 = ((BooleanValue) v1).getValue();
-            Boolean value2 = ((BooleanValue) v2).getValue();
-            return Boolean.compare(value1, value2);
-        }
+            "Boolean",
+            Boolean.class,
+                s ->
+                        s.equalsIgnoreCase("TRUE") || s.equalsIgnoreCase("FALSE"),
+                () -> "false",
+                new String[]{"boolean"},
+                (f, v) ->
+                        new BooleanValue(f, Boolean.parseBoolean(v)),
+                (v1, v2) -> {
+                    Boolean value1 = ((BooleanValue) v1).getValue();
+                    Boolean value2 = ((BooleanValue) v2).getValue();
+                    return Boolean.compare(value1, value2);
+                }
     ),
     /**
      * enum.
      */
-    ENUM("Enum", String.class, s -> true, () -> "", new String[] {"enum"}, EnumValue::new,
-        (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
+    ENUM("Enum", String.class, s -> true, () -> "", new String[]{"enum"}, EnumValue::new,
+            (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
     ),
 
     /**
      * datetime.
      */
     DATETIME(
-        "DateTime",
-        Long.class,
-        s -> {
-            try {
-                Instant.ofEpochMilli(Long.parseLong(s));
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        },
-        () -> Long.toString(new Date(0).getTime()),
-        new String[] {"timestamp"},
-        (f, v) -> {
-            Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
-            return new DateTimeValue(f, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
-        },
-        (v1, v2) -> {
-            LocalDateTime value1 = ((DateTimeValue) v1).getValue();
-            LocalDateTime value2 = ((DateTimeValue) v2).getValue();
-            return value1.compareTo(value2);
-        }
+            "DateTime",
+            Long.class,
+                s -> {
+                    try {
+                        Instant.ofEpochMilli(Long.parseLong(s));
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                },
+                () -> Long.toString(new Date(0).getTime()),
+                new String[]{"timestamp"},
+                (f, v) -> {
+                    Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
+                    return new DateTimeValue(f, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
+                },
+                (v1, v2) -> {
+                    LocalDateTime value1 = ((DateTimeValue) v1).getValue();
+                    LocalDateTime value2 = ((DateTimeValue) v2).getValue();
+                    return value1.compareTo(value2);
+                }
     ),
     /**
      * Long.
      */
     LONG(
-        "Long",
-        Long.class,
-        s -> {
-            try {
-                Long.parseLong(s);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        },
-        () -> "0",
-        new String[] {"bigint", "long", "serialNo"},
-        (f, v) -> new LongValue(f, Long.parseLong(v)),
-        (v1, v2) -> {
-            Long value1 = ((LongValue) v1).getValue();
-            Long value2 = ((LongValue) v2).getValue();
-            return Long.compare(value1, value2);
-        }
+            "Long",
+            Long.class,
+                s -> {
+                    try {
+                        Long.parseLong(s);
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                },
+                () -> "0",
+                new String[]{"bigint", "long", "serialNo"},
+                (f, v) -> new LongValue(f, Long.parseLong(v)),
+                (v1, v2) -> {
+                    Long value1 = ((LongValue) v1).getValue();
+                    Long value2 = ((LongValue) v2).getValue();
+                    return Long.compare(value1, value2);
+                }
     ),
     /**
      * String.
      */
     STRING("String",
-        String.class,
-        s -> true,
-        () -> "",
-        new String[] {" string"},
-        StringValue::new,
-        (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
+            String.class,
+            s -> true,
+            () -> "",
+            new String[]{" string"},
+            StringValue::new,
+            (v1, v2) -> v1.valueToString().compareTo(v2.valueToString())
     ),
     /**
      * strings.
      */
     STRINGS("Strings",
-        String.class,
-        s -> {
-            try {
-                s.trim().split(",");
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        },
-        () -> "",
-        new String[] {"strings"}, (x, str) -> {
+            String.class,
+            s -> {
+                try {
+                    s.trim().split(",");
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            },
+            () -> "",
+            new String[]{"strings"}, (x, str) -> {
         return new StringsValue(x, str.trim().split(","));
     },
-        (v1, v2) -> 0
+            (v1, v2) -> 0
     ),
     /**
      * decimal.
@@ -147,14 +147,14 @@ public enum FieldType {
         } catch (Exception e) {
             return false;
         }
-    }, () -> "0.0", new String[] {"double", "decimal"}, (f, v) -> {
+    }, () -> "0.0", new String[]{"double", "decimal"}, (f, v) -> {
         return new DecimalValue(f, new BigDecimal(v));
     },
-        (v1, v2) -> {
-            BigDecimal value1 = ((DecimalValue) v1).getValue();
-            BigDecimal value2 = ((DecimalValue) v2).getValue();
-            return value1.compareTo(value2);
-        }
+            (v1, v2) -> {
+                BigDecimal value1 = ((DecimalValue) v1).getValue();
+                BigDecimal value2 = ((DecimalValue) v2).getValue();
+                return value1.compareTo(value2);
+            }
     );
 
     private String type;
@@ -198,13 +198,13 @@ public enum FieldType {
     }
 
     FieldType(String type, Predicate<String> tester, BiFunction<IEntityField, String, IValue> valueConverter) {
-        this(type, String.class, tester, () -> "0", new String[] {}, valueConverter,
-            (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
+        this(type, String.class, tester, () -> "0", new String[]{}, valueConverter,
+                (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
     FieldType(String type, String[] accepts, BiFunction<IEntityField, String, IValue> valueConverter) {
         this(type, String.class, s -> true, () -> "0", accepts, valueConverter,
-            (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
+                (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
     public String getType() {
@@ -280,7 +280,7 @@ public enum FieldType {
         }
 
         return Stream.of(FieldType.values())
-            .filter(x -> x.accept(rawType))
-            .findFirst().orElse(FieldType.STRING);
+                .filter(x -> x.accept(rawType))
+                .findFirst().orElse(FieldType.STRING);
     }
 }

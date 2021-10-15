@@ -24,36 +24,36 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
     private static final int MAX_ERROR_MESSAGE_LENGTH = 256;
 
-//    @Override
-//    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
-//
-//        Formula formula = (Formula) context.getFocusField().config().getCalculation();
-//
-//        //  执行公式
-//        try {
-//            //  调用公式执行器执行
-//            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-//                FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
-//        } catch (Exception e) {
-//            //  异常时
-//            if (formula.getFailedPolicy().equals(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
-//                try {
-//                    logger.warn(
-//                        "formula [entityFieldId-{}] has executed failed, will use failed default value to instead, [reason-{}]",
-//                        context.getFocusField().id(), e.getMessage());
-//
-//                    return Optional.of(IValueUtils.toIValue(context.getFocusField(), formula.getFailedDefaultValue()));
-//                } finally {
-//                    //  将错误加入hints中
-//                    context.hint(e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
-//                }
-//            } else {
-//                logger.warn("formula [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
-//                    context.getFocusField().id(), e.getMessage());
-//                throw new CalculationException(e.getMessage(), e);
-//            }
-//        }
-//    }
+    //    @Override
+    //    public Optional<IValue> calculate(CalculationLogicContext context) throws CalculationException {
+    //
+    //        Formula formula = (Formula) context.getFocusField().config().getCalculation();
+    //
+    //        //  执行公式
+    //        try {
+    //            //  调用公式执行器执行
+    //            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
+    //                FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
+    //        } catch (Exception e) {
+    //            //  异常时
+    //            if (formula.getFailedPolicy().equals(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
+    //                try {
+    //                    logger.warn(
+    //                        "formula [entityFieldId-{}] has executed failed, will use failed default value to instead, [reason-{}]",
+    //                        context.getFocusField().id(), e.getMessage());
+    //
+    //                    return Optional.of(IValueUtils.toIValue(context.getFocusField(), formula.getFailedDefaultValue()));
+    //                } finally {
+    //                    //  将错误加入hints中
+    //                    context.hint(e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
+    //                }
+    //            } else {
+    //                logger.warn("formula [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
+    //                    context.getFocusField().id(), e.getMessage());
+    //                throw new CalculationException(e.getMessage(), e);
+    //            }
+    //        }
+    //    }
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {

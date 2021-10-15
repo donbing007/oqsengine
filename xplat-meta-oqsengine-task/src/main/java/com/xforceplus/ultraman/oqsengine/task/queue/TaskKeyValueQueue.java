@@ -141,10 +141,10 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
 
         this.unSubmitTask = new ConcurrentHashMap();
         worker = new ThreadPoolExecutor(1, 1,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue(10000),
-            ExecutorHelper.buildNameThreadFactory("task", false),
-            new ThreadPoolExecutor.AbortPolicy()
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue(10000),
+                ExecutorHelper.buildNameThreadFactory("task", false),
+                new ThreadPoolExecutor.AbortPolicy()
         );
         worker.submit(new TaskBatchSave());
     }
@@ -251,7 +251,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
             } else {
                 if (count++ >= 3) {
                     throw new RuntimeException(
-                        String.format("Task not found where elementKey equals %s .", elementKey));
+                            String.format("Task not found where elementKey equals %s .", elementKey));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
@@ -294,7 +294,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
                 if (count++ >= 3) {
                     logger.error(e.getMessage());
                     throw new RuntimeException(
-                        String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
+                            String.format("Task ack failed taskLocation = %s", buildNextElementKey(location)));
                 } else {
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                 }
@@ -310,8 +310,8 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     private String buildNextElementKey(long id) {
         StringBuilder buff = new StringBuilder();
         buff.append(this.elementKeyPrefix)
-            .append('-')
-            .append(id);
+                .append('-')
+                .append(id);
         return buff.toString();
     }
 
@@ -328,6 +328,13 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         if (!running) {
             throw new RuntimeException("当前任务队列不可用");
         }
+    }
+
+    /*
+    无任务添加后，可关闭线程释放资源.
+     */
+    public void shutDownWorker() {
+        worker.shutdown();
     }
 
     private class TaskBatchSave implements Runnable {
@@ -354,7 +361,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
                     }
                 } catch (RuntimeException e) {
                     logger.error(String.format("kv error when batchSave or incr unusedTask.source[{}]", e.getMessage()),
-                        e);
+                            e);
                 }
             }
 

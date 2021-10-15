@@ -17,6 +17,13 @@ public class Participant {
     private IEntityField field;
     private Object attachment;
 
+    /**
+     * 构造函数.
+     *
+     * @param entityClass entityClass.
+     * @param field field.
+     * @param attachment attachment.
+     */
     public Participant(IEntityClass entityClass, IEntityField field, Object attachment) {
         this.entityClass = entityClass;
         this.field = field;

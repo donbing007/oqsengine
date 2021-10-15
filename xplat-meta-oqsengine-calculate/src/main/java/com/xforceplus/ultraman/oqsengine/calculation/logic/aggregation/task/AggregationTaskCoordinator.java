@@ -149,7 +149,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Override
     public boolean addTask(Task task) {
-        return false;
+        throw new UnsupportedOperationException("aggregationTaskCoordinator not support this method for now");
     }
 
     /**
@@ -235,6 +235,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
+
+        // 添加当前队列任务之后，关闭队列线程池
+        TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);
+        queue.shutDownWorker();
         return true;
     }
 
@@ -381,6 +385,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
                             try {
                                 taskKeyValueQueue.init();
+                                taskKeyValueQueue.shutDownWorker();
                             } catch (Exception e) {
                                 logger.error(e.getMessage(), e);
                             }
@@ -429,13 +434,19 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                             }
 
                             try {
-                                runner.run(AggregationTaskCoordinator.this, task);
-                            } catch (Exception ex) {
+                                int count = 0;
+                                while (count < 3) {
+                                    try {
+                                        runner.run(AggregationTaskCoordinator.this, task);
+                                        break;
+                                    } catch (Exception ex) {
 
-                                logger.error(ex.getMessage(), ex);
+                                        logger.error(ex.getMessage(), ex);
 
-                                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
-
+                                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+                                        count++;
+                                    }
+                                }
                             } finally {
                                 try {
 
@@ -450,12 +461,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                     task.id(), task.runnerType());
                         }
                     }
-
-
                 }
-
             }
-
         }
     }
 }
