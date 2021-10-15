@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 影响树参与者.
@@ -17,19 +18,6 @@ public class Participant {
     private IEntityField field;
     private Object attachment;
 
-    /**
-     * 构造函数.
-     *
-     * @param entityClass entityClass.
-     * @param field field.
-     * @param attachment attachment.
-     */
-    public Participant(IEntityClass entityClass, IEntityField field, Object attachment) {
-        this.entityClass = entityClass;
-        this.field = field;
-        this.attachment = attachment;
-    }
-
     public IEntityClass getEntityClass() {
         return entityClass;
     }
@@ -38,8 +26,8 @@ public class Participant {
         return field;
     }
 
-    public Object getAttachment() {
-        return attachment;
+    public Optional<Object> getAttachment() {
+        return Optional.ofNullable(attachment);
     }
 
     @Override
@@ -67,5 +55,50 @@ public class Participant {
     @Override
     public int hashCode() {
         return Objects.hash(entityClass, field);
+    }
+
+
+    /**
+     * 构造器.
+     */
+    public static final class Builder {
+        private IEntityClass entityClass;
+        private IEntityField field;
+        private Object attachment;
+
+        private Builder() {
+        }
+
+        public static Builder anParticipant() {
+            return new Builder();
+        }
+
+        public Builder withEntityClass(IEntityClass entityClass) {
+            this.entityClass = entityClass;
+            return this;
+        }
+
+        public Builder withField(IEntityField field) {
+            this.field = field;
+            return this;
+        }
+
+        public Builder withAttachment(Object attachment) {
+            this.attachment = attachment;
+            return this;
+        }
+
+        /**
+         * 构造.
+         *
+         * @return Participant.
+         */
+        public Participant build() {
+            Participant participant = new Participant();
+            participant.entityClass = this.entityClass;
+            participant.attachment = this.attachment;
+            participant.field = this.field;
+            return participant;
+        }
     }
 }
