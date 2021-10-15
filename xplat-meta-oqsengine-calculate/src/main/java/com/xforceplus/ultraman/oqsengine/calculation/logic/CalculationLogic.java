@@ -21,15 +21,6 @@ import java.util.Optional;
 public interface CalculationLogic {
 
     /**
-     * 默认维护场景.
-     */
-    CalculationScenarios[] DEFAULT_MAINTENANCE_SCENARIOS = new CalculationScenarios[] {
-        CalculationScenarios.BUILD,
-        CalculationScenarios.REPLACE,
-        CalculationScenarios.DELETE
-    };
-
-    /**
      * 字段值计算.
      *
      * @param context 计算上下文.
@@ -70,7 +61,7 @@ public interface CalculationLogic {
      * @return 需要维护的场景列表.
      */
     public default CalculationScenarios[] needMaintenanceScenarios() {
-        return DEFAULT_MAINTENANCE_SCENARIOS;
+        return new CalculationScenarios[0];
     }
 
     /**

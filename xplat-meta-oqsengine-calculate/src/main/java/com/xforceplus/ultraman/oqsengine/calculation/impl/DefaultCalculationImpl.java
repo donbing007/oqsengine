@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -19,7 +20,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +43,11 @@ public class DefaultCalculationImpl implements Calculation {
     /**
      * 如果出现冲突,最大重试的次数.
      */
-    private static int MAX_REPLAY_TIMES = 100;
+    private static int MAX_REPLAY_NUMBER = 100;
+    /**
+     * 每一个字段修改维护构造影响树的最大迭代次数.
+     */
+    private static int MAX_BUILD_INFUENCE_NUMBER = 1000;
 
     final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
@@ -72,13 +76,18 @@ public class DefaultCalculationImpl implements Calculation {
 
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
+        // 保留当前引起维护的目标实例标识.
+        long targetEntityId = context.getFocusEntity().id();
+
         Infuence[] infuences = scope(context);
+
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
+
         List<IEntity> triggerEntities = new LinkedList();
         for (Infuence infuence : infuences) {
-            triggerEntities.clear();
 
+            triggerEntities.clear();
             triggerEntities.add(infuence.getSourceEntity());
 
             /*
@@ -109,6 +118,10 @@ public class DefaultCalculationImpl implements Calculation {
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
+                // 更新下个结点的触发实例.
+                triggerEntities.clear();
+                triggerEntities.addAll(affectedEntities);
+
                 for (IEntity affectedEntitiy : affectedEntities) {
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
                     context.focusField(participant.getField());
@@ -131,16 +144,21 @@ public class DefaultCalculationImpl implements Calculation {
                 return true;
             });
 
-            persist(context);
+            persist(context, targetEntityId);
         }
     }
 
     /**
-     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
+     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下.<br> 1. 数据被删除,放弃. <br> 2. 数据版本冲突,重试直到成功.(有上限)<br>
      */
-    private void persist(CalculationContext context) throws CalculationException {
+    private void persist(CalculationContext context, long targetEntityId) throws CalculationException {
 
-        List<IEntity> entities = new ArrayList<>(context.getEntitiesFormCache());
+        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
+            // 过滤掉当前操作的实例.
+            e.id() != targetEntityId
+
+        ).collect(Collectors.toList());
+
         final int batchSize = 1000;
 
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
@@ -173,7 +191,7 @@ public class DefaultCalculationImpl implements Calculation {
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
         EntityPackage replayPackage = entityPackage;
-        for (int p = 0; p < MAX_REPLAY_TIMES; p++) {
+        for (int p = 0; p < MAX_REPLAY_NUMBER; p++) {
 
             int[] results = masterStorage.replace(replayPackage);
             EntityPackage finalReplayPackage = replayPackage;
@@ -255,21 +273,39 @@ public class DefaultCalculationImpl implements Calculation {
          */
         CalculationScenarios currentScenarios = context.getScenariso();
 
-        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculationLogics();
+        // 只处理需要处理当前维护场景的logic.
+        Collection<CalculationLogic> logics =
+            getNeedMaintainScenariosLogic(calculationLogicFactory, context.getScenariso());
 
         Infuence[] infuences = calculationFields.stream().map(f -> {
 
             Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
             if (changeOp.isPresent()) {
-                Infuence infuence = new Infuence(context.getFocusEntity(), context.getFocusClass(), changeOp.get());
+                Infuence infuence = new Infuence(
+                    context.getFocusEntity(),
+                    Participant.Builder.anParticipant()
+                        .withEntityClass(context.getFocusClass())
+                        .withField(context.getFocusField()).build(),
+                    changeOp.get());
 
-                for (CalculationLogic logic : logics) {
-                    if (isSupportScenarios(currentScenarios, logic)) {
+                /*
+                不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
+                 */
+                int oldSize = infuence.getSize();
+                for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
+                    for (CalculationLogic logic : logics) {
                         context.focusField(f);
 
                         logic.scope(context, infuence);
                     }
+
+                    if (oldSize == infuence.getSize()) {
+                        break;
+                    } else {
+                        oldSize = infuence.getSize();
+                    }
                 }
+
 
                 return Optional.ofNullable(infuence);
             }
@@ -329,31 +365,27 @@ public class DefaultCalculationImpl implements Calculation {
         return fields;
     }
 
-    // 判断当前计算逻辑片是否需要在当前场景下维护.
-    private boolean isSupportScenarios(CalculationScenarios current, CalculationLogic logic) {
-        boolean result = false;
-        CalculationScenarios[] scenarioses = logic.needMaintenanceScenarios();
-        for (CalculationScenarios scenarios : scenarioses) {
-            if (current == scenarios) {
-                result = true;
-                break;
+    // 得到需要在当前场景下维护的logic.
+    private Collection<CalculationLogic> getNeedMaintainScenariosLogic(
+        CalculationLogicFactory calculationLogicFactory, CalculationScenarios currentScenarios) {
+
+        Collection<CalculationLogic> logics = calculationLogicFactory.getCalculationLogics().stream().filter(l -> {
+            for (CalculationScenarios scenarios : l.needMaintenanceScenarios()) {
+                if (scenarios == currentScenarios) {
+                    return true;
+                }
             }
-        }
+            return false;
+        }).collect(Collectors.toList());
 
         if (logger.isDebugEnabled()) {
-            if (result) {
-                logger.debug(
-                    "The current scenario is {}, the target computing logic supports the scenario {}, so the current scenario is supported.",
-                    current.name(), Arrays.toString(scenarioses)
-                );
-            } else {
-                logger.debug(
-                    "The current scenario is {}. The target computing logic supports {}, so the current scenario is not supported.",
-                    current.name(), Arrays.toString(scenarioses)
-                );
-            }
+            logger.debug(
+                "The current scenario is {}, and the logic to be maintained is [{}].",
+                currentScenarios.name(),
+                logics.stream().map(l -> l.getClass().getSimpleName()).collect(Collectors.joining(", "))
+            );
         }
 
-        return result;
+        return logics;
     }
 }

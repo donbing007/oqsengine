@@ -68,11 +68,16 @@ public class InfuenceTest {
         IEntity entity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(entity, A_CLASS, new ValueChange(
-            entity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(entity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                entity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
         ValueChange expectedChange = new ValueChange(
             entity.id(),
@@ -101,20 +106,32 @@ public class InfuenceTest {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
-            rootEntity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(rootEntity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
         // 出现在root结点下.
-        infuence.impact(B_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS).withField(EntityField.CREATE_TIME_FILED).build());
 
         // 出现在B_Class之下.
-        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS).withField(EntityField.CREATE_TIME_FILED).build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(C_CLASS).withField(EntityField.CREATE_TIME_FILED).build()
+        );
 
         List<IEntityClass> scanResults = new ArrayList(2);
-        infuence.scan((parentClass, participant, infuence1) -> {
+        infuence.scan((parent, participant, infuence1) -> {
 
             scanResults.add(participant.getEntityClass());
 
@@ -127,30 +144,60 @@ public class InfuenceTest {
     }
 
     /**
-     * 创建多分支.
-     *              A<br>
-     *              |<br>
-     *           |-----|<br>
-     *           B     D<br>
-     *           |     |<br>
-     *           C     E<br>
+     * 创建多分支. A<br> |<br> |-----|<br> B     D<br> |     |<br> C     E<br>
      */
     @Test
     public void testBuildManyBranches() throws Exception {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
-            rootEntity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(rootEntity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
-        infuence.impact(A_CLASS, B_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
 
-        infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(E_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
 
         List<IEntityClass> scanResults = new ArrayList(4);
         infuence.scan((parentClass, participant, infuence1) -> {
@@ -179,41 +226,59 @@ public class InfuenceTest {
     }
 
     /**
-     * 测试扫描的同时增加. 基础树如下.
-     *               A<br>
-     *               |<br>
-     *            |-----|<br>
-     *            B     D<br>
-     *            |<br>
-     *            C <br>
-     *       目标为
-     *              A<br>
-     *              |<br>
-     *           |-----|<br>
-     *           B     D<br>
-     *           |     |<br>
-     *           C     E<br>
+     * 测试扫描的同时增加. 基础树如下. A<br> |<br> |-----|<br> B     D<br> |<br> C <br> 目标为 A<br> |<br> |-----|<br> B     D<br> |
+     * |<br> C     E<br>
      */
     @Test
     public void testScanWithAdd() throws Exception {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
-            rootEntity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(rootEntity, Participant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
-        infuence.impact(A_CLASS, B_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
 
 
-        infuence.scan((parentClass, participant, infuenceInner) -> {
+        infuence.scan((parent, participant, infuenceInner) -> {
 
             if (participant.getEntityClass().id() == D_CLASS.id()) {
-                infuenceInner.impact(parentClass.get(), E_CLASS, EntityField.CREATE_TIME_FILED);
+                infuenceInner.impact(
+                    parent.get(),
+                    Participant.Builder.anParticipant()
+                        .withEntityClass(E_CLASS)
+                        .withField(EntityField.CREATE_TIME_FILED)
+                        .build());
             }
 
             return true;
@@ -245,30 +310,57 @@ public class InfuenceTest {
     }
 
     /**
-     * 测试是否以广度优先方式遍历.
-     *           A<br>
-     *           |<br>
-     *        |-----|<br>
-     *        B     D<br>
-     *        |     |<br>
-     *        C     E<br>
+     * 测试是否以广度优先方式遍历. A<br> |<br> |-----|<br> B     D<br> |     |<br> C     E<br>
      */
     @Test
     public void testBfsIter() throws Exception {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
-            rootEntity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(rootEntity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
-        infuence.impact(A_CLASS, B_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
 
-        infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(Participant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            Participant.Builder.anParticipant()
+                .withEntityClass(E_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
 
         List<IEntityClass> results = new ArrayList<>();
         infuence.scan((parentClass, participant, infuenceInner) -> {
@@ -285,24 +377,47 @@ public class InfuenceTest {
         Assertions.assertEquals(E_CLASS.id(), results.get(4).id());
     }
 
+    /**
+     * 测试同样的参与者不能同时处于同一个双亲结点下.
+     */
     @Test
-    public void testString() throws Exception {
+    public void testDifferentFieldInSameClass() throws Exception {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, A_CLASS, new ValueChange(
-            rootEntity.id(),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
-            new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
-        ));
+        Infuence infuence = new Infuence(rootEntity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
 
-        infuence.impact(A_CLASS, B_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(B_CLASS, C_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.UPDATE_TIME_FILED).build()
+        );
 
-        infuence.impact(A_CLASS, D_CLASS, EntityField.CREATE_TIME_FILED);
-        infuence.impact(D_CLASS, E_CLASS, EntityField.CREATE_TIME_FILED);
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.UPDATE_TIME_FILED).build()
+        );
 
-        System.out.println(infuence.toString());
+        List<IEntityClass> results = new ArrayList<>();
+        infuence.scan((parent, participant, infuenceInner) ->  {
+            if (parent.isPresent()) {
+                results.add(participant.getEntityClass());
+            }
+            return true;
+        });
+
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(B_CLASS, results.get(0));
     }
 
 }
