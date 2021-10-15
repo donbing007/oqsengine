@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.A
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -111,21 +112,30 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
-        // 目标实例
-        IEntityClass entityClass = context.getFocusClass();
-        // 焦点字段
-        IEntityField aggField = context.getFocusField();
-        Aggregation aggregation = (Aggregation) aggField.config().getCalculation();
-        // 被哪些字段聚合的map<fieldId, boId>
-        Map<Long, Long> aggByMap = aggregation.getAggregationByFields();
-        aggByMap.forEach((fid, bid) -> {
-            Optional<IEntityClass> aggEntityClassOp = context.getMetaManager().get().load(bid, entityClass.ref().getProfile());
-            if (aggEntityClassOp.isPresent()) {
-                Optional<IEntityField> entityFieldOp = aggEntityClassOp.get().field(fid);
-                if (entityFieldOp.isPresent()) {
-                    infuence.impact(entityClass, aggEntityClassOp.get(), entityFieldOp.get());
+        infuence.scan((parent, participant, infuenceInner) -> {
+            IEntityClass currentClass = participant.getEntityClass();
+            IEntityField currentField = participant.getField();
+            Aggregation aggregation = (Aggregation) currentField.config().getCalculation();
+            // 被哪些字段聚合的map<fieldId, boId>
+            Map<Long, Long> aggByMap = aggregation.getAggregationByFields();
+            aggByMap.forEach((fid, bid) -> {
+                Optional<IEntityClass> aggEntityClassOp = context.getMetaManager().get().load(bid, currentClass.ref().getProfile());
+                if (aggEntityClassOp.isPresent()) {
+                    Optional<IEntityField> entityFieldOp = aggEntityClassOp.get().field(fid);
+                    if (entityFieldOp.isPresent()) {
+                        infuenceInner.impact(
+                                Participant.Builder.anParticipant()
+                                        .withEntityClass(currentClass)
+                                        .withField(currentField).build(),
+
+                                Participant.Builder.anParticipant()
+                                        .withEntityClass(aggEntityClassOp.get())
+                                        .withField(entityFieldOp.get()).build()
+                        );
+                    }
                 }
-            }
+            });
+            return true;
         });
     }
 
