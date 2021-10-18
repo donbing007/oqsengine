@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class CalculationLogicFactory {
 
-    private static Map<CalculationType, CalculationLogic> calculationLogics;
+    private Map<CalculationType, CalculationLogic> calculationLogics;
 
     /**
      * 构造计算逻辑工厂.
@@ -64,5 +64,14 @@ public class CalculationLogicFactory {
      */
     public Collection<CalculationLogic> getCalculationLogics() {
         return calculationLogics.values();
+    }
+
+    /**
+     * 注册一个新的logic,替换已有的.
+     *
+     * @param logic 新的logic.
+     */
+    public void register(CalculationLogic logic) {
+        calculationLogics.put(logic.supportType(), logic);
     }
 }

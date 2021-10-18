@@ -409,7 +409,7 @@ public class InfuenceTest {
         );
 
         List<IEntityClass> results = new ArrayList<>();
-        infuence.scan((parent, participant, infuenceInner) ->  {
+        infuence.scan((parent, participant, infuenceInner) -> {
             if (parent.isPresent()) {
                 results.add(participant.getEntityClass());
             }

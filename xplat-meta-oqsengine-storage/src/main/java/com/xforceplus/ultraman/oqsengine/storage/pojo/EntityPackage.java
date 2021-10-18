@@ -41,6 +41,15 @@ public class EntityPackage implements Serializable {
     }
 
     /**
+     * 判断是否为空.
+     *
+     * @return true 为空,false 不为空.
+     */
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    /**
      * 包裹中增加一个新的IEntity实例.
      *
      * @param entity 实例.

@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -27,7 +26,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
@@ -333,15 +331,15 @@ public class ManagementWithCalculatorTest {
         }
 
         @Override
-        public Optional<StorageUniqueEntity> select(List<BusinessKey> businessKeys, IEntityClass entityClass)
-            throws SQLException {
-            return Optional.empty();
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
+            return null;
         }
 
         @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -352,12 +350,12 @@ public class ManagementWithCalculatorTest {
         @Override
         public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
             throws SQLException {
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public Optional<IEntity> selectOne(long id) throws SQLException {
-            return Optional.empty();
+            return Optional.ofNullable(entityMap.get(id));
         }
 
         @Override

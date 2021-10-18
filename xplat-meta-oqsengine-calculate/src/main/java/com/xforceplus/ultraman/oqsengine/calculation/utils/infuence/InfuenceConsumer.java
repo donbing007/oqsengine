@@ -15,7 +15,7 @@ public interface InfuenceConsumer {
     /**
      * 消费.
      *
-     * @param parent 父结点元信息.
+     * @param parent        父结点元信息.
      * @param participant   参与者.
      * @param infuenceInner 当前的影响树.
      * @return true 继续,false中断.

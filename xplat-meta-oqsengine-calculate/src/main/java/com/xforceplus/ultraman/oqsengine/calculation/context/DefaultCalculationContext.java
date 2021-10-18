@@ -184,7 +184,11 @@ public class DefaultCalculationContext implements CalculationContext {
 
     @Override
     public Collection<CalculationHint> getHints() {
-        return this.hints;
+        if (this.hints == null) {
+            return Collections.emptyList();
+        } else {
+            return this.hints;
+        }
     }
 
     /**
@@ -199,7 +203,6 @@ public class DefaultCalculationContext implements CalculationContext {
         private KeyValueStorage keyValueStorage;
         private TaskCoordinator taskCoordinator;
         private ConditionsSelectStorage combindedSelectStorage;
-        private Collection<ValueChange> valueChanges;
 
         private Builder() {
         }
@@ -240,11 +243,6 @@ public class DefaultCalculationContext implements CalculationContext {
 
         public Builder withTransaction(Transaction transaction) {
             this.transaction = transaction;
-            return this;
-        }
-
-        public Builder withValueChanges(Collection<ValueChange> valueChanges) {
-            this.valueChanges = valueChanges;
             return this;
         }
 
