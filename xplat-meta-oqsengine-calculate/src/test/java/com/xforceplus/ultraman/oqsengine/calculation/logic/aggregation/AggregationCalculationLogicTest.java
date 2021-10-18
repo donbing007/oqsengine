@@ -1,10 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
 
 import com.google.protobuf.Value;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
@@ -12,18 +20,21 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 测试类.
@@ -31,9 +42,17 @@ import java.util.Optional;
  */
 public class AggregationCalculationLogicTest {
 
-    private AggregationFunctionFactory aggregationFunctionFactory;
+    final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogicTest.class);
+
+    public static final int ONE = 1;
+
+    public static final int ZERO = 0;
 
     private List<IEntityClass> entityClasses = new ArrayList<>();
+
+    private CalculationContext context;
+
+    private AggregationCalculationLogic aggregationCalculationLogic;
 
     @BeforeEach
     public void before() {
@@ -258,58 +277,13 @@ public class AggregationCalculationLogicTest {
         entityClasses.add(e);
 
         // 构建context
+        context = new DefaultCalculationContext();
+        aggregationCalculationLogic = new AggregationCalculationLogic();
     }
-
-//    @Test
-//    public void calculate() {
-//
-//        IEntity entity = Entity.Builder.anEntity()
-//                .withId(1)
-//                .withVersion(1)
-//                .withEntityClassRef(entityClasses.get(0).ref())
-//                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
-//                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
-//                        new LongValue(entityClasses.get(0).field(11).get(), 100),
-//                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
-//                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
-//                ))).build();
-//        IEntityField targetField = entityClasses.get(1).field(21).get();
-//        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
-//        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
-//
-//        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
-//
-//        // 获取当前的原始版本.
-//        Optional<IValue> o = Optional.empty();
-//        Optional<IEntity> entityOptional = Optional.of(Entity.Builder.anEntity()
-//                .withId(1)
-//                .withVersion(1)
-//                .withEntityClassRef(entityClasses.get(0).ref())
-//                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
-//                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
-//                        new LongValue(entityClasses.get(0).field(11).get(), 200),
-//                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
-//                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
-//                ))).build());
-//        if (entityOptional.isPresent()) {
-//            o = entityOptional.get().entityValue().getValue(targetFieldId);
-//        }
-//        Optional<IValue> targetValue;
-//        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
-//        if (aggregationType.equals(AggregationType.AVG)) {
-//            int count = 1;
-//            // 求平均值需要count信息
-//            targetValue = ((AvgFunction) function).excuteAvg(o, o, n, count);
-//        } else {
-//            targetValue = function.excute(o, o, n);
-//        }
-//        Assertions.assertNotNull(targetValue.get());
-//    }
 
     @Test
     public void calculate() {
-
-        IEntity entity = Entity.Builder.anEntity()
+        IEntity aggEntity = Entity.Builder.anEntity()
                 .withId(1)
                 .withVersion(1)
                 .withEntityClassRef(entityClasses.get(0).ref())
@@ -320,36 +294,78 @@ public class AggregationCalculationLogicTest {
                         new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
                 ))).build();
         IEntityField targetField = entityClasses.get(1).field(21).get();
-        long targetFieldId = ((Aggregation) targetField.config().getCalculation()).getFieldId();
-        AggregationType aggregationType = ((Aggregation) targetField.config().getCalculation()).getAggregationType();
+        context.focusEntity(aggEntity, entityClasses.get(0));
+        context.focusField(targetField);
 
-        Optional<IValue> n = entity.entityValue().getValue(targetFieldId);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
 
-        // 获取当前的原始版本.
-        Optional<IValue> o = Optional.empty();
-        Optional<IEntity> entityOptional = Optional.of(Entity.Builder.anEntity()
-                .withId(1)
-                .withVersion(1)
-                .withEntityClassRef(entityClasses.get(0).ref())
-                .withTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
-                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
-                        new LongValue(entityClasses.get(0).field(11).get(), 200),
-                        new DecimalValue(entityClasses.get(0).field(12).get(), new BigDecimal("100")),
-                        new DateTimeValue(entityClasses.get(0).field(13).get(), LocalDateTime.now())
-                ))).build());
-        if (entityOptional.isPresent()) {
-            o = entityOptional.get().entityValue().getValue(targetFieldId);
+        Assert.assertNotNull(targetValue);
+
+    }
+
+    /**
+     * 根据条件和id来判断这条数据是否符合聚合范围.
+     *
+     * @param entity 被聚合数据.
+     * @param entityClass 被聚合对象.
+     * @param conditions 条件信息.
+     * @return 是否符合.
+     */
+    private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass,
+                                           Conditions conditions, ConditionsSelectStorage conditionsSelectStorage) {
+        if (conditions == null || conditions.size() == 0) {
+            return true;
         }
-        Optional<IValue> targetValue;
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
-        if (aggregationType.equals(AggregationType.AVG)) {
-            int count = 1;
-            // 求平均值需要count信息
-            targetValue = ((AvgFunction) function).excuteAvg(o, o, n, count);
-        } else {
-            targetValue = function.excute(o, o, n);
+        conditions.addAnd(new Condition(entityClass.field("id").get(),
+                ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
+        Collection<EntityRef> entityRefs = null;
+        try {
+            entityRefs = conditionsSelectStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        Assertions.assertNotNull(targetValue.get());
+        if (entityRefs != null && entityRefs.size() > ZERO) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 得到统计值.
+     *
+     * @param aggregation 聚合配置.
+     * @param sourceEntity 来源实例.
+     * @param entityClass 对象结构.
+     * @param metaManager meta.
+     * @param conditionsSelectStorage 条件查询.
+     * @return 统计数字.
+     */
+    private int countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass,
+                                       MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
+        // 得到count值
+        Optional<IEntityClass> aggEntityClass =
+                metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
+        int count = 1;
+        if (aggEntityClass.isPresent()) {
+            Conditions conditions = aggregation.getConditions();
+            // 根据关系id得到关系字段
+            Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
+            if (entityField.isPresent()) {
+                conditions.addAnd(new Condition(aggEntityClass.get().ref(), entityField.get(),
+                        ConditionOperator.EQUALS, aggregation.getRelationId(),
+                        sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
+            }
+            Collection<EntityRef> entityRefs = null;
+            try {
+                entityRefs = conditionsSelectStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if (entityRefs != null && entityRefs.size() > ZERO) {
+                count = entityRefs.size();
+            }
+        }
+        return count;
     }
 
 }
