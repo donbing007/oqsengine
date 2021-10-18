@@ -1,0 +1,1 @@
+{"uuid":"17b2e92e-8e61-4b3d-9dcb-2ea89048c06a","name":"testBuildCalculation()","children":["30a0f284-0d1d-4697-9762-34271e3e189e"],"befores":[{"name":"before","status":"passed","stage":"finished","steps":[],"attachments":[],"parameters":[],"start":1634567025126,"stop":1634567025164}],"afters":[],"links":[],"start":1634567024854,"stop":1634567037814}

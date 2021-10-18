@@ -56,6 +56,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
         IEntityField aggField = context.getFocusField();
         //聚合字段的值
         Optional<IValue> aggValue = entity.entityValue().getValue(aggField.id());
+        if (!aggField.calculationType().equals(CalculationType.AGGREGATION)) {
+            return aggValue;
+        }
+
         long byAggEntityClassId = ((Aggregation) aggField.config().getCalculation()).getClassId();
         long byAggFieldId = ((Aggregation) aggField.config().getCalculation()).getFieldId();
         //获取被聚合的entity信息（修改后的）
