@@ -91,7 +91,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(entity, context.getFocusClass(),
+        boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
                 ((Aggregation) aggField.config().getCalculation()).getConditions(), context.getCombindStorage().get());
         if (!pass) {
             return aggValue;
@@ -183,8 +183,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
     }
-
-
 
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
