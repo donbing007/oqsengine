@@ -62,9 +62,11 @@ public class OperationResult {
      * 半成功状态.
      */
     public void resetStatus(Collection<CalculationHint> hints) {
-        this.resultStatus = ResultStatus.HALF_SUCCESS;
-        this.hints = hints;
-        this.message = ResultStatus.HALF_SUCCESS.name();
+        if (hints != null && !hints.isEmpty()) {
+            this.resultStatus = ResultStatus.HALF_SUCCESS;
+            this.hints = hints;
+            this.message = ResultStatus.HALF_SUCCESS.name();
+        }
     }
 
     public int getVersion() {

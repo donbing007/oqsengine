@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -84,12 +83,7 @@ public class DefaultCalculationImpl implements Calculation {
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
-        List<IEntity> triggerEntities = new LinkedList();
         for (Infuence infuence : infuences) {
-
-            triggerEntities.clear();
-            triggerEntities.add(infuence.getSourceEntity());
-
             /*
             根据所有影响树得到目标更新实例集合.
             entityClass 表示当前影响树被影响的实例元信息.
@@ -110,18 +104,20 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-            infuence.scan((parentEntityClass, participant, infuenceInner) -> {
+            infuence.scan((parentParticipant, participant, infuenceInner) -> {
+                if (!parentParticipant.isPresent()) {
+                    // 发起源不需要维护.
+                    return true;
+                }
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
 
-                long[] affectedEntityIds = logic.getMaintainTarget(context, participant, triggerEntities);
+                long[] affectedEntityIds = logic.getMaintainTarget(context, participant,
+                    parentParticipant.get().getAffectedEntities());
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
-                // 更新下个结点的触发实例.
-                triggerEntities.clear();
-                triggerEntities.addAll(affectedEntities);
-
+                // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
                     context.focusField(participant.getField());
@@ -140,6 +136,8 @@ public class DefaultCalculationImpl implements Calculation {
                         affectedEntitiy.entityValue().addValue(newValueOp.get());
                     }
                 }
+                // 加入到当前参与者的影响entity记录中.
+                affectedEntities.forEach(e -> participant.addAffectedEntity(e));
 
                 return true;
             });
@@ -173,15 +171,29 @@ public class DefaultCalculationImpl implements Calculation {
                     throw new CalculationException(ex.getMessage(), ex);
                 }
 
-                entityPackage = new EntityPackage();
+                entityPackage = null;
 
             } else {
+
+                if (entityPackage == null) {
+                    entityPackage = new EntityPackage();
+                }
+
                 Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
                 if (!entityClassOp.isPresent()) {
                     throw new CalculationException(
                         String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
                 }
                 entityPackage.put(entities.get(i), entityClassOp.get());
+
+            }
+        }
+
+        if (entityPackage != null && !entityPackage.isEmpty()) {
+            try {
+                doPersist(context, entityPackage);
+            } catch (SQLException ex) {
+                throw new CalculationException(ex.getMessage(), ex);
             }
         }
     }
@@ -271,7 +283,6 @@ public class DefaultCalculationImpl implements Calculation {
                        D(sum)
              这里 B lookup 和A,但是D又SUM了B,所以需要多个logic来共同构造这个树.
          */
-        CalculationScenarios currentScenarios = context.getScenariso();
 
         // 只处理需要处理当前维护场景的logic.
         Collection<CalculationLogic> logics =
@@ -285,7 +296,11 @@ public class DefaultCalculationImpl implements Calculation {
                     context.getFocusEntity(),
                     Participant.Builder.anParticipant()
                         .withEntityClass(context.getFocusClass())
-                        .withField(context.getFocusField()).build(),
+                        .withField(changeOp.get().getField())
+                        .withAffectedEntities(Arrays.asList(
+                            context.getFocusEntity()
+                        ))
+                        .build(),
                     changeOp.get());
 
                 /*

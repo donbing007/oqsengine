@@ -39,6 +39,7 @@ public class ValueChange {
      * @param newValue 新值.
      */
     public ValueChange(long entityId, IValue oldValue, IValue newValue) {
+        this.entityId = entityId;
         this.oldValue = oldValue;
         this.newValue = newValue;
 
