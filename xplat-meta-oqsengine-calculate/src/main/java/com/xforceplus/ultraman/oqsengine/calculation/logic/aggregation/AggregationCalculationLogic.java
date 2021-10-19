@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -55,6 +56,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
         IEntityField aggField = context.getFocusField();
         //聚合字段的值
         Optional<IValue> aggValue = entity.entityValue().getValue(aggField.id());
+        if (!aggField.calculationType().equals(CalculationType.AGGREGATION)) {
+            return aggValue;
+        }
+
         long byAggEntityClassId = ((Aggregation) aggField.config().getCalculation()).getClassId();
         long byAggFieldId = ((Aggregation) aggField.config().getCalculation()).getFieldId();
         //获取被聚合的entity信息（修改后的）
@@ -90,7 +95,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(entity, context.getFocusClass(),
+        boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
                 ((Aggregation) aggField.config().getCalculation()).getConditions(), context.getCombindStorage().get());
         if (!pass) {
             return aggValue;
@@ -104,8 +109,16 @@ public class AggregationCalculationLogic implements CalculationLogic {
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
         Optional<IValue> targetValue;
         if (aggregationType.equals(AggregationType.AVG)) {
-            int count = countAggregationEntity((Aggregation) aggField.config().getCalculation(), entity,
+            int count = 1;
+            count = countAggregationEntity((Aggregation) aggField.config().getCalculation(), entity,
                     context.getFocusClass(), context.getMetaManager().get(), context.getCombindStorage().get());
+            if (count == 0) {
+                if (!aggField.type().equals(FieldType.DATETIME)) {
+                    aggValue.get().setStringValue("0");
+                    return aggValue;
+                }
+                return aggValue;
+            }
             // 求平均值需要count信息
             targetValue = ((AvgFunction) function).excuteAvg(agg, o, n, count);
         } else {
@@ -174,8 +187,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
     }
-
-
 
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
