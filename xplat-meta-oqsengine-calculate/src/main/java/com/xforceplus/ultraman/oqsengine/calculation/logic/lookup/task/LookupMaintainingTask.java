@@ -24,20 +24,24 @@ public class LookupMaintainingTask extends AbstractTask implements Serializable 
         this(iterKey, null);
     }
 
-    public LookupMaintainingTask(String iterKey, String pointKey) {
-        this(iterKey, pointKey, DEFAULT_SIZE);
+    public LookupMaintainingTask(String iterKey, String seekKey) {
+        this(iterKey, seekKey, DEFAULT_SIZE);
+    }
+
+    public LookupMaintainingTask(String iterKey, int maxSize) {
+        this(iterKey, null, maxSize);
     }
 
     /**
      * 构造任务实例.
      *
-     * @param iterKey  迭代的key.
-     * @param pointKey 当前开始的key.
-     * @param maxSize  最大处理数据量.
+     * @param iterKey 迭代的key.
+     * @param seekKey 从此key之后开始.
+     * @param maxSize 最大处理数据量.
      */
-    public LookupMaintainingTask(String iterKey, String pointKey, int maxSize) {
+    public LookupMaintainingTask(String iterKey, String seekKey, int maxSize) {
         this.iterKey = iterKey;
-        this.pointKey = pointKey;
+        this.pointKey = seekKey;
         this.maxSize = maxSize;
     }
 

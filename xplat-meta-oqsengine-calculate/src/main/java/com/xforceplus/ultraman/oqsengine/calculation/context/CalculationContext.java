@@ -28,6 +28,13 @@ import java.util.function.Supplier;
 public interface CalculationContext {
 
     /**
+     * 获得第一次被Focus的实体.
+     *
+     * @return 第一次被Focus的实体.
+     */
+    IEntity getSourceEntity();
+
+    /**
      * 当前的目标实例.
      *
      * @return 目标实例.
@@ -47,6 +54,23 @@ public interface CalculationContext {
      * @return 焦点字段.
      */
     IEntityField getFocusField();
+
+    /**
+     * 当前是否维护.
+     *
+     * @return true是, false不是.
+     */
+    boolean isMaintenance();
+
+    /**
+     * 标识开始维护.
+     */
+    void startMaintenance();
+
+    /**
+     * 标识结束维护.
+     */
+    void stopMaintenance();
 
     /**
      * 设置当前的焦点实例,焦点实例类型.

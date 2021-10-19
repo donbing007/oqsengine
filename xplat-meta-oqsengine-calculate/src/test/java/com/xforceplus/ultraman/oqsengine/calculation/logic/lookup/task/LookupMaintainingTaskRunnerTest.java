@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
-import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -243,7 +243,7 @@ public class LookupMaintainingTaskRunnerTest {
         masterStorage.replace(targetEntity, targetEntityClass);
 
         LookupMaintainingTask task = new LookupMaintainingTask(
-            LookupHelper.buildIteratorPrefixLinkKey(targetEntity, targetField0, lookupEntityClass, lookupField0)
+            LookupHelper.buildIteratorPrefixLinkKey(targetField0, lookupEntityClass, lookupField0, targetEntity)
                 .toString()
         );
 

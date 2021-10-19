@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Transac
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * 事务实现接口.
@@ -128,5 +129,23 @@ public interface Transaction {
      * @param action Actions that need to be performed.
      */
     void exclusiveAction(TransactionExclusiveAction action) throws SQLException;
+
+    /**
+     * 注册事务提交后任务执行.
+     *
+     * @param hook 提交后的动作.
+     */
+    default void registerCommitHook(Consumer<Transaction> hook) {
+
+    }
+
+    /**
+     * 注册事务回滚后的动作.
+     *
+     * @param hook 回滚后的动作.
+     */
+    default void registerRollbackHook(Consumer<Transaction> hook) {
+
+    }
 
 }

@@ -41,7 +41,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -310,20 +312,62 @@ public class DefaultCalculationImplTest {
             String.format("The target instance (%s) was expected to be found, but was not.", "entityC"));
     }
 
+    /**
+     * 测试持久化部份错误情况.
+     * 执行批量持久化,发生错误会针对错误数据进行重试.
+     * 这里测试是否进行了重试,同时重试的次数是否有上限.
+     */
+    @Test
+    public void testPersistenceErrReplayMax() throws Exception {
+        // entityB实例持久化会一直错误.
+        masterStorage.setReplaceTest(e -> !(e.id() == entityB.id()));
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withMasterStorage(masterStorage)
+            .withScenarios(CalculationScenarios.REPLACE).build();
+        context.getCalculationLogicFactory().get().register(lookupLogic);
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+
+        context.focusEntity(entityA, A_CLASS);
+        context.addValueChange(
+            ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
+        );
+
+        calculation.maintain(context);
+
+        // b 重试了多少次.
+        long size = masterStorage.getReplaceEntities().stream()
+            .filter(e -> e.id() == entityB.id())
+            .count();
+
+        Assertions.assertEquals(100, size);
+    }
+
     static class MockMasterStorage implements MasterStorage {
 
         private Map<Long, IEntity> entities = new HashMap<>();
 
         private List<IEntity> replaceEntities = new ArrayList<>();
 
+        private Predicate<IEntity> replaceTest;
+
+        public void setReplaceTest(Predicate<IEntity> replaceTest) {
+            this.replaceTest = replaceTest;
+        }
+
         @Override
         public int[] replace(EntityPackage entityPackage) throws SQLException {
-            int[] results = new int[entityPackage.size()];
-            Arrays.fill(results, 1);
-
-            entityPackage.stream().forEach(e -> replaceEntities.add(e.getKey()));
-
-            return results;
+            try {
+                if (replaceTest == null) {
+                    return IntStream.range(0, entityPackage.size()).map(i -> 1).toArray();
+                } else {
+                    IEntity[] entities = entityPackage.stream().map(e -> e.getKey()).toArray(IEntity[]::new);
+                    return Arrays.stream(entities).mapToInt(e -> replaceTest.test(e) ? 1 : 0).toArray();
+                }
+            } finally {
+                entityPackage.stream().forEach(e -> replaceEntities.add(e.getKey()));
+            }
         }
 
         public void addIEntity(IEntity entity) {

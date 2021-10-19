@@ -13,6 +13,8 @@ import java.util.stream.Stream;
 
 /**
  * 多个Entity实例包裹.
+ * 会保证加入的顺序.
+ * 顺序序号从0开始.
  *
  * @author dongbin
  * @version 0.1 2021/09/15 15:02

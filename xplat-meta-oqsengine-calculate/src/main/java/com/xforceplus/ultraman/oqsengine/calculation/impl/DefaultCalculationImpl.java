@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -162,13 +164,20 @@ public class DefaultCalculationImpl implements Calculation {
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
         EntityPackage entityPackage = new EntityPackage();
+        boolean persistResult;
         for (int i = 0; i < entities.size(); i++) {
             if (entityPackage.size() == batchSize) {
 
+
                 try {
-                    doPersist(context, entityPackage);
+                    persistResult = doPersist(context, entityPackage);
                 } catch (SQLException ex) {
                     throw new CalculationException(ex.getMessage(), ex);
+                }
+
+                if (!persistResult) {
+                    throw new CalculationException(
+                        "An error occurred during maintenance and the number of conflicts reached the upper limit. Procedure");
                 }
 
                 entityPackage = null;
@@ -198,7 +207,7 @@ public class DefaultCalculationImpl implements Calculation {
         }
     }
 
-    private void doPersist(CalculationContext context, EntityPackage entityPackage) throws SQLException {
+    private boolean doPersist(CalculationContext context, EntityPackage entityPackage) throws SQLException {
         MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
@@ -217,17 +226,27 @@ public class DefaultCalculationImpl implements Calculation {
 
                 if (replyEntityes.isEmpty()) {
                     // 目标数据已经不存在,被其他事务删除,放弃操作.
-                    break;
+                    return true;
                 }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Maintenance update instance conflict, wait 30 ms and try again.[{}/{}]",
+                        p + 1, MAX_REPLAY_NUMBER);
+                }
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(30L));
+
                 replayPackage = new EntityPackage();
                 for (IEntity replyEntity : replyEntityes) {
                     replayPackage.put(replyEntity, metaManager.load(replyEntity.entityClassRef()).get());
                 }
 
             } else {
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     // 加载实体,缓存+储存.

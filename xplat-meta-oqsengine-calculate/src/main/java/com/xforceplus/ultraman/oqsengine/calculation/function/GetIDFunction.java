@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function;
 
-import static com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper.FORMULA_CTX_PARAM;
+import static com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper.FORMULA_CTX_PARAM;
 
 import com.alibaba.google.common.base.Preconditions;
 import com.googlecode.aviator.runtime.function.AbstractFunction;

@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.autofill;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
-import com.xforceplus.ultraman.oqsengine.calculation.helper.FormulaHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -23,6 +24,10 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
+        if (context.getScenariso() != CalculationScenarios.BUILD) {
+            return Optional.empty();
+        }
+
         AutoFill autoFill = (AutoFill) context.getFocusField().config().getCalculation();
 
         switch (autoFill.getDomainNoType()) {
@@ -34,7 +39,7 @@ public class AutoFillCalculationLogic implements CalculationLogic {
             }
             default: {
                 throw new CalculationException(String.format("autoFill executed failed, unSupport domainNoType-[%s].",
-                        autoFill.getDomainNoType().name()));
+                    autoFill.getDomainNoType().name()));
             }
         }
     }
@@ -46,7 +51,7 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     private Optional<IValue> onNormal(CalculationContext context) throws CalculationException {
         Object result = context.getResourceWithEx(() -> context.getBizIDGenerator())
-                .nextId(String.valueOf(context.getFocusField().id()));
+            .nextId(String.valueOf(context.getFocusField().id()));
 
         if (null == result) {
             throw new CalculationException("autoFill id generate is null.");
@@ -58,10 +63,10 @@ public class AutoFillCalculationLogic implements CalculationLogic {
         try {
             //  调用公式执行器执行
             return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-                    FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
+                FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
         } catch (Exception e) {
             logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
-                    context.getFocusField().id(), e.getMessage());
+                context.getFocusField().id(), e.getMessage());
             throw new CalculationException(e.getMessage(), e);
         }
     }

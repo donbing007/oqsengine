@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
-import com.xforceplus.ultraman.oqsengine.calculation.helper.LookupHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -185,47 +187,46 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
                     }
                 }
 
-                IEntity updateLookupEntity;
-                for (IEntity lookupEntity : lookupEntities) {
-                    updateLookupEntity = lookupEntity;
-                    // 不断重试直到成功.
-                    while (masterStorage.replace(updateLookupEntity, lookupClass) == 0) {
+                final int batchSize = 1000;
+                Collection<EntityPackage> packages = split(lookupEntities, lookupClass, batchSize);
+                for (EntityPackage ep : packages) {
 
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(
-                                "lookup-update-failure : target [id({}), entityClass({}), field({}), value{{})] - lookup [id({}), entityClass({}), field({})].",
-                                targetEntityId,
-                                targetEntity.entityClassRef().getId(),
-                                targetFieldId,
-                                targetValueOp.get().getValue().toString(),
-                                lookupEntity.id(),
-                                lookupEntityClassId,
-                                lookupFieldId
-                            );
-                        }
+                    EntityPackage cep = ep;
+                    while (true) {
+                        // 保留更新之前的列表,用以在批量更新后判断那些成功那些失败.
+                        List<IEntity> targetEntities =
+                            cep.stream().map(e -> e.getKey()).collect(Collectors.toList());
 
-                        Optional<IEntity> op = masterStorage.selectOne(updateLookupEntity.id());
-                        if (!op.isPresent()) {
-                            // 实例已经被删除,跳过.
+                        int[] results = masterStorage.replace(cep);
+
+                        Collection<IEntity> notSuccessEntities = IntStream.range(0, results.length)
+                            .filter(i -> results[i] < 0)
+                            .mapToObj(i -> targetEntities.get(i)).collect(Collectors.toList());
+
+                        if (notSuccessEntities.isEmpty()) {
+                            // 全部成功.
                             break;
                         } else {
-                            updateLookupEntity = op.get();
+
+                            // 等待30毫秒再尝试.
+                            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(30L));
+
+                            long[] notSuccessIds = notSuccessEntities.stream().mapToLong(e -> e.id()).toArray();
+
+                            notSuccessEntities = masterStorage.selectMultiple(notSuccessIds);
+                            if (notSuccessEntities.isEmpty()) {
+                                // 实例已经全部被删除了.
+                                break;
+                            }
+
+                            cep = new EntityPackage();
+                            for (IEntity notSuccessEntity : notSuccessEntities) {
+                                cep.put(notSuccessEntity, lookupClass);
+                            }
+
                         }
-                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(30L));
                     }
 
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(
-                            "lookup-update-success : target [id({}), entityClass({}), field({}), value{{})] - lookup [id({}), entityClass({}), field({})].",
-                            targetEntityId,
-                            targetEntity.entityClassRef().getId(),
-                            targetFieldId,
-                            targetValueOp.get().getValue().toString(),
-                            lookupEntity.id(),
-                            lookupEntityClassId,
-                            lookupFieldId
-                        );
-                    }
                 }
             }
         } catch (Exception ex) {
@@ -233,5 +234,19 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         }
 
         return true;
+    }
+
+    private Collection<EntityPackage> split(Collection<IEntity> entities, IEntityClass entityClass, int size) {
+        Collection<EntityPackage> packages = new ArrayList<>(entities.size() / size + 1);
+        EntityPackage entityPackage = new EntityPackage();
+        for (IEntity entity : entities) {
+            if (entityPackage.size() < size) {
+                entityPackage.put(entity, entityClass);
+            } else {
+                packages.add(entityPackage);
+                entityPackage = new EntityPackage();
+            }
+        }
+        return packages;
     }
 }

@@ -1,9 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.calculation.helper;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.io.Serializable;
 
 /**
  * lookup 帮助工具.
@@ -48,7 +49,7 @@ public class LookupHelper {
     /**
      * 构造lookup的link信息记录KEY.<br>
      * KEY的组成方式如下.<br>
-     * 共同前辍-{标识}目标字段id-{标识}目标实例id-{标识}发起lookup的entityClassid-{标识}发起lookup的字段标识-{标识}发起lookup实例id.
+     * 共同前辍-{标识}目标字段id-{标识}发起lookup的entityClassid-{标识}发起lookup的字段标识-{标识}目标实例id-{标识}发起lookup实例id.
      *
      * @param targetEntity 目标实例.
      * @param targetField  目标字段.
@@ -129,18 +130,34 @@ public class LookupHelper {
      *
      * @param targetField       目标字段.
      * @param lookupEntityClass 发起lookup的元信息.
+     * @param lookupField       发起lookup的字段.
+     * @param targetEntity      目标实例.
      * @return link 的 key 前辍.
      */
     public static LookupLinkIterKey buildIteratorPrefixLinkKey(
-        IEntity targetEntity, IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField) {
+        IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField, IEntity targetEntity) {
 
-        return new LookupLinkIterKey(targetField.id(), targetEntity.id(), lookupEntityClass.id(), lookupField.id());
+        return new LookupLinkIterKey(targetField.id(), lookupEntityClass.id(), lookupField.id(), targetEntity.id());
+    }
+
+    /**
+     * 构造不包含目标实例的迭代key.
+     *
+     * @param targetField       目标字段.
+     * @param lookupEntityClass 发起lookup的元信息.
+     * @param lookupField       发起lookup的字段.
+     * @return link的key前辍.
+     */
+    public static LookupLinkIterKey buildIteratorPrefixNoTargetLinkKey(
+        IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField) {
+
+        return new LookupLinkIterKey(targetField.id(), lookupEntityClass.id(), lookupField.id(), -1);
     }
 
     /**
      * 迭代key.
      */
-    public static class LookupLinkIterKey {
+    public static class LookupLinkIterKey implements Serializable {
         private long targetFieldId;
         private long targetEntityId;
         private long lookupClassId;
@@ -150,11 +167,11 @@ public class LookupHelper {
          * 构造迭代key.
          *
          * @param targetFieldId  目标字段id.
-         * @param targetEntityId 目标实例id.
          * @param lookupClassId  lookup类型id.
          * @param lookupFieldId  lookup字段
+         * @param targetEntityId 目标实例id.
          */
-        public LookupLinkIterKey(long targetFieldId, long targetEntityId, long lookupClassId, long lookupFieldId) {
+        public LookupLinkIterKey(long targetFieldId, long lookupClassId, long lookupFieldId, long targetEntityId) {
             this.targetFieldId = targetFieldId;
             this.targetEntityId = targetEntityId;
             this.lookupClassId = lookupClassId;
@@ -177,22 +194,40 @@ public class LookupHelper {
             return lookupFieldId;
         }
 
+        public void setTargetEntityId(long targetEntityId) {
+            this.targetEntityId = targetEntityId;
+        }
+
         @Override
         public String toString() {
             final StringBuffer sb = new StringBuffer();
+
             sb.append(LINK_KEY_PREFIX)
                 .append(LINKE_KEY_SPACE)
+
+                // 目标字段标识.
                 .append(LINK_KEY_TARGET_FIELD_PREFIX)
                 .append(NumberUtils.zeroFill(targetFieldId))
                 .append(LINKE_KEY_SPACE)
-                .append(LINK_KEY_TARGET_ENTITY_PREFIX)
-                .append(NumberUtils.zeroFill(targetEntityId))
-                .append(LINKE_KEY_SPACE)
+
+                // 发起lookup的元信息标识.
                 .append(LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX)
                 .append(NumberUtils.zeroFill(lookupClassId))
-                .append(LINKE_KEY_SPACE)
-                .append(LINK_KEY_LOOKUP_FIELD_PREFIX)
-                .append(NumberUtils.zeroFill(lookupFieldId));
+                .append(LINKE_KEY_SPACE);
+
+            if (lookupFieldId > 0) {
+                // 发起lookup的字段标识.
+                sb.append(LINK_KEY_LOOKUP_FIELD_PREFIX)
+                    .append(NumberUtils.zeroFill(lookupFieldId))
+                    .append(LINKE_KEY_SPACE);
+            }
+
+            if (targetEntityId > 0) {
+                // 目标target实例标识.
+                sb.append(LINK_KEY_TARGET_ENTITY_PREFIX)
+                    .append(NumberUtils.zeroFill(targetEntityId));
+            }
+
 
             return sb.toString();
         }
@@ -201,7 +236,7 @@ public class LookupHelper {
     /**
      * lookup 字段的连接key.
      */
-    public static class LookupLinkKey {
+    public static class LookupLinkKey implements Serializable {
         private long targetFieldId;
         private long targetEntityId;
         private long lookupClassId;
@@ -255,18 +290,23 @@ public class LookupHelper {
 
             sb.append(LINK_KEY_PREFIX)
                 .append(LINKE_KEY_SPACE)
+                // 目标字段标识
                 .append(LINK_KEY_TARGET_FIELD_PREFIX)
                 .append(NumberUtils.zeroFill(targetFieldId))
                 .append(LINKE_KEY_SPACE)
-                .append(LINK_KEY_TARGET_ENTITY_PREFIX)
-                .append(NumberUtils.zeroFill(targetEntityId))
-                .append(LINKE_KEY_SPACE)
+                // 发起lookup class标识.
                 .append(LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX)
                 .append(NumberUtils.zeroFill(lookupClassId))
                 .append(LINKE_KEY_SPACE)
+                // 发起lookup字段标识.
                 .append(LINK_KEY_LOOKUP_FIELD_PREFIX)
                 .append(NumberUtils.zeroFill(lookupFieldId))
                 .append(LINKE_KEY_SPACE)
+                // 目标实例标识.
+                .append(LINK_KEY_TARGET_ENTITY_PREFIX)
+                .append(NumberUtils.zeroFill(targetEntityId))
+                .append(LINKE_KEY_SPACE)
+                // 发起lookup实例标识.
                 .append(LINK_KEY_LOOKUP_ENTITY_PREFIX)
                 .append(NumberUtils.zeroFill(lookupEntityId));
 

@@ -113,7 +113,9 @@ public class Participant {
         return Objects.hash(entityClass, field);
     }
 
-
+    /**
+     * 构造器.
+     */
     public static final class Builder {
         private IEntityClass entityClass;
         private IEntityField field;

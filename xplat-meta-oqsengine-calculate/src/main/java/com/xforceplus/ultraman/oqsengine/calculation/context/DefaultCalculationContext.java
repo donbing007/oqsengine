@@ -29,6 +29,8 @@ import java.util.Optional;
  */
 public class DefaultCalculationContext implements CalculationContext {
 
+    private IEntity sourceEntity;
+    private boolean maintenance;
     private IEntity focusEntity;
     private IEntityClass focusEntityClass;
     private IEntityField focusField;
@@ -82,6 +84,11 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
+    public IEntity getSourceEntity() {
+        return this.sourceEntity;
+    }
+
+    @Override
     public IEntity getFocusEntity() {
         return this.focusEntity;
     }
@@ -97,7 +104,25 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
+    public boolean isMaintenance() {
+        return this.maintenance;
+    }
+
+    @Override
+    public void startMaintenance() {
+        this.maintenance = true;
+    }
+
+    @Override
+    public void stopMaintenance() {
+        this.maintenance = false;
+    }
+
+    @Override
     public void focusEntity(IEntity entity, IEntityClass entityClass) {
+        if (this.focusEntity == null) {
+            this.sourceEntity = entity;
+        }
         this.focusEntity = entity;
         this.focusEntityClass = entityClass;
 

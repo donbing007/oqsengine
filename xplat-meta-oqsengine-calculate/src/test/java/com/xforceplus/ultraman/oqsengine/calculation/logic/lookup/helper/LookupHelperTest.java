@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.helper;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -6,8 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +50,7 @@ public class LookupHelperTest {
         IEntityField lookupField = EntityField.UPDATE_TIME_FILED;
 
         LookupHelper.LookupLinkIterKey key =
-            LookupHelper.buildIteratorPrefixLinkKey(targetEntity, targetField, lookupEntityClass, lookupField);
+            LookupHelper.buildIteratorPrefixLinkKey(targetField, lookupEntityClass, lookupField, targetEntity);
         Assertions.assertEquals(
             String.format("%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
                 LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id()),
