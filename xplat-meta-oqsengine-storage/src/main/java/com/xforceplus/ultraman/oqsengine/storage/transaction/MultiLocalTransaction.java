@@ -54,7 +54,7 @@ public class MultiLocalTransaction implements Transaction {
      * 提交号生成时的命名空间.
      * 此值用以和其他生成的ID序列区分开.
      */
-    private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.id";
+    private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.common.id";
 
     private long id;
     private long attachment;
