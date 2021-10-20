@@ -147,11 +147,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
                         .filter(f -> ((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
                         .forEach(f -> {
-                        /*
-                        指定当前参与者的新lookup发起者信息,包含如下.
-                        1. 发起聚合元信息.
-                        2. 发起聚合字段.
-                         */
                             infuenceInner.impact(
                                     participant,
                                     Participant.Builder.anParticipant()
