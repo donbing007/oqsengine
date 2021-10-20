@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
@@ -29,7 +30,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -96,7 +96,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
         //拿到数据后开始进行判断数据是否符合条件
         boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
-                ((Aggregation) aggField.config().getCalculation()).getConditions(), context.getCombindStorage().get());
+                ((Aggregation) aggField.config().getCalculation()).getConditions());
         if (!pass) {
             return aggValue;
         }
@@ -130,29 +130,38 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
-        infuence.scan((parent, participant, infuenceInner) -> {
-            IEntityClass currentClass = participant.getEntityClass();
-            IEntityField currentField = participant.getField();
-            Aggregation aggregation = (Aggregation) currentField.config().getCalculation();
-            // 被哪些字段聚合的map<fieldId, boId>
-            Map<Long, Long> aggByMap = aggregation.getAggregationByFields();
-            aggByMap.forEach((fid, bid) -> {
-                Optional<IEntityClass> aggEntityClassOp = context.getMetaManager().get().load(bid, currentClass.ref().getProfile());
-                if (aggEntityClassOp.isPresent()) {
-                    Optional<IEntityField> entityFieldOp = aggEntityClassOp.get().field(fid);
-                    if (entityFieldOp.isPresent()) {
-                        infuenceInner.impact(
-                                Participant.Builder.anParticipant()
-                                        .withEntityClass(currentClass)
-                                        .withField(currentField).build(),
+        infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
-                                Participant.Builder.anParticipant()
-                                        .withEntityClass(aggEntityClassOp.get())
-                                        .withField(entityFieldOp.get()).build()
-                        );
-                    }
-                }
-            });
+            IEntityClass participantClass = participant.getEntityClass();
+            IEntityField participantField = participant.getField();
+
+            /*
+            迭代所有关系中的字段,判断是否有可能会对当前参与者发起聚合 - MANY_TO_ONE的关系.
+             */
+            List<Relationship> relationships = participantClass.relationship().stream().filter(relationship -> {
+                return relationship.getRelationType().equals(Relationship.RelationType.MANY_TO_ONE);
+            }).collect(Collectors.toList());
+            for (Relationship r : relationships) {
+                IEntityClass relationshipClass = r.getRightEntityClass();
+                relationshipClass.fields().stream()
+                        .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
+                        .filter(f -> ((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
+                        .forEach(f -> {
+                        /*
+                        指定当前参与者的新lookup发起者信息,包含如下.
+                        1. 发起聚合元信息.
+                        2. 发起聚合字段.
+                         */
+                            infuenceInner.impact(
+                                    participant,
+                                    Participant.Builder.anParticipant()
+                                            .withEntityClass(relationshipClass)
+                                            .withField(f)
+                                            .build()
+                            );
+                        });
+            }
+
             return true;
         });
     }
@@ -197,22 +206,14 @@ public class AggregationCalculationLogic implements CalculationLogic {
      * @return 是否符合.
      */
     private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass,
-                                           Conditions conditions, ConditionsSelectStorage conditionsSelectStorage) {
+                                           Conditions conditions) {
         if (conditions == null || conditions.size() == 0) {
             return true;
         }
         conditions.addAnd(new Condition(entityClass.field("id").get(),
                 ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
-        Collection<EntityRef> entityRefs = null;
-        try {
-            entityRefs = conditionsSelectStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        if (entityRefs != null && entityRefs.size() > ZERO) {
-            return true;
-        }
-        return false;
+
+        return true;
     }
 
     /**

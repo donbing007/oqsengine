@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImplTest;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogicTest;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -29,7 +30,16 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiveAction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.task.Task;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -40,6 +50,8 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -66,94 +78,33 @@ public class AggregationCalculationLogicTest {
 
     private AggregationCalculationLogic aggregationCalculationLogic;
 
-    private static IEntityField A_LONG = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE)
-            .withFieldType(FieldType.LONG)
-            .withName("a-long").build();
+    private static IEntityField A_LONG;
 
-    private static IEntityField B_SUM = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 1)
-            .withFieldType(FieldType.LONG)
-            .withName("b-sum-a")
-            .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
-                            .withCalculation(Aggregation.Builder.anAggregation().build()).build()
-            )
-            .build();
+    private static IEntityField B_ID;
 
-    private static IEntityField C_COUNT = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 2)
-            .withFieldType(FieldType.LONG)
-            .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
-                            .withCalculation(Aggregation.Builder.anAggregation().build()).build()
-            )
-            .withName("c-lookup-a").build();
+    private static IEntityField B_REF;
 
-    private static IEntityField D_SUM = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 3)
-            .withFieldType(FieldType.LONG)
-            .withConfig(
-                    FieldConfig.Builder.anFieldConfig()
-                            .withCalculation(Aggregation.Builder.anAggregation().build()).build()
-            )
-            .withName("d-sum-a").build();
+    private static IEntityField B_SUM;
 
-    private static IEntityClass A_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE)
-            .withCode("a-class")
-            .withField(A_LONG).build();
+    private static IEntityField C_COUNT;
 
-    private static IEntityClass B_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 1)
-            .withCode("b-class")
-            .withField(B_SUM).build();
+    private static IEntityField D_SUM;
 
-    private static IEntityClass C_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 2)
-            .withCode("c-class")
-            .withField(C_COUNT).build();
+    private static IEntityClass A_CLASS;
 
-    private static IEntityClass D_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 3)
-            .withCode("d-class")
-            .withField(D_SUM).build();
+    private static IEntityClass B_CLASS;
 
-    private IEntity entityA = Entity.Builder.anEntity()
-            .withId(Long.MAX_VALUE)
-            .withEntityClassRef(A_CLASS.ref())
-            .withEntityValue(
-                    EntityValue.build().addValue(
-                            new LongValue(A_LONG, 100L)
-                    )
-            ).build();
+    private static IEntityClass C_CLASS;
 
-    private IEntity entityB = Entity.Builder.anEntity()
-            .withId(Long.MAX_VALUE - 1)
-            .withEntityClassRef(B_CLASS.ref())
-            .withEntityValue(
-                    EntityValue.build().addValue(
-                            new LongValue(B_SUM, 100L)
-                    )
-            ).build();
+    private static IEntityClass D_CLASS;
 
-    private IEntity entityD = Entity.Builder.anEntity()
-            .withId(Long.MAX_VALUE - 2)
-            .withEntityClassRef(D_CLASS.ref())
-            .withEntityValue(
-                    EntityValue.build().addValue(
-                            new LongValue(D_SUM, 100L)
-                    )
-            ).build();
+    private IEntity entityA;
 
-    private IEntity entityC = Entity.Builder.anEntity()
-            .withId(Long.MAX_VALUE - 3)
-            .withEntityClassRef(C_CLASS.ref())
-            .withEntityValue(
-                    EntityValue.build().addValue(
-                            new LongValue(C_COUNT, 100L)
-                    )
-            ).build();
+    private IEntity entityB;
+
+    private IEntity entityD;
+
+    private IEntity entityC;
 
     private AggregationCalculationLogicTest.MockLogic aggregationLogic;
     private AggregationCalculationLogicTest.MockLogic lookupLogic;
@@ -164,6 +115,236 @@ public class AggregationCalculationLogicTest {
 
     @BeforeEach
     public void before() {
+
+        A_LONG = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE)
+                .withFieldType(FieldType.LONG)
+                .withName("a-long").build();
+
+        B_ID = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 1000)
+                .withFieldType(FieldType.LONG)
+                .withName("id").build();
+
+        B_REF = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 10)
+                .withFieldType(FieldType.LONG)
+                .withName("relb").build();
+
+        B_SUM = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 1)
+                .withFieldType(FieldType.LONG)
+                .withName("b-sum-a")
+                .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                                .withCalculation(Aggregation.Builder.anAggregation()
+                                        .withClassId(Long.MAX_VALUE)
+                                        .withFieldId(Long.MAX_VALUE)
+                                        .withRelationId(Long.MAX_VALUE - 10)
+                                        .withAggregationType(AggregationType.SUM)
+                                        .build()
+                                ).build()
+                )
+                .build();
+
+        C_COUNT = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 2)
+                .withFieldType(FieldType.LONG)
+                .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                                .withCalculation(Aggregation.Builder.anAggregation()
+                                        .withClassId(Long.MAX_VALUE)
+                                        .withFieldId(Long.MAX_VALUE)
+                                        .withRelationId(Long.MAX_VALUE - 20)
+                                        .withAggregationType(AggregationType.COUNT)
+                                        .build()
+                                ).build()
+                )
+                .withName("c-count-a").build();
+
+        D_SUM = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 3)
+                .withFieldType(FieldType.LONG)
+                .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                                .withCalculation(Aggregation.Builder.anAggregation()
+                                        .withClassId(Long.MAX_VALUE - 1)
+                                        .withFieldId(Long.MAX_VALUE - 1)
+                                        .withRelationId(Long.MAX_VALUE - 30)
+                                        .withAggregationType(AggregationType.SUM)
+                                        .build()
+                                ).build()
+                )
+                .withName("d-sum-a").build();
+
+        A_CLASS = EntityClass.Builder.anEntityClass()
+                .withId(Long.MAX_VALUE)
+                .withCode("a-class")
+                .withField(A_LONG)
+                .withRelations(Arrays.asList(
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 100)
+                                .withCode("relb")
+                                .withLeftEntityClassId(Long.MAX_VALUE)
+                                .withLeftEntityClassCode("a-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 1)
+                                .withRightEntityClassLoader(id -> Optional.of(B_CLASS))
+                                .withEntityField(B_REF)
+                                .withBelongToOwner(true)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                                .build(),
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 200)
+                                .withCode("relc")
+                                .withLeftEntityClassId(Long.MAX_VALUE)
+                                .withLeftEntityClassCode("a-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 2)
+                                .withRightEntityClassLoader(id -> Optional.of(C_CLASS))
+                                .withBelongToOwner(true)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                                .build(),
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 10)
+                                .withCode("relb")
+                                .withLeftEntityClassId(Long.MAX_VALUE)
+                                .withLeftEntityClassCode("b-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 1)
+                                .withRightEntityClassLoader(id -> Optional.of(B_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build(),
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 20)
+                                .withCode("relc")
+                                .withLeftEntityClassId(Long.MAX_VALUE)
+                                .withLeftEntityClassCode("c-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 2)
+                                .withRightEntityClassLoader(id -> Optional.of(C_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build()
+                ))
+                .build();
+
+        B_CLASS = EntityClass.Builder.anEntityClass()
+                .withId(Long.MAX_VALUE - 1)
+                .withCode("b-class")
+                .withField(B_SUM)
+                .withRelations(Arrays.asList(
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 300)
+                                .withCode("relc")
+                                .withLeftEntityClassId(Long.MAX_VALUE - 1)
+                                .withLeftEntityClassCode("b-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 3)
+                                .withRightEntityClassLoader(id -> Optional.of(D_CLASS))
+                                .withBelongToOwner(true)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                                .build(),
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 30)
+                                .withCode("relc")
+                                .withLeftEntityClassId(Long.MAX_VALUE - 1)
+                                .withLeftEntityClassCode("d-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 3)
+                                .withRightEntityClassLoader(id -> Optional.of(D_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build(),
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 10)
+                                .withCode("relb")
+                                .withLeftEntityClassId(Long.MAX_VALUE - 1)
+                                .withLeftEntityClassCode("b-class")
+                                .withRightEntityClassId(Long.MAX_VALUE)
+                                .withRightEntityClassLoader(id -> Optional.of(A_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build()
+                ))
+                .build();
+
+        C_CLASS = EntityClass.Builder.anEntityClass()
+                .withId(Long.MAX_VALUE - 2)
+                .withCode("c-class")
+                .withField(C_COUNT)
+                .withRelations(Arrays.asList(
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 20)
+                                .withCode("relc")
+                                .withLeftEntityClassId(Long.MAX_VALUE - 2)
+                                .withLeftEntityClassCode("c-class")
+                                .withRightEntityClassId(Long.MAX_VALUE)
+                                .withRightEntityClassLoader(id -> Optional.of(A_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build()
+                ))
+                .build();
+
+        D_CLASS = EntityClass.Builder.anEntityClass()
+                .withId(Long.MAX_VALUE - 3)
+                .withCode("d-class")
+                .withField(D_SUM)
+                .withRelations(Arrays.asList(
+                        Relationship.Builder.anRelationship()
+                                .withId(Long.MAX_VALUE - 30)
+                                .withCode("relb")
+                                .withLeftEntityClassId(Long.MAX_VALUE - 3)
+                                .withLeftEntityClassCode("d-class")
+                                .withRightEntityClassId(Long.MAX_VALUE - 1)
+                                .withRightEntityClassLoader(id -> Optional.of(B_CLASS))
+                                .withBelongToOwner(false)
+                                .withIdentity(false)
+                                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                                .build()
+                ))
+                .build();
+
+        entityA = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE)
+                .withEntityClassRef(A_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(A_LONG, 100L)
+                        )
+                ).build();
+
+        entityB = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE - 1)
+                .withEntityClassRef(B_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(B_SUM, 100L)
+                        )
+                ).build();
+
+        entityD = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE - 2)
+                .withEntityClassRef(D_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(D_SUM, 100L)
+                        )
+                ).build();
+
+        entityC = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE - 3)
+                .withEntityClassRef(C_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(C_COUNT, 100L)
+                        )
+                ).build();
+
         calculation = new DefaultCalculationImpl();
 
         aggregationLogic = new AggregationCalculationLogicTest.MockLogic(CalculationType.AGGREGATION);
@@ -249,10 +430,11 @@ public class AggregationCalculationLogicTest {
                 .withMetaManager(metaManager)
                 .withScenarios(CalculationScenarios.BUILD).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
-        context.focusEntity(entityA, A_CLASS);
-        context.focusField(A_LONG);
+        context.focusEntity(entityB, B_CLASS);
+        context.focusField(B_SUM);
+        context.putEntityToCache(entityA);
         context.addValueChange(
-                ValueChange.build(entityC.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L)));
+                ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L)));
 
         Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
 
@@ -264,11 +446,13 @@ public class AggregationCalculationLogicTest {
     public void testReplaceCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
                 .withMetaManager(metaManager)
-                .withScenarios(CalculationScenarios.BUILD).build();
+                .withScenarios(CalculationScenarios.REPLACE).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
-        context.focusEntity(entityA, A_CLASS);
+        context.focusEntity(entityB, B_CLASS);
+        context.focusField(B_SUM);
+        context.putEntityToCache(entityA);
         context.addValueChange(
-                ValueChange.build(entityC.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L)));
+                ValueChange.build(entityA.id(), new LongValue(A_LONG, 100L), new LongValue(A_LONG, 200L)));
 
         Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
 
@@ -280,16 +464,133 @@ public class AggregationCalculationLogicTest {
     public void testRemoveCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
                 .withMetaManager(metaManager)
-                .withScenarios(CalculationScenarios.BUILD).build();
+                .withScenarios(CalculationScenarios.DELETE).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
-        context.focusEntity(entityA, A_CLASS);
+        context.focusEntity(entityB, B_CLASS);
+        context.focusField(B_SUM);
+        context.putEntityToCache(entityA);
         context.addValueChange(
-                ValueChange.build(entityC.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L)));
+                ValueChange.build(entityA.id(), new LongValue(A_LONG, 10L), new EmptyTypedValue(A_LONG)));
 
         Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
 
         Assert.assertNotNull(targetValue);
 
+    }
+
+    @Test
+    public void scope() {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext().build();
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE)
+                .withEntityClassRef(A_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(A_LONG, 100)
+                        )
+                ).build();
+        Infuence infuence = new Infuence(
+                targetEntity,
+                Participant.Builder.anParticipant()
+                        .withEntityClass(A_CLASS)
+                        .withField(A_LONG)
+                        .withAffectedEntities(Arrays.asList(targetEntity)).build(),
+                ValueChange.build(
+                        targetEntity.id(),
+                        new LongValue(A_LONG, 50L),
+                        new LongValue(A_LONG, 100L))
+        );
+
+        context.focusEntity(targetEntity, A_CLASS);
+        context.focusField(A_LONG);
+
+        aggregationCalculationLogic.scope(context, infuence);
+        List<Participant> participants = new ArrayList<>();
+        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+
+            participants.add(participant);
+
+            return true;
+        });
+
+        Assertions.assertEquals(4, participants.size());
+        Assertions.assertEquals(A_CLASS.id(), participants.get(0).getEntityClass().id());
+        Assertions.assertEquals(B_CLASS.id(), participants.get(1).getEntityClass().id());
+        Assertions.assertEquals(C_CLASS.id(), participants.get(2).getEntityClass().id());
+        Assertions.assertEquals(D_CLASS.id(), participants.get(3).getEntityClass().id());
+    }
+
+    @Test
+    public void getMaintainTarget() throws SQLException {
+        AggregationCalculationLogicTest.MockTaskCoordinator coordinator = new AggregationCalculationLogicTest.MockTaskCoordinator();
+        AggregationCalculationLogicTest.MockTransaction tx = new AggregationCalculationLogicTest.MockTransaction();
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+                .withTransaction(tx)
+                .withTaskCoordinator(coordinator)
+                .build();
+
+        Relationship bRef = A_CLASS.relationship().stream().filter(relationship -> {
+            return relationship.getRightEntityClass().equals(B_CLASS);
+        }).collect(Collectors.toList()).get(0);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE)
+                .withEntityClassRef(A_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(A_LONG, 100)
+                        ).addValue(
+                                new LongValue(bRef.getEntityField(), 1000)
+                        )
+                ).build();
+
+        IEntity bEntity = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE)
+                .withEntityClassRef(B_CLASS.ref())
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new LongValue(B_SUM, 100)
+                        ).addValue(
+                                new LongValue(B_ID, 1000)
+                        )
+                ).build();
+        Infuence infuence = new Infuence(
+                targetEntity,
+                Participant.Builder.anParticipant()
+                        .withEntityClass(A_CLASS)
+                        .withField(A_LONG)
+                        .withAffectedEntities(Arrays.asList(targetEntity)).build(),
+                ValueChange.build(
+                        targetEntity.id(),
+                        new LongValue(A_LONG, 50L),
+                        new LongValue(A_LONG, 100L))
+        );
+
+        context.focusEntity(targetEntity, A_CLASS);
+        context.focusField(A_LONG);
+
+        aggregationCalculationLogic.scope(context, infuence);
+        AtomicReference<Participant> p = new AtomicReference<>();
+        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+            if (parentParticipant.isPresent()) {
+                if (parentParticipant.get().getEntityClass().id() == A_CLASS.id()) {
+                    p.set(participant);
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        Participant participant = p.get();
+        long[] ids = aggregationCalculationLogic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(1, ids.length);
+
+//        tx.commit();
+//
+//        List<Task> tasks = coordinator.getTasks();
+//        Assertions.assertEquals(1, tasks.size());
     }
 
     /**
@@ -514,6 +815,123 @@ public class AggregationCalculationLogicTest {
         @Override
         public CalculationType supportType() {
             return type;
+        }
+    }
+
+    private static class MockTaskCoordinator implements TaskCoordinator {
+
+        private List<Task> tasks = new ArrayList<>();
+
+        public List<Task> getTasks() {
+            return tasks;
+        }
+
+        @Override
+        public boolean registerRunner(TaskRunner runner) {
+            return false;
+        }
+
+        @Override
+        public Optional<TaskRunner> getRunner(Class clazz) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean addTask(Task task) {
+            tasks.add(task);
+            return true;
+        }
+    }
+
+    private static class MockTransaction implements Transaction {
+
+        private List<Consumer<Transaction>> commitHooks = new ArrayList<>();
+
+        @Override
+        public long id() {
+            return Long.MAX_VALUE;
+        }
+
+        @Override
+        public Optional<String> message() {
+            return Optional.empty();
+        }
+
+        @Override
+        public void commit() throws SQLException {
+            commitHooks.forEach(h -> {
+                h.accept(this);
+            });
+        }
+
+        @Override
+        public void rollback() throws SQLException {
+
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return false;
+        }
+
+        @Override
+        public boolean isRollback() {
+            return false;
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return false;
+        }
+
+        @Override
+        public void join(TransactionResource transactionResource) throws SQLException {
+
+        }
+
+        @Override
+        public Optional<TransactionResource> queryTransactionResource(String key) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Collection<TransactionResource> listTransactionResource(TransactionResourceType type) {
+            return null;
+        }
+
+        @Override
+        public long attachment() {
+            return 0;
+        }
+
+        @Override
+        public void attach(long id) {
+
+        }
+
+        @Override
+        public boolean isReadyOnly() {
+            return false;
+        }
+
+        @Override
+        public TransactionAccumulator getAccumulator() {
+            return null;
+        }
+
+        @Override
+        public void exclusiveAction(TransactionExclusiveAction action) throws SQLException {
+
+        }
+
+        @Override
+        public void registerCommitHook(Consumer<Transaction> hook) {
+            this.commitHooks.add(hook);
+        }
+
+        @Override
+        public void registerRollbackHook(Consumer<Transaction> hook) {
+
         }
     }
 
