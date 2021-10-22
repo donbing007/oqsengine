@@ -26,7 +26,8 @@ import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -44,6 +45,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * SQLMasterStorage Tester.
@@ -52,7 +54,8 @@ import org.junit.jupiter.api.Test;
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
-public class SQLMasterStorageTest extends AbstractContainerExtends {
+@ExtendWith({RedisContainer.class, MysqlContainer.class})
+public class SQLMasterStorageTest {
 
     private TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
     private SQLMasterStorage storage = MasterDBInitialization.getInstance().getMasterStorage();

@@ -47,7 +47,7 @@ public class MysqlContainer extends AbstractContainerExtension {
                 .withEnv("MYSQL_DATABASE", "oqsengine")
                 .withEnv("MYSQL_ROOT_USERNAME", "root")
                 .withEnv("MYSQL_ROOT_PASSWORD", "root")
-                .withClasspathResourceMapping("./mysql", "/docker-entrypoint-initdb.d", BindMode.READ_ONLY)
+                .withClasspathResourceMapping("mysql", "/docker-entrypoint-initdb.d", BindMode.READ_ONLY)
                 .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(
                     Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));

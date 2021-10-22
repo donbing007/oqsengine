@@ -44,7 +44,6 @@ public class MasterDBInitialization implements BeanInitialization {
 
     public static final String MASTER_STORAGE_TABLE = "oqsbigentity";
     public static final String MASTER_STORAGE_FAILED_TABLE = "entityfaileds";
-    public static final String MASTER_STORAGE_UNIQUE_TABLE = "oqsunique";
 
     private MasterDBInitialization() {
     }
@@ -67,6 +66,7 @@ public class MasterDBInitialization implements BeanInitialization {
 
     @Override
     public void init() throws Exception {
+
         dataSource = buildDataSourceSelectorMaster();
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -122,7 +122,6 @@ public class MasterDBInitialization implements BeanInitialization {
         Statement st = conn.createStatement();
         st.execute("truncate table " + MASTER_STORAGE_TABLE);
         st.execute("truncate table " + MASTER_STORAGE_FAILED_TABLE);
-        st.execute("truncate table " + MASTER_STORAGE_UNIQUE_TABLE);
         st.close();
         conn.close();
     }
