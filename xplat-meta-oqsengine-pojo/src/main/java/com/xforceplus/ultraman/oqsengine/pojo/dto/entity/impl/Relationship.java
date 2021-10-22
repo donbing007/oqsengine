@@ -119,7 +119,7 @@ public class Relationship {
     /*
      * 是否是伴生关系
      */
-    private boolean isCompanion;
+    private boolean companion;
 
     private long companionRelation;
 
@@ -186,11 +186,11 @@ public class Relationship {
     }
 
     public boolean isCompanion() {
-        return isCompanion;
+        return companion;
     }
 
     public void setCompanion(boolean companion) {
-        isCompanion = companion;
+        this.companion = companion;
     }
 
     public long getCompanionRelation() {
@@ -223,18 +223,18 @@ public class Relationship {
      * Builder.
      */
     public static final class Builder {
-        private Long id;
+        private long id;
         private String code;
-        private Long leftEntityClassId;
+        private long leftEntityClassId;
         private String leftEntityClassCode;
-        private Long rightEntityClassId;
-        private RelationType relationType;
-        private Boolean identity;
+        private long rightEntityClassId;
+        private RelationType relationType = RelationType.UNKNOWN;
+        private boolean identity = true;
         private IEntityField entityField;
-        private Boolean belongToOwner;
-        private boolean strong;
+        private boolean belongToOwner = false;
+        private boolean strong = false;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
-        private boolean isCompanion;
+        private boolean companion = false;
         private long companionRelation;
 
         private Builder() {
@@ -290,7 +290,7 @@ public class Relationship {
         }
 
         public Relationship.Builder withCompanion(boolean isCompanion) {
-            this.isCompanion = isCompanion;
+            this.companion = isCompanion;
             return this;
         }
 
@@ -329,7 +329,7 @@ public class Relationship {
             relationship.leftEntityClassCode = this.leftEntityClassCode;
             relationship.strong = this.strong;
             relationship.belongToOwner = this.belongToOwner;
-            relationship.isCompanion = this.isCompanion;
+            relationship.companion = this.companion;
             relationship.companionRelation = this.companionRelation;
             return relationship;
         }

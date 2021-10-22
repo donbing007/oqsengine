@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.RemoteContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -35,18 +34,19 @@ public class CanalContainer extends AbstractContainerExtension {
             if (null == containerWrapper) {
                 throw new RuntimeException("get remote container failed.");
             }
-            /**
+            /*
              * 设置oqs中的环境变量
              */
             setSystemProperties(containerWrapper.host(), containerWrapper.port());
         } else {
+
             GenericContainer canal = new GenericContainer("canal/canal-server:v1.1.4")
                 .withNetwork(Global.NETWORK)
                 .withNetworkAliases("canal")
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
                 .withEnv("canal.auto.scan", "false")
-                .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
+                .withEnv("canal.destinations", "oqsengine")
                 .withEnv("canal.instance.master.address", "mysql:3306")
                 .withEnv("canal.instance.dbUsername", "root")
                 .withEnv("canal.instance.dbPassword", "root")
@@ -58,7 +58,7 @@ public class CanalContainer extends AbstractContainerExtension {
                 LOGGER.info(outputFrame.getUtf8String());
             });
 
-            /**
+            /*
              * 设置oqs中的环境变量
              */
             setSystemProperties(canal.getContainerIpAddress(), canal.getFirstMappedPort().toString());

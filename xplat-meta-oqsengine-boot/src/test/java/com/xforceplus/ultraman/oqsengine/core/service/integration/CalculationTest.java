@@ -94,8 +94,7 @@ public class CalculationTest extends AbstractContainerExtends {
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }
@@ -122,8 +121,7 @@ public class CalculationTest extends AbstractContainerExtends {
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }
@@ -153,10 +151,10 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(0,
             user.entityValue().getValue(
                 MockEntityClassDefine.USER_CLASS.field("订单总数(count)").get().id()).get().valueToLong());
-        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue(
+        Assertions.assertEquals(new BigDecimal("0.0"), user.entityValue().getValue(
             MockEntityClassDefine.USER_CLASS.field("总消费金额(sum)").get().id()).get().getValue()
         );
-        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue(
+        Assertions.assertEquals(new BigDecimal("0.0"), user.entityValue().getValue(
             MockEntityClassDefine.USER_CLASS.field("平均消费金额(avg)").get().id()).get().getValue()
         );
 
@@ -171,7 +169,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     .addValue(
                         new StringValue(
                             MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
-                            "U" + idGenerator.next("userCode"))
+                            "U" + idGenerator.next())
                     )
             ).build();
     }
@@ -185,7 +183,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     .addValue(
                         new StringValue(
                             MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
-                            "O" + idGenerator.next("orderCode")
+                            "O" + idGenerator.next()
                         )
                     )
                     .addValue(

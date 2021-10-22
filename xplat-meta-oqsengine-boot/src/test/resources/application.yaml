@@ -21,21 +21,13 @@ transaction:
   timeoutMs: 3000000
 
 threadPool:
-  # 0 or not exist use cpu core + 1
-  call:
-    read:
-      worker: 0
-      queue: 1000
-    write:
-      worker: 0
-      queue: 1000
-    rebuild:
-      worker: 0
-      queue: 1000
-  cdc:
-    worker: 0
-  event:
+  io:
+    # 服务响应线程池.
     worker: 3
+    queue: 1000
+  task:
+    # 后端任务,或者IO线程池中放入的任务执行线程池.
+    worker: 10
     queue: 1000
 
 sync:
@@ -142,13 +134,14 @@ cdc:
     type: single
     host: "${CANAL_HOST}"
     port: ${CANAL_PORT}
-    destination: "${CANAL_DESTINATION}"
+    destination: "oqsengine"
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
   consumer:
     checkCommitReady: true
+    skipCommitId: -1
 
 meta:
   grpc:

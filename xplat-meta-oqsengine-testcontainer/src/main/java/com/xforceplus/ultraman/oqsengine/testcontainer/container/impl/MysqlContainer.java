@@ -35,7 +35,7 @@ public class MysqlContainer extends AbstractContainerExtension {
             if (null == containerWrapper) {
                 throw new RuntimeException("get remote container failed.");
             }
-            /**
+            /*
              * 设置oqs中的环境变量
              */
             setSystemProperties(containerWrapper.host(), containerWrapper.port());
@@ -47,6 +47,7 @@ public class MysqlContainer extends AbstractContainerExtension {
                 .withEnv("MYSQL_DATABASE", "oqsengine")
                 .withEnv("MYSQL_ROOT_USERNAME", "root")
                 .withEnv("MYSQL_ROOT_PASSWORD", "root")
+                .withClasspathResourceMapping("./mysql", "/docker-entrypoint-initdb.d", BindMode.READ_ONLY)
                 .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(
                     Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
@@ -57,7 +58,7 @@ public class MysqlContainer extends AbstractContainerExtension {
                 LOGGER.info(outputFrame.getUtf8String());
             });
 
-            /**
+            /*
              * 设置oqs中的环境变量
              */
             setSystemProperties(mysql.getContainerIpAddress(), mysql.getFirstMappedPort().toString());
