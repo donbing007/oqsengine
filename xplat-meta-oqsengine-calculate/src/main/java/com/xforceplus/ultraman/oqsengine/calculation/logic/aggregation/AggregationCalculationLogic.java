@@ -21,11 +21,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,6 +56,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
+
         //目标实例
         IEntity entity = context.getFocusEntity();
         //焦点字段
@@ -70,6 +77,18 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return e.entityClassRef().getId() == byAggEntityClassId;
         }).collect(Collectors.toList());
         if (entities.isEmpty()) {
+            // build场景下，给默认值
+            if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                FieldType fieldType = aggField.type();
+                switch (fieldType) {
+                    case LONG:
+                        return Optional.of(new LongValue(aggField, 0L));
+                    case DECIMAL:
+                        return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO));
+                    case DATETIME:
+                        return aggValue;
+                }
+            }
             return aggValue;
         }
 
