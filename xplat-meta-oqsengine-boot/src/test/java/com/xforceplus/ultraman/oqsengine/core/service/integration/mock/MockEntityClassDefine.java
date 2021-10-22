@@ -1,15 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
+import org.mockito.Mockito;
 
 /**
  * MetaManager的Mock实现,为了单元测试准备.
@@ -23,6 +29,10 @@ public class MockEntityClassDefine {
 
     private static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
     /**
+     * 关系标识的开始值,依次递减.
+     */
+    private static long baseRelationsId = Integer.MAX_VALUE;
+    /**
      * 类型标识的开始值,依次递减.
      */
     private static long baseClassId = Long.MAX_VALUE;
@@ -31,32 +41,116 @@ public class MockEntityClassDefine {
      */
     private static long baseFieldId = Long.MAX_VALUE - 1;
 
-    private static long l0EntityClassId = baseClassId--;
-    private static long l1EntityClassId = baseClassId--;
-    private static long l2EntityClassId = baseClassId--;
-    private static long driverEntityClassId = baseClassId--;
-    private static long lookupEntityClassId = baseClassId--;
+    private static long l0EntityClassId = baseClassId;
+    private static long l1EntityClassId = baseClassId - 1;
+    private static long l2EntityClassId = baseClassId - 2;
+    private static long userClassId = baseClassId - 3;
+    private static long orderClassId = baseClassId - 4;
+    private static long orderItemClassId = baseClassId - 5;
+
+    private static long driverEntityClassId = baseClassId - 6;
+    private static long lookupEntityClassId = baseClassId - 7;
+
+    private static long l0LongFieldId = baseFieldId - 1;
+    private static long l0StringFieldId = baseFieldId - 2;
+    private static long l0StringsFieldId = baseFieldId - 3;
+    private static long l1LongFieldId = baseFieldId - 4;
+    private static long l1StringFieldId = baseFieldId - 5;
+    private static long l2StringFieldId = baseFieldId - 6;
+    private static long l2TimeFieldId = baseFieldId - 7;
+    private static long l2EnumFieldId = baseFieldId - 8;
+    private static long l2DecFieldId = baseFieldId - 9;
+    private static long driverLongFieldId = baseFieldId - 10;
+    private static long lookupL2StringFieldId = baseFieldId - 11;
+    private static long lookupL0StringFieldId = baseFieldId - 12;
+    private static long lookupL2DecFieldId = baseFieldId - 13;
+    private static long l2LookupIdFieldId = baseFieldId - 14;
 
 
-    public static IEntityClass l0EntityClass;
-    public static IEntityClass l1EntityClass;
-    public static IEntityClass l2EntityClass;
-    public static IEntityClass driverEntityClass;
-    public static IEntityClass lookupEntityClass;
+    public static IEntityClass L0_ENTITY_CLASS;
+    public static IEntityClass L1_ENTITY_CLASS;
+    public static IEntityClass L2_ENTITY_CLASS;
+    public static IEntityClass DRIVER_ENTITY_CLASS;
+    public static IEntityClass LOOKUP_ENTITY_CLASS;
+
+    /*
+     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg))
+     *   |---订单 (单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup))
+     *        |---订单项 (单号(lookup), 物品名称, 金额)
+     */
+    public static IEntityClass USER_CLASS;
+    public static IEntityClass ORDER_CLASS;
+    public static IEntityClass ORDER_ITEM_CLASS;
+
+    // 用户编号字段标识
+    private static long userCodeFieldId = baseFieldId - 15;
+    // 用户订单总数字段标识
+    private static long userOrderTotalNumberCountFieldId = baseFieldId - 16;
+    // 用户订单总消费金额字段标识.
+    private static long userOrderTotalPriceSumFieldId = baseFieldId - 17;
+    // 用户订单平均消费金额字段标识.
+    private static long userOrderAvgPriceAvgFieldId = baseFieldId - 18;
+    // 用户订单关联字段标识.
+    private static long orderUserForeignFieldId = baseFieldId - 19;
+    // 订单编号字段标识.
+    private static long orderCodeFieldId = baseFieldId - 20;
+    // 订单下单时间字段标识.
+    private static long orderCreateTimeFieldId = baseFieldId - 21;
+    // 订单项总数
+    private static long orderTotalNumberCountFieldId = baseFieldId - 22;
+    // 订单总金额.
+    private static long orderTotalPriceSumFieldId = baseFieldId - 23;
+    // 订单lookup用户编号.
+    private static long orderUserCodeLookupFieldId = baseFieldId - 24;
+    // 订单-订单项外键标识.
+    private static long orderOrderItemForeignFieldId = baseFieldId - 25;
+    // 订单项lookup订单号字段标识.
+    private static long orderItemOrderCodeLookupFieldId = baseFieldId - 26;
+    // 订单项名称字段标识.
+    private static long orderItemNameFieldId = baseFieldId - 27;
+    // 订单项金额字段标识.
+    private static long orderItemPriceFieldId = baseFieldId - 28;
+
+    // 用户->订单关系标识.
+    private static long userOrderOneToManyRelationshipId = baseRelationsId - 6;
+    // 订单 -> 订单项关系标识.
+    private static long orderOrderItemOneToManyRelationshipId = baseRelationsId - 7;
+    //订单 -> 用户关系标识.
+    private static long orderUserManyToOneRelationshipId = baseRelationsId - 8;
+    // 订单项 -> 订单 关系标识.
+    private static long orderItemOrderManyToOneRelationshipId = baseRelationsId - 9;
+
+    // 用户订单关系字段.
+    private static IEntityField orderUserForeignField = EntityField.Builder.anEntityField()
+        .withId(orderUserForeignFieldId)
+        .withName("订单用户关联")
+        .withFieldType(FieldType.LONG)
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
+        ).build();
+
+    // 订单订单项关系字段.
+    private static IEntityField orderOrderItemForeignField = EntityField.Builder.anEntityField()
+        .withId(orderOrderItemForeignFieldId)
+        .withName("订单项订单关联")
+        .withFieldType(FieldType.LONG)
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
+        ).build();
 
     static {
-        l0EntityClass = EntityClass.Builder.anEntityClass()
+        L0_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
             .withId(l0EntityClassId)
             .withLevel(0)
             .withCode("l0")
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(l0LongFieldId)
                     .withFieldType(FieldType.LONG)
                     .withName("l0-long")
                     .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l0StringFieldId)
                 .withFieldType(FieldType.STRING)
                 .withName("l0-string")
                 .withConfig(FieldConfig
@@ -67,7 +161,7 @@ public class MockEntityClassDefine {
                 .build()
             )
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l0StringsFieldId)
                 .withFieldType(FieldType.STRINGS)
                 .withName("l0-strings")
                 .withConfig(FieldConfig
@@ -79,48 +173,48 @@ public class MockEntityClassDefine {
             )
             .build();
 
-        l1EntityClass = EntityClass.Builder.anEntityClass()
+        L1_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
             .withId(l1EntityClassId)
             .withLevel(1)
             .withCode("l1")
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l1LongFieldId)
                 .withFieldType(FieldType.LONG)
                 .withName("l1-long")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l1StringFieldId)
                 .withFieldType(FieldType.STRING)
                 .withName("l1-string")
                 .withConfig(FieldConfig.Builder.anFieldConfig()
                     .withSearchable(true)
                     .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
                     .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
-            .withFather(l0EntityClass)
+            .withFather(L0_ENTITY_CLASS)
             .build();
 
-        l2EntityClass = EntityClass.Builder.anEntityClass()
+        L2_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
             .withId(l2EntityClassId)
             .withLevel(2)
             .withCode("l2")
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l2StringFieldId)
                 .withFieldType(FieldType.STRING)
                 .withName("l2-string")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l2TimeFieldId)
                 .withFieldType(FieldType.DATETIME)
                 .withName("l2-time")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withLen(Integer.MAX_VALUE).withSearchable(true).build())
                 .build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l2EnumFieldId)
                 .withFieldType(FieldType.ENUM)
                 .withName("l2-enum")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(baseFieldId--)
+                .withId(l2DecFieldId)
                 .withFieldType(FieldType.DECIMAL)
                 .withName("l2-dec")
                 .withConfig(
@@ -135,7 +229,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(3)
+                        .withId(baseRelationsId)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
@@ -151,10 +245,10 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(4)
+                        .withId(baseRelationsId - 1)
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
@@ -170,10 +264,10 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(driverEntityClass))
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(5)
+                        .withId(baseRelationsId - 2)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
@@ -182,20 +276,20 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(l2EntityClassId)
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(lookupEntityClass))
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
                         .build()
                 )
             )
-            .withFather(l1EntityClass)
+            .withFather(L1_ENTITY_CLASS)
             .build();
 
-        driverEntityClass = EntityClass.Builder.anEntityClass()
+        DRIVER_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
             .withId(driverEntityClassId)
             .withLevel(0)
             .withCode("driver")
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(driverLongFieldId)
                     .withFieldType(FieldType.LONG)
                     .withName("driver-long")
                     .withConfig(
@@ -208,39 +302,39 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(1)
+                        .withId(baseRelationsId - 3)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withIdentity(false)
                         .withLeftEntityClassId(driverEntityClassId)
                         .withLeftEntityClassCode("driver")
-                        .withEntityField(l2EntityClass.field("l2-driver.id").get())
-                        .withRightEntityClassId(l2EntityClass.id())
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
+                        .withRightEntityClassId(L2_ENTITY_CLASS.id())
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(2)
+                        .withId(baseRelationsId - 4)
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
                         .withIdentity(false)
-                        .withLeftEntityClassId(l2EntityClass.id())
-                        .withLeftEntityClassCode(l2EntityClass.code())
-                        .withEntityField(l2EntityClass.field("l2-driver.id").get())
+                        .withLeftEntityClassId(L2_ENTITY_CLASS.id())
+                        .withLeftEntityClassCode(L2_ENTITY_CLASS.code())
+                        .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(driverEntityClass))
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
                         .build()
                 )
             ).build();
 
-        lookupEntityClass = EntityClass.Builder.anEntityClass()
+        LOOKUP_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
             .withId(lookupEntityClassId)
             .withLevel(0)
             .withCode("lookup")
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(lookupL2StringFieldId)
                     .withName("lookup-l2-string")
                     .withFieldType(FieldType.STRING)
                     .withConfig(
@@ -248,7 +342,7 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Lookup.Builder.anLookup()
                                     .withClassId(l2EntityClassId)
-                                    .withFieldId(l2EntityClass.field("l2-string").get().id()).build()
+                                    .withFieldId(L2_ENTITY_CLASS.field("l2-string").get().id()).build()
                             )
                             .withSearchable(true)
                             .withLen(Integer.MAX_VALUE)
@@ -257,7 +351,7 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(lookupL0StringFieldId)
                     .withName("lookup-l0-string")
                     .withFieldType(FieldType.STRING)
                     .withConfig(
@@ -265,7 +359,7 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Lookup.Builder.anLookup()
                                     .withClassId(l2EntityClassId)
-                                    .withFieldId(l2EntityClass.field("l0-string").get().id()).build()
+                                    .withFieldId(L2_ENTITY_CLASS.field("l0-string").get().id()).build()
                             )
                             .withSearchable(true)
                             .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
@@ -275,7 +369,7 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(lookupL2DecFieldId)
                     .withName("lookup-l2-dec")
                     .withFieldType(FieldType.DECIMAL)
                     .withConfig(
@@ -283,7 +377,7 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Lookup.Builder.anLookup()
                                     .withClassId(l2EntityClassId)
-                                    .withFieldId(l2EntityClass.field("l2-dec").get().id()).build()
+                                    .withFieldId(L2_ENTITY_CLASS.field("l2-dec").get().id()).build()
                             )
                             .withSearchable(true)
                             .withLen(Integer.MAX_VALUE)
@@ -293,7 +387,7 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(baseFieldId--)
+                    .withId(l2LookupIdFieldId)
                     .withName("l2-lookup.id")
                     .withFieldType(FieldType.LONG)
                     .withConfig(
@@ -303,7 +397,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(5)
+                        .withId(baseRelationsId - 5)
                         .withCode("l2-one-to-many-lookup")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
@@ -312,9 +406,283 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(lookupEntityClassId)
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(l2EntityClass))
+                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build()
                 )
             ).build();
+
+        USER_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(userClassId)
+            .withCode("user")
+            .withLevel(0)
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userCodeFieldId)
+                    .withFieldType(FieldType.STRING)
+                    .withName("用户编号")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(100)
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                            .withRequired(true).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderTotalNumberCountFieldId)
+                    .withName("订单总数(count)")
+                    .withFieldType(FieldType.LONG)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.COUNT)
+                                    .withClassId(orderClassId)
+                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderTotalPriceSumFieldId)
+                    .withName("总消费金额(sum)")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withSearchable(true)
+                            .withPrecision(6)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.SUM)
+                                    .withClassId(orderClassId)
+                                    .withFieldId(orderTotalPriceSumFieldId)
+                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderAvgPriceAvgFieldId)
+                    .withName("平均消费金额(avg)")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.AVG)
+                                    .withClassId(orderClassId)
+                                    .withFieldId(orderTotalPriceSumFieldId)
+                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                            ).build()
+                    ).build()
+            )
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(userOrderOneToManyRelationshipId)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withBelongToOwner(false)
+                        .withLeftEntityClassId(userClassId)
+                        .withLeftEntityClassCode("user")
+                        .withRightEntityClassId(orderClassId)
+                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withEntityField(orderUserForeignField).build()
+                )
+            ).build();
+
+        ORDER_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(orderClassId)
+            .withCode("order")
+            .withLevel(0)
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderCodeFieldId)
+                    .withFieldType(FieldType.STRING)
+                    .withName("订单号")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(100)
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                            .withRequired(true).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderCreateTimeFieldId)
+                    .withFieldType(FieldType.DATETIME)
+                    .withName("下单时间")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                            .withRequired(true).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderTotalNumberCountFieldId)
+                    .withFieldType(FieldType.LONG)
+                    .withName("订单项总数(count)")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.COUNT)
+                                    .withClassId(orderItemClassId)
+                                    .withRelationId(orderOrderItemOneToManyRelationshipId).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderTotalPriceSumFieldId)
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("总金额(sum)")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.SUM)
+                                    .withClassId(orderItemClassId)
+                                    .withFieldId(orderItemPriceFieldId)
+                                    .withRelationId(orderOrderItemOneToManyRelationshipId).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderUserCodeLookupFieldId)
+                    .withFieldType(FieldType.STRING)
+                    .withName("用户编号(lookup)")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withLen(100)
+                            .withCalculation(
+                                Lookup.Builder.anLookup()
+                                    .withClassId(userClassId)
+                                    .withFieldId(userCodeFieldId).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(orderUserForeignField)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(orderOrderItemOneToManyRelationshipId)
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withBelongToOwner(false)
+                        .withLeftEntityClassId(orderClassId)
+                        .withLeftEntityClassCode("order")
+                        .withRightEntityClassId(orderItemClassId)
+                        .withRightEntityClassLoader(orderItemClassId -> Optional.of(ORDER_ITEM_CLASS))
+                        .withEntityField(orderOrderItemForeignField).build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(orderUserManyToOneRelationshipId)
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(orderClassId)
+                        .withLeftEntityClassCode("order")
+                        .withRightEntityClassId(userClassId)
+                        .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+                        .withEntityField(orderUserForeignField).build()
+                )
+            )
+            .build();
+
+        ORDER_ITEM_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(orderItemClassId)
+            .withCode("orderItem")
+            .withLevel(0)
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderItemOrderCodeLookupFieldId)
+                    .withFieldType(FieldType.STRING)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withLen(100)
+                            .withCalculation(
+                                Lookup.Builder.anLookup()
+                                    .withClassId(orderClassId)
+                                    .withFieldId(orderCodeFieldId)
+                                    .build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderItemNameFieldId)
+                    .withFieldType(FieldType.STRING)
+                    .withName("物品名称")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(100)
+                            .withSearchable(true).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderItemPriceFieldId)
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("金额")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withLen(19)
+                            .withPrecision(6).build()
+                    ).build()
+            )
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(orderItemOrderManyToOneRelationshipId)
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(orderItemClassId)
+                        .withLeftEntityClassCode("orderItem")
+                        .withRightEntityClassId(orderClassId)
+                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withEntityField(orderOrderItemForeignField).build()
+                )
+            ).build();
+    }
+
+    /**
+     * 初始化.
+     */
+    public static void initMetaManager(MetaManager metaManager) {
+        IEntityClass[] es = new IEntityClass[] {
+            L0_ENTITY_CLASS,
+            L1_ENTITY_CLASS,
+            L2_ENTITY_CLASS,
+            DRIVER_ENTITY_CLASS,
+            LOOKUP_ENTITY_CLASS,
+            USER_CLASS,
+            ORDER_CLASS,
+            ORDER_ITEM_CLASS
+        };
+
+        for (IEntityClass e : es) {
+            Mockito.when(metaManager.load(e.id())).thenReturn(Optional.of(e));
+            Mockito.when(metaManager.load(e.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(e));
+            Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
+            Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
+        }
     }
 }

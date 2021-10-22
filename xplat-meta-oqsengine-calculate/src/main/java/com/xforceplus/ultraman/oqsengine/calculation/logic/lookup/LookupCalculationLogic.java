@@ -190,15 +190,17 @@ public class LookupCalculationLogic implements CalculationLogic {
                     index++;
                 }
 
-                /*
-                超出 TRANSACTION_LIMIT_NUMBER 数量将进行事务外处理.
-                这里会利用事务提供的回调在事务提交后执行.
-                */
-                context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
-                    String lastKey = iter.currentKey();
+                if (index >= TRANSACTION_LIMIT_NUMBER) {
+                    /*
+                    超出 TRANSACTION_LIMIT_NUMBER 数量将进行事务外处理.
+                    这里会利用事务提供的回调在事务提交后执行.
+                    */
                     TaskCoordinator coordinator = context.getResourceWithEx(() -> context.getTaskCoordinator());
-                    coordinator.addTask(new LookupMaintainingTask(iterKey, lastKey, TRANSACTION_LIMIT_NUMBER));
-                });
+                    context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
+                        String lastKey = iter.currentKey();
+                        coordinator.addTask(new LookupMaintainingTask(iterKey, lastKey, TRANSACTION_LIMIT_NUMBER));
+                    });
+                }
 
                 return links.stream().mapToLong(l -> l.getLookupEntityId()).toArray();
             }

@@ -31,12 +31,9 @@ public class MemoryTaskKeyQueue implements TaskQueue {
     }
 
     @Override
-    public Task get(long awaitTimeMs) {
-        try {
-            return queue.poll(awaitTimeMs, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+    public Task get(long awaitTimeMs) throws InterruptedException {
+        return queue.poll(awaitTimeMs, TimeUnit.MILLISECONDS);
+
     }
 
     @Override

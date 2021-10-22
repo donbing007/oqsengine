@@ -34,10 +34,10 @@ public class LookupHelperTest {
         Assertions.assertEquals(
             String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
                 LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id()),
-                LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntity.id()),
                 LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX,
                 NumberUtils.zeroFill(lookupEntity.entityClassRef().getId()),
                 LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, NumberUtils.zeroFill(lookupField.id()),
+                LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntity.id()),
                 LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntity.id())
             ), key.toString());
     }
@@ -54,9 +54,9 @@ public class LookupHelperTest {
         Assertions.assertEquals(
             String.format("%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
                 LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id()),
-                LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntity.id()),
                 LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX, NumberUtils.zeroFill(lookupEntityClass.id()),
-                LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, NumberUtils.zeroFill(lookupField.id())
+                LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, NumberUtils.zeroFill(lookupField.id()),
+                LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntity.id())
             ),
             key.toString()
         );

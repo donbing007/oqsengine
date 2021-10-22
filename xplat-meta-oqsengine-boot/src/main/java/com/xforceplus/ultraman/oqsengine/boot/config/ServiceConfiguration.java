@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntitySearchServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.TransactionManagementServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,25 +40,25 @@ public class ServiceConfiguration {
         return impl;
     }
 
-    //    /**
-    //     * 实体管理服务.
-    //     */
-    //    @Bean
-    //    public EntityManagementService entityManagementService(
-    //        @Value("${sync.ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
-    //        @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs,
-    //        @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize
-    //    ) {
-    //        EntityManagementServiceImpl impl = new EntityManagementServiceImpl(ignoreCDCStatusCheck);
-    //        if (allowMaxLiveTimeMs > 0) {
-    //            impl.setAllowMaxLiveTimeMs(allowMaxLiveTimeMs);
-    //        }
-    //
-    //        if (allowMaxUnSyncCommitIdSize > 0) {
-    //            impl.setAllowMaxUnSyncCommitIdSize(allowMaxUnSyncCommitIdSize);
-    //        }
-    //        return impl;
-    //    }
+    /**
+     * 实体管理服务.
+     */
+    @Bean
+    public EntityManagementService entityManagementService(
+        @Value("${sync.ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
+        @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs,
+        @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize) {
+
+        EntityManagementServiceImpl impl = new EntityManagementServiceImpl(ignoreCDCStatusCheck);
+        if (allowMaxLiveTimeMs > 0) {
+            impl.setAllowMaxLiveTimeMs(allowMaxLiveTimeMs);
+        }
+
+        if (allowMaxUnSyncCommitIdSize > 0) {
+            impl.setAllowMaxUnSyncCommitIdSize(allowMaxUnSyncCommitIdSize);
+        }
+        return impl;
+    }
 
     @Bean
     public DevOpsManagementService devOpsManagementService() {

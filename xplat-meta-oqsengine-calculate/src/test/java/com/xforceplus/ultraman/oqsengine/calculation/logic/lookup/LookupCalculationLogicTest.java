@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -341,45 +342,60 @@ public class LookupCalculationLogicTest {
     public void testStrongRelationship() throws Exception {
         MockTaskCoordinator coordinator = new MockTaskCoordinator();
         MockTransaction tx = new MockTransaction();
+        KeyValueStorage kv = new MemoryKeyValueStorage();
 
-        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
-            .withTransaction(tx)
-            .withTaskCoordinator(coordinator)
-            .build();
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
             .withEntityValue(
                 EntityValue.build().addValue(
-                    new LongValue(targetLongField, 100)
+                    new StringValue(targetStringField, "v1")
                 )
             ).build();
+
+        // 比当前事务可处理上限多1.
+        for (int i = 0; i < 1001; i++) {
+            IEntity lookupEntity = Entity.Builder.anEntity()
+                .withId(Integer.MAX_VALUE - i)
+                .withEntityClassRef(strongLookupEntityClass.ref())
+                .build();
+            String key =
+                LookupHelper.buildLookupLinkKey(targetEntity, targetStringField, lookupEntity, strongStringLookupField)
+                    .toString();
+            kv.save(key, null);
+        }
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withTransaction(tx)
+            .withTaskCoordinator(coordinator)
+            .withKeyValueStorage(kv)
+            .build();
+        context.focusEntity(targetEntity, targetEntityClass);
+        context.focusField(targetStringField);
+
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+
         Infuence infuence = new Infuence(
             targetEntity,
             Participant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
-                .withField(targetLongField)
+                .withField(targetStringField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
             ValueChange.build(
                 targetEntity.id(),
-                new LongValue(targetLongField, 50L),
-                new LongValue(targetLongField, 100L))
+                new StringValue(targetStringField, "v0"),
+                new StringValue(targetStringField, "v1")
+            )
         );
 
-        context.focusEntity(targetEntity, targetEntityClass);
-        context.focusField(targetLongField);
-
-        LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
         AtomicReference<Participant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
-            if (parentParticipant.isPresent()) {
-                if (parentParticipant.get().getEntityClass().id() == targetClassId) {
-                    p.set(participant);
-                    return false;
-                }
+            if (participant.getEntityClass().id() == strongLookupClassId) {
+                p.set(participant);
+                return false;
             }
             return true;
         });
@@ -387,7 +403,7 @@ public class LookupCalculationLogicTest {
 
         Participant participant = p.get();
         long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(0, ids.length);
+        Assertions.assertEquals(1000, ids.length);
 
         tx.commit();
 
@@ -396,11 +412,9 @@ public class LookupCalculationLogicTest {
 
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
 
-        LookupHelper.LookupLinkIterKey lookupLinkIterKey = LookupHelper.buildIteratorPrefixLinkKey(
-            context.getFocusField(), participant.getEntityClass(), participant.getField(),
-            context.getFocusEntity());
-        Assertions.assertEquals(lookupLinkIterKey.toString(), lookTask.getIterKey());
-        Assertions.assertNull(lookTask.getPointKey().orElse(null));
+        String startKey =
+            "lookup-tf9223372036854775806-lc9223372036854775806-lf9223372036854775803-te9223372036854775807-le0000000002147483646";
+        Assertions.assertEquals(startKey, lookTask.getPointKey().get());
     }
 
     private static class MockTaskCoordinator implements TaskCoordinator {

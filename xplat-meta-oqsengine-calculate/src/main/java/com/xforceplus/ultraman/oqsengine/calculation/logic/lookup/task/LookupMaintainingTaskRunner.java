@@ -236,16 +236,19 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         return true;
     }
 
-    private Collection<EntityPackage> split(Collection<IEntity> entities, IEntityClass entityClass, int size) {
-        Collection<EntityPackage> packages = new ArrayList<>(entities.size() / size + 1);
+    private Collection<EntityPackage> split(Collection<IEntity> entities, IEntityClass entityClass,
+                                            int packageLimitSize) {
+        Collection<EntityPackage> packages = new ArrayList<>(entities.size() / packageLimitSize + 1);
         EntityPackage entityPackage = new EntityPackage();
+        packages.add(entityPackage);
         for (IEntity entity : entities) {
-            if (entityPackage.size() < size) {
-                entityPackage.put(entity, entityClass);
-            } else {
-                packages.add(entityPackage);
+            if (entityPackage.size() >= packageLimitSize) {
                 entityPackage = new EntityPackage();
+                packages.add(entityPackage);
+                entityPackage.put(entity, entityClass);
             }
+
+            entityPackage.put(entity, entityClass);
         }
         return packages;
     }

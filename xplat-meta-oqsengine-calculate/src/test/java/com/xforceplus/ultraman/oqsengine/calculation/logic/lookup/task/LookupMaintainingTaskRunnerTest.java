@@ -224,13 +224,14 @@ public class LookupMaintainingTaskRunnerTest {
      */
     @Test
     public void testRunOnece() throws Exception {
-        // 默认的一次执行是100,所以这里设置10将不会往任务队列中增加任务.
+        // 设定的默认执行上限是1000,所以这里设置10将不会往任务队列中增加任务.
         doTest(10);
     }
 
     @Test
     public void testRunRepeatedly() throws Exception {
-        doTest(150);
+        // 会增加第二个任务.
+        doTest(1500);
     }
 
     // 实际测试任务,只有一个target,会有1-N个lookup实例.
@@ -244,7 +245,8 @@ public class LookupMaintainingTaskRunnerTest {
 
         LookupMaintainingTask task = new LookupMaintainingTask(
             LookupHelper.buildIteratorPrefixLinkKey(targetField0, lookupEntityClass, lookupField0, targetEntity)
-                .toString()
+                .toString(),
+            1000
         );
 
         runner.run(coordinator, task);
@@ -252,9 +254,10 @@ public class LookupMaintainingTaskRunnerTest {
         // 等待所有lookup字段被更新.
         Collection<IEntity> newLookupEntities = null;
         boolean notUpdate = true;
+        int okSize = 0;
         while (notUpdate) {
             newLookupEntities = masterStorage.selectMultiple(lookupEntityIds);
-            int okSize = 0;
+            okSize = 0;
             for (IEntity lookupEntity : newLookupEntities) {
                 if (lookupEntity.version() == 0) {
                     notUpdate = true;
@@ -270,6 +273,7 @@ public class LookupMaintainingTaskRunnerTest {
                 }
             }
         }
+        logger.debug("All entity update.[{}/{}]", okSize, newLookupEntities.size());
 
         for (IEntity le : newLookupEntities) {
             Assertions.assertEquals(

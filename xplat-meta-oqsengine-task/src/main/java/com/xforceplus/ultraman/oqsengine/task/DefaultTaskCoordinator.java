@@ -165,9 +165,19 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                     task = taskQueue.get(checkTimeoutMs);
                 } catch (Exception ex) {
 
-                    logger.error(ex.getMessage(), ex);
+                    // 如果异常是中断异常,那么忽略.
+                    if (!InterruptedException.class.isInstance(ex)) {
 
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+                        logger.error(ex.getMessage(), ex);
+
+                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+
+                    } else {
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(ex.getMessage(), ex);
+                        }
+                    }
 
                 }
 

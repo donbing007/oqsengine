@@ -361,26 +361,50 @@ public class DefaultCalculationImpl implements Calculation {
         IEntityClass entityClass = context.getFocusClass();
 
         Collection<IEntityField> fields;
-        if (onlyCalculationField) {
+        fields = entityClass.fields().stream().filter(f -> {
+            /*
+            如果只处理计算字段, 那么所有优先级小于0的将被过滤.
+            如果处理所有字段,那么只有计算类型未知的才会被过滤.
+             */
+            if (onlyCalculationField) {
+                return f.calculationType().getPriority() > (byte) 0;
+            } else {
+                return f.calculationType() != CalculationType.UNKNOWN;
+            }
+        }).filter(f -> {
+            /*
+               如果字段的计算类型定义即使用没有改变也需要被计算,否则判断是否发生改变.
+            */
+            CalculationScenarios scenarios = context.getScenariso();
+            CalculationType calculationType = f.calculationType();
+            switch (scenarios) {
+                case BUILD: {
+                    if (calculationType.isBuildNeedNotChange()) {
+                        return true;
+                    } else {
+                        break;
+                    }
+                }
+                case REPLACE: {
+                    if (calculationType.isReplaceNeedNotChange()) {
+                        return true;
+                    } else {
+                        break;
+                    }
+                }
+                case DELETE: {
+                    if (calculationType.isDeleteNeedNotChange()) {
+                        return true;
+                    } else {
+                        break;
+                    }
+                }
+                default:
+                    return false;
+            }
 
-            fields = entityClass.fields().stream().filter(f ->
-                // 只处理计算字段.
-                f.calculationType() != CalculationType.STATIC || f.calculationType() != CalculationType.UNKNOWN
-
-            ).filter(f ->
-                // 只处理改变的字段.
-                context.getValueChange(context.getFocusEntity(), f).isPresent()
-
-            ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
-
-        } else {
-
-            fields = entityClass.fields().stream().filter(f ->
-                // 只处理改变的字段.
-                context.getValueChange(context.getFocusEntity(), f).isPresent()
-
-            ).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
-        }
+            return context.getValueChange(context.getFocusEntity(), f).isPresent();
+        }).sorted(CalculationComparator.getInstance()).collect(Collectors.toList());
 
         if (logger.isDebugEnabled()) {
             if (onlyCalculationField) {

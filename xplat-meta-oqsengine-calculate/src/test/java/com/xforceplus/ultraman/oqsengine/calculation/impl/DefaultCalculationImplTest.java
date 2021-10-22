@@ -253,6 +253,22 @@ public class DefaultCalculationImplTest {
 
     }
 
+    /**
+     * 测试创建的时候那些没有改变,但是需要被改变的计算字段.
+     */
+    @Test
+    public void testBuildNotChangeFieldButNeed() throws Exception {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.BUILD).build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(entityB, B_CLASS);
+
+        DefaultCalculationImpl calculation = new DefaultCalculationImpl();
+        IEntity newEntity = calculation.calculate(context);
+        Assertions.assertEquals(200L, newEntity.entityValue().getValue(B_SUM.id()).get().valueToLong());
+    }
+
     @Test
     public void testBuildCalculation() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()

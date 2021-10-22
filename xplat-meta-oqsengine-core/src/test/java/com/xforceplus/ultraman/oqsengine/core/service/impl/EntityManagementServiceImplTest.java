@@ -7,9 +7,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
-import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -24,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -488,62 +484,6 @@ public class EntityManagementServiceImplTest {
             .build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
-    }
-
-    @Test
-    public void testReplaceMaintain() throws Exception {
-        MasterStorage masterStorage = mock(MasterStorage.class);
-
-        long targetEntityId = Long.MAX_VALUE;
-        IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(targetEntityId)
-            .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l2-string").get(), "old-value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            ).build();
-
-        when(masterStorage.selectOne(targetEntityId, EntityClassDefine.l2EntityClass))
-            .thenReturn(Optional.of(targetEntity));
-        when(masterStorage.replace(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
-
-        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-
-        DefaultCalculationLogicContext calculationLogicContext =
-            DefaultCalculationLogicContext.Builder.anCalculationLogicContext()
-                .withEntity(targetEntity)
-                .withScenarios(CalculationScenarios.REPLACE).build();
-        calculationLogicContext.focusField(EntityClassDefine.l2EntityClass.field("l2-string").get());
-
-        CalculationLogic mockLookupLogic = mock(CalculationLogic.class);
-        when(mockLookupLogic.maintain(calculationLogicContext)).thenReturn(true);
-
-        // 默认的是一个没有任务逻辑片的工厂,这里重新模似一个.
-        CalculationLogicFactory mockCalculationLogicFactory = mock(CalculationLogicFactory.class);
-        when(mockCalculationLogicFactory.getCalculationLogics()).thenReturn(Arrays.asList(mockLookupLogic));
-
-        ReflectionTestUtils.setField(impl, "calculationLogicFactory", mockCalculationLogicFactory);
-
-        // 发起修改的实例.
-        IEntity replaceEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(targetEntityId)
-            .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l2-string").get(), "new-value"))
-            ).build();
-        impl.replace(replaceEntity);
-
-        verify(mockLookupLogic, times(1)).maintain(calculationLogicContext);
     }
 
 } 

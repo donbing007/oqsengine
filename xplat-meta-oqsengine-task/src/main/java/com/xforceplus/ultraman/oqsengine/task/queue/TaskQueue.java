@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 
 /**
@@ -9,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.task.Task;
  * @version 0.1 2021/08/05 15:27
  * @since 1.8
  */
-public interface TaskQueue {
+public interface TaskQueue extends Lifecycle {
 
     /**
      * 追加任务.
@@ -35,7 +36,7 @@ public interface TaskQueue {
      * @param awaitTimeMs 等待的毫秒数.
      * @return 任务.
      */
-    public Task get(long awaitTimeMs);
+    public Task get(long awaitTimeMs) throws InterruptedException;
 
     /**
      * 任务完成确认.
@@ -44,7 +45,4 @@ public interface TaskQueue {
      */
     public void ack(Task task);
 
-    public void destroy();
-
-    /*public boolean ack(Task task , long awaitTimeMS);*/
 }

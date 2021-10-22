@@ -398,7 +398,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                     queue = usingApp.entrySet().iterator().next().getValue();
                     try {
                         task = queue.get(1000L);
-                    } catch (RuntimeException e) {
+                    } catch (InterruptedException e) {
                         logger.error(e.getMessage(), e);
                     }
 
@@ -415,7 +415,11 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                             if (kv.incr(String.format("%s-%s", prefix, TaskKeyValueQueue.UNUSED), 0) == 0) {
                                 kv.incr(prefix);
                                 removeAppInfoFromOrderList(prefix);
-                                taskQueueMap.get(prefix).destroy();
+                                try {
+                                    taskQueueMap.get(prefix).destroy();
+                                } catch (Exception ex) {
+                                    logger.error(ex.getMessage(), ex);
+                                }
                                 taskQueueMap.remove(prefix);
                                 usingApp.remove(prefix);
                             }
