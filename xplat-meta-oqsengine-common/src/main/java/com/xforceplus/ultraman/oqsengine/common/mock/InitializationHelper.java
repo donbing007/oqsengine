@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.common.mock;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainerExtension;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Disabled;
@@ -23,7 +22,6 @@ public class InitializationHelper {
      * 加入.
      */
     public static void add(BeanInitialization beanInitialization) {
-        registerDestroy();
         clearList.add(beanInitialization);
     }
 
@@ -44,13 +42,7 @@ public class InitializationHelper {
         }
     }
 
-    public static void registerDestroy() {
-        if (clearList.isEmpty()) {
-            AbstractContainerExtension.addConsumer((v) -> {
-                destroy();
-            });
-        }
-    }
+
 
     public static void destroy() {
         CommonInitialization commonInitialization = null;

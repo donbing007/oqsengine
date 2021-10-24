@@ -24,6 +24,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
@@ -94,18 +96,17 @@ public class UserCaseTest extends AbstractContainerExtends {
     public void before() throws Exception {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
+
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.executeUpdate("truncate table oqsbigentity");
             }
         }
 
-
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }
@@ -132,8 +133,7 @@ public class UserCaseTest extends AbstractContainerExtends {
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }

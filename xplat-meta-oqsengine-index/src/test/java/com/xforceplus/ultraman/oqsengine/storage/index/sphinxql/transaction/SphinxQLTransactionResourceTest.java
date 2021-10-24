@@ -33,7 +33,7 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerExtends {
         Connection conn = ds.getConnection();
         SphinxQLTransactionResource sqtr = new SphinxQLTransactionResource("test", conn, false);
         try (Statement stat = conn.createStatement()) {
-            stat.executeUpdate(String.format("insert into oqsindex0 (%s,%s,%s) values(1,'100','v1')",
+            stat.executeUpdate(String.format("insert into oqsindex (%s,%s,%s) values(1,'100','v1')",
                 FieldDefine.ID, FieldDefine.ENTITYCLASSF, FieldDefine.ATTRIBUTEF));
         }
         sqtr.commit();
@@ -42,7 +42,7 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerExtends {
 
         try (Connection conn1 = ds.getConnection()) {
             try (Statement statement = conn1.createStatement()) {
-                ResultSet rs = statement.executeQuery("select count(*) from oqsindex0");
+                ResultSet rs = statement.executeQuery("select count(*) from oqsindex");
                 rs.next();
                 Assertions.assertEquals(1, rs.getInt(1));
             }

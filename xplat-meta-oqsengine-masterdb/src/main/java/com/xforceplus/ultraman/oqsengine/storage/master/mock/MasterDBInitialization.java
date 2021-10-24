@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.BeanInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.common.mock.SqlInitUtils;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -102,28 +103,9 @@ public class MasterDBInitialization implements BeanInitialization {
         masterStorage.init();
     }
 
-    private void initTable() throws Exception {
-        try (Connection conn = dataSource.getConnection();
-             Statement st = conn.createStatement()) {
-            st.execute(MasterDbScript.DROP_OQS_BIG_ENTITY);
-            st.execute(MasterDbScript.CREATE_OQS_BIG_ENTITY);
-
-            st.execute(MasterDbScript.DROP_OQS_UNIQUE);
-            st.execute(MasterDbScript.CREATE_OQS_UNIQUE);
-
-            st.execute(MasterDbScript.DROP_OQS_ENTITY_FAILS);
-            st.execute(MasterDbScript.CREATE_OQS_ENTITY_FAILS);
-        }
-    }
-
     @Override
     public void clear() throws Exception {
-        Connection conn = dataSource.getConnection();
-        Statement st = conn.createStatement();
-        st.execute("truncate table " + MASTER_STORAGE_TABLE);
-        st.execute("truncate table " + MASTER_STORAGE_FAILED_TABLE);
-        st.close();
-        conn.close();
+        SqlInitUtils.init("/mysql/truncate", dataSource);
     }
 
     @Override

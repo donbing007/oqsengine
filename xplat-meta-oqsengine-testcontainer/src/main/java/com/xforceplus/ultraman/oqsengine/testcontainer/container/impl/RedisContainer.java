@@ -61,6 +61,11 @@ public class RedisContainer extends AbstractContainerExtension {
     }
 
     @Override
+    protected void containerClose() {
+
+    }
+
+    @Override
     protected ContainerSupport containerSupport() {
         return ContainerSupport.REDIS;
     }

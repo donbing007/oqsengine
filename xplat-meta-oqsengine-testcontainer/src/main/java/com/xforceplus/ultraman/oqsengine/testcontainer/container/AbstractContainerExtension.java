@@ -26,8 +26,6 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
     private static final Logger
         LOGGER = LoggerFactory.getLogger(AbstractContainerExtension.class);
 
-    private static Consumer<Boolean> CONSUMER = null;
-
     private static String UUID;
 
     /**
@@ -74,10 +72,6 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
     public void close() {
         LOGGER.info("Stop container ...");
 
-        if (null != CONSUMER) {
-            CONSUMER.accept(true);
-        }
-
         AtomicBoolean useRemoteContainer = new AtomicBoolean(false);
         try {
             /**
@@ -85,6 +79,8 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
              */
             Global.CONTAINER_MAP.forEach(
                 (k, v) -> {
+                    containerClose();
+
                     if (v instanceof FixedContainerWrapper) {
                         GenericContainerUtils.genericClose(((FixedContainerWrapper) v).getGenericContainer());
                     } else {
@@ -103,14 +99,6 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
         }
     }
 
-    /**
-     * add destroy consumer.
-     */
-    public static void addConsumer(Consumer<Boolean> incomingConsumer) {
-        if (null == CONSUMER) {
-            CONSUMER = incomingConsumer;
-        }
-    }
 
     /**
      * 构建子容器，由子类来实现.
@@ -118,6 +106,13 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
      * @return 容器实例
      */
     protected abstract ContainerWrapper setupContainer(String uid);
+
+    /**
+     * 构建子容器，由子类来实现.
+     *
+     * @return 容器实例
+     */
+    protected abstract void containerClose();
 
     /**
      * 返回容器类型

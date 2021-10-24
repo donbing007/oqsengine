@@ -1,4 +1,3 @@
-create database if not exists oqsengine;
 use oqsengine;
 create table oqsbigentity
 (
@@ -18,15 +17,16 @@ create table oqsbigentity
     deleted        boolean default false not null comment '是否被删除.',
     attribute      json                  not null comment '当前 entity 的属性集合.',
     oqsmajor       int     default 0     not null comment '产生数据的oqs主版本号',
-    profile        varchar(64)           not null comment '替身',
+    profile        varchar(64) default '' not null comment '替身',
     primary key (id),
     KEY commitid_entity_index (commitid, entityclassl0, entityclassl1),
     KEY tx_index (tx),
-    KEY update_time_index(updatetime)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 PARTITION BY HASH(id) PARTITIONS 40;
+    KEY update_time_index (updatetime)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 create table kv (
   k       varchar(255)          not null comment 'key',
   v     blob                           comment '值',
   primary key (k)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 PARTITION BY KEY() PARTITIONS 40;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+

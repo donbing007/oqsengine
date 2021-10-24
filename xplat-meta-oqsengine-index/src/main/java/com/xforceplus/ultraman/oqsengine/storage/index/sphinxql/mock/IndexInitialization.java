@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.BeanInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.common.mock.SqlInitUtils;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -68,8 +69,6 @@ public class IndexInitialization implements BeanInitialization {
     public void init() throws Exception {
         writeDataSourceSelector = buildWriteDataSourceSelector();
 
-        initTable();
-
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
@@ -80,7 +79,7 @@ public class IndexInitialization implements BeanInitialization {
         sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        indexWriteIndexNameSelector = new SuffixNumberHashSelector(INDEX_TABLE, 2);
+        indexWriteIndexNameSelector = new NoSelector<>(INDEX_TABLE);
 
         indexStorage = new SphinxQLManticoreIndexStorage();
 
@@ -121,8 +120,7 @@ public class IndexInitialization implements BeanInitialization {
         for (DataSource ds : dataSources) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table " + INDEX_TABLE + "0");
-            st.executeUpdate("truncate table " + INDEX_TABLE + "1");
+            st.executeUpdate("truncate table " + INDEX_TABLE);
             st.close();
             conn.close();
         }
@@ -140,25 +138,8 @@ public class IndexInitialization implements BeanInitialization {
         instance = null;
     }
 
-    private void initTable() throws Exception {
-        List<DataSource> dataSources = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter();
-        for (DataSource ds : dataSources) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE + "0");
-            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE + "1");
-            st.executeUpdate(IndexDbScript.DROP_INDEX + INDEX_TABLE);
-
-            st.executeUpdate(IndexDbScript.CREATE_INDEX_0);
-            st.executeUpdate(IndexDbScript.CREATE_INDEX_1);
-            st.executeUpdate(IndexDbScript.SEARCH_INDEX);
-            st.close();
-            conn.close();
-        }
-    }
-
     private Selector<DataSource> buildWriteDataSourceSelector() throws IllegalAccessException {
-        return new HashSelector<>(CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter());
+        return new NoSelector<>(CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter().get(0));
     }
 
     private DataSource buildSearchDataSourceSelector() throws IllegalAccessException {

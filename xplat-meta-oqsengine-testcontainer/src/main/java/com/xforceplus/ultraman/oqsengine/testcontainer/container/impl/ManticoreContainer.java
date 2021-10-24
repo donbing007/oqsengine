@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
+import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,7 +54,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
                 .withExposedPorts(9306)
                 .withNetwork(Global.NETWORK)
                 .withNetworkAliases("manticore")
-                .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+                .withClasspathResourceMapping("manticore/manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
                 .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
             manticore.start();
@@ -69,60 +70,21 @@ public class ManticoreContainer extends AbstractContainerExtension {
             containerWrapper = new FixedContainerWrapper(manticore);
 
             try {
-                init();
+                SqlInitUtils.init("/manticore", "MANTICORE_JDBC");
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
-
         }
 
         return containerWrapper;
     }
 
-    private void init() throws Exception {
+    @Override
+    protected void containerClose() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        File path = new File(ManticoreContainer.class.getResource("/manticore").getPath());
-        String[] sqlFiles = path.list((dir, name) -> {
-            String[] names = name.split("\\.");
-            if (names.length == 2 && names[1].equals("sql")) {
-                return true;
-            }
-            return false;
-        });
-
-        List<String> sqls = new ArrayList();
-        for (String file : sqlFiles) {
-            String fullPath = String.format("%s%s%s", path.getAbsolutePath(), File.separator, file);
-            LOGGER.info("Reader manticore sql file: {}", fullPath);
-            try (BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fullPath), "utf8"))) {
-                String line;
-                StringBuilder buff = new StringBuilder();
-                while ((line = in.readLine()) != null) {
-                    buff.append(line);
-                    if (buff.charAt(buff.length() - 1) == ';') {
-                        buff.deleteCharAt(buff.length() - 1);
-                        sqls.add(buff.toString());
-
-                        LOGGER.info(buff.toString());
-
-                        buff.delete(0, buff.length());
-                    }
-                }
-            }
-        }
-
-        try (Connection conn = DriverManager.getConnection(System.getProperty("MANTICORE_JDBC"))) {
-            try (Statement statement = conn.createStatement()) {
-                for (String sql : sqls) {
-                    statement.execute(sql);
-                }
-            }
+            SqlInitUtils.init("/manticore/drop", "MANTICORE_JDBC");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

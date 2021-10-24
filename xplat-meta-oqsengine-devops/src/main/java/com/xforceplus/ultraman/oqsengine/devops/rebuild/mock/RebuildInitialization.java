@@ -54,7 +54,6 @@ public class RebuildInitialization implements BeanInitialization {
     public void init() throws Exception {
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
         devOpsDataSource = buildDevOpsDataSource();
-        initTable();
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         Collection<Field> fields = ReflectionUtils.printAllMembers(sqlTaskStorage);
         ReflectionUtils.reflectionFieldValue(fields, "devOpsDataSource", sqlTaskStorage, devOpsDataSource);
@@ -85,15 +84,6 @@ public class RebuildInitialization implements BeanInitialization {
         idGenerator = null;
 
         instance = null;
-    }
-
-    private void initTable() throws Exception {
-        try (Connection conn = devOpsDataSource.getConnection()) {
-            try (Statement st = conn.createStatement()) {
-                st.execute(RebuildDbScript.DROP_REBUILD);
-                st.execute(RebuildDbScript.CREATE_REBUILD);
-            }
-        }
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {

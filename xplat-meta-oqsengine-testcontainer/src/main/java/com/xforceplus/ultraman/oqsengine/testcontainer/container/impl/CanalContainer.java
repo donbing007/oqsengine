@@ -29,6 +29,8 @@ public class CanalContainer extends AbstractContainerExtension {
     protected ContainerWrapper setupContainer(String uid) {
         ContainerWrapper containerWrapper = null;
 
+        System.setProperty("CANAL_DESTINATION", "oqsengine");
+
         if (null != uid) {
             containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
             if (null == containerWrapper) {
@@ -46,7 +48,7 @@ public class CanalContainer extends AbstractContainerExtension {
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
                 .withEnv("canal.auto.scan", "false")
-                .withEnv("canal.destinations", "oqsengine")
+                .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
                 .withEnv("canal.instance.master.address", "mysql:3306")
                 .withEnv("canal.instance.dbUsername", "root")
                 .withEnv("canal.instance.dbPassword", "root")
@@ -67,6 +69,11 @@ public class CanalContainer extends AbstractContainerExtension {
         }
 
         return containerWrapper;
+    }
+
+    @Override
+    protected void containerClose() {
+
     }
 
     @Override

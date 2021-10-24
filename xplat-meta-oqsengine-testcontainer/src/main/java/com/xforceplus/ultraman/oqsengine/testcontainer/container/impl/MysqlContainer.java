@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
+import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
 import java.time.Duration;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  */
 public class MysqlContainer extends AbstractContainerExtension {
 
+    private static final String mysqlUserPass = "root";
     private static final Logger
         LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
 
@@ -45,10 +47,9 @@ public class MysqlContainer extends AbstractContainerExtension {
                 .withNetworkAliases("mysql")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
-                .withEnv("MYSQL_ROOT_USERNAME", "root")
-                .withEnv("MYSQL_ROOT_PASSWORD", "root")
-                .withClasspathResourceMapping("mysql", "/docker-entrypoint-initdb.d", BindMode.READ_ONLY)
-                .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
+                .withEnv("MYSQL_ROOT_USERNAME", mysqlUserPass)
+                .withEnv("MYSQL_ROOT_PASSWORD", mysqlUserPass)
+                .withClasspathResourceMapping("mysql/mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(
                     Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
@@ -66,7 +67,23 @@ public class MysqlContainer extends AbstractContainerExtension {
             containerWrapper = new FixedContainerWrapper(mysql);
         }
 
+
+        try {
+            SqlInitUtils.init("/mysql", "MYSQL_JDBC_WITH_AUTH");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return containerWrapper;
+    }
+
+    @Override
+    protected void containerClose() {
+        try {
+            SqlInitUtils.init("/mysql/drop", "MYSQL_JDBC_WITH_AUTH");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -88,6 +105,12 @@ public class MysqlContainer extends AbstractContainerExtension {
             "MYSQL_JDBC",
             String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 address, port)
+        );
+
+        System.setProperty(
+            "MYSQL_JDBC_WITH_AUTH",
+            String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&user=%s&password=%s",
+                address, port, mysqlUserPass, mysqlUserPass)
         );
 
         LOGGER.info("Start mysql server.({}:{})", address, port);
