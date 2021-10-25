@@ -16,7 +16,8 @@ public class GenericContainerUtils {
 
     /**
      * 关闭container.
-     * @param genericContainer
+     *
+     * @param genericContainer 目标容器.
      */
     public static void genericClose(GenericContainer genericContainer) {
         genericContainer.close();

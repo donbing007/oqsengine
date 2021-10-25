@@ -66,6 +66,11 @@ public class DefaultCalculationImpl implements Calculation {
             CalculationLogic logic = calculationLogicFactory.getCalculationLogic(field.calculationType());
             context.focusField(field);
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Start using {} logic to compute instance {} fields {} of type {}.",
+                    logic.getClass().getSimpleName(), targetEntity.id(), field.name(), context.getFocusClass().code());
+            }
+
             Optional<IValue> newValueOp = logic.calculate(context);
             if (newValueOp.isPresent()) {
                 targetEntity.entityValue().addValue(newValueOp.get());
@@ -106,6 +111,11 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
+            if (logger.isDebugEnabled()) {
+                logger.debug("Maintain computed fields, whose impact tree is as follows.");
+                logger.debug(infuence.toString());
+            }
+
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {
                     // 发起源不需要维护.
@@ -149,7 +159,7 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     /**
-     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下.<br> 1. 数据被删除,放弃. <br> 2. 数据版本冲突,重试直到成功.(有上限)<br>
+     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
      */
     private void persist(CalculationContext context, long targetEntityId) throws CalculationException {
 
@@ -158,6 +168,10 @@ public class DefaultCalculationImpl implements Calculation {
             e.id() != targetEntityId
 
         ).collect(Collectors.toList());
+
+        if (entities.isEmpty()) {
+            return;
+        }
 
         final int batchSize = 1000;
 
@@ -345,7 +359,7 @@ public class DefaultCalculationImpl implements Calculation {
             }
 
             return Optional.empty();
-        }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
+        }).filter(o -> o.isPresent()).map(o -> o.get()).filter(i -> !((Infuence) i).empty()).toArray(Infuence[]::new);
 
         return infuences;
     }

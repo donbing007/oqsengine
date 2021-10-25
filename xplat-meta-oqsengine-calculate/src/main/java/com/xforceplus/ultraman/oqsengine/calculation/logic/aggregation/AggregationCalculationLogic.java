@@ -21,19 +21,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -73,9 +69,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
         IEntity byAggEntity = null;
         //定义一个修改前的被聚合entity信息
         Optional<ValueChange> byAggEntityBeforChange = null;
-        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e -> {
-            return e.entityClassRef().getId() == byAggEntityClassId;
-        }).collect(Collectors.toList());
+        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
+            e.entityClassRef().getId() == byAggEntityClassId).collect(Collectors.toList());
+
         if (entities.isEmpty()) {
             // build场景下，给默认值
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
@@ -85,7 +81,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         return Optional.of(new LongValue(aggField, 0L));
                     case DECIMAL:
                         return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO));
-                    case DATETIME:
+                    default:
                         return aggValue;
                 }
             }
@@ -157,18 +153,20 @@ public class AggregationCalculationLogic implements CalculationLogic {
             /*
             迭代所有关系中的字段,判断是否有可能会对当前参与者发起聚合 - MANY_TO_ONE的关系.
              */
-            List<Relationship> relationships = participantClass.relationship().stream().filter(relationship -> {
-                return relationship.getRelationType().equals(Relationship.RelationType.MANY_TO_ONE);
-            }).collect(Collectors.toList());
+            List<Relationship> relationships = participantClass.relationship().stream()
+                .filter(relationship ->
+                    relationship.getRelationType().equals(Relationship.RelationType.MANY_TO_ONE))
+                .collect(Collectors.toList());
+
             for (Relationship r : relationships) {
                 IEntityClass relationshipClass = r.getRightEntityClass();
                 relationshipClass.fields().stream()
-                        .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
-                        .filter(f -> ((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
-                        .forEach(f -> {
-                            infuenceInner.impact(
-                                    participant,
-                                    Participant.Builder.anParticipant()
+                    .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
+                    .filter(f -> ((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
+                    .forEach(f -> {
+                        infuenceInner.impact(
+                            participant,
+                            Participant.Builder.anParticipant()
                                             .withEntityClass(relationshipClass)
                                             .withField(f)
                                             .build()
@@ -188,22 +186,15 @@ public class AggregationCalculationLogic implements CalculationLogic {
         if (entities.isEmpty()) {
             return new long[ZERO];
         }
-        List<Long> longs = new ArrayList<>();
-        entities.forEach(entity -> {
-            Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
+
+        return entities.stream().mapToLong(e -> {
+            Optional<IValue> aggEntityId = e.entityValue().getValue(aggregation.getRelationId());
             if (aggEntityId.isPresent()) {
-                longs.add(aggEntityId.get().valueToLong());
+                return aggEntityId.get().valueToLong();
+            } else {
+                return 0;
             }
-        });
-        if (longs.isEmpty()) {
-            return new long[ZERO];
-        }
-        long[] targetls = new long[longs.size()];
-        int i = ZERO;
-        for (Long targetLong : longs) {
-            targetls[i++] = targetLong.longValue();
-        }
-        return targetls;
+        }).filter(id -> id > 0).toArray();
     }
 
     @Override

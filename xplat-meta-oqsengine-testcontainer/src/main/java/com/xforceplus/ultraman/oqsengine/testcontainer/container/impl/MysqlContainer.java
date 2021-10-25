@@ -23,7 +23,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  */
 public class MysqlContainer extends AbstractContainerExtension {
 
-    private static final String mysqlUserPass = "root";
+    private static final String MYSQL_USER_PASS = "root";
     private static final Logger
         LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
 
@@ -47,8 +47,8 @@ public class MysqlContainer extends AbstractContainerExtension {
                 .withNetworkAliases("mysql")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
-                .withEnv("MYSQL_ROOT_USERNAME", mysqlUserPass)
-                .withEnv("MYSQL_ROOT_PASSWORD", mysqlUserPass)
+                .withEnv("MYSQL_ROOT_USERNAME", MYSQL_USER_PASS)
+                .withEnv("MYSQL_ROOT_PASSWORD", MYSQL_USER_PASS)
                 .withClasspathResourceMapping("mysql/mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
                 .waitingFor(
                     Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
@@ -69,7 +69,7 @@ public class MysqlContainer extends AbstractContainerExtension {
 
 
         try {
-            SqlInitUtils.init("/mysql", "MYSQL_JDBC_WITH_AUTH");
+            SqlInitUtils.execute("/mysql", "MYSQL_JDBC_WITH_AUTH");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -80,7 +80,7 @@ public class MysqlContainer extends AbstractContainerExtension {
     @Override
     protected void containerClose() {
         try {
-            SqlInitUtils.init("/mysql/drop", "MYSQL_JDBC_WITH_AUTH");
+            SqlInitUtils.execute("/mysql/drop", "MYSQL_JDBC_WITH_AUTH");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,8 +109,9 @@ public class MysqlContainer extends AbstractContainerExtension {
 
         System.setProperty(
             "MYSQL_JDBC_WITH_AUTH",
-            String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&user=%s&password=%s",
-                address, port, mysqlUserPass, mysqlUserPass)
+            String.format(
+                "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&user=%s&password=%s",
+                address, port, MYSQL_USER_PASS, MYSQL_USER_PASS)
         );
 
         LOGGER.info("Start mysql server.({}:{})", address, port);

@@ -111,15 +111,6 @@ public class MockEntityClassDefine {
     // 订单项金额字段标识.
     private static long orderItemPriceFieldId = baseFieldId - 28;
 
-    // 用户->订单关系标识.
-    private static long userOrderOneToManyRelationshipId = baseRelationsId - 6;
-    // 订单 -> 订单项关系标识.
-    private static long orderOrderItemOneToManyRelationshipId = baseRelationsId - 7;
-    //订单 -> 用户关系标识.
-    private static long orderUserManyToOneRelationshipId = baseRelationsId - 8;
-    // 订单项 -> 订单 关系标识.
-    private static long orderItemOrderManyToOneRelationshipId = baseRelationsId - 9;
-
     // 用户订单关系字段.
     private static IEntityField orderUserForeignField = EntityField.Builder.anEntityField()
         .withId(orderUserForeignFieldId)
@@ -442,7 +433,7 @@ public class MockEntityClassDefine {
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.COUNT)
                                     .withClassId(orderClassId)
-                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                                    .withRelationId(orderUserForeignField.id()).build()
                             ).build()
                     ).build()
             )
@@ -461,7 +452,7 @@ public class MockEntityClassDefine {
                                     .withAggregationType(AggregationType.SUM)
                                     .withClassId(orderClassId)
                                     .withFieldId(orderTotalPriceSumFieldId)
-                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                                    .withRelationId(orderUserForeignField.id()).build()
                             ).build()
                     ).build()
             )
@@ -480,14 +471,14 @@ public class MockEntityClassDefine {
                                     .withAggregationType(AggregationType.AVG)
                                     .withClassId(orderClassId)
                                     .withFieldId(orderTotalPriceSumFieldId)
-                                    .withRelationId(userOrderOneToManyRelationshipId).build()
+                                    .withRelationId(orderUserForeignField.id()).build()
                             ).build()
                     ).build()
             )
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(userOrderOneToManyRelationshipId)
+                        .withId(orderUserForeignField.id())
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(userClassId)
@@ -541,7 +532,7 @@ public class MockEntityClassDefine {
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.COUNT)
                                     .withClassId(orderItemClassId)
-                                    .withRelationId(orderOrderItemOneToManyRelationshipId).build()
+                                    .withRelationId(orderOrderItemForeignField.id()).build()
                             ).build()
                     ).build()
             )
@@ -560,7 +551,7 @@ public class MockEntityClassDefine {
                                     .withAggregationType(AggregationType.SUM)
                                     .withClassId(orderItemClassId)
                                     .withFieldId(orderItemPriceFieldId)
-                                    .withRelationId(orderOrderItemOneToManyRelationshipId).build()
+                                    .withRelationId(orderOrderItemForeignField.id()).build()
                             ).build()
                     ).build()
             )
@@ -584,23 +575,33 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemOneToManyRelationshipId)
+                        .withId(orderOrderItemForeignField.id())
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                        .withBelongToOwner(false)
+                        .withBelongToOwner(true)
                         .withLeftEntityClassId(orderClassId)
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(orderItemClassId)
                         .withRightEntityClassLoader(orderItemClassId -> Optional.of(ORDER_ITEM_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
-                        .withId(orderUserManyToOneRelationshipId)
+                        .withId(orderUserForeignField.id())
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
                         .withLeftEntityClassId(orderClassId)
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(userClassId)
                         .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+                        .withEntityField(orderUserForeignField).build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(orderUserForeignField.id())
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withBelongToOwner(false)
+                        .withLeftEntityClassId(orderClassId)
+                        .withLeftEntityClassCode("order")
+                        .withRightEntityClassId(userClassId)
+                        .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
                         .withEntityField(orderUserForeignField).build()
+
                 )
             )
             .build();
@@ -651,9 +652,18 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderItemOrderManyToOneRelationshipId)
+                        .withId(orderOrderItemForeignField.id())
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
+                        .withLeftEntityClassId(orderItemClassId)
+                        .withLeftEntityClassCode("orderItem")
+                        .withRightEntityClassId(orderClassId)
+                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withEntityField(orderOrderItemForeignField).build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(orderOrderItemForeignField.id())
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withBelongToOwner(false)
                         .withLeftEntityClassId(orderItemClassId)
                         .withLeftEntityClassCode("orderItem")
                         .withRightEntityClassId(orderClassId)

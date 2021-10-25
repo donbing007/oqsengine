@@ -79,6 +79,17 @@ public class Infuence {
     }
 
     /**
+     * 判断是否为空影响树. 空影响表示发起源影响力没有任何作用.
+     *
+     * @return true 空, false 非空.
+     */
+    public boolean empty() {
+        // 只有一个根结点.
+        final int onlyRoot = 1;
+        return getSize() == onlyRoot;
+    }
+
+    /**
      * 以广度优先的方式遍历整个影响树.
      *
      * @param consumer 对于每一个结点(不包含根结点)调用的消费实现.
@@ -110,6 +121,10 @@ public class Infuence {
 
     @Override
     public String toString() {
+        if (empty()) {
+            return rootNode.toString();
+        }
+
         TreeSize treeSize = getTreeSize();
         Node[][] buff = new Node[size][treeSize.getHigh()];
 
@@ -166,6 +181,7 @@ public class Infuence {
         }
 
         final StringBuilder sb = new StringBuilder();
+        sb.append('\n');
         for (int v = 0; v < buff.length; v++) {
             for (int h = 0; h < buff[h].length; h++) {
                 if (buff[v][h] == null) {

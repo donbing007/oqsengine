@@ -30,7 +30,7 @@ public enum CalculationType {
     /*
     lookup 字段.
      */
-    LOOKUP((byte) 4, (byte) 1, false, false, false),
+    LOOKUP((byte) 4, (byte) 1, true, false, false),
     /*
     聚合字段.
     */

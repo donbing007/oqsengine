@@ -7,16 +7,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +61,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
             containerWrapper = new FixedContainerWrapper(manticore);
 
             try {
-                SqlInitUtils.init("/manticore", "MANTICORE_JDBC");
+                SqlInitUtils.execute("/manticore", "MANTICORE_JDBC");
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -82,7 +73,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
     @Override
     protected void containerClose() {
         try {
-            SqlInitUtils.init("/manticore/drop", "MANTICORE_JDBC");
+            SqlInitUtils.execute("/manticore/drop", "MANTICORE_JDBC");
         } catch (Exception e) {
             e.printStackTrace();
         }

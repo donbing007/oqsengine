@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.utils;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,11 +20,10 @@ import org.slf4j.LoggerFactory;
  * @since 1.8
  */
 public class SqlInitUtils {
-    private static final Logger
-        LOGGER = LoggerFactory.getLogger(ManticoreContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlInitUtils.class);
 
     private static List<String> readSqls(String resource) throws IOException {
-        File path = new File(ManticoreContainer.class.getResource(resource).getPath());
+        File path = new File(SqlInitUtils.class.getResource(resource).getPath());
         String[] sqlFiles = path.list((dir, name) -> {
             String[] names = name.split("\\.");
             if (names.length == 2 && names[1].equals("sql")) {
@@ -61,7 +59,13 @@ public class SqlInitUtils {
         return sqls;
     }
 
-    public static void init(String resource, DataSource dataSource) throws Exception {
+    /**
+     * 执行资源中的SQL.
+     *
+     * @param resource   资源.
+     * @param dataSource 操作的数据源.
+     */
+    public static void execute(String resource, DataSource dataSource) throws Exception {
 
         List<String> sqlList = readSqls(resource);
 
@@ -80,7 +84,13 @@ public class SqlInitUtils {
         }
     }
 
-    public static void init(String resource, String propertyName) throws Exception {
+    /**
+     * 执行目标资源中的SQL.
+     *
+     * @param resource     资源.
+     * @param propertyName 属性.
+     */
+    public static void execute(String resource, String propertyName) throws Exception {
 
         List<String> sqlList = readSqls(resource);
 
