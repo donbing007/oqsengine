@@ -30,6 +30,7 @@ public class MaxFunction implements AggregationFunction {
         if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
@@ -39,8 +40,8 @@ public class MaxFunction implements AggregationFunction {
             }
             double temp = Math.max(Math.max(((DecimalValue) n.get()).getValue().doubleValue(),
                     ((DecimalValue) o.get()).getValue().doubleValue()), ((DecimalValue) agg.get()).getValue().doubleValue());
-            agg.get().setStringValue(String.valueOf(temp));
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(String.valueOf(temp));
+            return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
@@ -49,8 +50,8 @@ public class MaxFunction implements AggregationFunction {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             long temp = Math.max(Math.max(n.get().valueToLong(), o.get().valueToLong()), agg.get().valueToLong());
-            agg.get().setStringValue(String.valueOf(temp));
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(String.valueOf(temp));
+            return Optional.of(aggValue.get());
         } else if (agg.get() instanceof DateTimeValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new DateTimeValue(o.get().getField(), LocalDateTime.MIN));
@@ -63,28 +64,29 @@ public class MaxFunction implements AggregationFunction {
             long temp = Math.max(Math.max(((DateTimeValue) n.get()).getValue().toEpochSecond(zone),
                     ((DateTimeValue) o.get()).getValue().toEpochSecond(zone)),
                     ((DateTimeValue) agg.get()).getValue().toEpochSecond(zone));
-            agg.get().setStringValue(String.valueOf(temp));
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(String.valueOf(temp));
+            return Optional.of(aggValue.get());
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
                     .collect(BigDecimalSummaryStatistics.statistics());
-            agg.get().setStringValue(temp.getMax().toString());
+            aggValue.get().setStringValue(temp.getMax().toString());
         } else if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.get().setStringValue(String.valueOf(temp.getMax()));
+            aggValue.get().setStringValue(String.valueOf(temp.getMax()));
         } else if (agg.get() instanceof DateTimeValue) {
             ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
             LongSummaryStatistics temp = values.stream().map(v -> ((DateTimeValue) v.get()).getValue().toEpochSecond(zone))
                     .collect(Collectors.summarizingLong(Long::longValue));
-            agg.get().setStringValue(String.valueOf(temp.getMax()));
+            aggValue.get().setStringValue(String.valueOf(temp.getMax()));
         }
-        return Optional.of(agg.get());
+        return Optional.of(aggValue.get());
     }
 
     @Override

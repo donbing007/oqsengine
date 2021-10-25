@@ -27,6 +27,7 @@ public class CountFunction implements AggregationFunction {
         if (!n.isPresent()) {
             return Optional.of(agg.get());
         }
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof LongValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
@@ -34,21 +35,27 @@ public class CountFunction implements AggregationFunction {
             if (n.get() instanceof EmptyTypedValue) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
-            if (!o.isPresent()) {
-                Long temp = agg.get().valueToLong() + 1;
-                agg.get().setStringValue(temp.toString());
+            if (!(o.get().getValue().toString().equals("0")) && n.get().getValue().toString().equals("0")) {
+                Long temp = agg.get().valueToLong() - 1;
+                aggValue.get().setStringValue(temp.toString());
             }
+            if (o.get().getValue().toString().equals("0") && !(n.get().getValue().toString().equals("0"))) {
+                Long temp = agg.get().valueToLong() + 1;
+                aggValue.get().setStringValue(temp.toString());
+            }
+
         }
-        return Optional.of(agg.get());
+        return Optional.of(aggValue.get());
     }
 
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.get().setStringValue(String.valueOf(temp.getCount()));
+            aggValue.get().setStringValue(String.valueOf(temp.getCount()));
         }
-        return Optional.of(agg.get());
+        return Optional.of(aggValue.get());
     }
 
     @Override

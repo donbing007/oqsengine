@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
@@ -63,8 +64,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return aggValue;
         }
 
-        long byAggEntityClassId = ((Aggregation) aggField.config().getCalculation()).getClassId();
-        long byAggFieldId = ((Aggregation) aggField.config().getCalculation()).getFieldId();
+        Aggregation aggregation = ((Aggregation) aggField.config().getCalculation());
+        long byAggEntityClassId = aggregation.getClassId();
+        long byAggFieldId = aggregation.getFieldId();
         //获取被聚合的entity信息（修改后的）
         IEntity byAggEntity = null;
         //定义一个修改前的被聚合entity信息
@@ -87,7 +89,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
             return aggValue;
         }
-
+        // 计算相关的字段定义
+        Optional<IValue> agg;
+        Optional<IValue> n = null;
+        Optional<IValue> o = null;
         if (entities.size() > 1) {
             //处理两个对象中存在多个一对多，并且都建立了聚合字段-这种情况是比较少见的
             List<IEntity> byAggEntitys = entities.stream().filter(e -> {
@@ -98,19 +103,43 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 byAggEntity = byAggEntitys.get(ZERO);
                 Optional<IEntityClass> byAggEntityClass =
                     context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
-                if (byAggEntityClass.isPresent()) {
-                    byAggEntityBeforChange =
-                        context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                    if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                        n = Optional.of(new LongValue(aggField, 1));
+                        o = Optional.of(new EmptyTypedValue(aggField));
+                    } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                        o = Optional.of(new LongValue(aggField, 1));
+                        n = Optional.of(new EmptyTypedValue(aggField));
+                    }
+                } else {
+                    if (byAggEntityClass.isPresent()) {
+                        byAggEntityBeforChange =
+                                context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                        n = byAggEntityBeforChange.get().getNewValue();
+                        o = byAggEntityBeforChange.get().getOldValue();
+                    }
                 }
             }
         } else {
             // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
             byAggEntity = entities.get(ZERO);
             Optional<IEntityClass> byAggEntityClass =
-                context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
-            if (byAggEntityClass.isPresent()) {
-                byAggEntityBeforChange =
-                    context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                    n = Optional.of(new LongValue(aggField, 1));
+                    o = Optional.of(new EmptyTypedValue(aggField));
+                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                    o = Optional.of(new LongValue(aggField, 1));
+                    n = Optional.of(new EmptyTypedValue(aggField));
+                }
+            } else {
+                if (byAggEntityClass.isPresent()) {
+                    byAggEntityBeforChange =
+                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                    n = byAggEntityBeforChange.get().getNewValue();
+                    o = byAggEntityBeforChange.get().getOldValue();
+                }
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
@@ -121,16 +150,13 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         //拿到数据后开始运算
-        Optional<IValue> agg = aggValue;
-        Optional<IValue> n = byAggEntityBeforChange.get().getNewValue();
-        ;
-        Optional<IValue> o = byAggEntityBeforChange.get().getOldValue();
-        AggregationType aggregationType = ((Aggregation) aggField.config().getCalculation()).getAggregationType();
+        agg = aggValue;
+        AggregationType aggregationType = aggregation.getAggregationType();
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
         Optional<IValue> targetValue;
         if (aggregationType.equals(AggregationType.AVG)) {
             int count = 1;
-            count = countAggregationEntity((Aggregation) aggField.config().getCalculation(), entity,
+            count = countAggregationEntity(aggregation, entity,
                 context.getFocusClass(), context.getMetaManager().get(), context.getCombindStorage().get());
             if (count == 0) {
                 if (!aggField.type().equals(FieldType.DATETIME)) {

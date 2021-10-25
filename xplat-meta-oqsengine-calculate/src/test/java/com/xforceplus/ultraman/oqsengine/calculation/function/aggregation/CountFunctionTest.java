@@ -159,6 +159,19 @@ public class CountFunctionTest {
         Optional<IValue> a2 = countFunction.excute(Optional.of(agg2), Optional.of(o2), Optional.of(n2));
         System.out.println(a2.get().getValue());
 
+        // delete
+        LongValue agg3 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
+        LongValue o3 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
+        EmptyTypedValue n3 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
+        Optional<IValue> a3 = countFunction.excute(Optional.of(agg3), Optional.of(o3), Optional.of(n3));
+        System.out.println(a3.get().getValue());
+
+        // build
+        LongValue agg4 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
+        EmptyTypedValue o4 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
+        LongValue n4 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
+        Optional<IValue> a4 = countFunction.excute(Optional.of(agg4), Optional.of(o4), Optional.of(n4));
+        System.out.println(a4.get().getValue());
     }
 
     @Test

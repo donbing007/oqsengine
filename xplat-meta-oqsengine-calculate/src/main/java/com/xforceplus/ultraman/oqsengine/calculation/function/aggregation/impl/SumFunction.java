@@ -29,6 +29,7 @@ public class SumFunction implements AggregationFunction {
         if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
@@ -39,8 +40,8 @@ public class SumFunction implements AggregationFunction {
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
                     .add(((DecimalValue) n.get()).getValue())
                     .subtract(((DecimalValue) o.get()).getValue());
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
@@ -49,23 +50,24 @@ public class SumFunction implements AggregationFunction {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
                     .collect(BigDecimalSummaryStatistics.statistics());
-            agg.get().setStringValue(temp.getSum().toString());
+            aggValue.get().setStringValue(temp.getSum().toString());
         } else if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.get().setStringValue(String.valueOf(temp.getSum()));
+            aggValue.get().setStringValue(String.valueOf(temp.getSum()));
         }
-        return Optional.of(agg.get());
+        return Optional.of(aggValue.get());
     }
 
     @Override
