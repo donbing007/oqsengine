@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -420,23 +421,23 @@ public class MockEntityClassDefine {
                             .withRequired(true).build()
                     ).build()
             )
-            .withField(
-                EntityField.Builder.anEntityField()
-                    .withId(userOrderTotalNumberCountFieldId)
-                    .withName("订单总数(count)")
-                    .withFieldType(FieldType.LONG)
-                    .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                            .withLen(19)
-                            .withSearchable(true)
-                            .withCalculation(
-                                Aggregation.Builder.anAggregation()
-                                    .withAggregationType(AggregationType.COUNT)
-                                    .withClassId(orderClassId)
-                                    .withRelationId(orderUserForeignField.id()).build()
-                            ).build()
-                    ).build()
-            )
+//            .withField(
+//                EntityField.Builder.anEntityField()
+//                    .withId(userOrderTotalNumberCountFieldId)
+//                    .withName("订单总数(count)")
+//                    .withFieldType(FieldType.LONG)
+//                    .withConfig(
+//                        FieldConfig.Builder.anFieldConfig()
+//                            .withLen(19)
+//                            .withSearchable(true)
+//                            .withCalculation(
+//                                Aggregation.Builder.anAggregation()
+//                                    .withAggregationType(AggregationType.COUNT)
+//                                    .withClassId(orderClassId)
+//                                    .withRelationId(orderUserForeignField.id()).build()
+//                            ).build()
+//                    ).build()
+//            )
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(userOrderTotalPriceSumFieldId)
@@ -469,6 +470,7 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.AVG)
+                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(orderTotalPriceSumFieldId)
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -520,22 +522,22 @@ public class MockEntityClassDefine {
                             .withRequired(true).build()
                     ).build()
             )
-            .withField(
-                EntityField.Builder.anEntityField()
-                    .withId(orderTotalNumberCountFieldId)
-                    .withFieldType(FieldType.LONG)
-                    .withName("订单项总数(count)")
-                    .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                            .withSearchable(true)
-                            .withCalculation(
-                                Aggregation.Builder.anAggregation()
-                                    .withAggregationType(AggregationType.COUNT)
-                                    .withClassId(orderItemClassId)
-                                    .withRelationId(orderOrderItemForeignField.id()).build()
-                            ).build()
-                    ).build()
-            )
+//            .withField(
+//                EntityField.Builder.anEntityField()
+//                    .withId(orderTotalNumberCountFieldId)
+//                    .withFieldType(FieldType.LONG)
+//                    .withName("订单项总数(count)")
+//                    .withConfig(
+//                        FieldConfig.Builder.anFieldConfig()
+//                            .withSearchable(true)
+//                            .withCalculation(
+//                                Aggregation.Builder.anAggregation()
+//                                    .withAggregationType(AggregationType.COUNT)
+//                                    .withClassId(orderItemClassId)
+//                                    .withRelationId(orderOrderItemForeignField.id()).build()
+//                            ).build()
+//                    ).build()
+//            )
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(orderTotalPriceSumFieldId)

@@ -58,6 +58,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -219,6 +220,10 @@ public class SQLMasterStorage implements MasterStorage {
         // 排重.
         long[] useIds = removeDuplicate(ids);
 
+        if (useIds.length == 0) {
+            return Collections.emptyList();
+        }
+
         Collection<MasterStorageEntity> masterStorageEntities =
             (Collection<MasterStorageEntity>) transactionExecutor.execute(
                 (tx, resource, hint) -> {
@@ -246,6 +251,10 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
         Collection<IEntity> entities = selectMultiple(ids);
+        if (entities.isEmpty()) {
+            return entities;
+        }
+
         return entities.stream().filter(e -> {
 
             Optional<IEntityClass> actualEntityClassOp =

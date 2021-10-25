@@ -111,10 +111,10 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-            if (logger.isDebugEnabled()) {
-                logger.debug("Maintain computed fields, whose impact tree is as follows.");
-                logger.debug(infuence.toString());
-            }
+//            if (logger.isDebugEnabled()) {
+//                logger.debug("Maintain computed fields, whose impact tree is as follows.");
+//                logger.debug(infuence.toString());
+//            }
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {
@@ -134,8 +134,8 @@ public class DefaultCalculationImpl implements Calculation {
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
                     context.focusField(participant.getField());
 
-                    Optional<IValue> newValueOp = logic.calculate(context);
                     Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
+                    Optional<IValue> newValueOp = logic.calculate(context);
 
                     if (newValueOp.isPresent()) {
 
@@ -143,9 +143,17 @@ public class DefaultCalculationImpl implements Calculation {
                             oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
                         IValue newValue = newValueOp.get();
 
-                        context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
+                        if (!oldValue.equals(newValue)) {
+                            context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
-                        affectedEntitiy.entityValue().addValue(newValueOp.get());
+                            affectedEntitiy.entityValue().addValue(newValueOp.get());
+                        } else {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(
+                                    "Calculate field {}, the result is the same before and after calculation so do not change.",
+                                    context.getFocusField().name());
+                            }
+                        }
                     }
                 }
                 // 加入到当前参与者的影响entity记录中.
@@ -274,17 +282,20 @@ public class DefaultCalculationImpl implements Calculation {
         // 过滤掉缓存中已经存在的.
         long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();
 
-        MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
+        if (notCacheIds.length > 0) {
 
-        // 加载缓存中不存在的.
-        Collection<IEntity> entities;
-        try {
-            entities = masterStorage.selectMultiple(notCacheIds);
-        } catch (SQLException e) {
-            throw new CalculationException(e.getMessage(), e);
+            MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
+
+            // 加载缓存中不存在的.
+            Collection<IEntity> entities;
+            try {
+                entities = masterStorage.selectMultiple(notCacheIds);
+            } catch (SQLException e) {
+                throw new CalculationException(e.getMessage(), e);
+            }
+
+            entities.forEach(e -> context.putEntityToCache(e));
         }
-
-        entities.forEach(e -> context.putEntityToCache(e));
 
         // 从缓存中加载出目标实例.
         return Arrays.stream(ids)
