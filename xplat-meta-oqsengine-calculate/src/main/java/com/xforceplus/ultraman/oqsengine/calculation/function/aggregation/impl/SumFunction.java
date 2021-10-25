@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
@@ -29,12 +30,24 @@ public class SumFunction implements AggregationFunction {
             return Optional.empty();
         }
         if (agg.get() instanceof DecimalValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
+            }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
                     .add(((DecimalValue) n.get()).getValue())
                     .subtract(((DecimalValue) o.get()).getValue());
             agg.get().setStringValue(temp.toString());
             return Optional.of(agg.get());
         } else if (agg.get() instanceof LongValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new LongValue(o.get().getField(), 0L));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new LongValue(n.get().getField(), 0L));
+            }
             Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
             agg.get().setStringValue(temp.toString());
             return Optional.of(agg.get());

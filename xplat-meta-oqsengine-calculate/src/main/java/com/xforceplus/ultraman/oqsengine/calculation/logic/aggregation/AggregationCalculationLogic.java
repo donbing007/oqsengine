@@ -162,7 +162,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 IEntityClass relationshipClass = r.getRightEntityClass();
                 relationshipClass.fields().stream()
                     .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
-                    .filter(f -> ((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
+                    .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
+                            || (((Aggregation) f.config().getCalculation()).getAggregationType().equals(AggregationType.COUNT))))
                     .forEach(f -> {
                         infuenceInner.impact(
                             participant,

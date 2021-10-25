@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
@@ -27,6 +28,12 @@ public class CountFunction implements AggregationFunction {
             return Optional.of(agg.get());
         }
         if (agg.get() instanceof LongValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new LongValue(o.get().getField(), 0L));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new LongValue(n.get().getField(), 0L));
+            }
             if (!o.isPresent()) {
                 Long temp = agg.get().valueToLong() + 1;
                 agg.get().setStringValue(temp.toString());

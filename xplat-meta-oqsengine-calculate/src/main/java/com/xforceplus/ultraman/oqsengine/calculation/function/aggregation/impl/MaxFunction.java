@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.Aggreg
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
@@ -30,15 +31,33 @@ public class MaxFunction implements AggregationFunction {
             return Optional.empty();
         }
         if (agg.get() instanceof DecimalValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
+            }
             double temp = Math.max(Math.max(((DecimalValue) n.get()).getValue().doubleValue(),
                     ((DecimalValue) o.get()).getValue().doubleValue()), ((DecimalValue) agg.get()).getValue().doubleValue());
             agg.get().setStringValue(String.valueOf(temp));
             return Optional.of(agg.get());
         } else if (agg.get() instanceof LongValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new LongValue(o.get().getField(), 0L));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new LongValue(n.get().getField(), 0L));
+            }
             long temp = Math.max(Math.max(n.get().valueToLong(), o.get().valueToLong()), agg.get().valueToLong());
             agg.get().setStringValue(String.valueOf(temp));
             return Optional.of(agg.get());
         } else if (agg.get() instanceof DateTimeValue) {
+            if (o.get() instanceof EmptyTypedValue) {
+                o = Optional.of(new DateTimeValue(o.get().getField(), LocalDateTime.MIN));
+            }
+            if (n.get() instanceof EmptyTypedValue) {
+                n = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MIN));
+            }
             ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
             ((DateTimeValue) n.get()).getValue().toEpochSecond(zone);
             long temp = Math.max(Math.max(((DateTimeValue) n.get()).getValue().toEpochSecond(zone),

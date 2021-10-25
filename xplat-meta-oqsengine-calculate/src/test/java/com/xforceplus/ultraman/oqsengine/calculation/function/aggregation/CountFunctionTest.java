@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import org.junit.jupiter.api.Test;
@@ -139,12 +140,25 @@ public class CountFunctionTest {
         Optional<IValue> a = countFunction.excute(Optional.of(agg), Optional.of(o), Optional.of(n));
         System.out.println(a.get().getValue());
 
+        DecimalValue agg11 = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3"));
+        DecimalValue o11 = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1"));
+        EmptyTypedValue n11 = new EmptyTypedValue(l2EntityClass.field("l0-decimal").get());
+        Optional<IValue> a11 = countFunction.excute(Optional.of(agg11), Optional.of(o11), Optional.of(n11));
+        System.out.println(a11.get().getValue());
+
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2);
         Optional<IValue> a1 = countFunction.excute(Optional.of(agg1), Optional.of(o1), Optional.of(n1));
         System.out.println(a1.get().getValue());
+
+        LongValue agg2 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
+        LongValue o2 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
+        EmptyTypedValue n2 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
+        Optional<IValue> a2 = countFunction.excute(Optional.of(agg2), Optional.of(o2), Optional.of(n2));
+        System.out.println(a2.get().getValue());
+
     }
 
     @Test
