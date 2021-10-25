@@ -92,33 +92,38 @@ public class AggregationCalculationLogic implements CalculationLogic {
             //处理两个对象中存在多个一对多，并且都建立了聚合字段-这种情况是比较少见的
             List<IEntity> byAggEntitys = entities.stream().filter(e -> {
                 return e.entityValue().values().stream().filter(value ->
-                        value.getValue().equals(entity.id())).collect(Collectors.toList()).size() > ZERO;
+                    value.getValue().equals(entity.id())).collect(Collectors.toList()).size() > ZERO;
             }).collect(Collectors.toList());
             if (byAggEntitys.size() == ONE) {
                 byAggEntity = byAggEntitys.get(ZERO);
-                Optional<IEntityClass> byAggEntityClass = context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+                Optional<IEntityClass> byAggEntityClass =
+                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
                 if (byAggEntityClass.isPresent()) {
-                    byAggEntityBeforChange = context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                    byAggEntityBeforChange =
+                        context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
                 }
             }
         } else {
             // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
             byAggEntity = entities.get(ZERO);
-            Optional<IEntityClass> byAggEntityClass = context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+            Optional<IEntityClass> byAggEntityClass =
+                context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
             if (byAggEntityClass.isPresent()) {
-                byAggEntityBeforChange = context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                byAggEntityBeforChange =
+                    context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
         boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
-                ((Aggregation) aggField.config().getCalculation()).getConditions());
+            ((Aggregation) aggField.config().getCalculation()).getConditions());
         if (!pass) {
             return aggValue;
         }
 
         //拿到数据后开始运算
         Optional<IValue> agg = aggValue;
-        Optional<IValue> n = byAggEntityBeforChange.get().getNewValue();;
+        Optional<IValue> n = byAggEntityBeforChange.get().getNewValue();
+        ;
         Optional<IValue> o = byAggEntityBeforChange.get().getOldValue();
         AggregationType aggregationType = ((Aggregation) aggField.config().getCalculation()).getAggregationType();
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
@@ -126,7 +131,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
         if (aggregationType.equals(AggregationType.AVG)) {
             int count = 1;
             count = countAggregationEntity((Aggregation) aggField.config().getCalculation(), entity,
-                    context.getFocusClass(), context.getMetaManager().get(), context.getCombindStorage().get());
+                context.getFocusClass(), context.getMetaManager().get(), context.getCombindStorage().get());
             if (count == 0) {
                 if (!aggField.type().equals(FieldType.DATETIME)) {
                     aggValue.get().setStringValue("0");
@@ -168,11 +173,11 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         infuenceInner.impact(
                             participant,
                             Participant.Builder.anParticipant()
-                                            .withEntityClass(relationshipClass)
-                                            .withField(f)
-                                            .build()
-                            );
-                        });
+                                .withEntityClass(relationshipClass)
+                                .withField(f)
+                                .build()
+                        );
+                    });
             }
 
             return true;
@@ -181,7 +186,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
-            throws CalculationException {
+        throws CalculationException {
         IEntityField entityField = participant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
         if (entities.isEmpty()) {
@@ -206,9 +211,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
      *
-     * @param entity 被聚合数据.
+     * @param entity      被聚合数据.
      * @param entityClass 被聚合对象.
-     * @param conditions 条件信息.
+     * @param conditions  条件信息.
      * @return 是否符合.
      */
     private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass,
@@ -217,7 +222,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return true;
         }
         conditions.addAnd(new Condition(entityClass.field("id").get(),
-                ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
+            ConditionOperator.EQUALS, entity.entityValue().getValue(entity.id()).get()));
 
         return true;
     }
@@ -225,10 +230,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
     /**
      * 得到统计值.
      *
-     * @param aggregation 聚合配置.
-     * @param sourceEntity 来源实例.
-     * @param entityClass 对象结构.
-     * @param metaManager meta.
+     * @param aggregation             聚合配置.
+     * @param sourceEntity            来源实例.
+     * @param entityClass             对象结构.
+     * @param metaManager             meta.
      * @param conditionsSelectStorage 条件查询.
      * @return 统计数字.
      */
@@ -236,7 +241,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                                        MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
         // 得到count值
         Optional<IEntityClass> aggEntityClass =
-                metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
+            metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
         int count = 1;
         if (aggEntityClass.isPresent()) {
             Conditions conditions = aggregation.getConditions();
@@ -244,12 +249,13 @@ public class AggregationCalculationLogic implements CalculationLogic {
             Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(aggEntityClass.get().ref(), entityField.get(),
-                        ConditionOperator.EQUALS, aggregation.getRelationId(),
-                        sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
+                    ConditionOperator.EQUALS, aggregation.getRelationId(),
+                    sourceEntity.entityValue().getValue(sourceEntity.id()).get()));
             }
             Collection<EntityRef> entityRefs = null;
             try {
-                entityRefs = conditionsSelectStorage.select(conditions, entityClass, SelectConfig.Builder.anSelectConfig().build());
+                entityRefs = conditionsSelectStorage.select(conditions, entityClass,
+                    SelectConfig.Builder.anSelectConfig().build());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
