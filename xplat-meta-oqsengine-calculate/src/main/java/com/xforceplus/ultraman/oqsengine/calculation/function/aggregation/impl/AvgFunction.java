@@ -30,6 +30,7 @@ public class AvgFunction implements AggregationFunction {
         if (!(agg != null & o != null && n != null)) {
             return Optional.empty();
         }
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
@@ -40,8 +41,8 @@ public class AvgFunction implements AggregationFunction {
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
                     .add(((DecimalValue) n.get()).getValue())
                     .subtract(((DecimalValue) o.get()).getValue());
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
@@ -50,23 +51,24 @@ public class AvgFunction implements AggregationFunction {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
                     .collect(BigDecimalSummaryStatistics.statistics());
-            agg.get().setStringValue(temp.getAverage(MathContext.DECIMAL64).toString());
+            aggValue.get().setStringValue(temp.getAverage(MathContext.DECIMAL64).toString());
         } else if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
-            agg.get().setStringValue(new DecimalFormat("0").format(temp.getAverage()));
+            aggValue.get().setStringValue(new DecimalFormat("0").format(temp.getAverage()));
         }
-        return Optional.of(agg.get());
+        return Optional.of(aggValue.get());
     }
 
     @Override
@@ -96,6 +98,7 @@ public class AvgFunction implements AggregationFunction {
      * @return 返回计算值.
      */
     public Optional<IValue> excuteAvg(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, int count) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
@@ -108,8 +111,8 @@ public class AvgFunction implements AggregationFunction {
                     .add(((DecimalValue) n.get()).getValue())
                     .subtract(((DecimalValue) o.get()).getValue())
                     .divide(new BigDecimal(count), MathContext.DECIMAL64);
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
             if (o.get() instanceof EmptyTypedValue) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
@@ -118,8 +121,8 @@ public class AvgFunction implements AggregationFunction {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             Long temp = (agg.get().valueToLong() * count + n.get().valueToLong() - o.get().valueToLong()) / count;
-            agg.get().setStringValue(temp.toString());
-            return Optional.of(agg.get());
+            aggValue.get().setStringValue(temp.toString());
+            return Optional.of(aggValue.get());
         }
         return Optional.empty();
     }
