@@ -31,16 +31,16 @@ public class CanalContainer extends AbstractContainerExtension {
 
         System.setProperty("CANAL_DESTINATION", "oqsengine");
 
-        if (null != uid) {
-            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-            if (null == containerWrapper) {
-                throw new RuntimeException("get remote container failed.");
-            }
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-        } else {
+//        if (null != uid) {
+//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
+//            if (null == containerWrapper) {
+//                throw new RuntimeException("get remote container failed.");
+//            }
+//            /*
+//             * 设置oqs中的环境变量
+//             */
+//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
+//        } else {
 
             GenericContainer canal = new GenericContainer("canal/canal-server:v1.1.4")
                 .withNetwork(Global.NETWORK)
@@ -66,7 +66,7 @@ public class CanalContainer extends AbstractContainerExtension {
             setSystemProperties(canal.getContainerIpAddress(), canal.getFirstMappedPort().toString());
 
             containerWrapper = new FixedContainerWrapper(canal);
-        }
+//        }
 
         return containerWrapper;
     }

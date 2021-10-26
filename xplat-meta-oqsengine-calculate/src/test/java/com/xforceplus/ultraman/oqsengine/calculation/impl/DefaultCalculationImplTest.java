@@ -63,12 +63,12 @@ import org.junit.jupiter.api.Test;
 public class DefaultCalculationImplTest {
 
     private static IEntityField A_LONG = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE)
+        .withId(Long.MAX_VALUE - 100)
         .withFieldType(FieldType.LONG)
         .withName("a-long").build();
 
     private static IEntityField B_SUM = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withId(Long.MAX_VALUE - 200)
         .withFieldType(FieldType.LONG)
         .withName("b-sum-a")
         .withConfig(
@@ -78,7 +78,7 @@ public class DefaultCalculationImplTest {
         .build();
 
     private static IEntityField C_LOOKUP = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 2)
+        .withId(Long.MAX_VALUE - 300)
         .withFieldType(FieldType.LONG)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
@@ -87,7 +87,7 @@ public class DefaultCalculationImplTest {
         .withName("c-lookup-a").build();
 
     private static IEntityField D_SUM = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 3)
+        .withId(Long.MAX_VALUE - 400)
         .withFieldType(FieldType.LONG)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
@@ -335,7 +335,7 @@ public class DefaultCalculationImplTest {
      */
     @Test
     public void testPersistenceErrReplayMax() throws Exception {
-        // entityB实例持久化会一直错误.
+        // entityB实例持久化会一直错误.因为这里指定了判断其是否等于entityB,实际更新的是entityA.
         masterStorage.setReplaceTest(e -> !(e.id() == entityB.id()));
 
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()

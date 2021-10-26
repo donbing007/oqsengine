@@ -30,16 +30,16 @@ public class RedisContainer extends AbstractContainerExtension {
     @Override
     protected ContainerWrapper setupContainer(String uid) {
         ContainerWrapper containerWrapper = null;
-        if (null != uid) {
-            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-            if (null == containerWrapper) {
-                throw new RuntimeException("get remote container failed.");
-            }
-            /**
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-        } else {
+//        if (null != uid) {
+//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
+//            if (null == containerWrapper) {
+//                throw new RuntimeException("get remote container failed.");
+//            }
+//            /**
+//             * 设置oqs中的环境变量
+//             */
+//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
+//        } else {
             GenericContainer redis = new GenericContainer("redis:6.0.9-alpine3.12")
                 .withNetwork(Global.NETWORK)
                 .withNetworkAliases("redis")
@@ -56,7 +56,7 @@ public class RedisContainer extends AbstractContainerExtension {
             setSystemProperties(redis.getContainerIpAddress(), redis.getFirstMappedPort().toString());
 
             containerWrapper = new FixedContainerWrapper(redis);
-        }
+//        }
         return containerWrapper;
     }
 

@@ -115,7 +115,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 } else {
                     if (byAggEntityClass.isPresent()) {
                         byAggEntityBeforChange =
-                                context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
                         n = byAggEntityBeforChange.get().getNewValue();
                         o = byAggEntityBeforChange.get().getOldValue();
                     }
@@ -125,7 +125,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
             byAggEntity = entities.get(ZERO);
             Optional<IEntityClass> byAggEntityClass =
-                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+                context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     n = Optional.of(new LongValue(aggField, 1));
@@ -137,7 +137,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             } else {
                 if (byAggEntityClass.isPresent()) {
                     byAggEntityBeforChange =
-                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+                        context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
                     n = byAggEntityBeforChange.get().getNewValue();
                     o = byAggEntityBeforChange.get().getOldValue();
                 }
@@ -195,7 +195,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 relationshipClass.fields().stream()
                     .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
                     .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
-                            || (((Aggregation) f.config().getCalculation()).getAggregationType().equals(AggregationType.COUNT))))
+                        || (((Aggregation) f.config().getCalculation()).getAggregationType()
+                        .equals(AggregationType.COUNT))))
                     .forEach(f -> {
                         Aggregation aggregation = (Aggregation) f.config().getCalculation();
                         EntityField countId = (EntityField) participantField;
