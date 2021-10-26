@@ -64,8 +64,8 @@ import org.slf4j.LoggerFactory;
 /**
  * 测试类.
  * A
- * /     \
- * B(sum)  C(COUNT)
+ * /     \       \
+ * B(sum)  C(COUNT)  C(SUM)
  * /
  * D(SUM)
  */
@@ -90,6 +90,8 @@ public class AggregationCalculationLogicTest {
     private static IEntityField B_REF;
 
     private static IEntityField B_SUM;
+
+    private static IEntityField C_SUM;
 
     private static IEntityField C_COUNT;
 
@@ -155,6 +157,22 @@ public class AggregationCalculationLogicTest {
             )
             .build();
 
+        C_SUM = EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - 21)
+                .withFieldType(FieldType.LONG)
+                .withName("c-sum-a")
+                .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                                .withCalculation(Aggregation.Builder.anAggregation()
+                                        .withClassId(Long.MAX_VALUE)
+                                        .withFieldId(Long.MAX_VALUE)
+                                        .withRelationId(Long.MAX_VALUE - 20)
+                                        .withAggregationType(AggregationType.SUM)
+                                        .build()
+                                ).build()
+                )
+                .build();
+
         C_COUNT = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 2)
             .withFieldType(FieldType.LONG)
@@ -188,7 +206,7 @@ public class AggregationCalculationLogicTest {
         A_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
             .withCode("a-class")
-            .withField(A_LONG)
+            .withFields(Arrays.asList(A_LONG, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 100)
@@ -241,7 +259,7 @@ public class AggregationCalculationLogicTest {
         B_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 1)
             .withCode("b-class")
-            .withField(B_SUM)
+            .withFields(Arrays.asList(B_SUM, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 300)
@@ -282,7 +300,7 @@ public class AggregationCalculationLogicTest {
         C_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withCode("c-class")
-            .withField(C_COUNT)
+            .withFields(Arrays.asList(C_COUNT, C_SUM, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 20)
@@ -301,7 +319,7 @@ public class AggregationCalculationLogicTest {
         D_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 3)
             .withCode("d-class")
-            .withField(D_SUM)
+            .withFields(Arrays.asList(D_SUM, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 30)
@@ -513,14 +531,6 @@ public class AggregationCalculationLogicTest {
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(A_LONG);
 
-        context.addValueChange(
-                ValueChange.build(
-                        context.getFocusEntity().id(),
-                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
-                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
-                )
-        );
-
         aggregationCalculationLogic.scope(context, infuence);
         List<Participant> participants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -535,6 +545,42 @@ public class AggregationCalculationLogicTest {
         Assertions.assertEquals(B_CLASS.id(), participants.get(1).getEntityClass().id());
         Assertions.assertEquals(C_CLASS.id(), participants.get(2).getEntityClass().id());
         Assertions.assertEquals(D_CLASS.id(), participants.get(3).getEntityClass().id());
+
+        // Count 场景
+        context.focusEntity(targetEntity, A_CLASS);
+        context.focusField(EntityField.ID_ENTITY_FIELD);
+
+        Infuence infuenceCount = new Infuence(
+                targetEntity,
+                Participant.Builder.anParticipant()
+                        .withEntityClass(A_CLASS)
+                        .withField(EntityField.ID_ENTITY_FIELD)
+                        .withAffectedEntities(Arrays.asList(targetEntity)).build(),
+                ValueChange.build(
+                        context.getFocusEntity().id(),
+                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
+                )
+        );
+
+        context.addValueChange(
+                ValueChange.build(
+                        context.getFocusEntity().id(),
+                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
+                )
+        );
+
+        aggregationCalculationLogic.scope(context, infuenceCount);
+        List<Participant> participantsCount = new ArrayList<>();
+        infuenceCount.scan((parentParticipant, participant, infuenceInner) -> {
+
+            participantsCount.add(participant);
+
+            return true;
+        });
+
+
     }
 
     @Test

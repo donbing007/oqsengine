@@ -196,7 +196,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
                     .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
                     .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
                         || (((Aggregation) f.config().getCalculation()).getAggregationType()
-                        .equals(AggregationType.COUNT))))
+                        .equals(AggregationType.COUNT))
+                        || (participantField.name().equals(EntityField.ID_ENTITY_FIELD.name()))
+                    ))
                     .forEach(f -> {
                         Aggregation aggregation = (Aggregation) f.config().getCalculation();
                         EntityField countId = (EntityField) participantField;
@@ -215,7 +217,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                                         participant,
                                         Participant.Builder.anParticipant()
                                                 .withEntityClass(relationshipClass)
-                                                .withField(fieldId)
+                                                .withField(fieldId.ID_ENTITY_FIELD)
                                                 .build()
                                 );
                             }
