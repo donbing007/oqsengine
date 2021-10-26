@@ -317,9 +317,7 @@ public class DefaultCalculationImpl implements Calculation {
         // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
         Collection<IEntityField> calculationFields = parseChangeFields(context, false);
 
-        /*
-        当场景是创建或者删除造成实例数量发生改变的话,会固定增加一个ID实例的字段改变.
-         */
+        // 固定增加一个表示数量改变的特殊改变.
         switch (context.getScenariso()) {
             case BUILD: {
                 context.addValueChange(
@@ -341,6 +339,12 @@ public class DefaultCalculationImpl implements Calculation {
                         new EmptyTypedValue(EntityField.ID_ENTITY_FIELD)
                     )
                 );
+                calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                break;
+            }
+            case REPLACE: {
+                LongValue value = new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id());
+                context.addValueChange(ValueChange.build(context.getFocusEntity().id(), value, value));
                 calculationFields.add(EntityField.ID_ENTITY_FIELD);
                 break;
             }

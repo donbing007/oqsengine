@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.math.BigDecimal;
@@ -71,6 +72,9 @@ public class CalculationTest extends AbstractContainerExtends {
 
     @Resource
     private EntityManagementService entityManagementService;
+
+    @Resource
+    private MasterStorage masterStorage;
 
     @Resource
     private TransactionManager transactionManager;
@@ -210,9 +214,48 @@ public class CalculationTest extends AbstractContainerExtends {
         );
     }
 
+    /**
+     * 测试目标结构如下.
+     * <br>
+     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg))
+     * ..|---订单 (订单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup),订单用户关联)
+     * .......|---订单项 (单号(lookup), 物品名称, 金额, 订单项订单关联) <br>
+     * <br>
+     * 对订单项中的金额进行更新,其中应该造成订单和用户的金额重新计算.
+     */
     @Test
     public void testReplaceCalculation() throws Exception {
+        IEntity user = buildUserEntity();
+        OperationResult operationResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        IEntity order = buildOrderEntity(user);
+        operationResult = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        IEntity orderItem = buildOrderItem(order);
+        operationResult = entityManagementService.build(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
 
+        orderItem = Entity.Builder.anEntity()
+            .withId(orderItem.id())
+            .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new DecimalValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                        BigDecimal.ZERO
+                    )
+                )
+            ).build();
+
+        operationResult = entityManagementService.replace(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+
+        Assertions.assertEquals(BigDecimal.ZERO, order.entityValue().getValue("总金额(sum)").get().getValue());
+        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue("总消费金额(sum)").get().getValue());
+        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue("平均消费金额(avg)").get().getValue());
     }
 
     // 构造用户.
