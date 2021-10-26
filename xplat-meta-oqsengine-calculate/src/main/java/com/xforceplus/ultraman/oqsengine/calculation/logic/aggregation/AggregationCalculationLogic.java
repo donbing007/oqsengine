@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -196,13 +197,38 @@ public class AggregationCalculationLogic implements CalculationLogic {
                     .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
                             || (((Aggregation) f.config().getCalculation()).getAggregationType().equals(AggregationType.COUNT))))
                     .forEach(f -> {
-                        infuenceInner.impact(
-                            participant,
-                            Participant.Builder.anParticipant()
-                                .withEntityClass(relationshipClass)
-                                .withField(f)
-                                .build()
-                        );
+                        Aggregation aggregation = (Aggregation) f.config().getCalculation();
+                        EntityField countId = (EntityField) participantField;
+                        EntityField fId = (EntityField) f;
+                        if (countId.name().equals(EntityField.ID_ENTITY_FIELD.name())) {
+                            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                                infuenceInner.impact(
+                                        participant,
+                                        Participant.Builder.anParticipant()
+                                                .withEntityClass(relationshipClass)
+                                                .withField(f)
+                                                .build()
+                                );
+                            } else {
+                                infuenceInner.impact(
+                                        participant,
+                                        Participant.Builder.anParticipant()
+                                                .withEntityClass(relationshipClass)
+                                                .withField(fId)
+                                                .build()
+                                );
+                            }
+                        } else {
+                            if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                                infuenceInner.impact(
+                                        participant,
+                                        Participant.Builder.anParticipant()
+                                                .withEntityClass(relationshipClass)
+                                                .withField(f)
+                                                .build()
+                                );
+                            }
+                        }
                     });
             }
 
