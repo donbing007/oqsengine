@@ -31,17 +31,17 @@ public class MysqlContainer extends AbstractContainerExtension {
     protected ContainerWrapper setupContainer(String uid) {
         ContainerWrapper containerWrapper = null;
 
-        if (null != uid) {
-            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-
-            if (null == containerWrapper) {
-                throw new RuntimeException("get remote container failed.");
-            }
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-        } else {
+//        if (null != uid) {
+//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
+//
+//            if (null == containerWrapper) {
+//                throw new RuntimeException("get remote container failed.");
+//            }
+//            /*
+//             * 设置oqs中的环境变量
+//             */
+//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
+//        } else {
             GenericContainer mysql = new GenericContainer("mysql:5.7")
                 .withNetwork(Global.NETWORK)
                 .withNetworkAliases("mysql")
@@ -65,7 +65,7 @@ public class MysqlContainer extends AbstractContainerExtension {
             setSystemProperties(mysql.getContainerIpAddress(), mysql.getFirstMappedPort().toString());
 
             containerWrapper = new FixedContainerWrapper(mysql);
-        }
+//        }
 
 
         try {

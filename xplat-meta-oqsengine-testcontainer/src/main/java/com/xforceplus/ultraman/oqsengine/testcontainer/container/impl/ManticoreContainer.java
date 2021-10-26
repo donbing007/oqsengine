@@ -30,17 +30,17 @@ public class ManticoreContainer extends AbstractContainerExtension {
     protected ContainerWrapper setupContainer(String uid) {
         ContainerWrapper containerWrapper = null;
 
-        if (null != uid) {
-            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-
-            if (null == containerWrapper) {
-                throw new RuntimeException("get remote container failed.");
-            }
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-        } else {
+//        if (null != uid) {
+//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
+//
+//            if (null == containerWrapper) {
+//                throw new RuntimeException("get remote container failed.");
+//            }
+//            /*
+//             * 设置oqs中的环境变量
+//             */
+//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
+//        } else {
             GenericContainer manticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(Global.NETWORK)
@@ -65,7 +65,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
-        }
+//        }
 
         return containerWrapper;
     }
