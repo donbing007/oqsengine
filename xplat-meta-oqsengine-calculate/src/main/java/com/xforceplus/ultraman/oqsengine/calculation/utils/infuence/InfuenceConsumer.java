@@ -15,11 +15,11 @@ public interface InfuenceConsumer {
     /**
      * 消费.
      *
-     * @param parentParticipant 上层参与者.
-     * @param participant       参与者.
-     * @param infuenceInner     当前的影响树.
+     * @param parentParticipantOp 上层参与者.
+     * @param participant         参与者.
+     * @param infuenceInner       当前的影响树.
      * @return true 继续,false中断.
      */
-    boolean accept(Optional<Participant> parentParticipant, Participant participant, Infuence infuenceInner);
+    boolean accept(Optional<Participant> parentParticipantOp, Participant participant, Infuence infuenceInner);
 
 }

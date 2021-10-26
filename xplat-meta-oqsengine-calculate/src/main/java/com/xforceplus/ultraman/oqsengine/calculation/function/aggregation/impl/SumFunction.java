@@ -7,8 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.LongSummaryStatistics;
@@ -38,8 +36,8 @@ public class SumFunction implements AggregationFunction {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
             }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
-                    .add(((DecimalValue) n.get()).getValue())
-                    .subtract(((DecimalValue) o.get()).getValue());
+                .add(((DecimalValue) n.get()).getValue())
+                .subtract(((DecimalValue) o.get()).getValue());
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
@@ -61,10 +59,11 @@ public class SumFunction implements AggregationFunction {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
-                    .collect(BigDecimalSummaryStatistics.statistics());
+                .collect(BigDecimalSummaryStatistics.statistics());
             aggValue.get().setStringValue(temp.getSum().toString());
         } else if (agg.get() instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            LongSummaryStatistics temp =
+                values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(String.valueOf(temp.getSum()));
         }
         return Optional.of(aggValue.get());

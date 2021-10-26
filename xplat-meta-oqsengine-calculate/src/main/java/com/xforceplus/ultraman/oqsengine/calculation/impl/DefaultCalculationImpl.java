@@ -15,8 +15,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
@@ -33,7 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 计算字段计算器.
+ * 计算字段计算框架.
+ * 计算字段分为计算和维护两个阶段.
+ * 计算针对当前目标实例,维护针对当前字段改变所影响的实例.
+ * 维护的流程如下.
+ * 1. 根据当前改变构造影响树.
+ * 2. 迭代影响树不断计算被影响的实例.
+ * 3. 批量更新被影响的实例.
  *
  * @author dongbin
  * @version 0.1 2021/09/17 15:40
@@ -134,8 +142,8 @@ public class DefaultCalculationImpl implements Calculation {
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
                     context.focusField(participant.getField());
 
-                    Optional<IValue> newValueOp = logic.calculate(context);
                     Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
+                    Optional<IValue> newValueOp = logic.calculate(context);
 
                     if (newValueOp.isPresent()) {
 
@@ -143,9 +151,17 @@ public class DefaultCalculationImpl implements Calculation {
                             oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
                         IValue newValue = newValueOp.get();
 
-                        context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
+                        if (!oldValue.equals(newValue)) {
+                            context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
-                        affectedEntitiy.entityValue().addValue(newValueOp.get());
+                            affectedEntitiy.entityValue().addValue(newValueOp.get());
+                        } else {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(
+                                    "Calculate field {}, the result is the same before and after calculation so do not change.",
+                                    context.getFocusField().name());
+                            }
+                        }
                     }
                 }
                 // 加入到当前参与者的影响entity记录中.
@@ -274,17 +290,20 @@ public class DefaultCalculationImpl implements Calculation {
         // 过滤掉缓存中已经存在的.
         long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();
 
-        MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
+        if (notCacheIds.length > 0) {
 
-        // 加载缓存中不存在的.
-        Collection<IEntity> entities;
-        try {
-            entities = masterStorage.selectMultiple(notCacheIds);
-        } catch (SQLException e) {
-            throw new CalculationException(e.getMessage(), e);
+            MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
+
+            // 加载缓存中不存在的.
+            Collection<IEntity> entities;
+            try {
+                entities = masterStorage.selectMultiple(notCacheIds);
+            } catch (SQLException e) {
+                throw new CalculationException(e.getMessage(), e);
+            }
+
+            entities.forEach(e -> context.putEntityToCache(e));
         }
-
-        entities.forEach(e -> context.putEntityToCache(e));
 
         // 从缓存中加载出目标实例.
         return Arrays.stream(ids)
@@ -297,6 +316,44 @@ public class DefaultCalculationImpl implements Calculation {
     private Infuence[] scope(CalculationContext context) throws CalculationException {
         // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
         Collection<IEntityField> calculationFields = parseChangeFields(context, false);
+
+        /*
+        当场景是创建或者删除造成实例数量发生改变的话,会固定增加一个ID实例的字段改变.
+         */
+        switch (context.getScenariso()) {
+            case BUILD: {
+                context.addValueChange(
+                    ValueChange.build(
+                        context.getFocusEntity().id(),
+                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
+                    )
+                );
+                calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                break;
+            }
+            case DELETE: {
+
+                context.addValueChange(
+                    ValueChange.build(
+                        context.getFocusEntity().id(),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id()),
+                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD)
+                    )
+                );
+                calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                break;
+            }
+            default: {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The current scenario {} does not affect the number of instances and does not add a "
+                            + "variable number of influence trees.",
+                        context.getScenariso().name());
+                }
+            }
+        }
+
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
@@ -324,12 +381,13 @@ public class DefaultCalculationImpl implements Calculation {
         Infuence[] infuences = calculationFields.stream().map(f -> {
 
             Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
+            // 表示数量改变的id字段.
             if (changeOp.isPresent()) {
                 Infuence infuence = new Infuence(
                     context.getFocusEntity(),
                     Participant.Builder.anParticipant()
                         .withEntityClass(context.getFocusClass())
-                        .withField(changeOp.get().getField())
+                        .withField(f)
                         .withAffectedEntities(Arrays.asList(
                             context.getFocusEntity()
                         ))
@@ -354,12 +412,15 @@ public class DefaultCalculationImpl implements Calculation {
                     }
                 }
 
-
-                return Optional.ofNullable(infuence);
+                if (infuence.empty()) {
+                    return Optional.empty();
+                } else {
+                    return Optional.ofNullable(infuence);
+                }
             }
 
             return Optional.empty();
-        }).filter(o -> o.isPresent()).map(o -> o.get()).filter(i -> !((Infuence) i).empty()).toArray(Infuence[]::new);
+        }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
 
         return infuences;
     }
