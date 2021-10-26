@@ -615,6 +615,7 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(orderItemOrderCodeLookupFieldId)
+                    .withName("单号(lookup)")
                     .withFieldType(FieldType.STRING)
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()

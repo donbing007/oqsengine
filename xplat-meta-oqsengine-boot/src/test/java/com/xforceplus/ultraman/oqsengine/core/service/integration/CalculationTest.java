@@ -134,8 +134,9 @@ public class CalculationTest extends AbstractContainerExtends {
     /**
      * 测试目标结构如下.
      * <br>
-     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg)) <br> --|---订单 (单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup),
-     * 订单用户关联) <br> ------|---订单项 (单号(lookup), 物品名称, 金额, 订单项订单关联) <br>
+     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg))
+     * ..|---订单 (订单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup),订单用户关联)
+     * .......|---订单项 (单号(lookup), 物品名称, 金额, 订单项订单关联) <br>
      * <br>
      */
     @Test
@@ -179,14 +180,16 @@ public class CalculationTest extends AbstractContainerExtends {
             order.entityValue().getValue("用户编号(lookup)").get().valueToString()
         );
 
-//        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
 //        Assertions.assertEquals(1,
 //            user.entityValue().getValue("订单总数(count)").get().valueToLong());
 
         IEntity orderItem = buildOrderItem(order);
         operationResult = entityManagementService.build(orderItem);
+
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         Assertions.assertTrue(orderItem.id() > 0,
             "The identity of the user entity was expected to be set, but was not.");
         Assertions.assertEquals(
@@ -202,7 +205,7 @@ public class CalculationTest extends AbstractContainerExtends {
             user.entityValue().getValue("平均消费金额(avg)").get().getValue()
         );
         Assertions.assertEquals(
-            order.entityValue().getValue("单号").get().getValue(),
+            order.entityValue().getValue("订单号").get().getValue(),
             orderItem.entityValue().getValue("单号(lookup)").get().getValue()
         );
     }
@@ -276,6 +279,12 @@ public class CalculationTest extends AbstractContainerExtends {
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
                             new BigDecimal(faker.number().randomDouble(3, 1, 1000))
                                 .setScale(6, BigDecimal.ROUND_HALF_UP)
+                        )
+                    )
+                    .addValue(
+                        new LookupValue(
+                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号(lookup)").get(),
+                            order.id()
                         )
                     )
                     .addValue(
