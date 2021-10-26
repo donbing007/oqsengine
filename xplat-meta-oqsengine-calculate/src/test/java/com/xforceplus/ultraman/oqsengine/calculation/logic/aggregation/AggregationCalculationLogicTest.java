@@ -513,6 +513,14 @@ public class AggregationCalculationLogicTest {
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(A_LONG);
 
+        context.addValueChange(
+                ValueChange.build(
+                        context.getFocusEntity().id(),
+                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
+                )
+        );
+
         aggregationCalculationLogic.scope(context, infuence);
         List<Participant> participants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {

@@ -199,7 +199,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                     .forEach(f -> {
                         Aggregation aggregation = (Aggregation) f.config().getCalculation();
                         EntityField countId = (EntityField) participantField;
-                        EntityField fId = (EntityField) f;
+                        EntityField fieldId = (EntityField) f;
                         if (countId.name().equals(EntityField.ID_ENTITY_FIELD.name())) {
                             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
@@ -214,7 +214,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                                         participant,
                                         Participant.Builder.anParticipant()
                                                 .withEntityClass(relationshipClass)
-                                                .withField(fId)
+                                                .withField(fieldId)
                                                 .build()
                                 );
                             }
