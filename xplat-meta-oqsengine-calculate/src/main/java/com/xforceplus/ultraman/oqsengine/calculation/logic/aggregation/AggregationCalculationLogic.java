@@ -125,7 +125,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
             byAggEntity = entities.get(ZERO);
             Optional<IEntityClass> byAggEntityClass =
-                context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+                context.getMetaManager().get().load(byAggEntity.entityClassRef());
             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     n = Optional.of(new LongValue(aggField, 1));
@@ -133,6 +133,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     o = Optional.of(new LongValue(aggField, 1));
                     n = Optional.of(new EmptyTypedValue(aggField));
+                } else {
+                    return aggValue;
                 }
             } else {
                 if (byAggEntityClass.isPresent()) {
