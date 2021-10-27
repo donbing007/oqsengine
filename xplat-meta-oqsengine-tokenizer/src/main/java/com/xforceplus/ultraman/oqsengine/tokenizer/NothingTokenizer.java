@@ -20,7 +20,7 @@ public class NothingTokenizer implements Tokenizer {
     }
 
     @Override
-    public Iterator<String> tokenize(String value) {
+    public Iterator<String> tokenize(String value, TokenizerMode mode) {
         return emptyIterator;
     }
 

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,10 +30,19 @@ public class JcsegTokenizerTest {
     }
 
     @Test
-    public void testTokeniz() throws Exception {
+    public void testSerachModeTokeniz() throws Exception {
+        doTestTokeniz(Tokenizer.TokenizerMode.SEARCH, buildSearchModeCases());
+    }
+
+    @Test
+    public void testStorageModeTokeniz() throws Exception {
+        doTestTokeniz(Tokenizer.TokenizerMode.STORAGE, buildStorageModeCases());
+    }
+
+    private void doTestTokeniz(Tokenizer.TokenizerMode mode, Collection<Case> cases) throws Exception {
         JcsegTokenizer tokenizer = new JcsegTokenizer();
-        buildCases().forEach(c -> {
-            Iterator<String> words = tokenizer.tokenize(c.value);
+        cases.forEach(c -> {
+            Iterator<String> words = tokenizer.tokenize(c.value, mode);
 
             List<String> wordList = new ArrayList<>();
             while (words.hasNext()) {
@@ -47,8 +57,98 @@ public class JcsegTokenizerTest {
         });
     }
 
-    private Collection<Case> buildCases() {
+    private Collection<Case> buildSearchModeCases() {
         return Arrays.asList(
+            new Case(
+                "飞机票",
+                Collections.singletonList(
+                    "飞机票"
+                )
+            ),
+            new Case(
+                "UUID-123",
+                Collections.singletonList(
+                    "uuid-123"
+                )
+            ),
+            new Case(
+                "abc",
+                Collections.singletonList(
+                    "abc"
+                )
+            ),
+            new Case(
+                "abcd",
+                Collections.singletonList(
+                    "abcd"
+                )
+            ),
+            new Case(
+                "中英文hello world混合",
+                Arrays.asList(
+                    "中",
+                    "中英",
+                    "英文",
+                    "hello",
+                    "world",
+                    "混合"
+                )
+            ),
+            new Case(
+                "UUID-123,这个的上海云砺有限公司",
+                Arrays.asList(
+                    "uuid-123",
+                    "这个",
+                    "上海",
+                    "云",
+                    "砺",
+                    "有限公司"
+                )
+            ),
+            new Case(
+                "我的名称叫董斌",
+                Arrays.asList(
+                    "我的",
+                    "名称",
+                    "叫",
+                    "董斌"
+                )
+            ),
+            new Case(
+                "Apple pay",
+                Arrays.asList(
+                    "apple",
+                    "pay"
+                )
+            ),
+            new Case(
+                "测试test",
+                Arrays.asList(
+                    "测试",
+                    "test"
+                )
+            ),
+            new Case(
+                "我test",
+                Collections.singletonList("test")
+            )
+        );
+    }
+
+    private Collection<Case> buildStorageModeCases() {
+        return Arrays.asList(
+            new Case(
+                "飞机票",
+                Arrays.asList(
+                    "飞机票", "飞机", "机票"
+                )
+            ),
+            new Case(
+                "UUID-123",
+                Collections.singletonList(
+                    "uuid-123"
+                )
+            ),
             new Case(
                 "abc",
                 Arrays.asList(

@@ -477,7 +477,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
                     Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
+                    // 以储存模式分词.
+                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue, Tokenizer.TokenizerMode.STORAGE);
                     /*
                      * 处理当前字段分词结果.
                      */
