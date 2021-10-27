@@ -4,10 +4,15 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +58,33 @@ public class FormulaCalculationLogic implements CalculationLogic {
                 throw new CalculationException(e.getMessage(), e);
             }
         }
+    }
+
+    @Override
+    public void scope(CalculationContext context, Infuence infuence) {
+        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+            IEntityClass participantClass = participant.getEntityClass();
+            IEntityField participantField = participant.getField();
+            participantClass.fields().stream()
+                    .filter(f -> f.calculationType().equals(CalculationType.FORMULA))
+                    .forEach(f -> {
+                        Formula formula = (Formula) f.config().getCalculation();
+                        List<String> args = formula.getArgs();
+                        if (args.size() > 0) {
+                            if (args.contains(participantField.name())) {
+                                infuenceInner.impact(
+                                        participant,
+                                        Participant.Builder.anParticipant()
+                                                .withEntityClass(participantClass)
+                                                .withField(f)
+                                                .build()
+                                );
+                            }
+                        }
+                    });
+
+            return true;
+        });
     }
 
     @Override
