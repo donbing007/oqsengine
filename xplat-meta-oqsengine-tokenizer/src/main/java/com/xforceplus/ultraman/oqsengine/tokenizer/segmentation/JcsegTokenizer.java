@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.lionsoul.jcseg.ISegment;
 import org.lionsoul.jcseg.IWord;
@@ -26,7 +25,6 @@ import org.lionsoul.jcseg.segmenter.SegmenterConfig;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import sun.plugin2.message.JavaScriptBaseMessage;
 
 /**
  * 基于jcseg的分词器实现.
