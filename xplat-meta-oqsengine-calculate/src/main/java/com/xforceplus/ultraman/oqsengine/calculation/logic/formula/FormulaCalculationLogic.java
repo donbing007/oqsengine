@@ -1,19 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,31 +69,55 @@ public class FormulaCalculationLogic implements CalculationLogic {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             IEntityClass participantClass = participant.getEntityClass();
             IEntityField participantField = participant.getField();
-            participantClass.fields().stream()
-                    .filter(f -> f.calculationType().equals(CalculationType.FORMULA))
-                    .forEach(f -> {
-                        Formula formula = (Formula) f.config().getCalculation();
-                        List<String> args = formula.getArgs();
-                        if (args.size() > 0) {
-                            if (args.contains(participantField.name())) {
-                                infuenceInner.impact(
-                                        participant,
-                                        Participant.Builder.anParticipant()
-                                                .withEntityClass(participantClass)
-                                                .withField(f)
-                                                .build()
-                                );
-                            }
+
+            List<IEntityField> fields = participantClass.fields().stream()
+                    .filter(f -> f.calculationType() == CalculationType.FORMULA).collect(Collectors.toList());
+            if (fields != null && fields.size() > 0) {
+                fields.forEach(f -> {
+                    Formula formula = (Formula) f.config().getCalculation();
+                    List<String> args = formula.getArgs();
+                    if (args.size() > 0) {
+                        if (args.contains(participantField.name())) {
+                            infuenceInner.impact(
+                                    participant,
+                                    Participant.Builder.anParticipant()
+                                            .withEntityClass(participantClass)
+                                            .withField(f)
+                                            .build()
+                            );
                         }
-                    });
+                    }
+                });
+            }
 
             return true;
         });
     }
 
     @Override
+    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+            throws CalculationException {
+
+        return entities.stream().mapToLong(e -> e.id()).filter(id -> id > 0).toArray();
+    }
+
+    @Override
     public CalculationType supportType() {
         return CalculationType.FORMULA;
+    }
+
+    /**
+     * 需要维护的场景.
+     *
+     * @return 需要维护的场景列表.
+     */
+    @Override
+    public CalculationScenarios[] needMaintenanceScenarios() {
+        return new CalculationScenarios[] {
+            CalculationScenarios.BUILD,
+            CalculationScenarios.REPLACE,
+            CalculationScenarios.DELETE
+        };
     }
 
 }
