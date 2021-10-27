@@ -39,12 +39,9 @@ public class JcsegTokenizerTest {
                 wordList.add(words.next());
             }
 
-            Assert.assertEquals(
-                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(),
-                c.expectedWords.size());
-
             for (String word : wordList) {
-                Assert.assertTrue(String.format("expected:%s, actual:%s", c.expectedWords, wordList),
+                Assert.assertTrue(
+                    String.format("source:%s, expected:%s, actual:%s", c.value, c.expectedWords, wordList),
                     c.expectedWords.contains(word));
             }
         });
@@ -54,16 +51,21 @@ public class JcsegTokenizerTest {
         return Arrays.asList(
             new Case(
                 "abc",
-                Collections.singletonList("abc")
+                Arrays.asList(
+                    "abc", "ab"
+                )
             ),
             new Case(
                 "abcd",
-                Collections.singletonList("abcd")
+                Arrays.asList(
+                    "abcd", "ab", "abc", "cd"
+                )
             ),
             new Case(
                 "中英文hello world混合",
                 Arrays.asList(
                     "中",
+                    "中英",
                     "英文",
                     "hello",
                     "world",
@@ -78,7 +80,9 @@ public class JcsegTokenizerTest {
                     "上海",
                     "云",
                     "砺",
-                    "有限公司"
+                    "有限公司",
+                    "有限",
+                    "公司"
                 )
             ),
             new Case(
