@@ -3,10 +3,13 @@ package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * JcsegTokenizer Tester.
@@ -17,10 +20,18 @@ import org.junit.jupiter.api.Test;
  */
 public class JcsegTokenizerTest {
 
+    @Before
+    public void before() throws Exception {
+    }
+
+    @After
+    public void after() throws Exception {
+    }
+
     @Test
     public void testTokeniz() throws Exception {
         JcsegTokenizer tokenizer = new JcsegTokenizer();
-        buildCases().stream().forEach(c -> {
+        buildCases().forEach(c -> {
             Iterator<String> words = tokenizer.tokenize(c.value);
 
             List<String> wordList = new ArrayList<>();
@@ -28,13 +39,10 @@ public class JcsegTokenizerTest {
                 wordList.add(words.next());
             }
 
-            Assertions.assertEquals(wordList.size(),
-                c.expectedWords.size(),
-                String.format("expected:%s, actual:%s", c.expectedWords, wordList));
-
             for (String word : wordList) {
-                Assertions.assertTrue(
-                    c.expectedWords.contains(word), String.format("expected:%s, actual:%s", c.expectedWords, wordList));
+                Assert.assertTrue(
+                    String.format("source:%s, expected:%s, actual:%s", c.value, c.expectedWords, wordList),
+                    c.expectedWords.contains(word));
             }
         });
     }
@@ -43,16 +51,21 @@ public class JcsegTokenizerTest {
         return Arrays.asList(
             new Case(
                 "abc",
-                Arrays.asList("abc")
+                Arrays.asList(
+                    "abc", "ab"
+                )
             ),
             new Case(
                 "abcd",
-                Arrays.asList("abcd")
+                Arrays.asList(
+                    "abcd", "ab", "abc", "cd"
+                )
             ),
             new Case(
                 "中英文hello world混合",
                 Arrays.asList(
                     "中",
+                    "中英",
                     "英文",
                     "hello",
                     "world",
@@ -67,7 +80,9 @@ public class JcsegTokenizerTest {
                     "上海",
                     "云",
                     "砺",
-                    "有限公司"
+                    "有限公司",
+                    "有限",
+                    "公司"
                 )
             ),
             new Case(
@@ -95,7 +110,7 @@ public class JcsegTokenizerTest {
             ),
             new Case(
                 "我test",
-                Arrays.asList("test")
+                Collections.singletonList("test")
             )
         );
     }

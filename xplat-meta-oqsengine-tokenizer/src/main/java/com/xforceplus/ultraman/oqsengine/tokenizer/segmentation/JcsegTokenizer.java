@@ -1,14 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import com.xforceplus.ultraman.oqsengine.tokenizer.EmptyWorkdsIterator;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.lionsoul.jcseg.ISegment;
 import org.lionsoul.jcseg.IWord;
 import org.lionsoul.jcseg.dic.ADictionary;
@@ -52,7 +60,7 @@ public class JcsegTokenizer implements Tokenizer {
         }
     }
 
-    private final void init() throws IOException {
+    private void init() throws IOException {
         config = new SegmenterConfig(true);
         dic = DictionaryFactory.createDefaultDictionary(config, false);
 
@@ -74,17 +82,70 @@ public class JcsegTokenizer implements Tokenizer {
         }
     }
 
+    /**
+     * 会对英文数字和非英文数字进行拆分, 英文将直接使用NLP模式进行分词.
+     * 非英文数字才会使用NLP和MOST模式进行混合分词.
+     */
     @Override
     public Iterator<String> tokenize(String value) {
-        if (value == null || value.isEmpty()) {
-            return EmptyWorkdsIterator.getInstance();
-        } else {
-            try {
-                return new JcsegIterator(config, dic, value);
-            } catch (IOException e) {
-                throw new RuntimeException(e.getMessage(), e);
+        JcsegIterator nlpIter;
+        JcsegIterator mostIter;
+        try {
+            nlpIter = new JcsegIterator(config, dic, ISegment.NLP, value);
+            mostIter = new JcsegIterator(config, dic, ISegment.MOST, value);
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        Map<String, Object> nlpWords =
+            StreamSupport.stream(Spliterators.spliteratorUnknownSize(nlpIter, Spliterator.ORDERED), false)
+                .collect(Collectors.toMap(s -> s, s -> "", (s0, s1) -> s0, LinkedHashMap::new));
+        // 需要关注的字符长度.
+        final int watchLen = 1;
+        Collection<String>
+            mostWords = StreamSupport.stream(Spliterators.spliteratorUnknownSize(mostIter, Spliterator.ORDERED), false)
+            .filter(word -> !nlpWords.containsKey(word))
+            .filter(word -> {
+
+                if (word.length() == watchLen || isEnOrNumber(word)) {
+                    // 单字
+                    return nlpWords.containsKey(word);
+
+                } else {
+                    return true;
+                }
+            }).collect(Collectors.toList());
+
+        List<String> results = new ArrayList<>(nlpWords.size() + mostWords.size());
+        results.addAll(nlpWords.keySet());
+        results.addAll(mostWords);
+        return results.iterator();
+    }
+
+    /**
+     * 判定每一个字符.
+     * 48-57 判定为数字.
+     * 65-90 判定为大写字母.
+     * 97-122 判定为小写字母.
+     */
+    private boolean isEnOrNumber(String word) {
+        for (char c : word.toCharArray()) {
+            if (isAlphabets(c)) {
+                return true;
+            }
+            if (isNumber(c)) {
+                return true;
             }
         }
+        return false;
+    }
+
+    private boolean isAlphabets(char c) {
+        return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+    }
+
+    private boolean isNumber(char c) {
+        return c >= 48 && c <= 57;
     }
 
     @Override
@@ -100,16 +161,19 @@ public class JcsegTokenizer implements Tokenizer {
         private ADictionary dic;
         private ISegment seg;
 
+
         private String value;
         private IWord nextWord;
 
-        public JcsegIterator(SegmenterConfig config, ADictionary dic, String value) throws IOException {
+        public JcsegIterator(SegmenterConfig config, ADictionary dic, ISegment.Type type, String value)
+            throws IOException {
             this.config = config;
             this.dic = dic;
             this.value = value;
-            seg = ISegment.NLP.factory.create(config, dic);
+            seg = type.factory.create(config, dic);
             seg.reset(new StringReader(this.value));
             nextWord = seg.next();
+
         }
 
         @Override
