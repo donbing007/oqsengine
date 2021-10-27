@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer.segmentation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.tokenizer.EmptyWorkdsIterator;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +29,8 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 
 /**
  * 基于jcseg的分词器实现.
+ * <p>
+ * 储存模式将进行较细节的切分, 搜索模式将较为粗.
  *
  * @author dongbin
  * @version 0.1 2021/3/15 14:48
@@ -82,44 +85,57 @@ public class JcsegTokenizer implements Tokenizer {
         }
     }
 
-    /**
-     * 会对英文数字和非英文数字进行拆分, 英文将直接使用NLP模式进行分词.
-     * 非英文数字才会使用NLP和MOST模式进行混合分词.
-     */
     @Override
-    public Iterator<String> tokenize(String value) {
-        JcsegIterator nlpIter;
-        JcsegIterator mostIter;
-        try {
-            nlpIter = new JcsegIterator(config, dic, ISegment.NLP, value);
-            mostIter = new JcsegIterator(config, dic, ISegment.MOST, value);
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+    public Iterator<String> tokenize(String value, TokenizerMode mode) {
+        if (value == null || value.isEmpty()) {
+            return EmptyWorkdsIterator.getInstance();
         }
 
-        Map<String, Object> nlpWords =
-            StreamSupport.stream(Spliterators.spliteratorUnknownSize(nlpIter, Spliterator.ORDERED), false)
-                .collect(Collectors.toMap(s -> s, s -> "", (s0, s1) -> s0, LinkedHashMap::new));
-        // 需要关注的字符长度.
-        final int watchLen = 1;
-        Collection<String>
-            mostWords = StreamSupport.stream(Spliterators.spliteratorUnknownSize(mostIter, Spliterator.ORDERED), false)
-            .filter(word -> !nlpWords.containsKey(word))
-            .filter(word -> {
+        if (TokenizerMode.SEARCH == mode) {
 
-                if (word.length() == watchLen || isEnOrNumber(word)) {
-                    // 单字
-                    return nlpWords.containsKey(word);
+            try {
+                return new JcsegIterator(config, dic, ISegment.NLP, value);
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
 
-                } else {
-                    return true;
-                }
-            }).collect(Collectors.toList());
+        } else if (TokenizerMode.STORAGE == mode) {
+            JcsegIterator nlpIter;
+            JcsegIterator mostIter;
+            try {
+                nlpIter = new JcsegIterator(config, dic, ISegment.NLP, value);
+                mostIter = new JcsegIterator(config, dic, ISegment.MOST, value);
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
 
-        List<String> results = new ArrayList<>(nlpWords.size() + mostWords.size());
-        results.addAll(nlpWords.keySet());
-        results.addAll(mostWords);
-        return results.iterator();
+            Map<String, Object> nlpWords =
+                StreamSupport.stream(Spliterators.spliteratorUnknownSize(nlpIter, Spliterator.ORDERED), false)
+                    .collect(Collectors.toMap(s -> s, s -> "", (s0, s1) -> s0, LinkedHashMap::new));
+            // 需要关注的字符长度.
+            final int watchLen = 1;
+            Collection<String>
+                mostWords =
+                StreamSupport.stream(Spliterators.spliteratorUnknownSize(mostIter, Spliterator.ORDERED), false)
+                    .filter(word -> !nlpWords.containsKey(word))
+                    .filter(word -> {
+
+                        if (word.length() == watchLen || isEnOrNumber(word)) {
+                            // 单字
+                            return nlpWords.containsKey(word);
+
+                        } else {
+                            return true;
+                        }
+                    }).collect(Collectors.toList());
+
+            List<String> results = new ArrayList<>(nlpWords.size() + mostWords.size());
+            results.addAll(nlpWords.keySet());
+            results.addAll(mostWords);
+            return results.iterator();
+        } else {
+            return EmptyWorkdsIterator.getInstance();
+        }
     }
 
     /**

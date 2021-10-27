@@ -154,8 +154,8 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         Assertions.assertTrue(user.id() > 0, "The identity of the user entity was expected to be set, but was not.");
 
-//        Assertions.assertEquals(0,
-//            user.entityValue().getValue("订单总数(count)").get().valueToLong());
+        Assertions.assertEquals(0,
+            user.entityValue().getValue("订单总数(count)").get().valueToLong());
         Assertions.assertEquals(
             new BigDecimal("0.0"),
             user.entityValue().getValue("总消费金额(sum)").get().getValue()
@@ -173,8 +173,8 @@ public class CalculationTest extends AbstractContainerExtends {
         operationResult = entityManagementService.build(order);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         Assertions.assertTrue(order.id() > 0, "The identity of the user entity was expected to be set, but was not.");
-//        Assertions.assertEquals(0,
-//            order.entityValue().getValue("订单项总数(count)").get().valueToLong());
+        Assertions.assertEquals(0,
+            order.entityValue().getValue("订单项总数(count)").get().valueToLong());
         Assertions.assertEquals(
             new BigDecimal("0.0"),
             order.entityValue().getValue("总金额(sum)").get().getValue()
@@ -185,8 +185,8 @@ public class CalculationTest extends AbstractContainerExtends {
         );
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-//        Assertions.assertEquals(1,
-//            user.entityValue().getValue("订单总数(count)").get().valueToLong());
+        Assertions.assertEquals(1,
+            user.entityValue().getValue("订单总数(count)").get().valueToLong());
 
         IEntity orderItem = buildOrderItem(order);
         operationResult = entityManagementService.build(orderItem);

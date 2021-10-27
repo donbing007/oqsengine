@@ -17,7 +17,7 @@ maven-build:
   script:
     - echo ${CI_JOB_ID}
     - update_pom_version
-    - mvn clean install -U -s ./.mvn/wrapper/settings.xml
+    - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
 #    - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Drequest.uuid=${CI_JOB_ID} -Dcontainer.server.host=${CONTAINER_SERVER_HOST} -Dcontainer.server.port=${containerServerPort}
     - cat target/site/jacoco/index.html
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
