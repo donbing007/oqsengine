@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrappe
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.GenericContainerUtils;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -38,7 +37,7 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
         UUID = System.getProperty("request.uuid");
         LOGGER.info("before all, UUID : {}", UUID);
 
-        Global.CONTAINER_MAP.computeIfAbsent(containerSupport(), (key) -> { return setupContainer(UUID); });
+        Global.CONTAINER_MAP.computeIfAbsent(containerSupport(), (key) -> setupContainer(UUID));
 
         if (!Global.HOOKED) {
             synchronized (Global.LOCK) {
@@ -53,11 +52,10 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
     /**
      * 每个测试用例类执行完毕退出前执行.
-     * @param extensionContext
      */
     @Override
     public void afterAll(ExtensionContext extensionContext) {
-        /**
+        /*
          * 这里consumer只能做容器内部数据清理工作
          */
         if (null != UUID) {

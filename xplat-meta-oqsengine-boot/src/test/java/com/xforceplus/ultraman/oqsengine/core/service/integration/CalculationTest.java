@@ -138,9 +138,9 @@ public class CalculationTest extends AbstractContainerExtends {
     /**
      * 测试目标结构如下.
      * <br>
-     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg))
-     * ..|---订单 (订单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup),订单用户关联)
-     * .......|---订单项 (单号(lookup), 物品名称, 金额, 订单项订单关联) <br>
+     * 用户(用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg)
+     * ..|---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 用户编号lookup,订单项平均价格formula, 订单用户关联)
+     * .......|---订单项 (单号lookup, 物品名称, 金额, 订单项订单关联) <br>
      * <br>
      */
     @Test
@@ -155,14 +155,14 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertTrue(user.id() > 0, "The identity of the user entity was expected to be set, but was not.");
 
         Assertions.assertEquals(0,
-            user.entityValue().getValue("订单总数(count)").get().valueToLong());
+            user.entityValue().getValue("订单总数count").get().valueToLong());
         Assertions.assertEquals(
             new BigDecimal("0.0"),
-            user.entityValue().getValue("总消费金额(sum)").get().getValue()
+            user.entityValue().getValue("总消费金额sum").get().getValue()
         );
         Assertions.assertEquals(
             new BigDecimal("0.0"),
-            user.entityValue().getValue("平均消费金额(avg)").get().getValue()
+            user.entityValue().getValue("平均消费金额avg").get().getValue()
         );
 
         /*
@@ -171,55 +171,65 @@ public class CalculationTest extends AbstractContainerExtends {
          */
         IEntity order = buildOrderEntity(user);
         operationResult = entityManagementService.build(order);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
         Assertions.assertTrue(order.id() > 0, "The identity of the user entity was expected to be set, but was not.");
         Assertions.assertEquals(0,
-            order.entityValue().getValue("订单项总数(count)").get().valueToLong());
+            order.entityValue().getValue("订单项总数count").get().valueToLong());
         Assertions.assertEquals(
             new BigDecimal("0.0"),
-            order.entityValue().getValue("总金额(sum)").get().getValue()
+            order.entityValue().getValue("总金额sum").get().getValue()
         );
         Assertions.assertEquals(
             user.entityValue().getValue("用户编号").get().valueToString(),
-            order.entityValue().getValue("用户编号(lookup)").get().valueToString()
+            order.entityValue().getValue("用户编号lookup").get().valueToString()
+        );
+        Assertions.assertEquals(
+            new BigDecimal("0.000000"),
+            order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         Assertions.assertEquals(1,
-            user.entityValue().getValue("订单总数(count)").get().valueToLong());
+            user.entityValue().getValue("订单总数count").get().valueToLong());
 
         IEntity orderItem = buildOrderItem(order);
         operationResult = entityManagementService.build(orderItem);
 
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         Assertions.assertTrue(orderItem.id() > 0,
             "The identity of the user entity was expected to be set, but was not.");
         Assertions.assertEquals(
             orderItem.entityValue().getValue("金额").get().getValue(),
-            order.entityValue().getValue("总金额(sum)").get().getValue()
+            order.entityValue().getValue("总金额sum").get().getValue()
         );
         Assertions.assertEquals(
             orderItem.entityValue().getValue("金额").get().getValue(),
-            user.entityValue().getValue("总消费金额(sum)").get().getValue()
+            user.entityValue().getValue("总消费金额sum").get().getValue()
         );
         Assertions.assertEquals(
-            order.entityValue().getValue("总金额(sum)").get().getValue(),
-            user.entityValue().getValue("平均消费金额(avg)").get().getValue()
+            order.entityValue().getValue("总金额sum").get().getValue(),
+            user.entityValue().getValue("平均消费金额avg").get().getValue()
         );
         Assertions.assertEquals(
             order.entityValue().getValue("订单号").get().getValue(),
-            orderItem.entityValue().getValue("单号(lookup)").get().getValue()
+            orderItem.entityValue().getValue("单号lookup").get().getValue()
+        );
+        Assertions.assertEquals(
+            ((BigDecimal) order.entityValue().getValue("总金额sum").get().getValue()).divide(BigDecimal.ONE),
+            order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
     }
 
     /**
      * 测试目标结构如下.
      * <br>
-     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg))
-     * ..|---订单 (订单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup),订单用户关联)
-     * .......|---订单项 (单号(lookup), 物品名称, 金额, 订单项订单关联) <br>
+     * 用户(用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg)
+     * ..|---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 用户编号lookup,订单项平均价格formula, 订单用户关联)
+     * .......|---订单项 (单号lookup, 物品名称, 金额, 订单项订单关联) <br>
      * <br>
      * 对订单项中的金额进行更新,其中应该造成订单和用户的金额重新计算.
      */
@@ -230,10 +240,12 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         IEntity order = buildOrderEntity(user);
         operationResult = entityManagementService.build(order);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
         IEntity orderItem = buildOrderItem(order);
         operationResult = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
 
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
@@ -242,7 +254,7 @@ public class CalculationTest extends AbstractContainerExtends {
                 EntityValue.build().addValue(
                     new DecimalValue(
                         MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                        BigDecimal.ZERO
+                        new BigDecimal("100.0")
                     )
                 )
             ).build();
@@ -253,9 +265,47 @@ public class CalculationTest extends AbstractContainerExtends {
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
 
-        Assertions.assertEquals(BigDecimal.ZERO, order.entityValue().getValue("总金额(sum)").get().getValue());
-        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue("总消费金额(sum)").get().getValue());
-        Assertions.assertEquals(BigDecimal.ZERO, user.entityValue().getValue("平均消费金额(avg)").get().getValue());
+        Assertions.assertEquals(new BigDecimal("100.000000"),
+            order.entityValue().getValue("总金额sum").get().getValue());
+        Assertions.assertEquals(new BigDecimal("100.000000"),
+            user.entityValue().getValue("总消费金额sum").get().getValue());
+        Assertions.assertEquals(new BigDecimal("100.000000"),
+            user.entityValue().getValue("平均消费金额avg").get().getValue());
+        Assertions.assertEquals(new BigDecimal("100.000000"),
+            order.entityValue().getValue("订单项平均价格formula").get().getValue()
+        );
+    }
+
+    @Test
+    public void testDeleteCalculation() throws Exception {
+        IEntity user = buildUserEntity();
+        OperationResult operationResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        IEntity order = buildOrderEntity(user);
+        operationResult = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
+        IEntity orderItem = buildOrderItem(order);
+        operationResult = entityManagementService.build(orderItem);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
+
+
+        operationResult = entityManagementService.delete(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+
+        Assertions.assertEquals(new BigDecimal("0.000000"),
+            order.entityValue().getValue("总金额sum").get().getValue());
+        Assertions.assertEquals(new BigDecimal("0.000000"),
+            user.entityValue().getValue("总消费金额sum").get().getValue());
+        Assertions.assertEquals(new BigDecimal("0.000000"),
+            user.entityValue().getValue("平均消费金额avg").get().getValue());
+        Assertions.assertEquals(new BigDecimal("0.000000"),
+            order.entityValue().getValue("订单项平均价格formula").get().getValue()
+        );
     }
 
     // 构造用户.
@@ -292,7 +342,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     )
                     .addValue(
                         new LookupValue(
-                            MockEntityClassDefine.ORDER_CLASS.field("用户编号(lookup)").get(),
+                            MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
                             user.id()
                         )
                     )
@@ -326,7 +376,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     )
                     .addValue(
                         new LookupValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号(lookup)").get(),
+                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号lookup").get(),
                             order.id()
                         )
                     )

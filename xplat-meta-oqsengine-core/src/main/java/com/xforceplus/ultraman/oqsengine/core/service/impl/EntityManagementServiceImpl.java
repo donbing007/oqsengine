@@ -409,6 +409,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE, tx);
+                calculationContext.focusEntity(newEntity, entityClass);
                 newEntity = calculation.calculate(calculationContext);
                 setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity), entityClass);
 

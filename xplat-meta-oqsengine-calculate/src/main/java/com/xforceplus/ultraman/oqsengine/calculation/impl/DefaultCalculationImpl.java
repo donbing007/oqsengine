@@ -119,10 +119,10 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-            if (logger.isDebugEnabled()) {
-                logger.debug("Maintain computed fields, whose impact tree is as follows.");
-                logger.debug(infuence.toString());
-            }
+//            if (logger.isDebugEnabled()) {
+//                logger.debug("Maintain computed fields, whose impact tree is as follows.");
+//                logger.debug(infuence.toString());
+//            }
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {
@@ -258,6 +258,29 @@ public class DefaultCalculationImpl implements Calculation {
                     // 目标数据已经不存在,被其他事务删除,放弃操作.
                     return true;
                 }
+
+                replyEntityes.forEach(e -> {
+                    IEntityClass entityClass = metaManager.load(e.entityClassRef()).get();
+                    for (IEntityField field : entityClass.fields()) {
+                        Optional<ValueChange> vcOp = context.getValueChange(e, field);
+
+                        if (!vcOp.isPresent()) {
+                            continue;
+                        } else {
+                            ValueChange vc = vcOp.get();
+                            Optional<IValue> valueOp = vc.getNewValue();
+                            if (!valueOp.isPresent()) {
+                                continue;
+                            }
+                            IValue newValue = valueOp.get();
+                            if (EmptyTypedValue.class.isInstance(newValue)) {
+                                e.entityValue().remove(field);
+                            } else {
+                                e.entityValue().addValue(newValue);
+                            }
+                        }
+                    }
+                });
 
                 if (logger.isDebugEnabled()) {
                     logger.debug("Maintenance update instance conflict, wait 30 ms and try again.[{}/{}]",

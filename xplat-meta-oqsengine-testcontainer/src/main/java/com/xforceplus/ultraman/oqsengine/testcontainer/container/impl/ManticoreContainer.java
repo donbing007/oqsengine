@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -28,44 +27,30 @@ public class ManticoreContainer extends AbstractContainerExtension {
 
     @Override
     protected ContainerWrapper setupContainer(String uid) {
-        ContainerWrapper containerWrapper = null;
+        GenericContainer manticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
+            .withExposedPorts(9306)
+            .withNetwork(Global.NETWORK)
+            .withNetworkAliases("manticore")
+            .withClasspathResourceMapping("manticore/manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
+        manticore.start();
+        manticore.followOutput((Consumer<OutputFrame>) outputFrame -> {
+            LOGGER.info(outputFrame.getUtf8String());
+        });
 
-//        if (null != uid) {
-//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-//
-//            if (null == containerWrapper) {
-//                throw new RuntimeException("get remote container failed.");
-//            }
-//            /*
-//             * 设置oqs中的环境变量
-//             */
-//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-//        } else {
-            GenericContainer manticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
-                .withExposedPorts(9306)
-                .withNetwork(Global.NETWORK)
-                .withNetworkAliases("manticore")
-                .withClasspathResourceMapping("manticore/manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
-            manticore.start();
-            manticore.followOutput((Consumer<OutputFrame>) outputFrame -> {
-                LOGGER.info(outputFrame.getUtf8String());
-            });
+        /*
+         * 设置oqs中的环境变量
+         */
+        setSystemProperties(manticore.getContainerIpAddress(), manticore.getFirstMappedPort().toString());
 
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(manticore.getContainerIpAddress(), manticore.getFirstMappedPort().toString());
+        ContainerWrapper containerWrapper = new FixedContainerWrapper(manticore);
 
-            containerWrapper = new FixedContainerWrapper(manticore);
-
-            try {
-                SqlInitUtils.execute("/manticore", "MANTICORE_JDBC");
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-//        }
+        try {
+            SqlInitUtils.execute("/manticore", "MANTICORE_JDBC");
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
 
         return containerWrapper;
     }

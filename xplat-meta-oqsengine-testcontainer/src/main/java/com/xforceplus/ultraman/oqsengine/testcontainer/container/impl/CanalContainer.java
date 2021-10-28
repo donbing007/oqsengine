@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import java.time.Duration;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -27,48 +26,32 @@ public class CanalContainer extends AbstractContainerExtension {
 
     @Override
     protected ContainerWrapper setupContainer(String uid) {
-        ContainerWrapper containerWrapper = null;
-
         System.setProperty("CANAL_DESTINATION", "oqsengine");
 
-//        if (null != uid) {
-//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-//            if (null == containerWrapper) {
-//                throw new RuntimeException("get remote container failed.");
-//            }
-//            /*
-//             * 设置oqs中的环境变量
-//             */
-//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-//        } else {
+        GenericContainer canal = new GenericContainer("canal/canal-server:v1.1.4")
+            .withNetwork(Global.NETWORK)
+            .withNetworkAliases("canal")
+            .withExposedPorts(11111)
+            .withEnv("canal.instance.mysql.slaveId", "12")
+            .withEnv("canal.auto.scan", "false")
+            .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
+            .withEnv("canal.instance.master.address", "mysql:3306")
+            .withEnv("canal.instance.dbUsername", "root")
+            .withEnv("canal.instance.dbPassword", "root")
+            .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
+            .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
-            GenericContainer canal = new GenericContainer("canal/canal-server:v1.1.4")
-                .withNetwork(Global.NETWORK)
-                .withNetworkAliases("canal")
-                .withExposedPorts(11111)
-                .withEnv("canal.instance.mysql.slaveId", "12")
-                .withEnv("canal.auto.scan", "false")
-                .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
-                .withEnv("canal.instance.master.address", "mysql:3306")
-                .withEnv("canal.instance.dbUsername", "root")
-                .withEnv("canal.instance.dbPassword", "root")
-                .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
-                .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
+        canal.start();
+        canal.followOutput((Consumer<OutputFrame>) outputFrame -> {
+            LOGGER.info(outputFrame.getUtf8String());
+        });
 
-            canal.start();
-            canal.followOutput((Consumer<OutputFrame>) outputFrame -> {
-                LOGGER.info(outputFrame.getUtf8String());
-            });
+        /*
+         * 设置oqs中的环境变量
+         */
+        setSystemProperties(canal.getContainerIpAddress(), canal.getFirstMappedPort().toString());
 
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(canal.getContainerIpAddress(), canal.getFirstMappedPort().toString());
-
-            containerWrapper = new FixedContainerWrapper(canal);
-//        }
-
-        return containerWrapper;
+        return new FixedContainerWrapper(canal);
     }
 
     @Override
@@ -84,7 +67,8 @@ public class CanalContainer extends AbstractContainerExtension {
     private void setSystemProperties(String address, String port) {
 
         if (null == address || null == port) {
-            throw new RuntimeException(String.format("container canal init failed of null value, address[%s] or port[%s]", address, port));
+            throw new RuntimeException(
+                String.format("container canal init failed of null value, address[%s] or port[%s]", address, port));
         }
 
         System.setProperty("CANAL_HOST", address);

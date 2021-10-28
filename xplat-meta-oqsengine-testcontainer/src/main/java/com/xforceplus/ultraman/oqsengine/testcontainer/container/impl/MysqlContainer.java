@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.utils.RemoteCallUtils;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -29,43 +28,29 @@ public class MysqlContainer extends AbstractContainerExtension {
 
     @Override
     protected ContainerWrapper setupContainer(String uid) {
-        ContainerWrapper containerWrapper = null;
+        GenericContainer mysql = new GenericContainer("mysql:5.7")
+            .withNetwork(Global.NETWORK)
+            .withNetworkAliases("mysql")
+            .withExposedPorts(3306)
+            .withEnv("MYSQL_DATABASE", "oqsengine")
+            .withEnv("MYSQL_ROOT_USERNAME", MYSQL_USER_PASS)
+            .withEnv("MYSQL_ROOT_PASSWORD", MYSQL_USER_PASS)
+            .withClasspathResourceMapping("mysql/mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
+            .waitingFor(
+                Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
-//        if (null != uid) {
-//            containerWrapper = RemoteCallUtils.startUseRemoteContainer(uid, containerSupport());
-//
-//            if (null == containerWrapper) {
-//                throw new RuntimeException("get remote container failed.");
-//            }
-//            /*
-//             * 设置oqs中的环境变量
-//             */
-//            setSystemProperties(containerWrapper.host(), containerWrapper.port());
-//        } else {
-            GenericContainer mysql = new GenericContainer("mysql:5.7")
-                .withNetwork(Global.NETWORK)
-                .withNetworkAliases("mysql")
-                .withExposedPorts(3306)
-                .withEnv("MYSQL_DATABASE", "oqsengine")
-                .withEnv("MYSQL_ROOT_USERNAME", MYSQL_USER_PASS)
-                .withEnv("MYSQL_ROOT_PASSWORD", MYSQL_USER_PASS)
-                .withClasspathResourceMapping("mysql/mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
-                .waitingFor(
-                    Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
+        mysql.start();
 
-            mysql.start();
+        mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
+            LOGGER.info(outputFrame.getUtf8String());
+        });
 
-            mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
-                LOGGER.info(outputFrame.getUtf8String());
-            });
+        /*
+         * 设置oqs中的环境变量
+         */
+        setSystemProperties(mysql.getContainerIpAddress(), mysql.getFirstMappedPort().toString());
 
-            /*
-             * 设置oqs中的环境变量
-             */
-            setSystemProperties(mysql.getContainerIpAddress(), mysql.getFirstMappedPort().toString());
-
-            containerWrapper = new FixedContainerWrapper(mysql);
-//        }
+        ContainerWrapper containerWrapper = new FixedContainerWrapper(mysql);
 
 
         try {
@@ -93,7 +78,8 @@ public class MysqlContainer extends AbstractContainerExtension {
 
     private void setSystemProperties(String address, String port) {
         if (null == address || null == port) {
-            throw new RuntimeException(String.format("container mysql init failed of null value, address[%s] or port[%s]", address, port));
+            throw new RuntimeException(
+                String.format("container mysql init failed of null value, address[%s] or port[%s]", address, port));
         }
 
         System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
@@ -103,7 +89,8 @@ public class MysqlContainer extends AbstractContainerExtension {
 
         System.setProperty(
             "MYSQL_JDBC",
-            String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+            String.format(
+                "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                 address, port)
         );
 

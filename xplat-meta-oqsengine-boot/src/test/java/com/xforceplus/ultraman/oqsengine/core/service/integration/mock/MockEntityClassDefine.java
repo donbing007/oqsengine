@@ -12,7 +12,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
@@ -111,6 +113,8 @@ public class MockEntityClassDefine {
     private static long orderItemNameFieldId = baseFieldId - 27;
     // 订单项金额字段标识.
     private static long orderItemPriceFieldId = baseFieldId - 28;
+    // 订单的订单项平均价格.
+    private static long orderAvgPriceFieldId = baseFieldId - 29;
 
     // 用户订单关系字段.
     private static IEntityField orderUserForeignField = EntityField.Builder.anEntityField()
@@ -424,7 +428,7 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(userOrderTotalNumberCountFieldId)
-                    .withName("订单总数(count)")
+                    .withName("订单总数count")
                     .withFieldType(FieldType.LONG)
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
@@ -441,7 +445,7 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(userOrderTotalPriceSumFieldId)
-                    .withName("总消费金额(sum)")
+                    .withName("总消费金额sum")
                     .withFieldType(FieldType.DECIMAL)
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
@@ -460,7 +464,7 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(userOrderAvgPriceAvgFieldId)
-                    .withName("平均消费金额(avg)")
+                    .withName("平均消费金额avg")
                     .withFieldType(FieldType.DECIMAL)
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
@@ -526,7 +530,7 @@ public class MockEntityClassDefine {
                 EntityField.Builder.anEntityField()
                     .withId(orderTotalNumberCountFieldId)
                     .withFieldType(FieldType.LONG)
-                    .withName("订单项总数(count)")
+                    .withName("订单项总数count")
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
                             .withSearchable(true)
@@ -542,7 +546,7 @@ public class MockEntityClassDefine {
                 EntityField.Builder.anEntityField()
                     .withId(orderTotalPriceSumFieldId)
                     .withFieldType(FieldType.DECIMAL)
-                    .withName("总金额(sum)")
+                    .withName("总金额sum")
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
                             .withLen(19)
@@ -561,7 +565,7 @@ public class MockEntityClassDefine {
                 EntityField.Builder.anEntityField()
                     .withId(orderUserCodeLookupFieldId)
                     .withFieldType(FieldType.STRING)
-                    .withName("用户编号(lookup)")
+                    .withName("用户编号lookup")
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
                             .withSearchable(true)
@@ -572,6 +576,27 @@ public class MockEntityClassDefine {
                                     .withFieldId(userCodeFieldId).build()
                             ).build()
                     ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderAvgPriceFieldId)
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("订单项平均价格formula")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withScale(1)
+                            .withCalculation(Formula.Builder.anFormula()
+                                .withLevel(1)
+                                .withExpression("${总金额sum} / ${订单项总数count}")
+                                .withFailedDefaultValue(new BigDecimal("0.0"))
+                                .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                                .withArgs(Arrays.asList("总金额sum", "订单项总数count"))
+                                .build()
+                            ).build()
+                    )
+                    .build()
             )
             .withField(orderUserForeignField)
             .withRelations(
@@ -615,7 +640,7 @@ public class MockEntityClassDefine {
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(orderItemOrderCodeLookupFieldId)
-                    .withName("单号(lookup)")
+                    .withName("单号lookup")
                     .withFieldType(FieldType.STRING)
                     .withConfig(
                         FieldConfig.Builder.anFieldConfig()
