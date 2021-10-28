@@ -21,65 +21,52 @@ public final class ContainerStarter {
 
     static final Logger LOGGER = LoggerFactory.getLogger(ContainerStarter.class);
 
-    private static GenericContainer redis;
-    private static GenericContainer mysql;
-    private static GenericContainer manticore0;
-    private static GenericContainer manticore1;
-    private static GenericContainer searchManticore;
-    private static GenericContainer cannal;
-    private static Network network;
+    private GenericContainer redis;
+    private GenericContainer mysql;
+    private GenericContainer manticore0;
+    private GenericContainer manticore1;
+    private GenericContainer searchManticore;
+    private GenericContainer cannal;
+    private Network network;
 
-    static {
+    /**
+     * 初始化.
+     */
+    public void init() {
         System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
-
-        network = Network.NetworkImpl.builder().createNetworkCmdModifier((createNetworkCmd) -> {
-            com.github.dockerjava.api.model.Network.Ipam.Config
-                config = new com.github.dockerjava.api.model.Network.Ipam.Config();
-            com.github.dockerjava.api.model.Network.Ipam ipam = new com.github.dockerjava.api.model.Network.Ipam();
-            ipam.withConfig(new com.github.dockerjava.api.model.Network.Ipam.Config[]{config.withSubnet("10.10.10.0/16").withGateway("10.10.10.1")});
-            createNetworkCmd.withIpam(ipam);
-        }).build();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (network != null) {
-                network.close();
-            }
-        }));
-
-    }
-
-    private static void waitStop(GenericContainer genericContainer) {
-        while (genericContainer.isRunning()) {
-            try {
-                LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
-                TimeUnit.MILLISECONDS.sleep(5);
-            } catch (Exception ex) {
-                LOGGER.error(ex.getMessage(), ex);
-            }
-        }
+        network = Network.newNetwork();
     }
 
     /**
-     * 重置所有打开过的容器.
+     * 清理.
      */
-    public static synchronized void reset() {
-        stopCannal();
-
-        stopManticore();
-
-        stopMysql();
-
-        stopRedis();
+    public void destroy() {
+        try {
+            stopCannal();
+            stopManticore();
+            stopMysql();
+            stopRedis();
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+        } finally {
+            network.close();
+        }
     }
 
     /**
      * 开始redis容器.
      */
-    public static synchronized void startRedis() {
+    public synchronized void startRedis() {
+        if (network == null) {
+            throw new IllegalStateException("No initialization.");
+        }
+
         if (redis == null) {
+
             redis = new GenericContainer("redis:6.0.9-alpine3.12")
                 .withNetwork(network)
                 .withNetworkAliases("redis")
+                .withNetworkMode("bridge")
                 .withExposedPorts(6379)
                 .waitingFor(Wait.forListeningPort());
             redis.start();
@@ -97,7 +84,7 @@ public final class ContainerStarter {
     /**
      * 结束redis容器.
      */
-    public static synchronized void stopRedis() {
+    public synchronized void stopRedis() {
         if (redis != null) {
             redis.stop();
             waitStop(redis);
@@ -114,11 +101,16 @@ public final class ContainerStarter {
     /**
      * 开始 mysql 容器.
      */
-    public static synchronized void startMysql() {
+    public synchronized void startMysql() {
+        if (network == null) {
+            throw new IllegalStateException("No initialization.");
+        }
+
         if (mysql == null) {
             mysql = new GenericContainer("mysql:5.7")
-                .withNetwork(network)
                 .withNetworkAliases("mysql")
+                .withNetwork(network)
+                .withNetworkMode("bridge")
                 .withExposedPorts(3306)
                 .withEnv("MYSQL_DATABASE", "oqsengine")
                 .withEnv("MYSQL_ROOT_USERNAME", "root")
@@ -147,7 +139,7 @@ public final class ContainerStarter {
     /**
      * 结束mysql容器.
      */
-    public static synchronized void stopMysql() {
+    public synchronized void stopMysql() {
         if (mysql != null) {
             mysql.stop();
             waitStop(mysql);
@@ -164,10 +156,15 @@ public final class ContainerStarter {
     /**
      * 开始 manticore 容器.
      */
-    public static synchronized void startManticore() {
+    public synchronized void startManticore() {
+        if (network == null) {
+            throw new IllegalStateException("No initialization.");
+        }
+
         if (manticore0 == null) {
             manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withNetworkMode("bridge")
                 .withNetwork(network)
                 .withNetworkAliases("manticore0")
                 .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -196,6 +193,7 @@ public final class ContainerStarter {
         if (manticore1 == null) {
             manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withNetworkMode("bridge")
                 .withNetwork(network)
                 .withNetworkAliases("manticore1")
                 .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -224,6 +222,7 @@ public final class ContainerStarter {
         if (searchManticore == null) {
             searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
+                .withNetworkMode("bridge")
                 .withNetwork(network)
                 .withNetworkAliases("searchManticore")
                 .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
@@ -252,7 +251,7 @@ public final class ContainerStarter {
     /**
      * 结束 manticore 容器.
      */
-    public static synchronized void stopManticore() {
+    public synchronized void stopManticore() {
         if (searchManticore != null) {
             searchManticore.stop();
             waitStop(searchManticore);
@@ -293,13 +292,18 @@ public final class ContainerStarter {
     /**
      * 开始 cannal 容器.
      */
-    public static synchronized void startCannal() {
+    public synchronized void startCannal() {
+        if (network == null) {
+            throw new IllegalStateException("No initialization.");
+        }
+
         if (cannal == null) {
             System.setProperty("CANAL_DESTINATION", getRandomString(6));
 
             cannal = new GenericContainer("canal/canal-server:v1.1.4")
-                .withNetwork(network)
                 .withNetworkAliases("cannal")
+                .withNetworkMode("bridge")
+                .withNetwork(network)
                 .withExposedPorts(11111)
                 .withEnv("canal.instance.mysql.slaveId", "12")
                 .withEnv("canal.auto.scan", "false")
@@ -325,7 +329,7 @@ public final class ContainerStarter {
     /**
      * 结束 cannal 容器.
      */
-    public static synchronized void stopCannal() {
+    public synchronized void stopCannal() {
         if (cannal != null) {
             cannal.stop();
             waitStop(cannal);
@@ -348,5 +352,16 @@ public final class ContainerStarter {
             sb.append(str.charAt(number));
         }
         return sb.toString();
+    }
+
+    private void waitStop(GenericContainer genericContainer) {
+        while (genericContainer.isRunning()) {
+            try {
+                LOGGER.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
+                TimeUnit.MILLISECONDS.sleep(5);
+            } catch (Exception ex) {
+                LOGGER.error(ex.getMessage(), ex);
+            }
+        }
     }
 }

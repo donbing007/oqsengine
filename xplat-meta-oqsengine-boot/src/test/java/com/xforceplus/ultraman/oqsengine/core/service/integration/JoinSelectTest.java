@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -83,12 +84,25 @@ public class JoinSelectTest {
     private List<IEntity> entities;
     private List<IEntity> driverEntities;
 
+    private static ContainerStarter starter;
+
     @BeforeClass
     public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
+        starter = new ContainerStarter();
+        starter.init();
+
+        starter.startMysql();
+        starter.startManticore();
+        starter.startRedis();
+        starter.startCannal();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (starter != null) {
+            starter.destroy();
+            starter = null;
+        }
     }
 
     @Before

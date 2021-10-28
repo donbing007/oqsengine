@@ -41,8 +41,6 @@ public class ChangelogConfiguration {
 
     @Bean
     public RedisClient redisClient() {
-
-        ContainerStarter.startRedis();
         RedisClient redisClient = null;
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));

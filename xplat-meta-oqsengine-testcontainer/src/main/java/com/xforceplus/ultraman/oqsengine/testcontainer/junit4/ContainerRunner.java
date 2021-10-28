@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.junit4;
 
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.TestClass;
 
 /**
  * 容器启动的Junit4 Runner实现.
@@ -27,24 +29,60 @@ public class ContainerRunner extends BlockJUnit4ClassRunner {
 
     @Override
     public void run(RunNotifier notifier) {
-        ContainerType[] containerTypes = ContainerHelper.parseContainers(getTestClass());
-        boolean start = false;
-        if (containerTypes != null && containerTypes.length > 0) {
-            start = true;
+        ContainerStarter starter = null;
+        try {
+            ContainerType[] containerTypes = parseContainers(getTestClass());
+            if (containerTypes.length > 0) {
+                starter = new ContainerStarter();
+                starter.init();
 
-            for (ContainerType containerType : containerTypes) {
-                ContainerHelper.processContainer(containerType, true);
+                for (ContainerType containerType : containerTypes) {
+                    startContainer(containerType, starter);
+                }
             }
-        }
 
-        super.run(notifier);
+            super.run(notifier);
 
-        if (start) {
-            for (int i = containerTypes.length - 1; i >= 0; i--) {
-                ContainerHelper.processContainer(containerTypes[i], false);
+        } finally {
+
+            if (starter != null) {
+                starter.destroy();
             }
+
         }
     }
 
+    // 解析需要的目标容器类型.
+    private ContainerType[] parseContainers(TestClass testClass) {
+        DependentContainers dc = testClass.getAnnotation(DependentContainers.class);
+        if (dc == null) {
+            return new ContainerType[0];
+        } else {
+            return dc.value();
+        }
+    }
 
+    // 启动指定类型容器.
+    private void startContainer(ContainerType type, ContainerStarter starter) {
+        switch (type) {
+            case REDIS: {
+                starter.startRedis();
+                break;
+            }
+            case MYSQL: {
+                starter.startMysql();
+                break;
+            }
+            case MANTICORE: {
+                starter.startManticore();
+                break;
+            }
+            case CANNAL: {
+                starter.startCannal();
+                break;
+            }
+            default:
+                throw new IllegalArgumentException(String.format("%s is an unsupported container type."));
+        }
+    }
 }
