@@ -96,7 +96,7 @@ public class BaseInit {
 
         entityClassGenerator = new MockEntityClassGenerator();
 
-        grpcParamsConfig = gRpcParamsConfig();
+        grpcParamsConfig = gprcParamsConfig();
 
         taskExecutor = new ThreadPoolExecutor(5, 5, 0,
             TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
@@ -111,7 +111,7 @@ public class BaseInit {
         return syncResponseHandler;
     }
 
-    protected GRpcParams gRpcParamsConfig() {
+    protected GRpcParams gprcParamsConfig() {
         GRpcParams grpcParamsConfig = new GRpcParams();
         grpcParamsConfig.setDefaultDelayTaskDuration(30_000);
         grpcParamsConfig.setKeepAliveSendDuration(5_000);

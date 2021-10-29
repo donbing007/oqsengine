@@ -22,8 +22,6 @@ import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.Collection;
 import javax.sql.DataSource;
 
@@ -44,7 +42,6 @@ public class MasterDBInitialization implements BeanInitialization {
     private SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory;
 
     public static final String MASTER_STORAGE_TABLE = "oqsbigentity";
-    public static final String MASTER_STORAGE_FAILED_TABLE = "entityfaileds";
 
     private MasterDBInitialization() {
     }
@@ -99,7 +96,6 @@ public class MasterDBInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRunner());
 
         masterStorage.setTableName(MASTER_STORAGE_TABLE);
-        masterStorage.setErrorTable(MASTER_STORAGE_FAILED_TABLE);
         masterStorage.init();
     }
 

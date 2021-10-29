@@ -11,7 +11,6 @@ import java.util.Objects;
  * abcde -> abc bcd cde
  * 这是测试 -> 这是测 是测试
  * 即最终的关键字数量 (字符长度 - 子串长度) + 1
- * <p>
  * 储存模式和搜索模式没有区别.
  *
  * @author dongbin

@@ -28,8 +28,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -50,11 +48,11 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 计算字段计算器测试. 测试构造如下的一个情况.
- *             A
- *          /     \
- *        B(sum)  C(lookup)
- *        /
- *       D(SUM)
+ * A
+ * /     \
+ * B(sum)  C(lookup)
+ * /
+ * D(SUM)
  *
  * @author dongbin
  * @version 0.1 2021/10/14 10:26:24
@@ -403,17 +401,6 @@ public class DefaultCalculationImplTest {
         @Override
         public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
                                                      long lastId, int size) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void writeError(ErrorStorageEntity errorStorageEntity) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
-            throws SQLException {
             throw new UnsupportedOperationException();
         }
 

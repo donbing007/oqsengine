@@ -1,6 +1,6 @@
 create table oqsindex (
-    attrf        text indexed,
-    entityclassf text indexed,
+    attrf        text,
+    entityclassf text,
     tx           bigint,
     commitid     bigint,
     createtime   bigint,

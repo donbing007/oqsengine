@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationC
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.AggregationCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -14,16 +13,24 @@ import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -35,18 +42,24 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Transac
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * 测试类.
@@ -147,21 +160,21 @@ public class FormulaCalculationLogicTest {
             .build();
 
         B_FML = EntityField.Builder.anEntityField()
-                .withId(Long.MAX_VALUE - 11)
-                .withFieldType(FieldType.LONG)
-                .withName("b-fml-b-sum")
-                .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                                .withCalculation(Formula.Builder.anFormula()
-                                        .withLevel(1)
-                                        .withExpression("${b-sum-a} * 2")
-                                        .withFailedDefaultValue(0)
-                                        .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
-                                        .withArgs(Collections.singletonList("b-sum-a"))
-                                        .build()
-                                ).build()
-                )
-                .build();
+            .withId(Long.MAX_VALUE - 11)
+            .withFieldType(FieldType.LONG)
+            .withName("b-fml-b-sum")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Formula.Builder.anFormula()
+                        .withLevel(1)
+                        .withExpression("${b-sum-a} * 2")
+                        .withFailedDefaultValue(0)
+                        .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                        .withArgs(Collections.singletonList("b-sum-a"))
+                        .build()
+                    ).build()
+            )
+            .build();
 
         C_COUNT = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 2)
@@ -194,19 +207,19 @@ public class FormulaCalculationLogicTest {
             .withName("d-sum-a").build();
 
         D_SUM_B_FML = EntityField.Builder.anEntityField()
-                .withId(Long.MAX_VALUE - 31)
-                .withFieldType(FieldType.LONG)
-                .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                                .withCalculation(Aggregation.Builder.anAggregation()
-                                        .withClassId(Long.MAX_VALUE - 1)
-                                        .withFieldId(Long.MAX_VALUE - 11)
-                                        .withRelationId(Long.MAX_VALUE - 30)
-                                        .withAggregationType(AggregationType.SUM)
-                                        .build()
-                                ).build()
-                )
-                .withName("d-sum-a").build();
+            .withId(Long.MAX_VALUE - 31)
+            .withFieldType(FieldType.LONG)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(Long.MAX_VALUE - 1)
+                        .withFieldId(Long.MAX_VALUE - 11)
+                        .withRelationId(Long.MAX_VALUE - 30)
+                        .withAggregationType(AggregationType.SUM)
+                        .build()
+                    ).build()
+            )
+            .withName("d-sum-a").build();
 
         A_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
@@ -636,17 +649,6 @@ public class FormulaCalculationLogicTest {
         @Override
         public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
                                                      long lastId, int size) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void writeError(ErrorStorageEntity errorStorageEntity) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
-            throws SQLException {
             throw new UnsupportedOperationException();
         }
 

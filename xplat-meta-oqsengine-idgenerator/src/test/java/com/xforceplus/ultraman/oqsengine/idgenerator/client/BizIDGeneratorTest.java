@@ -136,22 +136,22 @@ public class BizIDGeneratorTest {
         int ret1 = storage1.build(info1);
         Assertions.assertEquals(ret1, 1);
 
-        SegmentInfo info3 = SegmentInfo.builder().withBeginId(1l).withBizType(LINEAR_BIZ_TYPE_3)
+        SegmentInfo info3 = SegmentInfo.builder().withBeginId(1L).withBizType(LINEAR_BIZ_TYPE_3)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
             .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}:{00000}").withMode(1).withStep(100)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-            .withVersion(1l)
+            .withVersion(1L)
             .withResetable(0)
             .withPatternKey("")
             .build();
         int ret3 = storage1.build(info3);
         Assertions.assertEquals(ret3, 1);
 
-        SegmentInfo info4 = SegmentInfo.builder().withBeginId(1l).withBizType(LINEAR_BIZ_TYPE_4)
+        SegmentInfo info4 = SegmentInfo.builder().withBeginId(1L).withBizType(LINEAR_BIZ_TYPE_4)
             .withCreateTime(new Timestamp(System.currentTimeMillis()))
             .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}-{HH}:{00000}").withMode(1).withStep(1000)
             .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-            .withVersion(1l)
+            .withVersion(1L)
             .withResetable(0)
             .withPatternKey("")
             .build();

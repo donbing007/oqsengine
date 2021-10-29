@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.changelog.event;
 
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
-
 import java.util.Map;
 
 /**
  * version event to return
  */
-public class VersionEvent implements ChangelogEvent{
+public class VersionEvent implements ChangelogEvent {
 
     private long objId;
 
@@ -33,9 +32,11 @@ public class VersionEvent implements ChangelogEvent{
 
     @Override
     public String toString() {
-        return "VersionEvent{" +
-                "objId=" + objId +
-                ", changeVersion=" + changeVersion +
-                '}';
+        return new StringBuilder()
+            .append("VersionEvent{")
+            .append("objId=").append(objId)
+            .append(", changeVersion=")
+            .append(changeVersion).append('}')
+            .toString();
     }
 }

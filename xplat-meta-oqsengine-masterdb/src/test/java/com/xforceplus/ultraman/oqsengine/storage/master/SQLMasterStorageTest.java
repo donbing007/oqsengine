@@ -158,6 +158,7 @@ public class SQLMasterStorageTest {
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     /**
@@ -196,7 +197,7 @@ public class SQLMasterStorageTest {
     @Test
     public void testBuildEntities() throws Exception {
         EntityPackage entityPackage = new EntityPackage();
-        int expectedSize = 10000;
+        int expectedSize = 1000;
         for (int i = 0; i < expectedSize; i++) {
             entityPackage.put(
                 Entity.Builder.anEntity()

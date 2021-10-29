@@ -144,7 +144,13 @@ public class InfuenceTest {
     }
 
     /**
-     * 创建多分支. A<br> |<br> |-----|<br> B     D<br> |     |<br> C     E<br>
+     * 创建多分支.
+     * .....A
+     * .....|
+     * ...|-----|
+     * ...B     D
+     * ...|     |
+     * ...C     E
      */
     @Test
     public void testBuildManyBranches() throws Exception {
@@ -226,8 +232,20 @@ public class InfuenceTest {
     }
 
     /**
-     * 测试扫描的同时增加. 基础树如下. A<br> |<br> |-----|<br> B     D<br> |<br> C <br> 目标为 A<br> |<br> |-----|<br> B     D<br> |
-     * |<br> C     E<br>
+     * 测试扫描的同时增加. 基础树如下.
+     * ...........A
+     * ...........|
+     * ........|-----|
+     * ........B     D
+     * .......|
+     * .......C
+     * 目标为
+     * .........A
+     * .........|
+     * ......|-----|
+     * ......B     D
+     * ......|     |
+     * ......C     E
      */
     @Test
     public void testScanWithAdd() throws Exception {
@@ -310,7 +328,13 @@ public class InfuenceTest {
     }
 
     /**
-     * 测试是否以广度优先方式遍历. A<br> |<br> |-----|<br> B     D<br> |     |<br> C     E<br>
+     * 测试是否以广度优先方式遍历.
+     * ...........A
+     * ...........|
+     * ........|-----|
+     * ........B     D
+     * ........|     |
+     * ........C     E
      */
     @Test
     public void testBfsIter() throws Exception {
@@ -420,4 +444,27 @@ public class InfuenceTest {
         Assertions.assertEquals(B_CLASS, results.get(0));
     }
 
+    @Test
+    public void testToString() throws Exception {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        Infuence infuence = new Infuence(rootEntity,
+            Participant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
+        infuence.impact(
+            Participant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.UPDATE_TIME_FILED).build()
+        );
+
+        System.out.println(infuence.toString());
+    }
 }

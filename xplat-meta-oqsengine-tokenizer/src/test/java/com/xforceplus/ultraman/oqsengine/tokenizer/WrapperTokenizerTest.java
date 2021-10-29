@@ -39,7 +39,7 @@ public class WrapperTokenizerTest {
         );
 
         List<String> wildCardWords = new ArrayList<>();
-        while(words.hasNext()) {
+        while (words.hasNext()) {
             wildCardWords.add(words.next());
         }
 
@@ -55,7 +55,7 @@ public class WrapperTokenizerTest {
             "scan"
         );
         wildCardWords = new ArrayList<>();
-        while(words.hasNext()) {
+        while (words.hasNext()) {
             wildCardWords.add(words.next());
         }
         Collections.sort(expectedWords);

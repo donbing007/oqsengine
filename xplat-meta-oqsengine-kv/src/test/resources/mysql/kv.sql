@@ -1,4 +1,3 @@
-create database oqsengine;
 use oqsengine;
 create table kv (
   k     varchar(255)          not null comment 'key',

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -17,15 +16,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -38,12 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -65,63 +55,63 @@ public class AggregationTaskRunnerTest {
     private long targetFieldId = 1001;
 
     private IEntityField aggField = EntityField.Builder.anEntityField()
-            .withId(aggFieldId)
-            .withFieldType(FieldType.LONG)
-            .withName("agg")
-            .withConfig(
-                    FieldConfig.Builder.anFieldConfig().build()
-            ).build();
+        .withId(aggFieldId)
+        .withFieldType(FieldType.LONG)
+        .withName("agg")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().build()
+        ).build();
 
     private IEntityField targetField = EntityField.Builder.anEntityField()
-            .withId(targetFieldId)
-            .withFieldType(FieldType.LONG)
-            .withName("target")
-            .withConfig(
-                    FieldConfig.Builder.anFieldConfig().build()
-            ).build();
+        .withId(targetFieldId)
+        .withFieldType(FieldType.LONG)
+        .withName("target")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().build()
+        ).build();
 
     private IEntityClass aggEntityClass = EntityClass.Builder.anEntityClass()
-            .withId(aggEntityClassId)
-            .withCode("agg")
-            .withField(aggField)
-            .withLevel(0)
-            .withRelations(
-                    Arrays.asList(
-                            Relationship.Builder.anRelationship()
-                                    .withId(Long.MAX_VALUE)
-                                    .withCode(Long.toString(Long.MAX_VALUE))
-                                    .withEntityField(targetField)
-                                    .withLeftEntityClassId(targetEntityClassId)
-                                    .withRightEntityClassId(aggEntityClassId)
-                                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                                    .withBelongToOwner(false)
-                                    .withStrong(true)
-                                    .withIdentity(true)
-                                    .build()
-                    )
-            ).build();
+        .withId(aggEntityClassId)
+        .withCode("agg")
+        .withField(aggField)
+        .withLevel(0)
+        .withRelations(
+            Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(Long.MAX_VALUE)
+                    .withCode(Long.toString(Long.MAX_VALUE))
+                    .withEntityField(targetField)
+                    .withLeftEntityClassId(targetEntityClassId)
+                    .withRightEntityClassId(aggEntityClassId)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .withBelongToOwner(false)
+                    .withStrong(true)
+                    .withIdentity(true)
+                    .build()
+            )
+        ).build();
 
 
     private IEntityClass targetEntityClass = EntityClass.Builder.anEntityClass()
-            .withId(targetEntityClassId)
-            .withCode("target")
-            .withLevel(0)
-            .withField(targetField)
-            .withRelations(
-                    Arrays.asList(
-                            Relationship.Builder.anRelationship()
-                                    .withId(Long.MAX_VALUE - 1)
-                                    .withCode(Long.toString(Long.MAX_VALUE))
-                                    .withLeftEntityClassId(targetEntityClassId)
-                                    .withRightEntityClassId(aggEntityClassId)
-                                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                                    .withStrong(true)
-                                    .withBelongToOwner(false)
-                                    .withIdentity(true)
-                                    .build()
-                    )
+        .withId(targetEntityClassId)
+        .withCode("target")
+        .withLevel(0)
+        .withField(targetField)
+        .withRelations(
+            Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(Long.MAX_VALUE - 1)
+                    .withCode(Long.toString(Long.MAX_VALUE))
+                    .withLeftEntityClassId(targetEntityClassId)
+                    .withRightEntityClassId(aggEntityClassId)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .withStrong(true)
+                    .withBelongToOwner(false)
+                    .withIdentity(true)
+                    .build()
             )
-            .build();
+        )
+        .build();
 
 
     private AggregationTaskRunner runner;
@@ -133,7 +123,9 @@ public class AggregationTaskRunnerTest {
     private long avgEntityId;
     private Map<Long, List<EntityRef>> indexData;
 
-
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         ptNode = new PTNode();
@@ -143,16 +135,16 @@ public class AggregationTaskRunnerTest {
         ptNode.setEntityField(targetField);
         ptNode.setAggregationType(AggregationType.MAX);
         ptNode.setRelationship(Relationship.Builder.anRelationship()
-                .withId(1)
-                .withLeftEntityClassId(targetEntityClassId)
-                .withRightEntityClassId(aggEntityClassId)
-                .withRightEntityClassLoader(id -> Optional.of(aggEntityClass))
-                .withEntityField(aggField)
-                .withIdentity(true)
-                .withBelongToOwner(true)
-                .withStrong(false)
-                .withRelationType(Relationship.RelationType.ONE_TO_MANY)
-                .build());
+            .withId(1)
+            .withLeftEntityClassId(targetEntityClassId)
+            .withRightEntityClassId(aggEntityClassId)
+            .withRightEntityClassLoader(id -> Optional.of(aggEntityClass))
+            .withEntityField(aggField)
+            .withIdentity(true)
+            .withBelongToOwner(true)
+            .withStrong(false)
+            .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+            .build());
         ptNode.setConditions(Conditions.buildEmtpyConditions());
         nodes = new ArrayList<>();
         nodes.add(ptNode);
@@ -179,8 +171,9 @@ public class AggregationTaskRunnerTest {
 
     }
 
-
-
+    /**
+     * 清理.
+     */
     @AfterEach
     public void destroy() {
         runner = null;
@@ -206,12 +199,12 @@ public class AggregationTaskRunnerTest {
     private void buildData(long size) throws Exception {
         IValue entityValue = new LongValue(targetField, 0);
         IEntity targetEntity = Entity.Builder.anEntity()
-                .withId(10000)
-                .withEntityClassRef(targetEntityClass.ref())
-                .withTime(System.currentTimeMillis())
-                .withVersion(0)
-                .withEntityValue(EntityValue.build().addValue(entityValue))
-                .build();
+            .withId(10000)
+            .withEntityClassRef(targetEntityClass.ref())
+            .withTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withEntityValue(EntityValue.build().addValue(entityValue))
+            .build();
 
         avgEntityId = targetEntity.id();
         masterStorage.build(targetEntity, targetEntityClass);
@@ -219,13 +212,13 @@ public class AggregationTaskRunnerTest {
         long baseId = 20000;
         for (int i = 0; i < size; i++) {
             IEntity aggEntity = Entity.Builder.anEntity()
-                    .withId(baseId++)
-                    .withEntityClassRef(aggEntityClass.ref())
-                    .withTime(System.currentTimeMillis())
-                    .withVersion(0)
-                    .withEntityValue(
-                            EntityValue.build().addValue(new LongValue(aggField, i))
-                    ).build();
+                .withId(baseId++)
+                .withEntityClassRef(aggEntityClass.ref())
+                .withTime(System.currentTimeMillis())
+                .withVersion(0)
+                .withEntityValue(
+                    EntityValue.build().addValue(new LongValue(aggField, i))
+                ).build();
 
             masterStorage.build(aggEntity, aggEntityClass);
         }
@@ -302,7 +295,8 @@ public class AggregationTaskRunnerTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size) throws SQLException {
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
             MockAbstractDataIterator iterator = new MockAbstractDataIterator();
             try {
                 iterator.load(masterData.get(entityClass.id()));
@@ -316,20 +310,10 @@ public class AggregationTaskRunnerTest {
 
         @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
-                throws SQLException {
+            throws SQLException {
             List<OriginalEntity> originalEntities = masterData.get(entityClass.id());
-            return originalEntities.stream().map(l -> EntityRef.Builder.anEntityRef().withId(l.getId()).build()).collect(Collectors.toList());
-        }
-
-        @Override
-        public void writeError(ErrorStorageEntity errorStorageEntity) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
-                throws SQLException {
-            throw new UnsupportedOperationException();
+            return originalEntities.stream().map(l -> EntityRef.Builder.anEntityRef().withId(l.getId()).build())
+                .collect(Collectors.toList());
         }
 
         @Override
@@ -345,13 +329,13 @@ public class AggregationTaskRunnerTest {
         @Override
         public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
             return Arrays.stream(ids).mapToObj(id -> data.get(id)).filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
         }
 
         @Override
         public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
             return Arrays.stream(ids).mapToObj(id -> data.get(id)).filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
         }
 
         @Override
@@ -379,18 +363,21 @@ public class AggregationTaskRunnerTest {
         }
 
         @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
             return indexData.get(entityClass.id());
         }
     }
 
-
+    /**
+     * 数据迭代器mock.
+     */
     public static class MockAbstractDataIterator implements DataIterator<OriginalEntity> {
 
         private final List<OriginalEntity> buffer;
+
         /**
          * 初始化.
-         *
          */
 
         public MockAbstractDataIterator() {
@@ -425,7 +412,6 @@ public class AggregationTaskRunnerTest {
             buffer.addAll(buff);
         }
     }
-
 
 
     class MockCommitIdStatusService implements CommitIdStatusService {

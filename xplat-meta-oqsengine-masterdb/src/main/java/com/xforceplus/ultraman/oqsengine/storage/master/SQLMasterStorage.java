@@ -25,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
@@ -35,9 +34,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryEx
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.QueryErrorExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.errors.ReplaceErrorExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
@@ -106,8 +102,6 @@ public class SQLMasterStorage implements MasterStorage {
 
     private String tableName;
 
-    private String errorTable;
-
     private long queryTimeout;
 
     public void setQueryTimeout(long queryTimeout) {
@@ -116,10 +110,6 @@ public class SQLMasterStorage implements MasterStorage {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    public void setErrorTable(String errorTable) {
-        this.errorTable = errorTable;
     }
 
     @Override
@@ -138,7 +128,8 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size) throws SQLException {
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
+                                                 int size) throws SQLException {
         return new EntityIterator(entityClass, lastId, startTime, endTime, size);
     }
 
@@ -302,26 +293,6 @@ public class SQLMasterStorage implements MasterStorage {
                 return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             }
         );
-    }
-
-    @Override
-    public void writeError(ErrorStorageEntity errorStorageEntity) {
-        asyncErrorExecutor.submit(() -> {
-            try {
-                transactionExecutor.execute((tx, resource, hint) -> {
-                    return new ReplaceErrorExecutor(errorTable, resource, queryTimeout).execute(errorStorageEntity);
-                });
-            } catch (Exception e) {
-                logger.warn("write error record failed, errorStorageEntity [{}]", errorStorageEntity.toString());
-            }
-        });
-    }
-
-    @Override
-    public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition) throws SQLException {
-        return (Collection<ErrorStorageEntity>) transactionExecutor.execute((tx, resource, hint) -> {
-            return new QueryErrorExecutor(errorTable, resource, queryTimeout).execute(queryErrorCondition);
-        });
     }
 
     @Timed(

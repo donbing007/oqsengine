@@ -82,11 +82,17 @@ public class DataSourceFactory {
         Config config;
         ConfigFactory.invalidateCaches();
         if (dsConfigFile == null) {
+
             config = ConfigFactory.load("oqsengine-ds.conf");
+
         } else if (dsConfigFile.startsWith(CLASS_PATH_PROTOCOL)) {
+
             String path = dsConfigFile.substring(CLASS_PATH_PROTOCOL.length());
+
             config = ConfigFactory.load(path);
+
         } else {
+
             config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
         }
 

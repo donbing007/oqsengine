@@ -3,16 +3,12 @@ package com.xforceplus.ultraman.oqsengine.testcontainer.container.impl;
 import com.xforceplus.ultraman.oqsengine.testcontainer.constant.Global;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainerExtension;
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.utils.SqlInitUtils;
 import java.time.Duration;
-import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
@@ -26,10 +22,11 @@ public class MysqlContainer extends AbstractContainerExtension {
     private static final Logger
         LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
 
+    private GenericContainer container;
+
     @Override
-    protected ContainerWrapper setupContainer(String uid) {
-        GenericContainer mysql = new GenericContainer("mysql:5.7")
-            .withNetwork(Global.NETWORK)
+    protected GenericContainer buildContainer() {
+        container = new GenericContainer("mysql:5.7")
             .withNetworkAliases("mysql")
             .withExposedPorts(3306)
             .withEnv("MYSQL_DATABASE", "oqsengine")
@@ -39,35 +36,29 @@ public class MysqlContainer extends AbstractContainerExtension {
             .waitingFor(
                 Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
-        mysql.start();
+        return container;
+    }
 
-        mysql.followOutput((Consumer<OutputFrame>) outputFrame -> {
-            LOGGER.info(outputFrame.getUtf8String());
-        });
-
-        /*
-         * 设置oqs中的环境变量
-         */
-        setSystemProperties(mysql.getContainerIpAddress(), mysql.getFirstMappedPort().toString());
-
-        ContainerWrapper containerWrapper = new FixedContainerWrapper(mysql);
+    @Override
+    protected void init() {
+        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
 
 
         try {
             SqlInitUtils.execute("/mysql", "MYSQL_JDBC_WITH_AUTH");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
-
-        return containerWrapper;
     }
 
     @Override
-    protected void containerClose() {
-        try {
-            SqlInitUtils.execute("/mysql/drop", "MYSQL_JDBC_WITH_AUTH");
-        } catch (Exception e) {
-            e.printStackTrace();
+    protected void clean() {
+        if (this.container != null) {
+            try {
+                SqlInitUtils.execute("/mysql/drop", "MYSQL_JDBC_WITH_AUTH");
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -76,13 +67,16 @@ public class MysqlContainer extends AbstractContainerExtension {
         return ContainerSupport.MYSQL;
     }
 
+    @Override
+    protected GenericContainer getGenericContainer() {
+        return this.container;
+    }
+
     private void setSystemProperties(String address, String port) {
         if (null == address || null == port) {
             throw new RuntimeException(
                 String.format("container mysql init failed of null value, address[%s] or port[%s]", address, port));
         }
-
-        System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
 
         System.setProperty("MYSQL_HOST", address);
         System.setProperty("MYSQL_PORT", port);

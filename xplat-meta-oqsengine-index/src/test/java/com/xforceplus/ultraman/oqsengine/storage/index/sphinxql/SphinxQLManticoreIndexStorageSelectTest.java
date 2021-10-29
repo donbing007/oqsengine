@@ -23,7 +23,8 @@ import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * 索引查询测试.
@@ -48,7 +50,8 @@ import org.junit.jupiter.api.Test;
  * @version 0.1 2021/3/10 14:01
  * @since 1.8
  */
-public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerExtends {
+@ExtendWith({RedisContainer.class, ManticoreContainer.class})
+public class SphinxQLManticoreIndexStorageSelectTest {
 
     /*
     使用的字段名和其id.
@@ -158,6 +161,7 @@ public class SphinxQLManticoreIndexStorageSelectTest extends AbstractContainerEx
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     /**

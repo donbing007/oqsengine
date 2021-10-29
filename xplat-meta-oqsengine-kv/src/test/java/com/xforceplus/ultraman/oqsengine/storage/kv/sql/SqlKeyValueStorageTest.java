@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql;
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
@@ -43,15 +42,12 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
      */
     @BeforeEach
     public void before() throws Exception {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:kv/oqsengine-ds.conf");
-
-
         storage = new SqlKeyValueStorage();
         storage.setTableName("kv");
         storage.setTimeoutMs(200);
 
-
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
+
 
         try (Connection conn = ds.getConnection()) {
             try (Statement st = conn.createStatement()) {

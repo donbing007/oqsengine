@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.constant;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
 /**
@@ -11,14 +12,55 @@ import org.testcontainers.containers.Network;
  * @since 1.8
  */
 public class Global {
-    public static final Network NETWORK = Network.newNetwork();
-
-    public static final ConcurrentHashMap<ContainerSupport, ContainerWrapper> CONTAINER_MAP = new ConcurrentHashMap();
-    public static volatile boolean HOOKED = false;
-    public static final Object LOCK = new Object();
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(Global.class);
     public static final int WAIT_START_TIME_OUT = 200;
 
-    public Global() {
+    private static Network network;
+
+    private static int containerSize = 0;
+
+    /**
+     * 启动容器.
+     *
+     * @param container 目标容器.
+     */
+    public static synchronized void startContainer(GenericContainer container) {
+        containerSize++;
+
+        if (network == null) {
+            LOGGER.info("The first container is created, creating the network.");
+            network = Network.newNetwork();
+        }
+
+        container.withNetwork(network);
+        container.start();
+    }
+
+    /**
+     * 关闭容器.
+     *
+     * @param container 目标容器.
+     */
+    public static synchronized void closeContainer(GenericContainer container) {
+        containerSize--;
+
+        container.close();
+
+        while (container.isRunning()) {
+            try {
+                LOGGER.info("The {} container is not closed, etc. 5 ms.", container.getDockerImageName());
+                TimeUnit.MILLISECONDS.sleep(5);
+            } catch (Exception ex) {
+                LOGGER.error(ex.getMessage(), ex);
+            }
+        }
+
+        if (containerSize <= 0 && network != null) {
+
+            LOGGER.info("The last container is closed, shutting down the network.");
+
+            network.close();
+            network = null;
+        }
     }
 }

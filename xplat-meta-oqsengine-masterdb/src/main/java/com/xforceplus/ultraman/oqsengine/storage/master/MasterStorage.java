@@ -6,11 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.PreciseSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
-import java.util.Collection;
 
 /**
  * 主要储存定义.
@@ -41,20 +38,10 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @param startTime   开始时间
      * @param endTime     结束时间.
      * @param lastId      上次迭代的最后id.
-     * @param size      迭代数量.
+     * @param size        迭代数量.
      * @return 迭代器.
      * @throws SQLException 发生异常.
      */
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
-            throws SQLException;
-
-    /**
-     * 写入errorEntityInfo相关记录.
-     */
-    void writeError(ErrorStorageEntity errorStorageEntity);
-
-    /**
-     * 查询错误列表.
-     */
-    Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition) throws SQLException;
+        throws SQLException;
 }

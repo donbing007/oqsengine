@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
@@ -26,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -41,7 +39,6 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
@@ -356,8 +353,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         } finally {
             inserCountTotal.increment();
-            //  处理半成功，将插入一条失败的Message
-            handleHalfSuccessOrRecover(0, entityClass.id(), operationResult);
         }
     }
 
@@ -465,8 +460,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw ex;
         } finally {
             replaceCountTotal.increment();
-            //  处理半成功，将插入一条失败的Message
-            handleHalfSuccessOrRecover(entity.maintainId(), entityClass.id(), operationResult);
         }
     }
 
@@ -749,31 +742,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withTransaction(tx)
             .withCombindedSelectStorage(this.combinedSelectStorage)
             .build();
-    }
-
-    private void handleHalfSuccessOrRecover(long maintainId, long entityClassId, OperationResult operationResult) {
-        if (null != operationResult && (maintainId > 0 && operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
-            || operationResult.getResultStatus().equals(ResultStatus.HALF_SUCCESS))) {
-
-            String errors = "serialize errors failed.";
-            try {
-                errors = JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(operationResult.getHints());
-            } catch (Exception e) {
-                //  ignore
-            }
-            //  将entityId设置为maintainId
-            ErrorStorageEntity errorStorageEntity = ErrorStorageEntity.Builder.anErrorStorageEntity()
-                .withMaintainId(maintainId > 0 ? maintainId : operationResult.getEntityId())
-                .withEntity(entityClassId)
-                .withId(operationResult.getEntityId())
-                .withErrors(errors)
-                .withFixedStatus(
-                    operationResult.getResultStatus().equals(ResultStatus.SUCCESS)
-                        ? FixedStatus.FIXED.getStatus() : FixedStatus.NOT_FIXED.getStatus()
-                ).build();
-
-            masterStorage.writeError(errorStorageEntity);
-        }
     }
 
     // 设置改变的值.

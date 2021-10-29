@@ -25,13 +25,16 @@ public class ServerMetricsInfo {
         this.clientWatches = clientWatches;
     }
 
+    /**
+     * 客户端监视器.
+     */
     public static class ClientWatches {
         private String clientId;
         private List<WatchElement> watches;
         private long lastHeartBeat;
 
         public ClientWatches(String clientId,
-                                 List<WatchElement> watches, long lastHeartBeat) {
+                             List<WatchElement> watches, long lastHeartBeat) {
             this.clientId = clientId;
             this.watches = watches;
             this.lastHeartBeat = lastHeartBeat;

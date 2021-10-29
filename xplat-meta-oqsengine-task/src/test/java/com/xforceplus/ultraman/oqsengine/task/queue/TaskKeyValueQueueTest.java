@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.task.queue;
 
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.HessianSerializeStrategy;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @version 1.0 2021/8/13 18:06
  * @since 1.8
  */
-class TaskKeyValueQueueTest {
+public class TaskKeyValueQueueTest {
     private TaskKeyValueQueue instance;
     private KeyValueStorage keyValueStorage;
     private static final String NAME = "test";
@@ -42,11 +43,13 @@ class TaskKeyValueQueueTest {
 
     @BeforeEach
     void before() throws Exception {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
+
         worker = new ThreadPoolExecutor(5, 5,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue(10000),
-                ExecutorHelper.buildNameThreadFactory("task", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(10000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);

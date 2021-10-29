@@ -119,10 +119,10 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-//            if (logger.isDebugEnabled()) {
-//                logger.debug("Maintain computed fields, whose impact tree is as follows.");
-//                logger.debug(infuence.toString());
-//            }
+            //            if (logger.isDebugEnabled()) {
+            //                logger.debug("Maintain computed fields, whose impact tree is as follows.");
+            //                logger.debug(infuence.toString());
+            //            }
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {

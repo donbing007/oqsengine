@@ -6,14 +6,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * 搜索测试.
@@ -30,7 +32,8 @@ import org.junit.jupiter.api.Test;
  * @version 0.1 2021/05/18 15:51
  * @since 1.8
  */
-public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerExtends {
+@ExtendWith({RedisContainer.class, ManticoreContainer.class})
+public class SphinxQLManticoreIndexStorageSearchTest {
 
     private IEntityField baseStringField = EntityField.Builder.anEntityField()
         .withId(Long.MAX_VALUE)
@@ -51,10 +54,10 @@ public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerEx
         .withName("name")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-            .withSearchable(true)
-            .withCrossSearch(true)
-            .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
-            .build()
+                .withSearchable(true)
+                .withCrossSearch(true)
+                .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+                .build()
         )
         .build();
     private IEntityClass firstEntityClass = EntityClass.Builder.anEntityClass()
@@ -96,6 +99,7 @@ public class SphinxQLManticoreIndexStorageSearchTest extends AbstractContainerEx
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test

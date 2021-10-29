@@ -83,7 +83,6 @@ public class CommonInitialization implements BeanInitialization {
      */
     public synchronized DataSourcePackage getDataSourcePackage(boolean showSql) {
         if (null == dataSourcePackage) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
             dataSourcePackage = DataSourceFactory.build(showSql);
         }
         return dataSourcePackage;

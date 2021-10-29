@@ -69,16 +69,17 @@ public class TaskKeyValueQueueSQLTest {
      */
     @BeforeEach
     public void before() throws Exception {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
+
         worker = new ThreadPoolExecutor(5, 5,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue(10000),
-                ExecutorHelper.buildNameThreadFactory("task", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(10000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);
 
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:kv/oqsengine-ds.conf");
         keyValueStorage = new SqlKeyValueStorage();
         keyValueStorage.setTableName("kv");
         keyValueStorage.setTimeoutMs(200);

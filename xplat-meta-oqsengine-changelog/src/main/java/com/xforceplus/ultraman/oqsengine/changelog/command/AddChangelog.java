@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.changelog.command;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 
 /**
- * a command wrap a changelogedEvent
+ * a command wrap a changelogedEvent.
  */
-public class AddChangelog implements ChangelogCommand{
+public class AddChangelog implements ChangelogCommand {
 
     private long objId;
 
@@ -13,6 +13,9 @@ public class AddChangelog implements ChangelogCommand{
 
     private ChangedEvent changedEvent;
 
+    /**
+     * 增加一个修改日志.
+     */
     public AddChangelog(long objId, long entityclassId, ChangedEvent changedEvent) {
         this.objId = objId;
         this.changedEvent = changedEvent;

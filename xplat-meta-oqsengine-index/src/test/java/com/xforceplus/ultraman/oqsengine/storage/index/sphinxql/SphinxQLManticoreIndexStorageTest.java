@@ -31,7 +31,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -52,6 +53,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * MantiocreIndexStorage Tester.
@@ -60,7 +62,8 @@ import org.junit.jupiter.api.Test;
  * @version 1.0 03/08/2021
  * @since <pre>Mar 8, 2021</pre>
  */
-public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends {
+@ExtendWith({RedisContainer.class, ManticoreContainer.class})
+public class SphinxQLManticoreIndexStorageTest {
 
     private Faker faker = new Faker(Locale.CHINA);
 
@@ -157,6 +160,7 @@ public class SphinxQLManticoreIndexStorageTest extends AbstractContainerExtends 
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     /**

@@ -206,6 +206,7 @@ public class SQLMasterStorageQueryTest {
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test

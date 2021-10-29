@@ -18,7 +18,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     private final Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
     /**
-     *
+     * 客户标识.
      */
     protected volatile String clientId;
 

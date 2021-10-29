@@ -36,16 +36,3 @@ create table cdcerrors
     unique key unikey_upk (unikey),
     key cdcerrors_k0 (batchid)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
-create table entityfaileds
-(
-    id          bigint                      not null comment '业务主键ID',
-    entity      bigint                      not null comment 'entity 的类型 id.',
-    errors      text                                 comment '错误字段摘要',
-    executetime bigint default 0            not null comment '出错时间戳',
-    fixedtime   bigint default 0            not null comment '修复时间.',
-    status      tinyint default 1           not null comment '处理状态,1(未处理),2(已提交处理),3(处理成功),4(处理失败)',
-    primary key (id),
-    key entityfaileds_k1 (entity),
-    key entityfaileds_k2 (executetime)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

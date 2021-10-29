@@ -3,14 +3,10 @@ package com.xforceplus.ultraman.oqsengine.testcontainer.container.impl;
 import com.xforceplus.ultraman.oqsengine.testcontainer.constant.Global;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainerExtension;
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.ContainerWrapper;
-import com.xforceplus.ultraman.oqsengine.testcontainer.pojo.FixedContainerWrapper;
 import java.time.Duration;
-import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
@@ -24,12 +20,13 @@ public class CanalContainer extends AbstractContainerExtension {
     private static final Logger
         LOGGER = LoggerFactory.getLogger(CanalContainer.class);
 
+    private GenericContainer container;
+
     @Override
-    protected ContainerWrapper setupContainer(String uid) {
+    protected GenericContainer buildContainer() {
         System.setProperty("CANAL_DESTINATION", "oqsengine");
 
-        GenericContainer canal = new GenericContainer("canal/canal-server:v1.1.4")
-            .withNetwork(Global.NETWORK)
+        container = new GenericContainer("canal/canal-server:v1.1.4")
             .withNetworkAliases("canal")
             .withExposedPorts(11111)
             .withEnv("canal.instance.mysql.slaveId", "12")
@@ -41,27 +38,27 @@ public class CanalContainer extends AbstractContainerExtension {
             .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
-        canal.start();
-        canal.followOutput((Consumer<OutputFrame>) outputFrame -> {
-            LOGGER.info(outputFrame.getUtf8String());
-        });
-
-        /*
-         * 设置oqs中的环境变量
-         */
-        setSystemProperties(canal.getContainerIpAddress(), canal.getFirstMappedPort().toString());
-
-        return new FixedContainerWrapper(canal);
+        return container;
     }
 
     @Override
-    protected void containerClose() {
+    protected void init() {
+        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+    }
+
+    @Override
+    protected void clean() {
 
     }
 
     @Override
     protected ContainerSupport containerSupport() {
         return ContainerSupport.CANAL;
+    }
+
+    @Override
+    protected GenericContainer getGenericContainer() {
+        return this.container;
     }
 
     private void setSystemProperties(String address, String port) {

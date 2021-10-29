@@ -15,15 +15,16 @@ import org.slf4j.LoggerFactory;
  */
 public class SendUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(SendUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SendUtils.class);
 
     /**
      * 响应response处理结果，需要进行check-requestWatcher的可用性.
      */
-    public static void sendRequestWithALiveCheck(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
+    public static void sendRequestWithALiveCheck(RequestWatcher requestWatcher,
+                                                 EntityClassSyncRequest entityClassSyncRequest) {
         //  这里由于异步执行了OQS的缓存更新，等待后可能出现新的流始化了，所以必须进行doubleCheck判断uid是否相同
         if (null == requestWatcher || !requestWatcher.isActive()) {
-            logger.warn("stream observer not exists.");
+            LOGGER.warn("stream observer not exists.");
             throw new MetaSyncClientException("stream observer not exists or was expired.", true);
         }
         sendRequest(requestWatcher, entityClassSyncRequest);
@@ -38,7 +39,7 @@ public class SendUtils {
             printLog(entityClassSyncRequest);
         } catch (Exception e) {
             throw new MetaSyncClientException(
-                    String.format("send request error, message-[%s].", e.getMessage()), true);
+                String.format("send request error, message-[%s].", e.getMessage()), true);
         }
     }
 
@@ -46,13 +47,13 @@ public class SendUtils {
         try {
             RequestStatus requestStatus = RequestStatus.getInstance(entityClassSyncRequest.getStatus());
             if (entityClassSyncRequest.getStatus() == RequestStatus.HEARTBEAT.ordinal()) {
-                logger.debug("send request success, request [{}, {}, {}]",
+                LOGGER.debug("send request success, request [{}, {}, {}]",
                     "HEARTBEAT",
                     "STATUS:" + (null == requestStatus ? "UN_KNOW" : requestStatus.name()),
                     "UID:" + entityClassSyncRequest.getUid());
             } else {
                 String appId = entityClassSyncRequest.getAppId();
-                logger.info("send request success, request [{}, {}, {}, {}, {}]",
+                LOGGER.info("send request success, request [{}, {}, {}, {}, {}]",
                     "REQ APP_ID:" + appId,
                     "ENV:" + entityClassSyncRequest.getEnv(),
                     "VER:" + entityClassSyncRequest.getVersion(),

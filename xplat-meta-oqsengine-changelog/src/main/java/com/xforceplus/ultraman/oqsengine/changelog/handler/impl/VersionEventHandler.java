@@ -4,15 +4,14 @@ import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.event.VersionEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogEventHandler;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
+import java.sql.SQLException;
+import java.util.Collections;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.util.Collections;
-
 /**
- * version event handler
+ * version event handler.
  */
 public class VersionEventHandler implements ChangelogEventHandler<VersionEvent> {
 
@@ -29,8 +28,8 @@ public class VersionEventHandler implements ChangelogEventHandler<VersionEvent> 
     @Override
     public void onEvent(VersionEvent changelogEvent) {
         try {
-            queryStorage.saveChangeVersion(changelogEvent.getObjId()
-                    , Collections.singletonList(changelogEvent.getChangeVersion()));
+            queryStorage.saveChangeVersion(changelogEvent.getObjId(),
+                Collections.singletonList(changelogEvent.getChangeVersion()));
         } catch (SQLException e) {
             logger.error("{}", e);
         }

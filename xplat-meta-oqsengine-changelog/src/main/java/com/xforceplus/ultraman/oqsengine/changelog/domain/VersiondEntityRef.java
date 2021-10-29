@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 /**
- * EntityRef
+ * EntityRef.
  */
 public class VersiondEntityRef {
 
@@ -14,11 +14,17 @@ public class VersiondEntityRef {
     public VersiondEntityRef() {
     }
 
-    public VersiondEntityRef(long entityClassId, long id){
+    /**
+     * 初始化.
+     */
+    public VersiondEntityRef(long entityClassId, long id) {
         this.entityClassId = entityClassId;
         this.id = id;
     }
 
+    /**
+     * 初始化.
+     */
     public VersiondEntityRef(long entityClassId, long id, long version) {
         this.version = version;
         this.entityClassId = entityClassId;
