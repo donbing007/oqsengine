@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.A
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -239,7 +240,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 }
             }
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
     }
 

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupH
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -260,7 +261,7 @@ public class LookupCalculationLogicTest {
 
             participants.add(participant);
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(2, participants.size());
@@ -313,10 +314,10 @@ public class LookupCalculationLogicTest {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == targetClassId) {
                     p.set(participant);
-                    return false;
+                    return InfuenceConsumer.Action.OVER;
                 }
             }
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
 
@@ -395,9 +396,9 @@ public class LookupCalculationLogicTest {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (participant.getEntityClass().id() == strongLookupClassId) {
                 p.set(participant);
-                return false;
+                return InfuenceConsumer.Action.OVER;
             }
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
 

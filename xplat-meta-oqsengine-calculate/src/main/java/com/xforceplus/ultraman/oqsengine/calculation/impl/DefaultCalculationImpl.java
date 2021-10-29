@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -119,15 +120,15 @@ public class DefaultCalculationImpl implements Calculation {
                  3. 结合缓存加载出所有受影响的对象实例列表.
                  4. 对每一个实例都应用字段的相应计算.
              */
-            //            if (logger.isDebugEnabled()) {
-            //                logger.debug("Maintain computed fields, whose impact tree is as follows.");
-            //                logger.debug(infuence.toString());
-            //            }
+            if (logger.isDebugEnabled()) {
+                logger.debug("Maintain computed fields, whose impact tree is as follows.");
+                logger.debug(infuence.toString());
+            }
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {
                     // 发起源不需要维护.
-                    return true;
+                    return InfuenceConsumer.Action.CONTINUE;
                 }
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
@@ -156,18 +157,23 @@ public class DefaultCalculationImpl implements Calculation {
 
                             affectedEntitiy.entityValue().addValue(newValueOp.get());
                         } else {
+
                             if (logger.isDebugEnabled()) {
                                 logger.debug(
                                     "Calculate field {}, the result is the same before and after calculation so do not change.",
                                     context.getFocusField().name());
                             }
+
+                            // 没有任何改变,所有受此字段影响的后续都将被忽略.
+                            return InfuenceConsumer.Action.OVER_SELF;
+
                         }
                     }
                 }
                 // 加入到当前参与者的影响entity记录中.
                 affectedEntities.forEach(e -> participant.addAffectedEntity(e));
 
-                return true;
+                return InfuenceConsumer.Action.CONTINUE;
             });
 
             persist(context, targetEntityId);

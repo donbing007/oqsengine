@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -555,7 +556,7 @@ public class FormulaCalculationLogicTest {
 
             participants.add(participant);
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(2, participants.size());
@@ -605,10 +606,10 @@ public class FormulaCalculationLogicTest {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == B_CLASS.id()) {
                     p.set(participant);
-                    return false;
+                    return InfuenceConsumer.Action.OVER;
                 }
             }
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         Participant participant = p.get();
@@ -739,7 +740,7 @@ public class FormulaCalculationLogicTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return true;
+                return InfuenceConsumer.Action.CONTINUE;
             });
         }
 

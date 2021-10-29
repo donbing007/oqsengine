@@ -23,8 +23,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
@@ -372,17 +370,6 @@ public class LookupMaintainingTaskRunnerTest {
 
         @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
-            throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void writeError(ErrorStorageEntity errorStorageEntity) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
             throws SQLException {
             throw new UnsupportedOperationException();
         }
