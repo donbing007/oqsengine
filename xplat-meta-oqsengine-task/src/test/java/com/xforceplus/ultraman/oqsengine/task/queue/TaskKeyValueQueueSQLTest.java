@@ -28,6 +28,7 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -156,7 +157,16 @@ public class TaskKeyValueQueueSQLTest {
     public void testAppendOne() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
         instance.append(new MockTask());
 
-        TimeUnit.SECONDS.sleep(2L);
+        Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
+        unSubmitTask.setAccessible(true);
+        ConcurrentHashMap<String, byte[]> unSubmitTaskMap = (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+
+        long millis = System.currentTimeMillis();
+        while (!unSubmitTaskMap.isEmpty()) {
+            if (System.currentTimeMillis() - millis > 180000) {
+                break;
+            }
+        }
 
         Field elementKeyPrefix = instance.getClass().getDeclaredField("elementKeyPrefix");
         elementKeyPrefix.setAccessible(true);
@@ -222,6 +232,17 @@ public class TaskKeyValueQueueSQLTest {
         }
         latch.await();
 
+        Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
+        unSubmitTask.setAccessible(true);
+        ConcurrentHashMap<String, byte[]> unSubmitTaskMap = (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+
+        long millis = System.currentTimeMillis();
+        while (!unSubmitTaskMap.isEmpty()) {
+            if (System.currentTimeMillis() - millis > 180000) {
+                break;
+            }
+        }
+
         Field elementKeyPrefix = instance.getClass().getDeclaredField("elementKeyPrefix");
         elementKeyPrefix.setAccessible(true);
         String prefix = (String) elementKeyPrefix.get(instance);
@@ -231,6 +252,9 @@ public class TaskKeyValueQueueSQLTest {
         long initPoint = (long) initPointField.get(instance);
 
         for (long i = initPoint; i <= count; i++) {
+            if (!keyValueStorage.exist(prefix + "-" + i)) {
+                logger.info(prefix + "-" +i);
+            }
             Assertions.assertTrue(keyValueStorage.exist(prefix + "-" + i));
         }
         Assertions.assertEquals(keyValueStorage.incr(NAME + "-unused", 0), count);
@@ -478,13 +502,15 @@ public class TaskKeyValueQueueSQLTest {
         long initPoint = (long) initPointField.get(instance);
 
         long lostSize = 0;
+        long hasSave = 0;
         for (long i = initPoint; i <= count; i++) {
+            hasSave ++;
             if (!keyValueStorage.exist(prefix + "-" + i)) {
                 lostSize = appendCount.get() - i;
                 break;
             }
         }
-        Assertions.assertFalse(lostSize > 100 ? true : false);
+        Assertions.assertTrue(lostSize == (count - hasSave));
 
     }
 
