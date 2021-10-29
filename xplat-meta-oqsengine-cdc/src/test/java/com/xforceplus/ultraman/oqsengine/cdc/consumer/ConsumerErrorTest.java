@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainer
 import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
+@Ignore
 public class ConsumerErrorTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;

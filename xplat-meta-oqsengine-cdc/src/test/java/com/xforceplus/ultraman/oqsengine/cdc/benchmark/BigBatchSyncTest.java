@@ -10,14 +10,15 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.sql.SQLException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -29,6 +30,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/23
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class BigBatchSyncTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
@@ -38,19 +41,6 @@ public class BigBatchSyncTest extends AbstractCDCContainer {
     private ConsumerRunner consumerRunner;
 
     private MockRedisCallbackService mockRedisCallbackService;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerStarter.reset();
-    }
 
     @Before
     public void before() throws Exception {

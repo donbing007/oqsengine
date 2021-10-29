@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCon
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -16,10 +15,8 @@ import java.sql.SQLException;
 import java.util.Collection;
 import javax.sql.DataSource;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,7 +28,7 @@ import org.junit.runner.RunWith;
  * @since : 1.8
  */
 @RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class CdcErrorStorageTest extends AbstractCDCContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
@@ -54,21 +51,6 @@ public class CdcErrorStorageTest extends AbstractCDCContainer {
     private static CdcErrorTask expectedCdcErrorTask =
         CdcErrorTask.buildErrorTask(expectedSeqNo, expectedUniKey, expectedBatchId, expectedId, expectedEntityId,
             expectedVersion, expectedOp, expectedCommitId, expectedErrorType, "2", expectedMessage);
-
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerStarter.reset();
-    }
-
 
     @Before
     public void before() throws Exception {

@@ -17,14 +17,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -34,6 +36,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/9
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class SphinxConsumerServiceTest extends AbstractCDCContainer {
     private ConsumerService sphinxConsumerService;
 
@@ -52,14 +56,6 @@ public class SphinxConsumerServiceTest extends AbstractCDCContainer {
     private int expectedSize = 0;
 
     private CDCMetricsService cdcMetricsService;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
 
     private void before(boolean isMock) throws Exception {
         sphinxConsumerService = initAll(isMock);

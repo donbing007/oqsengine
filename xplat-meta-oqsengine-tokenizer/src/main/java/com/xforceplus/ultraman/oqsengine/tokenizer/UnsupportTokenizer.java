@@ -24,7 +24,7 @@ public class UnsupportTokenizer implements Tokenizer {
     }
 
     @Override
-    public Iterator<String> tokenize(String value) {
+    public Iterator<String> tokenize(String value, TokenizerMode mode) {
         throw new UnsupportedOperationException("Unknown fuzzy type.");
     }
 

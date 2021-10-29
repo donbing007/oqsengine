@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
@@ -8,17 +10,22 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
-import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.test.util.ReflectionTestUtils;
-
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * desc :.
@@ -27,6 +34,8 @@ import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
  * @author : xujia 2020/11/13
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
@@ -40,11 +49,6 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);
@@ -56,8 +60,6 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCContainer {
     @AfterClass
     public static void afterClass() {
         cdcMetricsService.shutdown();
-
-        ContainerStarter.reset();
     }
 
     @Before
