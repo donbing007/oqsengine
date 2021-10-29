@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
@@ -15,7 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -31,6 +34,17 @@ public class CacheExecutorTest {
     private CacheExecutor cacheExecutor = MetaInitialization.getInstance().getCacheExecutor();
 
     public CacheExecutorTest() throws IllegalAccessException {
+    }
+
+    @BeforeEach
+    public void before() throws Exception {
+        cacheExecutor = MetaInitialization.getInstance().getCacheExecutor();
+    }
+
+    @AfterEach
+    public void after() throws Exception {
+        InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test

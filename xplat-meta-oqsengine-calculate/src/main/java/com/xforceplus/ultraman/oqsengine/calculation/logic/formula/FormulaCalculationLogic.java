@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.Formul
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -16,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +33,6 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
     private static final int MAX_ERROR_MESSAGE_LENGTH = 256;
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "formula", "action", "calculate"}
-    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
         Formula formula = (Formula) context.getFocusField().config().getCalculation();
@@ -71,10 +65,6 @@ public class FormulaCalculationLogic implements CalculationLogic {
         }
     }
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "formula", "action", "scope"}
-    )
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -105,10 +95,6 @@ public class FormulaCalculationLogic implements CalculationLogic {
         });
     }
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "formula", "action", "getTarget"}
-    )
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
         throws CalculationException {

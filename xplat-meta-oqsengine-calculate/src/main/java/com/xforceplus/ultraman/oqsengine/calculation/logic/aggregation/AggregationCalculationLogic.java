@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -32,7 +31,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import io.micrometer.core.annotation.Timed;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -52,10 +50,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
     public static final int ONE = 1;
     public static final int ZERO = 0;
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "aggregation", "action", "calculate"}
-    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
 
@@ -181,10 +175,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
         return targetValue;
     }
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "aggregation", "action", "scope"}
-    )
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -251,10 +241,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
         });
     }
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "aggregation", "action", "getTarget"}
-    )
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
         throws CalculationException {

@@ -504,7 +504,7 @@ public class TaskKeyValueQueueSQLTest {
         long lostSize = 0;
         long hasSave = 0;
         for (long i = initPoint; i <= count; i++) {
-            hasSave ++;
+            hasSave++;
             if (!keyValueStorage.exist(prefix + "-" + i)) {
                 lostSize = appendCount.get() - i;
                 break;

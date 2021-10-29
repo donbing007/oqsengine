@@ -5,12 +5,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import io.micrometer.core.annotation.Timed;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +22,6 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     final Logger logger = LoggerFactory.getLogger(AutoFillCalculationLogic.class);
 
-    @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
-        extraTags = {"logic", "autofill", "action", "calculate"}
-    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
         if (context.getScenariso() != CalculationScenarios.BUILD) {

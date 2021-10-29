@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.metadata.AbstractMetaTestHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaTestHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  * @since : 1.8
  */
 
-public class EntityClassSyncExecutorTest extends MetaTestHelper {
+public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
 
 
     @BeforeEach

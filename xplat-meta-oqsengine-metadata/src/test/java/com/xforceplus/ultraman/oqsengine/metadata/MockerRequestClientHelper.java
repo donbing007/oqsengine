@@ -19,7 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2021/4/7
  * @since : 1.8
  */
-public class MockerRequestClientHelper extends MetaTestHelper {
+public class MockerRequestClientHelper extends AbstractMetaTestHelper {
 
     protected IRequestHandler requestHandler;
 

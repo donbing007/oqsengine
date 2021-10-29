@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -22,6 +23,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,6 +65,10 @@ public class DefaultCalculationImpl implements Calculation {
 
     final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "all", "action", "calculate"}
+    )
     @Override
     public IEntity calculate(CalculationContext context) throws CalculationException {
         IEntity targetEntity = context.getFocusEntity();
@@ -80,7 +88,15 @@ public class DefaultCalculationImpl implements Calculation {
                     logic.getClass().getSimpleName(), targetEntity.id(), field.name(), context.getFocusClass().code());
             }
 
-            Optional<IValue> newValueOp = logic.calculate(context);
+            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
+            Optional<IValue> newValueOp;
+            try {
+                newValueOp = logic.calculate(context);
+            } finally {
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "calculate");
+            }
+
             if (newValueOp.isPresent()) {
                 targetEntity.entityValue().addValue(newValueOp.get());
             }
@@ -89,6 +105,10 @@ public class DefaultCalculationImpl implements Calculation {
         return targetEntity;
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "all", "action", "maintain"}
+    )
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
         // 保留当前引起维护的目标实例标识.
@@ -133,8 +153,12 @@ public class DefaultCalculationImpl implements Calculation {
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
 
+                Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
                 long[] affectedEntityIds = logic.getMaintainTarget(context, participant,
                     parentParticipant.get().getAffectedEntities());
+
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "getTarget");
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
@@ -435,7 +459,11 @@ public class DefaultCalculationImpl implements Calculation {
                     for (CalculationLogic logic : logics) {
                         context.focusField(f);
 
+                        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
                         logic.scope(context, infuence);
+
+                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "scope");
                     }
 
                     if (oldSize == infuence.getSize()) {
@@ -553,5 +581,17 @@ public class DefaultCalculationImpl implements Calculation {
         }
 
         return logics;
+    }
+
+    // 停止计时并输出指标
+    private void processTimer(CalculationLogic logic, Timer.Sample sample, String metricName, String action) {
+        sample.stop(Timer.builder(metricName)
+            .tags(
+                "logic", logic.getClass().getSimpleName(),
+                "action", action
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
     }
 }

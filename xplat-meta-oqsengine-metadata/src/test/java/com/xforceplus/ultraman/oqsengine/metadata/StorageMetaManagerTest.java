@@ -9,20 +9,20 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-public class StorageMetaManagerTest extends MetaTestHelper {
+public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
     final Logger logger = LoggerFactory.getLogger(StorageMetaManagerTest.class);
 

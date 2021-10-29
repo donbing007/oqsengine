@@ -15,7 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @since 1.8
  */
 @ExtendWith({RedisContainer.class})
-public abstract class MetaTestHelper {
+public abstract class AbstractMetaTestHelper {
 
     protected IRequestHandler mockRequestHandler;
 
@@ -38,14 +38,18 @@ public abstract class MetaTestHelper {
         mockRequestHandler = null;
         MockMetaManagerHolder.resetMetaManager(null);
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
+    /**
+     * mock.
+     */
     public void mockRequestHandler() throws IllegalAccessException {
         /*
          * init mockRequestHandler
          */
         mockRequestHandler = new MockRequestHandler();
         ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor",
-                            MetaInitialization.getInstance().getEntityClassSyncExecutor());
+            MetaInitialization.getInstance().getEntityClassSyncExecutor());
     }
 }
