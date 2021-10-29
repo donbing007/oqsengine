@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.Formul
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -15,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import io.micrometer.core.annotation.Timed;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,10 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
     private static final int MAX_ERROR_MESSAGE_LENGTH = 256;
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "formula", "action", "calculate"}
+    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
         Formula formula = (Formula) context.getFocusField().config().getCalculation();
@@ -41,30 +47,34 @@ public class FormulaCalculationLogic implements CalculationLogic {
         try {
             //  调用公式执行器执行
             return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-                    FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
+                FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
         } catch (Exception e) {
             //  异常时
             if (formula.getFailedPolicy().equals(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
                 try {
                     logger.warn(
-                            "formula [entityFieldId-{}] has executed failed, will use failed default value to instead, [reason-{}]",
-                            context.getFocusField().id(), e.getMessage());
+                        "formula [entityFieldId-{}] has executed failed, will use failed default value to instead, [reason-{}]",
+                        context.getFocusField().id(), e.getMessage());
 
                     return Optional.of(IValueUtils.toIValue(context.getFocusField(), formula.getFailedDefaultValue()));
                 } finally {
                     //  将错误加入hints中
                     context.hint(
-                            context.getFocusField(),
-                            e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
+                        context.getFocusField(),
+                        e.getMessage().substring(0, Math.min(e.getMessage().length(), MAX_ERROR_MESSAGE_LENGTH)));
                 }
             } else {
                 logger.warn("formula [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
-                        context.getFocusField().id(), e.getMessage());
+                    context.getFocusField().id(), e.getMessage());
                 throw new CalculationException(e.getMessage(), e);
             }
         }
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "formula", "action", "scope"}
+    )
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -72,7 +82,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
             IEntityField participantField = participant.getField();
 
             List<IEntityField> fields = participantClass.fields().stream()
-                    .filter(f -> f.calculationType() == CalculationType.FORMULA).collect(Collectors.toList());
+                .filter(f -> f.calculationType() == CalculationType.FORMULA).collect(Collectors.toList());
             if (fields != null && fields.size() > 0) {
                 fields.forEach(f -> {
                     Formula formula = (Formula) f.config().getCalculation();
@@ -80,11 +90,11 @@ public class FormulaCalculationLogic implements CalculationLogic {
                     if (args.size() > 0) {
                         if (args.contains(participantField.name())) {
                             infuenceInner.impact(
-                                    participant,
-                                    Participant.Builder.anParticipant()
-                                            .withEntityClass(participantClass)
-                                            .withField(f)
-                                            .build()
+                                participant,
+                                Participant.Builder.anParticipant()
+                                    .withEntityClass(participantClass)
+                                    .withField(f)
+                                    .build()
                             );
                         }
                     }
@@ -95,9 +105,13 @@ public class FormulaCalculationLogic implements CalculationLogic {
         });
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "formula", "action", "getTarget"}
+    )
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
-            throws CalculationException {
+        throws CalculationException {
 
         return entities.stream().mapToLong(e -> e.id()).filter(id -> id > 0).toArray();
     }
