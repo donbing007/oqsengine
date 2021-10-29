@@ -106,15 +106,11 @@ public class Infuence {
                 ChildNode childNode = (ChildNode) node;
                 Optional<Node> parentNode = childNode.getParent();
 
-                if (!consumer.accept(
+                return consumer.accept(
                     parentNode.isPresent() ? Optional.of(parentNode.get().getParticipant()) : Optional.empty(),
                     childNode.getParticipant(),
                     this
-                )) {
-                    return false;
-                }
-
-                return true;
+                );
             }
         });
     }
@@ -126,7 +122,20 @@ public class Infuence {
         }
 
         TreeSize treeSize = getTreeSize();
-        Node[][] buff = new Node[size][treeSize.getHigh()];
+        /*
+        构造一个结点buff二维数组,行数量等于有效结点数量,列数量等于树的高度.
+               A
+             /   \
+            B     C
+            这样的树目标是构造出如下的矩阵.
+
+             A ·
+             L B
+             L C
+
+             L 表示连接线.
+         */
+        Node[][] buff = new Node[size][treeSize.getHigh() + 1];
 
         // 横轴
         int horizontal = 0;
@@ -147,6 +156,7 @@ public class Infuence {
                 }
                 for (int h = 0; h < buff[v].length; h++) {
                     if (node.getParent().get() == buff[v][h]) {
+                        // 设定子元素的坐标.
                         vertical = v;
                         horizontal = h;
                         found = true;
@@ -183,9 +193,9 @@ public class Infuence {
         final StringBuilder sb = new StringBuilder();
         sb.append('\n');
         for (int v = 0; v < buff.length; v++) {
-            for (int h = 0; h < buff[h].length; h++) {
+            for (int h = 0; h < buff[v].length; h++) {
                 if (buff[v][h] == null) {
-                    sb.append("  ");
+                    sb.append("··");
                 } else if (buff[v][h] == LevelNode.getInstance()) {
                     sb.append(" |- ");
                 } else {
@@ -217,7 +227,7 @@ public class Infuence {
         AtomicReference<ChildNode> ref = new AtomicReference<>();
         bfsIter((node, level) -> {
             if (RootNode.class.isInstance(node)) {
-                return true;
+                return InfuenceConsumer.Action.CONTINUE;
             } else {
 
                 ChildNode childNode = (ChildNode) node;
@@ -225,10 +235,10 @@ public class Infuence {
 
                     ref.set((ChildNode) node);
 
-                    return false;
+                    return InfuenceConsumer.Action.OVER;
 
                 } else {
-                    return true;
+                    return InfuenceConsumer.Action.CONTINUE;
                 }
             }
         });
@@ -243,6 +253,7 @@ public class Infuence {
         stack.add(rootNode);
         stack.add(LevelNode.getInstance());
         Node node;
+        InfuenceConsumer.Action action;
         while (!stack.isEmpty()) {
             node = stack.poll();
 
@@ -256,11 +267,22 @@ public class Infuence {
 
             } else {
 
-                if (!bfsIterNodeConsumer.consumer(node, level)) {
-                    return;
+                action = bfsIterNodeConsumer.consumer(node, level);
+                switch (action) {
+                    case CONTINUE: {
+                        node.getChildren().forEach(n -> stack.add(n));
+                        break;
+                    }
+                    case OVER: {
+                        return;
+                    }
+                    case OVER_SELF: {
+                        break;
+                    }
+                    default: {
+                        throw new IllegalArgumentException("Error action.");
+                    }
                 }
-
-                node.getChildren().forEach(n -> stack.add(n));
             }
         }
     }
@@ -268,7 +290,7 @@ public class Infuence {
     @FunctionalInterface
     private interface BfsIterNodeConsumer {
 
-        boolean consumer(Node node, int level);
+        InfuenceConsumer.Action consumer(Node node, int level);
     }
 
     // 序号
@@ -290,7 +312,7 @@ public class Infuence {
                 }
             }
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         return new TreeSize(maxWide.get(), maxHigh.get());

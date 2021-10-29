@@ -20,6 +20,23 @@ public interface InfuenceConsumer {
      * @param infuenceInner       当前的影响树.
      * @return true 继续,false中断.
      */
-    boolean accept(Optional<Participant> parentParticipantOp, Participant participant, Infuence infuenceInner);
+    Action accept(Optional<Participant> parentParticipantOp, Participant participant, Infuence infuenceInner);
 
+    /**
+     * 迭代影响力时用以控制之后迭代的动作表示.
+     */
+    static enum Action {
+        /**
+         * 继续正常迭代.
+         */
+        CONTINUE,
+        /**
+         * 终止迭代.
+         */
+        OVER,
+        /**
+         * 终止被当前影响力影响的.
+         */
+        OVER_SELF;
+    }
 }

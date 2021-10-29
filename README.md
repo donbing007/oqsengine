@@ -14,6 +14,15 @@
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
 * xplat-meta-oqsengine-cdc 数据同步相关.
 * xplat-meta-oqsengine-status 状态管理.
+* xplat-meta-oqsengine-calculate 计算字段计算.
+* xplat-meta-oqsengine-changelog 审计日志.
+* xplat-meta-oqsengine-event 事件.
+* xplat-meta-oqsengine-kv kv储存.
+* xplat-meta-oqsengine-lock 锁实现.
+* xplat-meta-oqsengine-task 任务队列.
+* xplat-meta-oqsengine-synchronizer 客户端使用的锁.
+* xplat-meta-oqsengine-testcontainer 测试使用的容器框架.
+* xplat-meta-oqsengine-tokenizer 分词.
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
 * xplat-meta-oqsengine-testreport 测试覆盖的聚合项目.不影响实际功能.
@@ -165,6 +174,7 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_mode | | 当前工作模式(1 正常, 2 只读) |
 | oqs_readonly_rease | | 如果进入了只读模式,此值表示原因. (取值 1 正常.<p>2 CDC心跳失败造成只读.<p>3 未提交号过多造成只读.<p>4 CDC服务离线造成只读.)|
 | oqs_now_commitid | | 当前最大提交号 |
+| oqs_calculation_logic_latency | logic(aggregation, autofill, formula, lookup)和action(calculate, scope, getTarget).| 计算字段处理延时 |
 
 # META同步工具(Meta/Client/Server)
 ## Meta逻辑

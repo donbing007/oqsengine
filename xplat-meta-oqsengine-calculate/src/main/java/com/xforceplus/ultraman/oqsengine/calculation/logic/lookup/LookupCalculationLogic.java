@@ -7,7 +7,9 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -21,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.kv.KeyIterator;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +48,10 @@ public class LookupCalculationLogic implements CalculationLogic {
      */
     private static final int TRANSACTION_LIMIT_NUMBER = 1000;
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "lookup", "action", "calculate"}
+    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
         IEntityField focusField = context.getFocusField();
@@ -89,6 +96,10 @@ public class LookupCalculationLogic implements CalculationLogic {
 
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "lookup", "action", "scope"}
+    )
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
 
@@ -123,7 +134,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                     });
             }
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
     }
 
@@ -131,6 +142,10 @@ public class LookupCalculationLogic implements CalculationLogic {
      * lookup 只允许指向静态字段,同时不能指向其他lookup字段.
      * 所以只会处于影响树的第二层,第一层为触发源.
      */
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "lookup", "action", "getTarget"}
+    )
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant,
                                     Collection<IEntity> triggerEntities)

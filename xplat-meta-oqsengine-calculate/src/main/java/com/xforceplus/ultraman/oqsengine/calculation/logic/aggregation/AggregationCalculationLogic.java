@@ -9,7 +9,9 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.A
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -30,14 +32,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import io.micrometer.core.annotation.Timed;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 聚合字段计算.
@@ -48,10 +49,13 @@ import org.slf4j.LoggerFactory;
  */
 public class AggregationCalculationLogic implements CalculationLogic {
 
-    final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogic.class);
     public static final int ONE = 1;
     public static final int ZERO = 0;
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "aggregation", "action", "calculate"}
+    )
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
 
@@ -177,6 +181,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
         return targetValue;
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "aggregation", "action", "scope"}
+    )
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -195,12 +203,12 @@ public class AggregationCalculationLogic implements CalculationLogic {
             for (Relationship r : relationships) {
                 IEntityClass relationshipClass = r.getRightEntityClass();
                 List<IEntityField> fields = relationshipClass.fields().stream()
-                        .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
-                        .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
-                                || (((Aggregation) f.config().getCalculation()).getAggregationType()
-                                .equals(AggregationType.COUNT))
-                                || (participantField.name().equals(EntityField.ID_ENTITY_FIELD.name()))
-                        )).collect(Collectors.toList());
+                    .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
+                    .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
+                        || (((Aggregation) f.config().getCalculation()).getAggregationType()
+                        .equals(AggregationType.COUNT))
+                        || (participantField.name().equals(EntityField.ID_ENTITY_FIELD.name()))
+                    )).collect(Collectors.toList());
                 if (fields != null && fields.size() > 0) {
                     fields.forEach(f -> {
                         Aggregation aggregation = (Aggregation) f.config().getCalculation();
@@ -209,29 +217,29 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         if (countId.name().equals(EntityField.ID_ENTITY_FIELD.name())) {
                             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
-                                        participant,
-                                        Participant.Builder.anParticipant()
-                                                .withEntityClass(relationshipClass)
-                                                .withField(f)
-                                                .build()
+                                    participant,
+                                    Participant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(f)
+                                        .build()
                                 );
                             } else {
                                 infuenceInner.impact(
-                                        participant,
-                                        Participant.Builder.anParticipant()
-                                                .withEntityClass(relationshipClass)
-                                                .withField(fieldId.ID_ENTITY_FIELD)
-                                                .build()
+                                    participant,
+                                    Participant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(fieldId.ID_ENTITY_FIELD)
+                                        .build()
                                 );
                             }
                         } else {
                             if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
-                                        participant,
-                                        Participant.Builder.anParticipant()
-                                                .withEntityClass(relationshipClass)
-                                                .withField(f)
-                                                .build()
+                                    participant,
+                                    Participant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(f)
+                                        .build()
                                 );
                             }
                         }
@@ -239,10 +247,14 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 }
             }
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
     }
 
+    @Timed(
+        value = MetricsDefine.CALCULATION_LOGIC,
+        extraTags = {"logic", "aggregation", "action", "getTarget"}
+    )
     @Override
     public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
         throws CalculationException {

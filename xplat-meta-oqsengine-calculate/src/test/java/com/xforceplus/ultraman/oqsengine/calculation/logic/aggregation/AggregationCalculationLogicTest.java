@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -30,8 +31,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -537,7 +536,7 @@ public class AggregationCalculationLogicTest {
 
             participants.add(participant);
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(4, participants.size());
@@ -577,7 +576,7 @@ public class AggregationCalculationLogicTest {
 
             participantsCount.add(participant);
 
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
 
@@ -629,10 +628,10 @@ public class AggregationCalculationLogicTest {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == A_CLASS.id()) {
                     p.set(participant);
-                    return false;
+                    return InfuenceConsumer.Action.OVER;
                 }
             }
-            return true;
+            return InfuenceConsumer.Action.CONTINUE;
         });
 
         Participant participant = p.get();
@@ -673,17 +672,6 @@ public class AggregationCalculationLogicTest {
         @Override
         public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
                                                      long lastId, int size) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void writeError(ErrorStorageEntity errorStorageEntity) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition queryErrorCondition)
-            throws SQLException {
             throw new UnsupportedOperationException();
         }
 
@@ -774,7 +762,7 @@ public class AggregationCalculationLogicTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return true;
+                return InfuenceConsumer.Action.CONTINUE;
             });
         }
 
