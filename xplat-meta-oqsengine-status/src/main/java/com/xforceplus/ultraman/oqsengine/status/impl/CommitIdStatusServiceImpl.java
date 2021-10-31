@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
@@ -101,6 +102,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Resource
     private RedisClient redisClient;
 
+    @Resource
+    private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
+
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
@@ -161,9 +165,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.commitid");
 
-
-        saveLuaScriptSha = syncCommands.scriptLoad(SAVE_LUA_SCRIPT);
-        obsoleteLuaScriptSha = syncCommands.scriptLoad(OBSOLETE_LUA_SCRIPT);
+        if (redisLuaScriptWatchDog != null) {
+            saveLuaScriptSha = redisLuaScriptWatchDog.watch(SAVE_LUA_SCRIPT);
+            obsoleteLuaScriptSha = redisLuaScriptWatchDog.watch(OBSOLETE_LUA_SCRIPT);
+        } else {
+            saveLuaScriptSha = syncCommands.scriptLoad(SAVE_LUA_SCRIPT);
+            obsoleteLuaScriptSha = syncCommands.scriptLoad(OBSOLETE_LUA_SCRIPT);
+        }
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));

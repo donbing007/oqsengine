@@ -24,8 +24,8 @@ public class WrapperTokenizer implements Tokenizer {
     }
 
     @Override
-    public Iterator<String> tokenize(String value) {
-        return new WrapperIterator(tokenizers, value);
+    public Iterator<String> tokenize(String value, TokenizerMode mode) {
+        return new WrapperIterator(tokenizers, value, mode);
     }
 
     @Override
@@ -36,12 +36,14 @@ public class WrapperTokenizer implements Tokenizer {
     static class WrapperIterator implements Iterator<String> {
 
         private List<Tokenizer> tokenizers;
+        private TokenizerMode mode;
         private Iterator<String> currentIter;
         private String value;
 
-        public WrapperIterator(Collection<Tokenizer> tokenizers, String value) {
+        public WrapperIterator(Collection<Tokenizer> tokenizers, String value, TokenizerMode mode) {
             this.tokenizers = new ArrayList<>(tokenizers);
             this.value = value;
+            this.mode = mode;
 
             if (!tokenizers.isEmpty()) {
                 currentIter = this.tokenizers.remove(0).tokenize(this.value);
@@ -59,7 +61,7 @@ public class WrapperTokenizer implements Tokenizer {
                     }
 
                     Tokenizer tokenizer = tokenizers.remove(0);
-                    currentIter = tokenizer.tokenize(value);
+                    currentIter = tokenizer.tokenize(value, mode);
                     if (currentIter.hasNext()) {
                         return true;
                     }

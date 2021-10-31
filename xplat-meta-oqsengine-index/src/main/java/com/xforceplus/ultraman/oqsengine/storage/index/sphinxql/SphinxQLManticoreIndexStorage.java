@@ -477,7 +477,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
                     Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
+                    // 以储存模式分词.
+                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue, Tokenizer.TokenizerMode.STORAGE);
                     /*
                      * 处理当前字段分词结果.
                      */
@@ -487,12 +488,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                             buff.append(' ');
                         }
                         word = words.next();
-                        // 防止和原始字符相同的分词结果.
-                        if (!word.equals(strValue)) {
-                            buff.append(shortStorageName.getPrefix())
-                                .append(word)
-                                .append(shortStorageName.getSuffix());
-                        }
+                        buff.append(SphinxQLHelper.encodeFuzzyWord(shortStorageName, word));
                     }
                     if (buff.length() > 0) {
                         buff.append(' ');
@@ -518,8 +514,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     buff.append(' ');
                 }
 
+                String strValue = current.value().toString();
+                strValue = SphinxQLHelper.filterSymbols(strValue);
+
                 buff.append(shortStorageName.getPrefix())
-                    .append(current.value())
+                    .append(strValue)
                     .append(shortStorageName.getSuffix());
             }
 

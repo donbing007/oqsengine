@@ -13,10 +13,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -39,6 +43,20 @@ public class ReplayServiceTest {
 
     @Autowired
     private ChangelogExample example;
+
+    private static ContainerStarter starter;
+
+    @BeforeClass
+    public static void beforeClass() {
+        starter = new ContainerStarter();
+        starter.init();
+        starter.startRedis();
+    }
+
+    @AfterTestClass
+    public void afterClass() {
+        starter.destroy();
+    }
 
     @Test
     public void testReplayRelation(){

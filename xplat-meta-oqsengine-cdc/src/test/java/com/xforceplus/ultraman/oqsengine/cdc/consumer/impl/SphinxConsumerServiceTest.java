@@ -17,14 +17,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -34,6 +36,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/9
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class SphinxConsumerServiceTest extends AbstractCDCContainer {
     private ConsumerService sphinxConsumerService;
 
@@ -53,14 +57,6 @@ public class SphinxConsumerServiceTest extends AbstractCDCContainer {
 
     private CDCMetricsService cdcMetricsService;
 
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerStarter.startMysql();
-        ContainerStarter.startManticore();
-        ContainerStarter.startRedis();
-        ContainerStarter.startCannal();
-    }
-
     private void before(boolean isMock) throws Exception {
         sphinxConsumerService = initAll(isMock);
         cdcMetricsService = new CDCMetricsService();
@@ -72,88 +68,91 @@ public class SphinxConsumerServiceTest extends AbstractCDCContainer {
     @Test
     public void errorTest() throws Exception {
         before(true);
-
-        List<CanalEntry.Entry> badEntries = new ArrayList<>();
-
-        List<CanalEntry.Entry> goodEntries = new ArrayList<>();
-
-        long commitId = Long.MAX_VALUE - 1;
-
-        badEntries.add(
-            buildRow(RANDOM_INSERT_1, 1, Long.MAX_VALUE, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_1, 1, 1,
-                true));
-        goodEntries.add(
-            buildRow(RANDOM_INSERT_1, 1, Long.MAX_VALUE, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_1, 1, 1,
-                false));
-
-        CanalEntry.Entry e2 =
-            buildRow(EXPECTED_CREF, 3, Long.MAX_VALUE - 2, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_2, 1, 1,
-                false);
-        badEntries.add(e2);
-        goodEntries.add(e2);
-
-
-        Exception e = null;
         try {
-            sphinxConsumerService.consume(badEntries, 1, cdcMetricsService);
-        } catch (Exception ex) {
-            e = ex;
-        }
+            List<CanalEntry.Entry> badEntries = new ArrayList<>();
 
-        Assert.assertNotNull(e);
-        Assert.assertEquals("mock error", e.getMessage());
+            List<CanalEntry.Entry> goodEntries = new ArrayList<>();
 
-        CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType())
-            .setStatus(FixedStatus.NOT_FIXED.getStatus());
-        Collection<CdcErrorTask> cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-        Assert.assertEquals(1, cdcErrorTasks.size());
+            long commitId = Long.MAX_VALUE - 1;
+
+            badEntries.add(
+                buildRow(RANDOM_INSERT_1, 1, Long.MAX_VALUE, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_1, 1, 1,
+                    true));
+            goodEntries.add(
+                buildRow(RANDOM_INSERT_1, 1, Long.MAX_VALUE, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_1, 1, 1,
+                    false));
+
+            CanalEntry.Entry e2 =
+                buildRow(EXPECTED_CREF, 3, Long.MAX_VALUE - 2, true, 1, commitId, "false", EXPECTED_ATTR_INDEX_2, 1, 1,
+                    false);
+            badEntries.add(e2);
+            goodEntries.add(e2);
 
 
-        List<OriginalEntity> originalEntities = new ArrayList<>();
-        Method m = sphinxSyncExecutor.getClass()
-            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class});
-        m.setAccessible(true);
+            Exception e = null;
+            try {
+                sphinxConsumerService.consume(badEntries, 1, cdcMetricsService);
+            } catch (Exception ex) {
+                e = ex;
+            }
 
-        originalEntities.add((OriginalEntity) m
-            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(0)), RANDOM_INSERT_1, commitId}));
-        originalEntities.add((OriginalEntity) m
-            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(1)), EXPECTED_CREF, commitId}));
+            Assert.assertNotNull(e);
+            Assert.assertEquals("mock error", e.getMessage());
 
-        String value = OriginalEntityUtils.toOriginalEntityStr(originalEntities);
-        CdcErrorTask cdcErrorTask = cdcErrorTasks.iterator().next();
-        int ret = cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, value);
-        Assert.assertEquals(1, ret);
+            CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
+            cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType())
+                .setStatus(FixedStatus.NOT_FIXED.getStatus());
+            Collection<CdcErrorTask> cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
+            Assert.assertEquals(1, cdcErrorTasks.size());
 
-        e = null;
 
-        CDCMetrics cdcMetrics = null;
-        try {
-            cdcMetrics = sphinxConsumerService.consume(badEntries, 1, cdcMetricsService);
-        } catch (Exception ex) {
-            e = ex;
-        }
+            List<OriginalEntity> originalEntities = new ArrayList<>();
+            Method m = sphinxSyncExecutor.getClass()
+                .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class});
+            m.setAccessible(true);
 
-        Assert.assertNull(e);
-        Assert.assertNotNull(cdcMetrics);
+            originalEntities.add((OriginalEntity) m
+                .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(0)), RANDOM_INSERT_1, commitId}));
+            originalEntities.add((OriginalEntity) m
+                .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(1)), EXPECTED_CREF, commitId}));
 
-        Assert.assertEquals(1, cdcMetrics.getBatchId());
-        Assert.assertEquals(1, cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size());
-        Assert.assertTrue(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId));
-        Assert.assertEquals(2, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            String value = OriginalEntityUtils.toOriginalEntityStr(originalEntities);
+            CdcErrorTask cdcErrorTask = cdcErrorTasks.iterator().next();
+            int ret = cdcErrorStorage.submitRecover(cdcErrorTask.getSeqNo(), FixedStatus.SUBMIT_FIX_REQ, value);
+            Assert.assertEquals(1, ret);
 
-        cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType())
-            .setStatus(FixedStatus.FIXED.getStatus());
-        cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-        Assert.assertEquals(1, cdcErrorTasks.size());
-        cdcErrorTask = cdcErrorTasks.iterator().next();
+            e = null;
 
-        originalEntities = OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
-        Assert.assertEquals(2, originalEntities.size());
-        for (OriginalEntity o : originalEntities) {
-            Assert.assertNotNull(o.getEntityClass());
-            Assert.assertNotNull(o.getAttributes());
+            CDCMetrics cdcMetrics = null;
+            try {
+                cdcMetrics = sphinxConsumerService.consume(badEntries, 1, cdcMetricsService);
+            } catch (Exception ex) {
+                e = ex;
+            }
+
+            Assert.assertNull(e);
+            Assert.assertNotNull(cdcMetrics);
+
+            Assert.assertEquals(1, cdcMetrics.getBatchId());
+            Assert.assertEquals(1, cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size());
+            Assert.assertTrue(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId));
+            Assert.assertEquals(2, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+
+            cdcErrorQueryCondition = new CdcErrorQueryCondition();
+            cdcErrorQueryCondition.setBatchId(1L).setType(ErrorType.DATA_INSERT_ERROR.getType())
+                .setStatus(FixedStatus.FIXED.getStatus());
+            cdcErrorTasks = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
+            Assert.assertEquals(1, cdcErrorTasks.size());
+            cdcErrorTask = cdcErrorTasks.iterator().next();
+
+            originalEntities = OriginalEntityUtils.toOriginalEntity(metaManager, cdcErrorTask.getOperationObject());
+            Assert.assertEquals(2, originalEntities.size());
+            for (OriginalEntity o : originalEntities) {
+                Assert.assertNotNull(o.getEntityClass());
+                Assert.assertNotNull(o.getAttributes());
+            }
+        } finally {
+            closeAll();
         }
     }
 
@@ -170,31 +169,34 @@ public class SphinxConsumerServiceTest extends AbstractCDCContainer {
     public void havePrefCrefTest() throws Exception {
 
         before(false);
+        try {
+            expectedSize = 0;
 
-        expectedSize = 0;
+            List<CanalEntry.Entry> entries = new ArrayList<>();
 
-        List<CanalEntry.Entry> entries = new ArrayList<>();
+            CanalEntry.Entry entryTStart = buildTransactionStart();
+            entries.add(entryTStart);
 
-        CanalEntry.Entry entryTStart = buildTransactionStart();
-        entries.add(entryTStart);
+            build(entries, Long.MAX_VALUE, false);
 
-        build(entries, Long.MAX_VALUE, false);
+            build(entries, Long.MAX_VALUE - 1, false);
 
-        build(entries, Long.MAX_VALUE - 1, false);
-
-        CanalEntry.Entry entryTEnd = buildTransactionEnd();
-        entries.add(entryTEnd);
+            CanalEntry.Entry entryTEnd = buildTransactionEnd();
+            entries.add(entryTEnd);
 
 
-        CDCMetrics cdcMetrics = new CDCMetrics();
+            CDCMetrics cdcMetrics = new CDCMetrics();
 
-        Method m = sphinxConsumerService.getClass().getDeclaredMethod("syncAfterDataFilter",
-            new Class[] {List.class, CDCMetrics.class, CDCMetricsService.class});
-        m.setAccessible(true);
+            Method m = sphinxConsumerService.getClass().getDeclaredMethod("syncAfterDataFilter",
+                new Class[] {List.class, CDCMetrics.class, CDCMetricsService.class});
+            m.setAccessible(true);
 
-        int count = (int) m.invoke(sphinxConsumerService, new Object[] {entries, cdcMetrics, cdcMetricsService});
+            int count = (int) m.invoke(sphinxConsumerService, new Object[] {entries, cdcMetrics, cdcMetricsService});
 
-        Assert.assertEquals(expectedSize, count);
+            Assert.assertEquals(expectedSize, count);
+        } finally {
+            closeAll();
+        }
     }
 
 

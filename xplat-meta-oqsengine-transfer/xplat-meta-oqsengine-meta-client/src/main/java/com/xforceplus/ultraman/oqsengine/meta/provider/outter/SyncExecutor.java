@@ -13,18 +13,14 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
  */
 public interface SyncExecutor {
     /**
-     * 外部实现sync接口
-     * @param appId
-     * @param version
-     * @param entityClassSyncRspProto
-     * @return
+     * 外部实现sync接口.
      */
     boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto);
 
+    boolean dataImport(String appId, int version, String content);
+
     /**
-     * 外部实现获取版本
-     * @param appId
-     * @return
+     * 外部实现获取版本.
      */
     int version(String appId);
 }

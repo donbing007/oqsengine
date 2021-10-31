@@ -76,7 +76,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                             "test")
                     )
                 ),
-                String.format("MATCH('((@%s 1y2p0ijtest32e8e7S))')", FieldDefine.ATTRIBUTEF)
+                String.format("MATCH('((@%s 1y2p0ijtestw32e8e7S))')", FieldDefine.ATTRIBUTEF)
             ),
             new Case(
                 new Conditions(

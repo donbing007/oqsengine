@@ -34,7 +34,7 @@ public class RedisLuaScript {
      */
     public static String PREPARE_VERSION_SCRIPT =
         "local appVersion = redis.call('hget', KEYS[1], ARGV[2]);"
-            + "if appVersion == false or appVersion < ARGV[1] then "
+            + "if appVersion == false or tonumber(appVersion) < tonumber(ARGV[1]) then "
             + "local prePareKey = string.format('%s.%s', KEYS[2], ARGV[2]);"
             + "if (redis.call('exists', prePareKey) == 0) then "
             + "redis.call('setex', prePareKey, tonumber(ARGV[3]), ARGV[1]);"
