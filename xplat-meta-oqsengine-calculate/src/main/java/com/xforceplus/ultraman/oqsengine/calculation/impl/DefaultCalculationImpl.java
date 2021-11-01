@@ -99,6 +99,18 @@ public class DefaultCalculationImpl implements Calculation {
 
             if (newValueOp.isPresent()) {
                 targetEntity.entityValue().addValue(newValueOp.get());
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Instance {} field {} evaluates to {}.",
+                        targetEntity.id(), field.name(), newValueOp.get().getValue());
+                }
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Instance {} field {} evaluates to {}.",
+                        targetEntity.id(), field.name(), "NULL");
+                }
+
             }
         }
 
@@ -169,15 +181,6 @@ public class DefaultCalculationImpl implements Calculation {
 
                     Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
                     Optional<IValue> newValueOp = logic.calculate(context);
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(
-                            "Compute instance field [{}], before [{}] after [{}].",
-                            participant.getField().name(),
-                            oldValueOp.orElse(new EmptyTypedValue(participant.getField())),
-                            newValueOp.orElse(new EmptyTypedValue(participant.getField()))
-                        );
-                    }
 
                     if (newValueOp.isPresent()) {
 
