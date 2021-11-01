@@ -367,6 +367,10 @@ public class DefaultCalculationImpl implements Calculation {
     private Collection<IEntity> loadEntities(CalculationContext context, long[] ids)
         throws CalculationException {
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("Load instance. Identity list [{}]", Arrays.toString(ids));
+        }
+
         if (ids == null || ids.length == 0) {
             return Collections.emptyList();
         }
