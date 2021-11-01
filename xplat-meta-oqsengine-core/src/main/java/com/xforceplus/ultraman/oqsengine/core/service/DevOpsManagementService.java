@@ -7,9 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -128,9 +125,4 @@ public interface DevOpsManagementService {
      * 删除比传入commitId小的所有commitId.
      */
     void cleanLessThan(long id);
-
-    /**
-     * 查询错误.
-     */
-    Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition errorCondition) throws SQLException;
 }

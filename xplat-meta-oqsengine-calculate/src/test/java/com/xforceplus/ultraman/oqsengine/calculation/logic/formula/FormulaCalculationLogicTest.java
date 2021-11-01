@@ -486,42 +486,42 @@
 //        Assert.assertNotNull(targetValue);
 //
 //    }
-////
-////    @Test
-////    public void testReplaceCalculation() {
-////        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
-////            .withMetaManager(metaManager)
-////            .withScenarios(CalculationScenarios.REPLACE).build();
-////        context.getCalculationLogicFactory().get().register(aggregationLogic);
-////        context.focusEntity(entityB, B_CLASS);
-////        context.focusField(B_SUM);
-////        context.putEntityToCache(entityA);
-////        context.addValueChange(
-////            ValueChange.build(entityA.id(), new LongValue(A_LONG, 100L), new LongValue(A_LONG, 200L)));
-////
-////        Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
-////
-////        Assert.assertNotNull(targetValue);
-////
-////    }
 //
-////    @Test
-////    public void testRemoveCalculation() {
-////        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
-////            .withMetaManager(metaManager)
-////            .withScenarios(CalculationScenarios.DELETE).build();
-////        context.getCalculationLogicFactory().get().register(aggregationLogic);
-////        context.focusEntity(entityB, B_CLASS);
-////        context.focusField(B_SUM);
-////        context.putEntityToCache(entityA);
-////        context.addValueChange(
-////            ValueChange.build(entityA.id(), new LongValue(A_LONG, 10L), new EmptyTypedValue(A_LONG)));
-////
-////        Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
-////
-////        Assert.assertNotNull(targetValue);
-////
-////    }
+//    @Test
+//    public void testReplaceCalculation() {
+//        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+//            .withMetaManager(metaManager)
+//            .withScenarios(CalculationScenarios.REPLACE).build();
+//        context.getCalculationLogicFactory().get().register(aggregationLogic);
+//        context.focusEntity(entityB, B_CLASS);
+//        context.focusField(B_SUM);
+//        context.putEntityToCache(entityA);
+//        context.addValueChange(
+//            ValueChange.build(entityA.id(), new LongValue(A_LONG, 100L), new LongValue(A_LONG, 200L)));
+//
+//        Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
+//
+//        Assert.assertNotNull(targetValue);
+//
+//    }
+//
+//    @Test
+//    public void testRemoveCalculation() {
+//        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+//            .withMetaManager(metaManager)
+//            .withScenarios(CalculationScenarios.DELETE).build();
+//        context.getCalculationLogicFactory().get().register(aggregationLogic);
+//        context.focusEntity(entityB, B_CLASS);
+//        context.focusField(B_SUM);
+//        context.putEntityToCache(entityA);
+//        context.addValueChange(
+//            ValueChange.build(entityA.id(), new LongValue(A_LONG, 10L), new EmptyTypedValue(A_LONG)));
+//
+//        Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
+//
+//        Assert.assertNotNull(targetValue);
+//
+//    }
 //
 //    @Test
 //    public void scope() {

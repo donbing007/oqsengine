@@ -3,6 +3,9 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
+import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
+import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.function.GetIDFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -25,6 +28,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
@@ -51,6 +55,11 @@ public class TestInitTools {
     private static BizIDGenerator bizIDGenerator;
     private static IdGenerator redisIDGenerator;
 
+    /**
+     * id生成.
+     *
+     * @param bizType 业务id类型.
+     */
     public static void bizIdGenerator(String bizType) throws IllegalAccessException {
         AviatorHelper.addFunction(new GetIDFunction());
         RedisClient redisClient = CommonInitialization.getInstance().getRedisClient();
@@ -71,9 +80,10 @@ public class TestInitTools {
         ReflectionTestUtils.setField(impl, "longContinuousPartialOrderIdGenerator", redisIDGenerator);
         ReflectionTestUtils.setField(impl, "longNoContinuousPartialOrderIdGenerator", idGenerator());
         ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
-        ReflectionTestUtils.setField(impl, "calculationLogicFactory", calculationLogicFactory());
         ReflectionTestUtils.setField(impl, "bizIDGenerator", bizIDGenerator);
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
+        ReflectionTestUtils.setField(impl, "calculation", new MockCalculation());
+
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
             @Override
             public void watch(EventType type, Consumer<Event> listener) {
@@ -93,6 +103,7 @@ public class TestInitTools {
      * 关闭.
      */
     public static void close() throws Exception {
+        InitializationHelper.destroy();
         InitializationHelper.clearAll();
     }
 
@@ -140,6 +151,18 @@ public class TestInitTools {
         return new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
     }
 
+    static class MockCalculation implements Calculation {
+
+        @Override
+        public IEntity calculate(CalculationContext context) throws CalculationException {
+            return context.getFocusEntity();
+        }
+
+        @Override
+        public void maintain(CalculationContext context) throws CalculationException {
+
+        }
+    }
 
     static class MockTransactionExecutor implements TransactionExecutor {
 

@@ -79,7 +79,7 @@ public class EntitySearchServiceImplTest {
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(impl, "indexStorage", indexStorage);
-        ReflectionTestUtils.setField(impl, "combinedStorage", combinedSelectStorage);
+        ReflectionTestUtils.setField(impl, "combinedSelectStorage", combinedSelectStorage);
         ReflectionTestUtils.setField(impl, "threadPool", threadPool);
         ReflectionTestUtils.setField(impl, "commitIdStatusService", commitIdStatusService);
         impl.init();

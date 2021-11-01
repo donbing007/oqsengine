@@ -66,7 +66,7 @@ public class DefaultCalculationImpl implements Calculation {
     final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
     @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
+        value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
         extraTags = {"logic", "all", "action", "calculate"}
     )
     @Override
@@ -94,7 +94,7 @@ public class DefaultCalculationImpl implements Calculation {
             try {
                 newValueOp = logic.calculate(context);
             } finally {
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "calculate");
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate");
             }
 
             if (newValueOp.isPresent()) {
@@ -106,7 +106,7 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
+        value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
         extraTags = {"logic", "all", "action", "maintain"}
     )
     @Override
@@ -158,7 +158,7 @@ public class DefaultCalculationImpl implements Calculation {
                 long[] affectedEntityIds = logic.getMaintainTarget(context, participant,
                     parentParticipant.get().getAffectedEntities());
 
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "getTarget");
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget");
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
@@ -463,7 +463,7 @@ public class DefaultCalculationImpl implements Calculation {
 
                         logic.scope(context, infuence);
 
-                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "scope");
+                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope");
                     }
 
                     if (oldSize == infuence.getSize()) {
@@ -588,7 +588,8 @@ public class DefaultCalculationImpl implements Calculation {
         sample.stop(Timer.builder(metricName)
             .tags(
                 "logic", logic.getClass().getSimpleName(),
-                "action", action
+                "action", action,
+                "exception", ""
             )
             .publishPercentileHistogram(false)
             .publishPercentiles(null)
