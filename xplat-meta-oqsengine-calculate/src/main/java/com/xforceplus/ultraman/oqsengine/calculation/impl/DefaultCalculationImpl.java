@@ -180,6 +180,15 @@ public class DefaultCalculationImpl implements Calculation {
                     context.focusField(participant.getField());
 
                     Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Start using {} logic to compute instance {} fields {} of type {}.",
+                            logic.getClass().getSimpleName(),
+                            affectedEntitiy.id(),
+                            participant.getField().name(),
+                            participant.getEntityClass().code());
+                    }
+
                     Optional<IValue> newValueOp = logic.calculate(context);
 
                     if (newValueOp.isPresent()) {
@@ -187,6 +196,11 @@ public class DefaultCalculationImpl implements Calculation {
                         IValue oldValue =
                             oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
                         IValue newValue = newValueOp.get();
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Instance {} field {} evaluates to {}.",
+                                affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
+                        }
 
                         if (!oldValue.equals(newValue)) {
                             context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
@@ -203,6 +217,11 @@ public class DefaultCalculationImpl implements Calculation {
                             // 没有任何改变,所有受此字段影响的后续都将被忽略.
                             return InfuenceConsumer.Action.OVER_SELF;
 
+                        }
+                    } else {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Instance {} field {} evaluates to {}.",
+                                affectedEntitiy.id(), participant.getField().name(), "NULL");
                         }
                     }
                 }
