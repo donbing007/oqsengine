@@ -148,5 +148,13 @@ public interface CacheExecutor {
      */
     void invalidateLocal();
 
+    /**
+     * 写入同步日志.
+     */
+    void addSyncLog(String appId, Integer version, String message);
 
+    /**
+     * 查询同步日志.
+     */
+    Map<String, String> getSyncLog();
 }

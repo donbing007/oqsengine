@@ -317,52 +317,61 @@ public class SyncRequestHandler implements IRequestHandler {
     private EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
         RequestStatus status = SYNC_FAIL;
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+
         try {
             if (entityClassSyncResponse.getAppId().isEmpty()
                 || entityClassSyncResponse.getAppId().isEmpty()
                 || NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
-                throw new MetaSyncClientException("sync appId or version could not be null...", false);
+
+                throw new MetaSyncClientException("sync appId/version/env could not be null...", false);
             }
 
             builder.setAppId(entityClassSyncResponse.getAppId())
                 .setVersion(entityClassSyncResponse.getVersion())
                 .setEnv(entityClassSyncResponse.getEnv());
+        } catch (Exception e) {
+            logger.warn("entityClassSyncResponse is invalidate, , message : {}", e.getMessage());
+            return builder.setStatus(status.ordinal());
+        } finally {
+            metrics(status);
+        }
 
-            //  该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
-            try {
-                //  md5 check && 是否已存在版本判断.
-                EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
-                if (md5Check(entityClassSyncResponse.getMd5(), result)) {
-                    WatchElement w =
-                        new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), Confirmed);
-                    //  当前关注此版本
-                    if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
-                        //  执行外部传入的执行器
-                        try {
-                            status = syncExecutor
-                                .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
-                                    result) ? RequestStatus.SYNC_OK : SYNC_FAIL;
-                        } catch (Exception e) {
-                            status = DATA_ERROR;
-                            logger.warn(e.getMessage());
-                        }
-
-                        if (status == RequestStatus.SYNC_OK) {
-                            requestWatchExecutor.update(w);
-                        }
-                    } else {
-                        logger.warn("current oqs-version bigger than sync-version : {}, will ignore...",
-                            entityClassSyncResponse.getVersion());
-                        status = RequestStatus.SYNC_OK;
+        //  该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
+        try {
+            //  md5 check && 是否已存在版本判断.
+            EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
+            if (md5Check(entityClassSyncResponse.getMd5(), result)) {
+                WatchElement w =
+                    new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                        entityClassSyncResponse.getVersion(), Confirmed);
+                //  当前关注此版本
+                if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
+                    //  执行外部传入的执行器
+                    try {
+                        status = syncExecutor
+                            .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+                                result) ? RequestStatus.SYNC_OK : SYNC_FAIL;
+                    } catch (Exception e) {
+                        status = DATA_ERROR;
+                        logger.warn(e.getMessage());
                     }
-                }
 
-            } catch (Exception e) {
-                logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+                    if (status == RequestStatus.SYNC_OK) {
+                        requestWatchExecutor.update(w);
+                    }
+                } else {
+                    logger.warn("current oqs-version bigger than sync-version : {}, will ignore...",
+                        entityClassSyncResponse.getVersion());
+                    status = RequestStatus.SYNC_OK;
+                }
+            } else {
+                syncExecutor.recordSyncFailed(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), "check md5 failed.");
             }
         } catch (Exception e) {
-            logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+            String error = String.format("handle entityClassSyncResponse failed, message : [%s]", e.getMessage());
+            syncExecutor.recordSyncFailed(entityClassSyncResponse.getAppId(),
+                entityClassSyncResponse.getVersion(), error);
+            logger.warn(error);
         } finally {
             metrics(status);
         }
@@ -404,8 +413,8 @@ public class SyncRequestHandler implements IRequestHandler {
             if (null != requestWatcher) {
                 try {
                     if (requestWatcher.isActive()) {
-                        if (System.currentTimeMillis() - requestWatcher.heartBeat() >
-                            grpcParams.getDefaultHeartbeatTimeout()) {
+                        if (System.currentTimeMillis() - requestWatcher.heartBeat()
+                            > grpcParams.getDefaultHeartbeatTimeout()) {
                             requestWatcher.observer().onCompleted();
                             logger.warn("last heartbeat time [{}] reaches max timeout [{}]",
                                 System.currentTimeMillis() - requestWatcher.heartBeat(),

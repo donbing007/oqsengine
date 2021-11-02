@@ -9,39 +9,14 @@ import java.util.Collection;
  *
  * @since 1.8
  */
-public class MetaMetrics {
-    private int version;
-    private String env;
-    private String appId;
+public class MetaMetrics extends MetaBase {
 
     private Collection<EntityClassStorage> metas;
 
     public MetaMetrics() {
+        super();
     }
 
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
-    public String getEnv() {
-        return env;
-    }
-
-    public void setEnv(String env) {
-        this.env = env;
-    }
-
-    public String getAppId() {
-        return appId;
-    }
-
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
 
     public Collection<EntityClassStorage> getMetas() {
         return metas;
@@ -56,9 +31,9 @@ public class MetaMetrics {
      */
     public MetaMetrics(int version, String env, String appId,
                        Collection<EntityClassStorage> metas) {
-        this.version = version;
-        this.env = env;
-        this.appId = appId;
+
+        super(version, env, appId);
+
         this.metas = metas;
     }
 }
