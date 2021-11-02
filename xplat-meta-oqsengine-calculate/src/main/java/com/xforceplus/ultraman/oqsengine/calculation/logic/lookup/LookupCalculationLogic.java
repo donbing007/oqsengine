@@ -145,8 +145,10 @@ public class LookupCalculationLogic implements CalculationLogic {
             // 判断是否为强关系,只有强关系才会在当前事务进行部份更新.
             boolean strong = (boolean) attachmentOp.get();
             LookupHelper.LookupLinkIterKey lookupLinkIterKey = LookupHelper.buildIteratorPrefixLinkKey(
-                context.getFocusField(), participant.getEntityClass(), participant.getField(),
-                context.getFocusEntity());
+                ((Lookup) participant.getField().config().getCalculation()).getFieldId(),
+                participant.getEntityClass().id(),
+                participant.getField().id(),
+                context.getFocusEntity().id());
 
             if (!strong) {
                 /*

@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -165,12 +164,22 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                     task = taskQueue.get(checkTimeoutMs);
                 } catch (Exception ex) {
 
+                    if (!running) {
+                        break;
+                    }
+
                     // 如果异常是中断异常,那么忽略.
                     if (!InterruptedException.class.isInstance(ex)) {
 
                         logger.error(ex.getMessage(), ex);
 
-                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(checkTimeoutMs);
+                        } catch (InterruptedException e) {
+                            if (!running) {
+                                break;
+                            }
+                        }
 
                     } else {
 
@@ -201,7 +210,13 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
 
                             logger.error(ex.getMessage(), ex);
 
-                            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(checkTimeoutMs);
+                            } catch (InterruptedException e) {
+                                if (!running) {
+                                    break;
+                                }
+                            }
 
                         } finally {
                             try {
@@ -220,7 +235,14 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
                     if (logger.isDebugEnabled()) {
                         logger.debug("No task found, wait {} milliseconds and try again.", checkTimeoutMs);
                     }
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(checkTimeoutMs);
+                    } catch (InterruptedException e) {
+                        if (!running) {
+                            break;
+                        }
+                    }
                 }
             }
         }

@@ -211,9 +211,23 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
                     return null;
                 }
                 if (kv.incr(unusedTaskSize, 0) <= 0) {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000L));
+
+                    if (!running) {
+                        break;
+                    }
+
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(1000L);
+                    } catch (InterruptedException e) {
+                        if (!running) {
+                            break;
+                        }
+                    }
+
                 } else {
+
                     break;
+
                 }
             }
             // 取出任务后将未取出任务数减一
@@ -326,7 +340,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
 
     private void checkRunning() {
         if (!running) {
-            throw new RuntimeException("当前任务队列不可用");
+            throw new IllegalStateException("The task queue has not been initialized.");
         }
     }
 
@@ -349,7 +363,14 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
              */
             while (running) {
                 try {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(syncGapTimeMs));
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(syncGapTimeMs);
+                    } catch (InterruptedException e) {
+                        if (!running) {
+                            return;
+                        }
+                    }
+
                     if (unSubmitTask.size() > 0) {
                         temp = new HashMap(unSubmitTask);
                         tempSet = temp.entrySet();

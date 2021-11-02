@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -356,7 +355,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 500L;
+        private final long checkTimeoutMs = 1000 * 60 * 60;
 
         @Override
         public void run() {
@@ -372,7 +371,19 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         if (logger.isDebugEnabled()) {
                             logger.debug("当前无初始化聚合任务");
                         }
-                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+
+                        if (!running) {
+                            break;
+                        }
+
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(checkTimeoutMs);
+                        } catch (InterruptedException e) {
+                            if (!running) {
+                                break;
+                            }
+                        }
+
                     } else {
                         // 添加usingApp,多oqs节点中只有添加聚合任务的oqs节点包含当前任务队列，其它oqs节点需在本地进程中新建属性相同的taskQueue后再获取任务执行
                         if (taskQueueMap.containsKey(processingPrefix)) {
@@ -445,9 +456,20 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                         break;
                                     } catch (Exception ex) {
 
+                                        if (!running) {
+                                            break;
+                                        }
+
                                         logger.error(ex.getMessage(), ex);
 
-                                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkTimeoutMs));
+                                        try {
+                                            TimeUnit.MILLISECONDS.sleep(checkTimeoutMs);
+                                        } catch (InterruptedException e) {
+                                            if (!running) {
+                                                break;
+                                            }
+                                        }
+
                                         count++;
                                     }
                                 }

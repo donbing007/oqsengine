@@ -189,7 +189,9 @@ public class DefaultCalculationImpl implements Calculation {
                             participant.getEntityClass().code());
                     }
 
+                    context.startMaintenance();
                     Optional<IValue> newValueOp = logic.calculate(context);
+                    context.stopMaintenance();
 
                     if (newValueOp.isPresent()) {
 

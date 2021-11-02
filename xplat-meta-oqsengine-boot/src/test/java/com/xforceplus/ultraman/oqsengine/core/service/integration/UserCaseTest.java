@@ -20,15 +20,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -45,8 +47,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -56,11 +62,20 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @version 0.1 2020/11/29 17:37
  * @since 1.8
  */
-@ExtendWith(SpringExtension.class)
+@ExtendWith({
+    RedisContainer.class,
+    MysqlContainer.class,
+    ManticoreContainer.class,
+    CanalContainer.class,
+    SpringExtension.class
+})
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class UserCaseTest extends AbstractContainerExtends {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+public class UserCaseTest implements ApplicationContextAware {
 
     final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
+
+    private ApplicationContext applicationContext;
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -209,7 +224,7 @@ public class UserCaseTest extends AbstractContainerExtends {
         Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
-        transactionManager.unbind();
+        transactionManager.finish();
     }
 
     @Test
@@ -244,7 +259,7 @@ public class UserCaseTest extends AbstractContainerExtends {
         Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
-        transactionManager.unbind();
+        transactionManager.finish();
     }
 
     @Test
@@ -326,7 +341,6 @@ public class UserCaseTest extends AbstractContainerExtends {
         TimeUnit.SECONDS.sleep(1);
 
         Assertions.assertEquals(0, commitIdStatusService.size());
-
     }
 
     /**
@@ -785,7 +799,7 @@ public class UserCaseTest extends AbstractContainerExtends {
                 .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
                 .withEntityValue(
                     EntityValue.build().addValue(
-                        new LongValue(
+                        new LookupValue(
                             MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
                             targetEntity.id())
                     ).addValue(
@@ -798,6 +812,7 @@ public class UserCaseTest extends AbstractContainerExtends {
             result = entityManagementService.build(lookupEntity);
             Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
         }
+
 
         Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
             lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
@@ -817,7 +832,8 @@ public class UserCaseTest extends AbstractContainerExtends {
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
                 )
             ).build();
-        entityManagementService.replace(newTargetEntity);
+        result = entityManagementService.replace(newTargetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
 
         boolean success = false;
         long successSize = 0;
@@ -848,9 +864,10 @@ public class UserCaseTest extends AbstractContainerExtends {
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2").get(),
+                        MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
                         ConditionOperator.EQUALS,
-                        new StringValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2").get(), "v2"))
+                        new StringValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
+                            "v2"))
                 ),
             MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -859,7 +876,7 @@ public class UserCaseTest extends AbstractContainerExtends {
 
         Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
         Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
-            e -> e.entityValue().getValue("lookup-l2").get().valueToString().equals("v2")
+            e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2")
         ).count());
     }
 
@@ -884,7 +901,7 @@ public class UserCaseTest extends AbstractContainerExtends {
                 .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
                 .withEntityValue(
                     EntityValue.build().addValue(
-                        new LongValue(
+                        new LookupValue(
                             MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-dec").get(),
                             targetEntity.id())
                     ).addValue(
@@ -963,5 +980,10 @@ public class UserCaseTest extends AbstractContainerExtends {
         Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
             e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333")
         ).count());
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

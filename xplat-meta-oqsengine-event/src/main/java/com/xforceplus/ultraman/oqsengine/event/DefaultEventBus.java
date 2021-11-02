@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -108,8 +107,18 @@ public class DefaultEventBus implements EventBus {
                     }
 
                 } else {
-                    // 进行短暂的休眠.
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+
+                    if (closed) {
+                        break;
+                    }
+
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(10);
+                    } catch (InterruptedException e) {
+                        if (closed) {
+                            break;
+                        }
+                    }
                 }
             }
         }

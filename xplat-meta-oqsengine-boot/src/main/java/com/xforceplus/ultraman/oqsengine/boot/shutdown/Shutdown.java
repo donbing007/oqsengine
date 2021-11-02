@@ -81,11 +81,11 @@ public class Shutdown {
 
         // wait shutdown
         logger.info("Start closing the io worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 3600);
+        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 30);
         logger.info("Succeed closing the io worker thread...ok!");
 
         logger.info("Start closing the task worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(taskThreadPool, 3600);
+        ExecutorHelper.shutdownAndAwaitTermination(taskThreadPool, 30);
         logger.info("Succeed closing the task worker thread...ok!");
 
         logger.info("Closing the process......ok!");

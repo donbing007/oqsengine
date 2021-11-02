@@ -137,7 +137,13 @@ public class LookupHelper {
     public static LookupLinkIterKey buildIteratorPrefixLinkKey(
         IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField, IEntity targetEntity) {
 
-        return new LookupLinkIterKey(targetField.id(), lookupEntityClass.id(), lookupField.id(), targetEntity.id());
+        return buildIteratorPrefixLinkKey(targetField.id(), lookupField.id(), lookupField.id(), targetEntity.id());
+    }
+
+    public static LookupLinkIterKey buildIteratorPrefixLinkKey(
+        long targetFieldId, long lookupEntityClassId, long lookupFieldId, long targetEntityId) {
+
+        return new LookupLinkIterKey(targetFieldId, lookupEntityClassId, lookupFieldId, targetEntityId);
     }
 
     /**

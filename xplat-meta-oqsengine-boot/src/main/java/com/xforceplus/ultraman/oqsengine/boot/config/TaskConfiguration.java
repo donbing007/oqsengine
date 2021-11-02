@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 /**
  * 任务相关配置.
@@ -33,6 +34,7 @@ public class TaskConfiguration {
      * 任务协调者.
      */
     @Bean("taskCoordinator")
+    @DependsOn("taskQueue")
     public TaskCoordinator taskCoordinator(
         @Value("${task.worker.number:3}") int number,
         ExecutorService taskThreadPool,
@@ -62,6 +64,7 @@ public class TaskConfiguration {
      * @return 聚合任务协调者
      */
     @Bean("aggregationTaskCoordinator")
+    @DependsOn("keyValueStorage")
     public TaskCoordinator aggregationTaskCoordinator(
             @Value("${task.worker.number:3}") int number,
             ExecutorService taskThreadPool,

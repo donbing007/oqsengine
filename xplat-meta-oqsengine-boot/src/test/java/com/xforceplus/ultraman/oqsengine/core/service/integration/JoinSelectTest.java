@@ -21,6 +21,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -40,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -49,8 +54,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @version 0.1 2020/4/28 16:27
  * @since 1.8
  */
-@ExtendWith(SpringExtension.class)
+@ExtendWith({
+    RedisContainer.class,
+    MysqlContainer.class,
+    ManticoreContainer.class,
+    CanalContainer.class,
+    SpringExtension.class
+})
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class JoinSelectTest extends AbstractContainerExtends {
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
@@ -123,7 +135,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    3L,
+                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), Long.MAX_VALUE)
                 )
             )
@@ -150,7 +162,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    3L,
+                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 1L)
                 )
             )
@@ -175,7 +187,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    3L,
+                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 2L)
                 )
             )
@@ -206,7 +218,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                         MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                         MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                         ConditionOperator.EQUALS,
-                        3L,
+                        MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
                         new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 100L)
                     )
                 )

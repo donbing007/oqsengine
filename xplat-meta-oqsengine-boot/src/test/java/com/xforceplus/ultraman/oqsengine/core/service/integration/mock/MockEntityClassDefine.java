@@ -30,7 +30,7 @@ import org.mockito.Mockito;
 @Disabled("explanation")
 public class MockEntityClassDefine {
 
-    private static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
+    public static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
     /**
      * 关系标识的开始值,依次递减.
      */
@@ -225,7 +225,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId)
+                        .withId(DRIVCER_ID_FEILD_ID)
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
@@ -244,7 +244,7 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 1)
+                        .withId(DRIVCER_ID_FEILD_ID)
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)

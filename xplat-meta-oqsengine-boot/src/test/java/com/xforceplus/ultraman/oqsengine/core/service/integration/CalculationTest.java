@@ -23,6 +23,10 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -40,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -49,8 +54,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @version 0.1 2021/10/20 17:10
  * @since 1.8
  */
-@ExtendWith(SpringExtension.class)
+@ExtendWith({
+    RedisContainer.class,
+    MysqlContainer.class,
+    ManticoreContainer.class,
+    CanalContainer.class,
+    SpringExtension.class
+})
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CalculationTest extends AbstractContainerExtends {
 
     final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
