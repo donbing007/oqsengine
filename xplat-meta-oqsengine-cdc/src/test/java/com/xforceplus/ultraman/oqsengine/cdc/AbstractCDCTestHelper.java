@@ -42,6 +42,7 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
             mockRedisCallbackService.reset();
         }
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {

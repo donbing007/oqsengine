@@ -2,13 +2,12 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 /**
- * 聚合测试功能
+ * 聚合测试功能.
  *
  * @className: EntityManagementWithAggregation
  * @package: com.xforceplus.ultraman.oqsengine.core.service.impl.calculator

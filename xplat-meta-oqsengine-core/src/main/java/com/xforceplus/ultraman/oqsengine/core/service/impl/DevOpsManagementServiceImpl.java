@@ -20,8 +20,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.condition.QueryErrorCondition;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.ErrorStorageEntity;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -188,11 +186,5 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public void cleanLessThan(long id) {
         commitIdRepairExecutor.cleanLessThan(id);
-    }
-
-    @Override
-    public Collection<ErrorStorageEntity> selectErrors(QueryErrorCondition errorCondition) throws SQLException {
-
-        return masterStorage.selectErrors(errorCondition);
     }
 }

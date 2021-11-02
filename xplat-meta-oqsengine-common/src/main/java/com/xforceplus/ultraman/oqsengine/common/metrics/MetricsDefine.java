@@ -132,5 +132,5 @@ public class MetricsDefine {
     /**
      * 计算字段逻辑片计算.tag是 logic(aggregation, autofill, formula, lookup)和action(calculate, scope).
      */
-    public static final String CALCULATION_LOGIC = PREFIX + ".calculation.logic";
+    public static final String CALCULATION_LOGIC_DELAY_LATENCY_SECONDS = PREFIX + ".calculation.logic.delay.latency";
 }

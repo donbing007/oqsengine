@@ -28,6 +28,9 @@ public class DefaultEventBusTest {
     private EventStorage eventStorage;
     private ExecutorService worker;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         eventStorage = new MemoryEventStorage();

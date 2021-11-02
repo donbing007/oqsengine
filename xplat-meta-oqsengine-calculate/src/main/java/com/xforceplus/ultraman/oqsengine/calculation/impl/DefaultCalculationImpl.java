@@ -66,7 +66,7 @@ public class DefaultCalculationImpl implements Calculation {
     final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
     @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
+        value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
         extraTags = {"logic", "all", "action", "calculate"}
     )
     @Override
@@ -94,11 +94,23 @@ public class DefaultCalculationImpl implements Calculation {
             try {
                 newValueOp = logic.calculate(context);
             } finally {
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "calculate");
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate");
             }
 
             if (newValueOp.isPresent()) {
                 targetEntity.entityValue().addValue(newValueOp.get());
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Instance {} field {} evaluates to {}.",
+                        targetEntity.id(), field.name(), newValueOp.get().getValue());
+                }
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Instance {} field {} evaluates to {}.",
+                        targetEntity.id(), field.name(), "NULL");
+                }
+
             }
         }
 
@@ -106,7 +118,7 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     @Timed(
-        value = MetricsDefine.CALCULATION_LOGIC,
+        value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
         extraTags = {"logic", "all", "action", "maintain"}
     )
     @Override
@@ -158,7 +170,7 @@ public class DefaultCalculationImpl implements Calculation {
                 long[] affectedEntityIds = logic.getMaintainTarget(context, participant,
                     parentParticipant.get().getAffectedEntities());
 
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "getTarget");
+                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget");
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
@@ -168,6 +180,15 @@ public class DefaultCalculationImpl implements Calculation {
                     context.focusField(participant.getField());
 
                     Optional<IValue> oldValueOp = affectedEntitiy.entityValue().getValue(participant.getField().id());
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Start using {} logic to compute instance {} fields {} of type {}.",
+                            logic.getClass().getSimpleName(),
+                            affectedEntitiy.id(),
+                            participant.getField().name(),
+                            participant.getEntityClass().code());
+                    }
+
                     Optional<IValue> newValueOp = logic.calculate(context);
 
                     if (newValueOp.isPresent()) {
@@ -175,6 +196,11 @@ public class DefaultCalculationImpl implements Calculation {
                         IValue oldValue =
                             oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
                         IValue newValue = newValueOp.get();
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Instance {} field {} evaluates to {}.",
+                                affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
+                        }
 
                         if (!oldValue.equals(newValue)) {
                             context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
@@ -191,6 +217,11 @@ public class DefaultCalculationImpl implements Calculation {
                             // 没有任何改变,所有受此字段影响的后续都将被忽略.
                             return InfuenceConsumer.Action.OVER_SELF;
 
+                        }
+                    } else {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Instance {} field {} evaluates to {}.",
+                                affectedEntitiy.id(), participant.getField().name(), "NULL");
                         }
                     }
                 }
@@ -340,6 +371,10 @@ public class DefaultCalculationImpl implements Calculation {
             return Collections.emptyList();
         }
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("Load instance. Identity list [{}]", Arrays.toString(ids));
+        }
+
         // 过滤掉缓存中已经存在的.
         long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();
 
@@ -463,7 +498,7 @@ public class DefaultCalculationImpl implements Calculation {
 
                         logic.scope(context, infuence);
 
-                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC, "scope");
+                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope");
                     }
 
                     if (oldSize == infuence.getSize()) {
@@ -588,7 +623,8 @@ public class DefaultCalculationImpl implements Calculation {
         sample.stop(Timer.builder(metricName)
             .tags(
                 "logic", logic.getClass().getSimpleName(),
-                "action", action
+                "action", action,
+                "exception", ""
             )
             .publishPercentileHistogram(false)
             .publishPercentiles(null)
