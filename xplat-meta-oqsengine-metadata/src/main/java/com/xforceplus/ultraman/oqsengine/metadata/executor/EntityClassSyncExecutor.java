@@ -113,13 +113,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             // step3 update new Hash in redis
-            step = save(appId, version, (List<EntityClassStorage>) step.getData(), payloads);
+            List<EntityClassStorage> data = (List<EntityClassStorage>) step.getData();
+            step = save(appId, version, data, payloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
             }
 
             //  step4 build agg event
-            step = buildAggEvent(appId, version, (List<EntityClassStorage>) step.getData(), aggPayloads);
+            step = buildAggEvent(appId, version, data, aggPayloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
             }
