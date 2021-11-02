@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.AggregationEventBuilder;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.SyncStep;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,59 +80,129 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+        int expiredVersion = -1;
+        List<Event<?>> payloads = new ArrayList<>();
+        List<Event<?>> aggPayloads = new ArrayList<>();
 
-        // step1 prepare
-        if (cacheExecutor.prepare(appId, version)) {
-            int expiredVersion = -1;
-            try {
-                List<Event<?>> payloads = new ArrayList<>();
-                List<Event<?>> aggPayloads = new ArrayList<>();
-                try {
-                    expiredVersion = version(appId);
-                } catch (Exception e) {
-                    logger.warn("query expiredVersion failed, [{}]", e.toString());
-                    return false;
+        //  初始化SyncStep
+        SyncStep step = SyncStep.failed(SyncStep.StepDefinition.UNKNOWN, "");
+        //  设置是否锁定
+        boolean openPrepare = false;
+
+        //  return false的情况代表本地没有准备好.
+        try {
+            //  准备,是否可以加锁更新，不成功直接返回失败
+            step = prepared(appId, version);
+            if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+                return false;
+            }
+            openPrepare = true;
+
+            //  查询当前版本
+            step = querySyncVersion(appId);
+            if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+                return false;
+            }
+            expiredVersion = (int) step.getData();
+
+            //  转换protobuf结构
+            step = parserProto(entityClassSyncRspProto);
+            //  同步数据失败的情况下需要抛出异常，而不是直接返回false.
+            if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+                throw new MetaSyncClientException(step.getMessage(), false);
+            }
+
+            // step3 update new Hash in redis
+            List<EntityClassStorage> data = (List<EntityClassStorage>) step.getData();
+            step = save(appId, version, data, payloads);
+            if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+                return false;
+            }
+
+            //  step4 build agg event
+            step = buildAggEvent(appId, version, data, aggPayloads);
+            if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+                return false;
+            }
+
+            step = SyncStep.ok();
+
+        } finally {
+            //  如果成功、执行publish
+            if (step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
+
+                //  set into expired clean task
+                if (expiredVersion != NOT_EXIST_VERSION) {
+                    expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
+                        new ExpireExecutor.Expired(appId, expiredVersion)));
                 }
 
-                // step2 convert to storage
-                List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
+                publish(payloads);
+                publish(aggPayloads);
+            } else {
+                payloads.clear();
+                aggPayloads.clear();
+            }
 
-                try {
-                    // step3 update new Hash in redis
-                    if (!cacheExecutor.save(appId, version, entityClassStorageList, payloads)) {
-                        throw new MetaSyncClientException(
-                            String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
-                        );
-                    }
-
-                    // step3.1 send new buildAggEvent
-                    new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorageList, aggPayloads);
-
-                    //  step4 set into expired clean task
-                    if (expiredVersion != NOT_EXIST_VERSION) {
-                        expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
-                            new ExpireExecutor.Expired(appId, expiredVersion)));
-                    }
-
-                    return true;
-                } catch (Exception e) {
-                    payloads.clear();
-                    aggPayloads.clear();
-                    logger.warn("sync-error, message[{}]", e.toString());
-                    return false;
-                } finally {
-                    publish(payloads);
-                    publish(aggPayloads);
-                }
-            } finally {
+            if (openPrepare) {
                 cacheExecutor.endPrepare(appId);
             }
-        }
-        logger.warn("sync-prepare failed, have another sync job, current [{}]-[{}] will be canceled.",
-            appId, version);
 
-        return false;
+            //  record sync logs to redis
+            cacheExecutor.addSyncLog(appId, version, step.toPersistentMessage());
+        }
+
+        return step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS);
     }
+
+    @Override
+    public void recordSyncFailed(String appId, Integer version, String message) {
+        cacheExecutor.addSyncLog(appId, version,  SyncStep.StepDefinition.SYNC_CLIENT_FAILED + ":" + message);
+    }
+
+
+    private SyncStep<Boolean> prepared(String appId, int version) {
+        return cacheExecutor.prepare(appId, version) ? SyncStep.ok(true) : SyncStep.failed(SyncStep.StepDefinition.DUPLICATE_PREPARE_FAILED,
+            String.format("sync-prepare failed, have another sync job, current [%s]-[%d] will be canceled.", appId, version));
+    }
+
+    private SyncStep<Integer> querySyncVersion(String appId) {
+        try {
+            return SyncStep.ok(version(appId));
+        } catch (Exception e) {
+            String message = String.format("query expiredVersion failed, [%s]", e.getMessage());
+            return SyncStep.failed(SyncStep.StepDefinition.QUERY_VERSION_FAILED, message);
+        }
+    }
+
+    private SyncStep<List<EntityClassStorage>> parserProto(EntityClassSyncRspProto entityClassSyncRspProto) {
+        // step2 convert to storage
+        try {
+            return SyncStep.ok(protoToStorageList(entityClassSyncRspProto));
+        } catch (Exception e) {
+            return SyncStep.failed(SyncStep.StepDefinition.PARSER_PROTO_BUF_FAILED, String.format("parser meta proto failed, [%s]", e.getMessage()));
+        }
+    }
+
+    private SyncStep<Boolean> save(String appId, int version, List<EntityClassStorage> entityClassStorages, List<Event<?>> payloads) {
+        try {
+            return cacheExecutor.save(appId, version, entityClassStorages, payloads) ? SyncStep.ok(true)
+                : SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, "storage entity class failed.");
+
+        } catch (Exception e) {
+            return SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, e.getMessage());
+        }
+    }
+
+    private SyncStep<Boolean> buildAggEvent(String appId, int version, List<EntityClassStorage> entityClassStorages, List<Event<?>> payloads) {
+        try {
+            new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorages, payloads);
+            return SyncStep.ok(true);
+        } catch (Exception e) {
+            return SyncStep.failed(SyncStep.StepDefinition.BUILD_EVENT_FAILED, String.format("build agg event failed, [%s]", e.getMessage()));
+        }
+    }
+
 
 
     /**

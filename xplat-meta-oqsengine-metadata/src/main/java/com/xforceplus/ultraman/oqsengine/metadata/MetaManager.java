@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -72,4 +75,11 @@ public interface MetaManager {
      * 产看当前appId下的信息.
      */
     Optional<MetaMetrics> showMeta(String appId) throws Exception;
+
+    /**
+     * 查询同步日志.
+     */
+    default Collection<MetaLogs> metaLogs() {
+        return new ArrayList<>();
+    }
 }

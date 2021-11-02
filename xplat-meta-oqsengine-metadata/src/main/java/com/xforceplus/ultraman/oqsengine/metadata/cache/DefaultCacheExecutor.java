@@ -48,10 +48,14 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -100,9 +104,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private int prepareExpire = 60;
 
     /*
+     * fixed固定1天
+     */
+    private int fixedDayExpire = 24 * 60 * 60;
+
+    /*
      * 默认一年过期
      */
-    private int cacheExpire = 12 * 30 * 24 * 60 * 60;
+    private int cacheExpire = 12 * 30 * fixedDayExpire;
+
+    /*
+     * 默认7天过期
+     */
+    private int logExpire = 7;
 
     /*
      * script
@@ -706,6 +720,39 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         return true;
+    }
+
+    @Override
+    public void addSyncLog(String appId, Integer version, String message) {
+        String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now()));
+        String fieldName = String.format("%s.%d.%d", appId, version, System.currentTimeMillis());
+
+        try {
+            syncCommands.expire(key, logExpire * logExpire);
+            syncCommands.hset(key, fieldName, message);
+        } catch (Exception e) {
+            //  失败时什么都不做
+            //  ignore
+        }
+    }
+
+    @Override
+    public Map<String, String> getSyncLog() {
+        Map<String, String> logs = new LinkedHashMap<>();
+        for (int i = 0; i < logExpire; i++) {
+            String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now().minusDays(i)));
+            Map<String, String> part = syncCommands.hgetall(key);
+            if (!part.isEmpty()) {
+                logs.putAll(part);
+            }
+        }
+
+        return logs;
+    }
+
+    private String toNowDateString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return formatter.format(date);
     }
 
     @Override

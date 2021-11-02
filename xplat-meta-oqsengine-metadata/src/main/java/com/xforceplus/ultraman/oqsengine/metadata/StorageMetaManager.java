@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
@@ -262,6 +263,28 @@ public class StorageMetaManager implements MetaManager {
             logger.warn("show meta error, appId {}, message : {}", appId, e.getMessage());
             throw e;
         }
+    }
+
+    @Override
+    public Collection<MetaLogs> metaLogs() {
+        Map<String, String> result = cacheExecutor.getSyncLog();
+        List<MetaLogs> metaLogs = new ArrayList<>();
+
+        if (!result.isEmpty()) {
+            result.forEach(
+                (k, v) -> {
+                    String[] keySplitter = k.split("\\.");
+                    if (keySplitter.length == 3) {
+                        metaLogs.add(
+                            new MetaLogs(keySplitter[0], Integer.parseInt(keySplitter[1]), Long.parseLong(keySplitter[2]), v)
+                        );
+                    }
+                }
+            );
+        }
+
+        return metaLogs;
+
     }
 
 

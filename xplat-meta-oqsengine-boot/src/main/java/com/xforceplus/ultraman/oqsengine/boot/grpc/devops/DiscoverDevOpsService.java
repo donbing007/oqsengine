@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -113,6 +114,20 @@ public class DiscoverDevOpsService {
             return metaManager.showMeta(appId).orElse(new MetaMetrics(-1, "", appId, new ArrayList<>()));
         } catch (Exception e) {
             exceptionHandle(String.format("showMeta exception, [%s]", appId), e);
+        }
+
+        return null;
+    }
+
+    /**
+     * 显示meta同步日志.
+     */
+    @DiscoverAction(describe = "显示meta同步日志", retClass = Collection.class, retInner = MetaLogs.class)
+    public Collection<MetaLogs> metaLogs() {
+        try {
+            return metaManager.metaLogs();
+        } catch (Exception e) {
+            exceptionHandle("metaLogs exception", e);
         }
 
         return null;
