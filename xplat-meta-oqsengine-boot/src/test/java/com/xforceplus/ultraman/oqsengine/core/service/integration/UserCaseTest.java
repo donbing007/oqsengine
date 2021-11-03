@@ -468,39 +468,46 @@ public class UserCaseTest implements ApplicationContextAware {
                 ))
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+        // 保证同步成功.可以命中索引中搜索.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L),
-                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "2")
                 ))
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
+        // 保证同步成功.可以命中索引中搜索.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 2L),
-                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "5")
                 ))
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
+        // 保证同步成功.可以命中索引中搜索.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions().addAnd(
-                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), ConditionOperator.EQUALS,
-                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0"))
-            ),
+            Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-            Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()), Page.newSinglePage(100));
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withSort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
+                .withSecondarySort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get()))
+                .withPage(Page.newSinglePage(1000)).build()
+        );
 
         Assertions.assertEquals(3, entities.size());
         Assertions.assertEquals(e0.id(), entities.stream().findFirst().get().id());
-        Assertions.assertEquals(e1.id(), entities.stream().skip(1).findFirst().get().id());
-        Assertions.assertEquals(e2.id(), entities.stream().skip(2).findFirst().get().id());
+        Assertions.assertEquals(e2.id(), entities.stream().skip(1).findFirst().get().id());
+        Assertions.assertEquals(e1.id(), entities.stream().skip(2).findFirst().get().id());
     }
 
     // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.

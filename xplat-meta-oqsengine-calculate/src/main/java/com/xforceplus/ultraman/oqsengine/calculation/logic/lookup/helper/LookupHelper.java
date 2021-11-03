@@ -137,7 +137,8 @@ public class LookupHelper {
     public static LookupLinkIterKey buildIteratorPrefixLinkKey(
         IEntityField targetField, IEntityClass lookupEntityClass, IEntityField lookupField, IEntity targetEntity) {
 
-        return buildIteratorPrefixLinkKey(targetField.id(), lookupField.id(), lookupField.id(), targetEntity.id());
+        return buildIteratorPrefixLinkKey(targetField.id(), lookupEntityClass.id(), lookupField.id(),
+            targetEntity.id());
     }
 
     public static LookupLinkIterKey buildIteratorPrefixLinkKey(
