@@ -30,10 +30,10 @@ ingress:
 resources:
   limits:
     cpu: 2000m
-    memory: 2048Mi
+    memory: 4096Mi
   requests:
-    cpu: 500m
-    memory: 1024Mi
+    cpu: 1000m
+    memory: 2048Mi
 
 nodeSelector: {}
 
@@ -49,8 +49,16 @@ annotations:
 # 推荐-Xmx大小为limit的60%.
 jvm:
   - -server
-  - -XX:+UseG1GC
-  - -Xmx1228m
+  - -Xms2457M
+  - -Xmx2457M
+  - -Xmn1024M
+  - -XX:MetaspaceSize=150M
+  - -XX:MaxMetaspaceSize=150M
+  - -XX:+UseParNewGC
+  - -XX:+UseConcMarkSweepGC
+  - -XX:+CMSScavengeBeforeRemark
+  - -XX:CMSInitiatingOccupancyFraction=75
+  - -XX:+UseCMSInitiatingOccupancyOnly
 
 jmx:
   enabled: false
