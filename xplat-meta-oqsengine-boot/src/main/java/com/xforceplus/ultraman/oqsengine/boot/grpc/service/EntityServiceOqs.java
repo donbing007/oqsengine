@@ -74,6 +74,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -833,6 +835,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    private Sort toSort(Tuple2<FieldSortUp, IEntityField> tuple2) {
+        Sort sortT = null;
+        FieldSortUp sortUp = tuple2._1();
+        if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+            sortT = Sort.buildAscSort(tuple2._2());
+        } else {
+            sortT = Sort.buildDescSort(tuple2._2());
+        }
+        return sortT;
+    }
+
     /**
      * need to return affected ids.
      */
@@ -868,8 +881,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
             try {
-                Collection<IEntity> entities = null;
-
                 //check if has sub query for more details
                 List<QueryFieldsUp> queryField = in.getQueryFieldsList();
 
@@ -880,42 +891,43 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 int pageSize = in.getPageSize();
                 page = new Page(pageNo, pageSize);
 
-                Optional<? extends IEntityField> sortField;
+                //builderCondition
+                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
+                ServiceSelectConfig.Builder serviceSelectConfigBuilder = ServiceSelectConfig.Builder.anSearchConfig();
+                //inject page
+                serviceSelectConfigBuilder.withPage(page);
 
-                if (sort == null || sort.isEmpty()) {
-                    sortField = Optional.empty();
-                } else {
-                    FieldSortUp sortUp = sort.get(0);
-                    //get related field
-                    sortField = toEntityField(entityClass, sortUp.getField());
-                }
+                //build sort
+                if (sort != null && !sort.isEmpty()) {
+                    List<Tuple2<FieldSortUp, IEntityField>> sortFieldsList = sort.stream()
+                        .map(x -> Tuple.of(x, toEntityField(entityClass, x.getField())))
+                        .filter(x -> x._2().isPresent())
+                        .map(x -> x.map2(Optional::get))
+                        .collect(Collectors.toList());
 
-                if (!sortField.isPresent()) {
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
-                    if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, page);
-                    } else {
-                        entities = entitySearchService.selectByConditions(
-                            Conditions.buildEmtpyConditions(), entityClassRef, page);
-                    }
-                } else {
-                    FieldSortUp sortUp = sort.get(0);
-                    Sort sortParam;
-                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
-                        sortParam = Sort.buildAscSort(sortField.get());
-                    } else {
-                        sortParam = Sort.buildDescSort(sortField.get());
-                    }
-
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
-                    if (consOp.isPresent()) {
-                        entities =
-                            entitySearchService.selectByConditions(consOp.get(), entityClassRef, sortParam, page);
-                    } else {
-                        entities = entitySearchService.selectByConditions(
-                            Conditions.buildEmtpyConditions(), entityClassRef, page);
+                    int size = sortFieldsList.size();
+                    if (size == 1) {
+                        Tuple2<FieldSortUp, IEntityField> tuple2 = sortFieldsList.get(0);
+                        serviceSelectConfigBuilder.withSort(toSort(tuple2));
+                    } else if (size == 2) {
+                        Tuple2<FieldSortUp, IEntityField> tuple21 = sortFieldsList.get(0);
+                        serviceSelectConfigBuilder.withSort(toSort(tuple21));
+                        Tuple2<FieldSortUp, IEntityField> tuple22 = sortFieldsList.get(1);
+                        serviceSelectConfigBuilder.withSecondarySort(toSort(tuple22));
+                    } else if (size >= 3) {
+                        Tuple2<FieldSortUp, IEntityField> tuple21 = sortFieldsList.get(0);
+                        serviceSelectConfigBuilder.withSort(toSort(tuple21));
+                        Tuple2<FieldSortUp, IEntityField> tuple22 = sortFieldsList.get(1);
+                        serviceSelectConfigBuilder.withSecondarySort(toSort(tuple22));
+                        Tuple2<FieldSortUp, IEntityField> tuple23 = sortFieldsList.get(2);
+                        serviceSelectConfigBuilder.withThridSort(toSort(tuple23));
                     }
                 }
+
+                Collection<IEntity> entities =
+                    entitySearchService
+                        .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
+                            serviceSelectConfigBuilder.build());
 
                 //----------------------------
                 AtomicInteger affected = new AtomicInteger(0);
@@ -1438,9 +1450,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 int pageSize = in.getPageSize();
                 page = new Page(pageNo, pageSize);
 
-                Optional<? extends IEntityField> sortField;
-
-
                 List<BusinessKey> businessKeys = getBusinessKeys(entityClass, in.getConditions().getFieldsList());
 
 
@@ -1451,14 +1460,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         entity.<Collection<IEntity>>map(Collections::singletonList).orElse(Collections.emptyList());
                 } else {
 
-                    if (sort == null || sort.isEmpty()) {
-                        sortField = Optional.empty();
-                    } else {
-                        FieldSortUp sortUp = sort.get(0);
-                        //get related field
-                        sortField = toEntityField(entityClass, sortUp.getField());
-                    }
-
                     Optional<Conditions> extraCondition = Optional.empty();
                     if (in.hasTree()) {
                         SelectByTree tree = in.getTree();
@@ -1467,34 +1468,48 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
 
                     Sort sortParam = Sort.buildOutOfSort();
-                    if (sortField.isPresent()) {
-                        FieldSortUp sortUp = sort.get(0);
 
-                        if (sortUp.getOrder() == FieldSortUp.Order.asc) {
-                            sortParam = Sort.buildAscSort(sortField.get());
-                        } else {
-                            sortParam = Sort.buildDescSort(sortField.get());
+                    ServiceSelectConfig.Builder serviceSelectConfigBuilder =
+                        ServiceSelectConfig.Builder.anSearchConfig();
+                    //inject page
+                    serviceSelectConfigBuilder.withPage(page);
+                    //inject extra filter
+                    serviceSelectConfigBuilder.withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions));
+
+                    //build sort
+                    if (sort != null && !sort.isEmpty()) {
+                        List<Tuple2<FieldSortUp, IEntityField>> sortFieldsList = sort.stream()
+                            .map(x -> Tuple.of(x, toEntityField(entityClass, x.getField())))
+                            .filter(x -> x._2().isPresent())
+                            .map(x -> x.map2(Optional::get))
+                            .collect(Collectors.toList());
+
+                        int size = sortFieldsList.size();
+                        if (size == 1) {
+                            Tuple2<FieldSortUp, IEntityField> tuple2 = sortFieldsList.get(0);
+                            serviceSelectConfigBuilder.withSort(toSort(tuple2));
+                        } else if (size == 2) {
+                            Tuple2<FieldSortUp, IEntityField> tuple21 = sortFieldsList.get(0);
+                            serviceSelectConfigBuilder.withSort(toSort(tuple21));
+                            Tuple2<FieldSortUp, IEntityField> tuple22 = sortFieldsList.get(1);
+                            serviceSelectConfigBuilder.withSecondarySort(toSort(tuple22));
+                        } else if (size >= 3) {
+                            Tuple2<FieldSortUp, IEntityField> tuple21 = sortFieldsList.get(0);
+                            serviceSelectConfigBuilder.withSort(toSort(tuple21));
+                            Tuple2<FieldSortUp, IEntityField> tuple22 = sortFieldsList.get(1);
+                            serviceSelectConfigBuilder.withSecondarySort(toSort(tuple22));
+                            Tuple2<FieldSortUp, IEntityField> tuple23 = sortFieldsList.get(2);
+                            serviceSelectConfigBuilder.withThridSort(toSort(tuple23));
                         }
                     }
-
-                    ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig
-                        .Builder.anSearchConfig()
-                        .withSort(sortParam)
-                        .withPage(page)
-                        .withFilter(extraCondition.orElseGet(Conditions::buildEmtpyConditions))
-                        .build();
 
                     Optional<Conditions> consOp = toConditions(
                         entityClass, in.getConditions(), in.getIdsList(), metaManager);
 
-                    if (consOp.isPresent()) {
-
-                        entities =
-                            entitySearchService.selectByConditions(consOp.get(), entityClassRef, serviceSelectConfig);
-                    } else {
-                        entities = entitySearchService.selectByConditions(
-                            Conditions.buildEmtpyConditions(), entityClassRef, serviceSelectConfig);
-                    }
+                    entities =
+                        entitySearchService
+                            .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
+                                serviceSelectConfigBuilder.build());
                 }
 
                 Collection<IEntity> retCollections = simplify(metadata, entities, in.getQueryFieldsList());
