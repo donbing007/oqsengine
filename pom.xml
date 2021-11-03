@@ -162,6 +162,7 @@
     </build>
 
     <modules>
+        <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-tokenizer</module>
@@ -171,7 +172,6 @@
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-kv</module>
         <module>xplat-meta-oqsengine-task</module>
-        <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
         <module>xplat-meta-oqsengine-calculate</module>

@@ -355,7 +355,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 1000 * 60 * 60;
+        private final long checkTimeoutMs = 5000;
 
         @Override
         public void run() {
