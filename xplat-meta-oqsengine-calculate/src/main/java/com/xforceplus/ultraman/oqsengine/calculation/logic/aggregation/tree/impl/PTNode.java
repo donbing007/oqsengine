@@ -175,4 +175,9 @@ public class PTNode {
     public PTNode() {
         nextNodes = new ArrayList<>();
     }
+
+    @Override
+    public String toString() {
+        return "PTNode{" + "rootFlag=" + rootFlag + ", level=" + level + ", version=" + version + ", entityClass=" + entityClass + ", entityField=" + entityField + ", aggEntityClass=" + aggEntityClass + ", aggEntityField=" + aggEntityField + ", conditions=" + conditions + ", relationship=" + relationship + ", nextNodes=" + nextNodes + ", preNode=" + preNode + ", aggregationType=" + aggregationType + '}';
+    }
 }

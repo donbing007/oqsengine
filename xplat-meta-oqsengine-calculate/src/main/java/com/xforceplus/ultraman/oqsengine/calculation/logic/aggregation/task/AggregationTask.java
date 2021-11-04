@@ -58,6 +58,10 @@ public class AggregationTask extends AbstractTask implements Serializable {
 
     private List<Long> relationIds;
 
+    @Override
+    public String toString() {
+        return "AggregationTask{" + "prefix='" + prefix + '\'' + ", parseTree=" + parseTree + ", relationIds=" + relationIds + '}';
+    }
 
     @Override
     public Class runnerType() {

@@ -61,6 +61,7 @@ public class AggregationTaskRunner implements TaskRunner {
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
+        logger.info(String.format("start agg init task: %s", task.toString()));
         // 执行聚合初始化，step 1: 查询被聚合  Step 2: 调用聚合函数  Step 3: 乐观锁更新
         AggregationTask aggregationTask = (AggregationTask) task;
         List<PTNode> ptNodes = aggregationTask.getParseTree().toList();
@@ -80,6 +81,7 @@ public class AggregationTaskRunner implements TaskRunner {
                     try {
                         // 获取主信息id，得到entity信息
                         OriginalEntity originalEntity = iterator.next();
+                        logger.info(String.format("start agg entity: %s", originalEntity.toString()));
                         Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), ptNode.getEntityClass());
                         if (aggMainEntity.isPresent()) {
                             if (logger.isDebugEnabled()) {
