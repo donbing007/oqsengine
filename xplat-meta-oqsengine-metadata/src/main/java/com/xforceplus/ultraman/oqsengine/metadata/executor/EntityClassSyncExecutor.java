@@ -80,7 +80,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        logger.info("================start sync==============");
         int expiredVersion = -1;
         List<Event<?>> payloads = new ArrayList<>();
         List<Event<?>> aggPayloads = new ArrayList<>();
@@ -93,7 +92,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         //  return false的情况代表本地没有准备好.
         try {
             //  准备,是否可以加锁更新，不成功直接返回失败
-            logger.info("================start prepare==============");
             step = prepared(appId, version);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
@@ -101,7 +99,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             openPrepare = true;
 
             //  查询当前版本
-            logger.info("================start querySyncVersion==============");
             step = querySyncVersion(appId);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
@@ -109,7 +106,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             expiredVersion = (int) step.getData();
 
             //  转换protobuf结构
-            logger.info("================start parserProto==============");
             step = parserProto(entityClassSyncRspProto);
             //  同步数据失败的情况下需要抛出异常，而不是直接返回false.
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
@@ -196,6 +192,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 : SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, "storage entity class failed.");
 
         } catch (Exception e) {
+            logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, e.getMessage());
         }
     }
