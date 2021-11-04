@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -32,7 +33,8 @@ public class AggregationEventBuilder {
     final Logger logger = LoggerFactory.getLogger(AggregationEventBuilder.class);
 
     @Resource
-    private StorageMetaManager storageMetaManager;
+    private MetaManager metaManager;
+
 
     /**
      * 构建聚合事件.
@@ -73,7 +75,7 @@ public class AggregationEventBuilder {
                         f.calculationType().equals(CalculationType.AGGREGATION))
                         .collect(Collectors.toList());
                 if (sf.size() > 0) {
-                    entityClasses.add(storageMetaManager.load(s.getId()).get());
+                    entityClasses.add(metaManager.load(s.getId()).get());
                     sf.forEach(ef -> {
                         Aggregation aggregation = (Aggregation) ef.config().getCalculation();
                         Optional<IEntityClass> entityClassOptional = profileByField(aggregation.getClassId(),
@@ -89,7 +91,7 @@ public class AggregationEventBuilder {
                             f.calculationType().equals(CalculationType.AGGREGATION))
                             .collect(Collectors.toList());
                     if (mf.size() > 0) {
-                        Optional<IEntityClass> entityClassOptional = storageMetaManager.load(s.getId(), entry.getKey());
+                        Optional<IEntityClass> entityClassOptional = metaManager.load(s.getId(), entry.getKey());
                         entityClasses.add(entityClassOptional.get());
                         mf.forEach(ef -> {
                             Aggregation aggregation = (Aggregation) ef.config().getCalculation();
@@ -123,11 +125,11 @@ public class AggregationEventBuilder {
                         List<EntityField> mf = entry.getValue().getEntityFieldList().stream().filter(f -> f.id() == fieldId)
                                 .collect(Collectors.toList());
                         if (mf.size() == 1) {
-                            return storageMetaManager.load(entityClassId, entry.getKey());
+                            return metaManager.load(entityClassId, entry.getKey());
                         }
                     }
                 }
-                return storageMetaManager.load(entityClassId);
+                return metaManager.load(entityClassId);
             }
         }
         return Optional.empty();

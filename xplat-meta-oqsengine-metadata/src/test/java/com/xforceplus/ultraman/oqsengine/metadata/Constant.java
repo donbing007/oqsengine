@@ -12,11 +12,11 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 public class Constant {
     public static final String LOCAL_HOST = "localhost";
     public static final int LOCAL_PORT = 8081;
-    public static final String REMOTE_HOST = "120.55.249.44";
-    public static final int REMOTE_PORT = 23111;
+    public static final String REMOTE_HOST = "172.25.11.62";
+    public static final int REMOTE_PORT = 8081;
 
     public static final boolean IF_TEST_LOCAL = false;
-    public static final boolean IF_TEST_REMOTE = false;
+    public static final boolean IF_TEST_REMOTE = true;
 
     //  local test use
     public static volatile boolean IS_SERVER_OK = false;
@@ -36,7 +36,7 @@ public class Constant {
         return grpcParamsConfig;
     }
 
-    public static final String TEST_APP_ID = "1421998962514796545";
+    public static final String TEST_APP_ID = "1439054602486120449";
     public static final String TEST_ENV = "0";
     public static final int TEST_START_VERSION = 0;
     public static final long TEST_ENTITY_CLASS_ID = 1434714478818562049L;
