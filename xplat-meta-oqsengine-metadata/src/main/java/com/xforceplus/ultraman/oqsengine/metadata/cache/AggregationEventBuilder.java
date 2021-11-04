@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -18,8 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * 聚合字段初始化字段任务.
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class AggregationEventBuilder {
     final Logger logger = LoggerFactory.getLogger(AggregationEventBuilder.class);
 
+    @Resource
     private StorageMetaManager storageMetaManager;
 
     /**
@@ -59,12 +61,6 @@ public class AggregationEventBuilder {
      * @param storageList 集合.
      */
     private List<IEntityClass> getAggEntityClass(List<EntityClassStorage> storageList) {
-        try {
-            storageMetaManager = (StorageMetaManager) MetaInitialization.getInstance().getMetaManager();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        storageMetaManager.init();
         List<IEntityClass> entityClasses = new ArrayList<>();
         if (storageList != null && storageList.size() > 0) {
             List<EntityField> entityFields = new ArrayList<>();
@@ -116,12 +112,6 @@ public class AggregationEventBuilder {
      * @param storageList 元数据.
      */
     private Optional<IEntityClass> profileByField(long entityClassId, long fieldId, List<EntityClassStorage> storageList) {
-        try {
-            storageMetaManager = (StorageMetaManager) MetaInitialization.getInstance().getMetaManager();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        storageMetaManager.init();
         if (storageList != null && storageList.size() > 0) {
             List<EntityClassStorage> entityClassStorages = storageList.stream().filter(s -> s.getId() == entityClassId)
                     .collect(Collectors.toList());
