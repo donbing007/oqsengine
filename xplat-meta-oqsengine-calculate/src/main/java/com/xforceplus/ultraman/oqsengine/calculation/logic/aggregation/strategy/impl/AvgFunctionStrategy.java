@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -29,8 +31,12 @@ import java.util.Optional;
  */
 public class AvgFunctionStrategy implements FunctionStrategy {
 
+    final Logger logger = LoggerFactory.getLogger(AvgFunctionStrategy.class);
+
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+        logger.info("begin excuteAvg agg:{}, o-value:{}, n-value:{}",
+                agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         Optional<IValue> aggValue = context.getFocusEntity().entityValue().getValue(context.getFocusField().id());
@@ -76,6 +82,8 @@ public class AvgFunctionStrategy implements FunctionStrategy {
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
+                logger.info("avg count relationId:{}, relationValue:{}",
+                        entityField.get().id(), context.getFocusEntity().id());
                 conditions.addAnd(new Condition(entityField.get(),
                         ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
             }

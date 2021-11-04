@@ -34,6 +34,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -50,6 +52,8 @@ import java.util.stream.Collectors;
  */
 public class AggregationCalculationLogic implements CalculationLogic {
 
+    final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogic.class);
+
     public static final int ONE = 1;
     public static final int ZERO = 0;
 
@@ -58,7 +62,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
         //目标实例
         IEntity entity = context.getFocusEntity();
-        IEntity sourceEntity = context.getSourceEntity();
+        logger.info("begin aggregation entity:{}, field:{}", context.getFocusClass().name(), context.getFocusField().name());
         //焦点字段
         IEntityField aggField = context.getFocusField();
         //聚合字段的值

@@ -20,6 +20,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.SQLException;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -33,8 +36,13 @@ import java.util.Optional;
  * @since 1.8
  */
 public class MaxFunctionStrategy implements FunctionStrategy {
+
+    final Logger logger = LoggerFactory.getLogger(MaxFunctionStrategy.class);
+
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+        logger.info("begin excuteMax agg:{}, o-value:{}, n-value:{}",
+                agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
@@ -129,6 +137,8 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
+                logger.info("max count relationId:{}, relationValue:{}",
+                        entityField.get().id(), context.getFocusEntity().id());
                 conditions.addAnd(new Condition(entityField.get(),
                         ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
             }
