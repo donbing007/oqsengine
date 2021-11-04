@@ -45,11 +45,11 @@ public class AggregationEventBuilder {
         if (storageList != null && storageList.size() > 0) {
             List<IEntityClass> entityClasses = this.getAggEntityClass(storageList);
 
-            logger.info(String.format("%s aggEntityClass info is: %s", appId + "-" + version, entityClasses.toString()));
+            logger.info(String.format("=============== %s aggEntityClass info is: %s", appId + "-" + version, entityClasses.toString()));
             ActualEvent event = new ActualEvent<>(EventType.AGGREGATION_TREE_UPGRADE,
                     new AggregationTreePayload(appId, version, entityClasses));
             payLoads.add(event);
-            logger.info(String.format("add %s event success", appId + "-" + version));
+            logger.info(String.format("=============== add %s event success", appId + "-" + version));
         }
     }
 

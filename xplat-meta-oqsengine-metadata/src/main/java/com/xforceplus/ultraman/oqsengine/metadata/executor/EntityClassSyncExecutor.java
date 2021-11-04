@@ -121,7 +121,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             //  step4 build agg event
-            logger.info(String.format("start buildAggEvent : %s"), appId + "-" + version);
+            logger.info(String.format("=================start buildAggEvent : %s", appId + "-" + version));
             step = buildAggEvent(appId, version, data, aggPayloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
@@ -199,11 +199,11 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
     private SyncStep<Boolean> buildAggEvent(String appId, int version, List<EntityClassStorage> entityClassStorages, List<Event<?>> payloads) {
         try {
-            logger.info(String.format("start buildAggEvent : %s, List<EntityClassStorage> is : %s "), appId + "-" + version, entityClassStorages.toString());
+            logger.info(String.format("==========start buildAggEvent : %s, List<EntityClassStorage> is : %s ", appId + "-" + version, entityClassStorages.toString()));
             new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorages, payloads);
             return SyncStep.ok(true);
         } catch (Exception e) {
-            logger.error(String.format("failed buildAggEvent : %s, List<EntityClassStorage> is : %s "), appId + "-" + version, entityClassStorages.toString());
+            logger.error(String.format("============failed buildAggEvent : %s, List<EntityClassStorage> is : %s ", appId + "-" + version, entityClassStorages.toString()));
             logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.BUILD_EVENT_FAILED, String.format("build agg event failed, [%s]", e.getMessage()));
         }
