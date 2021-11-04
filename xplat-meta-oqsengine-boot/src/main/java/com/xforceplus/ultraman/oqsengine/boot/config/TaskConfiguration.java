@@ -65,7 +65,7 @@ public class TaskConfiguration {
      */
     @Bean("aggregationTaskCoordinator")
     @DependsOn("keyValueStorage")
-    public TaskCoordinator aggregationTaskCoordinator(
+    public AggregationTaskCoordinator aggregationTaskCoordinator(
             @Value("${task.worker.number:3}") int number,
             ExecutorService taskThreadPool,
             List<TaskRunner> taskRunners) {

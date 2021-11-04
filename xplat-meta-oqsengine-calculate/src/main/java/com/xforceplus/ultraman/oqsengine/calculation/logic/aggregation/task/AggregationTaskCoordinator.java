@@ -213,6 +213,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @return 是否成功.
      */
     public boolean addInitAppInfo(String prefix, List<ParseTree> list) {
+        if (list.isEmpty() || list == null) {
+            logger.warn(String.format("not support empty task: appVersion is : %s", prefix));
+            return false;
+        }
         try {
             logger.info(String.format("============================try add %s task to queue, aggTask is : %s ", prefix, list.toString()));
             // 判断是否已有节点添加任务
