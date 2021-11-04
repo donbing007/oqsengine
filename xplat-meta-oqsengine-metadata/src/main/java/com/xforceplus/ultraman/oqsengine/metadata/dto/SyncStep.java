@@ -58,7 +58,7 @@ public class SyncStep<T> {
     public static <T> SyncStep<T> ok(T data) {
         SyncStep step = ok();
         step.data = data;
-
+        step.stepDefinition = StepDefinition.SUCCESS;
         return step;
     }
 
