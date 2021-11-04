@@ -94,10 +94,14 @@ public class AvgFunction implements AggregationFunction {
      * @param agg 聚合值.
      * @param o 老值.
      * @param n 新值.
-     * @param count 分子值-总数查询count出的结果.
+     * @param ocount 分子值-总数查询老count出的结果.
+     * @param ncount 分子值-总数查询新count出的结果.
      * @return 返回计算值.
      */
-    public Optional<IValue> excuteAvg(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, int count) {
+    public Optional<IValue> excuteAvg(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, long ocount, long ncount) {
+        if (ncount == 0) {
+            return Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
+        }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             if (o.get() instanceof EmptyTypedValue) {
@@ -107,10 +111,10 @@ public class AvgFunction implements AggregationFunction {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
             }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
-                    .multiply(new BigDecimal(count), MathContext.DECIMAL64)
+                    .multiply(new BigDecimal(ocount), MathContext.DECIMAL64)
                     .add(((DecimalValue) n.get()).getValue())
                     .subtract(((DecimalValue) o.get()).getValue())
-                    .divide(new BigDecimal(count), MathContext.DECIMAL64);
+                    .divide(new BigDecimal(ncount), MathContext.DECIMAL64);
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
@@ -120,7 +124,7 @@ public class AvgFunction implements AggregationFunction {
             if (n.get() instanceof EmptyTypedValue) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
-            Long temp = (agg.get().valueToLong() * count + n.get().valueToLong() - o.get().valueToLong()) / count;
+            Long temp = (agg.get().valueToLong() * (ocount) + n.get().valueToLong() - o.get().valueToLong()) / ncount;
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         }

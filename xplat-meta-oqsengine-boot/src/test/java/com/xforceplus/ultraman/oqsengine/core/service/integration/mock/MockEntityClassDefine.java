@@ -93,6 +93,10 @@ public class MockEntityClassDefine {
     private static long userOrderTotalPriceSumFieldId = baseFieldId - 17;
     // 用户订单平均消费金额字段标识.
     private static long userOrderAvgPriceAvgFieldId = baseFieldId - 18;
+    // 用户订单最大消费金额字段标识.
+    private static long userOrderAvgPriceMaxFieldId = baseFieldId - 181;
+    // 用户订单最小消费金额字段标识.
+    private static long userOrderAvgPriceMinFieldId = baseFieldId - 182;
     // 用户订单关联字段标识.
     private static long orderUserForeignFieldId = baseFieldId - 19;
     // 订单编号字段标识.
@@ -481,6 +485,46 @@ public class MockEntityClassDefine {
                             ).build()
                     ).build()
             )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderAvgPriceMaxFieldId)
+                    .withName("最大消费金额max")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                     .withAggregationType(AggregationType.MAX)
+                                     .withConditions(Conditions.buildEmtpyConditions())
+                                     .withClassId(orderClassId)
+                                     .withFieldId(orderTotalPriceSumFieldId)
+                                     .withRelationId(orderUserForeignField.id()).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderAvgPriceMinFieldId)
+                    .withName("最小消费金额min")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                         FieldConfig.Builder.anFieldConfig()
+                              .withLen(19)
+                              .withPrecision(6)
+                              .withSearchable(true)
+                              .withCalculation(
+                                   Aggregation.Builder.anAggregation()
+                                        .withAggregationType(AggregationType.MIN)
+                                        .withConditions(Conditions.buildEmtpyConditions())
+                                        .withClassId(orderClassId)
+                                        .withFieldId(orderTotalPriceSumFieldId)
+                                        .withRelationId(orderUserForeignField.id()).build()
+                              ).build()
+                    ).build()
+                )
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
