@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 聚合字段初始化字段任务.
@@ -25,6 +27,7 @@ import javax.annotation.Resource;
  * @date: 2021/8/31 16:24
  */
 public class AggregationEventBuilder {
+    final Logger logger = LoggerFactory.getLogger(AggregationEventBuilder.class);
 
     @Resource
     private MetaManager metaManager;
@@ -42,9 +45,11 @@ public class AggregationEventBuilder {
         if (storageList != null && storageList.size() > 0) {
             List<IEntityClass> entityClasses = this.getAggEntityClass(storageList);
 
+            logger.info(String.format("%s aggEntityClass info is: %s", appId + "-" + version, entityClasses.toString()));
             ActualEvent event = new ActualEvent<>(EventType.AGGREGATION_TREE_UPGRADE,
                     new AggregationTreePayload(appId, version, entityClasses));
             payLoads.add(event);
+            logger.info(String.format("add %s event success", appId + "-" + version));
         }
     }
 
