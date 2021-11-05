@@ -74,6 +74,7 @@ public class EntitySearchServiceImplTest {
         masterStorage = mock(MasterStorage.class);
         indexStorage = mock(IndexStorage.class);
         combinedSelectStorage = new CombinedSelectStorage(masterStorage, indexStorage);
+        combinedSelectStorage.setCommitIdStatusService(commitIdStatusService);
 
         impl = new EntitySearchServiceImpl();
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);

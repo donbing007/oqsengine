@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +44,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     private ConditionsSelectStorage syncedStorage;
 
-    @Resource
     private TransactionManager transactionManager;
 
-    @Resource
     private CommitIdStatusService commitIdStatusService;
 
     private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
@@ -90,6 +87,15 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
             return comparator;
         };
+    }
+
+    public void setTransactionManager(
+        TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
+    }
+
+    public void setCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
     }
 
     /**
@@ -281,23 +287,22 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             return config.getCommitId();
         }
 
-        if (commitIdStatusService == null || transactionManager == null) {
-            return 0;
-        }
-        // 获取提交号.
-        Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-        long minUnSyncCommitId;
-        if (!minUnSyncCommitIdOp.isPresent()) {
-            minUnSyncCommitId = 0;
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
-            }
-        } else {
-            minUnSyncCommitId = minUnSyncCommitIdOp.get();
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
-                    minUnSyncCommitId);
+        long minUnSyncCommitId = 0;
+        if (commitIdStatusService != null) {
+            // 获取提交号.
+            Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
+            if (!minUnSyncCommitIdOp.isPresent()) {
+                minUnSyncCommitId = 0;
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Unable to fetch the commit number, use the default commit number 0.");
+                }
+            } else {
+                minUnSyncCommitId = minUnSyncCommitIdOp.get();
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The minimum commit number {} that is currently uncommitted was successfully obtained.",
+                        minUnSyncCommitId);
+                }
             }
         }
 
