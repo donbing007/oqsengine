@@ -131,6 +131,10 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 }
             }
         }
+        if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+            // 如果不是删除最大的数据，无需额外判断，直接返回当前聚合值
+            return agg;
+        }
         return function.excute(agg, o, n);
     }
 

@@ -138,6 +138,10 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 }
             }
         }
+        if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+            // 如果不是删除最小的数据，无需额外判断，直接返回当前聚合值
+            return agg;
+        }
         logger.info("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
                 agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
         return function.excute(agg, o, n);
