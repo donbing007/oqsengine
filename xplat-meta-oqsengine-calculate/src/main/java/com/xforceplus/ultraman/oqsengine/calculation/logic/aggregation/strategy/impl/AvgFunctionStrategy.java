@@ -79,7 +79,6 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         long count = 0;
         if (aggEntityClass.isPresent()) {
             Conditions conditions = Conditions.buildEmtpyConditions();
-            conditions.addAnd(aggregation.getConditions(), false);
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
