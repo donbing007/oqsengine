@@ -71,7 +71,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     // 删除最小值，需要重新查找最小值-将最小值返回
                     Optional<IValue> minValue = null;
                     try {
-                        minValue = minAggregationEntity(aggregation, context);
+                        minValue = minAggregationEntity(aggregation, context, CalculationScenarios.DELETE);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -90,7 +90,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         // 如果新数据大于老数据，则需要在数据库中进行一次检索，查出最小数据，用该数据和新值进行比对，然后进行替换
                         Optional<IValue> minValue = null;
                         try {
-                            minValue = minAggregationEntity(aggregation, context);
+                            minValue = minAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
@@ -118,7 +118,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     // 如果新数据大于老数据，则需要在数据库中进行一次检索，查出最小数据，用该数据和新值进行比对，然后进行替换
                     Optional<IValue> minValue = null;
                     try {
-                        minValue = minAggregationEntity(aggregation, context);
+                        minValue = minAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -189,7 +189,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
      * @param context     上下文信息.
      * @return 统计数字.
      */
-    private Optional<IValue> minAggregationEntity(Aggregation aggregation, CalculationContext context) throws SQLException {
+    private Optional<IValue> minAggregationEntity(Aggregation aggregation, CalculationContext context,
+                                                  CalculationScenarios calculationScenarios) throws SQLException {
         // 得到最大值
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
@@ -222,7 +223,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     }
                     return Optional.empty();
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
+                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    if (entity.isPresent()) {
+                        return entity.get().entityValue().getValue(aggregation.getFieldId());
+                    }
+                }
+                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
                 logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
