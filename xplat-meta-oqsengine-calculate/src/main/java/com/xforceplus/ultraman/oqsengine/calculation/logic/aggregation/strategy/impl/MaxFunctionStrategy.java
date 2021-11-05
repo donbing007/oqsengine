@@ -197,7 +197,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             List<EntityRef> entityRefs = (List<EntityRef>) context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
-                            .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
+                            .withSort(Sort.buildDescSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
             );
             if (!entityRefs.isEmpty()) {
