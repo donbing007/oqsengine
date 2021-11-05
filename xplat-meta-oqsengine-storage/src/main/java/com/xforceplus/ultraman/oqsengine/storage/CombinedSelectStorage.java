@@ -10,16 +10,23 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +44,12 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     private ConditionsSelectStorage unSyncStorage;
 
     private ConditionsSelectStorage syncedStorage;
+
+    @Resource
+    private TransactionManager transactionManager;
+
+    @Resource
+    private CommitIdStatusService commitIdStatusService;
 
     private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
 
@@ -93,7 +106,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         throws SQLException {
         Collection<EntityRef> masterRefs = Collections.emptyList();
 
-        long commitId = config.getCommitId();
+        long commitId = checkCommitId(config);
         Sort sort = config.getSort();
         Sort secondSort = config.getSecondarySort();
         Sort thirdSort = config.getThirdSort();
@@ -261,5 +274,54 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         if (ref.getSortValue(sortIndex).isPresent()) {
             ref.setSortValue(sortIndex, finalValue);
         }
+    }
+
+    private long checkCommitId(SelectConfig config) {
+        if (config.getCommitId() > 0) {
+            return config.getCommitId();
+        }
+
+        if (commitIdStatusService == null || transactionManager == null) {
+            return 0;
+        }
+        // 获取提交号.
+        Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
+        long minUnSyncCommitId;
+        if (!minUnSyncCommitIdOp.isPresent()) {
+            minUnSyncCommitId = 0;
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
+            }
+        } else {
+            minUnSyncCommitId = minUnSyncCommitIdOp.get();
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
+                    minUnSyncCommitId);
+            }
+        }
+
+        /*
+         * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
+         * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询.
+         * 1.在事务中并且未提交.
+         * 2.之前有过写入动作.
+         */
+        if (transactionManager != null && minUnSyncCommitId <= 0) {
+            Optional<Transaction> currentTransaction = transactionManager.getCurrent();
+            if (currentTransaction.isPresent()) {
+                Transaction transaction = currentTransaction.get();
+                TransactionAccumulator accumulator = transaction.getAccumulator();
+                // 没有写和的操作序号值.
+                final int noWriteOpSize = 0;
+                if (accumulator.getBuildNumbers()
+                    + accumulator.getReplaceNumbers()
+                    + accumulator.getDeleteNumbers() > noWriteOpSize) {
+                    minUnSyncCommitId = CommitHelper.getUncommitId();
+                }
+            }
+        }
+
+        return minUnSyncCommitId;
     }
 }
