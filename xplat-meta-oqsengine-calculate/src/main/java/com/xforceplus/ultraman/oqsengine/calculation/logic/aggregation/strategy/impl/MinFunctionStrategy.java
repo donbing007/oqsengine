@@ -175,7 +175,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
+            Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
