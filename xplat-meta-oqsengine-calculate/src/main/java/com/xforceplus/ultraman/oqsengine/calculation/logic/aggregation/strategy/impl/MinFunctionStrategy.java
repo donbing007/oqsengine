@@ -79,6 +79,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                         agg.get().setStringValue(minValue.get().valueToString());
                         return agg;
+                    } else {
+                        agg.get().setStringValue("0");
+                        return agg;
                     }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断

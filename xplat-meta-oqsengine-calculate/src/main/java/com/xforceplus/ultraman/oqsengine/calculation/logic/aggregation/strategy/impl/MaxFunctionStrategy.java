@@ -74,6 +74,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
                         agg.get().setStringValue(maxValue.get().valueToString());
                         return agg;
+                    } else {
+                        agg.get().setStringValue("0");
+                        return agg;
                     }
                 } else {
                     // 如果新数据小于老数据，则需要在数据库中进行一次检索，查出最大数据，用该数据和新值进行比对，然后进行替换
