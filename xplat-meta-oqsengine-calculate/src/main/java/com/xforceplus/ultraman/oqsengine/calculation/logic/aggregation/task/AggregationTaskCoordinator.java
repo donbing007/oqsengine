@@ -223,7 +223,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             return false;
         }
         try {
-            logger.info(String.format("============================try add %s task to queue, aggTask is : %s ", prefix, list.toString()));
+            logger.info(String.format("============================try add %s task to queue, aggTask size is : %s ", prefix, list.size()));
             // 判断是否已有节点添加任务
             if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
