@@ -133,7 +133,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         long count = 0;
         if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
+            Conditions conditions = Conditions.buildEmtpyConditions();
+            conditions.addAnd(aggregation.getConditions(), false);
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
@@ -144,6 +145,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
             }
             Page emptyPage = Page.emptyPage();
             try {
+                logger.info("min count conditions:{}", conditions.toString());
                 context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
                         SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
             } catch (SQLException e) {
