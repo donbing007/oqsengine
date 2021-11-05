@@ -192,11 +192,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                             .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
             );
+            logger.info("minAggregationEntity:entityRefs:{}", entityRefs.size());
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
                     return Optional.empty();
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                logger.info("minAggregationEntity:entityRefs:{}", entity.get().toString());
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }
