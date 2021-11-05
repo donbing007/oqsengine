@@ -244,7 +244,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
-        logger.info(String.format("===========================add %s task to queue success, aggTask is : %s ", prefix, list.toString()));
+        logger.info(String.format("===========================add %s task to queue success, aggTask size is : %s ", prefix, list.size()));
 
         // 添加当前队列任务之后，关闭队列线程池
         TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);

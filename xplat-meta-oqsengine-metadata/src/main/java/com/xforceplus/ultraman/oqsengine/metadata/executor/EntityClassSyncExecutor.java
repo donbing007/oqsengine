@@ -116,7 +116,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             // step3 update new Hash in redis
-            logger.info("================start  update new Hash in redis==============");
             List<EntityClassStorage> data = (List<EntityClassStorage>) step.getData();
             step = save(appId, version, data, payloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
