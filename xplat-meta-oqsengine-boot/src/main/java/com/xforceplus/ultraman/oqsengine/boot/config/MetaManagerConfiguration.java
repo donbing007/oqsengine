@@ -113,6 +113,12 @@ public class MetaManagerConfiguration {
         return new ExpireExecutor();
     }
 
+
+    @Bean
+    public AggregationEventBuilder aggregationEventBuilder() {
+        return new AggregationEventBuilder();
+    }
+
     @Bean("entityClassFormatHandler")
     public EntityClassFormatHandler entityClassFormatHandler() {
         return new DefaultEntityClassFormatHandler();
