@@ -67,6 +67,19 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
                             agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
                     return function.excute(agg, o, n);
+                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                    // 删除最小值，需要重新查找最小值-将最小值返回
+                    Optional<IValue> minValue = null;
+                    try {
+                        minValue = minAggregationEntity(aggregation, context);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    if (minValue.isPresent()) {
+                        logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                        agg.get().setStringValue(minValue.get().valueToString());
+                        return agg;
+                    }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
                     if (checkMaxValue(o.get(), n.get())) {
