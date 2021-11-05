@@ -41,6 +41,8 @@ public class Global {
 
             containerSize--;
 
+            container.close();
+
             releaseNetwork();
 
             return false;

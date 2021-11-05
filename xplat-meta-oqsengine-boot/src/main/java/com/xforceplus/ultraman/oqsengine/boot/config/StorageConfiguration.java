@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDec
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -83,8 +84,9 @@ public class StorageConfiguration {
      * 联合查询策略储存实现.
      */
     @Bean
-    public CombinedSelectStorage combinedSelectStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
-        return new CombinedSelectStorage(masterStorage, indexStorage);
+    public CombinedSelectStorage combinedSelectStorage(
+        MasterStorage masterStorage, IndexStorage indexStorage, TransactionManager transactionManager) {
+        return new CombinedSelectStorage(masterStorage, indexStorage, transactionManager);
     }
 
     /**
