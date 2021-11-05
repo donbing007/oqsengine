@@ -5,10 +5,12 @@ import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Resource;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -40,6 +42,8 @@ public class MockMetaManagerHolder {
             Collection<Field> cacheFields = ReflectionUtils.printAllMembers(metaManager);
             ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,
                 MetaInitialization.getInstance().getCacheExecutor());
+            ReflectionUtils.reflectionFieldValue(cacheFields, "entityClassFormatHandler", metaManager,
+                MetaInitialization.getInstance().getEntityClassFormatHandler());
             ReflectionUtils.reflectionFieldValue(cacheFields, "requestHandler", metaManager, requestHandler);
             ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
                 MetaInitialization.getInstance().getEntityClassSyncExecutor());

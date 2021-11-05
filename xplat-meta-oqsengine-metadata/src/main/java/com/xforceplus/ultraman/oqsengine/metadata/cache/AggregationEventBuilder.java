@@ -4,10 +4,9 @@ import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AggregationTreePayload;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -31,8 +30,8 @@ import org.slf4j.LoggerFactory;
 public class AggregationEventBuilder {
     final Logger logger = LoggerFactory.getLogger(AggregationEventBuilder.class);
 
-    @Resource
-    private MetaManager metaManager;
+    @Resource(name = "entityClassFormatHandler")
+    private EntityClassFormatHandler entityClassFormatHandler;
 
 
     /**
@@ -74,7 +73,7 @@ public class AggregationEventBuilder {
                         f.calculationType().equals(CalculationType.AGGREGATION))
                         .collect(Collectors.toList());
                 if (sf.size() > 0) {
-                    entityClasses.add(metaManager.load(s.getId()).get());
+                    entityClasses.add(entityClassFormatHandler.classLoad(s.getId(), null).get());
                     sf.forEach(ef -> {
                         Aggregation aggregation = (Aggregation) ef.config().getCalculation();
                         Optional<IEntityClass> entityClassOptional = profileByField(aggregation.getClassId(),
@@ -90,7 +89,7 @@ public class AggregationEventBuilder {
                             f.calculationType().equals(CalculationType.AGGREGATION))
                             .collect(Collectors.toList());
                     if (mf.size() > 0) {
-                        Optional<IEntityClass> entityClassOptional = metaManager.load(s.getId(), entry.getKey());
+                        Optional<IEntityClass> entityClassOptional = entityClassFormatHandler.classLoad(s.getId(), entry.getKey());
                         entityClasses.add(entityClassOptional.get());
                         mf.forEach(ef -> {
                             Aggregation aggregation = (Aggregation) ef.config().getCalculation();
@@ -124,11 +123,11 @@ public class AggregationEventBuilder {
                         List<EntityField> mf = entry.getValue().getEntityFieldList().stream().filter(f -> f.id() == fieldId)
                                 .collect(Collectors.toList());
                         if (mf.size() == 1) {
-                            return metaManager.load(entityClassId, entry.getKey());
+                            return entityClassFormatHandler.classLoad(entityClassId, entry.getKey());
                         }
                     }
                 }
-                return metaManager.load(entityClassId);
+                return entityClassFormatHandler.classLoad(entityClassId, null);
             }
         }
         return Optional.empty();

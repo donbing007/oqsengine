@@ -48,9 +48,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
         long count;
         if (agg.get().valueToLong() == 0 || agg.get().valueToString().equals("0.0")) {
             count = countAggregationEntity(aggregation, context);
+            logger.info("minExcute Count:{}, agg-value:{}, n-value:{}", count,
+                    agg.get().valueToString(), n.get().valueToString());
             if ((context.getScenariso()).equals(CalculationScenarios.BUILD)) {
                 if (count == 1) {
                     agg.get().setStringValue(n.get().valueToString());
+                    logger.info("第一条数据计算 - return agg-value:{}, n-value:{}",
+                            agg.get().valueToString(), n.get().valueToString());
                     return agg;
                 }
             }
@@ -59,6 +63,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
         if (agg.get().valueToString().equals(o.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                    logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
+                            agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
                     return function.excute(agg, o, n);
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
@@ -117,6 +123,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 }
             }
         }
+        logger.info("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
+                agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
         return function.excute(agg, o, n);
     }
 
@@ -134,7 +142,6 @@ public class MinFunctionStrategy implements FunctionStrategy {
         long count = 0;
         if (aggEntityClass.isPresent()) {
             Conditions conditions = Conditions.buildEmtpyConditions();
-            conditions.addAnd(aggregation.getConditions(), false);
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
