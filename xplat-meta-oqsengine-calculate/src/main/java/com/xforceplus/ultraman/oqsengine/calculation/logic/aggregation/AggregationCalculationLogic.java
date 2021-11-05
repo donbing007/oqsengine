@@ -34,14 +34,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 聚合字段计算.
@@ -62,7 +62,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
         //目标实例
         IEntity entity = context.getFocusEntity();
-        logger.info("begin aggregation entity:{}, field:{}", context.getFocusClass().name(), context.getFocusField().name());
+        logger.info("begin aggregation entity:{}, field:{}",
+                context.getFocusClass().name(), context.getFocusField().name());
         //焦点字段
         IEntityField aggField = context.getFocusField();
         //聚合字段的值

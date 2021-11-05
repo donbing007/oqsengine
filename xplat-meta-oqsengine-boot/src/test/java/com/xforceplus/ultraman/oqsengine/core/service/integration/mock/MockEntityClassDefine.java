@@ -528,7 +528,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderUserForeignField.id())
+                        .withId(orderUserForeignField.id() + 100)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(userClassId)
@@ -646,7 +646,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemForeignField.id())
+                        .withId(orderOrderItemForeignField.id() + 100)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withLeftEntityClassId(orderClassId)
@@ -664,7 +664,7 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
                         .withEntityField(orderUserForeignField).build(),
                     Relationship.Builder.anRelationship()
-                        .withId(orderUserForeignField.id())
+                        .withId(orderUserForeignField.id() + 200)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(orderClassId)
@@ -733,7 +733,7 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemForeignField.id())
+                        .withId(orderOrderItemForeignField.id() + 200)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(orderItemClassId)
