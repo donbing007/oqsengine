@@ -201,6 +201,13 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             );
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
+                    if (entityRefs.size() == 1) {
+                        // 只剩下一条数据
+                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        if (entity.isPresent()) {
+                            return entity.get().entityValue().getValue(aggregation.getFieldId());
+                        }
+                    }
                     return Optional.empty();
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());

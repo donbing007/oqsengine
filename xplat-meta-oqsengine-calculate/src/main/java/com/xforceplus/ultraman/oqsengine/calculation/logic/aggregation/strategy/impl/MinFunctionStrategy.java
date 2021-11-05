@@ -212,6 +212,14 @@ public class MinFunctionStrategy implements FunctionStrategy {
             logger.info("minAggregationEntity:entityRefs:{}", entityRefs.size());
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
+                    if (entityRefs.size() == 1) {
+                        // 只剩下一条数据
+                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
+                        if (entity.isPresent()) {
+                            return entity.get().entityValue().getValue(aggregation.getFieldId());
+                        }
+                    }
                     return Optional.empty();
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
