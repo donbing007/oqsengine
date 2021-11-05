@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -201,6 +202,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
      * @return 旧值大返回true，旧值小返回false.
      */
     private boolean checkMaxValue(IValue o, IValue n) {
+        if (o instanceof EmptyTypedValue) {
+            return false;
+        }
+        if (n instanceof EmptyTypedValue) {
+            return true;
+        }
         if (o instanceof DecimalValue) {
             double temp = Math.max(((DecimalValue) o).getValue().doubleValue(), ((DecimalValue) n).getValue().doubleValue());
             return Double.compare(temp, ((DecimalValue) o).getValue().doubleValue()) == 0 ? true : false;
