@@ -72,6 +72,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                             e.printStackTrace();
                         }
                         if (maxValue.isPresent()) {
+                            logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
                             if (checkMaxValue(maxValue.get(), n.get())) {
                                 agg.get().setStringValue(maxValue.get().valueToString());
                                 return agg;

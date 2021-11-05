@@ -78,11 +78,11 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         Optional<IValue> minValue = null;
                         try {
                             minValue = minAggregationEntity(aggregation, context);
-                            logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                         if (minValue.isPresent()) {
+                            logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                             if (checkMaxValue(minValue.get(), n.get())) {
                                 // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
                                 agg.get().setStringValue(n.get().valueToString());
