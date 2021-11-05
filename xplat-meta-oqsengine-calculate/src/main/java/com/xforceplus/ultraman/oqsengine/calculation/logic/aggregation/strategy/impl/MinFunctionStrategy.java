@@ -67,6 +67,19 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
                             agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
                     return function.excute(agg, o, n);
+                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                    // 删除最小值，需要重新查找最小值-将最小值返回
+                    Optional<IValue> minValue = null;
+                    try {
+                        minValue = minAggregationEntity(aggregation, context);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    if (minValue.isPresent()) {
+                        logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                        agg.get().setStringValue(minValue.get().valueToString());
+                        return agg;
+                    }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
                     if (checkMaxValue(o.get(), n.get())) {
@@ -78,11 +91,11 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         Optional<IValue> minValue = null;
                         try {
                             minValue = minAggregationEntity(aggregation, context);
-                            logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                         if (minValue.isPresent()) {
+                            logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                             if (checkMaxValue(minValue.get(), n.get())) {
                                 // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
                                 agg.get().setStringValue(n.get().valueToString());
@@ -189,7 +202,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
             List<EntityRef> entityRefs = (List<EntityRef>) context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
-                            .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
+                            .withSort(Sort.buildDescSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
             );
             logger.info("minAggregationEntity:entityRefs:{}", entityRefs.size());
@@ -198,7 +211,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
-                logger.info("minAggregationEntity:entityRefs:{}", entity.get().toString());
+                logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }
