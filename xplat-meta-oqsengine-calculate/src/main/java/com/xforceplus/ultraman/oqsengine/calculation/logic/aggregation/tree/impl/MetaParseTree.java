@@ -36,6 +36,10 @@ public class MetaParseTree implements ParseTree, Serializable {
 
     }
 
+    public MetaParseTree(String prefix) {
+        this.prefix = prefix;
+    }
+
     public MetaParseTree(PTNode root) {
         this.root = root;
     }

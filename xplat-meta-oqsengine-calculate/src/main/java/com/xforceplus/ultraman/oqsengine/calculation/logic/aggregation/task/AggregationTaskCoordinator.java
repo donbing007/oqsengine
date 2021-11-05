@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
@@ -28,7 +29,6 @@ import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 
 /**
@@ -62,6 +62,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Resource
     private ResourceLocker locker;
+
+    @Resource(name = "longContinuousPartialOrderIdGenerator")
+    private LongIdGenerator idGenerator;
+
 
     /**
      * 每个appId-version维护一个任务队列.
@@ -161,7 +165,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     public boolean addTask(String prefix, Task task) throws Exception {
         TaskQueue queue;
         if (!taskQueueMap.containsKey(prefix)) {
-            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
+            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, prefix);
+
             taskKeyValueQueue.init();
             taskQueueMap.put(prefix, taskKeyValueQueue);
         }
@@ -400,7 +405,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
                         } else {
-                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
+                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, processingPrefix);
                             try {
                                 taskKeyValueQueue.init();
                                 taskKeyValueQueue.shutDownWorker();
