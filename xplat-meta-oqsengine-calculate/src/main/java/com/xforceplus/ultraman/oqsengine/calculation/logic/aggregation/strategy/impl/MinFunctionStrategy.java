@@ -189,7 +189,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
             List<EntityRef> entityRefs = (List<EntityRef>) context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
-                            .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
+                            .withSort(Sort.buildDescSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
             );
             logger.info("minAggregationEntity:entityRefs:{}", entityRefs.size());
@@ -198,7 +198,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
-                logger.info("minAggregationEntity:entityRefs:{}", entity.get().toString());
+                logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }
