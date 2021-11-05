@@ -283,7 +283,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult[] build(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager.getCurrent();
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
 
             if (tx.isPresent()) {
@@ -380,7 +380,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult[] replace(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager.getCurrent();
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
 
             if (tx.isPresent()) {
@@ -503,7 +503,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult[] delete(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager.getCurrent();
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
 
             if (tx.isPresent()) {
@@ -583,7 +583,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager.getCurrent();
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
 
             if (tx.isPresent()) {

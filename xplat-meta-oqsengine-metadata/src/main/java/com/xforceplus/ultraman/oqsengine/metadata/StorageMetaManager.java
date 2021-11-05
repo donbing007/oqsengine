@@ -1,34 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.FileReaderUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.micrometer.core.annotation.Timed;
 import java.io.File;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +52,9 @@ public class StorageMetaManager implements MetaManager {
 
     @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
+
+    @Resource(name = "entityClassFormatHandler")
+    private EntityClassFormatHandler entityClassFormatHandler;
 
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncDispatcher;
@@ -102,23 +94,12 @@ public class StorageMetaManager implements MetaManager {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "load"})
     @Override
     public Optional<IEntityClass> load(long id) {
-        try {
-            return innerLoad(id, null);
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
-            return Optional.empty();
-        }
+        return entityClassFormatHandler.classLoad(id, null);
     }
 
     @Override
     public Optional<IEntityClass> load(long id, String profile) {
-
-        try {
-            return innerLoad(id, profile);
-        } catch (Exception e) {
-            logger.warn(String.format("load entityClass [%d]-[%s] error, message [%s]", id, profile, e.getMessage()));
-            return Optional.empty();
-        }
+        return entityClassFormatHandler.classLoad(id, profile);
     }
 
     @Override
@@ -285,125 +266,6 @@ public class StorageMetaManager implements MetaManager {
 
         return metaLogs;
 
-    }
-
-
-    private Optional<IEntityClass> innerLoad(long id, String profileCode)
-        throws SQLException, JsonProcessingException {
-        if (id == HEALTH_CHECK_ENTITY_ID) {
-            return Optional.of(HealthCheckEntityClass.getInstance());
-        }
-        Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-        return Optional.of(toEntityClass(id, profileCode, entityClassStorageMaps));
-    }
-
-    /**
-     * 生成IEntityClass.
-     */
-    private IEntityClass toEntityClass(long id, String profileCode,
-                                       Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
-        EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
-        if (null == entityClassStorage) {
-            throw new SQLException(String.format("entity class [%d] not found.", id));
-        }
-
-        List<Relationship> relationships = toQqsRelation(entityClassStorage.getRelations());
-
-        List<IEntityField> entityFields = new ArrayList<>();
-        if (null != entityClassStorage.getFields()) {
-            entityClassStorage.getFields()
-                .forEach(
-                    e -> {
-                        IEntityField entityField = cloneEntityField(e);
-                        if (null != entityField) {
-                            entityFields.add(entityField);
-                        }
-                    }
-                );
-        }
-
-        //  加载profile
-        if (null != profileCode && !profileCode.equals(OqsProfile.UN_DEFINE_PROFILE)
-            && null != entityClassStorage.getProfileStorageMap()) {
-            ProfileStorage profileStorage = entityClassStorage.getProfileStorageMap().get(profileCode);
-            if (null != profileStorage) {
-                if (null != profileStorage.getEntityFieldList()) {
-                    profileStorage.getEntityFieldList().forEach(
-                        ps -> {
-                            IEntityField entityField = cloneEntityField(ps);
-                            if (null != entityField) {
-                                entityFields.add(entityField);
-                            }
-                        }
-                    );
-                }
-
-                if (null != profileStorage.getRelationStorageList()) {
-                    relationships.addAll(toQqsRelation(profileStorage.getRelationStorageList()));
-                }
-            }
-        }
-
-        EntityClass.Builder builder =
-            EntityClass.Builder.anEntityClass()
-                .withId(entityClassStorage.getId())
-                .withCode(entityClassStorage.getCode())
-                .withName(entityClassStorage.getName())
-                .withLevel(entityClassStorage.getLevel())
-                .withVersion(entityClassStorage.getVersion())
-                .withRelations(relationships)
-                .withProfile(profileCode)
-                .withFields(entityFields);
-        //   加载父类.
-        if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
-            builder.withFather(toEntityClass(entityClassStorage.getFatherId(), profileCode, entityClassStorageMaps));
-        }
-
-        return builder.build();
-    }
-
-
-    /**
-     * 加载relation.
-     */
-    private List<Relationship> toQqsRelation(List<RelationStorage> relationStorageList) {
-        List<Relationship> relationships = new ArrayList<>();
-        if (null != relationStorageList) {
-            relationStorageList.forEach(
-                r -> {
-                    Relationship.Builder builder = Relationship.Builder.anRelationship()
-                        .withId(r.getId())
-                        .withCode(r.getCode())
-                        .withLeftEntityClassId(r.getLeftEntityClassId())
-                        .withLeftEntityClassCode(r.getLeftEntityClassCode())
-                        .withRelationType(Relationship.RelationType.getInstance(r.getRelationType()))
-                        .withIdentity(r.isIdentity())
-                        .withStrong(r.isStrong())
-                        .withRightEntityClassId(r.getRightEntityClassId())
-                        .withRightEntityClassLoader(this::load)
-                        .withEntityField(cloneEntityField(r.getEntityField()))
-                        .withBelongToOwner(r.isBelongToOwner());
-
-                    relationships.add(builder.build());
-                }
-            );
-        }
-        return relationships;
-    }
-
-    private IEntityField cloneEntityField(IEntityField entityField) {
-        if (null != entityField) {
-            return EntityField.Builder.anEntityField()
-                .withName(entityField.name())
-                .withCnName(entityField.cnName())
-                .withFieldType(entityField.type())
-                .withDictId(entityField.dictId())
-                .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue())
-                .withConfig(entityField.config().clone())
-                .build();
-        }
-        return null;
     }
 
     private void loadFromLocal(String path) {

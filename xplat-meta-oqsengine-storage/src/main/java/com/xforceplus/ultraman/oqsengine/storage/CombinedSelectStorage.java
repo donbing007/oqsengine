@@ -10,10 +10,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -42,13 +44,11 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     private ConditionsSelectStorage syncedStorage;
 
-    private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
-
     private TransactionManager transactionManager;
 
-    public CombinedSelectStorage(ConditionsSelectStorage unSyncStorage, ConditionsSelectStorage syncedStorage) {
-        this(unSyncStorage, syncedStorage, null);
-    }
+    private CommitIdStatusService commitIdStatusService;
+
+    private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
 
     /**
      * 构造一个联合查询.
@@ -58,11 +58,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
      */
     public CombinedSelectStorage(
         ConditionsSelectStorage unSyncStorage,
-        ConditionsSelectStorage syncedStorage,
-        TransactionManager transactionManager) {
+        ConditionsSelectStorage syncedStorage) {
         this.unSyncStorage = unSyncStorage;
         this.syncedStorage = syncedStorage;
-        this.transactionManager = transactionManager;
 
         // 比较器构建.
         comparatorSupplier = (sorts) -> {
@@ -91,6 +89,15 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         };
     }
 
+    public void setTransactionManager(
+        TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
+    }
+
+    public void setCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
+        this.commitIdStatusService = commitIdStatusService;
+    }
+
     /**
      * 联合查询.
      *
@@ -105,7 +112,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         throws SQLException {
         Collection<EntityRef> masterRefs = Collections.emptyList();
 
-        long commitId = config.getCommitId();
+        long commitId = checkCommitId(config);
         Sort sort = config.getSort();
         Sort secondSort = config.getSecondarySort();
         Sort thirdSort = config.getThirdSort();
@@ -125,27 +132,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                     .withCommitId(commitId)
                     .withDataAccessFitlerCondtitons(filterCondition)
                     .build());
-        } else {
-            // 如果提交号为空,那么只需要检查当前事务中是否有数据.未提交的数据.
-            Optional<Transaction> txOp =
-                transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
-            if (txOp.isPresent()) {
-                Transaction tx = txOp.get();
-                long wirteSize = tx.getAccumulator().getBuildNumbers() + tx.getAccumulator().getReplaceNumbers();
-                if (wirteSize > 0) {
-                    masterRefs = unSyncStorage.select(
-                        conditions,
-                        entityClass,
-                        SelectConfig.Builder.anSelectConfig()
-                            .withSort(sort)
-                            .withSecondarySort(secondSort)
-                            .withThirdSort(thirdSort)
-                            .withCommitId(CommitHelper.getUncommitId())
-                            .withDataAccessFitlerCondtitons(filterCondition)
-                            .build()
-                    );
-                }
-            }
         }
 
         for (EntityRef ref : masterRefs) {
@@ -294,5 +280,53 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         if (ref.getSortValue(sortIndex).isPresent()) {
             ref.setSortValue(sortIndex, finalValue);
         }
+    }
+
+    private long checkCommitId(SelectConfig config) {
+        if (config.getCommitId() > 0) {
+            return config.getCommitId();
+        }
+
+        long minUnSyncCommitId = 0;
+        if (commitIdStatusService != null) {
+            // 获取提交号.
+            Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
+            if (!minUnSyncCommitIdOp.isPresent()) {
+                minUnSyncCommitId = 0;
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Unable to fetch the commit number, use the default commit number 0.");
+                }
+            } else {
+                minUnSyncCommitId = minUnSyncCommitIdOp.get();
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The minimum commit number {} that is currently uncommitted was successfully obtained.",
+                        minUnSyncCommitId);
+                }
+            }
+        }
+
+        /*
+         * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
+         * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询.
+         * 1.在事务中并且未提交.
+         * 2.之前有过写入动作.
+         */
+        if (transactionManager != null && minUnSyncCommitId <= 0) {
+            Optional<Transaction> currentTransaction = transactionManager.getCurrent();
+            if (currentTransaction.isPresent()) {
+                Transaction transaction = currentTransaction.get();
+                TransactionAccumulator accumulator = transaction.getAccumulator();
+                // 没有写和的操作序号值.
+                final int noWriteOpSize = 0;
+                if (accumulator.getBuildNumbers()
+                    + accumulator.getReplaceNumbers()
+                    + accumulator.getDeleteNumbers() > noWriteOpSize) {
+                    minUnSyncCommitId = CommitHelper.getUncommitId();
+                }
+            }
+        }
+
+        return minUnSyncCommitId;
     }
 }

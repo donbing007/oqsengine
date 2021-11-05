@@ -30,10 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -323,21 +320,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
         usePage.setVisibleTotalCount(maxVisibleTotalCount);
 
-        Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-        long minUnSyncCommitId;
-        if (!minUnSyncCommitIdOp.isPresent()) {
-            minUnSyncCommitId = 0;
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
-            }
-        } else {
-            minUnSyncCommitId = minUnSyncCommitIdOp.get();
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
-                    minUnSyncCommitId);
-            }
-        }
         try {
             // join
             Map<Long, IEntityClass> entityClassCollectionMapping = collectEntityClass(conditions, entityClass);
@@ -380,7 +362,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
 
                 for (AbstractConditionNode safeNode : safeNodes) {
-                    subConditions.add(buildSafeNodeConditions(entityClass, safeNode, minUnSyncCommitId));
+                    subConditions.add(buildSafeNodeConditions(entityClass, safeNode));
                 }
 
                 useConditions = Conditions.buildEmtpyConditions();
@@ -399,8 +381,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             SelectConfig.Builder selectConfigBuilder = SelectConfig.Builder.anSelectConfig();
-            selectConfigBuilder.withCommitId(reviseCommitId(minUnSyncCommitId))
-                .withPage(usePage)
+            selectConfigBuilder.withPage(usePage)
                 .withDataAccessFitlerCondtitons(
                     config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions()
                 );
@@ -478,29 +459,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题. 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询. 1.
-     * 在事务中并且未提交. 2. 之前有过写入动作.
-     */
-    private long reviseCommitId(long minUnSyncCommitId) {
-        if (transactionManager != null && minUnSyncCommitId == 0) {
-            Optional<Transaction> currentTransaction = transactionManager.getCurrent();
-            if (currentTransaction.isPresent()) {
-                Transaction transaction = currentTransaction.get();
-                TransactionAccumulator accumulator = transaction.getAccumulator();
-                // 没有写和的操作序号值.
-                final int noWriteOpSize = 0;
-                if (accumulator.getBuildNumbers()
-                    + accumulator.getReplaceNumbers()
-                    + accumulator.getDeleteNumbers() > noWriteOpSize) {
-                    return CommitHelper.getUncommitId();
-                }
-            }
-        }
-
-        return minUnSyncCommitId;
-    }
-
-    /**
      * 以下情况会空返回. 1. 字段不存在. 2. 字段非可搜索. 注意: 如果字段标示为identifie类型,那么会返回true.
      */
     private boolean checkCanSearch(Condition c, IEntityClass entityClass) {
@@ -573,8 +531,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     /**
      * 将安全条件结点处理成可查询的 Conditions 实例. ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode,
-                                               long commitId)
+    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode)
         throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
@@ -604,7 +561,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
          * 并将剩余的构造成 DriverEntityTask 实例交由线程池执行.
          */
         driverEntityConditionsGroup.entrySet().stream()
-            .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue(), commitId))
+            .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue()))
             .forEach(driverEntityTask -> futures.add(threadPool.submit(driverEntityTask)));
 
         Conditions conditions = Conditions.buildEmtpyConditions();
@@ -765,12 +722,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         private DriverEntityKey key;
         private Conditions conditions;
-        private long commitId;
 
-        public DriverEntityTask(DriverEntityKey key, Conditions conditions, long commitId) {
+        public DriverEntityTask(DriverEntityKey key, Conditions conditions) {
             this.key = key;
             this.conditions = conditions;
-            this.commitId = commitId;
         }
 
         @Override
@@ -781,7 +736,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 conditions,
                 key.getEntityClass(),
                 SelectConfig.Builder.anSelectConfig()
-                    .withCommitId(commitId)
                     .withSort(Sort.buildOutOfSort())
                     .withPage(driverPage).build()
             );

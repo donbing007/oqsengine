@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -133,7 +134,6 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         long count = 0;
         if (aggEntityClass.isPresent()) {
             Conditions conditions = Conditions.buildEmtpyConditions();
-            conditions.addAnd(aggregation.getConditions(), false);
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
@@ -166,7 +166,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
+            Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
@@ -202,6 +202,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
      * @return 旧值大返回true，旧值小返回false.
      */
     private boolean checkMaxValue(IValue o, IValue n) {
+        if (o instanceof EmptyTypedValue) {
+            return false;
+        }
+        if (n instanceof EmptyTypedValue) {
+            return true;
+        }
         if (o instanceof DecimalValue) {
             double temp = Math.max(((DecimalValue) o).getValue().doubleValue(), ((DecimalValue) n).getValue().doubleValue());
             return Double.compare(temp, ((DecimalValue) o).getValue().doubleValue()) == 0 ? true : false;

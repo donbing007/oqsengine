@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -85,8 +86,12 @@ public class StorageConfiguration {
      */
     @Bean
     public CombinedSelectStorage combinedSelectStorage(
-        MasterStorage masterStorage, IndexStorage indexStorage, TransactionManager transactionManager) {
-        return new CombinedSelectStorage(masterStorage, indexStorage, transactionManager);
+        MasterStorage masterStorage, IndexStorage indexStorage,
+        TransactionManager transactionManager, CommitIdStatusService commitIdStatusService) {
+        CombinedSelectStorage storage = new CombinedSelectStorage(masterStorage, indexStorage);
+        storage.setTransactionManager(transactionManager);
+        storage.setCommitIdStatusService(commitIdStatusService);
+        return storage;
     }
 
     /**
