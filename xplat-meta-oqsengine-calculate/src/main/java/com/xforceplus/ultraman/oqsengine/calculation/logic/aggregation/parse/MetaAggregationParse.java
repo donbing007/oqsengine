@@ -40,9 +40,6 @@ public class MetaAggregationParse implements AggregationParse {
     private MetaManager metaManager;
 
     @Resource
-    private ParseTree parseTree;
-
-    @Resource
     private AggregationTaskCoordinator aggregationTaskCoordinator;
 
     /**
@@ -127,6 +124,7 @@ public class MetaAggregationParse implements AggregationParse {
 
     @Override
     public void builder(String appId, int version, List<IEntityClass> entityClasses) {
+        MetaParseTree parseTree = new MetaParseTree(appId + "-" + version);
         this.entityClasses = entityClasses;
         entityClasses.forEach(entityClass -> {
             Collection<IEntityField> entityFields = entityClass.fields();
