@@ -66,7 +66,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     // 删除最大值，需要重新查找最大值-将最大值返回
                     Optional<IValue> maxValue = null;
                     try {
-                        maxValue = maxAggregationEntity(aggregation, context);
+                        maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.DELETE);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -80,7 +80,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     if (checkMaxValue(o.get(), n.get())) {
                         Optional<IValue> maxValue = null;
                         try {
-                            maxValue = maxAggregationEntity(aggregation, context);
+                            maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
@@ -107,7 +107,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 if (checkMaxValue(o.get(), n.get())) {
                     Optional<IValue> maxValue = null;
                     try {
-                        maxValue = maxAggregationEntity(aggregation, context);
+                        maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -179,7 +179,8 @@ public class MaxFunctionStrategy implements FunctionStrategy {
      * @param context            上下文信息.
      * @return 统计数字.
      */
-    private Optional<IValue> maxAggregationEntity(Aggregation aggregation, CalculationContext context) throws SQLException {
+    private Optional<IValue> maxAggregationEntity(Aggregation aggregation, CalculationContext context,
+                                                  CalculationScenarios calculationScenarios) throws SQLException {
         // 得到最大值
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
@@ -209,6 +210,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         }
                     }
                     return Optional.empty();
+                }
+                if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
+                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    if (entity.isPresent()) {
+                        return entity.get().entityValue().getValue(aggregation.getFieldId());
+                    }
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
                 if (entity.isPresent()) {
