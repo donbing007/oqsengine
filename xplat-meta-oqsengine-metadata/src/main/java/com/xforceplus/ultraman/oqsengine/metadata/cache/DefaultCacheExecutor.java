@@ -629,7 +629,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 //  ignore
             }
         }
-        logger.info(String.format("resetVersion appId-version %s status is %s", appId + "-" + "version", ret));
         return ret;
     }
 
