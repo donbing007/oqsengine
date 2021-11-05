@@ -12,14 +12,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -44,12 +40,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
 
-    private TransactionManager transactionManager;
-
-    public CombinedSelectStorage(ConditionsSelectStorage unSyncStorage, ConditionsSelectStorage syncedStorage) {
-        this(unSyncStorage, syncedStorage, null);
-    }
-
     /**
      * 构造一个联合查询.
      *
@@ -58,11 +48,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
      */
     public CombinedSelectStorage(
         ConditionsSelectStorage unSyncStorage,
-        ConditionsSelectStorage syncedStorage,
-        TransactionManager transactionManager) {
+        ConditionsSelectStorage syncedStorage) {
         this.unSyncStorage = unSyncStorage;
         this.syncedStorage = syncedStorage;
-        this.transactionManager = transactionManager;
 
         // 比较器构建.
         comparatorSupplier = (sorts) -> {
@@ -125,27 +113,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                     .withCommitId(commitId)
                     .withDataAccessFitlerCondtitons(filterCondition)
                     .build());
-        } else {
-            // 如果提交号为空,那么只需要检查当前事务中是否有数据.未提交的数据.
-            Optional<Transaction> txOp =
-                transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
-            if (txOp.isPresent()) {
-                Transaction tx = txOp.get();
-                long wirteSize = tx.getAccumulator().getBuildNumbers() + tx.getAccumulator().getReplaceNumbers();
-                if (wirteSize > 0) {
-                    masterRefs = unSyncStorage.select(
-                        conditions,
-                        entityClass,
-                        SelectConfig.Builder.anSelectConfig()
-                            .withSort(sort)
-                            .withSecondarySort(secondSort)
-                            .withThirdSort(thirdSort)
-                            .withCommitId(CommitHelper.getUncommitId())
-                            .withDataAccessFitlerCondtitons(filterCondition)
-                            .build()
-                    );
-                }
-            }
         }
 
         for (EntityRef ref : masterRefs) {

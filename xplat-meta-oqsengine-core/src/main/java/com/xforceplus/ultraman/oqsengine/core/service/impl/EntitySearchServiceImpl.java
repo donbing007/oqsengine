@@ -323,6 +323,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
         usePage.setVisibleTotalCount(maxVisibleTotalCount);
 
+        // 获取提交号.
         Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
         long minUnSyncCommitId;
         if (!minUnSyncCommitIdOp.isPresent()) {
@@ -338,6 +339,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     minUnSyncCommitId);
             }
         }
+        minUnSyncCommitId = reviseCommitId(minUnSyncCommitId);
+
         try {
             // join
             Map<Long, IEntityClass> entityClassCollectionMapping = collectEntityClass(conditions, entityClass);
@@ -399,7 +402,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             SelectConfig.Builder selectConfigBuilder = SelectConfig.Builder.anSelectConfig();
-            selectConfigBuilder.withCommitId(reviseCommitId(minUnSyncCommitId))
+            selectConfigBuilder.withCommitId(minUnSyncCommitId)
                 .withPage(usePage)
                 .withDataAccessFitlerCondtitons(
                     config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions()
@@ -478,11 +481,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题. 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询. 1.
-     * 在事务中并且未提交. 2. 之前有过写入动作.
+     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
+     * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值. 这里需要修正以下情况的查询.
+     * 1.在事务中并且未提交.
+     * 2.之前有过写入动作.
      */
     private long reviseCommitId(long minUnSyncCommitId) {
-        if (transactionManager != null && minUnSyncCommitId == 0) {
+        if (transactionManager != null && minUnSyncCommitId <= 0) {
             Optional<Transaction> currentTransaction = transactionManager.getCurrent();
             if (currentTransaction.isPresent()) {
                 Transaction transaction = currentTransaction.get();
