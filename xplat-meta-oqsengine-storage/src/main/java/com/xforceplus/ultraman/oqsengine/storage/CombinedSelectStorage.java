@@ -46,7 +46,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
      * @param unSyncStorage 未同步实例查询.
      * @param syncedStorage 已同步实例查询.
      */
-    public CombinedSelectStorage(ConditionsSelectStorage unSyncStorage, ConditionsSelectStorage syncedStorage) {
+    public CombinedSelectStorage(
+        ConditionsSelectStorage unSyncStorage,
+        ConditionsSelectStorage syncedStorage) {
         this.unSyncStorage = unSyncStorage;
         this.syncedStorage = syncedStorage;
 
@@ -110,13 +112,12 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                     .withThirdSort(thirdSort)
                     .withCommitId(commitId)
                     .withDataAccessFitlerCondtitons(filterCondition)
-                    .build()
-            );
+                    .build());
+        }
 
-            for (EntityRef ref : masterRefs) {
-                if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
-                    throw new SQLException(String.format("Expected operation type unknown.[id=%d]", ref.getId()));
-                }
+        for (EntityRef ref : masterRefs) {
+            if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
+                throw new SQLException(String.format("Expected operation type unknown.[id=%d]", ref.getId()));
             }
         }
 
@@ -215,8 +216,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }).filter(s -> !s.isOutOfOrder()).toArray(Sort[]::new);
     }
 
-    private Stream<EntityRef> mergeToStream(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs,
-                                            Sort[] sorts) {
+    private Stream<EntityRef> mergeToStream(
+        Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs,
+        Sort[] sorts) {
         Stream<EntityRef> refStream = Stream.concat(masterRefs.stream(), indexRefs.stream());
         if (sorts.length == 0) {
             return refStream;

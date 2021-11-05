@@ -83,7 +83,8 @@ public class StorageConfiguration {
      * 联合查询策略储存实现.
      */
     @Bean
-    public CombinedSelectStorage combinedSelectStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
+    public CombinedSelectStorage combinedSelectStorage(
+        MasterStorage masterStorage, IndexStorage indexStorage) {
         return new CombinedSelectStorage(masterStorage, indexStorage);
     }
 

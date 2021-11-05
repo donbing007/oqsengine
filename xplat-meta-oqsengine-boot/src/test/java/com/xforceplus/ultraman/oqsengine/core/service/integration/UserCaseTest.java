@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -152,6 +153,61 @@ public class UserCaseTest implements ApplicationContextAware {
                 }
             }
         }
+    }
+
+    @Test
+    public void testCountEmptyPage() throws Exception {
+        Transaction tx = transactionManager.create(5000);
+        transactionManager.bind(tx.id());
+
+        IEntity[] targetEntities = IntStream.range(0, 10).mapToObj(i ->
+            Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ).build()
+        ).toArray(IEntity[]::new);
+
+        entityManagementService.build(targetEntities);
+
+        // 事务内统计.
+        Page page = Page.emptyPage();
+        transactionManager.bind(tx.id());
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+        );
+        Assertions.assertEquals(0, entities.size());
+        Assertions.assertEquals(targetEntities.length, page.getTotalCount());
+
+        transactionManager.bind(tx.id());
+        tx.commit();
+        transactionManager.finish();
+
+        // 事务外统计.
+        page = Page.emptyPage();
+        entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+        );
     }
 
     @Test
