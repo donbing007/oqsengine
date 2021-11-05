@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.DefaultEntityClassFormatHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.EnhancedSyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,4 +113,8 @@ public class MetaManagerConfiguration {
         return new ExpireExecutor();
     }
 
+    @Bean("entityClassFormatHandler")
+    public EntityClassFormatHandler entityClassFormatHandler() {
+        return new DefaultEntityClassFormatHandler();
+    }
 }
