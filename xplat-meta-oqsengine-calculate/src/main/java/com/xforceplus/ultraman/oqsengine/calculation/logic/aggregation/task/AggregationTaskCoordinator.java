@@ -213,7 +213,12 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @return 是否成功.
      */
     public boolean addInitAppInfo(String prefix, List<ParseTree> list) {
+        if (list.isEmpty() || list == null) {
+            logger.warn(String.format("not support empty task: appVersion is : %s", prefix));
+            return false;
+        }
         try {
+            logger.info(String.format("============================try add %s task to queue, aggTask is : %s ", prefix, list.toString()));
             // 判断是否已有节点添加任务
             if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
@@ -234,6 +239,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
+        logger.info(String.format("===========================add %s task to queue success, aggTask is : %s ", prefix, list.toString()));
 
         // 添加当前队列任务之后，关闭队列线程池
         TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);
@@ -256,12 +262,13 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             locker.lock(APP_INIT_ORDER);
             if (!kv.exist(APP_INIT_ORDER)) {
                 kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(prefix + ",", StandardCharsets.UTF_8));
+                logger.info(String.format("add %s to the appOrder ", prefix));
             } else {
                 Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
                 if (bytes.isPresent()) {
                     String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
                     kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(orderStr + prefix + ",", StandardCharsets.UTF_8));
-                    logger.info(String.format("add appId-version to the appOrder %s", orderStr));
+                    logger.info(String.format("add %s to the appOrder %s", prefix, orderStr));
                 }
             }
         } catch (RuntimeException e) {
@@ -355,7 +362,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 5000;
+        private final long checkTimeoutMs = 15000;
 
         @Override
         public void run() {
@@ -406,6 +413,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                     }
                 } else {
+                    logger.info("======================start agg init");
                     queue = usingApp.entrySet().iterator().next().getValue();
                     try {
                         task = queue.get(1000L);

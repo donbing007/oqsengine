@@ -344,4 +344,8 @@ public class MetaParseTree implements ParseTree, Serializable {
         return Optional.of(parseTree);
     }
 
+    @Override
+    public String toString() {
+        return "MetaParseTree{" + "prefix='" + prefix + '\'' + ", root=" + root + '}';
+    }
 }

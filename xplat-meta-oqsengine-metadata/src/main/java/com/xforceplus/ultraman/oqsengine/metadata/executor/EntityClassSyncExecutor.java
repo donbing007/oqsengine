@@ -46,6 +46,9 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     @Resource
     private EventBus eventBus;
 
+    @Resource
+    private AggregationEventBuilder aggregationEventBuilder;
+
     private volatile boolean closed = false;
 
     private Thread thread;
@@ -113,6 +116,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             // step3 update new Hash in redis
+            logger.info("================start  update new Hash in redis==============");
             List<EntityClassStorage> data = (List<EntityClassStorage>) step.getData();
             step = save(appId, version, data, payloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
@@ -120,6 +124,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             //  step4 build agg event
+            logger.info(String.format("=================start buildAggEvent : %s", appId + "-" + version));
             step = buildAggEvent(appId, version, data, aggPayloads);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
@@ -190,15 +195,19 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 : SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, "storage entity class failed.");
 
         } catch (Exception e) {
+            logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, e.getMessage());
         }
     }
 
     private SyncStep<Boolean> buildAggEvent(String appId, int version, List<EntityClassStorage> entityClassStorages, List<Event<?>> payloads) {
         try {
-            new AggregationEventBuilder().buildAggEvent(appId, version, entityClassStorages, payloads);
+            logger.info(String.format("==========start buildAggEvent : %s, List<EntityClassStorage> is : %s ", appId + "-" + version, entityClassStorages.toString()));
+            aggregationEventBuilder.buildAggEvent(appId, version, entityClassStorages, payloads);
             return SyncStep.ok(true);
         } catch (Exception e) {
+            logger.error(String.format("============failed buildAggEvent : %s, List<EntityClassStorage> is : %s ", appId + "-" + version, entityClassStorages.toString()));
+            logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.BUILD_EVENT_FAILED, String.format("build agg event failed, [%s]", e.getMessage()));
         }
     }

@@ -61,6 +61,7 @@ public class AggregationTaskRunner implements TaskRunner {
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
+        logger.info(String.format("start agg init task: %s", task.toString()));
         // 执行聚合初始化，step 1: 查询被聚合  Step 2: 调用聚合函数  Step 3: 乐观锁更新
         AggregationTask aggregationTask = (AggregationTask) task;
         List<PTNode> ptNodes = aggregationTask.getParseTree().toList();
@@ -80,9 +81,10 @@ public class AggregationTaskRunner implements TaskRunner {
                     try {
                         // 获取主信息id，得到entity信息
                         OriginalEntity originalEntity = iterator.next();
+                        logger.info(String.format("start agg entity: %s", originalEntity.toString()));
                         Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), ptNode.getEntityClass());
                         if (aggMainEntity.isPresent()) {
-                            if (logger.isDebugEnabled()) {
+                            if (logger.isInfoEnabled()) {
                                 logger.debug(String.format("start aggregate , entityClassId is %s , entityId is %s ", aggMainEntity.get().entityClassRef().getId(), aggMainEntity.get().id()));
                             }
                             //构造查询被聚合信息条件
@@ -95,7 +97,7 @@ public class AggregationTaskRunner implements TaskRunner {
                             Collection<EntityRef> entityRefs = masterStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
                                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withCommitId(minUnSyncCommitId).build());
                             Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
-                            if (logger.isDebugEnabled()) {
+                            if (logger.isInfoEnabled()) {
                                 logger.debug(String.format("select by conditions , entityClassId is %s, mainEntityId is %s, result id list is %s ", ptNode.getAggEntityClass().id(), aggMainEntity.get().id(), ids));
                             }
                             entityRefs = null;
@@ -134,7 +136,9 @@ public class AggregationTaskRunner implements TaskRunner {
                                 break;
                             }
 
+                            logger.info(String.format("doAgg begin, ivalues is: %s, ptNode is: %s", ivalues, ptNode));
                             Optional<IValue> aggMainIValue = doAgg(ivalues, ptNode);
+                            logger.info(String.format("doAgg result is: "), aggMainIValue.get().toString());
                             if (updateAgg(aggMainIValue, ptNode, aggMainEntity)) {
                                 break;
                             } else {

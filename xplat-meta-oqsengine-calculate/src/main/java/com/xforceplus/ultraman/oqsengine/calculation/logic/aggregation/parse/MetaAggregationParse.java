@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse;
 
 
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task.AggregationTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
@@ -40,6 +41,9 @@ public class MetaAggregationParse implements AggregationParse {
 
     @Resource
     private ParseTree parseTree;
+
+    @Resource
+    private AggregationTaskCoordinator aggregationTaskCoordinator;
 
     /**
      * 内存暂存解析树列表.
@@ -186,8 +190,9 @@ public class MetaAggregationParse implements AggregationParse {
                 }
             });
         });
+        List<ParseTree> parseTrees = new ArrayList<>();
         if (nodes.size() > 0) {
-            List<ParseTree> parseTrees = MetaParseTree.generateMultipleTress(nodes);
+            parseTrees = MetaParseTree.generateMultipleTress(nodes);
             parseTrees.forEach(pt -> {
                 appendTree(pt);
             });
@@ -196,6 +201,7 @@ public class MetaAggregationParse implements AggregationParse {
                 aggFieldIds.addAll(longs.get());
             }
         }
+        aggregationTaskCoordinator.addInitAppInfo(appId + "-" + version, parseTrees);
     }
 
     /**
