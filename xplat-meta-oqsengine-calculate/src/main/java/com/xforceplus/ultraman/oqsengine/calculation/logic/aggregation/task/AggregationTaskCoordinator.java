@@ -240,6 +240,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             }
         } catch (Exception e) {
             logger.error("===============================添加聚合初始化任务失败======================");
+            e.printStackTrace();
             return false;
         }
         kv.incr(buildUnInitAppName(prefix));
