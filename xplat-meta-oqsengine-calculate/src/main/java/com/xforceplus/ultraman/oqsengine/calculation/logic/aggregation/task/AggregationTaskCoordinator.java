@@ -239,7 +239,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 return false;
             }
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            e.printStackTrace();
             return false;
         }
         kv.incr(buildUnInitAppName(prefix));
