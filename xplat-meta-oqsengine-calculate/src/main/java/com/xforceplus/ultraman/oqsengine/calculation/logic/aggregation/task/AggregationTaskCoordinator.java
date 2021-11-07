@@ -239,6 +239,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 return false;
             }
         } catch (Exception e) {
+            logger.error("=================添加任务失败======");
             e.printStackTrace();
             return false;
         }
