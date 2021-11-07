@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import java.io.Serializable;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -21,7 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "STATIC"),
     @JsonSubTypes.Type(value = StaticCalculation.class, name = "UNKNOWN"),
 })
-public abstract class AbstractCalculation {
+public abstract class AbstractCalculation implements Serializable {
     @JsonProperty(value = "calculationType")
     protected CalculationType calculationType;
 
