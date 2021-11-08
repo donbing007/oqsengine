@@ -12,9 +12,9 @@ public enum AggregationType {
     UNKNOWN(0),
     COUNT(1),
     SUM(2),
-    MAX(3),
+    AVG(3),
     MIN(4),
-    AVG(5);
+    MAX(5);
 
     private int type;
     public int getType() {

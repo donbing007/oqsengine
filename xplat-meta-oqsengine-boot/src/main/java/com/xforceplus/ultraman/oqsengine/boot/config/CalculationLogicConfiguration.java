@@ -5,8 +5,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl
 import com.xforceplus.ultraman.oqsengine.calculation.listener.AggregationTreeBuilderListener;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.MetaAggregationParse;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,8 +33,4 @@ public class CalculationLogicConfiguration {
         return new MetaAggregationParse();
     }
 
-    @Bean
-    public ParseTree parseTree() {
-        return new MetaParseTree();
-    }
 }

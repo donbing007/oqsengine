@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Optional;
  *
  * @since 1.8
  */
-public interface EntityClassFormatHandler {
+public interface EntityClassFormatHandler extends Serializable {
 
     Optional<IEntityClass> classLoad(long id, String profile);
 }

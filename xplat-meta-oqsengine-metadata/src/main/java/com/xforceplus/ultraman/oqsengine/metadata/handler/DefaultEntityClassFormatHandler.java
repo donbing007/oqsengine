@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler {
+public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler, Serializable {
 
     final Logger logger = LoggerFactory.getLogger(StorageMetaManager.class);
 

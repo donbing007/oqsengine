@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
@@ -28,7 +29,6 @@ import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 
 /**
@@ -62,6 +62,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Resource
     private ResourceLocker locker;
+
+    @Resource(name = "longContinuousPartialOrderIdGenerator")
+    private LongIdGenerator idGenerator;
+
 
     /**
      * 每个appId-version维护一个任务队列.
@@ -161,7 +165,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     public boolean addTask(String prefix, Task task) throws Exception {
         TaskQueue queue;
         if (!taskQueueMap.containsKey(prefix)) {
-            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
+            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, prefix);
+
             taskKeyValueQueue.init();
             taskQueueMap.put(prefix, taskKeyValueQueue);
         }
@@ -218,7 +223,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             return false;
         }
         try {
-            logger.info(String.format("============================try add %s task to queue, aggTask is : %s ", prefix, list.toString()));
+            logger.info(String.format("============================try add %s task to queue, aggTask size is : %s ", prefix, list.size()));
             // 判断是否已有节点添加任务
             if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
@@ -234,12 +239,13 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 return false;
             }
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("===============================添加聚合初始化任务失败======================");
+            e.printStackTrace();
             return false;
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
-        logger.info(String.format("===========================add %s task to queue success, aggTask is : %s ", prefix, list.toString()));
+        logger.info(String.format("===========================add %s task to queue success, aggTask size is : %s ", prefix, list.size()));
 
         // 添加当前队列任务之后，关闭队列线程池
         TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);
@@ -400,7 +406,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
                         } else {
-                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
+                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, processingPrefix);
                             try {
                                 taskKeyValueQueue.init();
                                 taskKeyValueQueue.shutDownWorker();

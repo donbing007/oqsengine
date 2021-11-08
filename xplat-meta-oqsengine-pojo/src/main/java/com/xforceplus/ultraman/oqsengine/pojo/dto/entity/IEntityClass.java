@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
-public interface IEntityClass {
+public interface IEntityClass extends Serializable {
 
     /**
      * 获得对象的id.

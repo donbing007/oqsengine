@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -61,16 +62,33 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 //属于第二层树的操作，按实际操作方式判断
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     return function.excute(agg, o, n);
+                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                    // 删除最大值，需要重新查找最大值-将最大值返回
+                    Optional<IValue> maxValue = null;
+                    try {
+                        maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.DELETE);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    if (maxValue.isPresent()) {
+                        logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
+                        agg.get().setStringValue(maxValue.get().valueToString());
+                        return agg;
+                    } else {
+                        agg.get().setStringValue("0");
+                        return agg;
+                    }
                 } else {
                     // 如果新数据小于老数据，则需要在数据库中进行一次检索，查出最大数据，用该数据和新值进行比对，然后进行替换
                     if (checkMaxValue(o.get(), n.get())) {
                         Optional<IValue> maxValue = null;
                         try {
-                            maxValue = maxAggregationEntity(aggregation, context);
+                            maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                         if (maxValue.isPresent()) {
+                            logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
                             if (checkMaxValue(maxValue.get(), n.get())) {
                                 agg.get().setStringValue(maxValue.get().valueToString());
                                 return agg;
@@ -92,7 +110,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 if (checkMaxValue(o.get(), n.get())) {
                     Optional<IValue> maxValue = null;
                     try {
-                        maxValue = maxAggregationEntity(aggregation, context);
+                        maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -115,6 +133,10 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     return agg;
                 }
             }
+        }
+        if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+            // 如果不是删除最大的数据，无需额外判断，直接返回当前聚合值
+            return agg;
         }
         return function.excute(agg, o, n);
     }
@@ -160,12 +182,13 @@ public class MaxFunctionStrategy implements FunctionStrategy {
      * @param context            上下文信息.
      * @return 统计数字.
      */
-    private Optional<IValue> maxAggregationEntity(Aggregation aggregation, CalculationContext context) throws SQLException {
+    private Optional<IValue> maxAggregationEntity(Aggregation aggregation, CalculationContext context,
+                                                  CalculationScenarios calculationScenarios) throws SQLException {
         // 得到最大值
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
+            Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
@@ -182,7 +205,20 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             );
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
+                    if (entityRefs.size() == 1) {
+                        // 只剩下一条数据
+                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        if (entity.isPresent()) {
+                            return entity.get().entityValue().getValue(aggregation.getFieldId());
+                        }
+                    }
                     return Optional.empty();
+                }
+                if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
+                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    if (entity.isPresent()) {
+                        return entity.get().entityValue().getValue(aggregation.getFieldId());
+                    }
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
                 if (entity.isPresent()) {
@@ -201,6 +237,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
      * @return 旧值大返回true，旧值小返回false.
      */
     private boolean checkMaxValue(IValue o, IValue n) {
+        if (o instanceof EmptyTypedValue) {
+            return false;
+        }
+        if (n instanceof EmptyTypedValue) {
+            return true;
+        }
         if (o instanceof DecimalValue) {
             double temp = Math.max(((DecimalValue) o).getValue().doubleValue(), ((DecimalValue) n).getValue().doubleValue());
             return Double.compare(temp, ((DecimalValue) o).getValue().doubleValue()) == 0 ? true : false;

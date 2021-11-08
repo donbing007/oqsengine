@@ -133,6 +133,8 @@ public class AggregationTaskRunner implements TaskRunner {
 
                             // ivalus包含完整明细数据被聚合字段value，可能占用较大内存
                             if (ivalues.size() <= 0) {
+                                aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(ptNode.getEntityField(), ptNode.getEntityField().type().equals(FieldType.DATETIME) ? LocalDateTime.MIN : 0));
+                                masterStorage.replace(aggMainEntity.get(), ptNode.getEntityClass());
                                 break;
                             }
 
@@ -157,6 +159,7 @@ public class AggregationTaskRunner implements TaskRunner {
                 }
 
             }
+            logger.info(String.format("==============entityClass %s entityField %s has doAggInit complete.", ptNode.getEntityClass().id(), ptNode.getEntityField().id()));
         } catch (SQLException throwables) {
             logger.error(throwables.getMessage(), throwables);
         }

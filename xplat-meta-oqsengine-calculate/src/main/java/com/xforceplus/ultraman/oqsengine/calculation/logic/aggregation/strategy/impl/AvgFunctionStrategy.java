@@ -54,9 +54,9 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         // 判断聚合的对象信息是否是当前来源的数据
         if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                return ((AvgFunction) function).excuteAvg(agg, o, n, count, count + 1);
+                return ((AvgFunction) function).excuteAvg(agg, o, n, count - 1, count);
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                return ((AvgFunction) function).excuteAvg(agg, o, n, count, count - 1);
+                return ((AvgFunction) function).excuteAvg(agg, o, n, count + 1, count);
             } else {
                 return ((AvgFunction) function).excuteAvg(agg, o, n, count, count);
             }
