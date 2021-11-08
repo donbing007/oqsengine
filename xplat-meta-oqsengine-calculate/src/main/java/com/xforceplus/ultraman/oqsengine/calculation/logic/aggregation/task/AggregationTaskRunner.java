@@ -29,6 +29,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -223,7 +224,13 @@ public class AggregationTaskRunner implements TaskRunner {
         // 工厂获取聚合函数，执行运算
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
 
-        return function.init(Optional.of(IValueUtils.toIValue(entityField, entityField.type().equals(FieldType.DATETIME) ? LocalDateTime.now() : 0)), ivalues);
+        if (entityField.type().equals(FieldType.DATETIME)) {
+            return function.init(Optional.of(IValueUtils.toIValue(entityField, LocalDateTime.now())), ivalues);
+        } else if (entityField.type().equals(FieldType.DECIMAL)) {
+            return function.init(Optional.of(IValueUtils.toIValue(entityField, new BigDecimal("0.0"))), ivalues);
+        } else {
+            return function.init(Optional.of(IValueUtils.toIValue(entityField, 0)), ivalues);
+        }
     }
 
     private long getMinCommitId() {
