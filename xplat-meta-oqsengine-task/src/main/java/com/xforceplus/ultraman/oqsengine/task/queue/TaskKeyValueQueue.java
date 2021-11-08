@@ -140,6 +140,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         this.serializeStrategy = serializeStrategy;
         this.initPoint = initPoint;
         this.name = name;
+        this.anyLock = "anyLock-" + name;
     }
 
     @PostConstruct
@@ -173,7 +174,9 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         } catch (InterruptedException e) {
             // 不做处理
         }
-        ExecutorHelper.shutdownAndAwaitTermination(worker);
+        if (!worker.isTerminated() || !worker.isShutdown()) {
+            ExecutorHelper.shutdownAndAwaitTermination(worker);
+        }
     }
 
     /**

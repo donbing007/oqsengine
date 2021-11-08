@@ -384,6 +384,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         if (logger.isDebugEnabled()) {
                             logger.debug("当前无初始化聚合任务");
                         }
+                        logger.info("当前无初始化聚合任务");
 
                         if (!running) {
                             break;
@@ -405,6 +406,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 logger.debug(String.format("current usingApp is %s", processingPrefix));
                                 logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
+                            logger.info(String.format("current usingApp is %s", processingPrefix));
+                            logger.info(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                         } else {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, processingPrefix);
                             try {
@@ -447,6 +450,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 }
                                 taskQueueMap.remove(prefix);
                                 usingApp.remove(prefix);
+                                logger.info(String.format("================= %s task has been completed, and has removed from appOrderList", prefix));
                             }
                         }
                     } else {

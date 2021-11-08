@@ -56,7 +56,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 }
             }
         }
-        // 当聚合值和操作数据的旧值相同，则需要特殊处理  - 这里已经过滤掉第一条数据的特殊场景
+        // 当聚合值和操作数据的旧值相同，则需要特殊处理  - 这里已经过滤掉初始值为0的特殊场景
         if (agg.get().valueToString().equals(o.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 //属于第二层树的操作，按实际操作方式判断
@@ -97,6 +97,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                                 agg.get().setStringValue(n.get().valueToString());
                                 return agg;
                             }
+                        } else {
+                            agg.get().setStringValue(n.get().valueToString());
+                            return agg;
                         }
                     } else {
                         // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
@@ -207,6 +210,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                 if (entityRefs.size() < 2) {
                     if (entityRefs.size() == 1) {
                         // 只剩下一条数据
+                        if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
+                            return Optional.empty();
+                        }
                         Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());

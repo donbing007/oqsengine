@@ -107,6 +107,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
                                 agg.get().setStringValue(minValue.get().valueToString());
                                 return agg;
                             }
+                        } else {
+                            agg.get().setStringValue(n.get().valueToString());
+                            return agg;
                         }
                     }
                 }
@@ -145,6 +148,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
             // 如果不是删除最小的数据，无需额外判断，直接返回当前聚合值
             return agg;
         }
+
         logger.info("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
                 agg.get().valueToString(), n.get().valueToString(), o.get().valueToString());
         return function.excute(agg, o, n);
@@ -218,6 +222,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 if (entityRefs.size() < 2) {
                     if (entityRefs.size() == 1) {
                         // 只剩下一条数据
+                        if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
+                            return Optional.empty();
+                        }
                         Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
                         logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
                         if (entity.isPresent()) {
@@ -232,7 +239,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         return entity.get().entityValue().getValue(aggregation.getFieldId());
                     }
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
                 logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());

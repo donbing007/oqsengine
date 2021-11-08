@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import java.io.Serializable;
-
 /**
  * 表示entity 的字段信息.
  *
@@ -9,7 +7,7 @@ import java.io.Serializable;
  * @version 0.1 2020/2/22 16:29
  * @since 1.8
  */
-public interface IEntityField extends Comparable<IEntityField>, Serializable {
+public interface IEntityField extends Comparable<IEntityField> {
 
     /**
      * 字段标识.
