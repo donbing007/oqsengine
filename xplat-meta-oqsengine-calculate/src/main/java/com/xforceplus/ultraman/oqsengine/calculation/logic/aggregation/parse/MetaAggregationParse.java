@@ -181,6 +181,7 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setAggregationType(aggregation.getAggregationType());
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
+                                ((Aggregation) f.config().getCalculation()).getRelationId();
                                 nodes.add(ptNode);
                             }
                         }

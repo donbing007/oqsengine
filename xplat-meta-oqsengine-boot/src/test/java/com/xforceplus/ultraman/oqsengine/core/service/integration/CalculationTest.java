@@ -247,14 +247,36 @@ public class CalculationTest extends AbstractContainerExtends {
         operationResult = entityManagementService.build(order1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
                 operationResult.getMessage());
+        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         IEntity orderItem1 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
                 operationResult.getMessage());
+
+        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+
+        Assertions.assertNotEquals(
+          new BigDecimal("0.0"),
+          user.entityValue().getValue("平均消费金额avg").get().getValue()
+        );
+        Assertions.assertNotEquals(
+          new BigDecimal("0.0"),
+          user.entityValue().getValue("最大消费金额max").get().getValue()
+        );
+        Assertions.assertNotEquals(
+          new BigDecimal("0.0"),
+          user.entityValue().getValue("最小消费金额min").get().getValue()
+        );
+        Assertions.assertNotEquals(
+          new BigDecimal("0.0"),
+          user.entityValue().getValue("总消费金额sum").get().getValue()
+        );
+
         IEntity orderItem2 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem2);
-        order1 = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         Assertions.assertNotEquals(
                 new BigDecimal("0.0"),
