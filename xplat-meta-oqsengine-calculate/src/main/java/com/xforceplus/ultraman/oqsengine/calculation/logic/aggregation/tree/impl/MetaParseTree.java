@@ -303,7 +303,7 @@ public class MetaParseTree implements ParseTree, Serializable {
             if (PTNode.checkNode(node)) {
                 node.toSimpleNode();
             } else {
-                throw new RuntimeException("can not transfer to simpleNode, please check node.");
+                throw new RuntimeException("can not transfer to simpleNode, please ensure nodeInfo is complete.");
             }
         });
         return this;
