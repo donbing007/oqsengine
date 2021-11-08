@@ -172,6 +172,14 @@ public class AggregationTaskRunner implements TaskRunner {
 
                             // ivalus包含完整明细数据被聚合字段value，可能占用较大内存
                             if (ivalues.size() <= 0) {
+
+                                if (entityField.type().equals(FieldType.DATETIME)) {
+                                    aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, LocalDateTime.MIN));
+                                } else if (entityField.type().equals(FieldType.DECIMAL)) {
+                                    aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, new BigDecimal("0.0")));
+                                } else {
+                                    aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, 0));
+                                }
                                 aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(aggEntityField, aggEntityField.type().equals(FieldType.DATETIME) ? LocalDateTime.MIN : 0));
                                 masterStorage.replace(aggMainEntity.get(), entityClass);
                                 break;
