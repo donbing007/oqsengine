@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 解析树节点.
@@ -19,6 +21,7 @@ import java.util.List;
  * @date: 2021/8/30 14:49
  */
 public class PTNode implements Serializable {
+    private static Logger logger = LoggerFactory.getLogger(PTNode.class);
     /**
      * 根节点标识.
      */
@@ -102,6 +105,7 @@ public class PTNode implements Serializable {
     private PTNode preNode;
 
     private AggregationType aggregationType;
+
 
     public AggregationType getAggregationType() {
         return aggregationType;
@@ -271,14 +275,19 @@ public class PTNode implements Serializable {
      */
     public static boolean checkNode(PTNode node) {
         if (node.getEntityClass() == null) {
+            logger.error("===============entityclass info can not be empty");
             return false;
         } else if (node.getEntityField() == null) {
+            logger.error("================entityfield info can not be empty");
             return false;
         } else if (node.getAggEntityClass() == null) {
+            logger.error("===============aggEntityClass info can not be empty");
             return false;
         } else if (node.getAggEntityField() == null) {
+            logger.error("=====================aggEntityField info can not be empty");
             return false;
         } else if (node.getRelationship() == null) {
+            logger.error("=========================relationship info can not be empty");
             return false;
         }
         return true;
