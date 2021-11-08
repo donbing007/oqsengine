@@ -199,6 +199,7 @@ public class MetaAggregationParse implements AggregationParse {
                 aggFieldIds.addAll(longs.get());
             }
         }
+        parseTrees.forEach(ParseTree::toSimpleTree);
         aggregationTaskCoordinator.addInitAppInfo(appId + "-" + version, parseTrees);
     }
 

@@ -297,6 +297,18 @@ public class MetaParseTree implements ParseTree, Serializable {
         return parseTree;
     }
 
+    @Override
+    public ParseTree toSimpleTree() {
+        toList().forEach(node -> {
+            if (PTNode.checkNode(node)) {
+                node.toSimpleNode();
+            } else {
+                throw new RuntimeException("can not transfer to simpleNode, please check node.");
+            }
+        });
+        return this;
+    }
+
     /**
      * 根据对象id和字段id找到被聚合的对象信息.
      *

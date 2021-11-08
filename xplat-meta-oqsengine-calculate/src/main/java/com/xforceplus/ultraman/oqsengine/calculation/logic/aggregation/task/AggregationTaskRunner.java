@@ -4,13 +4,18 @@ import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.Aggreg
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -57,7 +62,12 @@ public class AggregationTaskRunner implements TaskRunner {
     @Resource
     private IndexStorage indexStorage;
 
+    @Resource
+    private MetaManager metaManager;
+
     private final long taskStopGapTimeMs = 500L;
+
+    private final int retryCount = 3;
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
@@ -75,30 +85,58 @@ public class AggregationTaskRunner implements TaskRunner {
         DataIterator<OriginalEntity> iterator;
         int count = 0;
         try {
-            iterator = masterStorage.iterator(ptNode.getEntityClass(), 0, System.currentTimeMillis(), 0, 1);
+            if (!metaManager.load(ptNode.getEntityClassRef()).isPresent()) {
+                throw new RuntimeException(String.format("entityClass not found by entityClassId %s", ptNode.getEntityClassRef().getId()));
+            }
+            IEntityClass entityClass = metaManager.load(ptNode.getEntityClassRef()).get();
+
+            if (!metaManager.load(ptNode.getAggEntityClassRef()).isPresent()) {
+                throw new RuntimeException(String.format("aggEntityClass not found by entityClassId %s", ptNode.getEntityClassRef().getId()));
+            }
+            IEntityClass aggEntityClass = metaManager.load(ptNode.getAggEntityClassRef()).get();
+
+            if (entityClass.relationship().stream().filter(s -> s.getId() == ptNode.getRelationId()).collect(Collectors.toList()).size() <= 0) {
+                throw new RuntimeException(String.format("not found relation by relationId %s", ptNode.getRelationId()));
+            }
+            Relationship relationship = entityClass.relationship().stream().filter(s -> s.getId() == ptNode.getRelationId()).collect(Collectors.toList()).get(0);
+
+            if (!entityClass.field(ptNode.getEntityFieldId()).isPresent()) {
+                throw new RuntimeException(String.format("entityField not found by entityClassId %s", ptNode.getEntityFieldId()));
+            }
+            IEntityField entityField = entityClass.field(ptNode.getEntityFieldId()).get();
+
+            if (!aggEntityClass.field(ptNode.getAggEntityFieldId()).isPresent()) {
+                throw new RuntimeException(String.format("aggEntityField not found by entityClassId %s", ptNode.getAggEntityFieldId()));
+            }
+            IEntityField aggEntityField = aggEntityClass.field(ptNode.getAggEntityFieldId()).get();
+
+
+
+            iterator = masterStorage.iterator(entityClass, 0, System.currentTimeMillis(), 0, 1);
             while (iterator.hasNext()) {
-                while (true) {
+                // 获取主信息id，得到entity信息
+                OriginalEntity originalEntity = iterator.next();
+                int retry = 0;
+                while (retry < retryCount) {
                     try {
-                        // 获取主信息id，得到entity信息
-                        OriginalEntity originalEntity = iterator.next();
                         logger.info(String.format("start agg entity: %s", originalEntity.toString()));
-                        Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), ptNode.getEntityClass());
+                        Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), entityClass);
                         if (aggMainEntity.isPresent()) {
                             if (logger.isInfoEnabled()) {
                                 logger.debug(String.format("start aggregate , entityClassId is %s , entityId is %s ", aggMainEntity.get().entityClassRef().getId(), aggMainEntity.get().id()));
                             }
                             //构造查询被聚合信息条件
-                            Condition condition = new Condition(ptNode.getRelationship().getEntityField(), ConditionOperator.EQUALS, new LongValue(ptNode.getRelationship().getEntityField(), aggMainEntity.get().id()));
+                            Condition condition = new Condition(relationship.getEntityField(), ConditionOperator.EQUALS, new LongValue(relationship.getEntityField(), aggMainEntity.get().id()));
                             Conditions conditions = ptNode.getConditions().addAnd(condition);
                             //获取未提交最小commitId号
                             long minUnSyncCommitId = getMinCommitId();
 
                             // 获取主库符合条件数据
-                            Collection<EntityRef> entityRefs = masterStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
+                            Collection<EntityRef> entityRefs = masterStorage.select(conditions, aggEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withCommitId(minUnSyncCommitId).build());
                             Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
                             if (logger.isInfoEnabled()) {
-                                logger.debug(String.format("select by conditions , entityClassId is %s, mainEntityId is %s, result id list is %s ", ptNode.getAggEntityClass().id(), aggMainEntity.get().id(), ids));
+                                logger.debug(String.format("masterStorage select by conditions , entityClassId is %s, mainEntityId is %s, result id list is %s ", aggEntityClass.id(), aggMainEntity.get().id(), ids));
                             }
                             entityRefs = null;
 
@@ -106,7 +144,7 @@ public class AggregationTaskRunner implements TaskRunner {
                             //按照一页1000条数据查询索引库
                             long defaultPageSize = 1000;
                             Page page = new Page(1L, defaultPageSize);
-                            Collection<EntityRef> indexEntityRefs = indexStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
+                            Collection<EntityRef> indexEntityRefs = indexStorage.select(conditions, aggEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
                             Set<Long> indexIds = indexEntityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
                             indexIds.addAll(ids);
@@ -115,39 +153,40 @@ public class AggregationTaskRunner implements TaskRunner {
                             // 得到所有聚合明细
                             Collection<IEntity> entities = masterStorage.selectMultiple(masterIds);
                             //获取符合条件的所有明细值
-                            List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(ptNode.getAggEntityField().id())).collect(Collectors.toList());
+                            List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(aggEntityField.id())).collect(Collectors.toList());
                             entities = null;
 
                             // 数据量较大，分批将ivalue加载到内存，释放entitys
                             if (page.getTotalCount() > defaultPageSize) {
                                 while (page.hasNextPage()) {
                                     page.getNextPage();
-                                    Collection<EntityRef> refCollection = indexStorage.select(conditions, ptNode.getAggEntityClass(), SelectConfig.Builder.anSelectConfig().withSort(
+                                    Collection<EntityRef> refCollection = indexStorage.select(conditions, aggEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                                             Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
                                     entities = masterStorage.selectMultiple(refCollection.stream().map(EntityRef::getId).collect(Collectors.toSet())
                                             .stream().mapToLong(Long::longValue).toArray());
-                                    ivalues.addAll(entities.stream().map(i -> i.entityValue().getValue(ptNode.getAggEntityField().id())).collect(Collectors.toList()));
+                                    ivalues.addAll(entities.stream().map(i -> i.entityValue().getValue(aggEntityField.id())).collect(Collectors.toList()));
                                     entities = null;
                                 }
                             }
 
                             // ivalus包含完整明细数据被聚合字段value，可能占用较大内存
                             if (ivalues.size() <= 0) {
-                                aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(ptNode.getEntityField(), ptNode.getEntityField().type().equals(FieldType.DATETIME) ? LocalDateTime.MIN : 0));
-                                masterStorage.replace(aggMainEntity.get(), ptNode.getEntityClass());
+                                aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(aggEntityField, aggEntityField.type().equals(FieldType.DATETIME) ? LocalDateTime.MIN : 0));
+                                masterStorage.replace(aggMainEntity.get(), entityClass);
                                 break;
                             }
 
                             logger.info(String.format("doAgg begin, ivalues is: %s, ptNode is: %s", ivalues, ptNode));
-                            Optional<IValue> aggMainIValue = doAgg(ivalues, ptNode);
-                            logger.info(String.format("doAgg result is: "), aggMainIValue.get().toString());
-                            if (updateAgg(aggMainIValue, ptNode, aggMainEntity)) {
+                            Optional<IValue> aggMainIValue = doAgg(ivalues, ptNode.getAggregationType(), entityField);
+                            logger.info(String.format("doAgg result is: %s", aggMainIValue.get().toString()));
+                            if (updateAgg(aggMainIValue, entityClass, aggMainEntity)) {
                                 break;
                             } else {
                                 LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
                             }
                         }
                     } catch (Exception e) {
+                        retry++;
                         logger.error(e.getMessage(), e);
                     }
                 }
@@ -159,18 +198,18 @@ public class AggregationTaskRunner implements TaskRunner {
                 }
 
             }
-            logger.info(String.format("==============entityClass %s entityField %s has doAggInit complete.", ptNode.getEntityClass().id(), ptNode.getEntityField().id()));
+            logger.info(String.format("==============entityClass %s entityField %s has doAggInit complete.", entityClass.id(), entityField.id()));
         } catch (SQLException throwables) {
             logger.error(throwables.getMessage(), throwables);
         }
     }
 
-    private boolean updateAgg(Optional<IValue> ivalue, PTNode ptNode, Optional<IEntity> entity) {
+    private boolean updateAgg(Optional<IValue> ivalue, IEntityClass entityClass, Optional<IEntity> entity) {
         // 乐观锁更新聚合信息,不成功会重试
         if (ivalue.isPresent()) {
             entity.get().entityValue().addValue(ivalue.get());
             try {
-                masterStorage.replace(entity.get(), ptNode.getEntityClass());
+                masterStorage.replace(entity.get(), entityClass);
                 return true;
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);
@@ -180,11 +219,11 @@ public class AggregationTaskRunner implements TaskRunner {
         return false;
     }
 
-    private Optional<IValue> doAgg(List<Optional<IValue>> ivalues, PTNode ptNode) {
+    private Optional<IValue> doAgg(List<Optional<IValue>> ivalues, AggregationType aggregationType, IEntityField entityField) {
         // 工厂获取聚合函数，执行运算
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(ptNode.getAggregationType());
+        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregationType);
 
-        return function.init(Optional.of(IValueUtils.toIValue(ptNode.getEntityField(), ptNode.getEntityField().type().equals(FieldType.DATETIME) ? LocalDateTime.now() : 0)), ivalues);
+        return function.init(Optional.of(IValueUtils.toIValue(entityField, entityField.type().equals(FieldType.DATETIME) ? LocalDateTime.now() : 0)), ivalues);
     }
 
     private long getMinCommitId() {

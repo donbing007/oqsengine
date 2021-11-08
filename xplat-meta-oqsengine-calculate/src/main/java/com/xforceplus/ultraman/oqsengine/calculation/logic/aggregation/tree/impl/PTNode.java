@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.imp
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
@@ -71,6 +72,31 @@ public class PTNode implements Serializable {
     private List<PTNode> nextNodes;
 
     /**
+     * 节点对象ref.
+     */
+    private EntityClassRef entityClassRef;
+
+    /**
+     * 被聚合节点对象ref.
+     */
+    private EntityClassRef aggEntityClassRef;
+
+    /**
+     * 节点字段id.
+     */
+    private long entityFieldId;
+
+    /**
+     * 被聚合节点字段id.
+     */
+    private long aggEntityFieldId;
+
+    /**
+     * 关系id.
+     */
+    private long relationId;
+
+    /**
      * 父节点.
      */
     private PTNode preNode;
@@ -117,7 +143,13 @@ public class PTNode implements Serializable {
         this.entityField = entityField;
     }
 
+    /**
+     * emptyConditions处理.
+     */
     public Conditions getConditions() {
+        if (conditions == null) {
+            conditions = Conditions.buildEmtpyConditions();
+        }
         return conditions;
     }
 
@@ -175,6 +207,81 @@ public class PTNode implements Serializable {
 
     public PTNode() {
         nextNodes = new ArrayList<>();
+    }
+
+    public long getRelationId() {
+        return relationId;
+    }
+
+    public void setRelationId(long relationId) {
+        this.relationId = relationId;
+    }
+
+    public EntityClassRef getEntityClassRef() {
+        return entityClassRef;
+    }
+
+    public void setEntityClassRef(EntityClassRef entityClassRef) {
+        this.entityClassRef = entityClassRef;
+    }
+
+    public EntityClassRef getAggEntityClassRef() {
+        return aggEntityClassRef;
+    }
+
+    public void setAggEntityClassRef(EntityClassRef aggEntityClassRef) {
+        this.aggEntityClassRef = aggEntityClassRef;
+    }
+
+    public long getEntityFieldId() {
+        return entityFieldId;
+    }
+
+    public void setEntityFieldId(long entityFieldId) {
+        this.entityFieldId = entityFieldId;
+    }
+
+    public long getAggEntityFieldId() {
+        return aggEntityFieldId;
+    }
+
+    public void setAggEntityFieldId(long aggEntityFieldId) {
+        this.aggEntityFieldId = aggEntityFieldId;
+    }
+
+    /**
+     * checkNode成功后才可以进行转换.
+     */
+    public PTNode toSimpleNode() {
+        this.entityClassRef = entityClass.ref();
+        this.entityClass = null;
+        this.aggEntityClassRef = aggEntityClass.ref();
+        this.aggEntityClass = null;
+        this.entityFieldId = entityField.id();
+        this.entityField = null;
+        this.aggEntityFieldId = aggEntityField.id();
+        this.aggEntityField = null;
+        this.relationId = relationship.getId();
+        this.relationship = null;
+        return this;
+    }
+
+    /**
+     * 检查必要属性不为空.
+     */
+    public static boolean checkNode(PTNode node) {
+        if (node.getEntityClass() == null) {
+            return false;
+        } else if (node.getEntityField() == null) {
+            return false;
+        } else if (node.getAggEntityClass() == null) {
+            return false;
+        } else if (node.getAggEntityField() == null) {
+            return false;
+        } else if (node.getRelationship() == null) {
+            return false;
+        }
+        return true;
     }
 
     @Override

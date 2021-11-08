@@ -17,7 +17,7 @@ import java.util.function.Function;
  * @author xujia 2021/2/18
  * @since 1.8
  */
-public class Relationship implements Serializable {
+public class Relationship {
 
     /**
      * 关系类型.

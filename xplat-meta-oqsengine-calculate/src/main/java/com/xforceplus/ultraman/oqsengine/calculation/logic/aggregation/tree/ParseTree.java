@@ -80,4 +80,7 @@ public interface ParseTree extends Serializable {
     ParseTree buildTree(List<IEntityClass> entityClasses, IEntityClass rootEntityClass, IEntityField rootEntityField,
                         IEntityClass aggEntityClass, IEntityField aggEntityField);
 
+
+    ParseTree toSimpleTree();
+
 }
