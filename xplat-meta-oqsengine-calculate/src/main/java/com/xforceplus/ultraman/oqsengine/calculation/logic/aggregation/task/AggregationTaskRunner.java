@@ -226,6 +226,7 @@ public class AggregationTaskRunner implements TaskRunner {
             entity.get().entityValue().addValue(ivalue.get());
             try {
                 masterStorage.replace(entity.get(), entityClass);
+                logger.info("++++++++++++++++++++++ replace entity with " + entity.get().toString());
                 return true;
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);

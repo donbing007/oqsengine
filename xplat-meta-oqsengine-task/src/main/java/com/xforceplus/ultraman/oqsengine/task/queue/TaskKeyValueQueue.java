@@ -174,7 +174,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         } catch (InterruptedException e) {
             // 不做处理
         }
-        if (!worker.isTerminated()) {
+        if (!worker.isTerminated() || !worker.isShutdown()) {
             ExecutorHelper.shutdownAndAwaitTermination(worker);
         }
     }
