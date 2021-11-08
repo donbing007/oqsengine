@@ -144,7 +144,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
                 EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
             Assertions.assertTrue(result);
         } catch (Exception e) {
-            Assertions.fail();
+            Assertions.fail(e.getMessage());
         } finally {
             if (null != in) {
                 in.close();

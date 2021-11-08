@@ -112,18 +112,15 @@ public class PageTest {
     public void testNotReady() {
         Page page = new Page(1, 10);
 
-        try {
-            page.getNextPage();
-            Assertions.fail("Not ready, but did not throw an exception.");
-        } catch (IllegalStateException ex) {
-            ex.printStackTrace();
-        }
-        try {
-            page.getAppointPage(1);
-            Assertions.fail("Not ready, but did not throw an exception.");
-        } catch (IllegalStateException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> page.getNextPage()
+        );
+
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> page.getAppointPage(1)
+        );
     }
 
     /**
@@ -143,13 +140,11 @@ public class PageTest {
         Assertions.assertEquals(100, page.getTotalCount());
         Assertions.assertEquals(1, page.getPageCount());
 
-        page = new Page(1, 10);
-        try {
-            page.setVisibleTotalCount(-200);
-            Assertions.fail("An exception was expected to be thrown, but it didn't.");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        Page usePage = new Page(1, 10);
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> usePage.setVisibleTotalCount(-200)
+        );
 
         page = new Page(4, 199);
         page.setVisibleTotalCount(200);
