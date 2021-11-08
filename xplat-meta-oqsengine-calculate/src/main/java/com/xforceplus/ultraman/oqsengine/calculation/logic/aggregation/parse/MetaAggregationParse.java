@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -171,12 +170,6 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setAggregationType(aggregation.getAggregationType());
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
-                                List<Relationship> collect = entityClass.relationship().stream().filter(s -> s.getId() == ((Aggregation) f.config().getCalculation()).getRelationId()).collect(Collectors.toList());
-                                if (collect.size() == 1) {
-                                    ptNode.setRelationship(collect.get(0));
-                                } else {
-                                    logger.error(String.format("not found unique relation by relationId: %s", ((Aggregation) f.config().getCalculation()).getRelationId()));
-                                }
                                 nodes.add(ptNode);
                             } else {
                                 //放置root节点
@@ -188,12 +181,7 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setAggregationType(aggregation.getAggregationType());
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
-                                List<Relationship> collect = entityClass.relationship().stream().filter(s -> s.getId() == ((Aggregation) f.config().getCalculation()).getRelationId()).collect(Collectors.toList());
-                                if (collect.size() == 1) {
-                                    ptNode.setRelationship(collect.get(0));
-                                } else {
-                                    logger.error(String.format("not found unique relation by relationId: %s", ((Aggregation) f.config().getCalculation()).getRelationId()));
-                                }
+                                ((Aggregation) f.config().getCalculation()).getRelationId();
                                 nodes.add(ptNode);
                             }
                         }
@@ -212,9 +200,6 @@ public class MetaAggregationParse implements AggregationParse {
                 aggFieldIds.addAll(longs.get());
             }
         }
-        logger.info(appId + "=================start transfer to SimpleTree");
-        parseTrees.forEach(ParseTree::toSimpleTree);
-        logger.info(appId + "===============parseTree size is : " + parseTrees.size());
         aggregationTaskCoordinator.addInitAppInfo(appId + "-" + version, parseTrees);
     }
 
