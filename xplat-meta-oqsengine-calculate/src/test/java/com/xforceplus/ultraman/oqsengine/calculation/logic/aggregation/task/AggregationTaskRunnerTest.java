@@ -3,9 +3,12 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -100,12 +103,13 @@ public class AggregationTaskRunnerTest {
         .withRelations(
             Arrays.asList(
                 Relationship.Builder.anRelationship()
-                    .withId(Long.MAX_VALUE - 1)
+                    .withId(1)
                     .withCode(Long.toString(Long.MAX_VALUE))
                     .withLeftEntityClassId(targetEntityClassId)
                     .withRightEntityClassId(aggEntityClassId)
                     .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                     .withStrong(true)
+                    .withEntityField(aggField)
                     .withBelongToOwner(false)
                     .withIdentity(true)
                     .build()
@@ -122,6 +126,7 @@ public class AggregationTaskRunnerTest {
     private MasterStorage masterStorage;
     private long avgEntityId;
     private Map<Long, List<EntityRef>> indexData;
+    private MetaManager metaManager;
 
     /**
      * 初始化.
@@ -159,6 +164,9 @@ public class AggregationTaskRunnerTest {
         masterStorageField.setAccessible(true);
         masterStorageField.set(runner, masterStorage);
 
+        Field metaManagerField = runner.getClass().getDeclaredField("metaManager");
+        metaManagerField.setAccessible(true);
+        metaManagerField.set(runner, new MockMetaManager());
 
         Field indexStorageField = runner.getClass().getDeclaredField("indexStorage");
         indexStorageField.setAccessible(true);
@@ -188,7 +196,7 @@ public class AggregationTaskRunnerTest {
     public void run() throws Exception {
         long size = 1000;
         buildData(size);
-        runner.run(new AggregationTaskCoordinator(), new AggregationTask("testAgg", new MetaParseTree(ptNode)));
+        runner.run(new AggregationTaskCoordinator(), new AggregationTask("testAgg", new MetaParseTree(ptNode).toSimpleTree()));
         Optional<IEntity> entity = masterStorage.selectOne(avgEntityId);
         if (entity.isPresent()) {
             Long value = (Long) entity.get().entityValue().getValue(targetFieldId).get().getValue();
@@ -366,6 +374,52 @@ public class AggregationTaskRunnerTest {
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
             return indexData.get(entityClass.id());
+        }
+    }
+
+    class MockMetaManager implements MetaManager {
+
+        @Override
+        public Optional<IEntityClass> load(long id) {
+            if (id == aggEntityClassId) {
+                return Optional.ofNullable(aggEntityClass);
+            }
+            return Optional.ofNullable(targetEntityClass);
+        }
+
+        @Override
+        public Optional<IEntityClass> load(long id, String profile) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<IEntityClass> load(EntityClassRef ref) {
+            return load(ref.getId());
+        }
+
+        @Override
+        public Optional<IEntityClass> loadHistory(long id, int version) {
+            return Optional.empty();
+        }
+
+        @Override
+        public int need(String appId, String env) {
+            return 0;
+        }
+
+        @Override
+        public void invalidateLocal() {
+
+        }
+
+        @Override
+        public boolean dataImport(String appId, String env, int version, String content) {
+            return false;
+        }
+
+        @Override
+        public Optional<MetaMetrics> showMeta(String appId) throws Exception {
+            return Optional.empty();
         }
     }
 

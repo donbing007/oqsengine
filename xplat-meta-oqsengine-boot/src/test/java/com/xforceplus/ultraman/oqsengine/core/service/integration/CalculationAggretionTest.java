@@ -148,7 +148,7 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
    * 测试目标结构如下.
    * <br>
    * 用户(用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
-   * ..|---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 用户编号lookup,订单项平均价格formula, 订单用户关联)
+   * ..|---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 总数量, 最大数量, 最小数量, 平均数量, 订单项平均价格formula, 订单用户关联)
    * .......|---订单项 (单号lookup, 物品名称, 金额, 订单项订单关联) <br>
    * <br>
    */

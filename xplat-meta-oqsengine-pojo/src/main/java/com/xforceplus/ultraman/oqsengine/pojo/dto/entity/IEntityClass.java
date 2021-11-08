@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
-public interface IEntityClass extends Serializable {
+public interface IEntityClass {
 
     /**
      * 获得对象的id.
