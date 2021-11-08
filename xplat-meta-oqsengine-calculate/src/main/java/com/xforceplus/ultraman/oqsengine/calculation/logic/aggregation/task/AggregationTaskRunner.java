@@ -72,7 +72,9 @@ public class AggregationTaskRunner implements TaskRunner {
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
-        logger.info(String.format("start agg init task: %s", task.toString()));
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("start agg init task: %s", task.toString()));
+        }
         // 执行聚合初始化，step 1: 查询被聚合  Step 2: 调用聚合函数  Step 3: 乐观锁更新
         AggregationTask aggregationTask = (AggregationTask) task;
         List<PTNode> ptNodes = aggregationTask.getParseTree().toList();
@@ -126,7 +128,9 @@ public class AggregationTaskRunner implements TaskRunner {
                 int retry = 0;
                 while (retry < retryCount) {
                     try {
-                        logger.info(String.format("start agg entity: %s", originalEntity.toString()));
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(String.format("start agg entity: %s", originalEntity.toString()));
+                        }
                         Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), entityClass);
                         if (aggMainEntity.isPresent()) {
                             if (logger.isInfoEnabled()) {
@@ -162,12 +166,12 @@ public class AggregationTaskRunner implements TaskRunner {
                             long[] masterIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
                             if (ptNode.getAggregationType() == AggregationType.COUNT) {
-                                if (entityClass.id() == 1439054602486120449L) {
-                                    logger.info("------------------- count init");
+                                if (entityClass.id() == 1457261799308005378L) {
+                                    logger.info("-------------------------------------------------------------------------- count init");
                                 }
                                 if (updateAgg(Optional.of(IValueUtils.toIValue(entityField, masterIds.length)), entityClass, aggMainEntity)) {
-                                    if (entityClass.id() == 1439054602486120449L) {
-                                        logger.info("----------------------------" + IValueUtils.toIValue(entityField, masterIds.length).valueToString());
+                                    if (entityClass.id() == 1457261799308005378L) {
+                                        logger.info("----------------------------------------------------------------" + IValueUtils.toIValue(entityField, masterIds.length).valueToString());
                                     }
                                     break;
                                 } else {
@@ -241,10 +245,9 @@ public class AggregationTaskRunner implements TaskRunner {
             entity.get().entityValue().addValue(ivalue.get());
             try {
                 masterStorage.replace(entity.get(), entityClass);
-                if (entityClass.id() == 1439054602486120449L) {
+                if (entityClass.id() == 1457261799308005378L) {
                     logger.info("----------------------------" + entity.get().entityValue().toString());
                 }
-                logger.info("++++++++++++++++++++++ replace entity with " + entity.get().entityValue().toString());
                 return true;
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);
