@@ -140,6 +140,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         this.serializeStrategy = serializeStrategy;
         this.initPoint = initPoint;
         this.name = name;
+        this.anyLock = "anyLock-" + name;
     }
 
     @PostConstruct
