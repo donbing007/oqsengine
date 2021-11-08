@@ -115,11 +115,13 @@ public class MetaManagerConfiguration {
 
 
     @Bean
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public AggregationEventBuilder aggregationEventBuilder() {
         return new AggregationEventBuilder();
     }
 
     @Bean("entityClassFormatHandler")
+    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public EntityClassFormatHandler entityClassFormatHandler() {
         return new DefaultEntityClassFormatHandler();
     }
