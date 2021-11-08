@@ -161,6 +161,15 @@ public class AggregationTaskRunner implements TaskRunner {
                             indexIds.addAll(ids);
                             long[] masterIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
+                            if (ptNode.getAggregationType() == AggregationType.COUNT) {
+                                if (updateAgg(Optional.of(IValueUtils.toIValue(entityField, masterIds.length)), entityClass, aggMainEntity)) {
+                                    break;
+                                } else {
+                                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
+                                }
+                            }
+
+
                             // 得到所有聚合明细
                             Collection<IEntity> entities = masterStorage.selectMultiple(masterIds);
                             //获取符合条件的所有明细值
@@ -226,7 +235,7 @@ public class AggregationTaskRunner implements TaskRunner {
             entity.get().entityValue().addValue(ivalue.get());
             try {
                 masterStorage.replace(entity.get(), entityClass);
-                logger.info("++++++++++++++++++++++ replace entity with " + entity.get().toString());
+                logger.info("++++++++++++++++++++++ replace entity with " + entity.get().entityValue().toString());
                 return true;
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);
