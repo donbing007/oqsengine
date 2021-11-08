@@ -305,7 +305,7 @@ public class MetaParseTree implements ParseTree, Serializable {
                 node.toSimpleNode();
                 logger.info("===========transfer to simpleNode complete");
             } else {
-                logger.error("can not transfer to simpleNode, please ensure nodeInfo is complete.");
+                logger.error("=============can not transfer to simpleNode, please ensure nodeInfo is complete.");
                 throw new RuntimeException("can not transfer to simpleNode, please ensure nodeInfo is complete.");
             }
         });
