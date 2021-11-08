@@ -87,27 +87,33 @@ public class AggregationTaskRunner implements TaskRunner {
         int count = 0;
         try {
             if (!metaManager.load(ptNode.getEntityClassRef()).isPresent()) {
-                throw new RuntimeException(String.format("entityClass not found by entityClassId %s", ptNode.getEntityClassRef().getId()));
+                throw new RuntimeException(String.format("entityClass not found by entityClassId %s",
+                        ptNode.getEntityClassRef().getId()));
             }
             IEntityClass entityClass = metaManager.load(ptNode.getEntityClassRef()).get();
 
             if (!metaManager.load(ptNode.getAggEntityClassRef()).isPresent()) {
-                throw new RuntimeException(String.format("aggEntityClass not found by entityClassId %s", ptNode.getEntityClassRef().getId()));
+                throw new RuntimeException(String.format("aggEntityClass not found by entityClassId %s",
+                           ptNode.getEntityClassRef().getId()));
             }
             IEntityClass aggEntityClass = metaManager.load(ptNode.getAggEntityClassRef()).get();
 
-            if (entityClass.relationship().stream().filter(s -> s.getId() == ptNode.getRelationId()).collect(Collectors.toList()).size() <= 0) {
+            if (entityClass.relationship().stream().filter(s -> s.getId() == ptNode.getRelationId())
+                    .collect(Collectors.toList()).size() <= 0) {
                 throw new RuntimeException(String.format("not found relation by relationId %s", ptNode.getRelationId()));
             }
-            Relationship relationship = entityClass.relationship().stream().filter(s -> s.getId() == ptNode.getRelationId()).collect(Collectors.toList()).get(0);
+            Relationship relationship = entityClass.relationship().stream().filter(s ->
+                    s.getId() == ptNode.getRelationId()).collect(Collectors.toList()).get(0);
 
             if (!entityClass.field(ptNode.getEntityFieldId()).isPresent()) {
-                throw new RuntimeException(String.format("entityField not found by entityClassId %s", ptNode.getEntityFieldId()));
+                throw new RuntimeException(String.format("entityField not found by entityClassId %s",
+                        ptNode.getEntityFieldId()));
             }
             IEntityField entityField = entityClass.field(ptNode.getEntityFieldId()).get();
 
             if (!aggEntityClass.field(ptNode.getAggEntityFieldId()).isPresent()) {
-                throw new RuntimeException(String.format("aggEntityField not found by entityClassId %s", ptNode.getAggEntityFieldId()));
+                throw new RuntimeException(String.format("aggEntityField not found by entityClassId %s",
+                        ptNode.getAggEntityFieldId()));
             }
             IEntityField aggEntityField = aggEntityClass.field(ptNode.getAggEntityFieldId()).get();
 
@@ -124,10 +130,14 @@ public class AggregationTaskRunner implements TaskRunner {
                         Optional<IEntity> aggMainEntity = masterStorage.selectOne(originalEntity.getId(), entityClass);
                         if (aggMainEntity.isPresent()) {
                             if (logger.isInfoEnabled()) {
-                                logger.debug(String.format("start aggregate , entityClassId is %s , entityId is %s ", aggMainEntity.get().entityClassRef().getId(), aggMainEntity.get().id()));
+                                logger.debug(String.format("start aggregate , entityClassId is %s , entityId is %s ",
+                                        aggMainEntity.get().entityClassRef().getId(),
+                                        aggMainEntity.get().id()));
                             }
                             //构造查询被聚合信息条件
-                            Condition condition = new Condition(relationship.getEntityField(), ConditionOperator.EQUALS, new LongValue(relationship.getEntityField(), aggMainEntity.get().id()));
+                            Condition condition = new Condition(relationship.getEntityField(),
+                                    ConditionOperator.EQUALS,
+                                    new LongValue(relationship.getEntityField(), aggMainEntity.get().id()));
                             Conditions conditions = ptNode.getConditions().addAnd(condition);
                             //获取未提交最小commitId号
                             long minUnSyncCommitId = getMinCommitId();
@@ -170,18 +180,15 @@ public class AggregationTaskRunner implements TaskRunner {
                                 }
                             }
 
-                            // ivalus包含完整明细数据被聚合字段value，可能占用较大内存
+                            // ivalus包含完整明细数据被聚合字段value，可能占用较大内存,只更新decimal和long类型
                             if (ivalues.size() <= 0) {
-
-                                if (entityField.type().equals(FieldType.DATETIME)) {
-                                    aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, LocalDateTime.MIN));
-                                } else if (entityField.type().equals(FieldType.DECIMAL)) {
+                                if (entityField.type().equals(FieldType.DECIMAL)) {
                                     aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, new BigDecimal("0.0")));
+                                    masterStorage.replace(aggMainEntity.get(), entityClass);
                                 } else {
                                     aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(entityField, 0));
+                                    masterStorage.replace(aggMainEntity.get(), entityClass);
                                 }
-                                aggMainEntity.get().entityValue().addValue(IValueUtils.toIValue(aggEntityField, aggEntityField.type().equals(FieldType.DATETIME) ? LocalDateTime.MIN : 0));
-                                masterStorage.replace(aggMainEntity.get(), entityClass);
                                 break;
                             }
 
