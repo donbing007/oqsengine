@@ -162,7 +162,13 @@ public class AggregationTaskRunner implements TaskRunner {
                             long[] masterIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
                             if (ptNode.getAggregationType() == AggregationType.COUNT) {
+                                if (entityClass.id() == 1439054602486120449L) {
+                                    logger.info("------------------- count init");
+                                }
                                 if (updateAgg(Optional.of(IValueUtils.toIValue(entityField, masterIds.length)), entityClass, aggMainEntity)) {
+                                    if (entityClass.id() == 1439054602486120449L) {
+                                        logger.info("----------------------------" + IValueUtils.toIValue(entityField, masterIds.length).valueToString());
+                                    }
                                     break;
                                 } else {
                                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
@@ -235,6 +241,9 @@ public class AggregationTaskRunner implements TaskRunner {
             entity.get().entityValue().addValue(ivalue.get());
             try {
                 masterStorage.replace(entity.get(), entityClass);
+                if (entityClass.id() == 1439054602486120449L) {
+                    logger.info("----------------------------" + entity.get().entityValue().toString());
+                }
                 logger.info("++++++++++++++++++++++ replace entity with " + entity.get().entityValue().toString());
                 return true;
             } catch (SQLException e) {
