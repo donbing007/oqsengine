@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toSet;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -23,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -48,8 +46,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     private CommitIdStatusService commitIdStatusService;
 
-    private Function<Sort[], Comparator<EntityRef>> comparatorSupplier;
-
     /**
      * 构造一个联合查询.
      *
@@ -61,32 +57,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         ConditionsSelectStorage syncedStorage) {
         this.unSyncStorage = unSyncStorage;
         this.syncedStorage = syncedStorage;
-
-        // 比较器构建.
-        comparatorSupplier = (sorts) -> {
-            Comparator<EntityRef> comparator = null;
-
-            for (int i = 0; i < sorts.length; i++) {
-                Sort sort = sorts[i];
-                int finalI = i;
-                Comparator<EntityRef> c =
-                    Comparator.comparing(r -> r.getSortValue(finalI).orElseGet(null), (v1, v2) -> {
-                        FieldType type = sort.getField().type();
-                        return type.compareFromStringValue(v1, v2);
-                    });
-                if (sort.isDes()) {
-                    c = c.reversed();
-                }
-
-                if (comparator == null) {
-                    comparator = c;
-                } else {
-                    comparator.thenComparing(c);
-                }
-            }
-
-            return comparator;
-        };
     }
 
     public void setTransactionManager(
@@ -235,17 +205,94 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }).filter(s -> !s.isOutOfOrder()).toArray(Sort[]::new);
     }
 
-    private Stream<EntityRef> mergeToStream(
-        Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs,
-        Sort[] sorts) {
-        Stream<EntityRef> refStream = Stream.concat(masterRefs.stream(), indexRefs.stream());
+    // 不处理重复记录,只合并多个结果列表并按规则排序.
+    private Stream<EntityRef> mergeToStream(Collection<EntityRef> unsynRefs, Collection<EntityRef> synedRefs,
+                                            Sort[] sorts) {
+        if (unsynRefs.isEmpty()) {
+            return synedRefs.stream();
+        }
+
+        if (unsynRefs.isEmpty() && unsynRefs.isEmpty()) {
+            return Stream.empty();
+        }
+
+        Stream<EntityRef> refStream = Stream.concat(unsynRefs.stream(), synedRefs.stream());
+
         if (sorts.length == 0) {
             return refStream;
         }
 
-        Comparator<EntityRef> refComparator = comparatorSupplier.apply(sorts);
+        final int firstSortIndex = 0;
+        final int secondSortIndex = 1;
+        final int thridSortIndex = 2;
 
-        return refStream.sorted(refComparator);
+        final int hasFirstSortLen = 1;
+        final int hasSecondSortLen = 2;
+        final int hasThridSortLen = 3;
+
+        if (sorts.length == hasThridSortLen) {
+            //三字段联排.
+            return refStream.sorted(
+                Comparator.comparing(
+                    EntityRef::getOrderValue,
+                    sorts[firstSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[firstSortIndex])
+                        : new SortValueComparator(sorts[firstSortIndex]).reversed()
+                ).thenComparing(
+                    EntityRef::getSecondOrderValue,
+                    sorts[secondSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[secondSortIndex])
+                        : new SortValueComparator(sorts[secondSortIndex]).reversed()
+                ).thenComparing(
+                    EntityRef::getThridOrderValue,
+                    sorts[thridSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[thridSortIndex])
+                        : new SortValueComparator(sorts[thridSortIndex]).reversed()
+                )
+            );
+        } else if (sorts.length == hasSecondSortLen) {
+            //二字段联排.
+            return refStream.sorted(
+                Comparator.comparing(
+                    EntityRef::getOrderValue,
+                    sorts[firstSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[firstSortIndex])
+                        : new SortValueComparator(sorts[firstSortIndex]).reversed()
+                ).thenComparing(
+                    EntityRef::getSecondOrderValue,
+                    sorts[secondSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[secondSortIndex])
+                        : new SortValueComparator(sorts[secondSortIndex]).reversed()
+                )
+            );
+        } else if (sorts.length == hasFirstSortLen) {
+            // 单字段排序.
+            return refStream.sorted(
+                Comparator.comparing(
+                    EntityRef::getOrderValue,
+                    sorts[firstSortIndex].isAsc()
+                        ? new SortValueComparator(sorts[firstSortIndex])
+                        : new SortValueComparator(sorts[firstSortIndex]).reversed()
+                ));
+        } else {
+            // 不排序.
+            return refStream;
+        }
+    }
+
+    // 比较器.
+    static class SortValueComparator implements Comparator<String> {
+
+        private Sort sort;
+
+        public SortValueComparator(Sort sort) {
+            this.sort = sort;
+        }
+
+        @Override
+        public int compare(String o1, String o2) {
+            return sort.getField().type().compareFromStringValue(o1, o2);
+        }
     }
 
     // 如果排序,但是查询结果没有值.

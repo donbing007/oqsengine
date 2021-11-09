@@ -49,11 +49,11 @@ annotations:
 # 推荐-Xmx大小为limit的60%.
 jvm:
   - -server
-  - -Xms2457M
-  - -Xmx2457M
-  - -Xmn1024M
-  - -XX:MetaspaceSize=150M
-  - -XX:MaxMetaspaceSize=150M
+  - -Xms4096M
+  - -Xmx4096M
+  - -Xmn1536M
+  - -XX:MetaspaceSize=256M
+  - -XX:MaxMetaspaceSize=256M
   - -XX:+UseParNewGC
   - -XX:+UseConcMarkSweepGC
   - -XX:+CMSScavengeBeforeRemark
