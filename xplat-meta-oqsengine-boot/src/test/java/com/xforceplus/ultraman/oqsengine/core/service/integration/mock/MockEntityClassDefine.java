@@ -93,6 +93,10 @@ public class MockEntityClassDefine {
     private static long userOrderTotalPriceSumFieldId = baseFieldId - 17;
     // 用户订单平均消费金额字段标识.
     private static long userOrderAvgPriceAvgFieldId = baseFieldId - 18;
+    // 用户订单最大消费金额字段标识.
+    private static long userOrderAvgPriceMaxFieldId = baseFieldId - 181;
+    // 用户订单最小消费金额字段标识.
+    private static long userOrderAvgPriceMinFieldId = baseFieldId - 182;
     // 用户订单关联字段标识.
     private static long orderUserForeignFieldId = baseFieldId - 19;
     // 订单编号字段标识.
@@ -481,10 +485,50 @@ public class MockEntityClassDefine {
                             ).build()
                     ).build()
             )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderAvgPriceMaxFieldId)
+                    .withName("最大消费金额max")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.MAX)
+                                    .withConditions(Conditions.buildEmtpyConditions())
+                                    .withClassId(orderClassId)
+                                    .withFieldId(orderTotalPriceSumFieldId)
+                                    .withRelationId(orderUserForeignField.id()).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(userOrderAvgPriceMinFieldId)
+                    .withName("最小消费金额min")
+                    .withFieldType(FieldType.DECIMAL)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.MIN)
+                                    .withConditions(Conditions.buildEmtpyConditions())
+                                    .withClassId(orderClassId)
+                                    .withFieldId(orderTotalPriceSumFieldId)
+                                    .withRelationId(orderUserForeignField.id()).build()
+                            ).build()
+                    ).build()
+            )
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderUserForeignField.id())
+                        .withId(orderUserForeignField.id() + 100)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(userClassId)
@@ -563,6 +607,44 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
+                    .withId(orderTotalPriceSumFieldId + 100)
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("最大金额max")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.MAX)
+                                    .withClassId(orderItemClassId)
+                                    .withFieldId(orderItemPriceFieldId)
+                                    .withRelationId(orderOrderItemForeignField.id()).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(orderTotalPriceSumFieldId + 101)
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("最小金额min")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withSearchable(true)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withAggregationType(AggregationType.MIN)
+                                    .withClassId(orderItemClassId)
+                                    .withFieldId(orderItemPriceFieldId)
+                                    .withRelationId(orderOrderItemForeignField.id()).build()
+                            ).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
                     .withId(orderUserCodeLookupFieldId)
                     .withFieldType(FieldType.STRING)
                     .withName("用户编号lookup")
@@ -602,7 +684,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemForeignField.id())
+                        .withId(orderOrderItemForeignField.id() + 100)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withLeftEntityClassId(orderClassId)
@@ -620,7 +702,7 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
                         .withEntityField(orderUserForeignField).build(),
                     Relationship.Builder.anRelationship()
-                        .withId(orderUserForeignField.id())
+                        .withId(orderUserForeignField.id() + 200)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(orderClassId)
@@ -689,7 +771,7 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemForeignField.id())
+                        .withId(orderOrderItemForeignField.id() + 200)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withLeftEntityClassId(orderItemClassId)

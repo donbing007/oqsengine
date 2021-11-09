@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -115,7 +116,16 @@ public class MultipleTimerWheelTest {
             });
         }
 
-        TimeUnit.MILLISECONDS.sleep(2000);
+        for (int i = 0; i < 100000; i++) {
+            if (500000 == wheel.size()) {
+
+                break;
+
+            } else {
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000));
+            }
+        }
 
         Assertions.assertEquals(500000, wheel.size());
     }

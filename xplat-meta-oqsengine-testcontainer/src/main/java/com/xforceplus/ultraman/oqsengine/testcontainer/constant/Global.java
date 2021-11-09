@@ -24,16 +24,31 @@ public class Global {
      *
      * @param container 目标容器.
      */
-    public static synchronized void startContainer(GenericContainer container) {
-        containerSize++;
+    public static synchronized boolean startContainer(GenericContainer container) {
+        try {
+            containerSize++;
 
-        if (network == null) {
-            LOGGER.info("The first container is created, creating the network.");
-            network = Network.newNetwork();
+            if (network == null) {
+                LOGGER.info("The first container is created, creating the network.");
+                network = Network.newNetwork();
+            }
+
+            container.withNetwork(network);
+            container.start();
+        } catch (Throwable ex) {
+
+            LOGGER.error(ex.getMessage(), ex);
+
+            containerSize--;
+
+            container.close();
+
+            releaseNetwork();
+
+            return false;
         }
 
-        container.withNetwork(network);
-        container.start();
+        return true;
     }
 
     /**
@@ -55,6 +70,10 @@ public class Global {
             }
         }
 
+        releaseNetwork();
+    }
+
+    private static void releaseNetwork() {
         if (containerSize <= 0 && network != null) {
 
             LOGGER.info("The last container is closed, shutting down the network.");

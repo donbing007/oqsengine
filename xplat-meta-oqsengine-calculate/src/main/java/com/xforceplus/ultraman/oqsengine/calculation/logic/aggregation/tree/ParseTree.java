@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ import java.util.List;
  * @author: wangzheng
  * @date: 2021/8/30 10:34
  */
-public interface ParseTree {
+public interface ParseTree extends Serializable {
 
     /**
      * 树的根节点，非空.
@@ -78,5 +79,8 @@ public interface ParseTree {
      */
     ParseTree buildTree(List<IEntityClass> entityClasses, IEntityClass rootEntityClass, IEntityField rootEntityField,
                         IEntityClass aggEntityClass, IEntityField aggEntityField);
+
+
+    ParseTree toSimpleTree();
 
 }

@@ -38,8 +38,7 @@ public class MinFunction implements AggregationFunction {
             if (n.get() instanceof EmptyTypedValue) {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
             }
-            double temp = Math.min(Math.min(((DecimalValue) n.get()).getValue().doubleValue(),
-                    ((DecimalValue) o.get()).getValue().doubleValue()), ((DecimalValue) agg.get()).getValue().doubleValue());
+            double temp = Math.min(((DecimalValue) n.get()).getValue().doubleValue(), ((DecimalValue) agg.get()).getValue().doubleValue());
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
@@ -49,7 +48,7 @@ public class MinFunction implements AggregationFunction {
             if (n.get() instanceof EmptyTypedValue) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
-            long temp = Math.min(Math.min(n.get().valueToLong(), o.get().valueToLong()), agg.get().valueToLong());
+            long temp = Math.min(n.get().valueToLong(), agg.get().valueToLong());
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof DateTimeValue) {
@@ -61,8 +60,7 @@ public class MinFunction implements AggregationFunction {
             }
             ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
             ((DateTimeValue) n.get()).getValue().toEpochSecond(zone);
-            long temp = Math.min(Math.min(((DateTimeValue) n.get()).getValue().toEpochSecond(zone),
-                    ((DateTimeValue) o.get()).getValue().toEpochSecond(zone)),
+            long temp = Math.min(((DateTimeValue) n.get()).getValue().toEpochSecond(zone),
                     ((DateTimeValue) agg.get()).getValue().toEpochSecond(zone));
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());

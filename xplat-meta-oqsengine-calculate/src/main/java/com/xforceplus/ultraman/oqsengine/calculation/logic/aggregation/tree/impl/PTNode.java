@@ -2,11 +2,15 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.imp
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 解析树节点.
@@ -16,7 +20,8 @@ import java.util.List;
  * @author: wangzheng
  * @date: 2021/8/30 14:49
  */
-public class PTNode {
+public class PTNode implements Serializable {
+    private static Logger logger = LoggerFactory.getLogger(PTNode.class);
     /**
      * 根节点标识.
      */
@@ -70,11 +75,37 @@ public class PTNode {
     private List<PTNode> nextNodes;
 
     /**
+     * 节点对象ref.
+     */
+    private EntityClassRef entityClassRef;
+
+    /**
+     * 被聚合节点对象ref.
+     */
+    private EntityClassRef aggEntityClassRef;
+
+    /**
+     * 节点字段id.
+     */
+    private long entityFieldId;
+
+    /**
+     * 被聚合节点字段id.
+     */
+    private long aggEntityFieldId;
+
+    /**
+     * 关系id.
+     */
+    private long relationId;
+
+    /**
      * 父节点.
      */
     private PTNode preNode;
 
     private AggregationType aggregationType;
+
 
     public AggregationType getAggregationType() {
         return aggregationType;
@@ -116,7 +147,13 @@ public class PTNode {
         this.entityField = entityField;
     }
 
+    /**
+     * emptyConditions处理.
+     */
     public Conditions getConditions() {
+        if (conditions == null) {
+            conditions = Conditions.buildEmtpyConditions();
+        }
         return conditions;
     }
 
@@ -174,5 +211,90 @@ public class PTNode {
 
     public PTNode() {
         nextNodes = new ArrayList<>();
+    }
+
+    public long getRelationId() {
+        return relationId;
+    }
+
+    public void setRelationId(long relationId) {
+        this.relationId = relationId;
+    }
+
+    public EntityClassRef getEntityClassRef() {
+        return entityClassRef;
+    }
+
+    public void setEntityClassRef(EntityClassRef entityClassRef) {
+        this.entityClassRef = entityClassRef;
+    }
+
+    public EntityClassRef getAggEntityClassRef() {
+        return aggEntityClassRef;
+    }
+
+    public void setAggEntityClassRef(EntityClassRef aggEntityClassRef) {
+        this.aggEntityClassRef = aggEntityClassRef;
+    }
+
+    public long getEntityFieldId() {
+        return entityFieldId;
+    }
+
+    public void setEntityFieldId(long entityFieldId) {
+        this.entityFieldId = entityFieldId;
+    }
+
+    public long getAggEntityFieldId() {
+        return aggEntityFieldId;
+    }
+
+    public void setAggEntityFieldId(long aggEntityFieldId) {
+        this.aggEntityFieldId = aggEntityFieldId;
+    }
+
+    /**
+     * checkNode成功后才可以进行转换.
+     */
+    public PTNode toSimpleNode() {
+        this.entityClassRef = entityClass.ref();
+        this.entityClass = null;
+        this.aggEntityClassRef = aggEntityClass.ref();
+        this.aggEntityClass = null;
+        this.entityFieldId = entityField.id();
+        this.entityField = null;
+        this.aggEntityFieldId = aggEntityField.id();
+        this.aggEntityField = null;
+        this.relationId = relationship.getId();
+        this.relationship = null;
+        return this;
+    }
+
+    /**
+     * 检查必要属性不为空.
+     */
+    public static boolean checkNode(PTNode node) {
+        if (node.getEntityClass() == null) {
+            logger.error("===============entityclass info can not be empty");
+            return false;
+        } else if (node.getEntityField() == null) {
+            logger.error("================entityfield info can not be empty");
+            return false;
+        } else if (node.getAggEntityClass() == null) {
+            logger.error("===============aggEntityClass info can not be empty");
+            return false;
+        } else if (node.getAggEntityField() == null) {
+            logger.error("=====================aggEntityField info can not be empty");
+            return false;
+        } else if (node.getRelationship() == null) {
+            logger.error("=========================relationship info can not be empty");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "PTNode{" + "rootFlag=" + rootFlag + ", level=" + level + ", version=" + version + ", entityClass=" + entityClass + ", entityField=" + entityField + ", aggEntityClass=" + aggEntityClass + ", aggEntityField=" + aggEntityField + ", conditions=" + conditions + ", relationship=" + relationship + ", nextNodes=" + nextNodes + ", preNode=" + preNode + ", aggregationType=" + aggregationType + '}';
     }
 }

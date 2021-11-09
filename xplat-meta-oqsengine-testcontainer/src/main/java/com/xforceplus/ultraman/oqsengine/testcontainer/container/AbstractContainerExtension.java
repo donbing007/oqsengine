@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 import com.xforceplus.ultraman.oqsengine.testcontainer.constant.Global;
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -20,6 +22,9 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractContainerExtension.class);
 
+    // 启动错误的最大重试次数.
+    private static final int MAX_TRY_NUMBER = 6;
+
     /**
      * 每个测试用例类开启执行前执行.
      *
@@ -30,17 +35,33 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
         LOGGER.info("Start the container {}...", containerSupport().name());
 
-        GenericContainer container = buildContainer();
+        GenericContainer container;
+        // 容器启动错误,重试最多 MAX_TRY_NUMBER 次数.
+        for (int i = 0; i < MAX_TRY_NUMBER; i++) {
 
-        Global.startContainer(container);
+            container = buildContainer();
 
-        container.followOutput((Consumer<OutputFrame>) outputFrame -> {
-            LOGGER.info(outputFrame.getUtf8String());
-        });
+            if (Global.startContainer(container)) {
 
-        init();
+                container.followOutput((Consumer<OutputFrame>) outputFrame -> {
+                    LOGGER.info(outputFrame.getUtf8String());
+                });
 
-        LOGGER.info("Start the container {}...OK!", containerSupport().name());
+                init();
+
+                LOGGER.info("Start the container {}...OK!", containerSupport().name());
+
+                return;
+            } else {
+
+                LOGGER.info("Failed to start container {}, wait 5 seconds and try again.[{}/{}]",
+                    containerSupport().name(), i + 1, MAX_TRY_NUMBER);
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(5000));
+            }
+        }
+
+        throw new IllegalStateException(String.format("Failed to start container %s.", containerSupport().name()));
     }
 
 

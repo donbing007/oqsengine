@@ -169,26 +169,32 @@ public class AvgFunctionTest {
         DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
         DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3000.10"));
-        Optional<IValue> a = avgFunction.excuteAvg(Optional.of(agg), Optional.of(o), Optional.of(n), 3);
+        Optional<IValue> a = avgFunction.excuteAvg(Optional.of(agg), Optional.of(o), Optional.of(n), 3, 3);
         System.out.println(a.get().getValue());
 
         DecimalValue agg11 = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1000.10"));
         DecimalValue o11 = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2000.10"));
         EmptyTypedValue n11 = new EmptyTypedValue(l2EntityClass.field("l0-decimal").get());
-        Optional<IValue> a11 = avgFunction.excuteAvg(Optional.of(agg11), Optional.of(o11), Optional.of(n11), 3);
+        Optional<IValue> a11 = avgFunction.excuteAvg(Optional.of(agg11), Optional.of(o11), Optional.of(n11), 4,3);
         System.out.println(a11.get().getValue());
 
         LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
         LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
         LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 3000);
-        Optional<IValue> a1 = avgFunction.excuteAvg(Optional.of(agg1), Optional.of(o1), Optional.of(n1), 3);
+        Optional<IValue> a1 = avgFunction.excuteAvg(Optional.of(agg1), Optional.of(o1), Optional.of(n1), 3, 3);
         System.out.println(a1.get().getValue());
 
         LongValue agg2 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
         LongValue o2 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
         EmptyTypedValue n2 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
-        Optional<IValue> a2 = avgFunction.excuteAvg(Optional.of(agg2), Optional.of(o2), Optional.of(n2), 3);
+        Optional<IValue> a2 = avgFunction.excuteAvg(Optional.of(agg2), Optional.of(o2), Optional.of(n2), 4, 3);
         System.out.println(a2.get().getValue());
+
+        LongValue agg3 = new LongValue(l2EntityClass.field("l1-long").get(), 1000);
+        LongValue n3 = new LongValue(l2EntityClass.field("l1-long").get(), 2000);
+        EmptyTypedValue o3 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
+        Optional<IValue> a3 = avgFunction.excuteAvg(Optional.of(agg3), Optional.of(o3), Optional.of(n3), 3, 4);
+        System.out.println(a3.get().getValue());
     }
 
 }

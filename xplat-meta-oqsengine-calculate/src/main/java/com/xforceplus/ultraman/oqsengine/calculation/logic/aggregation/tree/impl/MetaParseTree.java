@@ -36,6 +36,10 @@ public class MetaParseTree implements ParseTree, Serializable {
 
     }
 
+    public MetaParseTree(String prefix) {
+        this.prefix = prefix;
+    }
+
     public MetaParseTree(PTNode root) {
         this.root = root;
     }
@@ -293,6 +297,21 @@ public class MetaParseTree implements ParseTree, Serializable {
         return parseTree;
     }
 
+    @Override
+    public ParseTree toSimpleTree() {
+        toList().forEach(node -> {
+            if (PTNode.checkNode(node)) {
+                logger.info("===========check node success");
+                node.toSimpleNode();
+                logger.info("===========transfer to simpleNode complete");
+            } else {
+                logger.error("=============can not transfer to simpleNode, please ensure nodeInfo is complete.");
+                throw new RuntimeException("can not transfer to simpleNode, please ensure nodeInfo is complete.");
+            }
+        });
+        return this;
+    }
+
     /**
      * 根据对象id和字段id找到被聚合的对象信息.
      *
@@ -344,4 +363,8 @@ public class MetaParseTree implements ParseTree, Serializable {
         return Optional.of(parseTree);
     }
 
+    @Override
+    public String toString() {
+        return "MetaParseTree{" + "prefix='" + prefix + '\'' + ", root=" + root + '}';
+    }
 }

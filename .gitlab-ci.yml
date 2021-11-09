@@ -11,12 +11,13 @@ maven-build:
   coverage: '/Total.*?([0-9]{1,3})%/'
   script:
     - update_pom_version
-    - mvn clean install -U -s ./.mvn/wrapper/settings.xml
+    - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
     - cat target/site/jacoco/index.html
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   except:
     - tags
+    - master
 
 tag-mvn-deploy:
   stage: tag-mvn-deploy
@@ -28,6 +29,7 @@ tag-mvn-deploy:
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   only:
     - tags
+    - master
 
 docker-build:
   stage: docker-build
@@ -36,6 +38,8 @@ docker-build:
     - chart_build
   except:
     - /^.*-sdk$/
+    - master
+    - develop
 
 .auto_devops: &auto_devops |
   http_status_code=`curl -o .auto_devops.sh -s -m 10 --connect-timeout 10 -w %{http_code} "${CHOERODON_URL}/devops/ci?token=${Token}&type=microservice"`

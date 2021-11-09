@@ -63,13 +63,15 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     // 保证至少有一位数度.
     private static BigDecimal buildWellBigDecimal(IEntityField field, BigDecimal value) {
+        BigDecimal wellValue;
         String plainValue = value.toPlainString();
         if (plainValue.indexOf(".") < 0) {
-            plainValue = Long.toString(value.longValue()) + ".0";
+            plainValue = value.longValue() + ".0";
+            wellValue = new BigDecimal(plainValue);
         } else {
-            plainValue = value.toPlainString();
+            wellValue = value;
         }
 
-        return new BigDecimal(plainValue);
+        return wellValue;
     }
 }

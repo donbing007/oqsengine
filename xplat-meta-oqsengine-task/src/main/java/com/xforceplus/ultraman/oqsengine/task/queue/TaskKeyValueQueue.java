@@ -129,6 +129,20 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         this.initPoint = initPoint;
     }
 
+
+    /**
+     * 构造器注入.
+     */
+    public TaskKeyValueQueue(ResourceLocker locker, LongIdGenerator idGenerator, KeyValueStorage kv, SerializeStrategy serializeStrategy, long initPoint, String name) {
+        this.locker = locker;
+        this.idGenerator = idGenerator;
+        this.kv = kv;
+        this.serializeStrategy = serializeStrategy;
+        this.initPoint = initPoint;
+        this.name = name;
+        this.anyLock = "anyLock-" + name;
+    }
+
     @PostConstruct
     @Override
     public void init() throws Exception {
@@ -160,7 +174,9 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
         } catch (InterruptedException e) {
             // 不做处理
         }
-        ExecutorHelper.shutdownAndAwaitTermination(worker);
+        if (!worker.isTerminated() || !worker.isShutdown()) {
+            ExecutorHelper.shutdownAndAwaitTermination(worker);
+        }
     }
 
     /**

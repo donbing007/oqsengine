@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.task;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.ParseTree;
 import com.xforceplus.ultraman.oqsengine.common.ByteUtil;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
@@ -28,7 +29,6 @@ import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 
 /**
@@ -62,6 +62,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
     @Resource
     private ResourceLocker locker;
+
+    @Resource(name = "longContinuousPartialOrderIdGenerator")
+    private LongIdGenerator idGenerator;
+
 
     /**
      * 每个appId-version维护一个任务队列.
@@ -161,7 +165,8 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
     public boolean addTask(String prefix, Task task) throws Exception {
         TaskQueue queue;
         if (!taskQueueMap.containsKey(prefix)) {
-            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(prefix);
+            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, prefix);
+
             taskKeyValueQueue.init();
             taskQueueMap.put(prefix, taskKeyValueQueue);
         }
@@ -213,7 +218,12 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
      * @return 是否成功.
      */
     public boolean addInitAppInfo(String prefix, List<ParseTree> list) {
+        if (list.isEmpty() || list == null) {
+            logger.warn(String.format("not support empty task: appVersion is : %s", prefix));
+            return false;
+        }
         try {
+            logger.info(String.format("============================try add %s task to queue, aggTask size is : %s ", prefix, list.size()));
             // 判断是否已有节点添加任务
             if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
@@ -229,11 +239,13 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 return false;
             }
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("===============================添加聚合初始化任务失败======================");
+            e.printStackTrace();
             return false;
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
+        logger.info(String.format("===========================add %s task to queue success, aggTask size is : %s ", prefix, list.size()));
 
         // 添加当前队列任务之后，关闭队列线程池
         TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);
@@ -256,12 +268,13 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             locker.lock(APP_INIT_ORDER);
             if (!kv.exist(APP_INIT_ORDER)) {
                 kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(prefix + ",", StandardCharsets.UTF_8));
+                logger.info(String.format("add %s to the appOrder ", prefix));
             } else {
                 Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
                 if (bytes.isPresent()) {
                     String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
                     kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(orderStr + prefix + ",", StandardCharsets.UTF_8));
-                    logger.info(String.format("add appId-version to the appOrder %s", orderStr));
+                    logger.info(String.format("add %s to the appOrder %s", prefix, orderStr));
                 }
             }
         } catch (RuntimeException e) {
@@ -355,7 +368,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 1000 * 60 * 60;
+        private final long checkTimeoutMs = 15000;
 
         @Override
         public void run() {
@@ -371,6 +384,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                         if (logger.isDebugEnabled()) {
                             logger.debug("当前无初始化聚合任务");
                         }
+                        logger.info("当前无初始化聚合任务");
 
                         if (!running) {
                             break;
@@ -392,8 +406,10 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 logger.debug(String.format("current usingApp is %s", processingPrefix));
                                 logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
+                            logger.info(String.format("current usingApp is %s", processingPrefix));
+                            logger.info(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                         } else {
-                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(processingPrefix);
+                            TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, processingPrefix);
                             try {
                                 taskKeyValueQueue.init();
                                 taskKeyValueQueue.shutDownWorker();
@@ -406,6 +422,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                     }
                 } else {
+                    logger.info("======================start agg init");
                     queue = usingApp.entrySet().iterator().next().getValue();
                     try {
                         task = queue.get(1000L);
@@ -427,12 +444,15 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 kv.incr(prefix);
                                 removeAppInfoFromOrderList(prefix);
                                 try {
-                                    taskQueueMap.get(prefix).destroy();
+                                    if (taskQueueMap.containsKey(prefix)) {
+                                        taskQueueMap.get(prefix).destroy();
+                                    }
                                 } catch (Exception ex) {
                                     logger.error(ex.getMessage(), ex);
                                 }
                                 taskQueueMap.remove(prefix);
                                 usingApp.remove(prefix);
+                                logger.info(String.format("================= %s task has been completed, and has removed from appOrderList", prefix));
                             }
                         }
                     } else {

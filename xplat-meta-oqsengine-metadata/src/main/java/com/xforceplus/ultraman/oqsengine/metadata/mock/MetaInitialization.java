@@ -8,10 +8,11 @@ import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.DefaultEntityClassFormatHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -28,6 +29,8 @@ public class MetaInitialization implements BeanInitialization {
     public DefaultCacheExecutor cacheExecutor;
 
     public EntityClassSyncExecutor entityClassSyncExecutor;
+
+    public EntityClassFormatHandler entityClassFormatHandler;
 
     public MetaManager metaManager;
 
@@ -58,6 +61,11 @@ public class MetaInitialization implements BeanInitialization {
         ReflectionUtils.reflectionFieldValue(fields, "redisClient", cacheExecutor,
             CommonInitialization.getInstance().getRedisClient());
         cacheExecutor.init();
+
+        entityClassFormatHandler = new DefaultEntityClassFormatHandler();
+        Collection<Field> classLoaderFields = ReflectionUtils.printAllMembers(entityClassFormatHandler);
+        ReflectionUtils.reflectionFieldValue(classLoaderFields, "cacheExecutor", entityClassFormatHandler,
+            MetaInitialization.getInstance().getCacheExecutor());
 
         entityClassSyncExecutor = new EntityClassSyncExecutor();
 
@@ -113,6 +121,15 @@ public class MetaInitialization implements BeanInitialization {
 
     public EntityClassSyncExecutor getEntityClassSyncExecutor() {
         return entityClassSyncExecutor;
+    }
+
+    public EntityClassFormatHandler getEntityClassFormatHandler() {
+        return entityClassFormatHandler;
+    }
+
+    public void setEntityClassFormatHandler(
+        EntityClassFormatHandler entityClassFormatHandler) {
+        this.entityClassFormatHandler = entityClassFormatHandler;
     }
 
     public MetaManager getMetaManager() {

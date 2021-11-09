@@ -25,6 +25,7 @@ public class DecimalValueVerifierTest {
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withLen(3)
+                    .withPrecision(3)
                     .build()
             ).build();
 
@@ -34,8 +35,32 @@ public class DecimalValueVerifierTest {
         Assertions.assertTrue(verifier.isTooLong(field,
             new DecimalValue(field, new BigDecimal("1.1"))
         ));
-        Assertions.assertFalse(verifier.isTooLong(field,
+        Assertions.assertTrue(verifier.isTooLong(field,
             new DecimalValue(field, new BigDecimal("1.13"))
+        ));
+
+        field = EntityField.Builder.anEntityField()
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(19)
+                    .withPrecision(6)
+                    .build()
+            ).build();
+
+        Assertions.assertFalse(verifier.isTooLong(field,
+            new DecimalValue(field, new BigDecimal("1111111111111111111.666666"))
+        ));
+
+        field = EntityField.Builder.anEntityField()
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withLen(20)
+                    .withPrecision(6)
+                    .build()
+            ).build();
+
+        Assertions.assertFalse(verifier.isTooLong(field,
+            new DecimalValue(field, new BigDecimal("3.00000000000000000001"))
         ));
     }
 
@@ -64,6 +89,10 @@ public class DecimalValueVerifierTest {
         ));
         Assertions.assertFalse(verifier.isHighPrecision(field,
             new DecimalValue(field, new BigDecimal("1.1143"))
+        ));
+
+        Assertions.assertFalse(verifier.isHighPrecision(field,
+            new DecimalValue(field, new BigDecimal("3.00000000000000000001"))
         ));
 
         field = EntityField.Builder.anEntityField()

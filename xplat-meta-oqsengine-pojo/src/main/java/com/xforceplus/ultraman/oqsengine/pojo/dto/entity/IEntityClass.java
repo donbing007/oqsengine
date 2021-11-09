@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;

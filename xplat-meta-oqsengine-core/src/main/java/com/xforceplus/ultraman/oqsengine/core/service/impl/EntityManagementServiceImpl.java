@@ -40,6 +40,7 @@ import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -81,6 +82,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource(name = "serviceTransactionExecutor")
     private TransactionExecutor transactionExecutor;
+
+    @Resource
+    private TransactionManager transactionManager;
 
     @Resource
     private MasterStorage masterStorage;
@@ -275,6 +279,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "builds"})
+    @Override
+    public OperationResult[] build(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
+        for (int i = 0; i < results.length; i++) {
+
+            if (tx.isPresent()) {
+                transactionManager.bind(tx.get().id());
+            }
+
+            results[i] = build(entities[i]);
+        }
+        return results;
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
     @Override
     public OperationResult build(IEntity entity) throws SQLException {
@@ -354,6 +374,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } finally {
             inserCountTotal.increment();
         }
+    }
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replaces"})
+    @Override
+    public OperationResult[] replace(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
+        for (int i = 0; i < results.length; i++) {
+
+            if (tx.isPresent()) {
+                transactionManager.bind(tx.get().id());
+            }
+
+            results[i] = replace(entities[i]);
+        }
+        return results;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
@@ -463,6 +499,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deletes"})
+    @Override
+    public OperationResult[] delete(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
+        for (int i = 0; i < results.length; i++) {
+
+            if (tx.isPresent()) {
+                transactionManager.bind(tx.get().id());
+            }
+
+            results[i] = delete(entities[i]);
+        }
+        return results;
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
     @Override
     public OperationResult delete(IEntity entity) throws SQLException {
@@ -522,6 +574,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } finally {
             deleteCountTotal.increment();
         }
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "all", "action", "deleteforces"}
+    )
+    @Override
+    public OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
+        for (int i = 0; i < results.length; i++) {
+
+            if (tx.isPresent()) {
+                transactionManager.bind(tx.get().id());
+            }
+
+            results[i] = deleteForce(entities[i]);
+        }
+        return results;
     }
 
     @Timed(

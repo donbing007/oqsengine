@@ -18,7 +18,7 @@ logging:
     console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
 
 transaction:
-  timeoutMs: 3000
+  timeoutMs: 300000
 
 threadPool:
   io:

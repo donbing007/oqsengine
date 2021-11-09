@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;

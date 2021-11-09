@@ -19,8 +19,6 @@ public class DecimalValueVerifier implements ValueVerifier {
         BigDecimal decimal = (BigDecimal) value.getValue();
         int len = NumberUtils.size(decimal.longValue());
         len += decimal.scale();
-        // 额外的小数点.
-        len++;
 
         return !(len > field.config().getLen());
     }
