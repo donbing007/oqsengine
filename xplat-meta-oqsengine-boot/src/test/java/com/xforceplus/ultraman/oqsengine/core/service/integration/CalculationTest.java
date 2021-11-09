@@ -177,12 +177,12 @@ public class CalculationTest extends AbstractContainerExtends {
             user.entityValue().getValue("平均消费金额avg").get().getValue()
         );
         Assertions.assertEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("最大消费金额max").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最大消费金额max").get().getValue()
         );
         Assertions.assertEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("最小消费金额min").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最小消费金额min").get().getValue()
         );
 
         /*
@@ -246,32 +246,32 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity order1 = buildOrderEntity(user);
         operationResult = entityManagementService.build(order1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-                operationResult.getMessage());
+            operationResult.getMessage());
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         IEntity orderItem1 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-                operationResult.getMessage());
+            operationResult.getMessage());
 
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
 
         Assertions.assertNotEquals(
-          new BigDecimal("0.0"),
-          user.entityValue().getValue("平均消费金额avg").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("平均消费金额avg").get().getValue()
         );
         Assertions.assertNotEquals(
-          new BigDecimal("0.0"),
-          user.entityValue().getValue("最大消费金额max").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最大消费金额max").get().getValue()
         );
         Assertions.assertNotEquals(
-          new BigDecimal("0.0"),
-          user.entityValue().getValue("最小消费金额min").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最小消费金额min").get().getValue()
         );
         Assertions.assertNotEquals(
-          new BigDecimal("0.0"),
-          user.entityValue().getValue("总消费金额sum").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("总消费金额sum").get().getValue()
         );
 
         IEntity orderItem2 = buildOrderItem(order1);
@@ -279,20 +279,20 @@ public class CalculationTest extends AbstractContainerExtends {
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
         Assertions.assertNotEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("平均消费金额avg").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("平均消费金额avg").get().getValue()
         );
         Assertions.assertNotEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("最大消费金额max").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最大消费金额max").get().getValue()
         );
         Assertions.assertNotEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("最小消费金额min").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("最小消费金额min").get().getValue()
         );
         Assertions.assertNotEquals(
-                new BigDecimal("0.0"),
-                user.entityValue().getValue("总消费金额sum").get().getValue()
+            new BigDecimal("0.0"),
+            user.entityValue().getValue("总消费金额sum").get().getValue()
         );
 
     }
@@ -348,9 +348,9 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(new BigDecimal("100.000000"),
             user.entityValue().getValue("平均消费金额avg").get().getValue());
         Assertions.assertEquals(new BigDecimal("100.000000"),
-                user.entityValue().getValue("最大消费金额max").get().getValue());
+            user.entityValue().getValue("最大消费金额max").get().getValue());
         Assertions.assertEquals(new BigDecimal("100.000000"),
-                user.entityValue().getValue("最小消费金额min").get().getValue());
+            user.entityValue().getValue("最小消费金额min").get().getValue());
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
@@ -386,9 +386,9 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(new BigDecimal("0.000000"),
             user.entityValue().getValue("平均消费金额avg").get().getValue());
         Assertions.assertEquals(new BigDecimal("0.000000"),
-                user.entityValue().getValue("最大消费金额max").get().getValue());
+            user.entityValue().getValue("最大消费金额max").get().getValue());
         Assertions.assertEquals(new BigDecimal("0.000000"),
-                user.entityValue().getValue("最小消费金额min").get().getValue());
+            user.entityValue().getValue("最小消费金额min").get().getValue());
         Assertions.assertEquals(new BigDecimal("0.000000"),
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
