@@ -444,7 +444,9 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 kv.incr(prefix);
                                 removeAppInfoFromOrderList(prefix);
                                 try {
-                                    taskQueueMap.get(prefix).destroy();
+                                    if (taskQueueMap.containsKey(prefix)) {
+                                        taskQueueMap.get(prefix).destroy();
+                                    }
                                 } catch (Exception ex) {
                                     logger.error(ex.getMessage(), ex);
                                 }
