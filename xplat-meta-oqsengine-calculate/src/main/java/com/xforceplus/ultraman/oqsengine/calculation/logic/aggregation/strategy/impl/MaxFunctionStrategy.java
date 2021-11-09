@@ -48,7 +48,8 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count;
-        if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")) {
+        if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
+            || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
             count = countAggregationEntity(aggregation, context);
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 if (count == 1) {
@@ -257,11 +258,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             long temp = Math.max(o.valueToLong(), n.valueToLong());
             return temp == o.valueToLong();
         } else if (o instanceof DateTimeValue) {
-            ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
-            ((DateTimeValue) o).getValue().toEpochSecond(zone);
-            long temp = Math.max(((DateTimeValue) o).getValue().toEpochSecond(zone),
-                    ((DateTimeValue) n).getValue().toEpochSecond(zone));
-            return temp == ((DateTimeValue) o).getValue().toEpochSecond(zone);
+            long temp = Math.max(o.valueToLong(),
+                n.valueToLong());
+            return temp == o.valueToLong();
         }
         return false;
     }

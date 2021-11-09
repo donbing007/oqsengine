@@ -68,7 +68,7 @@ public class AggregationTaskRunner implements TaskRunner {
 
     private final long taskStopGapTimeMs = 500L;
 
-    private final int retryCount = 3;
+    private final int retryCount = 5;
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
@@ -113,12 +113,16 @@ public class AggregationTaskRunner implements TaskRunner {
             }
             IEntityField entityField = entityClass.field(ptNode.getEntityFieldId()).get();
 
-            if (!aggEntityClass.field(ptNode.getAggEntityFieldId()).isPresent()) {
-                throw new RuntimeException(String.format("aggEntityField not found by entityClassId %s",
-                        ptNode.getAggEntityFieldId()));
+            IEntityField tempAggEntityField = EntityField.Builder.anEntityField().build();
+            if (!ptNode.getAggregationType().equals(AggregationType.COUNT)) {
+                if (!aggEntityClass.field(ptNode.getAggEntityFieldId()).isPresent()) {
+                    throw new RuntimeException(String.format("aggEntityField not found by entityClassId %s",
+                            ptNode.getAggEntityFieldId()));
+                }
+                tempAggEntityField = aggEntityClass.field(ptNode.getAggEntityFieldId()).get();
             }
-            IEntityField aggEntityField = aggEntityClass.field(ptNode.getAggEntityFieldId()).get();
 
+            IEntityField aggEntityField = tempAggEntityField;
 
 
             iterator = masterStorage.iterator(entityClass, 0, System.currentTimeMillis(), 0, 1);
@@ -165,16 +169,8 @@ public class AggregationTaskRunner implements TaskRunner {
                             indexIds.addAll(ids);
                             long[] masterIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
-                            logger.info("" + ptNode.getAggregationType().toString());
                             if (ptNode.getAggregationType().equals(AggregationType.COUNT)) {
-                                logger.info("-----------------------------------------------------");
-                                if (entityClass.id() == 1457261799308005378L) {
-                                    logger.info("-------------------------------------------------------------------------- count init");
-                                }
                                 if (updateAgg(Optional.of(IValueUtils.toIValue(entityField, masterIds.length)), entityClass, aggMainEntity)) {
-                                    if (entityClass.id() == 1457261799308005378L) {
-                                        logger.info("----------------------------------------------------------------" + IValueUtils.toIValue(entityField, masterIds.length).valueToString());
-                                    }
                                     break;
                                 } else {
                                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100L));
@@ -212,10 +208,7 @@ public class AggregationTaskRunner implements TaskRunner {
                                 }
                                 break;
                             }
-
-                            logger.info(String.format("doAgg begin, ivalues is: %s, ptNode is: %s", ivalues, ptNode));
                             Optional<IValue> aggMainIValue = doAgg(ivalues, ptNode.getAggregationType(), entityField);
-                            logger.info(String.format("doAgg result is: %s", aggMainIValue.get().toString()));
                             if (updateAgg(aggMainIValue, entityClass, aggMainEntity)) {
                                 break;
                             } else {
@@ -238,6 +231,8 @@ public class AggregationTaskRunner implements TaskRunner {
             logger.info(String.format("==============entityClass %s entityField %s has doAggInit complete.", entityClass.id(), entityField.id()));
         } catch (SQLException throwables) {
             logger.error(throwables.getMessage(), throwables);
+        } catch (RuntimeException e) {
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -247,9 +242,6 @@ public class AggregationTaskRunner implements TaskRunner {
             entity.get().entityValue().addValue(ivalue.get());
             try {
                 masterStorage.replace(entity.get(), entityClass);
-                if (entityClass.id() == 1457261799308005378L) {
-                    logger.info("----------------------------" + entity.get().entityValue().toString());
-                }
                 return true;
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);

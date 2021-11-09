@@ -186,9 +186,6 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setEntityField(f);
                                 ptNode.setEntityClass(entityClass);
                                 ptNode.setConditions(aggregation.getConditions());
-                                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                                    logger.info("************************" + aggregation.getAggregationType());
-                                }
                                 ptNode.setAggregationType(aggregation.getAggregationType());
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());

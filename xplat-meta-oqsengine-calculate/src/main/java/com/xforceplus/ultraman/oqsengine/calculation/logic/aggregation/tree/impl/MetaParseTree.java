@@ -301,12 +301,9 @@ public class MetaParseTree implements ParseTree, Serializable {
     public ParseTree toSimpleTree() {
         toList().forEach(node -> {
             if (PTNode.checkNode(node)) {
-                logger.info("===========check node success");
                 node.toSimpleNode();
-                logger.info("===========transfer to simpleNode complete");
             } else {
                 logger.error("=============can not transfer to simpleNode, please ensure nodeInfo is complete.");
-                throw new RuntimeException("can not transfer to simpleNode, please ensure nodeInfo is complete.");
             }
         });
         return this;

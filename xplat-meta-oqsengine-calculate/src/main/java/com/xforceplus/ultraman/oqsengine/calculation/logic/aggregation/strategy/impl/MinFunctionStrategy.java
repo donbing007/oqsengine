@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +49,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count;
-        if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")) {
+        if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
+            || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
             count = countAggregationEntity(aggregation, context);
             logger.info("minExcute Count:{}, agg-value:{}, n-value:{}", count,
                     aggValue.get().valueToString(), n.get().valueToString());
@@ -272,11 +274,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
             long temp = Math.max(o.valueToLong(), n.valueToLong());
             return temp == o.valueToLong();
         } else if (o instanceof DateTimeValue) {
-            ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
-            ((DateTimeValue) o).getValue().toEpochSecond(zone);
-            long temp = Math.max(((DateTimeValue) o).getValue().toEpochSecond(zone),
-                    ((DateTimeValue) n).getValue().toEpochSecond(zone));
-            return temp == ((DateTimeValue) o).getValue().toEpochSecond(zone);
+            long temp = Math.max(o.valueToLong(),
+                    n.valueToLong());
+            return temp == o.valueToLong();
         }
         return false;
     }
