@@ -223,7 +223,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             return false;
         }
         try {
-            logger.info(String.format("============================try add %s task to queue, aggTask size is : %s ", prefix, list.size()));
+            logger.info(String.format("try add %s task to queue, aggTask size is : %s ", prefix, list.size()));
             // 判断是否已有节点添加任务
             if (kv.exist(buildUnInitAppName(prefix))) {
                 logger.info(String.format("%s already add addInitAppInfo", prefix));
@@ -239,14 +239,11 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                 return false;
             }
         } catch (Exception e) {
-            logger.error("===============================添加聚合初始化任务失败======================");
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
             return false;
         }
         kv.incr(buildUnInitAppName(prefix));
         addOrderInfo(prefix);
-        logger.info(String.format("===========================add %s task to queue success, aggTask size is : %s ", prefix, list.size()));
-
         // 添加当前队列任务之后，关闭队列线程池
         TaskKeyValueQueue queue = (TaskKeyValueQueue) taskQueueMap.get(prefix);
         queue.shutDownWorker();
@@ -268,14 +265,15 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
             locker.lock(APP_INIT_ORDER);
             if (!kv.exist(APP_INIT_ORDER)) {
                 kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(prefix + ",", StandardCharsets.UTF_8));
-                logger.info(String.format("add %s to the appOrder ", prefix));
             } else {
                 Optional<byte[]> bytes = kv.get(APP_INIT_ORDER);
                 if (bytes.isPresent()) {
                     String orderStr = ByteUtil.byteToString(bytes.get(), StandardCharsets.UTF_8);
                     kv.save(APP_INIT_ORDER, ByteUtil.stringToByte(orderStr + prefix + ",", StandardCharsets.UTF_8));
-                    logger.info(String.format("add %s to the appOrder %s", prefix, orderStr));
                 }
+            }
+            if (logger.isDebugEnabled()) {
+                logger.debug(String.format("%s has add to appInitOrderInfo"));
             }
         } catch (RuntimeException e) {
             logger.error(e.getMessage(), e);
@@ -401,13 +399,11 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                     } else {
                         // 添加usingApp,多oqs节点中只有添加聚合任务的oqs节点包含当前任务队列，其它oqs节点需在本地进程中新建属性相同的taskQueue后再获取任务执行
                         if (taskQueueMap.containsKey(processingPrefix)) {
-                            usingApp.put(processingPrefix, taskQueueMap.get(processingPrefix));
+                            usingApp.putIfAbsent(processingPrefix, taskQueueMap.get(processingPrefix));
                             if (logger.isDebugEnabled()) {
                                 logger.debug(String.format("current usingApp is %s", processingPrefix));
                                 logger.debug(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                             }
-                            logger.info(String.format("current usingApp is %s", processingPrefix));
-                            logger.info(String.format("current taskQueue is %s", usingApp.get(processingPrefix).toString()));
                         } else {
                             TaskKeyValueQueue taskKeyValueQueue = new TaskKeyValueQueue(locker, idGenerator, kv, serializeStrategy, 1L, processingPrefix);
                             try {
@@ -422,7 +418,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
 
                     }
                 } else {
-                    logger.info("======================start agg init");
+                    logger.info(String.format(" aggInitTask is doing, appId-version is %s ", usingApp.entrySet().iterator().next().getKey()));
                     queue = usingApp.entrySet().iterator().next().getValue();
                     try {
                         task = queue.get(1000L);
@@ -452,7 +448,7 @@ public class AggregationTaskCoordinator implements TaskCoordinator, Lifecycle {
                                 }
                                 taskQueueMap.remove(prefix);
                                 usingApp.remove(prefix);
-                                logger.info(String.format("================= %s task has been completed, and has removed from appOrderList", prefix));
+                                logger.info(String.format("%s task has been completed, and has removed from appOrderList", prefix));
                             }
                         }
                     } else {

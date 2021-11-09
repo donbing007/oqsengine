@@ -13,6 +13,10 @@ public final class FieldDefine {
     }
 
     /**
+     * key的哈希.
+     */
+    public static final String HASH = "h";
+    /**
      * 记录key的字段.
      */
     public static final String KEY = "k";

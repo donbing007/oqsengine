@@ -26,7 +26,7 @@ public class SuffixNumberHashSelectorTest {
         int len = 100; // 分布区域
         SuffixNumberHashSelector selector = new SuffixNumberHashSelector(base, len);
         for (String key : keys) {
-            int address = Math.abs(Time33Hash.build().hash(key) % len);
+            int address = Math.abs(Time33Hash.getInstance().hash(key) % len);
             Assertions.assertEquals(base + address, selector.select(key));
         }
     }

@@ -34,7 +34,7 @@ public class HashSelector<V> implements Selector<V> {
 
     @Override
     public V select(String key) {
-        int address = Math.abs(Time33Hash.build().hash(key) % targets.size());
+        int address = Math.abs(Time33Hash.getInstance().hash(key) % targets.size());
 
         return targets.get(address);
     }

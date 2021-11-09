@@ -275,19 +275,19 @@ public class PTNode implements Serializable {
      */
     public static boolean checkNode(PTNode node) {
         if (node.getEntityClass() == null) {
-            logger.error("===============entityclass info can not be empty");
+            logger.error("entityclass info can not be empty");
             return false;
         } else if (node.getEntityField() == null) {
-            logger.error("================entityfield info can not be empty");
+            logger.error("entityfield info can not be empty");
             return false;
         } else if (node.getAggEntityClass() == null) {
-            logger.error("===============aggEntityClass info can not be empty");
+            logger.error("aggEntityClass info can not be empty");
             return false;
         } else if (node.getAggEntityField() == null) {
-            logger.error("=====================aggEntityField info can not be empty");
+            logger.error("aggEntityField info can not be empty");
             return false;
         } else if (node.getRelationship() == null) {
-            logger.error("=========================relationship info can not be empty");
+            logger.error("relationship info can not be empty");
             return false;
         }
         return true;

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -37,13 +38,16 @@ public class DeleteTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Stri
             final int onlyOne = 1;
             if (keys.size() == onlyOne) {
 
-                ps.setString(1, keys.stream().findFirst().get());
+                String key = keys.stream().findFirst().get();
+                ps.setString(1, key);
+                ps.setLong(2, Time33Hash.getInstance().hash(key));
 
                 return Long.valueOf(ps.executeUpdate());
             } else {
 
                 for (String key : keys) {
                     ps.setString(1, key);
+                    ps.setLong(2, Time33Hash.getInstance().hash(key));
                     ps.addBatch();
                 }
 

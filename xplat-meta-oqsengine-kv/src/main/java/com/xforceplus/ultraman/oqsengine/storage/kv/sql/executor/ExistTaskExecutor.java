@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -32,7 +33,9 @@ public class ExistTaskExecutor extends AbstractJdbcTaskExecutor<String, Boolean>
         String sql = String.format(SqlTemplateDefine.EXIST_TEMPLATE, getTableName());
 
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
+
             ps.setString(1, key);
+            ps.setLong(2, Time33Hash.getInstance().hash(key));
 
             checkTimeout(ps);
 

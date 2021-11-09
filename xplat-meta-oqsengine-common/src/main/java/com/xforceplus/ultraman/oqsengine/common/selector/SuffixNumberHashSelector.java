@@ -27,7 +27,7 @@ public class SuffixNumberHashSelector implements Selector<String> {
 
     @Override
     public String select(String key) {
-        int code = Time33Hash.build().hash(key);
+        int code = Time33Hash.getInstance().hash(key);
         return base + (Math.abs(code % size));
     }
 

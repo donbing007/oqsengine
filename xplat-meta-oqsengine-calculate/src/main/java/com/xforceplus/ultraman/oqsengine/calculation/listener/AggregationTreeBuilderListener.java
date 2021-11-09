@@ -42,9 +42,7 @@ public class AggregationTreeBuilderListener {
     private void handleAggregationTreeUpgrade(ActualEvent event) {
         LOGGER.info("============Aggregation event :{}", event);
         if (event.payload().isPresent()) {
-            LOGGER.info("============Aggregation event payload present:{}", event);
             AggregationTreePayload payload = (AggregationTreePayload) event.payload().get();
-            LOGGER.info("===============appId is " + payload.getAppId() + "entityList size is : " + payload.getEntityList().size());
             aggregationParse.builderTrees(payload.getAppId(), payload.getVersion(),  payload.getEntityList());
         }
     }
