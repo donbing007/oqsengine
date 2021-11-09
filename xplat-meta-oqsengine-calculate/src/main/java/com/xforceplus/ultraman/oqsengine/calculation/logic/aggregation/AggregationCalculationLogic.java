@@ -159,7 +159,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         //拿到数据后开始运算
-        agg = aggValue;
+        agg = Optional.of(aggValue.get().copy());
         AggregationType aggregationType = aggregation.getAggregationType();
         Optional<IValue> targetValue = null;
         if (aggregationType.equals(AggregationType.AVG)) {

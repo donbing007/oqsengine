@@ -98,6 +98,8 @@ public class MockSimpleEntityClassDefine {
   private static long orderAvgPriceFieldId = baseFieldId - 29;
   // 订单项数量字段标识.
   private static long orderItemNumFieldId = baseFieldId - 30;
+  // 订单项时间字段标识.
+  private static long orderItemTimeFieldId = baseFieldId - 31;
 
   // 用户订单关系字段.
   private static IEntityField orderUserForeignField = EntityField.Builder.anEntityField()
@@ -536,6 +538,17 @@ public class MockSimpleEntityClassDefine {
               .withSearchable(true)
               .withLen(19)
               .withPrecision(6).build()
+          ).build()
+      )
+      .withField(
+        EntityField.Builder.anEntityField()
+          .withId(orderItemTimeFieldId)
+          .withFieldType(FieldType.DATETIME)
+          .withName("时间")
+          .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+              .withSearchable(true)
+              .withLen(19).build()
           ).build()
       )
       .withRelations(
