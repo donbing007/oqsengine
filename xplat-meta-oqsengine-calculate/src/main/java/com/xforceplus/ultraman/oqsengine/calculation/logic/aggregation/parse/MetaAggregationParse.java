@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.Pars
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.MetaParseTree;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.tree.impl.PTNode;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -185,6 +186,9 @@ public class MetaAggregationParse implements AggregationParse {
                                 ptNode.setEntityField(f);
                                 ptNode.setEntityClass(entityClass);
                                 ptNode.setConditions(aggregation.getConditions());
+                                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                                    logger.info("************************" + aggregation.getAggregationType());
+                                }
                                 ptNode.setAggregationType(aggregation.getAggregationType());
                                 ptNode.setAggEntityClass(entityClassOp.get());
                                 ptNode.setAggEntityField(entityFieldOp.get());
@@ -212,9 +216,7 @@ public class MetaAggregationParse implements AggregationParse {
                 aggFieldIds.addAll(longs.get());
             }
         }
-        logger.info(appId + "=================start transfer to SimpleTree");
         parseTrees.forEach(ParseTree::toSimpleTree);
-        logger.info(appId + "===============parseTree size is : " + parseTrees.size());
         aggregationTaskCoordinator.addInitAppInfo(appId + "-" + version, parseTrees);
     }
 
