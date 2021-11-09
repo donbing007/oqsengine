@@ -31,7 +31,7 @@ public class HashSelectorTest {
         List<String> keyPool = buildKeys(keySize);
 
         HashSelector selector = new HashSelector(dsPool);
-        Time33Hash h = Time33Hash.build();
+        Time33Hash h = Time33Hash.getInstance();
         for (String key : keyPool) {
             int address = Math.abs(h.hash(key) % dsSize);
 

@@ -23,7 +23,7 @@ public class Time33Hash implements Hash {
      *
      * @return 算法实例。
      */
-    public static Time33Hash build() {
+    public static Time33Hash getInstance() {
         return ALGORITHMS;
     }
 

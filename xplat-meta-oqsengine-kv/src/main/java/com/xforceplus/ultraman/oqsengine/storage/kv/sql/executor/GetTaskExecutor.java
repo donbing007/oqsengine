@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
@@ -37,6 +38,7 @@ public class GetTaskExecutor extends AbstractJdbcTaskExecutor<String, byte[]> {
             checkTimeout(ps);
 
             ps.setString(1, key);
+            ps.setLong(2, Time33Hash.getInstance().hash(key));
 
 
             try (ResultSet rs = ps.executeQuery()) {
