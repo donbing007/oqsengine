@@ -58,10 +58,7 @@ public class MaxFunction implements AggregationFunction {
             if (n.get() instanceof EmptyTypedValue) {
                 n = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MIN));
             }
-            ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
-            ((DateTimeValue) n.get()).getValue().toEpochSecond(zone);
-            long temp = Math.max(((DateTimeValue) n.get()).getValue().toEpochSecond(zone),
-                    ((DateTimeValue) agg.get()).getValue().toEpochSecond(zone));
+            long temp = Math.max(n.get().valueToLong(), agg.get().valueToLong());
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());
         }

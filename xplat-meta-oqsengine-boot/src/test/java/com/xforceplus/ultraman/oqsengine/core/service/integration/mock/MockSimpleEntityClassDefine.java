@@ -85,6 +85,10 @@ public class MockSimpleEntityClassDefine {
   private static long orderTotalNumMinFieldId = baseFieldId - 235;
   // 订单平均数量.
   private static long orderTotalNumAvgFieldId = baseFieldId - 236;
+  // 订单最大时间.
+  private static long orderTotalTimeMaxFieldId = baseFieldId - 237;
+  // 订单最小时间.
+  private static long orderTotalTimeMinFieldId = baseFieldId - 238;
 
   // 订单-订单项外键标识.
   private static long orderOrderItemForeignFieldId = baseFieldId - 25;
@@ -405,6 +409,44 @@ public class MockSimpleEntityClassDefine {
                   .withAggregationType(AggregationType.MIN)
                   .withClassId(orderItemClassId)
                   .withFieldId(orderItemNumFieldId)
+                  .withRelationId(orderOrderItemForeignField.id()).build()
+              ).build()
+          ).build()
+      )
+      .withField(
+        EntityField.Builder.anEntityField()
+          .withId(orderTotalTimeMaxFieldId)
+          .withFieldType(FieldType.DATETIME)
+          .withName("最大时间max")
+          .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+              .withLen(19)
+              .withPrecision(0)
+              .withSearchable(true)
+              .withCalculation(
+                Aggregation.Builder.anAggregation()
+                  .withAggregationType(AggregationType.MAX)
+                  .withClassId(orderItemClassId)
+                  .withFieldId(orderItemTimeFieldId)
+                  .withRelationId(orderOrderItemForeignField.id()).build()
+              ).build()
+          ).build()
+      )
+      .withField(
+        EntityField.Builder.anEntityField()
+          .withId(orderTotalTimeMinFieldId)
+          .withFieldType(FieldType.DATETIME)
+          .withName("最小时间min")
+          .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+              .withLen(19)
+              .withPrecision(0)
+              .withSearchable(true)
+              .withCalculation(
+                Aggregation.Builder.anAggregation()
+                  .withAggregationType(AggregationType.MIN)
+                  .withClassId(orderItemClassId)
+                  .withFieldId(orderItemTimeFieldId)
                   .withRelationId(orderOrderItemForeignField.id()).build()
               ).build()
           ).build()

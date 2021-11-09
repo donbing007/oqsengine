@@ -29,6 +29,9 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisConta
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -216,6 +219,14 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
             order.entityValue().getValue("最大数量max").get().valueToLong()
         );
         Assertions.assertEquals(
+          DateTimeValue.MIN_DATE_TIME,
+          order.entityValue().getValue("最小时间min").get().getValue()
+        );
+        Assertions.assertEquals(
+          DateTimeValue.MIN_DATE_TIME,
+          order.entityValue().getValue("最大时间max").get().getValue()
+        );
+        Assertions.assertEquals(
             0,
             order.entityValue().getValue("总数量sum").get().valueToLong()
         );
@@ -248,13 +259,21 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
             ((BigDecimal) order.entityValue().getValue("总金额sum").get().getValue()).divide(BigDecimal.ONE),
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
+
         Assertions.assertNotEquals(
-            0,
-            order.entityValue().getValue("最小数量min").get().valueToLong()
+          DateTimeValue.MIN_DATE_TIME,
+          order.entityValue().getValue("最小时间min").get().getValue()
         );
         Assertions.assertNotEquals(
-            0,
-            order.entityValue().getValue("最大数量max").get().valueToLong()
+          DateTimeValue.MIN_DATE_TIME,
+          order.entityValue().getValue("最大时间max").get().getValue()
+        );
+
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最小时间min").get().valueToLong()
+        );
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最大时间max").get().valueToLong()
         );
         Assertions.assertNotEquals(
             0,
@@ -270,6 +289,15 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
         operationResult = entityManagementService.build(orderItem1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
+        order1 = entitySearchService.selectOne(order.id(), MockSimpleEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockSimpleEntityClassDefine.USER_CLASS.ref()).get();
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最小时间min").get().valueToLong()
+        );
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最大时间max").get().valueToLong()
+        );
+
         IEntity orderItem2 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem2);
         order1 = entitySearchService.selectOne(order1.id(), MockSimpleEntityClassDefine.ORDER_CLASS.ref()).get();
@@ -289,6 +317,12 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
         Assertions.assertNotEquals(
             new BigDecimal("0.0"),
             user.entityValue().getValue("总消费金额sum").get().getValue()
+        );
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最小时间min").get().valueToLong()
+        );
+        Assertions.assertNotNull(
+          order.entityValue().getValue("最大时间max").get().valueToLong()
         );
 
     }
@@ -366,6 +400,12 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
                             order.id()
                         )
                     )
+                  .addValue(
+                    new DateTimeValue(
+                      MockSimpleEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                      faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    )
+                  )
             ).build();
     }
 }

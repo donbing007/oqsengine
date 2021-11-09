@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -23,6 +25,9 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
      * 格式化时使用的时区.
      */
     public static final ZoneId ZONE_ID = ZoneId.of("Asia/Shanghai");
+
+    public static final LocalDateTime MIN_DATE_TIME = LocalDateTime.of(LocalDate.of(0, 1, 1),
+        LocalTime.MIN);
 
     public DateTimeValue(IEntityField field, LocalDateTime value) {
         super(field, value);
