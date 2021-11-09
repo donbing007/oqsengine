@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -69,6 +70,7 @@ public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.En
             if (onlyOne) {
                 Map.Entry<String, Object> kv = kvs.stream().findFirst().get();
                 ps.setString(1, kv.getKey());
+                ps.setLong(2, Time33Hash.getInstance().hash(kv.getKey()));
                 setValue(ps, kv.getValue());
 
                 return Long.valueOf(ps.executeUpdate());
@@ -77,6 +79,7 @@ public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.En
 
                 for (Map.Entry<String, Object> kv : kvs) {
                     ps.setString(1, kv.getKey());
+                    ps.setLong(2, Time33Hash.getInstance().hash(kv.getKey()));
                     setValue(ps, kv.getValue());
 
                     ps.addBatch();
@@ -89,9 +92,9 @@ public class SaveTaskExecutor extends AbstractJdbcTaskExecutor<Collection<Map.En
 
     private void setValue(PreparedStatement ps, Object value) throws SQLException {
         if (number) {
-            ps.setLong(2, (long) value);
+            ps.setLong(3, (long) value);
         } else {
-            ps.setBytes(2, (byte[]) value);
+            ps.setBytes(3, (byte[]) value);
         }
     }
 }

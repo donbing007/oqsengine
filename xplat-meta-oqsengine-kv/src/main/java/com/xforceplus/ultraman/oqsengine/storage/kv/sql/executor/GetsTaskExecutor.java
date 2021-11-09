@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
@@ -37,7 +38,8 @@ public class GetsTaskExecutor
 
     @Override
     public Collection<Map.Entry<String, byte[]>> execute(Collection<String> keys) throws SQLException {
-        String sql = String.format(SqlTemplateDefine.SELECTS_TEMPLATE, getTableName(), buildQuestionMask(keys.size()));
+        String sql = String.format(SqlTemplateDefine.SELECTS_TEMPLATE, getTableName(),
+            buildQuestionMask(keys.size()), buildQuestionMask(keys.size()));
 
         try (PreparedStatement ps = getResource().value().prepareStatement(sql)) {
 
@@ -46,6 +48,9 @@ public class GetsTaskExecutor
             int pos = 1;
             for (String key : keys) {
                 ps.setString(pos++, key);
+            }
+            for (String key : keys) {
+                ps.setLong(pos++, Time33Hash.getInstance().hash(key));
             }
 
             List<Map.Entry<String, byte[]>> results = new ArrayList<>(keys.size());

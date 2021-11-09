@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.define.SqlTemplateDefine;
@@ -7,8 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * 更新已存在数字类型KV的值.
@@ -46,6 +45,7 @@ public class IncrTaskExecutor extends AbstractJdbcTaskExecutor<Long, Long> {
 
             ps.setLong(1, step);
             ps.setString(2, key);
+            ps.setLong(3, Time33Hash.getInstance().hash(key));
 
             size = ps.executeUpdate();
         }
@@ -55,7 +55,8 @@ public class IncrTaskExecutor extends AbstractJdbcTaskExecutor<Long, Long> {
             try (PreparedStatement ps = getResource().value().prepareStatement(insertSql)) {
                 checkTimeout(ps);
                 ps.setString(1, key);
-                ps.setLong(2, step);
+                ps.setLong(2, Time33Hash.getInstance().hash(key));
+                ps.setLong(3, step);
 
                 ps.executeUpdate();
             }
@@ -69,6 +70,7 @@ public class IncrTaskExecutor extends AbstractJdbcTaskExecutor<Long, Long> {
                 checkTimeout(ps);
 
                 ps.setString(1, key);
+                ps.setLong(2, Time33Hash.getInstance().hash(key));
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
