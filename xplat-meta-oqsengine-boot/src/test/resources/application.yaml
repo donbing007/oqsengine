@@ -145,6 +145,20 @@ cdc:
 
 meta:
   grpc:
-    type: mock
+    # client 启动客户端、server 启动服务端、offline 离线模式、mock
+    type: client
+    #    host: ultraman.xforcecloud.com
+    host: localhost
+    #host: 169.254.106.127
+    #    host: localhost
+    #    port: 8081
+    port: 8082
+    #    port: 23120
+    seconds:
+      heartbeatTimeout: 30
+      delaytaskTimeout: 30
+      keepAliveDuration: 5
+      monitorDuration: 1
+      reconnectDuration: 5
   load:
     path: "-"

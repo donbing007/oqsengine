@@ -158,16 +158,17 @@ discover:
   sdk:
     enable: true
     connection:
-      host: ultraman-devops-service-test.n01103-oqs-cdc
+#      host: ultraman-devops-service-test.n01103-oqs-cdc
+      host: ultraman-dev.phoenix-t.xforceplus.com
       port: 8916
     time:
       heartbeat:
         expired: 60000
         duration: 5000
     agent:
-      erviceName: oqs-engine
-      serviceGroup: ${HOSTNAME}
-      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
+      serviceName: oqs-engine
+      serviceGroup: ${HOSTNAME:oqs-engine-yyf}
+      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id:0}
     threadPool:
       task: 5
       queue: 100

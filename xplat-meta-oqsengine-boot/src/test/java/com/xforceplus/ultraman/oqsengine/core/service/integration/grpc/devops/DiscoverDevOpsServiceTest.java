@@ -3,14 +3,21 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import com.xforceplus.ultraman.oqsengine.task.queue.TaskQueue;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -39,19 +46,21 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
     @Autowired
     private DiscoverDevOpsService discoverDevOpsService;
 
-    @MockBean(name = "keyValueStorage")
-    private KeyValueStorage keyValueStorage;
+//    @MockBean(name = "keyValueStorage")
+//    private KeyValueStorage keyValueStorage;
 
-    @MockBean(name = "metaManager")
+//    @MockBean(name = "metaManager")
+//    private MetaManager metaManager;
+    @Autowired
     private MetaManager metaManager;
 
-//    // mockBean below need to delete
+    // mockBean below need to delete
 //    @MockBean(name = "longContinuousPartialOrderIdGenerator")
 //    private LongIdGenerator longIdGenerator;
 //
 //    @MockBean(name = "longNoContinuousPartialOrderIdGenerator")
 //    private LongIdGenerator longPartitionIdGenerator;
-//
+
 //    @MockBean
 //    private EntitySearchService entitySearchService;
 //
@@ -67,10 +76,10 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
 //    @MockBean
 //    private TaskQueue taskQueue;
 //
-//    @MockBean
+//    @MockBean(name = "taskCoordinator")
 //    private TaskCoordinator taskCoordinator;
 
-    private boolean waitForDebug = false;
+    private boolean waitForDebug = true;
 
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
@@ -80,7 +89,7 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
      */
     @BeforeEach
     public void before() throws IllegalAccessException {
-        MetaManager metaManager = new StorageMetaManager();
+//        MetaManager metaManager = new StorageMetaManager();
 
         Collection<Field> cacheFields = ReflectionUtils.printAllMembers(metaManager);
         ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,

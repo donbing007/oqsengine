@@ -5,11 +5,16 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN
 import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.ConditionHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
+import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryResponse;
+import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQuerySummary;
+import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryConfig;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
@@ -17,24 +22,31 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
 
 /**
  * Created by justin.xu on 08/2021.
@@ -387,6 +399,69 @@ public class DiscoverDevOpsService {
             exceptionHandle(String.format("cancel task exception, [%s]", taskId), e);
         }
         return false;
+    }
+
+    @Autowired
+    DataSource indexSearchDataSource;
+
+    @DiscoverAction(describe = "条件查询", retClass = Collection.class)
+    public DevOpsQueryResponse conditionQuery (
+            @MethodParam(name = "config", klass = DevOpsQueryConfig.class) DevOpsQueryConfig config
+    ){
+        try {
+            Optional<IEntityClass> entityClassOptl = metaManager.load(config.getEntityClassId());
+            if(!entityClassOptl.isPresent()) {
+                return null;
+            }
+
+            Facet facet = Facet.build();
+            entityClassOptl.get().fields().stream()
+                    .map(field -> facet.addField(field));
+
+            Conditions conditions = Conditions.buildEmtpyConditions();
+            config.getConditions().getFields().stream().forEach(c -> {
+                Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
+                        .stream().filter(field -> c.getField().equals(field.name())).findAny();
+                if(entityFieldOptl.isPresent() && ConditionOperator.getInstance(c.getOperator()) != null) {
+                    List<IValue> values =
+                            Arrays.asList(c.getValues()).stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(), v)).collect(Collectors.toList());
+
+
+                    Condition condition = new Condition(
+                            entityFieldOptl.get(),
+                            ConditionOperator.getInstance(c.getOperator()),
+                            values.toArray(new IValue[] {})
+                    );
+                    conditions.addAnd(condition);
+                }
+            });
+            ServiceSelectConfig serviceSelectConfig = ServiceSelectConfig.Builder.anSearchConfig()
+                    .withPage(new Page(config.getPageNo(), config.getPageSize()))
+                    .withFacet(facet)
+                    .build();
+
+            Collection<IEntity> entities = entitySearchService.selectByConditions(conditions, new EntityClassRef(config.getEntityClassId(), ""), serviceSelectConfig);
+
+            DevOpsQueryResponse response = new DevOpsQueryResponse();
+            response.setRows(entities.stream().map(entity -> {
+                Map map = new HashMap();
+                entity.entityValue().values().forEach(value -> {
+                    map.put(value.getField().name(), value.getValue());
+                });
+                return map;
+            }).collect(Collectors.toList()));
+            DevOpsQuerySummary summary = new DevOpsQuerySummary();
+            if(serviceSelectConfig.getPage().isPresent()) {
+                summary.setTotal(serviceSelectConfig.getPage().get().getTotalCount());
+            } else {
+                summary.setTotal(0L);
+            }
+            response.setSummary(summary);
+            return response;
+        } catch (Exception e) {
+            exceptionHandle(String.format("selectByConditions exception, [%s]", config.getEntityClassId()), e);
+        }
+        return null;
     }
 
     private void exceptionHandle(String businessMessage, Exception e) {
