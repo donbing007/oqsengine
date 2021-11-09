@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.SqlKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-import com.xforceplus.ultraman.oqsengine.task.mock.KVDbScript;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
@@ -44,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 
 /**
@@ -86,18 +84,11 @@ public class TaskKeyValueQueueSQLTest {
         keyValueStorage.setTimeoutMs(200);
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
 
-        try (Connection conn = ds.getConnection()) {
-            try (Statement st = conn.createStatement()) {
-                st.execute(KVDbScript.DROP_KV);
-                st.execute(KVDbScript.CREATE_KV);
-            }
-        }
-
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
-                StorageInitialization.getInstance().getTransactionManager(),
-                new SqlKvConnectionTransactionResourceFactory(),
-                NoSelector.build(ds),
-                NoSelector.build("kv"));
+            StorageInitialization.getInstance().getTransactionManager(),
+            new SqlKvConnectionTransactionResourceFactory(),
+            NoSelector.build(ds),
+            NoSelector.build("kv"));
 
         Collection<Field> fields = ReflectionUtils.printAllMembers(keyValueStorage);
         ReflectionUtils.reflectionFieldValue(fields, "transactionExecutor", keyValueStorage, executor);
@@ -159,7 +150,8 @@ public class TaskKeyValueQueueSQLTest {
 
         Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
         unSubmitTask.setAccessible(true);
-        ConcurrentHashMap<String, byte[]> unSubmitTaskMap = (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+        ConcurrentHashMap<String, byte[]> unSubmitTaskMap =
+            (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
 
         long millis = System.currentTimeMillis();
         while (!unSubmitTaskMap.isEmpty()) {
@@ -234,7 +226,8 @@ public class TaskKeyValueQueueSQLTest {
 
         Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
         unSubmitTask.setAccessible(true);
-        ConcurrentHashMap<String, byte[]> unSubmitTaskMap = (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+        ConcurrentHashMap<String, byte[]> unSubmitTaskMap =
+            (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
 
         long millis = System.currentTimeMillis();
         while (!unSubmitTaskMap.isEmpty()) {
@@ -253,7 +246,7 @@ public class TaskKeyValueQueueSQLTest {
 
         for (long i = initPoint; i <= count; i++) {
             if (!keyValueStorage.exist(prefix + "-" + i)) {
-                logger.info(prefix + "-" +i);
+                logger.info(prefix + "-" + i);
             }
             Assertions.assertTrue(keyValueStorage.exist(prefix + "-" + i));
         }
@@ -467,7 +460,9 @@ public class TaskKeyValueQueueSQLTest {
      * @throws InvocationTargetException .
      */
     @Test
-    public void testShutdown() throws InterruptedException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+    public void testShutdown()
+        throws InterruptedException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
+        InvocationTargetException {
         int count = 1000;
         AtomicLong appendCount = new AtomicLong(0);
         CountDownLatch latch = new CountDownLatch(count);
@@ -510,7 +505,7 @@ public class TaskKeyValueQueueSQLTest {
                 break;
             }
         }
-        Assertions.assertTrue(lostSize <= count );
+        Assertions.assertTrue(lostSize <= count);
 
     }
 
