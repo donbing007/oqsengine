@@ -123,9 +123,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             //  step4 build agg event
-            logger.info(String.format("=================start buildAggEvent : %s", appId + "-" + version));
             step = buildAggEvent(appId, version, data, aggPayloads);
-            logger.info(String.format("=================complete buildAggEvent : %s", appId + "-" + version));
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 return false;
             }
