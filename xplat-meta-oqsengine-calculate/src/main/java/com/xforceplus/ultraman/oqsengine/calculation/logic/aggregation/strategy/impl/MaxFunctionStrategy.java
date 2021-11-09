@@ -43,25 +43,26 @@ public class MaxFunctionStrategy implements FunctionStrategy {
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
         logger.info("begin excuteMax agg:{}, o-value:{}, n-value:{}",
                 agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count;
-        if (agg.get().valueToLong() == 0 || agg.get().valueToString().equals("0.0")) {
+        if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")) {
             count = countAggregationEntity(aggregation, context);
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 if (count == 1) {
-                    agg.get().setStringValue(n.get().valueToString());
-                    return agg;
+                    aggValue.get().setStringValue(n.get().valueToString());
+                    return aggValue;
                 }
             }
         }
         // 当聚合值和操作数据的旧值相同，则需要特殊处理  - 这里已经过滤掉初始值为0的特殊场景
-        if (agg.get().valueToString().equals(o.get().valueToString())) {
+        if (aggValue.get().valueToString().equals(o.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 //属于第二层树的操作，按实际操作方式判断
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                    return function.excute(agg, o, n);
+                    return function.excute(aggValue, o, n);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最大值，需要重新查找最大值-将最大值返回
                     Optional<IValue> maxValue = null;
@@ -72,11 +73,11 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     }
                     if (maxValue.isPresent()) {
                         logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
-                        agg.get().setStringValue(maxValue.get().valueToString());
-                        return agg;
+                        aggValue.get().setStringValue(maxValue.get().valueToString());
+                        return aggValue;
                     } else {
-                        agg.get().setStringValue("0");
-                        return agg;
+                        aggValue.get().setStringValue("0");
+                        return aggValue;
                     }
                 } else {
                     // 如果新数据小于老数据，则需要在数据库中进行一次检索，查出最大数据，用该数据和新值进行比对，然后进行替换
@@ -90,21 +91,21 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         if (maxValue.isPresent()) {
                             logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
                             if (checkMaxValue(maxValue.get(), n.get())) {
-                                agg.get().setStringValue(maxValue.get().valueToString());
-                                return agg;
+                                aggValue.get().setStringValue(maxValue.get().valueToString());
+                                return aggValue;
                             } else {
                                 // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                                agg.get().setStringValue(n.get().valueToString());
-                                return agg;
+                                aggValue.get().setStringValue(n.get().valueToString());
+                                return aggValue;
                             }
                         } else {
-                            agg.get().setStringValue(n.get().valueToString());
-                            return agg;
+                            aggValue.get().setStringValue(n.get().valueToString());
+                            return aggValue;
                         }
                     } else {
                         // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                        agg.get().setStringValue(n.get().valueToString());
-                        return agg;
+                        aggValue.get().setStringValue(n.get().valueToString());
+                        return aggValue;
                     }
                 }
             } else {
@@ -119,29 +120,29 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     }
                     if (maxValue.isPresent()) {
                         if (checkMaxValue(maxValue.get(), n.get())) {
-                            agg.get().setStringValue(maxValue.get().valueToString());
-                            return agg;
+                            aggValue.get().setStringValue(maxValue.get().valueToString());
+                            return aggValue;
                         } else {
                             // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                            agg.get().setStringValue(n.get().valueToString());
-                            return agg;
+                            aggValue.get().setStringValue(n.get().valueToString());
+                            return aggValue;
                         }
                     } else {
-                        agg.get().setStringValue(n.get().valueToString());
-                        return agg;
+                        aggValue.get().setStringValue(n.get().valueToString());
+                        return aggValue;
                     }
                 } else {
                     // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                    agg.get().setStringValue(n.get().valueToString());
-                    return agg;
+                    aggValue.get().setStringValue(n.get().valueToString());
+                    return aggValue;
                 }
             }
         }
         if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
             // 如果不是删除最大的数据，无需额外判断，直接返回当前聚合值
-            return agg;
+            return aggValue;
         }
-        return function.excute(agg, o, n);
+        return function.excute(aggValue, o, n);
     }
 
     /**

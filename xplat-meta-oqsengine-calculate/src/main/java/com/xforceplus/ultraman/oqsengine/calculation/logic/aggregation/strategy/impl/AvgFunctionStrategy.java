@@ -39,7 +39,7 @@ public class AvgFunctionStrategy implements FunctionStrategy {
                 agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        Optional<IValue> aggValue = context.getFocusEntity().entityValue().getValue(context.getFocusField().id());
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count = 0;
         count = countAggregationEntity(aggregation, context);

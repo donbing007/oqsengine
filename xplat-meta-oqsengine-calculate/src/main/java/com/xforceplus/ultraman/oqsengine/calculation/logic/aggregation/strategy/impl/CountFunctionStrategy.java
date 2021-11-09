@@ -18,8 +18,9 @@ import java.util.Optional;
 public class CountFunctionStrategy implements FunctionStrategy {
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+        Optional<IValue> aggValue = Optional.of(agg.get().copy());
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
-        return function.excute(agg, o, n);
+        return function.excute(aggValue, o, n);
     }
 }

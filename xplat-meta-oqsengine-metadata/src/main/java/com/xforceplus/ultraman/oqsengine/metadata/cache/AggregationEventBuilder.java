@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AggregationTre
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -73,9 +74,14 @@ public class AggregationEventBuilder {
                     entityClasses.add(entityClassFormatHandler.classLoad(s.getId(), null).get());
                     sf.forEach(ef -> {
                         Aggregation aggregation = (Aggregation) ef.config().getCalculation();
-                        Optional<IEntityClass> entityClassOptional = profileByField(aggregation.getClassId(),
+                        if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                            Optional<IEntityClass> entityClassOptional = entityClassFormatHandler.classLoad(aggregation.getClassId(), null);
+                            entityClasses.add(entityClassOptional.get());
+                        } else {
+                            Optional<IEntityClass> entityClassOptional = profileByField(aggregation.getClassId(),
                                 aggregation.getFieldId(), storageList);
-                        entityClasses.add(entityClassOptional.get());
+                            entityClasses.add(entityClassOptional.get());
+                        }
                     });
 
                 }
