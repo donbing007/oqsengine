@@ -71,6 +71,7 @@ public class AggregationEventBuilder {
                         f.calculationType().equals(CalculationType.AGGREGATION))
                         .collect(Collectors.toList());
                 if (sf.size() > 0) {
+                    logger.info("-----------------------------------------------------------------------" + entityClassFormatHandler.classLoad(s.getId(), null).get().code());
                     entityClasses.add(entityClassFormatHandler.classLoad(s.getId(), null).get());
                     sf.forEach(ef -> {
                         Aggregation aggregation = (Aggregation) ef.config().getCalculation();
