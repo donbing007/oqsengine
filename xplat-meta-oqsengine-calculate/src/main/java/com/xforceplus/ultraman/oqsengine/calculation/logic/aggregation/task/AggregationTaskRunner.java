@@ -165,7 +165,7 @@ public class AggregationTaskRunner implements TaskRunner {
                             indexIds.addAll(ids);
                             long[] masterIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
-                            logger.info("---------------------------------------------------" + ptNode.getAggregationType().toString());
+                            logger.info("" + ptNode.getAggregationType().toString());
                             if (ptNode.getAggregationType().equals(AggregationType.COUNT)) {
                                 logger.info("-----------------------------------------------------");
                                 if (entityClass.id() == 1457261799308005378L) {
