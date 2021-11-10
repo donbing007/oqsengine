@@ -104,7 +104,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     private long queryTimeout;
 
-    public void setQueryTimeout(long queryTimeout) {
+    public void setTimeoutMs(long queryTimeout) {
         this.queryTimeout = queryTimeout;
     }
 
@@ -116,9 +116,6 @@ public class SQLMasterStorage implements MasterStorage {
     @PostConstruct
     public void init() {
 
-        if (queryTimeout <= 0) {
-            setQueryTimeout(3000L);
-        }
     }
 
     @Override

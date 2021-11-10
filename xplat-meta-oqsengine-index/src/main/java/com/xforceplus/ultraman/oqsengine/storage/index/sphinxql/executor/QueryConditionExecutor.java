@@ -59,16 +59,16 @@ public class QueryConditionExecutor
      * @param resource                 事务资源.
      * @param conditionsBuilderFactory 条件构造器工厂.
      * @param storageStrategyFactory   逻辑物理字段转换器工厂.
-     * @param maxQueryTimeMs           最大查询超时毫秒.
+     * @param queryTimeMs              最大查询超时毫秒.
      */
     public QueryConditionExecutor(
         String indexTableName,
         TransactionResource<Connection> resource,
         SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory,
-        long maxQueryTimeMs) {
+        long queryTimeMs) {
 
-        super(indexTableName, resource, maxQueryTimeMs);
+        super(indexTableName, resource, queryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
         this.storageStrategyFactory = storageStrategyFactory;
     }
@@ -166,6 +166,10 @@ public class QueryConditionExecutor
         if (buff.length() > 0) {
             // 为首个增加一个','分隔.
             buff.insert(0, ',');
+            // 如果尾部多了一个',',删除.
+            if (buff.charAt(buff.length() - 1) == ',') {
+                buff.deleteCharAt(buff.length() - 1);
+            }
         }
         return buff.toString();
     }
@@ -355,9 +359,6 @@ public class QueryConditionExecutor
             st.setLong(3, maxMatch <= 0 ? 1 : maxMatch);
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
-
-            // 设定本地超时时间.
-            checkTimeout(st);
 
             try (ResultSet rs = st.executeQuery()) {
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());

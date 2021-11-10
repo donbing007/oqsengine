@@ -4,11 +4,8 @@ import com.xforceplus.ultraman.oqsengine.common.mock.BeanInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
-import com.xforceplus.ultraman.oqsengine.common.mock.SqlInitUtils;
-import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -110,7 +107,7 @@ public class IndexInitialization implements BeanInitialization {
             .reflectionFieldValue(fields, "threadPool", indexStorage, CommonInitialization.getInstance().getRunner());
 
         indexStorage.setSearchIndexName(INDEX_TABLE);
-        indexStorage.setMaxSearchTimeoutMs(1000);
+        indexStorage.setTimeoutMs(1000);
         indexStorage.init();
     }
 

@@ -65,9 +65,6 @@ jmx:
   port: 1099
   hostname: "127.0.0.1"
 
-environment:
-  - JVM_HEAP_PERCENTAGE: 60
-
 logger:
   level: INFO
 
@@ -155,8 +152,6 @@ storage:
   index:
     search:
       name: "oqsindex"
-      maxQueryTimeMs: 0
-      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:

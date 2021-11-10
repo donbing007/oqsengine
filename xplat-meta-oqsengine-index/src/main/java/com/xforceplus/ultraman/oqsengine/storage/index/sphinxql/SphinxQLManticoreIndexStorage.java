@@ -124,11 +124,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         this.searchIndexName = searchIndexName;
     }
 
-    public long getMaxSearchTimeoutMs() {
+    public long getTimeoutMs() {
         return maxSearchTimeoutMs;
     }
 
-    public void setMaxSearchTimeoutMs(long maxSearchTimeoutMs) {
+    public void setTimeoutMs(long maxSearchTimeoutMs) {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
@@ -165,7 +165,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 resource,
                 sphinxQLConditionsBuilderFactory,
                 storageStrategyFactory,
-                getMaxSearchTimeoutMs()).execute(
+                getTimeoutMs()).execute(
                 Tuple.of(entityClass, conditions, useConfig));
         });
     }
@@ -175,7 +175,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         throws SQLException {
         return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             return SearchExecutor
-                .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getMaxSearchTimeoutMs())
+                .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getTimeoutMs())
                 .execute(Tuple.of(config, entityClasses));
         });
     }

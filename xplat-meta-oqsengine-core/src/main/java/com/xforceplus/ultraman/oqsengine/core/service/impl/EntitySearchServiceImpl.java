@@ -402,7 +402,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                         if (config.getThirdSort().isPresent()) {
                             selectConfigBuilder.withThirdSort(config.getThirdSort().get());
+                        } else {
+                            // 追加ID排序.防止相同值造成排序不准确.
+                            selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
                         }
+                    } else {
+                        // 追加ID排序.防止相同值造成排序不准确.
+                        selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
                     }
                 }
             }

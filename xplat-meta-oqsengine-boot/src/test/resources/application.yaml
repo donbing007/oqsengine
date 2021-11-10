@@ -65,8 +65,6 @@ storage:
   index:
     search:
       name: "oqsindex"
-      maxQueryTimeMs: 0
-      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:

@@ -120,6 +120,8 @@ public class MockEntityClassDefine {
     // 订单的订单项平均价格.
     private static long orderAvgPriceFieldId = baseFieldId - 29;
 
+    private static long l2LongFieldId = baseFieldId - 30;
+
     // 用户订单关系字段.
     private static IEntityField orderUserForeignField = EntityField.Builder.anEntityField()
         .withId(orderUserForeignFieldId)
@@ -197,6 +199,11 @@ public class MockEntityClassDefine {
             .withId(l2EntityClassId)
             .withLevel(2)
             .withCode("l2")
+            .withField(EntityField.Builder.anEntityField()
+                .withId(l2LongFieldId)
+                .withFieldType(FieldType.LONG)
+                .withName("l2-long")
+                .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
                 .withId(l2StringFieldId)
                 .withFieldType(FieldType.STRING)
