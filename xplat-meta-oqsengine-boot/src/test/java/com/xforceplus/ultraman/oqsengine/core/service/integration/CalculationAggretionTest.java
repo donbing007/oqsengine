@@ -29,9 +29,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisConta
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -267,13 +264,6 @@ public class CalculationAggretionTest extends AbstractContainerExtends {
         Assertions.assertNotEquals(
           DateTimeValue.MIN_DATE_TIME,
           order.entityValue().getValue("最大时间max").get().getValue()
-        );
-
-        Assertions.assertNotNull(
-          order.entityValue().getValue("最小时间min").get().valueToLong()
-        );
-        Assertions.assertNotNull(
-          order.entityValue().getValue("最大时间max").get().valueToLong()
         );
         Assertions.assertNotEquals(
             0,
