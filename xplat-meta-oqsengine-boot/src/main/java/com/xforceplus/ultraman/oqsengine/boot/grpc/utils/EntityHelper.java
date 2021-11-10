@@ -19,12 +19,12 @@ public class EntityHelper {
     /**
      * 构造IEntityClass实例.
      */
-    public static IEntityClass toEntityClass(EntityUp entityUp, MetaManager metaManager) {
+    public static IEntityClass toEntityClass(EntityUp entityUp, MetaManager metaManager, String profile) {
 
         boolean hasExtendedClass =
             entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.EXTENDENTITYCLASS_FIELD_NUMBER));
 
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityUp.getId());
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityUp.getId(), profile);
         if (entityClassOp.isPresent()) {
             return entityClassOp.get();
         } else {

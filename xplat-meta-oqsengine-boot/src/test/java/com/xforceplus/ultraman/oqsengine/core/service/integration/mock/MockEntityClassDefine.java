@@ -150,7 +150,13 @@ public class MockEntityClassDefine {
                     .withId(l0LongFieldId)
                     .withFieldType(FieldType.LONG)
                     .withName("l0-long")
-                    .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(100)
+                            .withSearchable(true)
+                            .build()
+                    )
+                    .build())
             .withField(EntityField.Builder.anEntityField()
                 .withId(l0StringFieldId)
                 .withFieldType(FieldType.STRING)
@@ -252,7 +258,7 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(DRIVCER_ID_FEILD_ID)
@@ -271,7 +277,7 @@ public class MockEntityClassDefine {
                                 .build()
                         )
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(baseRelationsId - 2)
@@ -283,7 +289,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(l2EntityClassId)
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
                         .build()
                 )
             )
@@ -318,7 +324,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("driver")
                         .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
                         .withRightEntityClassId(L2_ENTITY_CLASS.id())
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(baseRelationsId - 4)
@@ -330,7 +336,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode(L2_ENTITY_CLASS.code())
                         .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
                         .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -413,7 +419,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(lookupEntityClassId)
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
-                        .withRightEntityClassLoader((id) -> Optional.ofNullable(L2_ENTITY_CLASS))
+                        .withRightEntityClassLoader((id, profile) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -541,7 +547,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(userClassId)
                         .withLeftEntityClassCode("user")
                         .withRightEntityClassId(orderClassId)
-                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withRightEntityClassLoader((id, orderClassId) -> Optional.of(ORDER_CLASS))
                         .withEntityField(orderUserForeignField).build()
                 )
             ).build();
@@ -697,7 +703,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(orderClassId)
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(orderItemClassId)
-                        .withRightEntityClassLoader(orderItemClassId -> Optional.of(ORDER_ITEM_CLASS))
+                        .withRightEntityClassLoader((id,orderItemClassId) -> Optional.of(ORDER_ITEM_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderUserForeignField.id())
@@ -706,7 +712,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(orderClassId)
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(userClassId)
-                        .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+                        .withRightEntityClassLoader((id, userClassId) -> Optional.of(USER_CLASS))
                         .withEntityField(orderUserForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderUserForeignField.id() + 200)
@@ -715,7 +721,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(orderClassId)
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(userClassId)
-                        .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+                        .withRightEntityClassLoader((id, userClassId) -> Optional.of(USER_CLASS))
                         .withEntityField(orderUserForeignField).build()
 
                 )
@@ -775,7 +781,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(orderItemClassId)
                         .withLeftEntityClassCode("orderItem")
                         .withRightEntityClassId(orderClassId)
-                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withRightEntityClassLoader((id,orderClassId) -> Optional.of(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderOrderItemForeignField.id() + 200)
@@ -784,7 +790,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassId(orderItemClassId)
                         .withLeftEntityClassCode("orderItem")
                         .withRightEntityClassId(orderClassId)
-                        .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+                        .withRightEntityClassLoader((id, orderClassId) -> Optional.of(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build()
                 )
             ).build();
@@ -806,7 +812,7 @@ public class MockEntityClassDefine {
         };
 
         for (IEntityClass e : es) {
-            Mockito.when(metaManager.load(e.id())).thenReturn(Optional.of(e));
+            Mockito.when(metaManager.load(e.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));

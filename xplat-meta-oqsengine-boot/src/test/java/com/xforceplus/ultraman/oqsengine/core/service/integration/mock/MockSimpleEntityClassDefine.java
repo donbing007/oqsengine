@@ -247,7 +247,7 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(userClassId)
             .withLeftEntityClassCode("user")
             .withRightEntityClassId(orderClassId)
-            .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+            .withRightEntityClassLoader((orderClassId,a) -> Optional.of(ORDER_CLASS))
             .withEntityField(orderUserForeignField).build()
         )
       ).build();
@@ -501,7 +501,7 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(orderClassId)
             .withLeftEntityClassCode("order")
             .withRightEntityClassId(orderItemClassId)
-            .withRightEntityClassLoader(orderItemClassId -> Optional.of(ORDER_ITEM_CLASS))
+            .withRightEntityClassLoader((orderItemClassId,a) -> Optional.of(ORDER_ITEM_CLASS))
             .withEntityField(orderOrderItemForeignField).build(),
           Relationship.Builder.anRelationship()
             .withId(orderUserForeignField.id())
@@ -510,7 +510,7 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(orderClassId)
             .withLeftEntityClassCode("order")
             .withRightEntityClassId(userClassId)
-            .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+            .withRightEntityClassLoader((userClassId,a) -> Optional.of(USER_CLASS))
             .withEntityField(orderUserForeignField).build(),
           Relationship.Builder.anRelationship()
             .withId(orderUserForeignField.id() + 200)
@@ -519,9 +519,8 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(orderClassId)
             .withLeftEntityClassCode("order")
             .withRightEntityClassId(userClassId)
-            .withRightEntityClassLoader(userClassId -> Optional.of(USER_CLASS))
+            .withRightEntityClassLoader((userClassId,a) -> Optional.of(USER_CLASS))
             .withEntityField(orderUserForeignField).build()
-
         )
       )
       .build();
@@ -602,7 +601,7 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(orderItemClassId)
             .withLeftEntityClassCode("orderItem")
             .withRightEntityClassId(orderClassId)
-            .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+            .withRightEntityClassLoader((orderClassId,a) -> Optional.of(ORDER_CLASS))
             .withEntityField(orderOrderItemForeignField).build(),
           Relationship.Builder.anRelationship()
             .withId(orderOrderItemForeignField.id() + 200)
@@ -611,7 +610,7 @@ public class MockSimpleEntityClassDefine {
             .withLeftEntityClassId(orderItemClassId)
             .withLeftEntityClassCode("orderItem")
             .withRightEntityClassId(orderClassId)
-            .withRightEntityClassLoader(orderClassId -> Optional.of(ORDER_CLASS))
+            .withRightEntityClassLoader((orderClassId,a) -> Optional.of(ORDER_CLASS))
             .withEntityField(orderOrderItemForeignField).build()
         )
       ).build();
@@ -628,7 +627,7 @@ public class MockSimpleEntityClassDefine {
     };
 
     for (IEntityClass e : es) {
-      Mockito.when(metaManager.load(e.id())).thenReturn(Optional.of(e));
+      Mockito.when(metaManager.load(e.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(e));
       Mockito.when(metaManager.load(e.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(e));
       Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
       Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));

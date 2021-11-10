@@ -165,7 +165,6 @@ message DomainCondition {
   }
   Operator operator = 7;
   string values = 8;
-
 }
 
 message ProfileInfo {

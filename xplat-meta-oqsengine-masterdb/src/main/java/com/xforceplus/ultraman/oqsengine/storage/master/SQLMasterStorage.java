@@ -486,7 +486,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
         Optional<IEntityClass> entityClassOp;
         if (se.getProfile() == null || se.getProfile().isEmpty()) {
-            entityClassOp = metaManager.load(se.getSelfEntityClassId());
+            entityClassOp = metaManager.load(se.getSelfEntityClassId(), "");
         } else {
             entityClassOp = metaManager.load(
                 se.getSelfEntityClassId(),

@@ -49,6 +49,9 @@ public class LockConfiguration {
         Config configCopy = new Config(config);
         String password = RedisConfigUtil.getRedisUrlPassword(configuration.uriWithStateDb());
         if (!StringUtils.isBlank(password)) {
+            if (password.startsWith(":")) {
+                password = password.substring(1);
+            }
             configCopy.useSingleServer().setPassword(password);
         }
         ConnectionManager connectionManager = ConfigSupport.createConnectionManager(configCopy);

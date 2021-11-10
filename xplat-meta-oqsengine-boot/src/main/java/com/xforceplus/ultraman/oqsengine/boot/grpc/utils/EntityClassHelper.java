@@ -113,6 +113,9 @@ public class EntityClassHelper {
      * 查找字段实例.
      */
     public static Optional<IEntityField> findFieldById(IEntityClass entityClass, long id) {
+
+        String profile = entityClass.ref().getProfile();
+
         //find current
         Optional<IEntityField> field = entityClass.field(id);
         if (field.isPresent()) {
@@ -122,7 +125,7 @@ public class EntityClassHelper {
         Optional<IEntityField> firstField = entityClass.relationship().stream()
             .filter(x -> x.getLeftEntityClassId() == entityClass.id())
             .map(x -> {
-                IEntityClass relatedEntityClass = x.getRightEntityClass();
+                IEntityClass relatedEntityClass = x.getRightEntityClass(profile);
                 Optional<IEntityField> entityField = relatedEntityClass.field(x.getId());
                 return entityField;
             }).filter(Optional::isPresent).map(Optional::get).findFirst();
@@ -184,15 +187,7 @@ public class EntityClassHelper {
                             FormulaTypedValue retValue = new FormulaTypedValue(x, contextMap);
                             return Collections.singletonList(retValue);
                         } else if (CalculationType.LOOKUP.equals(x.calculationType())) {
-                            String value = y.getValue();
-                            try {
-                                long longValue = Long.parseLong(value);
-                                LongValue typedLongValue = new LongValue(x, longValue);
-                                return Collections.singletonList(typedLongValue);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(
-                                    String.format("Lookup value [%s]cannot convert to Long", value));
-                            }
+                            return null;
                         } else {
                             return toTypedValue(x, y.getValue());
                         }

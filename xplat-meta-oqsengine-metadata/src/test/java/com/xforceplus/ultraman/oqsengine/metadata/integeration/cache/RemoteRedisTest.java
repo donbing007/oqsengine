@@ -70,7 +70,7 @@ public class RemoteRedisTest {
     @Test
     public void load() throws JsonProcessingException {
         if (isTestOpen) {
-            Optional<IEntityClass> entityClassOptional = storageMetaManager.load(1422422995802726402L);
+            Optional<IEntityClass> entityClassOptional = storageMetaManager.load(1422422995802726402L, "");
             Assertions.assertTrue(entityClassOptional.isPresent());
         }
     }

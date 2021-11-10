@@ -24,6 +24,12 @@ public class Lookup extends AbstractCalculation {
     @JsonProperty(value = "fieldId")
     private long fieldId;
 
+    /**
+     * lookup的关系信息.
+     */
+    @JsonProperty(value = "relationId")
+    private long relationId;
+
     public long getClassId() {
         return classId;
     }
@@ -40,6 +46,14 @@ public class Lookup extends AbstractCalculation {
         this.fieldId = fieldId;
     }
 
+    public long getRelationId() {
+        return relationId;
+    }
+
+    public void setRelationId(long relationId) {
+        this.relationId = relationId;
+    }
+
     private Lookup() {
         super(CalculationType.LOOKUP);
     }
@@ -49,6 +63,7 @@ public class Lookup extends AbstractCalculation {
         Lookup lookup = new Lookup();
         lookup.classId = this.classId;
         lookup.fieldId = this.fieldId;
+        lookup.relationId = this.relationId;
         lookup.level = this.level;
         return lookup;
     }
@@ -59,6 +74,7 @@ public class Lookup extends AbstractCalculation {
     public static final class Builder {
         private long classId;
         private long fieldId;
+        private long relationId;
 
         private Builder() {
         }
@@ -77,6 +93,11 @@ public class Lookup extends AbstractCalculation {
             return this;
         }
 
+        public Lookup.Builder withRelationId(long relationId) {
+            this.relationId = relationId;
+            return this;
+        }
+
         /**
          * build.
          */
@@ -85,6 +106,7 @@ public class Lookup extends AbstractCalculation {
             lookup.calculationType = CalculationType.LOOKUP;
             lookup.classId = this.classId;
             lookup.fieldId = this.fieldId;
+            lookup.relationId = this.relationId;
             lookup.level = DEFAULT_LEVEL;
             return lookup;
         }

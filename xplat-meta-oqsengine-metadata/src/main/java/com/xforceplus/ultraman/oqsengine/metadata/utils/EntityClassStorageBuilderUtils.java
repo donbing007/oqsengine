@@ -264,6 +264,7 @@ public class EntityClassStorageBuilderUtils {
         return Lookup.Builder.anLookup()
                     .withClassId(calculator.getLookupEntityClassId())
                     .withFieldId(calculator.getLookupEntityFieldId())
+                    .withRelationId(calculator.getLookupRelationId())
                     .build();
     }
 

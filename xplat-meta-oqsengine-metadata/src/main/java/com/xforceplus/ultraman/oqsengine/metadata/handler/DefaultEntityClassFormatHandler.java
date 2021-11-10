@@ -51,11 +51,6 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
         }
     }
 
-    private Optional<IEntityClass> classLoader(long id) {
-        return classLoad(id, null);
-    }
-
-
     /**
      * 生成IEntityClass.
      */
@@ -121,7 +116,6 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
         return builder.build();
     }
 
-
     /**
      * 加载relation.
      */
@@ -139,7 +133,7 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
                         .withIdentity(r.isIdentity())
                         .withStrong(r.isStrong())
                         .withRightEntityClassId(r.getRightEntityClassId())
-                        .withRightEntityClassLoader(this::classLoader)
+                        .withRightEntityClassLoader(this::classLoad)
                         .withEntityField(cloneEntityField(r.getEntityField()))
                         .withBelongToOwner(r.isBelongToOwner());
 
@@ -164,5 +158,4 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
         }
         return null;
     }
-
 }

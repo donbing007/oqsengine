@@ -102,7 +102,7 @@ public class LookupCalculationLogic implements CalculationLogic {
             迭代所有关系中的字段,判断是否有可能会对当前参与者发起lookup.
              */
             for (Relationship r : participantClass.relationship()) {
-                IEntityClass relationshipClass = r.getRightEntityClass();
+                IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
                 relationshipClass.fields().stream()
                     .filter(f -> f.calculationType() == CalculationType.LOOKUP)
                     .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())

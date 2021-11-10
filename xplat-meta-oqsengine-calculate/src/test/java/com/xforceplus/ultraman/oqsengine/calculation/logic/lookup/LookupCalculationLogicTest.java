@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
@@ -157,7 +158,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(strongLookupClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(strongLookupEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(strongLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(true)
@@ -167,7 +168,7 @@ public class LookupCalculationLogicTest {
                         .withId(1)
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(weakLookupClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(weakLookupEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(weakLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(false)
@@ -190,7 +191,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(strongLookupClassId)
                         .withRightEntityClassId(targetClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(true)
@@ -211,7 +212,7 @@ public class LookupCalculationLogicTest {
                         .withId(0)
                         .withLeftEntityClassId(weakLookupClassId)
                         .withRightEntityClassId(targetClassId)
-                        .withRightEntityClassLoader(id -> Optional.of(targetEntityClass))
+                        .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(false)

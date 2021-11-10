@@ -113,7 +113,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             if (byAggEntitys.size() == ONE) {
                 byAggEntity = byAggEntitys.get(ZERO);
                 Optional<IEntityClass> byAggEntityClass =
-                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId());
+                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
                 if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                     if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                         n = Optional.of(new LongValue(aggField, 1));
@@ -202,7 +202,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 .collect(Collectors.toList());
 
             for (Relationship r : relationships) {
-                IEntityClass relationshipClass = r.getRightEntityClass();
+                IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
                 List<IEntityField> fields = relationshipClass.fields().stream()
                     .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
                     .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())

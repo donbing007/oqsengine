@@ -76,6 +76,7 @@ public class MultipleTimerWheelTest {
         }
 
         latch.await();
+        TimeUnit.SECONDS.sleep(5);
         int size = wheel.size();
         Assertions.assertEquals(500000, result.get());
         Assertions.assertEquals(0, size);
@@ -104,8 +105,7 @@ public class MultipleTimerWheelTest {
         MultipleTimerWheel wheel = new MultipleTimerWheel(new TimeoutNotification() {
             @Override
             public long notice(Object t) {
-
-                return 0;
+              return 0;
             }
         });
 
@@ -118,11 +118,8 @@ public class MultipleTimerWheelTest {
 
         for (int i = 0; i < 100000; i++) {
             if (500000 == wheel.size()) {
-
                 break;
-
             } else {
-
                 LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000));
             }
         }

@@ -92,7 +92,7 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
 
         //  再次获取则为空
         Optional<IEntityClass> entityClassOp =
-            MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID);
+            MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID, "");
 
         Assertions.assertFalse(entityClassOp.isPresent());
 
@@ -106,7 +106,7 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
         Assertions.assertEquals(TEST_START_VERSION, version);
 
         Optional<IEntityClass> entityClassOp =
-            MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID);
+            MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID, "");
 
         Assertions.assertTrue(entityClassOp.isPresent());
     }

@@ -334,7 +334,10 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
             Map<Long, ValueWrapper> valueMap = prev.getValueMap();
 
-            Optional<IEntityClass> targetEntityClass = metaManager.load(prev.getEntityClassId());
+            /*
+             * TODO profile
+             */
+            Optional<IEntityClass> targetEntityClass = metaManager.load(prev.getEntityClassId(), "");
             if(targetEntityClass.isPresent()){
                 IEntityClass entityClass = targetEntityClass.get();
                 Optional<IEntityField> createUserNameField = entityClass.field("create_user_name");
