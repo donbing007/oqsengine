@@ -7,58 +7,62 @@ public interface EntityClassSyncRequestOrBuilder extends
     // @@protoc_insertion_point(interface_extends:EntityClassSyncRequest)
     com.google.protobuf.MessageOrBuilder {
 
-  /**
-   * <code>string uid = 1;</code>
-   */
-  java.lang.String getUid();
-  /**
-   * <code>string uid = 1;</code>
-   */
-  com.google.protobuf.ByteString
-      getUidBytes();
+    /**
+     * <code>string uid = 1;</code>
+     */
+    java.lang.String getUid();
 
-  /**
-   * <code>string appId = 2;</code>
-   */
-  java.lang.String getAppId();
-  /**
-   * <code>string appId = 2;</code>
-   */
-  com.google.protobuf.ByteString
-      getAppIdBytes();
+    /**
+     * <code>string uid = 1;</code>
+     */
+    com.google.protobuf.ByteString
+    getUidBytes();
 
-  /**
-   * <code>int32 version = 3;</code>
-   */
-  int getVersion();
+    /**
+     * <code>string appId = 2;</code>
+     */
+    java.lang.String getAppId();
 
-  /**
-   * <code>int32 status = 4;</code>
-   */
-  int getStatus();
+    /**
+     * <code>string appId = 2;</code>
+     */
+    com.google.protobuf.ByteString
+    getAppIdBytes();
 
-  /**
-   * <code>string env = 5;</code>
-   */
-  java.lang.String getEnv();
-  /**
-   * <code>string env = 5;</code>
-   */
-  com.google.protobuf.ByteString
-      getEnvBytes();
+    /**
+     * <code>int32 version = 3;</code>
+     */
+    int getVersion();
 
-  /**
-   * <code>bool force = 6;</code>
-   */
-  boolean getForce();
+    /**
+     * <code>int32 status = 4;</code>
+     */
+    int getStatus();
 
-  /**
-   * <code>string clientId = 7;</code>
-   */
-  java.lang.String getClientId();
-  /**
-   * <code>string clientId = 7;</code>
-   */
-  com.google.protobuf.ByteString
-      getClientIdBytes();
+    /**
+     * <code>string env = 5;</code>
+     */
+    java.lang.String getEnv();
+
+    /**
+     * <code>string env = 5;</code>
+     */
+    com.google.protobuf.ByteString
+    getEnvBytes();
+
+    /**
+     * <code>bool force = 6;</code>
+     */
+    boolean getForce();
+
+    /**
+     * <code>string clientId = 7;</code>
+     */
+    java.lang.String getClientId();
+
+    /**
+     * <code>string clientId = 7;</code>
+     */
+    com.google.protobuf.ByteString
+    getClientIdBytes();
 }

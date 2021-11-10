@@ -6,1231 +6,1343 @@ package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 /**
  * Protobuf type {@code RelationInfo}
  */
-public  final class RelationInfo extends
+public final class RelationInfo extends
     com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:RelationInfo)
     RelationInfoOrBuilder {
-private static final long serialVersionUID = 0L;
-  // Use RelationInfo.newBuilder() to construct.
-  private RelationInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-    super(builder);
-  }
-  private RelationInfo() {
-    id_ = 0L;
-    code_ = "";
-    rightEntityClassId_ = 0L;
-    leftEntityClassId_ = 0L;
-    leftEntityClassCode_ = "";
-    relationType_ = 0;
-    identity_ = false;
-    belongToOwner_ = false;
-    strong_ = false;
-  }
+    private static final long serialVersionUID = 0L;
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private RelationInfo(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
+    // Use RelationInfo.newBuilder() to construct.
+    private RelationInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
     }
-    int mutable_bitField0_ = 0;
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          default: {
-            if (!parseUnknownFieldProto3(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-          case 8: {
 
-            id_ = input.readInt64();
-            break;
-          }
-          case 18: {
-            java.lang.String s = input.readStringRequireUtf8();
+    private RelationInfo() {
+        id_ = 0L;
+        code_ = "";
+        rightEntityClassId_ = 0L;
+        leftEntityClassId_ = 0L;
+        leftEntityClassCode_ = "";
+        relationType_ = 0;
+        identity_ = false;
+        belongToOwner_ = false;
+        strong_ = false;
+    }
 
-            code_ = s;
-            break;
-          }
-          case 24: {
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+        return this.unknownFields;
+    }
 
-            rightEntityClassId_ = input.readInt64();
-            break;
-          }
-          case 32: {
-
-            leftEntityClassId_ = input.readInt64();
-            break;
-          }
-          case 42: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            leftEntityClassCode_ = s;
-            break;
-          }
-          case 48: {
-
-            relationType_ = input.readInt32();
-            break;
-          }
-          case 56: {
-
-            identity_ = input.readBool();
-            break;
-          }
-          case 66: {
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder subBuilder = null;
-            if (entityField_ != null) {
-              subBuilder = entityField_.toBuilder();
-            }
-            entityField_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom(entityField_);
-              entityField_ = subBuilder.buildPartial();
-            }
-
-            break;
-          }
-          case 72: {
-
-            belongToOwner_ = input.readBool();
-            break;
-          }
-          case 80: {
-
-            strong_ = input.readBool();
-            break;
-          }
+    private RelationInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
         }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
-  public static final com.google.protobuf.Descriptors.Descriptor
-      getDescriptor() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
-  }
+        int mutable_bitField0_ = 0;
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+            boolean done = false;
+            while (!done) {
+                int tag = input.readTag();
+                switch (tag) {
+                    case 0:
+                        done = true;
+                        break;
+                    default: {
+                        if (!parseUnknownFieldProto3(
+                            input, unknownFields, extensionRegistry, tag)) {
+                            done = true;
+                        }
+                        break;
+                    }
+                    case 8: {
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internalGetFieldAccessorTable() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_fieldAccessorTable
-        .ensureFieldAccessorsInitialized(
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.Builder.class);
-  }
+                        id_ = input.readInt64();
+                        break;
+                    }
+                    case 18: {
+                        java.lang.String s = input.readStringRequireUtf8();
 
-  public static final int ID_FIELD_NUMBER = 1;
-  private long id_;
-  /**
-   * <code>int64 id = 1;</code>
-   */
-  public long getId() {
-    return id_;
-  }
+                        code_ = s;
+                        break;
+                    }
+                    case 24: {
 
-  public static final int CODE_FIELD_NUMBER = 2;
-  private volatile java.lang.Object code_;
-  /**
-   * <code>string code = 2;</code>
-   */
-  public java.lang.String getCode() {
-    java.lang.Object ref = code_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      code_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>string code = 2;</code>
-   */
-  public com.google.protobuf.ByteString
-      getCodeBytes() {
-    java.lang.Object ref = code_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      code_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
+                        rightEntityClassId_ = input.readInt64();
+                        break;
+                    }
+                    case 32: {
 
-  public static final int RIGHTENTITYCLASSID_FIELD_NUMBER = 3;
-  private long rightEntityClassId_;
-  /**
-   * <code>int64 rightEntityClassId = 3;</code>
-   */
-  public long getRightEntityClassId() {
-    return rightEntityClassId_;
-  }
+                        leftEntityClassId_ = input.readInt64();
+                        break;
+                    }
+                    case 42: {
+                        java.lang.String s = input.readStringRequireUtf8();
 
-  public static final int LEFTENTITYCLASSID_FIELD_NUMBER = 4;
-  private long leftEntityClassId_;
-  /**
-   * <code>int64 leftEntityClassId = 4;</code>
-   */
-  public long getLeftEntityClassId() {
-    return leftEntityClassId_;
-  }
+                        leftEntityClassCode_ = s;
+                        break;
+                    }
+                    case 48: {
 
-  public static final int LEFTENTITYCLASSCODE_FIELD_NUMBER = 5;
-  private volatile java.lang.Object leftEntityClassCode_;
-  /**
-   * <code>string leftEntityClassCode = 5;</code>
-   */
-  public java.lang.String getLeftEntityClassCode() {
-    java.lang.Object ref = leftEntityClassCode_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      leftEntityClassCode_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>string leftEntityClassCode = 5;</code>
-   */
-  public com.google.protobuf.ByteString
-      getLeftEntityClassCodeBytes() {
-    java.lang.Object ref = leftEntityClassCode_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      leftEntityClassCode_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
+                        relationType_ = input.readInt32();
+                        break;
+                    }
+                    case 56: {
 
-  public static final int RELATIONTYPE_FIELD_NUMBER = 6;
-  private int relationType_;
-  /**
-   * <code>int32 relationType = 6;</code>
-   */
-  public int getRelationType() {
-    return relationType_;
-  }
+                        identity_ = input.readBool();
+                        break;
+                    }
+                    case 66: {
+                        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder subBuilder =
+                            null;
+                        if (entityField_ != null) {
+                            subBuilder = entityField_.toBuilder();
+                        }
+                        entityField_ = input.readMessage(
+                            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.parser(),
+                            extensionRegistry);
+                        if (subBuilder != null) {
+                            subBuilder.mergeFrom(entityField_);
+                            entityField_ = subBuilder.buildPartial();
+                        }
 
-  public static final int IDENTITY_FIELD_NUMBER = 7;
-  private boolean identity_;
-  /**
-   * <code>bool identity = 7;</code>
-   */
-  public boolean getIdentity() {
-    return identity_;
-  }
+                        break;
+                    }
+                    case 72: {
 
-  public static final int ENTITYFIELD_FIELD_NUMBER = 8;
-  private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo entityField_;
-  /**
-   * <code>.EntityFieldInfo entityField = 8;</code>
-   */
-  public boolean hasEntityField() {
-    return entityField_ != null;
-  }
-  /**
-   * <code>.EntityFieldInfo entityField = 8;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo getEntityField() {
-    return entityField_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() : entityField_;
-  }
-  /**
-   * <code>.EntityFieldInfo entityField = 8;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder getEntityFieldOrBuilder() {
-    return getEntityField();
-  }
+                        belongToOwner_ = input.readBool();
+                        break;
+                    }
+                    case 80: {
 
-  public static final int BELONGTOOWNER_FIELD_NUMBER = 9;
-  private boolean belongToOwner_;
-  /**
-   * <code>bool belongToOwner = 9;</code>
-   */
-  public boolean getBelongToOwner() {
-    return belongToOwner_;
-  }
+                        strong_ = input.readBool();
+                        break;
+                    }
+                }
+            }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(
+                e).setUnfinishedMessage(this);
+        } finally {
+            this.unknownFields = unknownFields.build();
+            makeExtensionsImmutable();
+        }
+    }
 
-  public static final int STRONG_FIELD_NUMBER = 10;
-  private boolean strong_;
-  /**
-   * <code>bool strong = 10;</code>
-   */
-  public boolean getStrong() {
-    return strong_;
-  }
-
-  private byte memoizedIsInitialized = -1;
-  public final boolean isInitialized() {
-    byte isInitialized = memoizedIsInitialized;
-    if (isInitialized == 1) return true;
-    if (isInitialized == 0) return false;
-
-    memoizedIsInitialized = 1;
-    return true;
-  }
-
-  public void writeTo(com.google.protobuf.CodedOutputStream output)
-                      throws java.io.IOException {
-    if (id_ != 0L) {
-      output.writeInt64(1, id_);
-    }
-    if (!getCodeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, code_);
-    }
-    if (rightEntityClassId_ != 0L) {
-      output.writeInt64(3, rightEntityClassId_);
-    }
-    if (leftEntityClassId_ != 0L) {
-      output.writeInt64(4, leftEntityClassId_);
-    }
-    if (!getLeftEntityClassCodeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, leftEntityClassCode_);
-    }
-    if (relationType_ != 0) {
-      output.writeInt32(6, relationType_);
-    }
-    if (identity_ != false) {
-      output.writeBool(7, identity_);
-    }
-    if (entityField_ != null) {
-      output.writeMessage(8, getEntityField());
-    }
-    if (belongToOwner_ != false) {
-      output.writeBool(9, belongToOwner_);
-    }
-    if (strong_ != false) {
-      output.writeBool(10, strong_);
-    }
-    unknownFields.writeTo(output);
-  }
-
-  public int getSerializedSize() {
-    int size = memoizedSize;
-    if (size != -1) return size;
-
-    size = 0;
-    if (id_ != 0L) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(1, id_);
-    }
-    if (!getCodeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, code_);
-    }
-    if (rightEntityClassId_ != 0L) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, rightEntityClassId_);
-    }
-    if (leftEntityClassId_ != 0L) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(4, leftEntityClassId_);
-    }
-    if (!getLeftEntityClassCodeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, leftEntityClassCode_);
-    }
-    if (relationType_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(6, relationType_);
-    }
-    if (identity_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(7, identity_);
-    }
-    if (entityField_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(8, getEntityField());
-    }
-    if (belongToOwner_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(9, belongToOwner_);
-    }
-    if (strong_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(10, strong_);
-    }
-    size += unknownFields.getSerializedSize();
-    memoizedSize = size;
-    return size;
-  }
-
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo)) {
-      return super.equals(obj);
-    }
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) obj;
-
-    boolean result = true;
-    result = result && (getId()
-        == other.getId());
-    result = result && getCode()
-        .equals(other.getCode());
-    result = result && (getRightEntityClassId()
-        == other.getRightEntityClassId());
-    result = result && (getLeftEntityClassId()
-        == other.getLeftEntityClassId());
-    result = result && getLeftEntityClassCode()
-        .equals(other.getLeftEntityClassCode());
-    result = result && (getRelationType()
-        == other.getRelationType());
-    result = result && (getIdentity()
-        == other.getIdentity());
-    result = result && (hasEntityField() == other.hasEntityField());
-    if (hasEntityField()) {
-      result = result && getEntityField()
-          .equals(other.getEntityField());
-    }
-    result = result && (getBelongToOwner()
-        == other.getBelongToOwner());
-    result = result && (getStrong()
-        == other.getStrong());
-    result = result && unknownFields.equals(other.unknownFields);
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + ID_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getId());
-    hash = (37 * hash) + CODE_FIELD_NUMBER;
-    hash = (53 * hash) + getCode().hashCode();
-    hash = (37 * hash) + RIGHTENTITYCLASSID_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getRightEntityClassId());
-    hash = (37 * hash) + LEFTENTITYCLASSID_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getLeftEntityClassId());
-    hash = (37 * hash) + LEFTENTITYCLASSCODE_FIELD_NUMBER;
-    hash = (53 * hash) + getLeftEntityClassCode().hashCode();
-    hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getRelationType();
-    hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIdentity());
-    if (hasEntityField()) {
-      hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
-      hash = (53 * hash) + getEntityField().hashCode();
-    }
-    hash = (37 * hash) + BELONGTOOWNER_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getBelongToOwner());
-    hash = (37 * hash) + STRONG_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getStrong());
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      java.nio.ByteBuffer data)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      java.nio.ByteBuffer data,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data, extensionRegistry);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      com.google.protobuf.ByteString data)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      com.google.protobuf.ByteString data,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data, extensionRegistry);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(byte[] data)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      byte[] data,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    return PARSER.parseFrom(data, extensionRegistry);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(java.io.InputStream input)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      java.io.InputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseDelimitedFrom(java.io.InputStream input)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseDelimitedFrom(
-      java.io.InputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      com.google.protobuf.CodedInputStream input)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
-  }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
-  }
-
-  public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder() {
-    return DEFAULT_INSTANCE.toBuilder();
-  }
-  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo prototype) {
-    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-  }
-  public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
-  }
-
-  @java.lang.Override
-  protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-    Builder builder = new Builder(parent);
-    return builder;
-  }
-  /**
-   * Protobuf type {@code RelationInfo}
-   */
-  public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:RelationInfo)
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
+    getDescriptor() {
+        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.Builder.class);
+    internalGetFieldAccessorTable() {
+        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.class,
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.Builder.class);
     }
 
-    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.newBuilder()
-    private Builder() {
-      maybeForceBuilderInitialization();
-    }
+    public static final int ID_FIELD_NUMBER = 1;
+    private long id_;
 
-    private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      super(parent);
-      maybeForceBuilderInitialization();
-    }
-    private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
-      }
-    }
-    public Builder clear() {
-      super.clear();
-      id_ = 0L;
-
-      code_ = "";
-
-      rightEntityClassId_ = 0L;
-
-      leftEntityClassId_ = 0L;
-
-      leftEntityClassCode_ = "";
-
-      relationType_ = 0;
-
-      identity_ = false;
-
-      if (entityFieldBuilder_ == null) {
-        entityField_ = null;
-      } else {
-        entityField_ = null;
-        entityFieldBuilder_ = null;
-      }
-      belongToOwner_ = false;
-
-      strong_ = false;
-
-      return this;
-    }
-
-    public com.google.protobuf.Descriptors.Descriptor
-        getDescriptorForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
-    }
-
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstanceForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.getDefaultInstance();
-    }
-
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo build() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo result = buildPartial();
-      if (!result.isInitialized()) {
-        throw newUninitializedMessageException(result);
-      }
-      return result;
-    }
-
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo buildPartial() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo(this);
-      result.id_ = id_;
-      result.code_ = code_;
-      result.rightEntityClassId_ = rightEntityClassId_;
-      result.leftEntityClassId_ = leftEntityClassId_;
-      result.leftEntityClassCode_ = leftEntityClassCode_;
-      result.relationType_ = relationType_;
-      result.identity_ = identity_;
-      if (entityFieldBuilder_ == null) {
-        result.entityField_ = entityField_;
-      } else {
-        result.entityField_ = entityFieldBuilder_.build();
-      }
-      result.belongToOwner_ = belongToOwner_;
-      result.strong_ = strong_;
-      onBuilt();
-      return result;
-    }
-
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, java.lang.Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
-    public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) {
-        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo)other);
-      } else {
-        super.mergeFrom(other);
-        return this;
-      }
-    }
-
-    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo other) {
-      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.getDefaultInstance()) return this;
-      if (other.getId() != 0L) {
-        setId(other.getId());
-      }
-      if (!other.getCode().isEmpty()) {
-        code_ = other.code_;
-        onChanged();
-      }
-      if (other.getRightEntityClassId() != 0L) {
-        setRightEntityClassId(other.getRightEntityClassId());
-      }
-      if (other.getLeftEntityClassId() != 0L) {
-        setLeftEntityClassId(other.getLeftEntityClassId());
-      }
-      if (!other.getLeftEntityClassCode().isEmpty()) {
-        leftEntityClassCode_ = other.leftEntityClassCode_;
-        onChanged();
-      }
-      if (other.getRelationType() != 0) {
-        setRelationType(other.getRelationType());
-      }
-      if (other.getIdentity() != false) {
-        setIdentity(other.getIdentity());
-      }
-      if (other.hasEntityField()) {
-        mergeEntityField(other.getEntityField());
-      }
-      if (other.getBelongToOwner() != false) {
-        setBelongToOwner(other.getBelongToOwner());
-      }
-      if (other.getStrong() != false) {
-        setStrong(other.getStrong());
-      }
-      this.mergeUnknownFields(other.unknownFields);
-      onChanged();
-      return this;
-    }
-
-    public final boolean isInitialized() {
-      return true;
-    }
-
-    public Builder mergeFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parsedMessage = null;
-      try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
-      } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
-      return this;
-    }
-
-    private long id_ ;
     /**
      * <code>int64 id = 1;</code>
      */
     public long getId() {
-      return id_;
-    }
-    /**
-     * <code>int64 id = 1;</code>
-     */
-    public Builder setId(long value) {
-      
-      id_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int64 id = 1;</code>
-     */
-    public Builder clearId() {
-      
-      id_ = 0L;
-      onChanged();
-      return this;
+        return id_;
     }
 
-    private java.lang.Object code_ = "";
+    public static final int CODE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object code_;
+
     /**
      * <code>string code = 2;</code>
      */
     public java.lang.String getCode() {
-      java.lang.Object ref = code_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        code_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+        java.lang.Object ref = code_;
+        if (ref instanceof java.lang.String) {
+            return (java.lang.String) ref;
+        } else {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            code_ = s;
+            return s;
+        }
     }
+
     /**
      * <code>string code = 2;</code>
      */
     public com.google.protobuf.ByteString
-        getCodeBytes() {
-      java.lang.Object ref = code_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        code_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string code = 2;</code>
-     */
-    public Builder setCode(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      code_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string code = 2;</code>
-     */
-    public Builder clearCode() {
-      
-      code_ = getDefaultInstance().getCode();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string code = 2;</code>
-     */
-    public Builder setCodeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      code_ = value;
-      onChanged();
-      return this;
+    getCodeBytes() {
+        java.lang.Object ref = code_;
+        if (ref instanceof java.lang.String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            code_ = b;
+            return b;
+        } else {
+            return (com.google.protobuf.ByteString) ref;
+        }
     }
 
-    private long rightEntityClassId_ ;
+    public static final int RIGHTENTITYCLASSID_FIELD_NUMBER = 3;
+    private long rightEntityClassId_;
+
     /**
      * <code>int64 rightEntityClassId = 3;</code>
      */
     public long getRightEntityClassId() {
-      return rightEntityClassId_;
-    }
-    /**
-     * <code>int64 rightEntityClassId = 3;</code>
-     */
-    public Builder setRightEntityClassId(long value) {
-      
-      rightEntityClassId_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int64 rightEntityClassId = 3;</code>
-     */
-    public Builder clearRightEntityClassId() {
-      
-      rightEntityClassId_ = 0L;
-      onChanged();
-      return this;
+        return rightEntityClassId_;
     }
 
-    private long leftEntityClassId_ ;
+    public static final int LEFTENTITYCLASSID_FIELD_NUMBER = 4;
+    private long leftEntityClassId_;
+
     /**
      * <code>int64 leftEntityClassId = 4;</code>
      */
     public long getLeftEntityClassId() {
-      return leftEntityClassId_;
-    }
-    /**
-     * <code>int64 leftEntityClassId = 4;</code>
-     */
-    public Builder setLeftEntityClassId(long value) {
-      
-      leftEntityClassId_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int64 leftEntityClassId = 4;</code>
-     */
-    public Builder clearLeftEntityClassId() {
-      
-      leftEntityClassId_ = 0L;
-      onChanged();
-      return this;
+        return leftEntityClassId_;
     }
 
-    private java.lang.Object leftEntityClassCode_ = "";
+    public static final int LEFTENTITYCLASSCODE_FIELD_NUMBER = 5;
+    private volatile java.lang.Object leftEntityClassCode_;
+
     /**
      * <code>string leftEntityClassCode = 5;</code>
      */
     public java.lang.String getLeftEntityClassCode() {
-      java.lang.Object ref = leftEntityClassCode_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        leftEntityClassCode_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+        java.lang.Object ref = leftEntityClassCode_;
+        if (ref instanceof java.lang.String) {
+            return (java.lang.String) ref;
+        } else {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            leftEntityClassCode_ = s;
+            return s;
+        }
     }
+
     /**
      * <code>string leftEntityClassCode = 5;</code>
      */
     public com.google.protobuf.ByteString
-        getLeftEntityClassCodeBytes() {
-      java.lang.Object ref = leftEntityClassCode_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        leftEntityClassCode_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string leftEntityClassCode = 5;</code>
-     */
-    public Builder setLeftEntityClassCode(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      leftEntityClassCode_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string leftEntityClassCode = 5;</code>
-     */
-    public Builder clearLeftEntityClassCode() {
-      
-      leftEntityClassCode_ = getDefaultInstance().getLeftEntityClassCode();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string leftEntityClassCode = 5;</code>
-     */
-    public Builder setLeftEntityClassCodeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      leftEntityClassCode_ = value;
-      onChanged();
-      return this;
+    getLeftEntityClassCodeBytes() {
+        java.lang.Object ref = leftEntityClassCode_;
+        if (ref instanceof java.lang.String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            leftEntityClassCode_ = b;
+            return b;
+        } else {
+            return (com.google.protobuf.ByteString) ref;
+        }
     }
 
-    private int relationType_ ;
+    public static final int RELATIONTYPE_FIELD_NUMBER = 6;
+    private int relationType_;
+
     /**
      * <code>int32 relationType = 6;</code>
      */
     public int getRelationType() {
-      return relationType_;
-    }
-    /**
-     * <code>int32 relationType = 6;</code>
-     */
-    public Builder setRelationType(int value) {
-      
-      relationType_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int32 relationType = 6;</code>
-     */
-    public Builder clearRelationType() {
-      
-      relationType_ = 0;
-      onChanged();
-      return this;
+        return relationType_;
     }
 
-    private boolean identity_ ;
+    public static final int IDENTITY_FIELD_NUMBER = 7;
+    private boolean identity_;
+
     /**
      * <code>bool identity = 7;</code>
      */
     public boolean getIdentity() {
-      return identity_;
-    }
-    /**
-     * <code>bool identity = 7;</code>
-     */
-    public Builder setIdentity(boolean value) {
-      
-      identity_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool identity = 7;</code>
-     */
-    public Builder clearIdentity() {
-      
-      identity_ = false;
-      onChanged();
-      return this;
+        return identity_;
     }
 
-    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo entityField_ = null;
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder> entityFieldBuilder_;
+    public static final int ENTITYFIELD_FIELD_NUMBER = 8;
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo entityField_;
+
     /**
      * <code>.EntityFieldInfo entityField = 8;</code>
      */
     public boolean hasEntityField() {
-      return entityFieldBuilder_ != null || entityField_ != null;
+        return entityField_ != null;
     }
+
     /**
      * <code>.EntityFieldInfo entityField = 8;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo getEntityField() {
-      if (entityFieldBuilder_ == null) {
-        return entityField_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() : entityField_;
-      } else {
-        return entityFieldBuilder_.getMessage();
-      }
+        return entityField_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() :
+            entityField_;
     }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    public Builder setEntityField(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo value) {
-      if (entityFieldBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        entityField_ = value;
-        onChanged();
-      } else {
-        entityFieldBuilder_.setMessage(value);
-      }
 
-      return this;
-    }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    public Builder setEntityField(
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder builderForValue) {
-      if (entityFieldBuilder_ == null) {
-        entityField_ = builderForValue.build();
-        onChanged();
-      } else {
-        entityFieldBuilder_.setMessage(builderForValue.build());
-      }
-
-      return this;
-    }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    public Builder mergeEntityField(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo value) {
-      if (entityFieldBuilder_ == null) {
-        if (entityField_ != null) {
-          entityField_ =
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.newBuilder(entityField_).mergeFrom(value).buildPartial();
-        } else {
-          entityField_ = value;
-        }
-        onChanged();
-      } else {
-        entityFieldBuilder_.mergeFrom(value);
-      }
-
-      return this;
-    }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    public Builder clearEntityField() {
-      if (entityFieldBuilder_ == null) {
-        entityField_ = null;
-        onChanged();
-      } else {
-        entityField_ = null;
-        entityFieldBuilder_ = null;
-      }
-
-      return this;
-    }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder getEntityFieldBuilder() {
-      
-      onChanged();
-      return getEntityFieldFieldBuilder().getBuilder();
-    }
     /**
      * <code>.EntityFieldInfo entityField = 8;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder getEntityFieldOrBuilder() {
-      if (entityFieldBuilder_ != null) {
-        return entityFieldBuilder_.getMessageOrBuilder();
-      } else {
-        return entityField_ == null ?
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() : entityField_;
-      }
-    }
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    private com.google.protobuf.SingleFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder> 
-        getEntityFieldFieldBuilder() {
-      if (entityFieldBuilder_ == null) {
-        entityFieldBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder>(
-                getEntityField(),
-                getParentForChildren(),
-                isClean());
-        entityField_ = null;
-      }
-      return entityFieldBuilder_;
+        return getEntityField();
     }
 
-    private boolean belongToOwner_ ;
+    public static final int BELONGTOOWNER_FIELD_NUMBER = 9;
+    private boolean belongToOwner_;
+
     /**
      * <code>bool belongToOwner = 9;</code>
      */
     public boolean getBelongToOwner() {
-      return belongToOwner_;
-    }
-    /**
-     * <code>bool belongToOwner = 9;</code>
-     */
-    public Builder setBelongToOwner(boolean value) {
-      
-      belongToOwner_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool belongToOwner = 9;</code>
-     */
-    public Builder clearBelongToOwner() {
-      
-      belongToOwner_ = false;
-      onChanged();
-      return this;
+        return belongToOwner_;
     }
 
-    private boolean strong_ ;
+    public static final int STRONG_FIELD_NUMBER = 10;
+    private boolean strong_;
+
     /**
      * <code>bool strong = 10;</code>
      */
     public boolean getStrong() {
-      return strong_;
-    }
-    /**
-     * <code>bool strong = 10;</code>
-     */
-    public Builder setStrong(boolean value) {
-      
-      strong_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool strong = 10;</code>
-     */
-    public Builder clearStrong() {
-      
-      strong_ = false;
-      onChanged();
-      return this;
-    }
-    public final Builder setUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFieldsProto3(unknownFields);
+        return strong_;
     }
 
-    public final Builder mergeUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.mergeUnknownFields(unknownFields);
+    private byte memoizedIsInitialized = -1;
+
+    public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) {
+            return true;
+        }
+        if (isInitialized == 0) {
+            return false;
+        }
+
+        memoizedIsInitialized = 1;
+        return true;
     }
 
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+        throws java.io.IOException {
+        if (id_ != 0L) {
+            output.writeInt64(1, id_);
+        }
+        if (!getCodeBytes().isEmpty()) {
+            com.google.protobuf.GeneratedMessageV3.writeString(output, 2, code_);
+        }
+        if (rightEntityClassId_ != 0L) {
+            output.writeInt64(3, rightEntityClassId_);
+        }
+        if (leftEntityClassId_ != 0L) {
+            output.writeInt64(4, leftEntityClassId_);
+        }
+        if (!getLeftEntityClassCodeBytes().isEmpty()) {
+            com.google.protobuf.GeneratedMessageV3.writeString(output, 5, leftEntityClassCode_);
+        }
+        if (relationType_ != 0) {
+            output.writeInt32(6, relationType_);
+        }
+        if (identity_ != false) {
+            output.writeBool(7, identity_);
+        }
+        if (entityField_ != null) {
+            output.writeMessage(8, getEntityField());
+        }
+        if (belongToOwner_ != false) {
+            output.writeBool(9, belongToOwner_);
+        }
+        if (strong_ != false) {
+            output.writeBool(10, strong_);
+        }
+        unknownFields.writeTo(output);
+    }
 
-    // @@protoc_insertion_point(builder_scope:RelationInfo)
-  }
+    public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) {
+            return size;
+        }
 
-  // @@protoc_insertion_point(class_scope:RelationInfo)
-  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo DEFAULT_INSTANCE;
-  static {
-    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo();
-  }
+        size = 0;
+        if (id_ != 0L) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeInt64Size(1, id_);
+        }
+        if (!getCodeBytes().isEmpty()) {
+            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, code_);
+        }
+        if (rightEntityClassId_ != 0L) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeInt64Size(3, rightEntityClassId_);
+        }
+        if (leftEntityClassId_ != 0L) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeInt64Size(4, leftEntityClassId_);
+        }
+        if (!getLeftEntityClassCodeBytes().isEmpty()) {
+            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, leftEntityClassCode_);
+        }
+        if (relationType_ != 0) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeInt32Size(6, relationType_);
+        }
+        if (identity_ != false) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeBoolSize(7, identity_);
+        }
+        if (entityField_ != null) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeMessageSize(8, getEntityField());
+        }
+        if (belongToOwner_ != false) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeBoolSize(9, belongToOwner_);
+        }
+        if (strong_ != false) {
+            size += com.google.protobuf.CodedOutputStream
+                .computeBoolSize(10, strong_);
+        }
+        size += unknownFields.getSerializedSize();
+        memoizedSize = size;
+        return size;
+    }
 
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo)) {
+            return super.equals(obj);
+        }
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo other =
+            (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) obj;
 
-  private static final com.google.protobuf.Parser<RelationInfo>
-      PARSER = new com.google.protobuf.AbstractParser<RelationInfo>() {
-    public RelationInfo parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
+        boolean result = true;
+        result = result && (getId()
+            == other.getId());
+        result = result && getCode()
+            .equals(other.getCode());
+        result = result && (getRightEntityClassId()
+            == other.getRightEntityClassId());
+        result = result && (getLeftEntityClassId()
+            == other.getLeftEntityClassId());
+        result = result && getLeftEntityClassCode()
+            .equals(other.getLeftEntityClassCode());
+        result = result && (getRelationType()
+            == other.getRelationType());
+        result = result && (getIdentity()
+            == other.getIdentity());
+        result = result && (hasEntityField() == other.hasEntityField());
+        if (hasEntityField()) {
+            result = result && getEntityField()
+                .equals(other.getEntityField());
+        }
+        result = result && (getBelongToOwner()
+            == other.getBelongToOwner());
+        result = result && (getStrong()
+            == other.getStrong());
+        result = result && unknownFields.equals(other.unknownFields);
+        return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+        if (memoizedHashCode != 0) {
+            return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + ID_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getId());
+        hash = (37 * hash) + CODE_FIELD_NUMBER;
+        hash = (53 * hash) + getCode().hashCode();
+        hash = (37 * hash) + RIGHTENTITYCLASSID_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getRightEntityClassId());
+        hash = (37 * hash) + LEFTENTITYCLASSID_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getLeftEntityClassId());
+        hash = (37 * hash) + LEFTENTITYCLASSCODE_FIELD_NUMBER;
+        hash = (53 * hash) + getLeftEntityClassCode().hashCode();
+        hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
+        hash = (53 * hash) + getRelationType();
+        hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getIdentity());
+        if (hasEntityField()) {
+            hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
+            hash = (53 * hash) + getEntityField().hashCode();
+        }
+        hash = (37 * hash) + BELONGTOOWNER_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getBelongToOwner());
+        hash = (37 * hash) + STRONG_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getStrong());
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new RelationInfo(input, extensionRegistry);
+        return PARSER.parseFrom(data, extensionRegistry);
     }
-  };
 
-  public static com.google.protobuf.Parser<RelationInfo> parser() {
-    return PARSER;
-  }
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+    }
 
-  @java.lang.Override
-  public com.google.protobuf.Parser<RelationInfo> getParserForType() {
-    return PARSER;
-  }
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+    }
 
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstanceForType() {
-    return DEFAULT_INSTANCE;
-  }
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        java.io.InputStream input)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseDelimitedFrom(
+        java.io.InputStream input)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public Builder newBuilderForType() {
+        return newBuilder();
+    }
+
+    public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+    }
+
+    public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+
+    public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+    }
+
+    /**
+     * Protobuf type {@code RelationInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:RelationInfo)
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfoOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
+        }
+
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_fieldAccessorTable
+                .ensureFieldAccessorsInitialized(
+                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.class,
+                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.Builder.class);
+        }
+
+        // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.newBuilder()
+        private Builder() {
+            maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            super(parent);
+            maybeForceBuilderInitialization();
+        }
+
+        private void maybeForceBuilderInitialization() {
+            if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+            }
+        }
+
+        public Builder clear() {
+            super.clear();
+            id_ = 0L;
+
+            code_ = "";
+
+            rightEntityClassId_ = 0L;
+
+            leftEntityClassId_ = 0L;
+
+            leftEntityClassCode_ = "";
+
+            relationType_ = 0;
+
+            identity_ = false;
+
+            if (entityFieldBuilder_ == null) {
+                entityField_ = null;
+            } else {
+                entityField_ = null;
+                entityFieldBuilder_ = null;
+            }
+            belongToOwner_ = false;
+
+            strong_ = false;
+
+            return this;
+        }
+
+        public com.google.protobuf.Descriptors.Descriptor
+        getDescriptorForType() {
+            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_RelationInfo_descriptor;
+        }
+
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstanceForType() {
+            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.getDefaultInstance();
+        }
+
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo build() {
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo result = buildPartial();
+            if (!result.isInitialized()) {
+                throw newUninitializedMessageException(result);
+            }
+            return result;
+        }
+
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo buildPartial() {
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo result =
+                new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo(this);
+            result.id_ = id_;
+            result.code_ = code_;
+            result.rightEntityClassId_ = rightEntityClassId_;
+            result.leftEntityClassId_ = leftEntityClassId_;
+            result.leftEntityClassCode_ = leftEntityClassCode_;
+            result.relationType_ = relationType_;
+            result.identity_ = identity_;
+            if (entityFieldBuilder_ == null) {
+                result.entityField_ = entityField_;
+            } else {
+                result.entityField_ = entityFieldBuilder_.build();
+            }
+            result.belongToOwner_ = belongToOwner_;
+            result.strong_ = strong_;
+            onBuilt();
+            return result;
+        }
+
+        public Builder clone() {
+            return (Builder) super.clone();
+        }
+
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+            return (Builder) super.setField(field, value);
+        }
+
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+            return (Builder) super.clearField(field);
+        }
+
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+            return (Builder) super.clearOneof(oneof);
+        }
+
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, java.lang.Object value) {
+            return (Builder) super.setRepeatedField(field, index, value);
+        }
+
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+            return (Builder) super.addRepeatedField(field, value);
+        }
+
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+            if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) {
+                return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) other);
+            } else {
+                super.mergeFrom(other);
+                return this;
+            }
+        }
+
+        public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo other) {
+            if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.getDefaultInstance()) {
+                return this;
+            }
+            if (other.getId() != 0L) {
+                setId(other.getId());
+            }
+            if (!other.getCode().isEmpty()) {
+                code_ = other.code_;
+                onChanged();
+            }
+            if (other.getRightEntityClassId() != 0L) {
+                setRightEntityClassId(other.getRightEntityClassId());
+            }
+            if (other.getLeftEntityClassId() != 0L) {
+                setLeftEntityClassId(other.getLeftEntityClassId());
+            }
+            if (!other.getLeftEntityClassCode().isEmpty()) {
+                leftEntityClassCode_ = other.leftEntityClassCode_;
+                onChanged();
+            }
+            if (other.getRelationType() != 0) {
+                setRelationType(other.getRelationType());
+            }
+            if (other.getIdentity() != false) {
+                setIdentity(other.getIdentity());
+            }
+            if (other.hasEntityField()) {
+                mergeEntityField(other.getEntityField());
+            }
+            if (other.getBelongToOwner() != false) {
+                setBelongToOwner(other.getBelongToOwner());
+            }
+            if (other.getStrong() != false) {
+                setStrong(other.getStrong());
+            }
+            this.mergeUnknownFields(other.unknownFields);
+            onChanged();
+            return this;
+        }
+
+        public final boolean isInitialized() {
+            return true;
+        }
+
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo parsedMessage = null;
+            try {
+                parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                parsedMessage =
+                    (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo) e.getUnfinishedMessage();
+                throw e.unwrapIOException();
+            } finally {
+                if (parsedMessage != null) {
+                    mergeFrom(parsedMessage);
+                }
+            }
+            return this;
+        }
+
+        private long id_;
+
+        /**
+         * <code>int64 id = 1;</code>
+         */
+        public long getId() {
+            return id_;
+        }
+
+        /**
+         * <code>int64 id = 1;</code>
+         */
+        public Builder setId(long value) {
+
+            id_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>int64 id = 1;</code>
+         */
+        public Builder clearId() {
+
+            id_ = 0L;
+            onChanged();
+            return this;
+        }
+
+        private java.lang.Object code_ = "";
+
+        /**
+         * <code>string code = 2;</code>
+         */
+        public java.lang.String getCode() {
+            java.lang.Object ref = code_;
+            if (!(ref instanceof java.lang.String)) {
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
+                java.lang.String s = bs.toStringUtf8();
+                code_ = s;
+                return s;
+            } else {
+                return (java.lang.String) ref;
+            }
+        }
+
+        /**
+         * <code>string code = 2;</code>
+         */
+        public com.google.protobuf.ByteString
+        getCodeBytes() {
+            java.lang.Object ref = code_;
+            if (ref instanceof String) {
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
+                        (java.lang.String) ref);
+                code_ = b;
+                return b;
+            } else {
+                return (com.google.protobuf.ByteString) ref;
+            }
+        }
+
+        /**
+         * <code>string code = 2;</code>
+         */
+        public Builder setCode(
+            java.lang.String value) {
+            if (value == null) {
+                throw new NullPointerException();
+            }
+
+            code_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>string code = 2;</code>
+         */
+        public Builder clearCode() {
+
+            code_ = getDefaultInstance().getCode();
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>string code = 2;</code>
+         */
+        public Builder setCodeBytes(
+            com.google.protobuf.ByteString value) {
+            if (value == null) {
+                throw new NullPointerException();
+            }
+            checkByteStringIsUtf8(value);
+
+            code_ = value;
+            onChanged();
+            return this;
+        }
+
+        private long rightEntityClassId_;
+
+        /**
+         * <code>int64 rightEntityClassId = 3;</code>
+         */
+        public long getRightEntityClassId() {
+            return rightEntityClassId_;
+        }
+
+        /**
+         * <code>int64 rightEntityClassId = 3;</code>
+         */
+        public Builder setRightEntityClassId(long value) {
+
+            rightEntityClassId_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>int64 rightEntityClassId = 3;</code>
+         */
+        public Builder clearRightEntityClassId() {
+
+            rightEntityClassId_ = 0L;
+            onChanged();
+            return this;
+        }
+
+        private long leftEntityClassId_;
+
+        /**
+         * <code>int64 leftEntityClassId = 4;</code>
+         */
+        public long getLeftEntityClassId() {
+            return leftEntityClassId_;
+        }
+
+        /**
+         * <code>int64 leftEntityClassId = 4;</code>
+         */
+        public Builder setLeftEntityClassId(long value) {
+
+            leftEntityClassId_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>int64 leftEntityClassId = 4;</code>
+         */
+        public Builder clearLeftEntityClassId() {
+
+            leftEntityClassId_ = 0L;
+            onChanged();
+            return this;
+        }
+
+        private java.lang.Object leftEntityClassCode_ = "";
+
+        /**
+         * <code>string leftEntityClassCode = 5;</code>
+         */
+        public java.lang.String getLeftEntityClassCode() {
+            java.lang.Object ref = leftEntityClassCode_;
+            if (!(ref instanceof java.lang.String)) {
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
+                java.lang.String s = bs.toStringUtf8();
+                leftEntityClassCode_ = s;
+                return s;
+            } else {
+                return (java.lang.String) ref;
+            }
+        }
+
+        /**
+         * <code>string leftEntityClassCode = 5;</code>
+         */
+        public com.google.protobuf.ByteString
+        getLeftEntityClassCodeBytes() {
+            java.lang.Object ref = leftEntityClassCode_;
+            if (ref instanceof String) {
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
+                        (java.lang.String) ref);
+                leftEntityClassCode_ = b;
+                return b;
+            } else {
+                return (com.google.protobuf.ByteString) ref;
+            }
+        }
+
+        /**
+         * <code>string leftEntityClassCode = 5;</code>
+         */
+        public Builder setLeftEntityClassCode(
+            java.lang.String value) {
+            if (value == null) {
+                throw new NullPointerException();
+            }
+
+            leftEntityClassCode_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>string leftEntityClassCode = 5;</code>
+         */
+        public Builder clearLeftEntityClassCode() {
+
+            leftEntityClassCode_ = getDefaultInstance().getLeftEntityClassCode();
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>string leftEntityClassCode = 5;</code>
+         */
+        public Builder setLeftEntityClassCodeBytes(
+            com.google.protobuf.ByteString value) {
+            if (value == null) {
+                throw new NullPointerException();
+            }
+            checkByteStringIsUtf8(value);
+
+            leftEntityClassCode_ = value;
+            onChanged();
+            return this;
+        }
+
+        private int relationType_;
+
+        /**
+         * <code>int32 relationType = 6;</code>
+         */
+        public int getRelationType() {
+            return relationType_;
+        }
+
+        /**
+         * <code>int32 relationType = 6;</code>
+         */
+        public Builder setRelationType(int value) {
+
+            relationType_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>int32 relationType = 6;</code>
+         */
+        public Builder clearRelationType() {
+
+            relationType_ = 0;
+            onChanged();
+            return this;
+        }
+
+        private boolean identity_;
+
+        /**
+         * <code>bool identity = 7;</code>
+         */
+        public boolean getIdentity() {
+            return identity_;
+        }
+
+        /**
+         * <code>bool identity = 7;</code>
+         */
+        public Builder setIdentity(boolean value) {
+
+            identity_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>bool identity = 7;</code>
+         */
+        public Builder clearIdentity() {
+
+            identity_ = false;
+            onChanged();
+            return this;
+        }
+
+        private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo entityField_ = null;
+        private com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder>
+            entityFieldBuilder_;
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public boolean hasEntityField() {
+            return entityFieldBuilder_ != null || entityField_ != null;
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo getEntityField() {
+            if (entityFieldBuilder_ == null) {
+                return entityField_ == null ?
+                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() :
+                    entityField_;
+            } else {
+                return entityFieldBuilder_.getMessage();
+            }
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public Builder setEntityField(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo value) {
+            if (entityFieldBuilder_ == null) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                entityField_ = value;
+                onChanged();
+            } else {
+                entityFieldBuilder_.setMessage(value);
+            }
+
+            return this;
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public Builder setEntityField(
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder builderForValue) {
+            if (entityFieldBuilder_ == null) {
+                entityField_ = builderForValue.build();
+                onChanged();
+            } else {
+                entityFieldBuilder_.setMessage(builderForValue.build());
+            }
+
+            return this;
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public Builder mergeEntityField(
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo value) {
+            if (entityFieldBuilder_ == null) {
+                if (entityField_ != null) {
+                    entityField_ =
+                        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo
+                            .newBuilder(entityField_).mergeFrom(value).buildPartial();
+                } else {
+                    entityField_ = value;
+                }
+                onChanged();
+            } else {
+                entityFieldBuilder_.mergeFrom(value);
+            }
+
+            return this;
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public Builder clearEntityField() {
+            if (entityFieldBuilder_ == null) {
+                entityField_ = null;
+                onChanged();
+            } else {
+                entityField_ = null;
+                entityFieldBuilder_ = null;
+            }
+
+            return this;
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder getEntityFieldBuilder() {
+
+            onChanged();
+            return getEntityFieldFieldBuilder().getBuilder();
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder getEntityFieldOrBuilder() {
+            if (entityFieldBuilder_ != null) {
+                return entityFieldBuilder_.getMessageOrBuilder();
+            } else {
+                return entityField_ == null ?
+                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.getDefaultInstance() :
+                    entityField_;
+            }
+        }
+
+        /**
+         * <code>.EntityFieldInfo entityField = 8;</code>
+         */
+        private com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder>
+        getEntityFieldFieldBuilder() {
+            if (entityFieldBuilder_ == null) {
+                entityFieldBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder>(
+                    getEntityField(),
+                    getParentForChildren(),
+                    isClean());
+                entityField_ = null;
+            }
+            return entityFieldBuilder_;
+        }
+
+        private boolean belongToOwner_;
+
+        /**
+         * <code>bool belongToOwner = 9;</code>
+         */
+        public boolean getBelongToOwner() {
+            return belongToOwner_;
+        }
+
+        /**
+         * <code>bool belongToOwner = 9;</code>
+         */
+        public Builder setBelongToOwner(boolean value) {
+
+            belongToOwner_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>bool belongToOwner = 9;</code>
+         */
+        public Builder clearBelongToOwner() {
+
+            belongToOwner_ = false;
+            onChanged();
+            return this;
+        }
+
+        private boolean strong_;
+
+        /**
+         * <code>bool strong = 10;</code>
+         */
+        public boolean getStrong() {
+            return strong_;
+        }
+
+        /**
+         * <code>bool strong = 10;</code>
+         */
+        public Builder setStrong(boolean value) {
+
+            strong_ = value;
+            onChanged();
+            return this;
+        }
+
+        /**
+         * <code>bool strong = 10;</code>
+         */
+        public Builder clearStrong() {
+
+            strong_ = false;
+            onChanged();
+            return this;
+        }
+
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+            return super.setUnknownFieldsProto3(unknownFields);
+        }
+
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+            return super.mergeUnknownFields(unknownFields);
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:RelationInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:RelationInfo)
+    private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo DEFAULT_INSTANCE;
+
+    static {
+        DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo();
+    }
+
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<RelationInfo>
+        PARSER = new com.google.protobuf.AbstractParser<RelationInfo>() {
+        public RelationInfo parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+            return new RelationInfo(input, extensionRegistry);
+        }
+    };
+
+    public static com.google.protobuf.Parser<RelationInfo> parser() {
+        return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RelationInfo> getParserForType() {
+        return PARSER;
+    }
+
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+    }
 
 }
 

@@ -48,7 +48,7 @@ public class SyncReadTest extends MockerRequestClientHelper {
             int count = 0;
             Optional<IEntityClass> entityClassOptional = null;
             while (count < 500) {
-                entityClassOptional = MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID);
+                entityClassOptional = MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID, "");
                 if (entityClassOptional.isPresent()) {
                     break;
                 }

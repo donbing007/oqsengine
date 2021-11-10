@@ -7,238 +7,260 @@ public interface CalculatorOrBuilder extends
     // @@protoc_insertion_point(interface_extends:Calculator)
     com.google.protobuf.MessageOrBuilder {
 
-  /**
-   * <code>int32 calculateType = 1;</code>
-   */
-  int getCalculateType();
+    /**
+     * <code>int32 calculateType = 1;</code>
+     */
+    int getCalculateType();
 
-  /**
-   * <code>string expression = 2;</code>
-   */
-  java.lang.String getExpression();
-  /**
-   * <code>string expression = 2;</code>
-   */
-  com.google.protobuf.ByteString
-      getExpressionBytes();
+    /**
+     * <code>string expression = 2;</code>
+     */
+    java.lang.String getExpression();
 
-  /**
-   * <code>string validator = 3;</code>
-   */
-  java.lang.String getValidator();
-  /**
-   * <code>string validator = 3;</code>
-   */
-  com.google.protobuf.ByteString
-      getValidatorBytes();
+    /**
+     * <code>string expression = 2;</code>
+     */
+    com.google.protobuf.ByteString
+    getExpressionBytes();
 
-  /**
-   * <code>string min = 4;</code>
-   */
-  java.lang.String getMin();
-  /**
-   * <code>string min = 4;</code>
-   */
-  com.google.protobuf.ByteString
-      getMinBytes();
+    /**
+     * <code>string validator = 3;</code>
+     */
+    java.lang.String getValidator();
 
-  /**
-   * <code>string max = 5;</code>
-   */
-  java.lang.String getMax();
-  /**
-   * <code>string max = 5;</code>
-   */
-  com.google.protobuf.ByteString
-      getMaxBytes();
+    /**
+     * <code>string validator = 3;</code>
+     */
+    com.google.protobuf.ByteString
+    getValidatorBytes();
 
-  /**
-   * <code>string condition = 6;</code>
-   */
-  java.lang.String getCondition();
-  /**
-   * <code>string condition = 6;</code>
-   */
-  com.google.protobuf.ByteString
-      getConditionBytes();
+    /**
+     * <code>string min = 4;</code>
+     */
+    java.lang.String getMin();
 
-  /**
-   * <code>string emptyValueTransfer = 7;</code>
-   */
-  java.lang.String getEmptyValueTransfer();
-  /**
-   * <code>string emptyValueTransfer = 7;</code>
-   */
-  com.google.protobuf.ByteString
-      getEmptyValueTransferBytes();
+    /**
+     * <code>string min = 4;</code>
+     */
+    com.google.protobuf.ByteString
+    getMinBytes();
 
-  /**
-   * <code>string patten = 8;</code>
-   */
-  java.lang.String getPatten();
-  /**
-   * <code>string patten = 8;</code>
-   */
-  com.google.protobuf.ByteString
-      getPattenBytes();
+    /**
+     * <code>string max = 5;</code>
+     */
+    java.lang.String getMax();
 
-  /**
-   * <code>string model = 9;</code>
-   */
-  java.lang.String getModel();
-  /**
-   * <code>string model = 9;</code>
-   */
-  com.google.protobuf.ByteString
-      getModelBytes();
+    /**
+     * <code>string max = 5;</code>
+     */
+    com.google.protobuf.ByteString
+    getMaxBytes();
 
-  /**
-   * <code>int32 step = 10;</code>
-   */
-  int getStep();
+    /**
+     * <code>string condition = 6;</code>
+     */
+    java.lang.String getCondition();
 
-  /**
-   * <code>int32 level = 11;</code>
-   */
-  int getLevel();
+    /**
+     * <code>string condition = 6;</code>
+     */
+    com.google.protobuf.ByteString
+    getConditionBytes();
 
-  /**
-   * <code>repeated string args = 12;</code>
-   */
-  java.util.List<java.lang.String>
-      getArgsList();
-  /**
-   * <code>repeated string args = 12;</code>
-   */
-  int getArgsCount();
-  /**
-   * <code>repeated string args = 12;</code>
-   */
-  java.lang.String getArgs(int index);
-  /**
-   * <code>repeated string args = 12;</code>
-   */
-  com.google.protobuf.ByteString
-      getArgsBytes(int index);
+    /**
+     * <code>string emptyValueTransfer = 7;</code>
+     */
+    java.lang.String getEmptyValueTransfer();
 
-  /**
-   * <code>int32 failedPolicy = 13;</code>
-   */
-  int getFailedPolicy();
+    /**
+     * <code>string emptyValueTransfer = 7;</code>
+     */
+    com.google.protobuf.ByteString
+    getEmptyValueTransferBytes();
 
-  /**
-   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-   */
-  boolean hasFailedDefaultValue();
-  /**
-   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-   */
-  com.google.protobuf.Any getFailedDefaultValue();
-  /**
-   * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
-   */
-  com.google.protobuf.AnyOrBuilder getFailedDefaultValueOrBuilder();
+    /**
+     * <code>string patten = 8;</code>
+     */
+    java.lang.String getPatten();
 
-  /**
-   * <code>int64 lookupEntityClassId = 15;</code>
-   */
-  long getLookupEntityClassId();
+    /**
+     * <code>string patten = 8;</code>
+     */
+    com.google.protobuf.ByteString
+    getPattenBytes();
 
-  /**
-   * <code>int64 lookupEntityFieldId = 16;</code>
-   */
-  long getLookupEntityFieldId();
+    /**
+     * <code>string model = 9;</code>
+     */
+    java.lang.String getModel();
 
-  /**
-   * <code>int32 resetType = 17;</code>
-   */
-  int getResetType();
+    /**
+     * <code>string model = 9;</code>
+     */
+    com.google.protobuf.ByteString
+    getModelBytes();
 
-  /**
-   * <code>int32 domainNoSenior = 18;</code>
-   */
-  int getDomainNoSenior();
+    /**
+     * <code>int32 step = 10;</code>
+     */
+    int getStep();
 
-  /**
-   * <code>int64 lookupRelationId = 19;</code>
-   */
-  long getLookupRelationId();
+    /**
+     * <code>int32 level = 11;</code>
+     */
+    int getLevel();
 
-  /**
-   * <code>int64 aggregationBoId = 20;</code>
-   */
-  long getAggregationBoId();
+    /**
+     * <code>repeated string args = 12;</code>
+     */
+    java.util.List<java.lang.String>
+    getArgsList();
 
-  /**
-   * <code>int64 aggregationFieldId = 21;</code>
-   */
-  long getAggregationFieldId();
+    /**
+     * <code>repeated string args = 12;</code>
+     */
+    int getArgsCount();
 
-  /**
-   * <code>int32 aggregationType = 22;</code>
-   */
-  int getAggregationType();
+    /**
+     * <code>repeated string args = 12;</code>
+     */
+    java.lang.String getArgs(int index);
 
-  /**
-   * <code>int64 aggregationRelationId = 23;</code>
-   */
-  long getAggregationRelationId();
+    /**
+     * <code>repeated string args = 12;</code>
+     */
+    com.google.protobuf.ByteString
+    getArgsBytes(int index);
 
-  /**
-   * <code>repeated .DomainCondition domainConditions = 24;</code>
-   */
-  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> 
-      getDomainConditionsList();
-  /**
-   * <code>repeated .DomainCondition domainConditions = 24;</code>
-   */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index);
-  /**
-   * <code>repeated .DomainCondition domainConditions = 24;</code>
-   */
-  int getDomainConditionsCount();
-  /**
-   * <code>repeated .DomainCondition domainConditions = 24;</code>
-   */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
-      getDomainConditionsOrBuilderList();
-  /**
-   * <code>repeated .DomainCondition domainConditions = 24;</code>
-   */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
-      int index);
+    /**
+     * <code>int32 failedPolicy = 13;</code>
+     */
+    int getFailedPolicy();
 
-  /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
-   */
-  int getAggregationByFieldsCount();
-  /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
-   */
-  boolean containsAggregationByFields(
-      long key);
-  /**
-   * Use {@link #getAggregationByFieldsMap()} instead.
-   */
-  @java.lang.Deprecated
-  java.util.Map<java.lang.Long, java.lang.Long>
-  getAggregationByFields();
-  /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
-   */
-  java.util.Map<java.lang.Long, java.lang.Long>
-  getAggregationByFieldsMap();
-  /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
-   */
+    /**
+     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+     */
+    boolean hasFailedDefaultValue();
 
-  long getAggregationByFieldsOrDefault(
-      long key,
-      long defaultValue);
-  /**
-   * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
-   */
+    /**
+     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+     */
+    com.google.protobuf.Any getFailedDefaultValue();
 
-  long getAggregationByFieldsOrThrow(
-      long key);
+    /**
+     * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
+     */
+    com.google.protobuf.AnyOrBuilder getFailedDefaultValueOrBuilder();
+
+    /**
+     * <code>int64 lookupEntityClassId = 15;</code>
+     */
+    long getLookupEntityClassId();
+
+    /**
+     * <code>int64 lookupEntityFieldId = 16;</code>
+     */
+    long getLookupEntityFieldId();
+
+    /**
+     * <code>int32 resetType = 17;</code>
+     */
+    int getResetType();
+
+    /**
+     * <code>int32 domainNoSenior = 18;</code>
+     */
+    int getDomainNoSenior();
+
+    /**
+     * <code>int64 lookupRelationId = 19;</code>
+     */
+    long getLookupRelationId();
+
+    /**
+     * <code>int64 aggregationBoId = 20;</code>
+     */
+    long getAggregationBoId();
+
+    /**
+     * <code>int64 aggregationFieldId = 21;</code>
+     */
+    long getAggregationFieldId();
+
+    /**
+     * <code>int32 aggregationType = 22;</code>
+     */
+    int getAggregationType();
+
+    /**
+     * <code>int64 aggregationRelationId = 23;</code>
+     */
+    long getAggregationRelationId();
+
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>
+    getDomainConditionsList();
+
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index);
+
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    int getDomainConditionsCount();
+
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>
+    getDomainConditionsOrBuilderList();
+
+    /**
+     * <code>repeated .DomainCondition domainConditions = 24;</code>
+     */
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
+        int index);
+
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
+     */
+    int getAggregationByFieldsCount();
+
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
+     */
+    boolean containsAggregationByFields(
+        long key);
+
+    /**
+     * Use {@link #getAggregationByFieldsMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.Long, java.lang.Long>
+    getAggregationByFields();
+
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
+     */
+    java.util.Map<java.lang.Long, java.lang.Long>
+    getAggregationByFieldsMap();
+
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
+     */
+
+    long getAggregationByFieldsOrDefault(
+        long key,
+        long defaultValue);
+
+    /**
+     * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
+     */
+
+    long getAggregationByFieldsOrThrow(
+        long key);
 }

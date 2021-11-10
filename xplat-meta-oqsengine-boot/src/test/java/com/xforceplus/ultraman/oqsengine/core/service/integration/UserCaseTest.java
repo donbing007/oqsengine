@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -945,10 +946,19 @@ public class UserCaseTest {
         Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
         // 验证是否成功lookup.
         queryLookupEntities.forEach(e -> {
+
+            // 此次更新是为了验证,已经lookup过的字段再次更新是否正确.
+            try {
+                entityManagementService.replace(e);
+            } catch (SQLException exception) {
+                throw new RuntimeException(exception.getMessage(), exception);
+            }
+
             Assertions.assertEquals(
                 targetEntity.entityValue().getValue("l2-string").get().valueToString(),
                 e.entityValue().getValue("lookup-l2-string").get().valueToString());
         });
+
 
         IEntity newTargetEntity = Entity.Builder.anEntity()
             .withId(targetEntity.id())

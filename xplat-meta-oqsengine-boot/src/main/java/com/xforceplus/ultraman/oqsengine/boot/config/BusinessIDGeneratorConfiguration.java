@@ -139,6 +139,4 @@ public class BusinessIDGeneratorConfiguration {
     public SpringContextUtil springContextUtil() {
         return new SpringContextUtil();
     }
-
-
 }

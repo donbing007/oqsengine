@@ -143,7 +143,7 @@ public class AggregationTaskRunnerTest {
             .withId(1)
             .withLeftEntityClassId(targetEntityClassId)
             .withRightEntityClassId(aggEntityClassId)
-            .withRightEntityClassLoader(id -> Optional.of(aggEntityClass))
+            .withRightEntityClassLoader((id,a) -> Optional.of(aggEntityClass))
             .withEntityField(aggField)
             .withIdentity(true)
             .withBelongToOwner(true)
@@ -380,7 +380,8 @@ public class AggregationTaskRunnerTest {
     class MockMetaManager implements MetaManager {
 
         @Override
-        public Optional<IEntityClass> load(long id) {
+        public Optional<IEntityClass> load(long id, String profile) {
+
             if (id == aggEntityClassId) {
                 return Optional.ofNullable(aggEntityClass);
             }
@@ -388,13 +389,8 @@ public class AggregationTaskRunnerTest {
         }
 
         @Override
-        public Optional<IEntityClass> load(long id, String profile) {
-            return Optional.empty();
-        }
-
-        @Override
         public Optional<IEntityClass> load(EntityClassRef ref) {
-            return load(ref.getId());
+            return load(ref.getId(), "");
         }
 
         @Override
@@ -525,6 +521,4 @@ public class AggregationTaskRunnerTest {
             return false;
         }
     }
-
-
 }

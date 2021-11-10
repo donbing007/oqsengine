@@ -60,10 +60,12 @@ public class DefaultChangelogImpl implements ChangelogService {
         List<Changelog> changeLogs = new LinkedList<>();
         long entityClassId = changedEvent.getEntityClassId();
 
+        String profile = entityClass.ref().getProfile();
+
         /**
          * get main entityClass
          */
-        IEntityClass entityClassOp = metaManager.load(entityClassId)
+        IEntityClass entityClassOp = metaManager.load(entityClassId, profile)
                 .orElseThrow(() -> new RuntimeException(String.format(FATAL_ERR, entityClassId)));
 
         List<Changelog> sourceChangelog = handleEvent(changedEvent, entityClass, null);
@@ -73,7 +75,7 @@ public class DefaultChangelogImpl implements ChangelogService {
             /**
              * entityclass is self ? TODO
              */
-            return handleEvent(changedEvent, x.getRightEntityClass(), x).stream();
+            return handleEvent(changedEvent, x.getRightEntityClass(profile), x).stream();
         }).collect(Collectors.toList());
 
         changeLogs.addAll(records);
@@ -183,7 +185,10 @@ public class DefaultChangelogImpl implements ChangelogService {
 
             changeVersionList = mergeSortedList(changeVersionList, currentList, Comparator.comparingLong(ChangeVersion::getVersion));
 
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId);
+            /**
+             * TODO current here losing fields
+             */
+            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, "");
             if(entityClassOp.isPresent()) {
                 IEntityClass entityClass = entityClassOp.get();
                 EntityRelation mainRelation = replayService.replayRelation(entityClass, objId, relatedChangelog);

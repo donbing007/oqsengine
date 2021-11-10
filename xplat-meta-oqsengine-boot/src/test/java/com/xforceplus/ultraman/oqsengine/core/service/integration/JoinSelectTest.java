@@ -105,7 +105,6 @@ public class JoinSelectTest extends AbstractContainerExtends {
         initialization = false;
 
         MockEntityClassDefine.initMetaManager(metaManager);
-
         initData();
 
         initialization = true;

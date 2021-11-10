@@ -82,7 +82,7 @@ public class ReplayServiceImpl implements ReplayService {
     public EntityDomain replaySimpleDomain(long entityClass, long id, long endVersion) {
 
         Tuple2<ChangeSnapshot, List<Changelog>> changeTuple = getChangeTuple(id, endVersion);
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClass);
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClass, "");
         return entityClassOp
                 .map(iEntityClass -> replaySingleDomainWithSnapshot(iEntityClass
                         , id
@@ -218,7 +218,7 @@ public class ReplayServiceImpl implements ReplayService {
         while (!taskQueue.isEmpty()) {
             Tuple3<Long, Long, Long> task = taskQueue.poll();
 
-            Optional<IEntityClass> entityClassOptional = metaManager.load(task._1);
+            Optional<IEntityClass> entityClassOptional = metaManager.load(task._1, "");
             if (entityClassOptional.isPresent()) {
 
 
@@ -241,7 +241,7 @@ public class ReplayServiceImpl implements ReplayService {
 
     private Optional<ChangelogStatefulEntity> replayStatefulEntityInternal(long entityClassId, long id) {
 
-        Optional<IEntityClass> loadEntityClassOp = metaManager.load(entityClassId);
+        Optional<IEntityClass> loadEntityClassOp = metaManager.load(entityClassId, "");
         return loadEntityClassOp.map(x -> {
             EntityDomain entityDomain = replaySimpleDomain(entityClassId, id, -1);
             ChangelogStatefulEntity statefulEntity = new ChangelogStatefulEntity(id, x, metaManager, entityDomain, snapshotThreshold);

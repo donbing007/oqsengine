@@ -32,7 +32,7 @@ public class LookupHelperTest {
         LookupHelper.LookupLinkKey key =
             LookupHelper.buildLookupLinkKey(targetEntity, targetField, lookupEntity, lookupField);
         Assertions.assertEquals(
-            String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
+            String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
                 LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField.id()),
                 LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX,
                 NumberUtils.zeroFill(lookupEntity.entityClassRef().getId()),

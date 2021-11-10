@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -115,7 +116,7 @@ public class Relationship {
     /*
      * "右"对象元信息定义的延迟加载方法.
      */
-    private Function<Long, Optional<IEntityClass>> rightEntityClassLoader;
+    private BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader;
 
     /*
      * 是否是伴生关系
@@ -133,8 +134,8 @@ public class Relationship {
      *
      * @return entityClass 实例.
      */
-    public IEntityClass getRightEntityClass() {
-        Optional<IEntityClass> entityClassOp = rightEntityClassLoader.apply(rightEntityClassId);
+    public IEntityClass getRightEntityClass(String profile) {
+        Optional<IEntityClass> entityClassOp = rightEntityClassLoader.apply(rightEntityClassId, profile);
         return entityClassOp.orElse(null);
     }
 
@@ -234,7 +235,7 @@ public class Relationship {
         private IEntityField entityField;
         private boolean belongToOwner = false;
         private boolean strong = false;
-        private Function<Long, Optional<IEntityClass>> entityClassLoader;
+        private BiFunction<Long, String, Optional<IEntityClass>> entityClassLoader;
         private boolean companion = false;
         private long companionRelation;
 
@@ -306,7 +307,7 @@ public class Relationship {
             return this;
         }
 
-        public Builder withRightEntityClassLoader(Function<Long, Optional<IEntityClass>> entityClassLoader) {
+        public Builder withRightEntityClassLoader(BiFunction<Long, String, Optional<IEntityClass>> entityClassLoader) {
             this.entityClassLoader = entityClassLoader;
             return this;
         }
@@ -329,7 +330,6 @@ public class Relationship {
             relationship.entityField = this.entityField;
             relationship.leftEntityClassCode = this.leftEntityClassCode;
             relationship.strong = this.strong;
-            relationship.belongToOwner = this.belongToOwner;
             relationship.companion = this.companion;
             relationship.companionRelation = this.companionRelation;
             return relationship;

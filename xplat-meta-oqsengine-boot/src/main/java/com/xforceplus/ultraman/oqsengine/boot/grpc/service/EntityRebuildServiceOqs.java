@@ -90,7 +90,10 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         return async(() -> {
             EntityUp entityUp = in.getEntity();
 
-            IEntityClass entityClass = toEntityClass(entityUp, metaManager);
+            /*
+             * TODO profile
+             */
+            IEntityClass entityClass = toEntityClass(entityUp, metaManager, "");
 
             try {
                 Optional<DevOpsTaskInfo> devOpsTaskInfo = devOpsManagementService.rebuildIndex(
@@ -134,7 +137,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     public CompletionStage<RebuildTaskInfo> getActiveTask(EntityUp in, Metadata metadata) {
         return async(() -> {
             try {
-                return devOpsManagementService.getActiveTask(toEntityClass(in, metaManager))
+                return devOpsManagementService.getActiveTask(toEntityClass(in, metaManager, ""))
                     .map(this::toTaskInfo).orElse(empty);
             } catch (SQLException e) {
                 logger.error("{}", e);

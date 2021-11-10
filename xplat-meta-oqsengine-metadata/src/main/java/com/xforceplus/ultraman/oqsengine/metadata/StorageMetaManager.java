@@ -85,18 +85,6 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
-    /**
-     * 使用entityClassId获取对应的EntityClass.
-     *
-     * @param id 元信息的标识.
-     * @return 元信息实现.
-     */
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "load"})
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        return entityClassFormatHandler.classLoad(id, null);
-    }
-
     @Override
     public Optional<IEntityClass> load(long id, String profile) {
         return entityClassFormatHandler.classLoad(id, profile);
@@ -257,7 +245,8 @@ public class StorageMetaManager implements MetaManager {
                     String[] keySplitter = k.split("\\.");
                     if (keySplitter.length == 3) {
                         metaLogs.add(
-                            new MetaLogs(keySplitter[0], Integer.parseInt(keySplitter[1]), Long.parseLong(keySplitter[2]), v)
+                            new MetaLogs(keySplitter[0], Integer.parseInt(keySplitter[1]),
+                                Long.parseLong(keySplitter[2]), v)
                         );
                     }
                 }

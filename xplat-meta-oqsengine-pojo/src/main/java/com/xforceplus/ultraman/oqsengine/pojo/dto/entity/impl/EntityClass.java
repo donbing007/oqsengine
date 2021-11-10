@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 一个元信息定义,OQS内部使用的对象元信息定义.
@@ -170,14 +171,14 @@ public class EntityClass implements IEntityClass {
         //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
-        }
-
-        if (relations != null) {
-            //  从关系中找
-            for (Relationship relation : relations) {
-                if (relation.isSelfRelation(this.id)) {
-                    if (relation.getEntityField() != null && relation.getEntityField().name().equals(name)) {
-                        return Optional.of(relation.getEntityField());
+        } else {
+            if (relations != null) {
+                //  从关系中找
+                for (Relationship relation : relations) {
+                    if (relation.isSelfRelation(this.id)) {
+                        if (relation.getEntityField() != null && relation.getEntityField().name().equals(name)) {
+                            return Optional.of(relation.getEntityField());
+                        }
                     }
                 }
             }
@@ -195,17 +196,16 @@ public class EntityClass implements IEntityClass {
         Optional<IEntityField> entityFieldOp =
             fields.stream().filter(f -> id == f.id()).findFirst();
 
-        //  找到
         if (entityFieldOp.isPresent()) {
             return entityFieldOp;
-        }
-
-        if (relations != null) {
-            //  从关系中找
-            for (Relationship relation : relations) {
-                if (relation.isSelfRelation(this.id)) {
-                    if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
-                        return Optional.of(relation.getEntityField());
+        } else {
+            if (relations != null) {
+                //  从关系中找
+                for (Relationship relation : relations) {
+                    if (relation.isSelfRelation(this.id)) {
+                        if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
+                            return Optional.of(relation.getEntityField());
+                        }
                     }
                 }
             }
