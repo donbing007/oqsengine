@@ -60,10 +60,10 @@ public class StorageConfiguration {
     @Bean
     public MasterStorage masterStorage(
         @Value("${storage.master.name:oqsbigentity}") String tableName,
-        @Value("${storage.timeoutMs.query:3000}") long masterQueryTimeout) {
+        @Value("${storage.timeoutMs.query:3000}") long timeoutMs) {
         SQLMasterStorage storage = new SQLMasterStorage();
         storage.setTableName(tableName);
-        storage.setQueryTimeout(masterQueryTimeout);
+        storage.setTimeoutMs(timeoutMs);
         return storage;
     }
 
@@ -73,10 +73,9 @@ public class StorageConfiguration {
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
-        @Value("${storage.index.search.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
-
+        @Value("${storage.timeoutMs.query:3000}") long timeoutMs) {
         SphinxQLManticoreIndexStorage storage = new SphinxQLManticoreIndexStorage();
-        storage.setMaxSearchTimeoutMs(maxQueryTimeMs);
+        storage.setTimeoutMs(timeoutMs);
         storage.setSearchIndexName(searchIndexName);
         return storage;
     }

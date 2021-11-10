@@ -509,11 +509,60 @@ public class UserCaseTest {
         Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
+    @Test
+    public void testOneSort() throws Exception {
+        long[] fistFieldValues = new long[] {
+            10, 9, 5, 8, 6, 10
+        };
+
+        List<IEntity> expectedEntities = new ArrayList<>(fistFieldValues.length);
+        for (int i = 0; i < fistFieldValues.length; i++) {
+            expectedEntities.add(Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                            fistFieldValues[i])
+                    )
+                ).build());
+        }
+        OperationResult[] results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
+        Assertions.assertEquals(expectedEntities.size(), results.length);
+        Arrays.stream(results).forEach(r ->
+            Assertions.assertEquals(ResultStatus.SUCCESS, r.getResultStatus())
+        );
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
+                .build()
+        );
+
+        long[] expectedFirstValues = new long[] {
+            10, 10, 9, 8, 6, 5
+        };
+
+        long[] firstValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l0-long").get().valueToLong()).toArray();
+        Assertions.assertArrayEquals(expectedFirstValues, firstValues);
+
+        // 两个数值一致的对象id应该从小到大.
+        IEntity firstEntity = entities.stream().findFirst().get();
+        IEntity secondEntity = entities.stream().skip(1).findFirst().get();
+
+        Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
+            String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
+                firstEntity.id(), secondEntity.id()));
+    }
+
     /**
-     * 测试多字段排序.
+     * 测试三字段排序.
      */
     @Test
-    public void testSort() throws Exception {
+    public void testThreeSort() throws Exception {
         long[] fistFieldValues = new long[] {
             10, 9, 5, 8, 6, 10
         };
@@ -553,8 +602,8 @@ public class UserCaseTest {
             ServiceSelectConfig.Builder.anSearchConfig()
                 .withPage(Page.newSinglePage(100))
                 .withSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
-                .withSecondarySort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get()))
-                .withThridSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-long").get()))
+                .withSecondarySort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get()))
+                .withThridSort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-long").get()))
                 .build()
         );
 
@@ -562,10 +611,10 @@ public class UserCaseTest {
             10, 10, 9, 8, 6, 5
         };
         long[] expectedSecondValues = new long[] {
-            4, 7, 6, 4, 5, 4
+            7, 4, 6, 4, 5, 4
         };
         long[] expectedThridValues = new long[] {
-            3, 5, 3, 3, 4, 3
+            5, 3, 3, 3, 4, 3
         };
 
         long[] firstValues = entities.stream()
