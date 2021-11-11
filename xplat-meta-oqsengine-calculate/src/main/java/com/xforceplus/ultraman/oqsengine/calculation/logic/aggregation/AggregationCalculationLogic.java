@@ -37,9 +37,6 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +64,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
         //目标实例
         IEntity entity = context.getFocusEntity();
         logger.info("begin aggregation entity:{}, field:{}",
-                context.getFocusClass().name(), context.getFocusField().name());
+            context.getFocusClass().name(), context.getFocusField().name());
         //焦点字段
         IEntityField aggField = context.getFocusField();
         //聚合字段的值
@@ -113,7 +110,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
             if (byAggEntitys.size() == ONE) {
                 byAggEntity = byAggEntitys.get(ZERO);
                 Optional<IEntityClass> byAggEntityClass =
-                    context.getMetaManager().get().load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
+                    context.getMetaManager().get()
+                        .load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
                 if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                     if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                         n = Optional.of(new LongValue(aggField, 1));
@@ -303,7 +301,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
      * @return 统计数字.
      */
     private long countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass,
-                                       MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
+                                        MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
         // 得到count值
         Optional<IEntityClass> aggEntityClass =
             metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());

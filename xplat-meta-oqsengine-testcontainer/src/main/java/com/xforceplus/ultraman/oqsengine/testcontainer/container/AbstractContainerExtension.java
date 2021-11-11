@@ -25,6 +25,8 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
     // 启动错误的最大重试次数.
     private static final int MAX_TRY_NUMBER = 6;
 
+    private static final int REPLAY_WAIT_TIME_MS = 1000 * 60;
+
     /**
      * 每个测试用例类开启执行前执行.
      *
@@ -54,10 +56,11 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
                 return;
             } else {
 
-                LOGGER.info("Failed to start container {}, wait 5 seconds and try again.[{}/{}]",
-                    containerSupport().name(), i + 1, MAX_TRY_NUMBER);
+                LOGGER.info("Failed to start container {}, wait {} seconds and try again.[{}/{}]",
+                    containerSupport().name(), TimeUnit.MILLISECONDS.toSeconds(REPLAY_WAIT_TIME_MS), i + 1,
+                    MAX_TRY_NUMBER);
 
-                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(5000));
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(REPLAY_WAIT_TIME_MS));
             }
         }
 
