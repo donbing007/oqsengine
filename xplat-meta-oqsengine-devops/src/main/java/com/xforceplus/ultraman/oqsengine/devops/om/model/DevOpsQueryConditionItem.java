@@ -12,39 +12,40 @@ public class DevOpsQueryConditionItem {
     /*
      * 字段信息
      */
-    private String field;
+    private String code;
 
     /*
      * 条件值集合
      */
-    private String[] values;
+    private String[] value;
 
     /*
      * 操作符.
      */
-    private String operator;
+    private String operation;
 
-    public String getField() {
-        return field;
+
+    public String getCode() {
+        return code;
     }
 
-    public void setField(String field) {
-        this.field = field;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    public String[] getValues() {
-        return values;
+    public String[] getValue() {
+        return value;
     }
 
-    public void setValues(String[] values) {
-        this.values = values;
+    public void setValue(String[] value) {
+        this.value = value;
     }
 
-    public String getOperator() {
-        return operator;
+    public String getOperation() {
+        return operation;
     }
 
-    public void setOperator(String operator) {
-        this.operator = operator;
+    public void setOperation(String operation) {
+        this.operation = operation;
     }
 }

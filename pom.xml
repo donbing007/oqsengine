@@ -371,7 +371,7 @@
             </dependency>
             <dependency>
                 <groupId>com.xforceplus.ultraman</groupId>
-                <artifactId>ultraman-devops-service-sdk</artifactId>
+                <artifactId>ultraman-discover-server-sdk</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>

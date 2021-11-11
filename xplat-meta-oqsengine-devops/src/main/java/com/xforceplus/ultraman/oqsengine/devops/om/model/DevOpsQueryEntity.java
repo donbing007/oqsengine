@@ -11,7 +11,17 @@ import java.util.List;
  */
 public class DevOpsQueryEntity {
 
+    private List<String> entities;
+
     private List<String> fields;
+
+    public List<String> getEntities() {
+        return entities;
+    }
+
+    public void setEntities(List<String> entities) {
+        this.entities = entities;
+    }
 
     public List<String> getFields() {
         return fields;

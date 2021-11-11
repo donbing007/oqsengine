@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.om.model;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
