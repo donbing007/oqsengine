@@ -29,15 +29,18 @@ public class CountFunction implements AggregationFunction {
         }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             if (!(o.get().getValue().toString().equals("0")) && n.get().getValue().toString().equals("0")) {
                 Long temp = agg.get().valueToLong() - 1;
                 aggValue.get().setStringValue(temp.toString());
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             if (o.get().getValue().toString().equals("0") && !(n.get().getValue().toString().equals("0"))) {
                 Long temp = agg.get().valueToLong() + 1;
