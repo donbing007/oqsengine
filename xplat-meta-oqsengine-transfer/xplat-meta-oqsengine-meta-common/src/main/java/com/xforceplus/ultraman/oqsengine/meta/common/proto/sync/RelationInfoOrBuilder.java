@@ -7,75 +7,71 @@ public interface RelationInfoOrBuilder extends
     // @@protoc_insertion_point(interface_extends:RelationInfo)
     com.google.protobuf.MessageOrBuilder {
 
-    /**
-     * <code>int64 id = 1;</code>
-     */
-    long getId();
+  /**
+   * <code>int64 id = 1;</code>
+   */
+  long getId();
 
-    /**
-     * <code>string code = 2;</code>
-     */
-    java.lang.String getCode();
+  /**
+   * <code>string code = 2;</code>
+   */
+  java.lang.String getCode();
+  /**
+   * <code>string code = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getCodeBytes();
 
-    /**
-     * <code>string code = 2;</code>
-     */
-    com.google.protobuf.ByteString
-    getCodeBytes();
+  /**
+   * <code>int64 rightEntityClassId = 3;</code>
+   */
+  long getRightEntityClassId();
 
-    /**
-     * <code>int64 rightEntityClassId = 3;</code>
-     */
-    long getRightEntityClassId();
+  /**
+   * <code>int64 leftEntityClassId = 4;</code>
+   */
+  long getLeftEntityClassId();
 
-    /**
-     * <code>int64 leftEntityClassId = 4;</code>
-     */
-    long getLeftEntityClassId();
+  /**
+   * <code>string leftEntityClassCode = 5;</code>
+   */
+  java.lang.String getLeftEntityClassCode();
+  /**
+   * <code>string leftEntityClassCode = 5;</code>
+   */
+  com.google.protobuf.ByteString
+      getLeftEntityClassCodeBytes();
 
-    /**
-     * <code>string leftEntityClassCode = 5;</code>
-     */
-    java.lang.String getLeftEntityClassCode();
+  /**
+   * <code>int32 relationType = 6;</code>
+   */
+  int getRelationType();
 
-    /**
-     * <code>string leftEntityClassCode = 5;</code>
-     */
-    com.google.protobuf.ByteString
-    getLeftEntityClassCodeBytes();
+  /**
+   * <code>bool identity = 7;</code>
+   */
+  boolean getIdentity();
 
-    /**
-     * <code>int32 relationType = 6;</code>
-     */
-    int getRelationType();
+  /**
+   * <code>.EntityFieldInfo entityField = 8;</code>
+   */
+  boolean hasEntityField();
+  /**
+   * <code>.EntityFieldInfo entityField = 8;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo getEntityField();
+  /**
+   * <code>.EntityFieldInfo entityField = 8;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder getEntityFieldOrBuilder();
 
-    /**
-     * <code>bool identity = 7;</code>
-     */
-    boolean getIdentity();
+  /**
+   * <code>bool belongToOwner = 9;</code>
+   */
+  boolean getBelongToOwner();
 
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    boolean hasEntityField();
-
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo getEntityField();
-
-    /**
-     * <code>.EntityFieldInfo entityField = 8;</code>
-     */
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfoOrBuilder getEntityFieldOrBuilder();
-
-    /**
-     * <code>bool belongToOwner = 9;</code>
-     */
-    boolean getBelongToOwner();
-
-    /**
-     * <code>bool strong = 10;</code>
-     */
-    boolean getStrong();
+  /**
+   * <code>bool strong = 10;</code>
+   */
+  boolean getStrong();
 }

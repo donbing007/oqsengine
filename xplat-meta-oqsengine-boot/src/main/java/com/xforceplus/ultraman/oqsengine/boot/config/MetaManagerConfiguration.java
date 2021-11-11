@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.AggregationEventBuilder;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
@@ -113,12 +112,6 @@ public class MetaManagerConfiguration {
         return new ExpireExecutor();
     }
 
-
-    @Bean
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
-    public AggregationEventBuilder aggregationEventBuilder() {
-        return new AggregationEventBuilder();
-    }
 
     @Bean("entityClassFormatHandler")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")

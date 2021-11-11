@@ -6,17 +6,15 @@ package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 /**
  * Protobuf type {@code Calculator}
  */
-public final class Calculator extends
+public  final class Calculator extends
     com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:Calculator)
     CalculatorOrBuilder {
-  private static final long serialVersionUID = 0L;
-
+private static final long serialVersionUID = 0L;
   // Use Calculator.newBuilder() to construct.
   private Calculator(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-
   private Calculator() {
     calculateType_ = 0;
     expression_ = "";
@@ -48,7 +46,6 @@ public final class Calculator extends
   getUnknownFields() {
     return this.unknownFields;
   }
-
   private Calculator(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -212,13 +209,11 @@ public final class Calculator extends
           }
           case 194: {
             if (!((mutable_bitField0_ & 0x00800000) == 0x00800000)) {
-              domainConditions_ =
-                  new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>();
+              domainConditions_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>();
               mutable_bitField0_ |= 0x00800000;
             }
             domainConditions_.add(
-                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.parser(),
-                    extensionRegistry));
+                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.parser(), extensionRegistry));
             break;
           }
           case 202: {
@@ -228,7 +223,7 @@ public final class Calculator extends
               mutable_bitField0_ |= 0x01000000;
             }
             com.google.protobuf.MapEntry<java.lang.Long, java.lang.Long>
-                aggregationByFields__ = input.readMessage(
+            aggregationByFields__ = input.readMessage(
                 AggregationByFieldsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
             aggregationByFields_.getMutableMap().put(
                 aggregationByFields__.getKey(), aggregationByFields__.getValue());
@@ -252,9 +247,8 @@ public final class Calculator extends
       makeExtensionsImmutable();
     }
   }
-
   public static final com.google.protobuf.Descriptors.Descriptor
-  getDescriptor() {
+      getDescriptor() {
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
   }
 
@@ -269,19 +263,16 @@ public final class Calculator extends
             "Invalid map field number: " + number);
     }
   }
-
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-  internalGetFieldAccessorTable() {
+      internalGetFieldAccessorTable() {
     return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class,
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
   }
 
   private int bitField0_;
   public static final int CALCULATETYPE_FIELD_NUMBER = 1;
   private int calculateType_;
-
   /**
    * <code>int32 calculateType = 1;</code>
    */
@@ -291,7 +282,6 @@ public final class Calculator extends
 
   public static final int EXPRESSION_FIELD_NUMBER = 2;
   private volatile java.lang.Object expression_;
-
   /**
    * <code>string expression = 2;</code>
    */
@@ -300,22 +290,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       expression_ = s;
       return s;
     }
   }
-
   /**
    * <code>string expression = 2;</code>
    */
   public com.google.protobuf.ByteString
-  getExpressionBytes() {
+      getExpressionBytes() {
     java.lang.Object ref = expression_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       expression_ = b;
@@ -327,7 +316,6 @@ public final class Calculator extends
 
   public static final int VALIDATOR_FIELD_NUMBER = 3;
   private volatile java.lang.Object validator_;
-
   /**
    * <code>string validator = 3;</code>
    */
@@ -336,22 +324,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       validator_ = s;
       return s;
     }
   }
-
   /**
    * <code>string validator = 3;</code>
    */
   public com.google.protobuf.ByteString
-  getValidatorBytes() {
+      getValidatorBytes() {
     java.lang.Object ref = validator_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       validator_ = b;
@@ -363,7 +350,6 @@ public final class Calculator extends
 
   public static final int MIN_FIELD_NUMBER = 4;
   private volatile java.lang.Object min_;
-
   /**
    * <code>string min = 4;</code>
    */
@@ -372,22 +358,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       min_ = s;
       return s;
     }
   }
-
   /**
    * <code>string min = 4;</code>
    */
   public com.google.protobuf.ByteString
-  getMinBytes() {
+      getMinBytes() {
     java.lang.Object ref = min_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       min_ = b;
@@ -399,7 +384,6 @@ public final class Calculator extends
 
   public static final int MAX_FIELD_NUMBER = 5;
   private volatile java.lang.Object max_;
-
   /**
    * <code>string max = 5;</code>
    */
@@ -408,22 +392,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       max_ = s;
       return s;
     }
   }
-
   /**
    * <code>string max = 5;</code>
    */
   public com.google.protobuf.ByteString
-  getMaxBytes() {
+      getMaxBytes() {
     java.lang.Object ref = max_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       max_ = b;
@@ -435,7 +418,6 @@ public final class Calculator extends
 
   public static final int CONDITION_FIELD_NUMBER = 6;
   private volatile java.lang.Object condition_;
-
   /**
    * <code>string condition = 6;</code>
    */
@@ -444,22 +426,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       condition_ = s;
       return s;
     }
   }
-
   /**
    * <code>string condition = 6;</code>
    */
   public com.google.protobuf.ByteString
-  getConditionBytes() {
+      getConditionBytes() {
     java.lang.Object ref = condition_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       condition_ = b;
@@ -471,7 +452,6 @@ public final class Calculator extends
 
   public static final int EMPTYVALUETRANSFER_FIELD_NUMBER = 7;
   private volatile java.lang.Object emptyValueTransfer_;
-
   /**
    * <code>string emptyValueTransfer = 7;</code>
    */
@@ -480,22 +460,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       emptyValueTransfer_ = s;
       return s;
     }
   }
-
   /**
    * <code>string emptyValueTransfer = 7;</code>
    */
   public com.google.protobuf.ByteString
-  getEmptyValueTransferBytes() {
+      getEmptyValueTransferBytes() {
     java.lang.Object ref = emptyValueTransfer_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       emptyValueTransfer_ = b;
@@ -507,7 +486,6 @@ public final class Calculator extends
 
   public static final int PATTEN_FIELD_NUMBER = 8;
   private volatile java.lang.Object patten_;
-
   /**
    * <code>string patten = 8;</code>
    */
@@ -516,22 +494,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       patten_ = s;
       return s;
     }
   }
-
   /**
    * <code>string patten = 8;</code>
    */
   public com.google.protobuf.ByteString
-  getPattenBytes() {
+      getPattenBytes() {
     java.lang.Object ref = patten_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       patten_ = b;
@@ -543,7 +520,6 @@ public final class Calculator extends
 
   public static final int MODEL_FIELD_NUMBER = 9;
   private volatile java.lang.Object model_;
-
   /**
    * <code>string model = 9;</code>
    */
@@ -552,22 +528,21 @@ public final class Calculator extends
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       model_ = s;
       return s;
     }
   }
-
   /**
    * <code>string model = 9;</code>
    */
   public com.google.protobuf.ByteString
-  getModelBytes() {
+      getModelBytes() {
     java.lang.Object ref = model_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b =
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       model_ = b;
@@ -579,7 +554,6 @@ public final class Calculator extends
 
   public static final int STEP_FIELD_NUMBER = 10;
   private int step_;
-
   /**
    * <code>int32 step = 10;</code>
    */
@@ -589,7 +563,6 @@ public final class Calculator extends
 
   public static final int LEVEL_FIELD_NUMBER = 11;
   private int level_;
-
   /**
    * <code>int32 level = 11;</code>
    */
@@ -599,40 +572,35 @@ public final class Calculator extends
 
   public static final int ARGS_FIELD_NUMBER = 12;
   private com.google.protobuf.LazyStringList args_;
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public com.google.protobuf.ProtocolStringList
-  getArgsList() {
+      getArgsList() {
     return args_;
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public int getArgsCount() {
     return args_.size();
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public java.lang.String getArgs(int index) {
     return args_.get(index);
   }
-
   /**
    * <code>repeated string args = 12;</code>
    */
   public com.google.protobuf.ByteString
-  getArgsBytes(int index) {
+      getArgsBytes(int index) {
     return args_.getByteString(index);
   }
 
   public static final int FAILEDPOLICY_FIELD_NUMBER = 13;
   private int failedPolicy_;
-
   /**
    * <code>int32 failedPolicy = 13;</code>
    */
@@ -642,21 +610,18 @@ public final class Calculator extends
 
   public static final int FAILEDDEFAULTVALUE_FIELD_NUMBER = 14;
   private com.google.protobuf.Any failedDefaultValue_;
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
   public boolean hasFailedDefaultValue() {
     return failedDefaultValue_ != null;
   }
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
   public com.google.protobuf.Any getFailedDefaultValue() {
     return failedDefaultValue_ == null ? com.google.protobuf.Any.getDefaultInstance() : failedDefaultValue_;
   }
-
   /**
    * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
    */
@@ -666,7 +631,6 @@ public final class Calculator extends
 
   public static final int LOOKUPENTITYCLASSID_FIELD_NUMBER = 15;
   private long lookupEntityClassId_;
-
   /**
    * <code>int64 lookupEntityClassId = 15;</code>
    */
@@ -676,7 +640,6 @@ public final class Calculator extends
 
   public static final int LOOKUPENTITYFIELDID_FIELD_NUMBER = 16;
   private long lookupEntityFieldId_;
-
   /**
    * <code>int64 lookupEntityFieldId = 16;</code>
    */
@@ -686,7 +649,6 @@ public final class Calculator extends
 
   public static final int RESETTYPE_FIELD_NUMBER = 17;
   private int resetType_;
-
   /**
    * <code>int32 resetType = 17;</code>
    */
@@ -696,7 +658,6 @@ public final class Calculator extends
 
   public static final int DOMAINNOSENIOR_FIELD_NUMBER = 18;
   private int domainNoSenior_;
-
   /**
    * <code>int32 domainNoSenior = 18;</code>
    */
@@ -706,7 +667,6 @@ public final class Calculator extends
 
   public static final int LOOKUPRELATIONID_FIELD_NUMBER = 19;
   private long lookupRelationId_;
-
   /**
    * <code>int64 lookupRelationId = 19;</code>
    */
@@ -716,7 +676,6 @@ public final class Calculator extends
 
   public static final int AGGREGATIONBOID_FIELD_NUMBER = 20;
   private long aggregationBoId_;
-
   /**
    * <code>int64 aggregationBoId = 20;</code>
    */
@@ -726,7 +685,6 @@ public final class Calculator extends
 
   public static final int AGGREGATIONFIELDID_FIELD_NUMBER = 21;
   private long aggregationFieldId_;
-
   /**
    * <code>int64 aggregationFieldId = 21;</code>
    */
@@ -736,7 +694,6 @@ public final class Calculator extends
 
   public static final int AGGREGATIONTYPE_FIELD_NUMBER = 22;
   private int aggregationType_;
-
   /**
    * <code>int32 aggregationType = 22;</code>
    */
@@ -746,7 +703,6 @@ public final class Calculator extends
 
   public static final int AGGREGATIONRELATIONID_FIELD_NUMBER = 23;
   private long aggregationRelationId_;
-
   /**
    * <code>int64 aggregationRelationId = 23;</code>
    */
@@ -756,36 +712,31 @@ public final class Calculator extends
 
   public static final int DOMAINCONDITIONS_FIELD_NUMBER = 24;
   private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> domainConditions_;
-
   /**
    * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
   public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> getDomainConditionsList() {
     return domainConditions_;
   }
-
   /**
    * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
-  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>
-  getDomainConditionsOrBuilderList() {
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+      getDomainConditionsOrBuilderList() {
     return domainConditions_;
   }
-
   /**
    * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
   public int getDomainConditionsCount() {
     return domainConditions_.size();
   }
-
   /**
    * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
   public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition getDomainConditions(int index) {
     return domainConditions_.get(index);
   }
-
   /**
    * <code>repeated .DomainCondition domainConditions = 24;</code>
    */
@@ -795,22 +746,19 @@ public final class Calculator extends
   }
 
   public static final int AGGREGATIONBYFIELDS_FIELD_NUMBER = 25;
-
   private static final class AggregationByFieldsDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
         java.lang.Long, java.lang.Long> defaultEntry =
-        com.google.protobuf.MapEntry
+            com.google.protobuf.MapEntry
             .<java.lang.Long, java.lang.Long>newDefaultInstance(
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_AggregationByFieldsEntry_descriptor,
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_AggregationByFieldsEntry_descriptor, 
                 com.google.protobuf.WireFormat.FieldType.INT64,
                 0L,
                 com.google.protobuf.WireFormat.FieldType.INT64,
                 0L);
   }
-
   private com.google.protobuf.MapField<
       java.lang.Long, java.lang.Long> aggregationByFields_;
-
   private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
   internalGetAggregationByFields() {
     if (aggregationByFields_ == null) {
@@ -823,17 +771,15 @@ public final class Calculator extends
   public int getAggregationByFieldsCount() {
     return internalGetAggregationByFields().getMap().size();
   }
-
   /**
    * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public boolean containsAggregationByFields(
       long key) {
-
+    
     return internalGetAggregationByFields().getMap().containsKey(key);
   }
-
   /**
    * Use {@link #getAggregationByFieldsMap()} instead.
    */
@@ -841,7 +787,6 @@ public final class Calculator extends
   public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFields() {
     return getAggregationByFieldsMap();
   }
-
   /**
    * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
@@ -849,7 +794,6 @@ public final class Calculator extends
   public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
     return internalGetAggregationByFields().getMap();
   }
-
   /**
    * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
@@ -857,19 +801,18 @@ public final class Calculator extends
   public long getAggregationByFieldsOrDefault(
       long key,
       long defaultValue) {
-
+    
     java.util.Map<java.lang.Long, java.lang.Long> map =
         internalGetAggregationByFields().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
-
   /**
    * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
    */
 
   public long getAggregationByFieldsOrThrow(
       long key) {
-
+    
     java.util.Map<java.lang.Long, java.lang.Long> map =
         internalGetAggregationByFields().getMap();
     if (!map.containsKey(key)) {
@@ -879,22 +822,17 @@ public final class Calculator extends
   }
 
   private byte memoizedIsInitialized = -1;
-
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized == 1) {
-      return true;
-    }
-    if (isInitialized == 0) {
-      return false;
-    }
+    if (isInitialized == 1) return true;
+    if (isInitialized == 0) return false;
 
     memoizedIsInitialized = 1;
     return true;
   }
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
-      throws java.io.IOException {
+                      throws java.io.IOException {
     if (calculateType_ != 0) {
       output.writeInt32(1, calculateType_);
     }
@@ -968,24 +906,22 @@ public final class Calculator extends
       output.writeMessage(24, domainConditions_.get(i));
     }
     com.google.protobuf.GeneratedMessageV3
-        .serializeLongMapTo(
-            output,
-            internalGetAggregationByFields(),
-            AggregationByFieldsDefaultEntryHolder.defaultEntry,
-            25);
+      .serializeLongMapTo(
+        output,
+        internalGetAggregationByFields(),
+        AggregationByFieldsDefaultEntryHolder.defaultEntry,
+        25);
     unknownFields.writeTo(output);
   }
 
   public int getSerializedSize() {
     int size = memoizedSize;
-    if (size != -1) {
-      return size;
-    }
+    if (size != -1) return size;
 
     size = 0;
     if (calculateType_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, calculateType_);
+        .computeInt32Size(1, calculateType_);
     }
     if (!getExpressionBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, expression_);
@@ -1013,11 +949,11 @@ public final class Calculator extends
     }
     if (step_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(10, step_);
+        .computeInt32Size(10, step_);
     }
     if (level_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(11, level_);
+        .computeInt32Size(11, level_);
     }
     {
       int dataSize = 0;
@@ -1029,56 +965,56 @@ public final class Calculator extends
     }
     if (failedPolicy_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(13, failedPolicy_);
+        .computeInt32Size(13, failedPolicy_);
     }
     if (failedDefaultValue_ != null) {
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(14, getFailedDefaultValue());
+        .computeMessageSize(14, getFailedDefaultValue());
     }
     if (lookupEntityClassId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(15, lookupEntityClassId_);
+        .computeInt64Size(15, lookupEntityClassId_);
     }
     if (lookupEntityFieldId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(16, lookupEntityFieldId_);
+        .computeInt64Size(16, lookupEntityFieldId_);
     }
     if (resetType_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(17, resetType_);
+        .computeInt32Size(17, resetType_);
     }
     if (domainNoSenior_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(18, domainNoSenior_);
+        .computeInt32Size(18, domainNoSenior_);
     }
     if (lookupRelationId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(19, lookupRelationId_);
+        .computeInt64Size(19, lookupRelationId_);
     }
     if (aggregationBoId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(20, aggregationBoId_);
+        .computeInt64Size(20, aggregationBoId_);
     }
     if (aggregationFieldId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(21, aggregationFieldId_);
+        .computeInt64Size(21, aggregationFieldId_);
     }
     if (aggregationType_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(22, aggregationType_);
+        .computeInt32Size(22, aggregationType_);
     }
     if (aggregationRelationId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(23, aggregationRelationId_);
+        .computeInt64Size(23, aggregationRelationId_);
     }
     for (int i = 0; i < domainConditions_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(24, domainConditions_.get(i));
+        .computeMessageSize(24, domainConditions_.get(i));
     }
     for (java.util.Map.Entry<java.lang.Long, java.lang.Long> entry
-        : internalGetAggregationByFields().getMap().entrySet()) {
+         : internalGetAggregationByFields().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.Long, java.lang.Long>
-          aggregationByFields__ = AggregationByFieldsDefaultEntryHolder.defaultEntry.newBuilderForType()
+      aggregationByFields__ = AggregationByFieldsDefaultEntryHolder.defaultEntry.newBuilderForType()
           .setKey(entry.getKey())
           .setValue(entry.getValue())
           .build();
@@ -1093,13 +1029,12 @@ public final class Calculator extends
   @java.lang.Override
   public boolean equals(final java.lang.Object obj) {
     if (obj == this) {
-      return true;
+     return true;
     }
     if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator)) {
       return super.equals(obj);
     }
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator other =
-        (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) obj;
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) obj;
 
     boolean result = true;
     result = result && (getCalculateType()
@@ -1240,45 +1175,38 @@ public final class Calculator extends
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1286,14 +1214,11 @@ public final class Calculator extends
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseDelimitedFrom(
-      java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1301,14 +1226,12 @@ public final class Calculator extends
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-
   public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1317,18 +1240,13 @@ public final class Calculator extends
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  public Builder newBuilderForType() {
-    return newBuilder();
-  }
-
+  public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-
   public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
@@ -1340,7 +1258,6 @@ public final class Calculator extends
     Builder builder = new Builder(parent);
     return builder;
   }
-
   /**
    * Protobuf type {@code Calculator}
    */
@@ -1349,7 +1266,7 @@ public final class Calculator extends
       // @@protoc_insertion_point(builder_implements:Calculator)
       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
-    getDescriptor() {
+        getDescriptor() {
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
     }
 
@@ -1364,7 +1281,6 @@ public final class Calculator extends
               "Invalid map field number: " + number);
       }
     }
-
     @SuppressWarnings({"rawtypes"})
     protected com.google.protobuf.MapField internalGetMutableMapField(
         int number) {
@@ -1376,13 +1292,11 @@ public final class Calculator extends
               "Invalid map field number: " + number);
       }
     }
-
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-    internalGetFieldAccessorTable() {
+        internalGetFieldAccessorTable() {
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class,
-              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
+              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder.class);
     }
 
     // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.newBuilder()
@@ -1395,14 +1309,12 @@ public final class Calculator extends
       super(parent);
       maybeForceBuilderInitialization();
     }
-
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
-          .alwaysUseFieldBuilders) {
+              .alwaysUseFieldBuilders) {
         getDomainConditionsFieldBuilder();
       }
     }
-
     public Builder clear() {
       super.clear();
       calculateType_ = 0;
@@ -1466,7 +1378,7 @@ public final class Calculator extends
     }
 
     public com.google.protobuf.Descriptors.Descriptor
-    getDescriptorForType() {
+        getDescriptorForType() {
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_Calculator_descriptor;
     }
 
@@ -1483,8 +1395,7 @@ public final class Calculator extends
     }
 
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator buildPartial() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result =
-          new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator(this);
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       result.calculateType_ = calculateType_;
@@ -1537,38 +1448,32 @@ public final class Calculator extends
     public Builder clone() {
       return (Builder) super.clone();
     }
-
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
       return (Builder) super.setField(field, value);
     }
-
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return (Builder) super.clearField(field);
     }
-
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return (Builder) super.clearOneof(oneof);
     }
-
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         int index, java.lang.Object value) {
       return (Builder) super.setRepeatedField(field, index, value);
     }
-
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
         java.lang.Object value) {
       return (Builder) super.addRepeatedField(field, value);
     }
-
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) {
-        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator) other);
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator)other);
       } else {
         super.mergeFrom(other);
         return this;
@@ -1576,9 +1481,7 @@ public final class Calculator extends
     }
 
     public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator other) {
-      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance()) {
-        return this;
-      }
+      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance()) return this;
       if (other.getCalculateType() != 0) {
         setCalculateType(other.getCalculateType());
       }
@@ -1681,9 +1584,9 @@ public final class Calculator extends
             domainConditionsBuilder_ = null;
             domainConditions_ = other.domainConditions_;
             bitField0_ = (bitField0_ & ~0x00800000);
-            domainConditionsBuilder_ =
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                    getDomainConditionsFieldBuilder() : null;
+            domainConditionsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getDomainConditionsFieldBuilder() : null;
           } else {
             domainConditionsBuilder_.addAllMessages(other.domainConditions_);
           }
@@ -1717,40 +1620,35 @@ public final class Calculator extends
       }
       return this;
     }
-
     private int bitField0_;
 
-    private int calculateType_;
-
+    private int calculateType_ ;
     /**
      * <code>int32 calculateType = 1;</code>
      */
     public int getCalculateType() {
       return calculateType_;
     }
-
     /**
      * <code>int32 calculateType = 1;</code>
      */
     public Builder setCalculateType(int value) {
-
+      
       calculateType_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 calculateType = 1;</code>
      */
     public Builder clearCalculateType() {
-
+      
       calculateType_ = 0;
       onChanged();
       return this;
     }
 
     private java.lang.Object expression_ = "";
-
     /**
      * <code>string expression = 2;</code>
      */
@@ -1766,15 +1664,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string expression = 2;</code>
      */
     public com.google.protobuf.ByteString
-    getExpressionBytes() {
+        getExpressionBytes() {
       java.lang.Object ref = expression_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         expression_ = b;
@@ -1783,48 +1680,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string expression = 2;</code>
      */
     public Builder setExpression(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       expression_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string expression = 2;</code>
      */
     public Builder clearExpression() {
-
+      
       expression_ = getDefaultInstance().getExpression();
       onChanged();
       return this;
     }
-
     /**
      * <code>string expression = 2;</code>
      */
     public Builder setExpressionBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       expression_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object validator_ = "";
-
     /**
      * <code>string validator = 3;</code>
      */
@@ -1840,15 +1733,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string validator = 3;</code>
      */
     public com.google.protobuf.ByteString
-    getValidatorBytes() {
+        getValidatorBytes() {
       java.lang.Object ref = validator_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         validator_ = b;
@@ -1857,48 +1749,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string validator = 3;</code>
      */
     public Builder setValidator(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       validator_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string validator = 3;</code>
      */
     public Builder clearValidator() {
-
+      
       validator_ = getDefaultInstance().getValidator();
       onChanged();
       return this;
     }
-
     /**
      * <code>string validator = 3;</code>
      */
     public Builder setValidatorBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       validator_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object min_ = "";
-
     /**
      * <code>string min = 4;</code>
      */
@@ -1914,15 +1802,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string min = 4;</code>
      */
     public com.google.protobuf.ByteString
-    getMinBytes() {
+        getMinBytes() {
       java.lang.Object ref = min_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         min_ = b;
@@ -1931,48 +1818,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string min = 4;</code>
      */
     public Builder setMin(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       min_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string min = 4;</code>
      */
     public Builder clearMin() {
-
+      
       min_ = getDefaultInstance().getMin();
       onChanged();
       return this;
     }
-
     /**
      * <code>string min = 4;</code>
      */
     public Builder setMinBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       min_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object max_ = "";
-
     /**
      * <code>string max = 5;</code>
      */
@@ -1988,15 +1871,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string max = 5;</code>
      */
     public com.google.protobuf.ByteString
-    getMaxBytes() {
+        getMaxBytes() {
       java.lang.Object ref = max_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         max_ = b;
@@ -2005,48 +1887,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string max = 5;</code>
      */
     public Builder setMax(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       max_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string max = 5;</code>
      */
     public Builder clearMax() {
-
+      
       max_ = getDefaultInstance().getMax();
       onChanged();
       return this;
     }
-
     /**
      * <code>string max = 5;</code>
      */
     public Builder setMaxBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       max_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object condition_ = "";
-
     /**
      * <code>string condition = 6;</code>
      */
@@ -2062,15 +1940,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string condition = 6;</code>
      */
     public com.google.protobuf.ByteString
-    getConditionBytes() {
+        getConditionBytes() {
       java.lang.Object ref = condition_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         condition_ = b;
@@ -2079,48 +1956,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string condition = 6;</code>
      */
     public Builder setCondition(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       condition_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string condition = 6;</code>
      */
     public Builder clearCondition() {
-
+      
       condition_ = getDefaultInstance().getCondition();
       onChanged();
       return this;
     }
-
     /**
      * <code>string condition = 6;</code>
      */
     public Builder setConditionBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       condition_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object emptyValueTransfer_ = "";
-
     /**
      * <code>string emptyValueTransfer = 7;</code>
      */
@@ -2136,15 +2009,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string emptyValueTransfer = 7;</code>
      */
     public com.google.protobuf.ByteString
-    getEmptyValueTransferBytes() {
+        getEmptyValueTransferBytes() {
       java.lang.Object ref = emptyValueTransfer_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         emptyValueTransfer_ = b;
@@ -2153,48 +2025,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransfer(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       emptyValueTransfer_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder clearEmptyValueTransfer() {
-
+      
       emptyValueTransfer_ = getDefaultInstance().getEmptyValueTransfer();
       onChanged();
       return this;
     }
-
     /**
      * <code>string emptyValueTransfer = 7;</code>
      */
     public Builder setEmptyValueTransferBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       emptyValueTransfer_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object patten_ = "";
-
     /**
      * <code>string patten = 8;</code>
      */
@@ -2210,15 +2078,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string patten = 8;</code>
      */
     public com.google.protobuf.ByteString
-    getPattenBytes() {
+        getPattenBytes() {
       java.lang.Object ref = patten_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         patten_ = b;
@@ -2227,48 +2094,44 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string patten = 8;</code>
      */
     public Builder setPatten(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       patten_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string patten = 8;</code>
      */
     public Builder clearPatten() {
-
+      
       patten_ = getDefaultInstance().getPatten();
       onChanged();
       return this;
     }
-
     /**
      * <code>string patten = 8;</code>
      */
     public Builder setPattenBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       patten_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object model_ = "";
-
     /**
      * <code>string model = 9;</code>
      */
@@ -2284,15 +2147,14 @@ public final class Calculator extends
         return (java.lang.String) ref;
       }
     }
-
     /**
      * <code>string model = 9;</code>
      */
     public com.google.protobuf.ByteString
-    getModelBytes() {
+        getModelBytes() {
       java.lang.Object ref = model_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         model_ = b;
@@ -2301,171 +2163,154 @@ public final class Calculator extends
         return (com.google.protobuf.ByteString) ref;
       }
     }
-
     /**
      * <code>string model = 9;</code>
      */
     public Builder setModel(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-
+    throw new NullPointerException();
+  }
+  
       model_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>string model = 9;</code>
      */
     public Builder clearModel() {
-
+      
       model_ = getDefaultInstance().getModel();
       onChanged();
       return this;
     }
-
     /**
      * <code>string model = 9;</code>
      */
     public Builder setModelBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
-
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
       model_ = value;
       onChanged();
       return this;
     }
 
-    private int step_;
-
+    private int step_ ;
     /**
      * <code>int32 step = 10;</code>
      */
     public int getStep() {
       return step_;
     }
-
     /**
      * <code>int32 step = 10;</code>
      */
     public Builder setStep(int value) {
-
+      
       step_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 step = 10;</code>
      */
     public Builder clearStep() {
-
+      
       step_ = 0;
       onChanged();
       return this;
     }
 
-    private int level_;
-
+    private int level_ ;
     /**
      * <code>int32 level = 11;</code>
      */
     public int getLevel() {
       return level_;
     }
-
     /**
      * <code>int32 level = 11;</code>
      */
     public Builder setLevel(int value) {
-
+      
       level_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 level = 11;</code>
      */
     public Builder clearLevel() {
-
+      
       level_ = 0;
       onChanged();
       return this;
     }
 
     private com.google.protobuf.LazyStringList args_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-
     private void ensureArgsIsMutable() {
       if (!((bitField0_ & 0x00000800) == 0x00000800)) {
         args_ = new com.google.protobuf.LazyStringArrayList(args_);
         bitField0_ |= 0x00000800;
-      }
+       }
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public com.google.protobuf.ProtocolStringList
-    getArgsList() {
+        getArgsList() {
       return args_.getUnmodifiableView();
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public java.lang.String getArgs(int index) {
       return args_.get(index);
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public com.google.protobuf.ByteString
-    getArgsBytes(int index) {
+        getArgsBytes(int index) {
       return args_.getByteString(index);
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public Builder setArgs(
         int index, java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      ensureArgsIsMutable();
+    throw new NullPointerException();
+  }
+  ensureArgsIsMutable();
       args_.set(index, value);
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public Builder addArgs(
         java.lang.String value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      ensureArgsIsMutable();
+    throw new NullPointerException();
+  }
+  ensureArgsIsMutable();
       args_.add(value);
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -2477,7 +2322,6 @@ public final class Calculator extends
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
@@ -2487,46 +2331,42 @@ public final class Calculator extends
       onChanged();
       return this;
     }
-
     /**
      * <code>repeated string args = 12;</code>
      */
     public Builder addArgsBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
-        throw new NullPointerException();
-      }
-      checkByteStringIsUtf8(value);
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
       ensureArgsIsMutable();
       args_.add(value);
       onChanged();
       return this;
     }
 
-    private int failedPolicy_;
-
+    private int failedPolicy_ ;
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public int getFailedPolicy() {
       return failedPolicy_;
     }
-
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public Builder setFailedPolicy(int value) {
-
+      
       failedPolicy_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 failedPolicy = 13;</code>
      */
     public Builder clearFailedPolicy() {
-
+      
       failedPolicy_ = 0;
       onChanged();
       return this;
@@ -2534,16 +2374,13 @@ public final class Calculator extends
 
     private com.google.protobuf.Any failedDefaultValue_ = null;
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>
-        failedDefaultValueBuilder_;
-
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> failedDefaultValueBuilder_;
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     public boolean hasFailedDefaultValue() {
       return failedDefaultValueBuilder_ != null || failedDefaultValue_ != null;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2554,7 +2391,6 @@ public final class Calculator extends
         return failedDefaultValueBuilder_.getMessage();
       }
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2571,7 +2407,6 @@ public final class Calculator extends
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2586,7 +2421,6 @@ public final class Calculator extends
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2594,7 +2428,7 @@ public final class Calculator extends
       if (failedDefaultValueBuilder_ == null) {
         if (failedDefaultValue_ != null) {
           failedDefaultValue_ =
-              com.google.protobuf.Any.newBuilder(failedDefaultValue_).mergeFrom(value).buildPartial();
+            com.google.protobuf.Any.newBuilder(failedDefaultValue_).mergeFrom(value).buildPartial();
         } else {
           failedDefaultValue_ = value;
         }
@@ -2605,7 +2439,6 @@ public final class Calculator extends
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2620,16 +2453,14 @@ public final class Calculator extends
 
       return this;
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     public com.google.protobuf.Any.Builder getFailedDefaultValueBuilder() {
-
+      
       onChanged();
       return getFailedDefaultValueFieldBuilder().getBuilder();
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
@@ -2641,300 +2472,268 @@ public final class Calculator extends
             com.google.protobuf.Any.getDefaultInstance() : failedDefaultValue_;
       }
     }
-
     /**
      * <code>.google.protobuf.Any failedDefaultValue = 14;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>
-    getFailedDefaultValueFieldBuilder() {
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
+        getFailedDefaultValueFieldBuilder() {
       if (failedDefaultValueBuilder_ == null) {
         failedDefaultValueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
-            getFailedDefaultValue(),
-            getParentForChildren(),
-            isClean());
+                getFailedDefaultValue(),
+                getParentForChildren(),
+                isClean());
         failedDefaultValue_ = null;
       }
       return failedDefaultValueBuilder_;
     }
 
-    private long lookupEntityClassId_;
-
+    private long lookupEntityClassId_ ;
     /**
      * <code>int64 lookupEntityClassId = 15;</code>
      */
     public long getLookupEntityClassId() {
       return lookupEntityClassId_;
     }
-
     /**
      * <code>int64 lookupEntityClassId = 15;</code>
      */
     public Builder setLookupEntityClassId(long value) {
-
+      
       lookupEntityClassId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 lookupEntityClassId = 15;</code>
      */
     public Builder clearLookupEntityClassId() {
-
+      
       lookupEntityClassId_ = 0L;
       onChanged();
       return this;
     }
 
-    private long lookupEntityFieldId_;
-
+    private long lookupEntityFieldId_ ;
     /**
      * <code>int64 lookupEntityFieldId = 16;</code>
      */
     public long getLookupEntityFieldId() {
       return lookupEntityFieldId_;
     }
-
     /**
      * <code>int64 lookupEntityFieldId = 16;</code>
      */
     public Builder setLookupEntityFieldId(long value) {
-
+      
       lookupEntityFieldId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 lookupEntityFieldId = 16;</code>
      */
     public Builder clearLookupEntityFieldId() {
-
+      
       lookupEntityFieldId_ = 0L;
       onChanged();
       return this;
     }
 
-    private int resetType_;
-
+    private int resetType_ ;
     /**
      * <code>int32 resetType = 17;</code>
      */
     public int getResetType() {
       return resetType_;
     }
-
     /**
      * <code>int32 resetType = 17;</code>
      */
     public Builder setResetType(int value) {
-
+      
       resetType_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 resetType = 17;</code>
      */
     public Builder clearResetType() {
-
+      
       resetType_ = 0;
       onChanged();
       return this;
     }
 
-    private int domainNoSenior_;
-
+    private int domainNoSenior_ ;
     /**
      * <code>int32 domainNoSenior = 18;</code>
      */
     public int getDomainNoSenior() {
       return domainNoSenior_;
     }
-
     /**
      * <code>int32 domainNoSenior = 18;</code>
      */
     public Builder setDomainNoSenior(int value) {
-
+      
       domainNoSenior_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 domainNoSenior = 18;</code>
      */
     public Builder clearDomainNoSenior() {
-
+      
       domainNoSenior_ = 0;
       onChanged();
       return this;
     }
 
-    private long lookupRelationId_;
-
+    private long lookupRelationId_ ;
     /**
      * <code>int64 lookupRelationId = 19;</code>
      */
     public long getLookupRelationId() {
       return lookupRelationId_;
     }
-
     /**
      * <code>int64 lookupRelationId = 19;</code>
      */
     public Builder setLookupRelationId(long value) {
-
+      
       lookupRelationId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 lookupRelationId = 19;</code>
      */
     public Builder clearLookupRelationId() {
-
+      
       lookupRelationId_ = 0L;
       onChanged();
       return this;
     }
 
-    private long aggregationBoId_;
-
+    private long aggregationBoId_ ;
     /**
      * <code>int64 aggregationBoId = 20;</code>
      */
     public long getAggregationBoId() {
       return aggregationBoId_;
     }
-
     /**
      * <code>int64 aggregationBoId = 20;</code>
      */
     public Builder setAggregationBoId(long value) {
-
+      
       aggregationBoId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 aggregationBoId = 20;</code>
      */
     public Builder clearAggregationBoId() {
-
+      
       aggregationBoId_ = 0L;
       onChanged();
       return this;
     }
 
-    private long aggregationFieldId_;
-
+    private long aggregationFieldId_ ;
     /**
      * <code>int64 aggregationFieldId = 21;</code>
      */
     public long getAggregationFieldId() {
       return aggregationFieldId_;
     }
-
     /**
      * <code>int64 aggregationFieldId = 21;</code>
      */
     public Builder setAggregationFieldId(long value) {
-
+      
       aggregationFieldId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 aggregationFieldId = 21;</code>
      */
     public Builder clearAggregationFieldId() {
-
+      
       aggregationFieldId_ = 0L;
       onChanged();
       return this;
     }
 
-    private int aggregationType_;
-
+    private int aggregationType_ ;
     /**
      * <code>int32 aggregationType = 22;</code>
      */
     public int getAggregationType() {
       return aggregationType_;
     }
-
     /**
      * <code>int32 aggregationType = 22;</code>
      */
     public Builder setAggregationType(int value) {
-
+      
       aggregationType_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int32 aggregationType = 22;</code>
      */
     public Builder clearAggregationType() {
-
+      
       aggregationType_ = 0;
       onChanged();
       return this;
     }
 
-    private long aggregationRelationId_;
-
+    private long aggregationRelationId_ ;
     /**
      * <code>int64 aggregationRelationId = 23;</code>
      */
     public long getAggregationRelationId() {
       return aggregationRelationId_;
     }
-
     /**
      * <code>int64 aggregationRelationId = 23;</code>
      */
     public Builder setAggregationRelationId(long value) {
-
+      
       aggregationRelationId_ = value;
       onChanged();
       return this;
     }
-
     /**
      * <code>int64 aggregationRelationId = 23;</code>
      */
     public Builder clearAggregationRelationId() {
-
+      
       aggregationRelationId_ = 0L;
       onChanged();
       return this;
     }
 
     private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition> domainConditions_ =
-        java.util.Collections.emptyList();
-
+      java.util.Collections.emptyList();
     private void ensureDomainConditionsIsMutable() {
       if (!((bitField0_ & 0x00800000) == 0x00800000)) {
-        domainConditions_ =
-            new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>(
-                domainConditions_);
+        domainConditions_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition>(domainConditions_);
         bitField0_ |= 0x00800000;
-      }
+       }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>
-        domainConditionsBuilder_;
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> domainConditionsBuilder_;
 
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
@@ -2946,7 +2745,6 @@ public final class Calculator extends
         return domainConditionsBuilder_.getMessageList();
       }
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -2957,7 +2755,6 @@ public final class Calculator extends
         return domainConditionsBuilder_.getCount();
       }
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -2968,7 +2765,6 @@ public final class Calculator extends
         return domainConditionsBuilder_.getMessage(index);
       }
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -2986,7 +2782,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3001,7 +2796,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3018,7 +2812,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3036,7 +2829,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3051,7 +2843,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3066,7 +2857,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3082,7 +2872,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3096,7 +2885,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3110,7 +2898,6 @@ public final class Calculator extends
       }
       return this;
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3118,31 +2905,27 @@ public final class Calculator extends
         int index) {
       return getDomainConditionsFieldBuilder().getBuilder(index);
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder getDomainConditionsOrBuilder(
         int index) {
       if (domainConditionsBuilder_ == null) {
-        return domainConditions_.get(index);
-      } else {
+        return domainConditions_.get(index);  } else {
         return domainConditionsBuilder_.getMessageOrBuilder(index);
       }
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>
-    getDomainConditionsOrBuilderList() {
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+         getDomainConditionsOrBuilderList() {
       if (domainConditionsBuilder_ != null) {
         return domainConditionsBuilder_.getMessageOrBuilderList();
       } else {
         return java.util.Collections.unmodifiableList(domainConditions_);
       }
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3150,7 +2933,6 @@ public final class Calculator extends
       return getDomainConditionsFieldBuilder().addBuilder(
           com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.getDefaultInstance());
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
@@ -3159,25 +2941,23 @@ public final class Calculator extends
       return getDomainConditionsFieldBuilder().addBuilder(
           index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.getDefaultInstance());
     }
-
     /**
      * <code>repeated .DomainCondition domainConditions = 24;</code>
      */
-    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder>
-    getDomainConditionsBuilderList() {
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder> 
+         getDomainConditionsBuilderList() {
       return getDomainConditionsFieldBuilder().getBuilderList();
     }
-
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>
-    getDomainConditionsFieldBuilder() {
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder> 
+        getDomainConditionsFieldBuilder() {
       if (domainConditionsBuilder_ == null) {
         domainConditionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainConditionOrBuilder>(
-            domainConditions_,
-            ((bitField0_ & 0x00800000) == 0x00800000),
-            getParentForChildren(),
-            isClean());
+                domainConditions_,
+                ((bitField0_ & 0x00800000) == 0x00800000),
+                getParentForChildren(),
+                isClean());
         domainConditions_ = null;
       }
       return domainConditionsBuilder_;
@@ -3185,7 +2965,6 @@ public final class Calculator extends
 
     private com.google.protobuf.MapField<
         java.lang.Long, java.lang.Long> aggregationByFields_;
-
     private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
     internalGetAggregationByFields() {
       if (aggregationByFields_ == null) {
@@ -3194,11 +2973,9 @@ public final class Calculator extends
       }
       return aggregationByFields_;
     }
-
     private com.google.protobuf.MapField<java.lang.Long, java.lang.Long>
     internalGetMutableAggregationByFields() {
-      onChanged();
-      ;
+      onChanged();;
       if (aggregationByFields_ == null) {
         aggregationByFields_ = com.google.protobuf.MapField.newMapField(
             AggregationByFieldsDefaultEntryHolder.defaultEntry);
@@ -3212,17 +2989,15 @@ public final class Calculator extends
     public int getAggregationByFieldsCount() {
       return internalGetAggregationByFields().getMap().size();
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public boolean containsAggregationByFields(
         long key) {
-
+      
       return internalGetAggregationByFields().getMap().containsKey(key);
     }
-
     /**
      * Use {@link #getAggregationByFieldsMap()} instead.
      */
@@ -3230,7 +3005,6 @@ public final class Calculator extends
     public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFields() {
       return getAggregationByFieldsMap();
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
@@ -3238,7 +3012,6 @@ public final class Calculator extends
     public java.util.Map<java.lang.Long, java.lang.Long> getAggregationByFieldsMap() {
       return internalGetAggregationByFields().getMap();
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
@@ -3246,19 +3019,18 @@ public final class Calculator extends
     public long getAggregationByFieldsOrDefault(
         long key,
         long defaultValue) {
-
+      
       java.util.Map<java.lang.Long, java.lang.Long> map =
           internalGetAggregationByFields().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public long getAggregationByFieldsOrThrow(
         long key) {
-
+      
       java.util.Map<java.lang.Long, java.lang.Long> map =
           internalGetAggregationByFields().getMap();
       if (!map.containsKey(key)) {
@@ -3272,19 +3044,17 @@ public final class Calculator extends
           .clear();
       return this;
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
 
     public Builder removeAggregationByFields(
         long key) {
-
+      
       internalGetMutableAggregationByFields().getMutableMap()
           .remove(key);
       return this;
     }
-
     /**
      * Use alternate mutation accessors instead.
      */
@@ -3293,20 +3063,18 @@ public final class Calculator extends
     getMutableAggregationByFields() {
       return internalGetMutableAggregationByFields().getMutableMap();
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
     public Builder putAggregationByFields(
         long key,
         long value) {
-
-
+      
+      
       internalGetMutableAggregationByFields().getMutableMap()
           .put(key, value);
       return this;
     }
-
     /**
      * <code>map&lt;int64, int64&gt; aggregationByFields = 25;</code>
      */
@@ -3317,7 +3085,6 @@ public final class Calculator extends
           .putAll(values);
       return this;
     }
-
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFieldsProto3(unknownFields);
@@ -3334,7 +3101,6 @@ public final class Calculator extends
 
   // @@protoc_insertion_point(class_scope:Calculator)
   private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator DEFAULT_INSTANCE;
-
   static {
     DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator();
   }
