@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
-import com.xforceplus.ultraman.oqsengine.calculation.listener.AggregationTreeBuilderListener;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.MetaAggregationParse;
 import org.springframework.context.annotation.Bean;
@@ -23,10 +22,6 @@ public class CalculationLogicConfiguration {
         return new DefaultCalculationImpl();
     }
 
-    @Bean
-    public AggregationTreeBuilderListener aggregationTreeBuilderListener() {
-        return new AggregationTreeBuilderListener();
-    }
 
     @Bean
     public AggregationParse aggregationParse() {

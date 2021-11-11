@@ -6,1159 +6,1067 @@ package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 /**
  * Protobuf type {@code EntityClassSyncRequest}
  */
-public final class EntityClassSyncRequest extends
+public  final class EntityClassSyncRequest extends
     com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:EntityClassSyncRequest)
     EntityClassSyncRequestOrBuilder {
-    private static final long serialVersionUID = 0L;
+private static final long serialVersionUID = 0L;
+  // Use EntityClassSyncRequest.newBuilder() to construct.
+  private EntityClassSyncRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    super(builder);
+  }
+  private EntityClassSyncRequest() {
+    uid_ = "";
+    appId_ = "";
+    version_ = 0;
+    status_ = 0;
+    env_ = "";
+    force_ = false;
+    clientId_ = "";
+  }
 
-    // Use EntityClassSyncRequest.newBuilder() to construct.
-    private EntityClassSyncRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-        super(builder);
+  @java.lang.Override
+  public final com.google.protobuf.UnknownFieldSet
+  getUnknownFields() {
+    return this.unknownFields;
+  }
+  private EntityClassSyncRequest(
+      com.google.protobuf.CodedInputStream input,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    this();
+    if (extensionRegistry == null) {
+      throw new java.lang.NullPointerException();
     }
-
-    private EntityClassSyncRequest() {
-        uid_ = "";
-        appId_ = "";
-        version_ = 0;
-        status_ = 0;
-        env_ = "";
-        force_ = false;
-        clientId_ = "";
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-        return this.unknownFields;
-    }
-
-    private EntityClassSyncRequest(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        this();
-        if (extensionRegistry == null) {
-            throw new java.lang.NullPointerException();
-        }
-        int mutable_bitField0_ = 0;
-        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.protobuf.UnknownFieldSet.newBuilder();
-        try {
-            boolean done = false;
-            while (!done) {
-                int tag = input.readTag();
-                switch (tag) {
-                    case 0:
-                        done = true;
-                        break;
-                    default: {
-                        if (!parseUnknownFieldProto3(
-                            input, unknownFields, extensionRegistry, tag)) {
-                            done = true;
-                        }
-                        break;
-                    }
-                    case 10: {
-                        java.lang.String s = input.readStringRequireUtf8();
-
-                        uid_ = s;
-                        break;
-                    }
-                    case 18: {
-                        java.lang.String s = input.readStringRequireUtf8();
-
-                        appId_ = s;
-                        break;
-                    }
-                    case 24: {
-
-                        version_ = input.readInt32();
-                        break;
-                    }
-                    case 32: {
-
-                        status_ = input.readInt32();
-                        break;
-                    }
-                    case 42: {
-                        java.lang.String s = input.readStringRequireUtf8();
-
-                        env_ = s;
-                        break;
-                    }
-                    case 48: {
-
-                        force_ = input.readBool();
-                        break;
-                    }
-                    case 58: {
-                        java.lang.String s = input.readStringRequireUtf8();
-
-                        clientId_ = s;
-                        break;
-                    }
-                }
+    int mutable_bitField0_ = 0;
+    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+        com.google.protobuf.UnknownFieldSet.newBuilder();
+    try {
+      boolean done = false;
+      while (!done) {
+        int tag = input.readTag();
+        switch (tag) {
+          case 0:
+            done = true;
+            break;
+          default: {
+            if (!parseUnknownFieldProto3(
+                input, unknownFields, extensionRegistry, tag)) {
+              done = true;
             }
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            throw e.setUnfinishedMessage(this);
-        } catch (java.io.IOException e) {
-            throw new com.google.protobuf.InvalidProtocolBufferException(
-                e).setUnfinishedMessage(this);
-        } finally {
-            this.unknownFields = unknownFields.build();
-            makeExtensionsImmutable();
-        }
-    }
+            break;
+          }
+          case 10: {
+            java.lang.String s = input.readStringRequireUtf8();
 
+            uid_ = s;
+            break;
+          }
+          case 18: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            appId_ = s;
+            break;
+          }
+          case 24: {
+
+            version_ = input.readInt32();
+            break;
+          }
+          case 32: {
+
+            status_ = input.readInt32();
+            break;
+          }
+          case 42: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            env_ = s;
+            break;
+          }
+          case 48: {
+
+            force_ = input.readBool();
+            break;
+          }
+          case 58: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            clientId_ = s;
+            break;
+          }
+        }
+      }
+    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+      throw e.setUnfinishedMessage(this);
+    } catch (java.io.IOException e) {
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
+    } finally {
+      this.unknownFields = unknownFields.build();
+      makeExtensionsImmutable();
+    }
+  }
+  public static final com.google.protobuf.Descriptors.Descriptor
+      getDescriptor() {
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
+  }
+
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_fieldAccessorTable
+        .ensureFieldAccessorsInitialized(
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.Builder.class);
+  }
+
+  public static final int UID_FIELD_NUMBER = 1;
+  private volatile java.lang.Object uid_;
+  /**
+   * <code>string uid = 1;</code>
+   */
+  public java.lang.String getUid() {
+    java.lang.Object ref = uid_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      uid_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string uid = 1;</code>
+   */
+  public com.google.protobuf.ByteString
+      getUidBytes() {
+    java.lang.Object ref = uid_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      uid_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int APPID_FIELD_NUMBER = 2;
+  private volatile java.lang.Object appId_;
+  /**
+   * <code>string appId = 2;</code>
+   */
+  public java.lang.String getAppId() {
+    java.lang.Object ref = appId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      appId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string appId = 2;</code>
+   */
+  public com.google.protobuf.ByteString
+      getAppIdBytes() {
+    java.lang.Object ref = appId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      appId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int VERSION_FIELD_NUMBER = 3;
+  private int version_;
+  /**
+   * <code>int32 version = 3;</code>
+   */
+  public int getVersion() {
+    return version_;
+  }
+
+  public static final int STATUS_FIELD_NUMBER = 4;
+  private int status_;
+  /**
+   * <code>int32 status = 4;</code>
+   */
+  public int getStatus() {
+    return status_;
+  }
+
+  public static final int ENV_FIELD_NUMBER = 5;
+  private volatile java.lang.Object env_;
+  /**
+   * <code>string env = 5;</code>
+   */
+  public java.lang.String getEnv() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      env_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string env = 5;</code>
+   */
+  public com.google.protobuf.ByteString
+      getEnvBytes() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      env_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int FORCE_FIELD_NUMBER = 6;
+  private boolean force_;
+  /**
+   * <code>bool force = 6;</code>
+   */
+  public boolean getForce() {
+    return force_;
+  }
+
+  public static final int CLIENTID_FIELD_NUMBER = 7;
+  private volatile java.lang.Object clientId_;
+  /**
+   * <code>string clientId = 7;</code>
+   */
+  public java.lang.String getClientId() {
+    java.lang.Object ref = clientId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      clientId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string clientId = 7;</code>
+   */
+  public com.google.protobuf.ByteString
+      getClientIdBytes() {
+    java.lang.Object ref = clientId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      clientId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  private byte memoizedIsInitialized = -1;
+  public final boolean isInitialized() {
+    byte isInitialized = memoizedIsInitialized;
+    if (isInitialized == 1) return true;
+    if (isInitialized == 0) return false;
+
+    memoizedIsInitialized = 1;
+    return true;
+  }
+
+  public void writeTo(com.google.protobuf.CodedOutputStream output)
+                      throws java.io.IOException {
+    if (!getUidBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, uid_);
+    }
+    if (!getAppIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, appId_);
+    }
+    if (version_ != 0) {
+      output.writeInt32(3, version_);
+    }
+    if (status_ != 0) {
+      output.writeInt32(4, status_);
+    }
+    if (!getEnvBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, env_);
+    }
+    if (force_ != false) {
+      output.writeBool(6, force_);
+    }
+    if (!getClientIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, clientId_);
+    }
+    unknownFields.writeTo(output);
+  }
+
+  public int getSerializedSize() {
+    int size = memoizedSize;
+    if (size != -1) return size;
+
+    size = 0;
+    if (!getUidBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, uid_);
+    }
+    if (!getAppIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, appId_);
+    }
+    if (version_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(3, version_);
+    }
+    if (status_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(4, status_);
+    }
+    if (!getEnvBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, env_);
+    }
+    if (force_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(6, force_);
+    }
+    if (!getClientIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, clientId_);
+    }
+    size += unknownFields.getSerializedSize();
+    memoizedSize = size;
+    return size;
+  }
+
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest)) {
+      return super.equals(obj);
+    }
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) obj;
+
+    boolean result = true;
+    result = result && getUid()
+        .equals(other.getUid());
+    result = result && getAppId()
+        .equals(other.getAppId());
+    result = result && (getVersion()
+        == other.getVersion());
+    result = result && (getStatus()
+        == other.getStatus());
+    result = result && getEnv()
+        .equals(other.getEnv());
+    result = result && (getForce()
+        == other.getForce());
+    result = result && getClientId()
+        .equals(other.getClientId());
+    result = result && unknownFields.equals(other.unknownFields);
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptor().hashCode();
+    hash = (37 * hash) + UID_FIELD_NUMBER;
+    hash = (53 * hash) + getUid().hashCode();
+    hash = (37 * hash) + APPID_FIELD_NUMBER;
+    hash = (53 * hash) + getAppId().hashCode();
+    hash = (37 * hash) + VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getVersion();
+    hash = (37 * hash) + STATUS_FIELD_NUMBER;
+    hash = (53 * hash) + getStatus();
+    hash = (37 * hash) + ENV_FIELD_NUMBER;
+    hash = (53 * hash) + getEnv().hashCode();
+    hash = (37 * hash) + FORCE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getForce());
+    hash = (37 * hash) + CLIENTID_FIELD_NUMBER;
+    hash = (53 * hash) + getClientId().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      com.google.protobuf.ByteString data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      com.google.protobuf.ByteString data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(byte[] data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      byte[] data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(java.io.InputStream input)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      java.io.InputStream input,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseDelimitedFrom(java.io.InputStream input)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseDelimitedFrom(
+      java.io.InputStream input,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      com.google.protobuf.CodedInputStream input)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
+  }
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+      com.google.protobuf.CodedInputStream input,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
+  }
+
+  public Builder newBuilderForType() { return newBuilder(); }
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
+  }
+  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
+
+  @java.lang.Override
+  protected Builder newBuilderForType(
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+    Builder builder = new Builder(parent);
+    return builder;
+  }
+  /**
+   * Protobuf type {@code EntityClassSyncRequest}
+   */
+  public static final class Builder extends
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      // @@protoc_insertion_point(builder_implements:EntityClassSyncRequest)
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
-    getDescriptor() {
-        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
+        getDescriptor() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-    internalGetFieldAccessorTable() {
-        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.class,
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.Builder.class);
+        internalGetFieldAccessorTable() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.Builder.class);
     }
 
-    public static final int UID_FIELD_NUMBER = 1;
-    private volatile java.lang.Object uid_;
+    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.newBuilder()
+    private Builder() {
+      maybeForceBuilderInitialization();
+    }
 
+    private Builder(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      super(parent);
+      maybeForceBuilderInitialization();
+    }
+    private void maybeForceBuilderInitialization() {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
+      }
+    }
+    public Builder clear() {
+      super.clear();
+      uid_ = "";
+
+      appId_ = "";
+
+      version_ = 0;
+
+      status_ = 0;
+
+      env_ = "";
+
+      force_ = false;
+
+      clientId_ = "";
+
+      return this;
+    }
+
+    public com.google.protobuf.Descriptors.Descriptor
+        getDescriptorForType() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
+    }
+
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstanceForType() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.getDefaultInstance();
+    }
+
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest build() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest result = buildPartial();
+      if (!result.isInitialized()) {
+        throw newUninitializedMessageException(result);
+      }
+      return result;
+    }
+
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest buildPartial() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest(this);
+      result.uid_ = uid_;
+      result.appId_ = appId_;
+      result.version_ = version_;
+      result.status_ = status_;
+      result.env_ = env_;
+      result.force_ = force_;
+      result.clientId_ = clientId_;
+      onBuilt();
+      return result;
+    }
+
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, java.lang.Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
+    public Builder mergeFrom(com.google.protobuf.Message other) {
+      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) {
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest)other);
+      } else {
+        super.mergeFrom(other);
+        return this;
+      }
+    }
+
+    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest other) {
+      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.getDefaultInstance()) return this;
+      if (!other.getUid().isEmpty()) {
+        uid_ = other.uid_;
+        onChanged();
+      }
+      if (!other.getAppId().isEmpty()) {
+        appId_ = other.appId_;
+        onChanged();
+      }
+      if (other.getVersion() != 0) {
+        setVersion(other.getVersion());
+      }
+      if (other.getStatus() != 0) {
+        setStatus(other.getStatus());
+      }
+      if (!other.getEnv().isEmpty()) {
+        env_ = other.env_;
+        onChanged();
+      }
+      if (other.getForce() != false) {
+        setForce(other.getForce());
+      }
+      if (!other.getClientId().isEmpty()) {
+        clientId_ = other.clientId_;
+        onChanged();
+      }
+      this.mergeUnknownFields(other.unknownFields);
+      onChanged();
+      return this;
+    }
+
+    public final boolean isInitialized() {
+      return true;
+    }
+
+    public Builder mergeFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parsedMessage = null;
+      try {
+        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) e.getUnfinishedMessage();
+        throw e.unwrapIOException();
+      } finally {
+        if (parsedMessage != null) {
+          mergeFrom(parsedMessage);
+        }
+      }
+      return this;
+    }
+
+    private java.lang.Object uid_ = "";
     /**
      * <code>string uid = 1;</code>
      */
     public java.lang.String getUid() {
-        java.lang.Object ref = uid_;
-        if (ref instanceof java.lang.String) {
-            return (java.lang.String) ref;
-        } else {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            uid_ = s;
-            return s;
-        }
+      java.lang.Object ref = uid_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        uid_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
-
     /**
      * <code>string uid = 1;</code>
      */
     public com.google.protobuf.ByteString
-    getUidBytes() {
-        java.lang.Object ref = uid_;
-        if (ref instanceof java.lang.String) {
-            com.google.protobuf.ByteString b =
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            uid_ = b;
-            return b;
-        } else {
-            return (com.google.protobuf.ByteString) ref;
-        }
+        getUidBytes() {
+      java.lang.Object ref = uid_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        uid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder setUid(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      uid_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder clearUid() {
+      
+      uid_ = getDefaultInstance().getUid();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder setUidBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      uid_ = value;
+      onChanged();
+      return this;
     }
 
-    public static final int APPID_FIELD_NUMBER = 2;
-    private volatile java.lang.Object appId_;
-
+    private java.lang.Object appId_ = "";
     /**
      * <code>string appId = 2;</code>
      */
     public java.lang.String getAppId() {
-        java.lang.Object ref = appId_;
-        if (ref instanceof java.lang.String) {
-            return (java.lang.String) ref;
-        } else {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            appId_ = s;
-            return s;
-        }
+      java.lang.Object ref = appId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        appId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
-
     /**
      * <code>string appId = 2;</code>
      */
     public com.google.protobuf.ByteString
-    getAppIdBytes() {
-        java.lang.Object ref = appId_;
-        if (ref instanceof java.lang.String) {
-            com.google.protobuf.ByteString b =
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            appId_ = b;
-            return b;
-        } else {
-            return (com.google.protobuf.ByteString) ref;
-        }
+        getAppIdBytes() {
+      java.lang.Object ref = appId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        appId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder setAppId(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      appId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder clearAppId() {
+      
+      appId_ = getDefaultInstance().getAppId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder setAppIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      appId_ = value;
+      onChanged();
+      return this;
     }
 
-    public static final int VERSION_FIELD_NUMBER = 3;
-    private int version_;
-
+    private int version_ ;
     /**
      * <code>int32 version = 3;</code>
      */
     public int getVersion() {
-        return version_;
+      return version_;
+    }
+    /**
+     * <code>int32 version = 3;</code>
+     */
+    public Builder setVersion(int value) {
+      
+      version_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 version = 3;</code>
+     */
+    public Builder clearVersion() {
+      
+      version_ = 0;
+      onChanged();
+      return this;
     }
 
-    public static final int STATUS_FIELD_NUMBER = 4;
-    private int status_;
-
+    private int status_ ;
     /**
      * <code>int32 status = 4;</code>
      */
     public int getStatus() {
-        return status_;
+      return status_;
+    }
+    /**
+     * <code>int32 status = 4;</code>
+     */
+    public Builder setStatus(int value) {
+      
+      status_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 status = 4;</code>
+     */
+    public Builder clearStatus() {
+      
+      status_ = 0;
+      onChanged();
+      return this;
     }
 
-    public static final int ENV_FIELD_NUMBER = 5;
-    private volatile java.lang.Object env_;
-
+    private java.lang.Object env_ = "";
     /**
      * <code>string env = 5;</code>
      */
     public java.lang.String getEnv() {
-        java.lang.Object ref = env_;
-        if (ref instanceof java.lang.String) {
-            return (java.lang.String) ref;
-        } else {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            env_ = s;
-            return s;
-        }
+      java.lang.Object ref = env_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        env_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
-
     /**
      * <code>string env = 5;</code>
      */
     public com.google.protobuf.ByteString
-    getEnvBytes() {
-        java.lang.Object ref = env_;
-        if (ref instanceof java.lang.String) {
-            com.google.protobuf.ByteString b =
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            env_ = b;
-            return b;
-        } else {
-            return (com.google.protobuf.ByteString) ref;
-        }
+        getEnvBytes() {
+      java.lang.Object ref = env_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        env_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnv(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      env_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder clearEnv() {
+      
+      env_ = getDefaultInstance().getEnv();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnvBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      env_ = value;
+      onChanged();
+      return this;
     }
 
-    public static final int FORCE_FIELD_NUMBER = 6;
-    private boolean force_;
-
+    private boolean force_ ;
     /**
      * <code>bool force = 6;</code>
      */
     public boolean getForce() {
-        return force_;
+      return force_;
+    }
+    /**
+     * <code>bool force = 6;</code>
+     */
+    public Builder setForce(boolean value) {
+      
+      force_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool force = 6;</code>
+     */
+    public Builder clearForce() {
+      
+      force_ = false;
+      onChanged();
+      return this;
     }
 
-    public static final int CLIENTID_FIELD_NUMBER = 7;
-    private volatile java.lang.Object clientId_;
-
+    private java.lang.Object clientId_ = "";
     /**
      * <code>string clientId = 7;</code>
      */
     public java.lang.String getClientId() {
-        java.lang.Object ref = clientId_;
-        if (ref instanceof java.lang.String) {
-            return (java.lang.String) ref;
-        } else {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            clientId_ = s;
-            return s;
-        }
+      java.lang.Object ref = clientId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        clientId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
-
     /**
      * <code>string clientId = 7;</code>
      */
     public com.google.protobuf.ByteString
-    getClientIdBytes() {
-        java.lang.Object ref = clientId_;
-        if (ref instanceof java.lang.String) {
-            com.google.protobuf.ByteString b =
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            clientId_ = b;
-            return b;
-        } else {
-            return (com.google.protobuf.ByteString) ref;
-        }
+        getClientIdBytes() {
+      java.lang.Object ref = clientId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        clientId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string clientId = 7;</code>
+     */
+    public Builder setClientId(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      clientId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string clientId = 7;</code>
+     */
+    public Builder clearClientId() {
+      
+      clientId_ = getDefaultInstance().getClientId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string clientId = 7;</code>
+     */
+    public Builder setClientIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      clientId_ = value;
+      onChanged();
+      return this;
+    }
+    public final Builder setUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.setUnknownFieldsProto3(unknownFields);
     }
 
-    private byte memoizedIsInitialized = -1;
-
-    public final boolean isInitialized() {
-        byte isInitialized = memoizedIsInitialized;
-        if (isInitialized == 1) {
-            return true;
-        }
-        if (isInitialized == 0) {
-            return false;
-        }
-
-        memoizedIsInitialized = 1;
-        return true;
+    public final Builder mergeUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.mergeUnknownFields(unknownFields);
     }
 
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-        throws java.io.IOException {
-        if (!getUidBytes().isEmpty()) {
-            com.google.protobuf.GeneratedMessageV3.writeString(output, 1, uid_);
-        }
-        if (!getAppIdBytes().isEmpty()) {
-            com.google.protobuf.GeneratedMessageV3.writeString(output, 2, appId_);
-        }
-        if (version_ != 0) {
-            output.writeInt32(3, version_);
-        }
-        if (status_ != 0) {
-            output.writeInt32(4, status_);
-        }
-        if (!getEnvBytes().isEmpty()) {
-            com.google.protobuf.GeneratedMessageV3.writeString(output, 5, env_);
-        }
-        if (force_ != false) {
-            output.writeBool(6, force_);
-        }
-        if (!getClientIdBytes().isEmpty()) {
-            com.google.protobuf.GeneratedMessageV3.writeString(output, 7, clientId_);
-        }
-        unknownFields.writeTo(output);
-    }
 
-    public int getSerializedSize() {
-        int size = memoizedSize;
-        if (size != -1) {
-            return size;
-        }
+    // @@protoc_insertion_point(builder_scope:EntityClassSyncRequest)
+  }
 
-        size = 0;
-        if (!getUidBytes().isEmpty()) {
-            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, uid_);
-        }
-        if (!getAppIdBytes().isEmpty()) {
-            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, appId_);
-        }
-        if (version_ != 0) {
-            size += com.google.protobuf.CodedOutputStream
-                .computeInt32Size(3, version_);
-        }
-        if (status_ != 0) {
-            size += com.google.protobuf.CodedOutputStream
-                .computeInt32Size(4, status_);
-        }
-        if (!getEnvBytes().isEmpty()) {
-            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, env_);
-        }
-        if (force_ != false) {
-            size += com.google.protobuf.CodedOutputStream
-                .computeBoolSize(6, force_);
-        }
-        if (!getClientIdBytes().isEmpty()) {
-            size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, clientId_);
-        }
-        size += unknownFields.getSerializedSize();
-        memoizedSize = size;
-        return size;
-    }
+  // @@protoc_insertion_point(class_scope:EntityClassSyncRequest)
+  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest DEFAULT_INSTANCE;
+  static {
+    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest();
+  }
 
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest)) {
-            return super.equals(obj);
-        }
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest other =
-            (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) obj;
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstance() {
+    return DEFAULT_INSTANCE;
+  }
 
-        boolean result = true;
-        result = result && getUid()
-            .equals(other.getUid());
-        result = result && getAppId()
-            .equals(other.getAppId());
-        result = result && (getVersion()
-            == other.getVersion());
-        result = result && (getStatus()
-            == other.getStatus());
-        result = result && getEnv()
-            .equals(other.getEnv());
-        result = result && (getForce()
-            == other.getForce());
-        result = result && getClientId()
-            .equals(other.getClientId());
-        result = result && unknownFields.equals(other.unknownFields);
-        return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-        if (memoizedHashCode != 0) {
-            return memoizedHashCode;
-        }
-        int hash = 41;
-        hash = (19 * hash) + getDescriptor().hashCode();
-        hash = (37 * hash) + UID_FIELD_NUMBER;
-        hash = (53 * hash) + getUid().hashCode();
-        hash = (37 * hash) + APPID_FIELD_NUMBER;
-        hash = (53 * hash) + getAppId().hashCode();
-        hash = (37 * hash) + VERSION_FIELD_NUMBER;
-        hash = (53 * hash) + getVersion();
-        hash = (37 * hash) + STATUS_FIELD_NUMBER;
-        hash = (53 * hash) + getStatus();
-        hash = (37 * hash) + ENV_FIELD_NUMBER;
-        hash = (53 * hash) + getEnv().hashCode();
-        hash = (37 * hash) + FORCE_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getForce());
-        hash = (37 * hash) + CLIENTID_FIELD_NUMBER;
-        hash = (53 * hash) + getClientId().hashCode();
-        hash = (29 * hash) + unknownFields.hashCode();
-        memoizedHashCode = hash;
-        return hash;
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        java.io.InputStream input)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseDelimitedFrom(
-        java.io.InputStream input)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parseFrom(
+  private static final com.google.protobuf.Parser<EntityClassSyncRequest>
+      PARSER = new com.google.protobuf.AbstractParser<EntityClassSyncRequest>() {
+    public EntityClassSyncRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new EntityClassSyncRequest(input, extensionRegistry);
     }
-
-    public Builder newBuilderForType() {
-        return newBuilder();
-    }
-
-    public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
-    }
-
-    public static Builder newBuilder(
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-
-    public Builder toBuilder() {
-        return this == DEFAULT_INSTANCE
-            ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        Builder builder = new Builder(parent);
-        return builder;
-    }
-
-    /**
-     * Protobuf type {@code EntityClassSyncRequest}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:EntityClassSyncRequest)
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequestOrBuilder {
-        public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
-        }
-
-        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_fieldAccessorTable
-                .ensureFieldAccessorsInitialized(
-                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.class,
-                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.Builder.class);
-        }
-
-        // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.newBuilder()
-        private Builder() {
-            maybeForceBuilderInitialization();
-        }
-
-        private Builder(
-            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-            super(parent);
-            maybeForceBuilderInitialization();
-        }
-
-        private void maybeForceBuilderInitialization() {
-            if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-            }
-        }
-
-        public Builder clear() {
-            super.clear();
-            uid_ = "";
-
-            appId_ = "";
-
-            version_ = 0;
-
-            status_ = 0;
-
-            env_ = "";
-
-            force_ = false;
-
-            clientId_ = "";
-
-            return this;
-        }
-
-        public com.google.protobuf.Descriptors.Descriptor
-        getDescriptorForType() {
-            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.internal_static_EntityClassSyncRequest_descriptor;
-        }
-
-        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstanceForType() {
-            return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.getDefaultInstance();
-        }
-
-        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest build() {
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest result = buildPartial();
-            if (!result.isInitialized()) {
-                throw newUninitializedMessageException(result);
-            }
-            return result;
-        }
-
-        public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest buildPartial() {
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest result =
-                new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest(this);
-            result.uid_ = uid_;
-            result.appId_ = appId_;
-            result.version_ = version_;
-            result.status_ = status_;
-            result.env_ = env_;
-            result.force_ = force_;
-            result.clientId_ = clientId_;
-            onBuilt();
-            return result;
-        }
-
-        public Builder clone() {
-            return (Builder) super.clone();
-        }
-
-        public Builder setField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-            return (Builder) super.setField(field, value);
-        }
-
-        public Builder clearField(
-            com.google.protobuf.Descriptors.FieldDescriptor field) {
-            return (Builder) super.clearField(field);
-        }
-
-        public Builder clearOneof(
-            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-            return (Builder) super.clearOneof(oneof);
-        }
-
-        public Builder setRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            int index, java.lang.Object value) {
-            return (Builder) super.setRepeatedField(field, index, value);
-        }
-
-        public Builder addRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-            return (Builder) super.addRepeatedField(field, value);
-        }
-
-        public Builder mergeFrom(com.google.protobuf.Message other) {
-            if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) {
-                return mergeFrom(
-                    (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) other);
-            } else {
-                super.mergeFrom(other);
-                return this;
-            }
-        }
-
-        public Builder mergeFrom(
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest other) {
-            if (other ==
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.getDefaultInstance()) {
-                return this;
-            }
-            if (!other.getUid().isEmpty()) {
-                uid_ = other.uid_;
-                onChanged();
-            }
-            if (!other.getAppId().isEmpty()) {
-                appId_ = other.appId_;
-                onChanged();
-            }
-            if (other.getVersion() != 0) {
-                setVersion(other.getVersion());
-            }
-            if (other.getStatus() != 0) {
-                setStatus(other.getStatus());
-            }
-            if (!other.getEnv().isEmpty()) {
-                env_ = other.env_;
-                onChanged();
-            }
-            if (other.getForce() != false) {
-                setForce(other.getForce());
-            }
-            if (!other.getClientId().isEmpty()) {
-                clientId_ = other.clientId_;
-                onChanged();
-            }
-            this.mergeUnknownFields(other.unknownFields);
-            onChanged();
-            return this;
-        }
-
-        public final boolean isInitialized() {
-            return true;
-        }
-
-        public Builder mergeFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest parsedMessage = null;
-            try {
-                parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-                parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest) e
-                    .getUnfinishedMessage();
-                throw e.unwrapIOException();
-            } finally {
-                if (parsedMessage != null) {
-                    mergeFrom(parsedMessage);
-                }
-            }
-            return this;
-        }
-
-        private java.lang.Object uid_ = "";
-
-        /**
-         * <code>string uid = 1;</code>
-         */
-        public java.lang.String getUid() {
-            java.lang.Object ref = uid_;
-            if (!(ref instanceof java.lang.String)) {
-                com.google.protobuf.ByteString bs =
-                    (com.google.protobuf.ByteString) ref;
-                java.lang.String s = bs.toStringUtf8();
-                uid_ = s;
-                return s;
-            } else {
-                return (java.lang.String) ref;
-            }
-        }
-
-        /**
-         * <code>string uid = 1;</code>
-         */
-        public com.google.protobuf.ByteString
-        getUidBytes() {
-            java.lang.Object ref = uid_;
-            if (ref instanceof String) {
-                com.google.protobuf.ByteString b =
-                    com.google.protobuf.ByteString.copyFromUtf8(
-                        (java.lang.String) ref);
-                uid_ = b;
-                return b;
-            } else {
-                return (com.google.protobuf.ByteString) ref;
-            }
-        }
-
-        /**
-         * <code>string uid = 1;</code>
-         */
-        public Builder setUid(
-            java.lang.String value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-
-            uid_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string uid = 1;</code>
-         */
-        public Builder clearUid() {
-
-            uid_ = getDefaultInstance().getUid();
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string uid = 1;</code>
-         */
-        public Builder setUidBytes(
-            com.google.protobuf.ByteString value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-            checkByteStringIsUtf8(value);
-
-            uid_ = value;
-            onChanged();
-            return this;
-        }
-
-        private java.lang.Object appId_ = "";
-
-        /**
-         * <code>string appId = 2;</code>
-         */
-        public java.lang.String getAppId() {
-            java.lang.Object ref = appId_;
-            if (!(ref instanceof java.lang.String)) {
-                com.google.protobuf.ByteString bs =
-                    (com.google.protobuf.ByteString) ref;
-                java.lang.String s = bs.toStringUtf8();
-                appId_ = s;
-                return s;
-            } else {
-                return (java.lang.String) ref;
-            }
-        }
-
-        /**
-         * <code>string appId = 2;</code>
-         */
-        public com.google.protobuf.ByteString
-        getAppIdBytes() {
-            java.lang.Object ref = appId_;
-            if (ref instanceof String) {
-                com.google.protobuf.ByteString b =
-                    com.google.protobuf.ByteString.copyFromUtf8(
-                        (java.lang.String) ref);
-                appId_ = b;
-                return b;
-            } else {
-                return (com.google.protobuf.ByteString) ref;
-            }
-        }
-
-        /**
-         * <code>string appId = 2;</code>
-         */
-        public Builder setAppId(
-            java.lang.String value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-
-            appId_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string appId = 2;</code>
-         */
-        public Builder clearAppId() {
-
-            appId_ = getDefaultInstance().getAppId();
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string appId = 2;</code>
-         */
-        public Builder setAppIdBytes(
-            com.google.protobuf.ByteString value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-            checkByteStringIsUtf8(value);
-
-            appId_ = value;
-            onChanged();
-            return this;
-        }
-
-        private int version_;
-
-        /**
-         * <code>int32 version = 3;</code>
-         */
-        public int getVersion() {
-            return version_;
-        }
-
-        /**
-         * <code>int32 version = 3;</code>
-         */
-        public Builder setVersion(int value) {
-
-            version_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>int32 version = 3;</code>
-         */
-        public Builder clearVersion() {
-
-            version_ = 0;
-            onChanged();
-            return this;
-        }
-
-        private int status_;
-
-        /**
-         * <code>int32 status = 4;</code>
-         */
-        public int getStatus() {
-            return status_;
-        }
-
-        /**
-         * <code>int32 status = 4;</code>
-         */
-        public Builder setStatus(int value) {
-
-            status_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>int32 status = 4;</code>
-         */
-        public Builder clearStatus() {
-
-            status_ = 0;
-            onChanged();
-            return this;
-        }
-
-        private java.lang.Object env_ = "";
-
-        /**
-         * <code>string env = 5;</code>
-         */
-        public java.lang.String getEnv() {
-            java.lang.Object ref = env_;
-            if (!(ref instanceof java.lang.String)) {
-                com.google.protobuf.ByteString bs =
-                    (com.google.protobuf.ByteString) ref;
-                java.lang.String s = bs.toStringUtf8();
-                env_ = s;
-                return s;
-            } else {
-                return (java.lang.String) ref;
-            }
-        }
-
-        /**
-         * <code>string env = 5;</code>
-         */
-        public com.google.protobuf.ByteString
-        getEnvBytes() {
-            java.lang.Object ref = env_;
-            if (ref instanceof String) {
-                com.google.protobuf.ByteString b =
-                    com.google.protobuf.ByteString.copyFromUtf8(
-                        (java.lang.String) ref);
-                env_ = b;
-                return b;
-            } else {
-                return (com.google.protobuf.ByteString) ref;
-            }
-        }
-
-        /**
-         * <code>string env = 5;</code>
-         */
-        public Builder setEnv(
-            java.lang.String value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-
-            env_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string env = 5;</code>
-         */
-        public Builder clearEnv() {
-
-            env_ = getDefaultInstance().getEnv();
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string env = 5;</code>
-         */
-        public Builder setEnvBytes(
-            com.google.protobuf.ByteString value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-            checkByteStringIsUtf8(value);
-
-            env_ = value;
-            onChanged();
-            return this;
-        }
-
-        private boolean force_;
-
-        /**
-         * <code>bool force = 6;</code>
-         */
-        public boolean getForce() {
-            return force_;
-        }
-
-        /**
-         * <code>bool force = 6;</code>
-         */
-        public Builder setForce(boolean value) {
-
-            force_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>bool force = 6;</code>
-         */
-        public Builder clearForce() {
-
-            force_ = false;
-            onChanged();
-            return this;
-        }
-
-        private java.lang.Object clientId_ = "";
-
-        /**
-         * <code>string clientId = 7;</code>
-         */
-        public java.lang.String getClientId() {
-            java.lang.Object ref = clientId_;
-            if (!(ref instanceof java.lang.String)) {
-                com.google.protobuf.ByteString bs =
-                    (com.google.protobuf.ByteString) ref;
-                java.lang.String s = bs.toStringUtf8();
-                clientId_ = s;
-                return s;
-            } else {
-                return (java.lang.String) ref;
-            }
-        }
-
-        /**
-         * <code>string clientId = 7;</code>
-         */
-        public com.google.protobuf.ByteString
-        getClientIdBytes() {
-            java.lang.Object ref = clientId_;
-            if (ref instanceof String) {
-                com.google.protobuf.ByteString b =
-                    com.google.protobuf.ByteString.copyFromUtf8(
-                        (java.lang.String) ref);
-                clientId_ = b;
-                return b;
-            } else {
-                return (com.google.protobuf.ByteString) ref;
-            }
-        }
-
-        /**
-         * <code>string clientId = 7;</code>
-         */
-        public Builder setClientId(
-            java.lang.String value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-
-            clientId_ = value;
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string clientId = 7;</code>
-         */
-        public Builder clearClientId() {
-
-            clientId_ = getDefaultInstance().getClientId();
-            onChanged();
-            return this;
-        }
-
-        /**
-         * <code>string clientId = 7;</code>
-         */
-        public Builder setClientIdBytes(
-            com.google.protobuf.ByteString value) {
-            if (value == null) {
-                throw new NullPointerException();
-            }
-            checkByteStringIsUtf8(value);
-
-            clientId_ = value;
-            onChanged();
-            return this;
-        }
-
-        public final Builder setUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-            return super.setUnknownFieldsProto3(unknownFields);
-        }
-
-        public final Builder mergeUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-            return super.mergeUnknownFields(unknownFields);
-        }
-
-
-        // @@protoc_insertion_point(builder_scope:EntityClassSyncRequest)
-    }
-
-    // @@protoc_insertion_point(class_scope:EntityClassSyncRequest)
-    private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest
-        DEFAULT_INSTANCE;
-
-    static {
-        DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest();
-    }
-
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstance() {
-        return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<EntityClassSyncRequest>
-        PARSER = new com.google.protobuf.AbstractParser<EntityClassSyncRequest>() {
-        public EntityClassSyncRequest parsePartialFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-            return new EntityClassSyncRequest(input, extensionRegistry);
-        }
-    };
-
-    public static com.google.protobuf.Parser<EntityClassSyncRequest> parser() {
-        return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<EntityClassSyncRequest> getParserForType() {
-        return PARSER;
-    }
-
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstanceForType() {
-        return DEFAULT_INSTANCE;
-    }
+  };
+
+  public static com.google.protobuf.Parser<EntityClassSyncRequest> parser() {
+    return PARSER;
+  }
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<EntityClassSyncRequest> getParserForType() {
+    return PARSER;
+  }
+
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest getDefaultInstanceForType() {
+    return DEFAULT_INSTANCE;
+  }
 
 }
 
