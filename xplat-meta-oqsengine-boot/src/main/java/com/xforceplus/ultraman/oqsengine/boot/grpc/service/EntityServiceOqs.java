@@ -1561,7 +1561,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
             try {
 
-                Collection<IEntity> entities = null;
                 Page page = null;
                 int pageNo = in.getPageNo();
                 int pageSize = in.getPageSize();
@@ -1609,14 +1608,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         Tuple2<FieldSortUp, IEntityField> tuple23 = sortFieldsList.get(2);
                         serviceSelectConfigBuilder.withThridSort(toSort(tuple23));
                     }
-                    Optional<Conditions> consOp = toConditions(
-                        entityClass, in.getConditions(), in.getIdsList(), metaManager);
-
-                    entities =
-                        entitySearchService
-                            .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
-                                serviceSelectConfigBuilder.build());
                 }
+                Optional<Conditions> consOp = toConditions(
+                    entityClass, in.getConditions(), in.getIdsList(), metaManager);
+
+                Collection<IEntity> entities = null;
+                entities =
+                    entitySearchService
+                        .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
+                            serviceSelectConfigBuilder.build());
 
                 Collection<IEntity> retCollections = simplify(metadata, entities, in.getQueryFieldsList());
 
