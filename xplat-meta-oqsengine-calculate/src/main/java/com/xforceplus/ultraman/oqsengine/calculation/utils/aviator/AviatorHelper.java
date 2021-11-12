@@ -54,7 +54,9 @@ public class AviatorHelper {
      */
     public static Expression compile(ExpressionWrapper expressionWrapper) {
         String functionBody = AviatorHelper.parseRule(expressionWrapper.getExpression());
-        LOGGER.info("Function body : {}", functionBody);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Function body : {}", functionBody);
+        }
         return INSTANCE.compile(expressionWrapper.getCode(), functionBody, expressionWrapper.isCached());
     }
 
