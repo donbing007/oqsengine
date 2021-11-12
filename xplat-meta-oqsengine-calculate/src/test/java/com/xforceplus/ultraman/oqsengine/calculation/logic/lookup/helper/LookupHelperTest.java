@@ -38,7 +38,8 @@ public class LookupHelperTest {
                 NumberUtils.zeroFill(lookupEntity.entityClassRef().getId()),
                 LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, NumberUtils.zeroFill(lookupField.id()),
                 LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntity.id()),
-                LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntity.id())
+                LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntity.id()),
+                LookupHelper.LINK_KEY_LOOKUP_PROFILE_PREFIX, ""
             ), key.toString());
     }
 
@@ -71,13 +72,14 @@ public class LookupHelperTest {
         long lookupEntityId = 32511L;
 
 
-        String key = String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
+        String key = String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
             LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField),
             LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntityId),
             LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX,
             NumberUtils.zeroFill(lookupClassId),
             LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, NumberUtils.zeroFill(lookupFieldId),
-            LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntityId)
+            LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntityId),
+            LookupHelper.LINK_KEY_LOOKUP_PROFILE_PREFIX, ""
         );
 
         LookupHelper.LookupLinkKey linkKey = LookupHelper.parseLinkKey(key);
@@ -109,13 +111,15 @@ public class LookupHelperTest {
         Assertions.assertThrows(IllegalArgumentException.class, () -> LookupHelper.parseLinkKey(finalKey));
 
 
-        key = String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
+        key = String.format("%s-%s%s-%s%s-%s%s-%s%s-%s%s-%s%s", LookupHelper.LINK_KEY_PREFIX,
             LookupHelper.LINK_KEY_TARGET_FIELD_PREFIX, NumberUtils.zeroFill(targetField),
             LookupHelper.LINK_KEY_TARGET_ENTITY_PREFIX, NumberUtils.zeroFill(targetEntityId),
             LookupHelper.LINK_KEY_LOOKUP_ENTITYCLASS_PREFIX,
             NumberUtils.zeroFill(lookupClassId),
             LookupHelper.LINK_KEY_LOOKUP_FIELD_PREFIX, "abc",
-            LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntityId));
+            LookupHelper.LINK_KEY_LOOKUP_ENTITY_PREFIX, NumberUtils.zeroFill(lookupEntityId),
+            LookupHelper.LINK_KEY_LOOKUP_PROFILE_PREFIX, ""
+        );
 
         String finalKey1 = key;
         Assertions.assertThrows(NumberFormatException.class, () -> LookupHelper.parseLinkKey(finalKey1));
