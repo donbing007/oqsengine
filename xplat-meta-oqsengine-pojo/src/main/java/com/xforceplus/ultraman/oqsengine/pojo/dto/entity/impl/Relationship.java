@@ -150,7 +150,7 @@ public class Relationship {
      *
      * @return entityClass 实例.
      */
-    public Collection<IEntityClass> getFamilyEntityClass() {
+    public Collection<IEntityClass> getRightFamilyEntityClasses() {
         return familyEntityClassLoader.apply(rightEntityClassId);
     }
 
