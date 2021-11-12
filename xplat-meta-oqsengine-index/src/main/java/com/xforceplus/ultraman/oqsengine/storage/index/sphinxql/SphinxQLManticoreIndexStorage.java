@@ -452,7 +452,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            buff.append(wrapperAttribute(field, storageValue)).append(' ');
+            buff.append(wrapperAttributeF(field, storageValue)).append(' ');
         }
 
         return buff.toString();
@@ -480,7 +480,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * <P>搜索字段属性全名用相似的格式,只是做如下改变.
      * {字段code}{内容}{字段code}
      */
-    private String wrapperAttribute(IEntityField field, StorageValue storageValue) {
+    private String wrapperAttributeF(IEntityField field, StorageValue storageValue) {
 
         StringBuilder buff = new StringBuilder();
         StorageValue current = storageValue;

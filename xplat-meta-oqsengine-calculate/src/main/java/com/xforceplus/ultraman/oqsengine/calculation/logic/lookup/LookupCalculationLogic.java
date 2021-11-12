@@ -102,26 +102,24 @@ public class LookupCalculationLogic implements CalculationLogic {
             迭代所有关系中的字段,判断是否有可能会对当前参与者发起lookup.
              */
             for (Relationship r : participantClass.relationship()) {
-                IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
-                relationshipClass.fields().stream()
-                    .filter(f -> f.calculationType() == CalculationType.LOOKUP)
-                    .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())
-                    .forEach(f -> {
-                        /*
-                        指定当前参与者的新lookup发起者信息,包含如下.
-                        1. 发起lookup元信息.
-                        2. 发起lookup字段.
-                        3. 不含目标实例的lookup link key.
-                         */
-                        infuenceInner.impact(
-                            participant,
-                            Participant.Builder.anParticipant()
-                                .withEntityClass(relationshipClass)
-                                .withField(f)
-                                .withAttachment(r.isStrong())
-                                .build()
-                        );
-                    });
+                // 应该包含所有定制的元信息.
+                Collection<IEntityClass> relationshipClasss = r.getRightFamilyEntityClasses();
+
+                for (IEntityClass relationshipClass : relationshipClasss) {
+                    relationshipClass.fields().stream()
+                        .filter(f -> f.calculationType() == CalculationType.LOOKUP)
+                        .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())
+                        .forEach(f -> {
+                            infuenceInner.impact(
+                                participant,
+                                Participant.Builder.anParticipant()
+                                    .withEntityClass(relationshipClass)
+                                    .withField(f)
+                                    .withAttachment(r.isStrong())
+                                    .build()
+                            );
+                        });
+                }
             }
 
             return InfuenceConsumer.Action.CONTINUE;
@@ -147,6 +145,7 @@ public class LookupCalculationLogic implements CalculationLogic {
             LookupHelper.LookupLinkIterKey lookupLinkIterKey = LookupHelper.buildIteratorPrefixLinkKey(
                 ((Lookup) participant.getField().config().getCalculation()).getFieldId(),
                 participant.getEntityClass().id(),
+                participant.getEntityClass().ref().getProfile(),
                 participant.getField().id(),
                 context.getFocusEntity().id());
 
