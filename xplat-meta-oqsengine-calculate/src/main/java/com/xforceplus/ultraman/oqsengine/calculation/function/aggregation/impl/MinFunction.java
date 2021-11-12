@@ -32,31 +32,40 @@ public class MinFunction implements AggregationFunction {
         }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
             }
             double temp = Math.min(((DecimalValue) n.get()).getValue().doubleValue(), ((DecimalValue) agg.get()).getValue().doubleValue());
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             long temp = Math.min(n.get().valueToLong(), agg.get().valueToLong());
             aggValue.get().setStringValue(String.valueOf(temp));
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof DateTimeValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new DateTimeValue(o.get().getField(), LocalDateTime.MAX));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MAX));
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MAX));
             }
             long temp = Math.min(n.get().valueToLong(), agg.get().valueToLong());
             aggValue.get().setStringValue(String.valueOf(temp));

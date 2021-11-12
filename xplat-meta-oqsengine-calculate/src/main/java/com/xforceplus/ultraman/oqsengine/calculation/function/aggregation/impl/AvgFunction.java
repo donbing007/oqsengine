@@ -27,16 +27,19 @@ public class AvgFunction implements AggregationFunction {
 
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
-        if (!(agg != null & o != null && n != null)) {
+        if (!(agg != null && o != null && n != null)) {
             return Optional.empty();
         }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
             }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
                     .add(((DecimalValue) n.get()).getValue())
@@ -44,11 +47,14 @@ public class AvgFunction implements AggregationFunction {
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue) {
+            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
                 o = Optional.of(new LongValue(o.get().getField(), 0L));
             }
-            if (n.get() instanceof EmptyTypedValue) {
+            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
                 n = Optional.of(new LongValue(n.get().getField(), 0L));
+            }
+            if (!agg.isPresent()) {
+                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
             }
             Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
             aggValue.get().setStringValue(temp.toString());
