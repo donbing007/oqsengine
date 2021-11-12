@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +49,34 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
         } catch (Exception e) {
             logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public Collection<IEntityClass> familyLoad(long id) {
+        try {
+            Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
+
+            EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
+
+            if (null == entityClassStorage) {
+                throw new SQLException(String.format("entity class [%d] not found.", id));
+            }
+            List<IEntityClass> entityClassList = new ArrayList<>();
+            entityClassList.add(toEntityClass(id, null, entityClassStorageMaps));
+
+            Map<String, ProfileStorage> profileStorages = entityClassStorage.getProfileStorageMap();
+            if (null != profileStorages) {
+                for (String key : profileStorages.keySet()) {
+                    entityClassList.add(toEntityClass(id, key, entityClassStorageMaps));
+                }
+            }
+
+            return entityClassList;
+
+        } catch (Exception e) {
+            logger.warn("load entityClass [{}] error, message [{}]", id, e.toString());
+            return new ArrayList<>();
         }
     }
 
@@ -134,6 +163,7 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
                         .withStrong(r.isStrong())
                         .withRightEntityClassId(r.getRightEntityClassId())
                         .withRightEntityClassLoader(this::classLoad)
+                        .withFamilyEntityClassLoader(this::familyLoad)
                         .withEntityField(cloneEntityField(r.getEntityField()))
                         .withBelongToOwner(r.isBelongToOwner());
 
