@@ -417,7 +417,7 @@ public class DiscoverDevOpsService {
             @MethodParam(name = "config", klass = DevOpsQueryConfig.class) DevOpsQueryConfig config
     ) {
         try {
-            Optional<IEntityClass> entityClassOptl = metaManager.load(config.getEntityClassId());
+            Optional<IEntityClass> entityClassOptl = metaManager.load(config.getEntityClassId(), null);
             if (!entityClassOptl.isPresent()) {
                 return null;
             }
@@ -534,7 +534,7 @@ public class DiscoverDevOpsService {
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "data", klass = Map.class) Map data
     ) {
-        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId);
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
         }
@@ -593,7 +593,7 @@ public class DiscoverDevOpsService {
             @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId,
             @MethodParam(name = "data", klass = Map.class) Map data
     ) {
-        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId);
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
         }
@@ -646,7 +646,7 @@ public class DiscoverDevOpsService {
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId
     ) {
-        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId);
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
         }
