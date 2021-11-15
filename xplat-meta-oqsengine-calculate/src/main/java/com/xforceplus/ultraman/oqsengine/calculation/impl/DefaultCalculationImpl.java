@@ -93,9 +93,14 @@ public class DefaultCalculationImpl implements Calculation {
             Optional<IValue> newValueOp;
             try {
                 newValueOp = logic.calculate(context);
-            } finally {
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate");
+            } catch (CalculationException ex) {
+                processTimer(
+                    logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate", true);
+                throw ex;
             }
+
+            processTimer(
+                logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate", false);
 
             if (newValueOp.isPresent()) {
                 targetEntity.entityValue().addValue(newValueOp.get());
@@ -167,10 +172,18 @@ public class DefaultCalculationImpl implements Calculation {
 
                 Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-                long[] affectedEntityIds = logic.getMaintainTarget(context, participant,
-                    parentParticipant.get().getAffectedEntities());
+                long[] affectedEntityIds = null;
+                try {
+                    affectedEntityIds = logic.getMaintainTarget(context, participant,
+                        parentParticipant.get().getAffectedEntities());
+                } catch (CalculationException ex) {
+                    processTimer(
+                        logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
+                    throw ex;
+                }
 
-                processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget");
+                processTimer(
+                    logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
 
                 Collection<IEntity> affectedEntities = loadEntities(context, affectedEntityIds);
 
@@ -500,7 +513,8 @@ public class DefaultCalculationImpl implements Calculation {
 
                         logic.scope(context, infuence);
 
-                        processTimer(logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope");
+                        processTimer(
+                            logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
                     }
 
                     if (oldSize == infuence.getSize()) {
@@ -621,12 +635,13 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     // 停止计时并输出指标
-    private void processTimer(CalculationLogic logic, Timer.Sample sample, String metricName, String action) {
+    private void processTimer(CalculationLogic logic, Timer.Sample sample, String metricName, String action,
+                              boolean ex) {
         sample.stop(Timer.builder(metricName)
             .tags(
                 "logic", logic.getClass().getSimpleName(),
                 "action", action,
-                "exception", ""
+                "exception", ex ? CalculationException.class.getSimpleName() : "none"
             )
             .publishPercentileHistogram(false)
             .publishPercentiles(null)
