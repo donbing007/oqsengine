@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -119,6 +120,11 @@ public class Relationship {
     private BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader;
 
     /*
+     * "右"家族对象元信息定义的延迟加载方法.
+     */
+    private Function<Long, Collection<IEntityClass>> familyEntityClassLoader;
+
+    /*
      * 是否是伴生关系
      */
     private boolean companion;
@@ -137,6 +143,15 @@ public class Relationship {
     public IEntityClass getRightEntityClass(String profile) {
         Optional<IEntityClass> entityClassOp = rightEntityClassLoader.apply(rightEntityClassId, profile);
         return entityClassOp.orElse(null);
+    }
+
+    /**
+     * 获取到关系中相关联的entityClass实例.即关系"右"家族对象的元信息定义实例.
+     *
+     * @return entityClass 实例.
+     */
+    public Collection<IEntityClass> getRightFamilyEntityClasses() {
+        return familyEntityClassLoader.apply(rightEntityClassId);
     }
 
     public long getId() {
@@ -236,6 +251,7 @@ public class Relationship {
         private boolean belongToOwner = false;
         private boolean strong = false;
         private BiFunction<Long, String, Optional<IEntityClass>> entityClassLoader;
+        private Function<Long, Collection<IEntityClass>> familyEntityClassLoader;
         private boolean companion = false;
         private long companionRelation;
 
@@ -312,6 +328,11 @@ public class Relationship {
             return this;
         }
 
+        public Builder withFamilyEntityClassLoader(Function<Long, Collection<IEntityClass>> familyEntityClassLoader) {
+            this.familyEntityClassLoader = familyEntityClassLoader;
+            return this;
+        }
+
         /**
          * 构造 OqsRelation 实例.
          *
@@ -332,6 +353,7 @@ public class Relationship {
             relationship.strong = this.strong;
             relationship.companion = this.companion;
             relationship.companionRelation = this.companionRelation;
+            relationship.familyEntityClassLoader = this.familyEntityClassLoader;
             return relationship;
         }
     }

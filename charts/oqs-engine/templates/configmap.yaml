@@ -146,7 +146,7 @@ data:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}
             connection:
-              host: {{ .Values.discover.sdk.connection.host | default "http://ultraman-devops-service-test.n01103-oqs-cdc" | quote }}
+              host: {{ .Values.discover.sdk.connection.host | default "ultraman-devops-service-test.n01103-oqs-cdc" | quote }}
               port: {{ .Values.discover.sdk.connection.port | default "8916" | quote }}
             time:
               heartbeat:

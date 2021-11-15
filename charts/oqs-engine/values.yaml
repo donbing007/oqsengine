@@ -190,15 +190,15 @@ discover:
   sdk:
     enable: false
     connection:
-      host: "http://ultraman-devops-service-test.n01103-oqs-cdc"
+      host: "ultraman-devops-service-test.n01103-oqs-cdc"
       port: "8916"
     time:
       heartbeat:
         expired: 60000
         duration: 5000
     agent:
-      serviceId: 1
-      serviceGroup: 12
+      serviceId: ${HOSTNAME}.${instance.id}
+      serviceGroup: ${HOSTNAME}
       serviceName: "oqs-engine"
     threadPool:
       task: 5

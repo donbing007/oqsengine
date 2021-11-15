@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockSimpleEntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -210,8 +209,8 @@ public class CalculationTest extends AbstractContainerExtends {
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
 
-        user = entitySearchService.selectOne(user.id(), MockSimpleEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockSimpleEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         Assertions.assertEquals(
             0,
             order.entityValue().getValue("最小数量min").get().valueToLong()
@@ -516,19 +515,19 @@ public class CalculationTest extends AbstractContainerExtends {
                     )
                     .addValue(
                         new LongValue(
-                            MockSimpleEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
                             faker.number().randomNumber()
                         )
                     )
                     .addValue(
                         new LongValue(
-                            MockSimpleEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
                             order.id()
                         )
                     )
                     .addValue(
                         new DateTimeValue(
-                            MockSimpleEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
                             faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
                         )
                     )

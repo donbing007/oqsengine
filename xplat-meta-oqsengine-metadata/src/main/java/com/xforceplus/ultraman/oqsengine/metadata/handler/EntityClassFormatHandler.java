@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -11,5 +12,13 @@ import java.util.Optional;
  */
 public interface EntityClassFormatHandler extends Serializable {
 
+    /**
+     * 获取一个entityClass.
+     */
     Optional<IEntityClass> classLoad(long id, String profile);
+
+    /**
+     * 获取当前entityClassId下的所有EntityClassWithProfile.
+     */
+    Collection<IEntityClass> familyLoad(long id);
 }

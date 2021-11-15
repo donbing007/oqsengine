@@ -21,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
@@ -159,6 +158,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(strongLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(strongLookupEntityClass))
+                        .withFamilyEntityClassLoader(id -> Arrays.asList(strongLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(true)
@@ -169,6 +169,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(weakLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(weakLookupEntityClass))
+                        .withFamilyEntityClassLoader(id -> Arrays.asList(weakLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(false)
@@ -192,6 +193,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(strongLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
+                        .withFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(true)
@@ -213,6 +215,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(weakLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
+                        .withFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(false)
@@ -415,7 +418,7 @@ public class LookupCalculationLogicTest {
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
 
         String startKey =
-            "lookup-tf9223372036854775806-lc9223372036854775806-lf9223372036854775803-te9223372036854775807-le0000000002147483646";
+            "lookup-tf9223372036854775806-lc9223372036854775806-lp-lf9223372036854775803-te9223372036854775807-le0000000002147483646";
         Assertions.assertEquals(startKey, lookTask.getPointKey().get());
     }
 
