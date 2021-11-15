@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>com.xforceplus.ultraman</groupId>
-            <artifactId>ultraman-devops-service-sdk</artifactId>
+            <artifactId>ultraman-discover-server-sdk</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
