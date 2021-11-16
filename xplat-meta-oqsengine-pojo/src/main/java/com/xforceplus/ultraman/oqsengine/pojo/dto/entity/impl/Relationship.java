@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -328,7 +327,8 @@ public class Relationship {
             return this;
         }
 
-        public Builder withFamilyEntityClassLoader(Function<Long, Collection<IEntityClass>> familyEntityClassLoader) {
+        public Builder withRightFamilyEntityClassLoader(
+            Function<Long, Collection<IEntityClass>> familyEntityClassLoader) {
             this.familyEntityClassLoader = familyEntityClassLoader;
             return this;
         }

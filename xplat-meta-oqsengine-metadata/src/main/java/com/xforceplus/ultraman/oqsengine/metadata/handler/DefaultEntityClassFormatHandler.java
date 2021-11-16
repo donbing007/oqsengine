@@ -163,7 +163,7 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
                         .withStrong(r.isStrong())
                         .withRightEntityClassId(r.getRightEntityClassId())
                         .withRightEntityClassLoader(this::classLoad)
-                        .withFamilyEntityClassLoader(this::familyLoad)
+                        .withRightFamilyEntityClassLoader(this::familyLoad)
                         .withEntityField(cloneEntityField(r.getEntityField()))
                         .withBelongToOwner(r.isBelongToOwner());
 

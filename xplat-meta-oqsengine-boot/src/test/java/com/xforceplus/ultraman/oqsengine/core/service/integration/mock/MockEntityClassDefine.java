@@ -68,6 +68,7 @@ public class MockEntityClassDefine {
     private static long lookupL0StringFieldId = baseFieldId - 12;
     private static long lookupL2DecFieldId = baseFieldId - 13;
     private static long l2LookupIdFieldId = baseFieldId - 14;
+    private static long l2LongFieldId = baseFieldId - 15;
 
 
     public static IEntityClass L0_ENTITY_CLASS;
@@ -238,6 +239,12 @@ public class MockEntityClassDefine {
                 .withConfig(
                     FieldConfig.Builder.anFieldConfig().withLen(100).withPrecision(6).withSearchable(true).build())
                 .build())
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(l2LongFieldId)
+                    .withFieldType(FieldType.LONG)
+                    .withName("l2-long")
+                    .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
                 .withId(DRIVCER_ID_FEILD_ID)
                 .withFieldType(FieldType.LONG)
@@ -264,7 +271,7 @@ public class MockEntityClassDefine {
                         )
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(DRIVCER_ID_FEILD_ID)
@@ -284,7 +291,7 @@ public class MockEntityClassDefine {
                         )
                         .withRightEntityClassId(driverEntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(baseRelationsId - 2)
@@ -297,7 +304,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(LOOKUP_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(LOOKUP_ENTITY_CLASS))
                         .build()
                 )
             )
@@ -333,7 +340,7 @@ public class MockEntityClassDefine {
                         .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
                         .withRightEntityClassId(L2_ENTITY_CLASS.id())
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
                         .withId(baseRelationsId - 4)
@@ -346,7 +353,7 @@ public class MockEntityClassDefine {
                         .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
                         .withRightEntityClassId(driverEntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -430,7 +437,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -559,7 +566,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("user")
                         .withRightEntityClassId(orderClassId)
                         .withRightEntityClassLoader((orderClassId, a) -> Optional.of(ORDER_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
                         .withEntityField(orderUserForeignField).build()
                 )
             ).build();
@@ -830,6 +837,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(orderItemClassId)
                         .withRightEntityClassLoader((orderItemClassId, a) -> Optional.of(ORDER_ITEM_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(ORDER_ITEM_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderUserForeignField.id())
@@ -839,6 +847,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(userClassId)
                         .withRightEntityClassLoader((userClassId, a) -> Optional.of(USER_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(USER_CLASS))
                         .withEntityField(orderUserForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderUserForeignField.id() - 200)
@@ -848,7 +857,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("order")
                         .withRightEntityClassId(userClassId)
                         .withRightEntityClassLoader((userClassId, a) -> Optional.of(USER_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(USER_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(USER_CLASS))
                         .withEntityField(orderUserForeignField).build()
 
                 )
@@ -932,7 +941,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("orderItem")
                         .withRightEntityClassId(orderClassId)
                         .withRightEntityClassLoader((orderClassId, a) -> Optional.of(ORDER_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build(),
                     Relationship.Builder.anRelationship()
                         .withId(orderOrderItemForeignField.id() - 200)
@@ -942,7 +951,7 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("orderItem")
                         .withRightEntityClassId(orderClassId)
                         .withRightEntityClassLoader((orderClassId, a) -> Optional.of(ORDER_CLASS))
-                        .withFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(ORDER_CLASS))
                         .withEntityField(orderOrderItemForeignField).build()
                 )
             ).build();
