@@ -1,0 +1,173 @@
+instance:
+  # static | statefulset 前者读取配置文件,后者使用 k8s statefulset 生成的 hostname.
+  type: static
+  id: 0
+
+grpc:
+  server:
+    port: 8081
+server:
+  port: 8086
+
+logging:
+  level:
+    root: debug
+    io:
+      lettuce: info
+  pattern:
+    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
+
+transaction:
+  timeoutMs: 3000000
+
+threadPool:
+  # 0 or not exist use cpu core + 1
+  call:
+    read:
+      worker: 0
+      queue: 1000
+    write:
+      worker: 0
+      queue: 1000
+    rebuild:
+      worker: 0
+      queue: 1000
+  cdc:
+    worker: 0
+  event:
+    worker: 3
+    queue: 1000
+
+sync:
+  ignoreCDCStatusCheck: false
+  allowMaxLiveTimeMs: 3000
+  allowMaxUnSyncCommitIdSize: 100
+
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
+
+storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
+  debug:
+    showsql: true
+  timeoutMs:
+    query: 10000
+  master:
+    name: "oqsbigentity"
+    shard:
+      table:
+        enabled: false
+        size: 1
+  index:
+    search:
+      name: "oqsindex"
+      maxQueryTimeMs: 0
+      maxBatchSize: 50
+    write:
+      name: "oqsindex"
+      shard:
+        enabled: true
+        size: 2
+  devOps:
+    cdc:
+      errors:
+        name: "cdcerrors"
+    maxQueryTimeMs: 3000
+    task:
+      split: 10
+      max:
+        queue:
+          size: 2000
+      execution:
+        timeout: 300000
+      update:
+        frequency: 100
+      cache:
+        expire: 30
+        maxsize: 500
+      page:
+        size: 1000
+
+redis:
+  # 单机 redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 单机SSL rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 哨兵: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
+  # 时间单位
+  # d 天
+  # h 小时
+  # m 分钟
+  # s 秒钟
+  # ms 毫秒
+  # us 微秒
+  # ns 纳秒
+  uri: "redis://${REDIS_HOST}:${REDIS_PORT}"
+  maxReqQueue: 10000
+
+management:
+  health:
+    redis:
+      enabled: false
+    db:
+      enabled: false
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    shutdown:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
+
+cdc:
+  connect:
+    type: single
+    host: "${CANAL_HOST}"
+    port: ${CANAL_PORT}
+    destination: "${CANAL_DESTINATION}"
+    username: root
+    password: root
+    subscribeFilter: .*\.oqsbigentity.*
+    batchSize: 2048
+  consumer:
+    checkCommitReady: true
+
+meta:
+  grpc:
+    type: mock
+  load:
+    path: "-"
+
+discover:
+  sdk:
+    enable: true
+    connection:
+      host: localhost
+      port: 8916
+    time:
+      heartbeat:
+        expired: 60000
+        duration: 5000
+    agent:
+      serviceId: ${discover.sdk.agent.serviceGroup}-${instance.id}
+      serviceGroup: oqs-engine-unit-test
+      serviceName: oqs-engine
+    threadPool:
+      task: 5
+      queue: 100

@@ -9,15 +9,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * desc :.
- * name : AbstractWatcher
+ * 抽象watcher.
  *
- * @author : xujia date : 2021/2/6
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
-    private Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
+    private final Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
+    /**
+     * 客户标识.
+     */
+    protected volatile String clientId;
+
     /**
      * 注册的uid.
      */
@@ -34,8 +38,9 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     protected volatile StreamObserver<T> streamObserver;
 
     /**
-     * 当前关注的appId.
-     * 注意：这个Map对应一个(OQS应用、SDK端)的所有关注列表，不能出现同一个AppID对应多套环境同时运行在一个(OQS应用、SDK端).
+     * 当前关注的appId
+     * 注意：这个Map对应一个(OQS应用、SDK端)的所有关注列表，
+     * 不能出现同一个AppID对应多套环境同时运行在一个(OQS应用、SDK端)
      * 所以这里的Key只是AppId.
      */
     protected Map<String, WatchElement> watches;
@@ -45,18 +50,20 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
      */
     private volatile boolean isActive = true;
 
-
     /**
-     * 观察者的抽像构造器.
-     *
-     * @param uid 目标标识.
-     * @param streamObserver grpc 流的观察者.
+     * 构造函数.
      */
-    public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
+    public AbstractWatcher(String clientId, String uid, StreamObserver<T> streamObserver) {
+        this.clientId = clientId;
         this.uid = uid;
         this.streamObserver = streamObserver;
         this.heartBeat = System.currentTimeMillis();
         this.watches = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public String clientId() {
+        return clientId;
     }
 
     @Override
@@ -87,24 +94,11 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         try {
             supplier.get();
         } catch (Exception e) {
-        //  ignore
+            //  ignore
 
         } finally {
-            /*
-             * 释放当前observer
-             */
+            //  释放当前observer
             release();
-        }
-    }
-
-    @Override
-    public void release() {
-        try {
-            if (null != streamObserver) {
-                streamObserver.onCompleted();
-            }
-        } catch (Exception e) {
-            //  ignore
         }
     }
 
@@ -132,12 +126,25 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         return streamObserver;
     }
 
+    protected abstract void reset(String uid, StreamObserver<T> streamObserver);
+
+    /**
+     * 释放.
+     */
+    protected void releaseStreamObserver() {
+        try {
+            if (null != streamObserver) {
+                streamObserver.onCompleted();
+            }
+        } catch (Exception e) {
+            //  ignore
+        }
+    }
+
     @Override
     public void active() {
         isActive = true;
-        /*
-         * 打开服务时设置一次heartbeat
-         */
+        //  打开服务时设置一次heartbeat
         resetHeartBeat();
     }
 
@@ -145,6 +152,4 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     public void inActive() {
         isActive = false;
     }
-
-    protected abstract void reset(String uid, StreamObserver<T> streamObserver);
 }

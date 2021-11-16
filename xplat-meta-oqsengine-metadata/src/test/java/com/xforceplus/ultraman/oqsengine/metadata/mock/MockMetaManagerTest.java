@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
- * .
+ * metaManager 的mock测试.
  *
  * @author dongbin
  * @version 0.1 2021/04/14 16:09
@@ -41,8 +40,8 @@ public class MockMetaManagerTest {
         );
 
         IEntityClass targetEntityClass = metaManager.load(1).get();
-        Assert.assertEquals(1, targetEntityClass.id());
-        Assert.assertEquals(6, targetEntityClass.version());
+        Assertions.assertEquals(1, targetEntityClass.id());
+        Assertions.assertEquals(6, targetEntityClass.version());
     }
 
     @Test
@@ -66,8 +65,21 @@ public class MockMetaManagerTest {
 
         metaManager.addEntityClass(l2);
 
-        Assert.assertTrue(metaManager.load(1).isPresent());
-        Assert.assertTrue(metaManager.load(2).isPresent());
-        Assert.assertTrue(metaManager.load(3).isPresent());
+        Assertions.assertTrue(metaManager.load(1).isPresent());
+        Assertions.assertTrue(metaManager.load(2).isPresent());
+        Assertions.assertTrue(metaManager.load(3).isPresent());
+    }
+
+    @Test
+    public void testOneVersion() throws Exception {
+        MockMetaManager metaManager = new MockMetaManager();
+
+        metaManager.addEntityClass(
+            EntityClass.Builder.anEntityClass()
+                .withId(1)
+                .withVersion(0)
+                .build()
+        );
+        Assertions.assertTrue(metaManager.load(1).isPresent());
     }
 }

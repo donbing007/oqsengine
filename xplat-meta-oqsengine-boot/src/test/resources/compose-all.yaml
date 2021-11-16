@@ -8,7 +8,7 @@ services:
       - MYSQL_ROOT_USERNAME=root
       - MYSQL_ROOT_PASSWORD=root
     volumes:
-      - "./mastdb.sql:/docker-entrypoint-initdb.d/1.sql"
+      - "./master.sql:/docker-entrypoint-initdb.d/1.sql"
       - "./mysql.cnf:/etc/my.cnf"
 
   canal-server:
@@ -18,11 +18,11 @@ services:
     environment:
       - canal.instance.mysql.slaveId=12
       - canal.auto.scan=false
-      - canal.destinations=nly-v1
+      - canal.destinations=oqsengine
       - canal.instance.master.address=mysql:3306
       - canal.instance.dbUsername=root
       - canal.instance.dbPassword=root
-      - canal.mq.topic=nly-v1
+      - canal.mq.topic=oqsengine
       - canal.instance.filter.regex=.*\.oqsbigentity.*
 
   redis:

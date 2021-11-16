@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutorImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,11 +29,6 @@ public class DevOpsConfiguration {
         @Value("${storage.devOps.task.cache.maxsize:500}") long cacheMaxSize,
         @Value("${storage.devOps.task.page.size:1000}") int pageSize) {
         return new DevOpsRebuildIndexExecutor(splitPart, maxQueueSize, cacheExpireTime, cacheMaxSize);
-    }
-
-    @Bean(name = "lockExecutor")
-    public LockExecutor lockExecutor() {
-        return new LockExecutor();
     }
 
     /**

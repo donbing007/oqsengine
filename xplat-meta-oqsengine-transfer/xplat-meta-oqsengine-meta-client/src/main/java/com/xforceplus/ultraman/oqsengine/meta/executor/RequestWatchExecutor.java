@@ -12,8 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * desc :
- * name : RequestWatchExecutor.
+ * request watch executor implement.
+ *
+ * @author xujia
+ * @since 1.8
  */
 public class RequestWatchExecutor implements IRequestWatchExecutor {
 
@@ -34,9 +36,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public void create(String uid, StreamObserver<EntityClassSyncRequest> observer) {
+    public void create(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer) {
         if (null == requestWatcher) {
-            requestWatcher = new RequestWatcher(uid, observer);
+            requestWatcher = new RequestWatcher(clientId, uid, observer);
         } else {
             requestWatcher.reset(uid, observer);
         }
@@ -94,7 +96,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     @Override
     public void stop() {
         if (null != requestWatcher) {
-            // 这里分开设置、等待3S如果有正在进行中的任务
+            //  这里分开设置、等待3S如果有正在进行中的任务
             requestWatcher.inActive();
 
             TimeWaitUtils.wakeupAfter(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.SECONDS);

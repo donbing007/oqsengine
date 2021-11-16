@@ -2,7 +2,10 @@ package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Store generic definitions.
@@ -24,6 +27,24 @@ public interface Storage {
     }
 
     /**
+     * Batch creation.
+     *
+     * @param entityPackage entity package.
+     * @return create results.
+     * @throws SQLException Storage error.
+     */
+    default int[] build(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        int index = 0;
+        while (iter.hasNext()) {
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = build(entry.getKey(), entry.getValue());
+        }
+        return results;
+    }
+
+    /**
      * Replace the information of the target Entity.
      *
      * @param entity target entity.
@@ -34,6 +55,24 @@ public interface Storage {
     }
 
     /**
+     * Batch replace.
+     *
+     * @param entityPackage entity package.
+     * @return replace results.
+     * @throws SQLException Storage error.
+     */
+    default int[] replace(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        int index = 0;
+        while (iter.hasNext()) {
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = replace(entry.getKey(), entry.getValue());
+        }
+        return results;
+    }
+
+    /**
      * Deletes an existing entity.
      *
      * @param entity target entity.
@@ -41,5 +80,23 @@ public interface Storage {
      */
     default int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
         return 0;
+    }
+
+    /**
+     * Batch delete.
+     *
+     * @param entityPackage entity package.
+     * @return delete results.
+     * @throws SQLException Storage error.
+     */
+    default int[] delete(EntityPackage entityPackage) throws SQLException {
+        int[] results = new int[entityPackage.size()];
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        int index = 0;
+        while (iter.hasNext()) {
+            Map.Entry<IEntity, IEntityClass> entry = iter.next();
+            results[index++] = delete(entry.getKey(), entry.getValue());
+        }
+        return results;
     }
 }

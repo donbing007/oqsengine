@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 
 
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class EntityAggDomain {
 
     private IEntity rootIEntity;
 
-    private Map<OqsRelation, List<EntityAggDomain>> graph = new HashMap<>();
+    private Map<Relationship, List<EntityAggDomain>> graph = new HashMap<>();
 
     public IEntity getRootIEntity() {
         return rootIEntity;
@@ -23,16 +23,16 @@ public class EntityAggDomain {
         this.rootIEntity = rootIEntity;
     }
 
-    public Map<OqsRelation, List<EntityAggDomain>> getGraph() {
+    public Map<Relationship, List<EntityAggDomain>> getGraph() {
         return graph;
     }
 
-    public void setGraph(Map<OqsRelation, List<EntityAggDomain>> graph) {
+    public void setGraph(Map<Relationship, List<EntityAggDomain>> graph) {
         this.graph = graph;
     }
 
-    public void put(OqsRelation oqsRelation, EntityAggDomain entityAggDomain){
-        List<EntityAggDomain> entityAggDomains = graph.computeIfAbsent(oqsRelation, k -> new LinkedList<>());
+    public void put(Relationship relationship, EntityAggDomain entityAggDomain){
+        List<EntityAggDomain> entityAggDomains = graph.computeIfAbsent(relationship, k -> new LinkedList<>());
         entityAggDomains.add(entityAggDomain);
     }
 

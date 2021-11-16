@@ -24,7 +24,7 @@ public class SQLChangelogStorage implements ChangelogStorage {
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource

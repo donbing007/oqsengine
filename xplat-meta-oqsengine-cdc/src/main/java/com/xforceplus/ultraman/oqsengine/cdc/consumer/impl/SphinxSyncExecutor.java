@@ -7,6 +7,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getIntegerFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringWithoutNullCheck;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_VERSION;
@@ -20,6 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OP;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.OQSMAJOR;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.PROFILE;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.TX;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.UPDATETIME;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.VERSION;
@@ -71,7 +73,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
     @Resource(name = "cdcErrorStorage")
     private CdcErrorStorage cdcErrorStorage;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator seqNoGenerator;
 
     @Resource
@@ -131,7 +133,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
     public boolean formatErrorHandle(List<CanalEntry.Column> columns, String uniKeyPrefix, int pos, Long batchId,
                                      String message) throws SQLException {
         Long id = getLongFromColumn(columns, ID, UN_KNOW_ID);
-        Long commitId = getLongFromColumn(columns, COMMITID, UN_KNOW_ID);
+        Long commitId = getLongFromColumn(columns, COMMITID);
 
         Integer version = getIntegerFromColumn(columns, VERSION, UN_KNOW_VERSION);
         Integer op = getIntegerFromColumn(columns, OP, UN_KNOW_OP);
@@ -143,8 +145,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
             //  ignore
 
         }
-
-        recordOrRecover(batchId, uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR),
+        String uniKey = uniKeyGenerate(uniKeyPrefix, pos, DATA_FORMAT_ERROR);
+        recordOrRecover(batchId, uniKey,
             id, entity, version, op, commitId, DATA_FORMAT_ERROR, message, new ArrayList<>());
 
         return true;
@@ -167,7 +169,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
         String message,
         List<OriginalEntity> entities) throws SQLException {
         logger.warn(
-            "[cdc-sync-executor] batchId : {}, sphinx consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}",
+            "[cdc-sync-executor] batchId : {}, cdc-consume error will be record in cdcErrors,  id : {}, commitId : {}, message : {}",
             batchId, id, commitId, null == message ? "unKnow" : message);
 
         try {
@@ -251,9 +253,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
     private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
         long entityId = getEntity(columns);
+        String profile = getStringWithoutNullCheck(columns, PROFILE);
 
         if (entityId > ZERO) {
-            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId);
+            Optional<IEntityClass> entityClassOptional =
+                metaManager.load(entityId, profile);
+
             if (entityClassOptional.isPresent()) {
                 return entityClassOptional.get();
             }

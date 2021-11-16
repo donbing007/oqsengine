@@ -23,10 +23,12 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanEx
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SearchExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -39,6 +41,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -121,20 +124,21 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         this.searchIndexName = searchIndexName;
     }
 
-    public long getMaxSearchTimeoutMs() {
+    public long getTimeoutMs() {
         return maxSearchTimeoutMs;
     }
 
-    public void setMaxSearchTimeoutMs(long maxSearchTimeoutMs) {
+    public void setTimeoutMs(long maxSearchTimeoutMs) {
         this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action",
-        "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "index", "action", "condition"})
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -149,6 +153,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             SelectConfig useConfig = SelectConfig.Builder.anSelectConfig()
                 .withCommitId(config.getCommitId())
                 .withSort(config.getSort())
+                .withSecondarySort(config.getSecondarySort())
+                .withThirdSort(config.getThirdSort())
                 .withPage(config.getPage())
                 .withExcludedIds(useFilterIds)
                 .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
@@ -159,11 +165,19 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 resource,
                 sphinxQLConditionsBuilderFactory,
                 storageStrategyFactory,
-                getMaxSearchTimeoutMs()).execute(
+                getTimeoutMs()).execute(
                 Tuple.of(entityClass, conditions, useConfig));
         });
+    }
 
-        return refs;
+    @Override
+    public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses)
+        throws SQLException {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+            return SearchExecutor
+                .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getTimeoutMs())
+                .execute(Tuple.of(config, entityClasses));
+        });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
@@ -409,11 +423,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
     }
 
-    // 全文属性
-    private String toAttributesF(OriginalEntity originalEntity) throws SQLException {
+    // 填允全文属性.
+    private String toAttributesF(OriginalEntity source) throws SQLException {
+
         StringBuilder buff = new StringBuilder();
-        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
-            IEntityClass entityClass = originalEntity.getEntityClass();
+        for (Map.Entry<String, Object> attr : source.listAttributes()) {
+            IEntityClass entityClass = source.getEntityClass();
             StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
             Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
             if (!needField(fieldOp, false)) {
@@ -437,8 +452,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            buff.append(wrapperAttribute(field, storageValue)).append(' ');
+            buff.append(wrapperAttributeF(field, storageValue)).append(' ');
         }
+
         return buff.toString();
     }
 
@@ -449,16 +465,26 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     /**
-     * 短名称为 aZl8N0y58M7S
-     * StorageType.STRING
-     * aZl8N0{空格}aZl8N0testy58M7S{空格}y58M7S
-     * StorageType.Long
+     * 格式为 {短名称前辍}{内容}{短名称后辍}{储存类型 S|L}.
+     *
+     * <p>例如:
+     * 短名称为 aZl8N0y58M7S.
+     *
+     * <p>StorageType.STRING.
+     *
+     * <p>aZl8N0testy58M7S
+     *
+     * <p>StorageType.Long.
      * aZl8N0123y58M7S
+     *
+     * <P>搜索字段属性全名用相似的格式,只是做如下改变.
+     * {字段code}{内容}{字段code}
      */
-    private String wrapperAttribute(IEntityField field, StorageValue storageValue) {
+    private String wrapperAttributeF(IEntityField field, StorageValue storageValue) {
 
         StringBuilder buff = new StringBuilder();
         StorageValue current = storageValue;
+        List<Map.Entry<String, String>> crossAttributes = new LinkedList<>();
         while (current != null) {
 
             ShortStorageName shortStorageName = current.shortStorageName();
@@ -477,7 +503,6 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
                     Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-                    // 以储存模式分词.
                     Iterator<String> words = tokenizer.tokenize(limitLenStrValue, Tokenizer.TokenizerMode.STORAGE);
                     /*
                      * 处理当前字段分词结果.
@@ -489,6 +514,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         }
                         word = words.next();
                         buff.append(SphinxQLHelper.encodeFuzzyWord(shortStorageName, word));
+
+                        if (field.config().isCrossSearch()) {
+                            crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
+                        }
                     }
                     if (buff.length() > 0) {
                         buff.append(' ');
@@ -508,6 +537,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(shortStorageName.getPrefix())
                     .append(strValue)
                     .append(shortStorageName.getNoLocationSuffix());
+
+                if (field.config().isCrossSearch()) {
+                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
+                }
             } else {
 
                 if (buff.length() > 0) {
@@ -520,9 +553,26 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(shortStorageName.getPrefix())
                     .append(strValue)
                     .append(shortStorageName.getSuffix());
+
+                if (field.config().isCrossSearch()) {
+                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
+                }
             }
 
             current = current.next();
+        }
+
+        // 如果有需要跨元信息.
+        if (!crossAttributes.isEmpty()) {
+            for (Map.Entry<String, String> attr : crossAttributes) {
+                if (buff.length() > 0) {
+                    buff.append(' ');
+                }
+
+                buff.append(attr.getKey())
+                    .append(attr.getValue())
+                    .append(attr.getKey());
+            }
         }
 
         return buff.toString();

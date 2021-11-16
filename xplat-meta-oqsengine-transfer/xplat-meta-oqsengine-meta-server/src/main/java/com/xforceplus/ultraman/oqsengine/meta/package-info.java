@@ -1,9 +1,4 @@
 /**
- * desc :
- * name : package-info
- *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * OQSEgnine依赖的元数据管理.
  */
 package com.xforceplus.ultraman.oqsengine.meta;

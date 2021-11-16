@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * 搜索配置.
+ * 查询配置.
  *
  * @author dongbin
  * @version 0.1 2021/3/1 17:06
@@ -21,6 +21,8 @@ public class SelectConfig implements Serializable {
 
     private long commitId;
     private Sort sort;
+    private Sort secondarySort;
+    private Sort thirdSort;
     private Page page;
     private Set<Long> excludedIds;
     private Conditions dataAccessFilterCondtitions;
@@ -34,23 +36,32 @@ public class SelectConfig implements Serializable {
     }
 
     public Sort getSort() {
-        return sort;
+        return this.sort == null ? Sort.buildOutOfSort() : this.sort;
+    }
+
+    public Sort getSecondarySort() {
+        return this.secondarySort == null ? Sort.buildOutOfSort() : this.secondarySort;
+    }
+
+    public Sort getThirdSort() {
+        return this.thirdSort == null ? Sort.buildOutOfSort() : this.thirdSort;
     }
 
     public Page getPage() {
-        return page;
+        return this.page == null ? Page.newSinglePage(10) : this.page;
     }
 
     public Set<Long> getExcludedIds() {
-        return excludedIds;
+        return this.excludedIds == null ? Collections.emptySet() : this.excludedIds;
     }
 
     public Facet getFacet() {
-        return facet;
+        return this.facet == null ? Facet.build() : this.facet;
     }
 
     public Conditions getDataAccessFilterCondtitions() {
-        return dataAccessFilterCondtitions;
+        return this.dataAccessFilterCondtitions == null
+            ? Conditions.buildEmtpyConditions() : this.dataAccessFilterCondtitions;
     }
 
     @Override
@@ -62,17 +73,20 @@ public class SelectConfig implements Serializable {
             return false;
         }
         SelectConfig that = (SelectConfig) o;
-        return commitId == that.commitId
-            && Objects.equals(sort, that.sort)
-            && Objects.equals(page, that.page)
-            && Objects.equals(excludedIds, that.excludedIds)
-            && Objects.equals(dataAccessFilterCondtitions, that.dataAccessFilterCondtitions)
-            && Objects.equals(facet, that.facet);
+        return getCommitId() == that.getCommitId()
+            && Objects.equals(getSort(), that.getSort())
+            && Objects.equals(getSecondarySort(), that.getSecondarySort())
+            && Objects.equals(getThirdSort(), that.getThirdSort())
+            && Objects.equals(getPage(), that.getPage())
+            && Objects.equals(getExcludedIds(), that.getExcludedIds())
+            && Objects.equals(getDataAccessFilterCondtitions(), that.getDataAccessFilterCondtitions())
+            && Objects.equals(getFacet(), that.getFacet());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(commitId, sort, page, excludedIds, dataAccessFilterCondtitions, facet);
+        return Objects.hash(getCommitId(), getSort(), getSecondarySort(), getThirdSort(), getPage(), getExcludedIds(),
+            getDataAccessFilterCondtitions(), getFacet());
     }
 
     @Override
@@ -94,6 +108,8 @@ public class SelectConfig implements Serializable {
     public static final class Builder {
         private long commitId = 0;
         private Sort sort = Sort.buildOutOfSort();
+        private Sort secondarySort = Sort.buildOutOfSort();
+        private Sort thirdSort = Sort.buildOutOfSort();
         private Page page = Page.newSinglePage(10);
         private Set<Long> excludedIds = Collections.emptySet();
         private Facet facet = Facet.build();
@@ -113,6 +129,16 @@ public class SelectConfig implements Serializable {
 
         public Builder withSort(Sort sort) {
             this.sort = sort;
+            return this;
+        }
+
+        public Builder withSecondarySort(Sort sort) {
+            this.secondarySort = sort;
+            return this;
+        }
+
+        public Builder withThirdSort(Sort sort) {
+            this.thirdSort = sort;
             return this;
         }
 
@@ -165,6 +191,8 @@ public class SelectConfig implements Serializable {
         public SelectConfig build() {
             SelectConfig selectConfig = new SelectConfig();
             selectConfig.sort = this.sort;
+            selectConfig.secondarySort = this.secondarySort;
+            selectConfig.thirdSort = this.thirdSort;
             selectConfig.commitId = this.commitId;
             selectConfig.page = this.page;
             selectConfig.excludedIds = this.excludedIds;

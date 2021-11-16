@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -16,7 +17,7 @@ import java.sql.SQLException;
  * @author xujia 2020/11/18
  * @since 1.8
  */
-public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Integer> {
+public class BatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
 
     private IEntityClass entityClass;
     private long startTime;
@@ -25,12 +26,12 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Intege
     /**
      * 实例化.
      *
-     * @param tableName 表名.
-     * @param resource 事务资源.
-     * @param timeout 超时毫秒.
+     * @param tableName   表名.
+     * @param resource    事务资源.
+     * @param timeout     超时毫秒.
      * @param entityClass 元信息.
-     * @param startTime 开始时间.
-     * @param endTime 结束时间.
+     * @param startTime   开始时间.
+     * @param endTime     结束时间.
      */
     public BatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
                                    IEntityClass entityClass, long startTime, long endTime) {
@@ -47,7 +48,7 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Intege
     }
 
     @Override
-    public Integer execute(Long nothing) throws SQLException {
+    public Integer execute(Long nothing) throws Exception {
         String sql = buildCountSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);

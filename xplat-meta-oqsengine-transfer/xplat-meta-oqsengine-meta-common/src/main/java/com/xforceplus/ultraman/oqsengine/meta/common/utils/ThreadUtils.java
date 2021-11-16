@@ -3,15 +3,11 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-
-
 /**
- * desc :
- * name : ThreadUtils
+ * 线程工具类.
  *
- * @author : xujia
- * date : 2021/2/5
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ThreadUtils {
     public static <T> Thread create(Supplier<T> supplier) {
@@ -22,10 +18,10 @@ public class ThreadUtils {
      * 默认5秒关闭.
      */
     public static void shutdown(Thread thread, long timeout) {
-        TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
         if (null != thread) {
             //  等待timeout秒后结束线程
             if (thread.isAlive()) {
+                TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
                 thread.interrupt();
             }
         }

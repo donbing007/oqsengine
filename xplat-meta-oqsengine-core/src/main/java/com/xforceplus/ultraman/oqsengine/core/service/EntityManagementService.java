@@ -22,6 +22,20 @@ public interface EntityManagementService {
     OperationResult build(IEntity entity) throws SQLException;
 
     /**
+     * 创建多个实体.
+     *
+     * @param entities 目标实体列表.
+     * @return 创建结果.
+     */
+    default OperationResult[] build(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = build(entities[i]);
+        }
+        return results;
+    }
+
+    /**
      * 替换一个已经存在的 entity 的信息.
      * 注意: 只包含需要替换的属性即可.
      *
@@ -30,11 +44,39 @@ public interface EntityManagementService {
     OperationResult replace(IEntity entity) throws SQLException;
 
     /**
+     * 批量更新.
+     *
+     * @param entities 目标实体列表.
+     * @return 创建结果.
+     */
+    default OperationResult[] replace(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = replace(entities[i]);
+        }
+        return results;
+    }
+
+    /**
      * 删除一个已经存在的 entity.
      *
      * @param entity 目标 entity.
      */
     OperationResult delete(IEntity entity) throws SQLException;
+
+    /**
+     * 删除多个已经存在的entity.
+     *
+     * @param entities 目标 entity 列表.
+     * @return 结果.
+     */
+    default OperationResult[] delete(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = delete(entities[i]);
+        }
+        return results;
+    }
 
     /**
      * 删除一个已经存在的 entity,和delete不同的是这个优先级最高.
@@ -46,4 +88,18 @@ public interface EntityManagementService {
      * @throws SQLException 操作异常.
      */
     OperationResult deleteForce(IEntity entity) throws SQLException;
+
+    /**
+     * 删除多个已经存在的 entity,和delete不同的是这个优先级最高.
+     *
+     * @param entities 目标列表.
+     * @return 操作结果.
+     */
+    default OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
+        OperationResult[] results = new OperationResult[entities.length];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = deleteForce(entities[i]);
+        }
+        return results;
+    }
 }

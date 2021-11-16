@@ -1,26 +1,25 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.FileReaderUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import io.micrometer.core.annotation.Timed;
-import java.sql.SQLException;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,12 @@ public class StorageMetaManager implements MetaManager {
     @Resource
     private IRequestHandler requestHandler;
 
+    @Resource(name = "grpcSyncExecutor")
+    private SyncExecutor syncExecutor;
+
+    @Resource(name = "entityClassFormatHandler")
+    private EntityClassFormatHandler entityClassFormatHandler;
+
     @Resource(name = "taskThreadPool")
     private ExecutorService asyncDispatcher;
 
@@ -59,29 +65,29 @@ public class StorageMetaManager implements MetaManager {
         this.isOffLineUse = true;
     }
 
+    private String loadPath;
+
+    public void setLoadPath(String loadPath) {
+        this.loadPath = loadPath;
+    }
+
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
-    /**
-     * 使用entityClassId获取对应的EntityClass.
-     *
-     * @param id 元信息的标识.
-     * @return 元信息实现.
-     */
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "load"})
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        try {
-            if (id == HEALTH_CHECK_ENTITY_ID) {
-                return Optional.of(HealthCheckEntityClass.getInstance());
-            }
-            Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-            return Optional.of(toEntityClass(id, entityClassStorageMaps));
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error.message is [{}]", id,  e.toString());
-            return Optional.empty();
+    @PostConstruct
+    public void init() {
+        //  sync data from file
+        if (null != loadPath && !loadPath.isEmpty()) {
+            logger.info("start load from local path : {}", loadPath);
+            loadFromLocal(loadPath);
+            logger.info("success load from local path : {}", loadPath);
         }
+    }
+
+    @Override
+    public Optional<IEntityClass> load(long id, String profile) {
+        return entityClassFormatHandler.classLoad(id, profile);
     }
 
     @Override
@@ -103,8 +109,11 @@ public class StorageMetaManager implements MetaManager {
         try {
             cacheExecutor.appEnvSet(appId, env);
 
-            if (!cacheExecutor.appEnvGet(appId).equals(env)) {
-                throw new RuntimeException("appId has been init with another Id, need failed...");
+            String cacheEnv = cacheExecutor.appEnvGet(appId);
+            if (!cacheEnv.equals(env)) {
+                logger.warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
+                    appId, env, cacheEnv);
+                env = cacheEnv;
             }
 
             int version = cacheExecutor.version(appId);
@@ -165,110 +174,118 @@ public class StorageMetaManager implements MetaManager {
         cacheExecutor.invalidateLocal();
     }
 
-    /**
-     * 生成IEntityClass.
-     */
-    private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps)
-        throws SQLException {
-        EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
-        if (null == entityClassStorage) {
-            throw new SQLException(String.format("entity class [%d] not found.", id));
+
+    @Override
+    public boolean dataImport(String appId, String env, int version, String content) {
+
+        cacheExecutor.appEnvSet(appId, env);
+
+        if (!cacheExecutor.appEnvGet(appId).equals(env)) {
+            throw new RuntimeException("appId has been init with another Id, need failed...");
         }
 
-        List<IEntityField> entityFields = new ArrayList<>();
-        if (null != entityClassStorage.getFields()) {
-            entityClassStorage.getFields()
-                .forEach(
-                    e -> {
-                        IEntityField entityField = cloneEntityField(e);
-                        if (null != entityField) {
-                            entityFields.add(entityField);
-                        }
-                    }
-                );
-        }
+        int currentVersion = cacheExecutor.version(appId);
 
-        OqsEntityClass.Builder builder =
-            OqsEntityClass.Builder.anEntityClass()
-                .withId(entityClassStorage.getId())
-                .withCode(entityClassStorage.getCode())
-                .withName(entityClassStorage.getName())
-                .withLevel(entityClassStorage.getLevel())
-                .withVersion(entityClassStorage.getVersion())
-                .withRelations(toQqsRelation(entityClassStorage.getRelations()))
-                .withFields(entityFields);
-        /*
-         * 加载父类
-         */
-        if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
-            builder.withFather(toEntityClass(entityClassStorage.getFatherId(), entityClassStorageMaps));
-        }
+        if (version > currentVersion) {
+            logger.info("execute data import, appId {}, currentVersion {}, update version {}", appId, currentVersion,
+                version);
 
-        return builder.build();
+            EntityClassSyncRspProto entityClassSyncRspProto;
+            try {
+                entityClassSyncRspProto = EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
+            }
+
+            if (!syncExecutor.sync(appId, version, entityClassSyncRspProto)) {
+                throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
+            }
+            return true;
+        } else {
+            String message = String
+                .format("appId [%s], current version [%d] greater than update version [%d], ignore...", appId,
+                    currentVersion, version);
+            logger.warn(message);
+            return false;
+        }
     }
 
-    /**
-     * 加载relation.
-     */
-    private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
-        List<OqsRelation> oqsRelations = new ArrayList<>();
-        if (null != relationStorageList) {
-            relationStorageList.forEach(
-                r -> {
-                    OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
-                        .withId(r.getId())
-                        .withCode(r.getCode())
-                        .withLeftEntityClassId(r.getLeftEntityClassId())
-                        .withLeftEntityClassCode(r.getLeftEntityClassCode())
-                        .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
-                        .withIdentity(r.isIdentity())
-                        .withStrong(r.isStrong())
-                        .withRightEntityClassId(r.getRightEntityClassId())
-                        .withRightEntityClassLoader(this::load)
-                        .withEntityField(cloneEntityField(r.getEntityField()))
-                        .withBelongToOwner(r.isBelongToOwner());
+    @Override
+    public Optional<MetaMetrics> showMeta(String appId) throws Exception {
 
-                    oqsRelations.add(builder.build());
+        try {
+            int currentVersion = cacheExecutor.version(appId);
+            if (currentVersion == NOT_EXIST_VERSION) {
+                return Optional.empty();
+            }
+            String env = cacheExecutor.appEnvGet(appId);
+
+            Collection<Long> ids = cacheExecutor.appEntityIdList(appId, currentVersion);
+
+            Map<Long, EntityClassStorage> metas = cacheExecutor.multiplyRead(ids, currentVersion, false);
+
+            return Optional
+                .of(new MetaMetrics(currentVersion, env, appId, null != metas ? metas.values() : new ArrayList<>()));
+
+        } catch (Exception e) {
+            logger.warn("show meta error, appId {}, message : {}", appId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public Collection<MetaLogs> metaLogs() {
+        Map<String, String> result = cacheExecutor.getSyncLog();
+        List<MetaLogs> metaLogs = new ArrayList<>();
+
+        if (!result.isEmpty()) {
+            result.forEach(
+                (k, v) -> {
+                    String[] keySplitter = k.split("\\.");
+                    if (keySplitter.length == 3) {
+                        metaLogs.add(
+                            new MetaLogs(keySplitter[0], Integer.parseInt(keySplitter[1]),
+                                Long.parseLong(keySplitter[2]), v)
+                        );
+                    }
                 }
             );
         }
-        return oqsRelations;
+
+        return metaLogs;
+
     }
 
-    private IEntityField cloneEntityField(IEntityField entityField) {
-        if (null != entityField) {
-            EntityField.Builder builder = EntityField.Builder.anEntityField()
-                .withName(entityField.name())
-                .withCnName(entityField.cnName())
-                .withFieldType(entityField.type())
-                .withDictId(entityField.dictId())
-                .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue());
-
-            if (null != entityField.config()) {
-                FieldConfig config = entityField.config();
-                builder.withConfig(FieldConfig.Builder.anFieldConfig()
-                    .withDelimiter(config.getDelimiter())
-                    .withDisplayType(config.getDisplayType())
-                    .withFieldSense(config.getFieldSense())
-                    .withFuzzyType(config.getFuzzyType())
-                    .withIdentifie(config.isIdentifie())
-                    .withMax(config.getMax())
-                    .withMin(config.getMin())
-                    .withPrecision(config.getPrecision())
-                    .withRequired(config.isRequired())
-                    .withSearchable(config.isSearchable())
-                    .withSplittable(config.isSplittable())
-                    .withUniqueName(config.getUniqueName())
-                    .withValidateRegexString(config.getValidateRegexString())
-                    .withWildcardMaxWidth(config.getWildcardMaxWidth())
-                    .withWildcardMinWidth(config.getWildcardMinWidth())
-                    .build()
-                );
-            }
-
-            return builder.build();
+    private void loadFromLocal(String path) {
+        if (!path.endsWith(File.separator)) {
+            path = path + File.separator;
         }
-        return null;
+        List<String> files = FileReaderUtils.getFileNamesInOneDir(path);
+        for (String file : files) {
+            try {
+                String[] splitter = EntityClassStorageHelper.splitMetaFromFileName(file);
+
+                String appId = splitter[0];
+                int version = Integer.parseInt(splitter[1]);
+                String fullPath = path + file;
+
+                String v =
+                    EntityClassStorageHelper.initDataFromFilePath(appId, splitter[2], version, fullPath);
+
+                if (dataImport(splitter[0], splitter[2], version, v)) {
+                    logger
+                        .info("init meta from local path success, path : {}, appId : {}, version : {}", fullPath, appId,
+                            version);
+                } else {
+                    logger.warn("init meta from local path failed, less than current oqs use version, path : {}",
+                        fullPath);
+                }
+            } catch (Exception e) {
+                logger.warn("load from local-file failed, path : {}, message : {}", path + file, e.getMessage());
+
+                //  ignore current file
+            }
+        }
     }
 }

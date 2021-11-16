@@ -34,7 +34,7 @@ public class MetricsConfiguration {
      * 搜索线程池指标.
      */
     @Bean
-    public ExecutorServiceMetrics callReadExecutorServiceMetrics() {
+    public ExecutorServiceMetrics ioExecutorServiceMetrics() {
         ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool,
             MetricsDefine.PREFIX + READ_THREAD_POOL,
             Tags.empty());
@@ -46,7 +46,7 @@ public class MetricsConfiguration {
      * 写入事务执行线程池指标.
      */
     @Bean
-    public ExecutorServiceMetrics callWriteExecutorServiceMetrics() {
+    public ExecutorServiceMetrics taskExecutorServiceMetrics() {
         ExecutorServiceMetrics esm = new ExecutorServiceMetrics(taskThreadPool,
             MetricsDefine.PREFIX + WRITE_THREAD_POOL,
             Tags.empty());

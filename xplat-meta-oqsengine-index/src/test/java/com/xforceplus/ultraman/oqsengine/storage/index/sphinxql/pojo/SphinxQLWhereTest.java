@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
+ * where 测试.
+ *
  * @author dongbin
  * @version 0.1 2021/04/09 15:37
  * @since 1.8
@@ -19,7 +21,7 @@ public class SphinxQLWhereTest {
             .addAttrFilter(" AND ")
             .addAttrFilter("attr.78823 < 100");
 
-        Assert.assertEquals("(attr.123279 > 0 AND attr.78823 < 100)", where.toString());
+        Assertions.assertEquals("(attr.123279 > 0 AND attr.78823 < 100)", where.toString());
     }
 
     @Test
@@ -30,7 +32,7 @@ public class SphinxQLWhereTest {
             .addMatch(" ")
             .addMatch("(@attrf 789)");
 
-        Assert.assertEquals("MATCH('((@attrf 123) (@attrf 789))')", where.toString());
+        Assertions.assertEquals("MATCH('((@attrf 123) (@attrf 789))')", where.toString());
     }
 
     @Test
@@ -40,9 +42,9 @@ public class SphinxQLWhereTest {
         where.addAttrFilter("attr.123279 > 0")
             .addAttrFilter(" AND ")
             .addAttrFilter("attr.78823 < 100");
-        where.setEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
+        where.addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
 
-        Assert.assertEquals("(attr.123279 > 0 AND attr.78823 < 100) AND MATCH('@entityclassf =9223372036854775807')",
+        Assertions.assertEquals("(attr.123279 > 0 AND attr.78823 < 100) AND MATCH('@entityclassf 9223372036854775807')",
             where.toString());
     }
 
@@ -53,9 +55,27 @@ public class SphinxQLWhereTest {
         where.addMatch("(@attrf 123)")
             .addMatch(" ")
             .addMatch("(@attrf 789)");
-        where.setEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
+        where.addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
 
-        Assert.assertEquals("MATCH('((@attrf 123) (@attrf 789)) (@entityclassf =9223372036854775807)')", where.toString());
+        Assertions.assertEquals("MATCH('((@attrf 123) (@attrf 789)) (@entityclassf 9223372036854775807)')",
+            where.toString());
+    }
+
+    @Test
+    public void testHaveMatchHaveEntityClassMultipleEntityClass() throws Exception {
+        SphinxQLWhere where = new SphinxQLWhere();
+
+        where.addMatch("(@attrf 123)")
+            .addMatch(" ")
+            .addMatch("(@attrf 789)")
+            .addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build())
+            .addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE - 1).build())
+            .addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE - 2).build());
+
+
+        Assertions.assertEquals(
+            "MATCH('((@attrf 123) (@attrf 789)) (@entityclassf 9223372036854775807 | 9223372036854775806 | 9223372036854775805)')",
+            where.toString());
     }
 
     @Test
@@ -68,9 +88,10 @@ public class SphinxQLWhereTest {
         where.addMatch("(@attrf 123)")
             .addMatch(" ")
             .addMatch("(@attrf 789)");
-        where.setEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
+        where.addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
 
-        Assert.assertEquals("(attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf =9223372036854775807)')",
+        Assertions.assertEquals(
+            "(attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf 9223372036854775807)')",
             where.toString());
     }
 
@@ -84,11 +105,12 @@ public class SphinxQLWhereTest {
         where.addMatch("(@attrf 123)")
             .addMatch(" ")
             .addMatch("(@attrf 789)");
-        where.setEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
+        where.addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
 
         where.setCommitId(100);
 
-        Assert.assertEquals("commitid < 100 AND (attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf =9223372036854775807)')",
+        Assertions.assertEquals(
+            "commitid < 100 AND (attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf 9223372036854775807)')",
             where.toString());
     }
 
@@ -102,12 +124,13 @@ public class SphinxQLWhereTest {
         where.addMatch("(@attrf 123)")
             .addMatch(" ")
             .addMatch("(@attrf 789)");
-        where.setEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
+        where.addEntityClass(EntityClass.Builder.anEntityClass().withId(Long.MAX_VALUE).build());
 
         where.setCommitId(100);
         where.addFilterId(1).addFilterId(2).addFilterId(3);
 
-        Assert.assertEquals("commitid < 100 AND id NOT IN (1,2,3) AND (attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf =9223372036854775807)')",
+        Assertions.assertEquals(
+            "commitid < 100 AND id NOT IN (1,2,3) AND (attr.123279 > 0 AND attr.78823 < 100) AND MATCH('((@attrf 123) (@attrf 789)) (@entityclassf 9223372036854775807)')",
             where.toString());
     }
 
@@ -116,7 +139,7 @@ public class SphinxQLWhereTest {
         SphinxQLWhere where = new SphinxQLWhere();
         where.setCommitId(100);
 
-        Assert.assertEquals("commitid < 100", where.toString());
+        Assertions.assertEquals("commitid < 100", where.toString());
     }
 
     @Test
@@ -124,7 +147,7 @@ public class SphinxQLWhereTest {
         SphinxQLWhere where = new SphinxQLWhere();
         where.addFilterId(1).addFilterId(2).addFilterId(3);
 
-        Assert.assertEquals("id NOT IN (1,2,3)", where.toString());
+        Assertions.assertEquals("id NOT IN (1,2,3)", where.toString());
     }
 
     @Test
@@ -136,7 +159,7 @@ public class SphinxQLWhereTest {
                 .addAttrFilter(" AND ")
                 .addAttrFilter("attr.78823 < 100"), true);
 
-        Assert.assertEquals("(attr.123279 > 0 AND attr.78823 < 100)", where.toString());
+        Assertions.assertEquals("(attr.123279 > 0 AND attr.78823 < 100)", where.toString());
 
         where = new SphinxQLWhere();
         where.addAttrFilter("attr.123279 > 0")
@@ -144,11 +167,11 @@ public class SphinxQLWhereTest {
             .addAttrFilter("attr.78823 < 100");
         where.addWhere(
             new SphinxQLWhere()
-                .addAttrFilter("attr.100000 = 100")
-            , true
+                .addAttrFilter("attr.100000 = 100"),
+            true
         );
 
-        Assert.assertEquals("((attr.123279 > 0 AND attr.78823 < 100) AND (attr.100000 = 100))", where.toString());
+        Assertions.assertEquals("((attr.123279 > 0 AND attr.78823 < 100) AND (attr.100000 = 100))", where.toString());
     }
 
     @Test
@@ -162,6 +185,6 @@ public class SphinxQLWhereTest {
             true
         );
 
-        Assert.assertEquals("MATCH('((@attrf 123) (@attrf 789))')", where.toString());
+        Assertions.assertEquals("MATCH('((@attrf 123) (@attrf 789))')", where.toString());
     }
 }

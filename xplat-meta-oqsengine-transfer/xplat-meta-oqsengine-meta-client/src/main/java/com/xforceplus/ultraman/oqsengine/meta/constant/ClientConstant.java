@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.constant;
 
 /**
- * desc :
- * name : ClientConstant
+ * client constant.
  *
- * @author : xujia
- * date : 2021/2/7
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ClientConstant {
     public static final int CLIENT_TASK_COUNT = 2;

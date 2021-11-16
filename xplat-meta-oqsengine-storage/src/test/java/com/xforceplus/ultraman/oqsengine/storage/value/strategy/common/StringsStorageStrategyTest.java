@@ -6,10 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * EnumStorageStrategy Tester.
@@ -22,14 +20,6 @@ public class StringsStorageStrategyTest {
 
     private StringsStorageStrategy storageStrategy = new StringsStorageStrategy();
     private IEntityField field = new EntityField(1, "enum", FieldType.ENUM);
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void testToStorage() throws Exception {
@@ -47,18 +37,18 @@ public class StringsStorageStrategyTest {
 
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
-        Assert.assertEquals(StringStorageValue.class, storageValue.getClass());
-        Assert.assertNotNull("Unexpected null value.", storageValue);
+        Assertions.assertEquals(StringStorageValue.class, storageValue.getClass());
+        Assertions.assertNotNull(storageValue, "Unexpected null value.");
 
         int i = 0;
         while (storageValue != null) {
-            Assert.assertEquals(expectedValues[i], storageValue.value());
+            Assertions.assertEquals(expectedValues[i], storageValue.value());
 
             i++;
             storageValue = storageValue.next();
         }
 
-        Assert.assertEquals(expectedValues.length, i);
+        Assertions.assertEquals(expectedValues.length, i);
     }
 
     @Test
@@ -84,7 +74,7 @@ public class StringsStorageStrategyTest {
 
         StringsValue stringsValue = (StringsValue) storageStrategy.toLogicValue(field, head);
 
-        Assert.assertEquals(String.join(",", expectedValues), String.join(",", stringsValue.getValue()));
+        Assertions.assertEquals(String.join(",", expectedValues), String.join(",", stringsValue.getValue()));
 
     }
 
@@ -94,10 +84,8 @@ public class StringsStorageStrategyTest {
         StringsValue logicValue = new StringsValue(field, expectedValues);
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
-        Assert.assertEquals(0, storageValue.location());
-        Assert.assertNull("Unexpected value.", storageValue.next());
-        Assert.assertEquals("1S0", storageValue.storageName());
+        Assertions.assertEquals(0, storageValue.location());
+        Assertions.assertNull(storageValue.next(), "Unexpected value.");
+        Assertions.assertEquals("1S0", storageValue.storageName());
     }
-
-
 } 

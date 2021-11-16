@@ -19,7 +19,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource

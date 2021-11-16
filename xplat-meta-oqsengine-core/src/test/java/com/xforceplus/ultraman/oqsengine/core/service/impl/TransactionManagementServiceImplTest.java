@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,10 +13,10 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.sql.SQLException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -27,11 +28,11 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 public class TransactionManagementServiceImplTest {
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
     }
 
@@ -48,10 +49,10 @@ public class TransactionManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
         long id = impl.begin();
-        Assert.assertEquals(123L, id);
+        Assertions.assertEquals(123L, id);
 
         // 不应该 bind
-        Assert.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
     }
 
     @Test
@@ -67,10 +68,10 @@ public class TransactionManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
         long id = impl.begin(1000L);
-        Assert.assertEquals(123L, id);
+        Assertions.assertEquals(123L, id);
 
         // 不应该 bind
-        Assert.assertFalse(tm.getCurrent().isPresent());
+        Assertions.assertFalse(tm.getCurrent().isPresent());
     }
 
     @Test
@@ -109,10 +110,10 @@ public class TransactionManagementServiceImplTest {
         impl.restore(txId);
         impl.commit();
 
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertTrue(tx.isCommitted());
-        Assert.assertFalse(tx.isRollback());
-        Assert.assertEquals(0, tm.size());
+        Assertions.assertTrue(tx.isCompleted());
+        Assertions.assertTrue(tx.isCommitted());
+        Assertions.assertFalse(tx.isRollback());
+        Assertions.assertEquals(0, tm.size());
     }
 
     @Test
@@ -137,29 +138,31 @@ public class TransactionManagementServiceImplTest {
         impl.restore(txId);
         impl.rollback();
 
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertFalse(tx.isCommitted());
-        Assert.assertTrue(tx.isRollback());
+        Assertions.assertTrue(tx.isCompleted());
+        Assertions.assertFalse(tx.isCommitted());
+        Assertions.assertTrue(tx.isRollback());
 
-        Assert.assertEquals(0, tm.size());
+        Assertions.assertEquals(0, tm.size());
     }
 
-    @Test(expected = SQLException.class)
+    @Test
     public void testCompleted() throws Exception {
-        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
-            .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .withWaitCommitSync(false)
-            .build();
+        assertThrows(SQLException.class, () -> {
+            CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+            when(commitIdStatusService.save(0, true)).thenReturn(true);
+            TransactionManager tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
+                .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdStatusService(commitIdStatusService)
+                .withCacheEventHandler(new DoNothingCacheEventHandler())
+                .withWaitCommitSync(false)
+                .build();
 
-        TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
-        ReflectionTestUtils.setField(impl, "transactionManager", tm);
+            TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
+            ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
-        impl.commit();
+            impl.commit();
+        });
     }
 
 } 

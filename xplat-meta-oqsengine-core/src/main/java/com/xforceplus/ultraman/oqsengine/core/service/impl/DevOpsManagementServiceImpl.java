@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Resource
     private CdcErrorStorage cdcErrorStorage;
+
+    @Resource
+    private MasterStorage masterStorage;
 
     /*
      * 默认查询为7天内的CDC ERROR记录
@@ -129,6 +133,11 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public void removeCommitIds(Long... ids) {
         commitIdRepairExecutor.clean(ids);
+    }
+
+    @Override
+    public long[] showCommitIds() {
+        return commitIdRepairExecutor.allCommitIds();
     }
 
     @Override

@@ -90,4 +90,19 @@ public interface FieldConfigOrBuilder extends
    */
   com.google.protobuf.ByteString
       getUniqueNameBytes();
+
+  /**
+   * <code>bool crossSearch = 14;</code>
+   */
+  boolean getCrossSearch();
+
+  /**
+   * <code>int32 length = 15;</code>
+   */
+  int getLength();
+
+  /**
+   * <code>int32 valueFloatScale = 16;</code>
+   */
+  int getValueFloatScale();
 }

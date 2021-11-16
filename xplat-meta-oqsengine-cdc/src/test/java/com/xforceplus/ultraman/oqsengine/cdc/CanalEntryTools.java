@@ -16,7 +16,7 @@ public class CanalEntryTools {
      * 测试的case.
      */
     public static class Case {
-        private long id;
+        private final long id;
         private int levelOrdinal;
         private boolean deleted;
         private boolean replacement;
@@ -25,7 +25,7 @@ public class CanalEntryTools {
         private long create;
         private long update;
         private long tx;
-        private long commitId;
+        private final long commitId;
         private int attr;
         private long entityId;
 
@@ -386,6 +386,9 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    /**
+     * 准备数据.
+     */
     public static class Prepared {
         public static String[] attrs = {
             "{\"1L\":73550,\"2S\":\"1\",\"3L\":0}",

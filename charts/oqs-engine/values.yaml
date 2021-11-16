@@ -30,10 +30,10 @@ ingress:
 resources:
   limits:
     cpu: 2000m
-    memory: 2048Mi
+    memory: 4096Mi
   requests:
-    cpu: 500m
-    memory: 1024Mi
+    cpu: 1000m
+    memory: 2048Mi
 
 nodeSelector: {}
 
@@ -49,16 +49,21 @@ annotations:
 # 推荐-Xmx大小为limit的60%.
 jvm:
   - -server
-  - -XX:+UseG1GC
-  - -Xmx1228m
+  - -Xms4096M
+  - -Xmx4096M
+  - -Xmn1536M
+  - -XX:MetaspaceSize=256M
+  - -XX:MaxMetaspaceSize=256M
+  - -XX:+UseParNewGC
+  - -XX:+UseConcMarkSweepGC
+  - -XX:+CMSScavengeBeforeRemark
+  - -XX:CMSInitiatingOccupancyFraction=75
+  - -XX:+UseCMSInitiatingOccupancyOnly
 
 jmx:
   enabled: false
   port: 1099
   hostname: "127.0.0.1"
-
-environment:
-  - JVM_HEAP_PERCENTAGE: 60
 
 logger:
   level: INFO
@@ -106,6 +111,8 @@ query:
     maxJoinDriverLineNumber: 1000
 changelog:
   enabled: false
+metadata:
+  enhanced: false
 storage:
   tokenizer:
     segmentation:
@@ -133,6 +140,8 @@ storage:
     timeoutMs: 3000
   timeoutMs:
     query: 3000
+  kv:
+    name: "kv"
   master:
     name: "oqsbigentity"
     shard:
@@ -143,8 +152,6 @@ storage:
   index:
     search:
       name: "oqsindex"
-      maxQueryTimeMs: 0
-      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:
@@ -179,6 +186,24 @@ sync:
   # Acceptable number of unsynchronized commit Numbers.
   allowMaxUnSyncCommitIdSize: 1000
 
+discover:
+  sdk:
+    enable: false
+    connection:
+      host: "ultraman-devops-service-test.n01103-oqs-cdc"
+      port: "8916"
+    time:
+      heartbeat:
+        expired: 60000
+        duration: 5000
+    agent:
+      serviceId: ${HOSTNAME}.${instance.id}
+      serviceGroup: ${HOSTNAME}
+      serviceName: "oqs-engine"
+    threadPool:
+      task: 5
+      queue: 100
+
 # datasource json config
 # Multiple data sources are separated by Numbers.
 # The HikariCP connection pool implementation is used, see configuration parameters.
@@ -188,7 +213,7 @@ datasource:
   master: |-
     {
       driverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcUrl: "jdbc:mysql://127.0.0.1:3306/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
+      jdbcUrl: "jdbc:mysql://127.0.0.1:3306/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&allowMultiQueries=true&rewriteBatchedStatements=true"
       username: "root",
       password: "root",
       maximumPoolSize: 3,
@@ -202,7 +227,7 @@ datasource:
     write: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
         maximumPoolSize: 3,
@@ -214,7 +239,7 @@ datasource:
     search: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
         maximumPoolSize: 3,

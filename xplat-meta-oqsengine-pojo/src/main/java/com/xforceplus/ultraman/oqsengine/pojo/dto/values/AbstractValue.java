@@ -16,6 +16,12 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     private IEntityField field;
     private V value;
 
+    /**
+     * 构造一个新的逻辑值.
+     *
+     * @param field 目标字段元信息.
+     * @param value 实际值.
+     */
     public AbstractValue(IEntityField field, V value) {
         this.field = field;
         this.value = value;
@@ -45,9 +51,36 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
     @Override
     public String valueToString() {
-        return value.toString();
+        if (value != null) {
+            return value.toString();
+        } else {
+            return "NULL";
+        }
     }
 
     @Override
     public abstract long valueToLong();
+
+    @Override
+    public IValue<V> copy() {
+        return copy(getField());
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(this.getClass().getSimpleName()).append("{");
+        sb.append("field=").append(field);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    protected void checkType(IEntityField newFiled) {
+        if (newFiled.type() != getField().type()) {
+            throw new IllegalArgumentException(
+                String.format("Field that doesn't fit.[newFieldId=%d, oldFieldId=%d, newType=%s, oldType=%s]",
+                    newFiled.id(), getField().id(), newFiled.type().name(), getField().type().name()));
+        }
+    }
 }

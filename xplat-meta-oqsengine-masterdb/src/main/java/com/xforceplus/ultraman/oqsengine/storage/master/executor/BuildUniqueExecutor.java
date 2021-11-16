@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.StorageUniqueEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -11,11 +12,11 @@ import java.util.Collections;
 /**
  * 项目名称: 票易通
  * JDK 版本: JDK1.8
- * 说明:
+ * 说明: 新增业务主键
  * 作者(@author): liwei
  * 创建时间: 2021/3/19 4:55 PM
  */
-public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEntity, Integer> {
+public class BuildUniqueExecutor extends AbstractJdbcTaskExecutor<StorageUniqueEntity, Integer> {
 
     public static Executor<StorageUniqueEntity, Integer> build(
         String tableName, TransactionResource resource, long timeout) {
@@ -32,7 +33,7 @@ public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEnt
 
 
     @Override
-    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws SQLException {
+    public Integer execute(StorageUniqueEntity storageUniqueEntity) throws Exception {
         String sql = buildSQL(storageUniqueEntity.getEntityClasses().length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int pos = 1;

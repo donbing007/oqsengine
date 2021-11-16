@@ -4,10 +4,8 @@ import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * NumberIndexTableNameHashSelector Tester.
@@ -17,15 +15,6 @@ import org.junit.Test;
  * @since <pre>Feb 20, 2020</pre>
  */
 public class SuffixNumberHashSelectorTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     /**
      * Method: select(String key).
      */
@@ -37,8 +26,8 @@ public class SuffixNumberHashSelectorTest {
         int len = 100; // 分布区域
         SuffixNumberHashSelector selector = new SuffixNumberHashSelector(base, len);
         for (String key : keys) {
-            int address = Math.abs(Time33Hash.build().hash(key) % len);
-            Assert.assertEquals(base + address, selector.select(key));
+            int address = Math.abs(Time33Hash.getInstance().hash(key) % len);
+            Assertions.assertEquals(base + address, selector.select(key));
         }
     }
 

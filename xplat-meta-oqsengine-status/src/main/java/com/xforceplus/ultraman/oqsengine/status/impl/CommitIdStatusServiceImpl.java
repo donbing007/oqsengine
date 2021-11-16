@@ -99,7 +99,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
      */
     public static final long INVALID_COMMITID = 0;
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
 
     @Resource
@@ -164,6 +164,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         syncConnect = redisClient.connect();
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.commitid");
+
 
         if (redisLuaScriptWatchDog != null) {
             saveLuaScriptSha = redisLuaScriptWatchDog.watch(SAVE_LUA_SCRIPT);

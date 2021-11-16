@@ -23,22 +23,39 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileEntity;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileRelations;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -59,16 +76,18 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     final Logger logger = LoggerFactory.getLogger(DefaultCacheExecutor.class);
 
-    @Resource
+    @Resource(name = "redisClientState")
     private RedisClient redisClient;
-
-    @Resource
-    private ObjectMapper objectMapper;
 
     @Resource
     private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
-    private Cache<String, EntityClassStorage> entityClassStorageCache;
+    public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+        .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+        .build();
+
+    private final Cache<String, EntityClassStorage> entityClassStorageCache;
 
     private StatefulRedisConnection<String, String> syncConnect;
 
@@ -85,9 +104,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private int prepareExpire = 60;
 
     /*
+     * fixed固定1天
+     */
+    private int fixedDayExpire = 24 * 60 * 60;
+
+    /*
      * 默认一年过期
      */
-    private int cacheExpire = 12 * 30 * 24 * 60 * 60;
+    private int cacheExpire = 12 * 30 * fixedDayExpire;
+
+    /*
+     * 默认7天过期
+     */
+    private int logExpire = 7;
 
     /*
      * script
@@ -110,16 +139,14 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private String entityClassStorageListScriptSha;
 
     /*
-     * keys
-     */
-    /*
      * version key (AppID-Env信息)
      * [redis hash key]
      * key-appEnvKeys
      * field-appId
      * value-env
      */
-    private String appEnvKeys;
+    private final String appEnvKeys;
+
     /*
      * version key (版本信息)
      * [redis hash key]
@@ -127,7 +154,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-appId
      * value-version
      */
-    private String appVersionKeys;
+    private final String appVersionKeys;
 
     /*
      * prepare key prefix with appId (当前正在进行更新中的Key)
@@ -135,7 +162,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * key-appPrepareKeyPrefix..appId
      * value-version
      */
-    private String appPrepareKeyPrefix;
+    private final String appPrepareKeyPrefix;
 
     /*
      * entityId-appId mapping key (当前的entityId与appId的mapping Key)
@@ -144,7 +171,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-entityId
      * value-appId
      */
-    private String appEntityMappingKey;
+    private final String appEntityMappingKey;
 
     /*
      * all entityIds in one appId with version key (当前的appId + version下所有的entityId列表)
@@ -153,7 +180,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field-(appId + version)
      * value-appIds
      */
-    private String appEntityCollectionsKey;
+    private final String appEntityCollectionsKey;
 
 
     /*
@@ -163,7 +190,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * field - entityStroage elements name
      * value - entityStroage elements value
      */
-    private String entityStorageKeys;
+    private final String entityStorageKeys;
 
     /**
      * 默认实例化.
@@ -314,7 +341,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
+    public boolean save(String appId, int version, List<EntityClassStorage> storageList,
+                        List<Event<?>> payLoads) {
         //  set data
         for (EntityClassStorage storage : storageList) {
             String key = entityStorageKeys + "." + version + "." + storage.getId();
@@ -331,7 +359,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 syncCommands.hset(key, ELEMENT_FATHER, Long.toString(storage.getFatherId()));
                 if (null != storage.getAncestors() && storage.getAncestors().size() > 0) {
                     try {
-                        String ancestorStr = objectMapper.writeValueAsString(storage.getAncestors());
+                        String ancestorStr = OBJECT_MAPPER.writeValueAsString(storage.getAncestors());
                         syncCommands.hset(key, ELEMENT_ANCESTORS, ancestorStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse ancestors failed.", false);
@@ -342,10 +370,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
             //  relations
             if (null != storage.getRelations() && storage.getRelations().size() > 0) {
                 try {
-                    String relationStr = objectMapper.writeValueAsString(storage.getRelations());
+                    String relationStr = OBJECT_MAPPER.writeValueAsString(storage.getRelations());
                     syncCommands.hset(key, ELEMENT_RELATIONS, relationStr);
                 } catch (JsonProcessingException e) {
-                    throw new MetaSyncClientException("parse children failed.", false);
+                    throw new MetaSyncClientException("parse relations failed.", false);
                 }
             }
 
@@ -353,10 +381,55 @@ public class DefaultCacheExecutor implements CacheExecutor {
             if (null != storage.getFields()) {
                 for (IEntityField entityField : storage.getFields()) {
                     try {
-                        String entityFieldStr = objectMapper.writeValueAsString(entityField);
+                        String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                        // TODO avg init.
                         syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
+                    }
+
+                    if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
+                        AutoFill.DomainNoType domainNoType =
+                            ((AutoFill) entityField.config().getCalculation()).getDomainNoType();
+                        if (domainNoType.equals(AutoFill.DomainNoType.NORMAL)) {
+                            payLoads.add(
+                                new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
+                                        new AutoFillUpgradePayload(entityField))
+                            );
+                        }
+                    }
+                }
+            }
+
+            //  profiles
+            if (null != storage.getProfileStorageMap() && !storage.getProfileStorageMap().isEmpty()) {
+                for (ProfileStorage ps : storage.getProfileStorageMap().values()) {
+                    if (null != ps.getEntityFieldList() && !ps.getEntityFieldList().isEmpty()) {
+                        for (IEntityField entityField : ps.getEntityFieldList()) {
+                            try {
+                                String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                                syncCommands
+                                    .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
+                            } catch (JsonProcessingException e) {
+                                throw new MetaSyncClientException("parse profile-entityFields failed.", false);
+                            }
+
+                            if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
+                                payLoads.add(
+                                    new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
+                                        new AutoFillUpgradePayload(entityField))
+                                );
+                            }
+                        }
+                    }
+
+                    if (null != ps.getRelationStorageList() && !ps.getRelationStorageList().isEmpty()) {
+                        try {
+                            String relationStr = OBJECT_MAPPER.writeValueAsString(ps.getRelationStorageList());
+                            syncCommands.hset(key, generateProfileRelations(ps.getCode()), relationStr);
+                        } catch (JsonProcessingException e) {
+                            throw new MetaSyncClientException("parse profile-relations failed.", false);
+                        }
                     }
                 }
             }
@@ -365,6 +438,27 @@ public class DefaultCacheExecutor implements CacheExecutor {
         //  reset version
         return resetVersion(appId, version,
             storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<EntityClassStorage> read(String appId) {
+        int version = version(appId);
+        if (version == NOT_EXIST_VERSION) {
+            return Collections.emptyList();
+        }
+
+        Collection<Long> ids = appEntityIdList(appId, version);
+        List<EntityClassStorage> entityClass = new ArrayList<>();
+        try {
+            for (Long id : ids) {
+                EntityClassStorage entityClassStorage = entityClassStorageCache.getIfPresent(generateEntityCacheKey(id, version));
+                entityClass.add(entityClassStorage);
+            }
+        } catch (Exception e) {
+            logger.warn("{}", e.toString());
+        }
+
+        return entityClass;
     }
 
     /**
@@ -377,7 +471,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
          * 不存在时抛出异常
          */
         if (NOT_EXIST_VERSION == version) {
-            throw new RuntimeException(String.format("invalid entityClassId : [%s], no version pair", entityClassId));
+            throw new RuntimeException(String.format("invalid entityClassId : [%d], no version pair", entityClassId));
         }
 
         EntityClassStorage entityClassStorage = getFromLocal(entityClassId, version);
@@ -420,17 +514,23 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 根据Ids读取EntityStorage列表.
      */
     @Override
-    public Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException {
+    public Map<Long, EntityClassStorage> multiplyRead(Collection<Long> ids, int version, boolean useLocalCache)
+        throws JsonProcessingException {
         Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
         if (null != ids && ids.size() > 0) {
             List<Long> remoteFilters = new ArrayList<>();
+
             ids.forEach(
                 id -> {
-                    EntityClassStorage entityClassStorage = getFromLocal(id, version);
-                    if (null == entityClassStorage) {
+                    if (!useLocalCache) {
                         remoteFilters.add(id);
                     } else {
-                        entityClassStorageMap.put(id, entityClassStorage);
+                        EntityClassStorage entityClassStorage = getFromLocal(id, version);
+                        if (null == entityClassStorage) {
+                            remoteFilters.add(id);
+                        } else {
+                            entityClassStorageMap.put(id, entityClassStorage);
+                        }
                     }
                 }
             );
@@ -487,17 +587,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
             return false;
         }
 
-        final String[] keys = {
-            appEntityMappingKey,
-            appVersionKeys
-        };
-
         /*
          * 这里多出2个位置分别为appId、version
-         * 当
          */
         String[] values = null;
-
         if (null != ids && ids.size() > 0) {
             values = new String[ids.size() + 2];
             int j = 2;
@@ -508,6 +601,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         } else {
             values = new String[2];
         }
+
+        String[] keys = {
+            appEntityMappingKey,
+            appVersionKeys
+        };
 
         values[0] = appId;
         values[1] = Integer.toString(version);
@@ -524,14 +622,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
          */
         if (ret) {
             try {
-                String fieldName = String.format("%s.%s", appId, version);
+                String fieldName = String.format("%s.%d", appId, version);
                 syncCommands.hset(appEntityCollectionsKey,
-                    fieldName, objectMapper.writeValueAsString(ids));
+                    fieldName, OBJECT_MAPPER.writeValueAsString(ids));
             } catch (Exception e) {
                 //  ignore
             }
         }
-
         return ret;
     }
 
@@ -610,33 +707,78 @@ public class DefaultCacheExecutor implements CacheExecutor {
             }
         }
 
-        String fieldName = String.format("%s.%s", appId, version);
-
-        //  获取 appId + version 映射的 entityIds列表
-        String v = syncCommands.hget(appEntityCollectionsKey,
-            fieldName);
-
-        if (null != v && !v.isEmpty()) {
-            try {
-                List<Long> ids = objectMapper.readValue(v,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
-                for (Long id : ids) {
-                    doClean(id, version);
-                }
-                //  删除 appId + version 映射的 entityIds列表
-                syncCommands.hdel(appEntityCollectionsKey, fieldName);
-            } catch (Exception e) {
-                logger.warn("{}", e.toString());
+        Collection<Long> ids = appEntityIdList(appId, version);
+        try {
+            for (Long id : ids) {
+                doClean(id, version);
             }
+            //  删除 appId + version 映射的 entityIds列表
+            syncCommands.hdel(appEntityCollectionsKey, String.format("%s.%d", appId, version));
+        } catch (Exception e) {
+            logger.warn("{}", e.toString());
         }
 
         return true;
     }
 
     @Override
+    public void addSyncLog(String appId, Integer version, String message) {
+        String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now()));
+        String fieldName = String.format("%s.%d.%d", appId, version, System.currentTimeMillis());
+
+        try {
+            syncCommands.expire(key, logExpire * logExpire);
+            syncCommands.hset(key, fieldName, message);
+        } catch (Exception e) {
+            //  失败时什么都不做
+            //  ignore
+        }
+    }
+
+    @Override
+    public Map<String, String> getSyncLog() {
+        Map<String, String> logs = new LinkedHashMap<>();
+        for (int i = 0; i < logExpire; i++) {
+            String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now().minusDays(i)));
+            Map<String, String> part = syncCommands.hgetall(key);
+            if (!part.isEmpty()) {
+                logs.putAll(part);
+            }
+        }
+
+        return logs;
+    }
+
+    private String toNowDateString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return formatter.format(date);
+    }
+
+    @Override
+    public Collection<Long> appEntityIdList(String appId, Integer version) {
+        String fieldName = String.format("%s.%d", appId, version);
+
+        //  获取 appId + version 映射的 entityIds列表
+        String v = syncCommands.hget(appEntityCollectionsKey, fieldName);
+
+        if (null != v && !v.isEmpty()) {
+            try {
+                return OBJECT_MAPPER.readValue(v,
+                    OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+            } catch (Exception e) {
+                logger.warn("{}", e.toString());
+            }
+        }
+
+        return new ArrayList<>();
+    }
+
+    @Override
     public void invalidateLocal() {
         entityClassStorageCache.invalidateAll();
     }
+
+
 
     /**
      * 删除过期版本的EntityClass信息.
@@ -666,7 +808,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         /*
          * 获取当前的Key.
          */
-        String keys = String.format("%s.%s.%s", entityStorageKeys, Integer.toString(version), Long.toString(entityId));
+        String keys = String.format("%s.%d.%d", entityStorageKeys, version, entityId);
 
         try {
             List<String> entityClassKeys = syncCommands.hkeys(keys);
@@ -714,9 +856,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
             keys, version + "", Long.toString(entityClassId));
 
         //  get self
-        Map<String, String> keyValues = objectMapper.readValue(redisValue, Map.class);
+        Map<String, String> keyValues = OBJECT_MAPPER.readValue(redisValue, Map.class);
 
-        return redisValuesToLocalStorage(objectMapper, keyValues);
+        return redisValuesToLocalStorage(OBJECT_MAPPER, keyValues);
     }
 
     private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap)
@@ -744,7 +886,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             ScriptOutputType.VALUE,
             keys, extraEntityIds);
 
-        Map<String, Map<String, String>> valuePairs = objectMapper.readValue(redisValue, Map.class);
+        Map<String, Map<String, String>> valuePairs = OBJECT_MAPPER.readValue(redisValue, Map.class);
         /*
          * check size
          */
@@ -756,7 +898,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
             EntityClassStorage storage =
-                redisValuesToLocalStorage(objectMapper, value.getValue());
+                redisValuesToLocalStorage(OBJECT_MAPPER, value.getValue());
 
             entityClassStorageMap.put(storage.getId(), storage);
         }

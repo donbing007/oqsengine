@@ -1,11 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 分页对象的测试.
@@ -15,25 +11,6 @@ import org.junit.Test;
  * @since 1.5
  */
 public class PageTest {
-
-    public PageTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     /**
      * 普通情况的测试,能过构造方法设置当前序号和分页大小.
@@ -47,10 +24,10 @@ public class PageTest {
         Page page = new Page();
         page.setTotalCount(dataTotal);
         PageScope scope = page.getNextPage();
-        Assert.assertEquals(scope.startLine, 1);
-        Assert.assertEquals(scope.endLine, 10);
-        Assert.assertEquals(page.getIndex(), 2);
-        Assert.assertEquals(page.getPageCount(), countPageCount(10, dataTotal));
+        Assertions.assertEquals(scope.startLine, 1);
+        Assertions.assertEquals(scope.endLine, 10);
+        Assertions.assertEquals(page.getIndex(), 2);
+        Assertions.assertEquals(page.getPageCount(), countPageCount(10, dataTotal));
 
         //指定当前序号为2并设置分页大小为11.
         int index = 2;
@@ -58,18 +35,18 @@ public class PageTest {
         page = new Page(index, size);
         page.setTotalCount(dataTotal);
         scope = page.getNextPage();
-        Assert.assertEquals(scope.startLine, index * size - size + 1);
-        Assert.assertEquals(scope.endLine, size * index);
-        Assert.assertEquals(page.getIndex(), index + 1);
-        Assert.assertEquals(page.getPageCount(), countPageCount(size, dataTotal));
+        Assertions.assertEquals(scope.startLine, index * size - size + 1);
+        Assertions.assertEquals(scope.endLine, size * index);
+        Assertions.assertEquals(page.getIndex(), index + 1);
+        Assertions.assertEquals(page.getPageCount(), countPageCount(size, dataTotal));
 
         //获取第3页
         scope = page.getNextPage();
         index++;
-        Assert.assertEquals(scope.startLine, index * size - size + 1);
-        Assert.assertEquals(scope.endLine, size * index);
-        Assert.assertEquals(page.getIndex(), index + 1);
-        Assert.assertEquals(page.getPageCount(), countPageCount(size, dataTotal));
+        Assertions.assertEquals(scope.startLine, index * size - size + 1);
+        Assertions.assertEquals(scope.endLine, size * index);
+        Assertions.assertEquals(page.getIndex(), index + 1);
+        Assertions.assertEquals(page.getPageCount(), countPageCount(size, dataTotal));
     }
 
     /**
@@ -86,25 +63,24 @@ public class PageTest {
         PageScope scope = lastPage.getNextPage();
         long pageCount = countPageCount(size, dataTotal);
         long remainingCount = size * (pageCount - 1) + 1;
-        Assert.assertEquals(scope.startLine, remainingCount);
-        Assert.assertEquals(scope.endLine, dataTotal);
-        Assert.assertEquals(lastPage.getIndex(), pageCount + 1);
-        Assert.assertEquals(lastPage.getPageCount(), pageCount);
+        Assertions.assertEquals(scope.startLine, remainingCount);
+        Assertions.assertEquals(scope.endLine, dataTotal);
+        Assertions.assertEquals(lastPage.getIndex(), pageCount + 1);
+        Assertions.assertEquals(lastPage.getPageCount(), pageCount);
 
         //直接使用构造方法,应该结果同上.
         lastPage = Page.lastPage(size);
         lastPage.setTotalCount(dataTotal);
         scope = lastPage.getNextPage();
-        Assert.assertEquals(scope.startLine, remainingCount);
-        Assert.assertEquals(scope.endLine, dataTotal);
-        Assert.assertEquals(lastPage.getIndex(), pageCount + 1);
-        Assert.assertEquals(lastPage.getPageCount(), pageCount);
+        Assertions.assertEquals(scope.startLine, remainingCount);
+        Assertions.assertEquals(scope.endLine, dataTotal);
+        Assertions.assertEquals(lastPage.getIndex(), pageCount + 1);
+        Assertions.assertEquals(lastPage.getPageCount(), pageCount);
 
         //已经为最后一页,再次获取返回null.
         scope = lastPage.getNextPage();
-        Assert.assertNull(scope);
-        Assert.assertEquals(lastPage.hasNextPage(), false);
-
+        Assertions.assertNull(scope);
+        Assertions.assertFalse(lastPage.hasNextPage());
     }
 
     /**
@@ -120,13 +96,13 @@ public class PageTest {
         long point = 1;
 
         PageScope scope = page.getAppointPage(point);
-        Assert.assertEquals(scope.startLine, point);
-        Assert.assertEquals(scope.endLine, size);
+        Assertions.assertEquals(scope.startLine, point);
+        Assertions.assertEquals(scope.endLine, size);
 
         point = 10;
         scope = page.getAppointPage(point);
-        Assert.assertEquals(scope.startLine, size * point - size + 1);
-        Assert.assertEquals(scope.endLine, size * point);
+        Assertions.assertEquals(scope.startLine, size * point - size + 1);
+        Assertions.assertEquals(scope.endLine, size * point);
     }
 
     /**
@@ -136,18 +112,15 @@ public class PageTest {
     public void testNotReady() {
         Page page = new Page(1, 10);
 
-        try {
-            page.getNextPage();
-            Assert.fail("Not ready, but did not throw an exception.");
-        } catch (IllegalStateException ex) {
-            ex.printStackTrace();
-        }
-        try {
-            page.getAppointPage(1);
-            Assert.fail("Not ready, but did not throw an exception.");
-        } catch (IllegalStateException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> page.getNextPage()
+        );
+
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> page.getAppointPage(1)
+        );
     }
 
     /**
@@ -158,32 +131,30 @@ public class PageTest {
         Page page = new Page(1, 10);
         page.setVisibleTotalCount(200);
         page.setTotalCount(1000);
-        Assert.assertEquals(1000, page.getTotalCount());
-        Assert.assertEquals(20, page.getPageCount());
+        Assertions.assertEquals(1000, page.getTotalCount());
+        Assertions.assertEquals(20, page.getPageCount());
 
         page = new Page(1, 10);
         page.setVisibleTotalCount(1);
         page.setTotalCount(100);
-        Assert.assertEquals(100, page.getTotalCount());
-        Assert.assertEquals(1, page.getPageCount());
+        Assertions.assertEquals(100, page.getTotalCount());
+        Assertions.assertEquals(1, page.getPageCount());
 
-        page = new Page(1, 10);
-        try {
-            page.setVisibleTotalCount(-200);
-            Assert.fail("An exception was expected to be thrown, but it didn't.");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        Page usePage = new Page(1, 10);
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> usePage.setVisibleTotalCount(-200)
+        );
 
         page = new Page(4, 199);
         page.setVisibleTotalCount(200);
         page.setTotalCount(3000);
 
-        Assert.assertEquals(3000, page.getTotalCount());
-        Assert.assertEquals(2, page.getPageCount());
-        Assert.assertEquals(4, page.getIndex());
-        Assert.assertFalse(page.hasNextPage());
-        Assert.assertNull(page.getNextPage());
+        Assertions.assertEquals(3000, page.getTotalCount());
+        Assertions.assertEquals(2, page.getPageCount());
+        Assertions.assertEquals(4, page.getIndex());
+        Assertions.assertFalse(page.hasNextPage());
+        Assertions.assertNull(page.getNextPage());
     }
 
     @Test
@@ -191,11 +162,11 @@ public class PageTest {
         Page page = new Page(2, 10);
         page.setTotalCount(0);
 
-        Assert.assertEquals(0, page.getTotalCount());
-        Assert.assertEquals(0, page.getPageCount());
-        Assert.assertFalse(page.hasNextPage());
+        Assertions.assertEquals(0, page.getTotalCount());
+        Assertions.assertEquals(0, page.getPageCount());
+        Assertions.assertFalse(page.hasNextPage());
         PageScope scope = page.getNextPage();
-        Assert.assertNull(scope);
+        Assertions.assertNull(scope);
     }
 
     @Test
@@ -203,10 +174,10 @@ public class PageTest {
         Page page = Page.emptyPage();
         page.setTotalCount(1000);
 
-        Assert.assertEquals(0, page.getPageCount());
-        Assert.assertFalse(page.hasNextPage());
+        Assertions.assertEquals(0, page.getPageCount());
+        Assertions.assertFalse(page.hasNextPage());
         PageScope scope = page.getNextPage();
-        Assert.assertNull(scope);
+        Assertions.assertNull(scope);
     }
 
     @Test
@@ -215,11 +186,11 @@ public class PageTest {
         sourcePage.setTotalCount(100);
         Page clonePage = sourcePage.clone();
 
-        Assert.assertTrue(clonePage.isEmptyPage());
-        Assert.assertEquals(100, clonePage.getTotalCount());
+        Assertions.assertTrue(clonePage.isEmptyPage());
+        Assertions.assertEquals(100, clonePage.getTotalCount());
         clonePage.setVisibleTotalCount(2000);
-        Assert.assertEquals(2000, clonePage.getVisibleTotalCount());
-        Assert.assertEquals(-1, sourcePage.getVisibleTotalCount());
+        Assertions.assertEquals(2000, clonePage.getVisibleTotalCount());
+        Assertions.assertEquals(-1, sourcePage.getVisibleTotalCount());
 
     }
 

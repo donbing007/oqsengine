@@ -31,5 +31,17 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId)
         throws SQLException;
 
-
+    /**
+     * 迭代某个entityClass的所有实例(包含所有子类).
+     *
+     * @param entityClass 目标entityClass.
+     * @param startTime   开始时间
+     * @param endTime     结束时间.
+     * @param lastId      上次迭代的最后id.
+     * @param size        迭代数量.
+     * @return 迭代器.
+     * @throws SQLException 发生异常.
+     */
+    DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
+        throws SQLException;
 }

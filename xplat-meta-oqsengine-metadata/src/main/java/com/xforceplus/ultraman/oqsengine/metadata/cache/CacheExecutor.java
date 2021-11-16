@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -19,9 +21,10 @@ public interface CacheExecutor {
      * @param appId       应用标识.
      * @param version     版本号.
      * @param storageList 需要保存的元信息.
+     * @param payLoads 需要发布的事件.
      * @return true成功, false失败.
      */
-    boolean save(String appId, int version, List<EntityClassStorage> storageList);
+    boolean save(String appId, int version, List<EntityClassStorage> storageList, List<Event<?>> payLoads);
 
     /**
      * 读取storageList原始信息，由外部进行EntityClass拼装.
@@ -32,6 +35,15 @@ public interface CacheExecutor {
      */
     Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
+
+    /**
+     * 读取内存中应用下的配置信息.
+     *
+     * @param appId 应用标识.
+     * @return entityStorage集合.
+     */
+    List<EntityClassStorage> read(String appId);
+
     /**
      * 批量读取.
      *
@@ -40,7 +52,7 @@ public interface CacheExecutor {
      * @return 元信息结果.
      * @throws JsonProcessingException JSON异常.
      */
-    Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException;
+    Map<Long, EntityClassStorage> multiplyRead(Collection<Long> ids, int version, boolean useLocalCache) throws JsonProcessingException;
 
     /**
      * 清除AppId + version对应的存储记录.
@@ -51,6 +63,15 @@ public interface CacheExecutor {
      * @return true 成功, false 失败.
      */
     boolean clean(String appId, int version, boolean force);
+
+    /**
+     * 获取当前appId的entityId列表.
+     *
+     * @param appId  应用标识.
+     * @param version 版本号.
+     * @return entityId列表.
+     */
+    public Collection<Long> appEntityIdList(String appId, Integer version);
 
     /**
      * 获取appId对应的版本信息.
@@ -126,4 +147,14 @@ public interface CacheExecutor {
      * 设置本地缓存无效.
      */
     void invalidateLocal();
+
+    /**
+     * 写入同步日志.
+     */
+    void addSyncLog(String appId, Integer version, String message);
+
+    /**
+     * 查询同步日志.
+     */
+    Map<String, String> getSyncLog();
 }

@@ -16,7 +16,7 @@ public interface Lifecycle {
      *
      * @throws SQLException 初始化失败.
      */
-    default void init() throws SQLException {
+    default void init() throws Exception {
 
     }
 
@@ -25,7 +25,7 @@ public interface Lifecycle {
      *
      * @throws SQLException 清理失败.
      */
-    default void destroy() throws SQLException {
+    default void destroy() throws Exception {
 
     }
 

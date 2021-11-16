@@ -2,21 +2,19 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -24,49 +22,48 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * Created by justin.xu on 05/2021
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-@Ignore
-public class ConsumerErrorTest extends AbstractCDCContainer {
+public class ConsumerErrorTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
-    private ConsumerRunner consumerRunner;
 
-    private MockRedisCallbackService mockRedisCallbackService;
+    private static final boolean IF_TEST = true;
 
-    private boolean ifTest = false;
-
-    @Before
+    /**
+     * 初始化.
+     */
+    @BeforeEach
     public void before() throws Exception {
-        if (ifTest) {
-            consumerRunner = initConsumerRunner();
-            consumerRunner.start();
+        if (IF_TEST) {
+            super.init(true);
         }
     }
 
-    @After
-    public void after() throws SQLException {
-        if (ifTest) {
-            consumerRunner.shutdown();
-            clear();
-            closeAll();
+    /**
+     * 清理.
+     */
+    @AfterEach
+    public void after() throws Exception {
+        if (IF_TEST) {
+            super.destroy(true);
         }
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
-        if (ifTest) {
-            ConsumerService consumerService = initAll(true);
+        if (IF_TEST) {
             CDCMetricsService cdcMetricsService = new CDCMetricsService();
-            mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
+            mockRedisCallbackService = new MockRedisCallbackService(StorageInitialization.getInstance()
+                .getCommitIdStatusService());
             ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
-            return new ConsumerRunner(consumerService, cdcMetricsService, singleCDCConnector);
+            return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(),
+                cdcMetricsService, CdcInitialization.getInstance().getSingleCDCConnector());
         }
         return null;
     }
 
     @Test
     public void syncBad() throws Exception {
-        if (ifTest) {
+        if (IF_TEST) {
+            TransactionManager transactionManager = StorageInitialization.getInstance().getTransactionManager();
             Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
@@ -92,14 +89,14 @@ public class ConsumerErrorTest extends AbstractCDCContainer {
         }
     }
 
-    private void initData(Transaction tx, IEntity[] datas, boolean replacement) throws SQLException {
+    private void initData(Transaction tx, IEntity[] datas, boolean replacement) throws Exception {
         for (IEntity entity : datas) {
             if (replacement) {
                 entity.resetVersion(0);
-                masterStorage.replace(entity, getEntityClass(entity.entityClassRef().getId()));
+                MasterDBInitialization.getInstance().getMasterStorage().replace(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateReplace(entity, entity);
             } else {
-                masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
+                MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateBuild(entity);
             }
         }

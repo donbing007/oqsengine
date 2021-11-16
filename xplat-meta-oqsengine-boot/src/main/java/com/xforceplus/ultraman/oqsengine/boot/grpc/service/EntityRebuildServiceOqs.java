@@ -6,7 +6,6 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN
 import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
@@ -70,9 +69,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Autowired
     private EntitySearchService entitySearchService;
 
-    private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
-
-    @Autowired
+    @Resource
     private MetaManager metaManager;
 
     @Resource(name = "ioThreadPool")
@@ -88,32 +85,15 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
-    /**
-     * checkout the entityClassRef.
-     */
-    private IEntityClass checkedEntityClassRef(EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef.getId());
-        if (entityClassOp.isPresent()) {
-            IEntityClass entityClass = entityClassOp.get();
-            return entityClass;
-        } else {
-            throw new RuntimeException(ENTITYCLASS_NOT_FOUND);
-        }
-    }
-
     @Override
     public CompletionStage<RebuildTaskInfo> rebuildIndex(RebuildRequest in, Metadata metadata) {
         return async(() -> {
             EntityUp entityUp = in.getEntity();
 
-            //check entityRef
-            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(entityUp);
-            IEntityClass entityClass;
-            try {
-                entityClass = checkedEntityClassRef(entityClassRef);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+            /*
+             * TODO profile
+             */
+            IEntityClass entityClass = toEntityClass(entityUp, metaManager, "");
 
             try {
                 Optional<DevOpsTaskInfo> devOpsTaskInfo = devOpsManagementService.rebuildIndex(
@@ -155,19 +135,10 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
 
     @Override
     public CompletionStage<RebuildTaskInfo> getActiveTask(EntityUp in, Metadata metadata) {
-
-        //check entityRef
-        EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in);
-        IEntityClass entityClass;
-        try {
-            entityClass = checkedEntityClassRef(entityClassRef);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-
         return async(() -> {
             try {
-                return devOpsManagementService.getActiveTask(entityClass).map(this::toTaskInfo).orElse(empty);
+                return devOpsManagementService.getActiveTask(toEntityClass(in, metaManager, ""))
+                    .map(this::toTaskInfo).orElse(empty);
             } catch (SQLException e) {
                 logger.error("{}", e);
                 return RebuildTaskInfo.newBuilder().setErrCode("-1").setMessage(e.getMessage()).buildPartial();
@@ -381,10 +352,10 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
             .setIsCancel(taskInfo.isCancel())
             .setIsDone(taskInfo.isDone())
             .setStatus(taskInfo.status().name())
-            .setBatchSize(taskInfo.getBatchSize())
+            .setBatchSize((int) taskInfo.getBatchSize())
             .setEntityId(taskInfo.getEntity())
             .setFinishSize(taskInfo.getFinishSize())
-            .setPercentage(taskInfo.getProgressPercentage())
+            .setPercentage((int) taskInfo.getProgressPercentage())
             .setStarts(taskInfo.getStarts())
             .setEnds(taskInfo.getEnds())
             .build();

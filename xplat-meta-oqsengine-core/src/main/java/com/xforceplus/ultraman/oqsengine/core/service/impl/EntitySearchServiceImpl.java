@@ -1,15 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
-import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
-import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AbstractConditionNode;
@@ -17,27 +15,22 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -48,18 +41,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -103,6 +93,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private IndexStorage indexStorage;
 
+    @Resource(name = "combinedSelectStorage")
+    private ConditionsSelectStorage combinedSelectStorage;
+
     @Resource(name = "taskThreadPool")
     private ExecutorService threadPool;
 
@@ -118,9 +111,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private long maxJoinDriverLineNumber;
-    private boolean useFullSort = false;
     private boolean showResult = false;
-    private CombinedStorage combinedStorage;
 
 
     @PostConstruct
@@ -140,8 +131,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (maxJoinDriverLineNumber > maxVisibleTotalCount) {
             maxJoinDriverLineNumber = maxVisibleTotalCount;
         }
-
-        combinedStorage = new CombinedStorage(masterStorage, indexStorage, useFullSort);
 
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
             maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
@@ -171,10 +160,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     public void setMaxVisibleTotalCount(long maxVisibleTotalCount) {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
-    }
-
-    public void setUseFullSort(boolean useFullSort) {
-        this.useFullSort = useFullSort;
     }
 
     public boolean isShowResult() {
@@ -211,6 +196,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     }
 
+    @Override
+    public Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException {
+        //        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
+        //        if (!entityClass.isPresent()) {
+        //            throw new RuntimeException(
+        //                String.format("Can not find any EntityClass with id %s", entityClassRef.getId()));
+        //        }
+        //        Optional<StorageUniqueEntity> uniqueStorage = masterStorage.select(key, entityClass.get());
+        //        if (!uniqueStorage.isPresent()) {
+        //            return Optional.empty();
+        //        }
+        //        return selectOne(uniqueStorage.get().getId(), entityClassRef);
+        throw new UnsupportedOperationException();
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException {
@@ -240,22 +240,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort,
-                                                  Page page)
-        throws SQLException {
+    public Collection<IEntity> selectByConditions(
+        Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page) throws SQLException {
         return selectByConditions(conditions, entityClassRef,
-            SearchConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
+            ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                  SearchConfig config)
+                                                  ServiceSelectConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -312,17 +311,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
 
         Conditions useConditions = conditions;
-        Sort useSort = null;
-        if (config.getSort().isPresent()) {
-            Sort sort = config.getSort().get();
-            if (sort.getField() != null && !sort.getField().config().isSearchable()) {
-                useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
-            } else {
-                useSort = sort;
-            }
-        } else {
-            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
-        }
 
         Page usePage;
         if (!config.getPage().isPresent()) {
@@ -332,21 +320,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
         usePage.setVisibleTotalCount(maxVisibleTotalCount);
 
-        Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-        long minUnSyncCommitId;
-        if (!minUnSyncCommitIdOp.isPresent()) {
-            minUnSyncCommitId = 0;
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
-            }
-        } else {
-            minUnSyncCommitId = minUnSyncCommitIdOp.get();
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
-                    minUnSyncCommitId);
-            }
-        }
         try {
             // join
             Map<Long, IEntityClass> entityClassCollectionMapping = collectEntityClass(conditions, entityClass);
@@ -389,7 +362,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
 
                 for (AbstractConditionNode safeNode : safeNodes) {
-                    subConditions.add(buildSafeNodeConditions(entityClass, safeNode, minUnSyncCommitId));
+                    subConditions.add(buildSafeNodeConditions(entityClass, safeNode));
                 }
 
                 useConditions = Conditions.buildEmtpyConditions();
@@ -407,16 +380,43 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            Collection<EntityRef> refs = combinedStorage.select(
+            SelectConfig.Builder selectConfigBuilder = SelectConfig.Builder.anSelectConfig();
+            selectConfigBuilder.withPage(usePage)
+                .withDataAccessFitlerCondtitons(
+                    config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions()
+                );
+            // 非排序.
+            if (!config.getSort().isPresent()
+                && !config.getSecondarySort().isPresent()
+                && !config.getThirdSort().isPresent()) {
+
+                selectConfigBuilder.withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+
+            } else {
+                // 上层不排序,后续的直接视为不排序.
+                if (config.getSort().isPresent()) {
+                    selectConfigBuilder.withSort(config.getSort().get());
+
+                    if (config.getSecondarySort().isPresent()) {
+                        selectConfigBuilder.withSecondarySort(config.getSecondarySort().get());
+
+                        if (config.getThirdSort().isPresent()) {
+                            selectConfigBuilder.withThirdSort(config.getThirdSort().get());
+                        } else {
+                            // 追加ID排序.防止相同值造成排序不准确.
+                            selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                        }
+                    } else {
+                        // 追加ID排序.防止相同值造成排序不准确.
+                        selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                    }
+                }
+            }
+
+            Collection<EntityRef> refs = combinedSelectStorage.select(
                 useConditions,
                 entityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withCommitId(reviseCommitId(minUnSyncCommitId))
-                    .withSort(useSort)
-                    .withPage(usePage)
-                    .withDataAccessFitlerCondtitons(
-                        config.getFilter().isPresent() ? config.getFilter().get() : Conditions.buildEmtpyConditions())
-                    .build()
+                selectConfigBuilder.build()
             );
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
@@ -447,37 +447,25 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
-    /**
-     * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.
-     * 未提交的数据的提交号都标示为 CommitHelper.getUncommitId() 的返回值.
-     * 这里需要修正以下情况的查询.
-     * 1. 在事务中并且未提交.
-     * 2. 之前有过写入动作.
-     */
-    private long reviseCommitId(long minUnSyncCommitId) {
-        if (transactionManager != null && minUnSyncCommitId == 0) {
-            Optional<Transaction> currentTransaction = transactionManager.getCurrent();
-            if (currentTransaction.isPresent()) {
-                Transaction transaction = currentTransaction.get();
-                TransactionAccumulator accumulator = transaction.getAccumulator();
-                // 没有写和的操作序号值.
-                final int noWriteOpSize = 0;
-                if (accumulator.getBuildNumbers()
-                    + accumulator.getReplaceNumbers()
-                    + accumulator.getDeleteNumbers() > noWriteOpSize) {
-                    return CommitHelper.getUncommitId();
-                }
-            }
+    @Override
+    public Collection<IEntity> search(ServiceSearchConfig config) throws SQLException {
+        SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
+            .withCode(config.getCode())
+            .withValue(config.getValue())
+            .withPage(config.getPage())
+            .withFuzzyType(config.getFuzzyType())
+            .build();
+        EntityClassRef[] entityClassRefs = config.getEntityClassRefs();
+        IEntityClass[] entityClasses = new IEntityClass[entityClassRefs.length];
+        for (int i = 0; i < entityClasses.length; i++) {
+            entityClasses[i] = EntityClassHelper.checkEntityClass(metaManager, entityClassRefs[i]);
         }
 
-        return minUnSyncCommitId;
+        return buildEntitiesFromRefs(indexStorage.search(searchConfig, entityClasses), null);
     }
 
     /**
-     * 以下情况会空返回.
-     * 1. 字段不存在.
-     * 2. 字段非可搜索.
-     * 注意: 如果字段标示为identifie类型,那么会返回true.
+     * 以下情况会空返回. 1. 字段不存在. 2. 字段非可搜索. 注意: 如果字段标示为identifie类型,那么会返回true.
      */
     private boolean checkCanSearch(Condition c, IEntityClass entityClass) {
         if (c.getField().config().isIdentifie()) {
@@ -516,9 +504,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-    /**
-     * 将根据数据查询的产生oqsmajor版本号来决定如何处理.
-     */
+    // 加载实体. entityClass 允许为null.
     private Collection<IEntity> buildEntitiesFromRefs(Collection<EntityRef> refs, IEntityClass entityClass)
         throws SQLException {
 
@@ -527,30 +513,31 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
 
         long[] ids = refs.stream().mapToLong(ref -> ref.getId()).toArray();
-        Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
-        return entities;
-    }
-
-    private IValue buildValue(IEntityField field, Long id) {
-
-        FieldType type = field.type();
-
-        switch (type) {
-            case LONG:
-                return new LongValue(field, id);
-            case STRINGS:
-                return new StringsValue(field, id.toString());
-            default:
-                throw new RuntimeException("Cannot join field type like this " + type);
+        // 结果查询表.
+        Map<Long, IEntity> entityTable;
+        if (entityClass == null) {
+            entityTable = masterStorage.selectMultiple(ids).stream()
+                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
+        } else {
+            entityTable = masterStorage.selectMultiple(ids, entityClass).stream()
+                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
         }
+
+        List<IEntity> results = new ArrayList<>(ids.length);
+        Arrays.stream(ids).forEach(id -> {
+            IEntity entity = entityTable.get(id);
+            if (entity != null) {
+                results.add(entity);
+            }
+        });
+
+        return results;
     }
 
     /**
-     * 将安全条件结点处理成可查询的 Conditions 实例.
-     * ignoreEntityClass 表示不需要处理的条件.
+     * 将安全条件结点处理成可查询的 Conditions 实例. ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode,
-                                               long commitId)
+    private Conditions buildSafeNodeConditions(IEntityClass mainEntityClass, AbstractConditionNode safeNode)
         throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
@@ -580,7 +567,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
          * 并将剩余的构造成 DriverEntityTask 实例交由线程池执行.
          */
         driverEntityConditionsGroup.entrySet().stream()
-            .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue(), commitId))
+            .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue()))
             .forEach(driverEntityTask -> futures.add(threadPool.submit(driverEntityTask)));
 
         Conditions conditions = Conditions.buildEmtpyConditions();
@@ -606,8 +593,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         driverQueryResult.getKey().mainEntityClassField,
                         ConditionOperator.MULTIPLE_EQUALS,
                         driverQueryResult.getValue().stream()
-                            .map(ref -> buildValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
-                            .toArray(IValue[]::new)
+                            .map(ref -> new LongValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
+                            .toArray(LongValue[]::new)
                     ));
             } catch (Exception e) {
 
@@ -635,19 +622,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } else {
             // 之前过滤掉了非 driver 的条件,这里需要加入.
             processConditions.collectCondition().stream()
-                .filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0).forEach(c -> {
-                    conditions.addAnd(c);
-                }
-            );
+                .filter(c -> !c.getEntityClassRef().isPresent() || c.getRelationId() == 0)
+                .forEach(c -> conditions.addAnd(c));
         }
 
         return conditions;
     }
 
     /**
-     * 将不同的 entityClass 的条件进行分组.
-     * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
-     * 不能处理非 driver 的 entity 查询条件.
+     * 将不同的 entityClass 的条件进行分组. 不同的 entityClass 关联不同的 Field 将认为是不同的组. 不能处理非 driver 的 entity 查询条件.
      */
     private Map<DriverEntityKey, Conditions> splitEntityClassCondition(IEntityClass mainEntityClass,
                                                                        Collection<Condition> conditionCollection)
@@ -671,13 +654,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     "An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
-            Optional<OqsRelation> relationOp = mainEntityClass.oqsRelations().stream()
+            Optional<Relationship> relationOp = mainEntityClass.relationship().stream()
                 .filter(r -> r.getId() == c.getRelationId()).findFirst();
             if (!relationOp.isPresent()) {
                 throw new SQLException(
                     String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));
             }
-            OqsRelation relation = relationOp.get();
+            Relationship relation = relationOp.get();
             relationField = relation.getEntityField();
             if (relationField != null) {
                 key = new DriverEntityKey(driverEntityClass, relationField);
@@ -695,8 +678,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 驱动 entity 的条件分组 key.
-     * 以 entityClass 和其关联的主 entityClass 中字段为区分.
+     * 驱动 entity 的条件分组 key. 以 entityClass 和其关联的主 entityClass 中字段为区分.
      */
     private class DriverEntityKey {
         private IEntityClass entityClass;
@@ -746,23 +728,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         private DriverEntityKey key;
         private Conditions conditions;
-        private long commitId;
 
-        public DriverEntityTask(DriverEntityKey key, Conditions conditions, long commitId) {
+        public DriverEntityTask(DriverEntityKey key, Conditions conditions) {
             this.key = key;
             this.conditions = conditions;
-            this.commitId = commitId;
         }
 
         @Override
         public Map.Entry<DriverEntityKey, Collection<EntityRef>> call() throws Exception {
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
-            Collection<EntityRef> refs = combinedStorage.select(
+            Collection<EntityRef> refs = combinedSelectStorage.select(
                 conditions,
                 key.getEntityClass(),
                 SelectConfig.Builder.anSelectConfig()
-                    .withCommitId(commitId)
                     .withSort(Sort.buildOutOfSort())
                     .withPage(driverPage).build()
             );
@@ -777,203 +756,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     key.getEntityClass().code(), maxJoinDriverLineNumber));
             }
             return new AbstractMap.SimpleEntry<>(key, refs);
-        }
-    }
-
-    /**
-     * 组合搜索.
-     */
-    static final class CombinedStorage {
-
-        private Logger logger = LoggerFactory.getLogger(CombinedStorage.class);
-
-        private MasterStorage masterStorage;
-
-        private IndexStorage indexStorage;
-
-        private boolean useFullSort = false;
-
-        private final Map<FieldType, EntityRefComparator> refMapping;
-
-        private final Map<FieldType, String> sortDefaultValue;
-
-        public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage, boolean useFullSort) {
-            this.masterStorage = masterStorage;
-            this.indexStorage = indexStorage;
-            this.useFullSort = useFullSort;
-
-            refMapping = new HashMap<>();
-            refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
-            refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
-            refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
-            refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
-            refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
-            refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
-            refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
-
-            sortDefaultValue = new HashMap();
-            sortDefaultValue.put(FieldType.BOOLEAN, Boolean.FALSE.toString());
-            sortDefaultValue.put(FieldType.DATETIME, Long.toString(new Date(0).getTime()));
-            sortDefaultValue.put(FieldType.LONG, "0");
-            sortDefaultValue.put(FieldType.DECIMAL, "0.0");
-            sortDefaultValue.put(FieldType.ENUM, "");
-            sortDefaultValue.put(FieldType.STRING, "");
-            sortDefaultValue.put(FieldType.UNKNOWN, "0");
-        }
-
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
-            throws SQLException {
-            Collection<EntityRef> masterRefs = Collections.emptyList();
-
-            long commitId = config.getCommitId();
-            Sort sort = config.getSort();
-            Page page = config.getPage();
-            Conditions filterCondition = config.getDataAccessFilterCondtitions();
-
-            if (commitId > 0) {
-                //trigger master search
-                masterRefs = masterStorage.select(
-                    conditions,
-                    entityClass,
-                    SelectConfig.Builder.anSelectConfig()
-                        .withSort(sort)
-                        .withCommitId(commitId)
-                        .withDataAccessFitlerCondtitons(filterCondition)
-                        .build()
-                );
-
-                for (EntityRef ref : masterRefs) {
-                    if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
-                        throw new SQLException(String.format("Expected operation type unknown.[id=%d]", ref.getId()));
-                    }
-                }
-            }
-
-            masterRefs = fixNullSortValue(masterRefs, sort);
-
-            /*
-             * filter ids
-             */
-            Set<Long> filterIdsFromMaster = masterRefs.stream()
-                .filter(
-                    x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
-                .map(EntityRef::getId)
-                .collect(toSet());
-
-
-            /*
-             * 这里在查询索引时新创建一个page的原因是在查询索引时会调用page.getNextPage()造成当前页增加.相当于如下.
-             * Page page = new Page(1,20);
-             * page.getNextPage();
-             * page.getNextPage();
-             *
-             * 第二次的调用会造成错误的读取后一页.
-             * 为了让getNextPage()方法一个Page实例只能调用一次.
-             */
-            Page indexPage;
-            try {
-                indexPage = page.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new SQLException(e.getMessage(), e);
-            }
-
-            Collection<EntityRef> indexRefs = indexStorage.select(
-                conditions,
-                entityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withSort(sort)
-                    .withPage(indexPage)
-                    .withExcludedIds(filterIdsFromMaster)
-                    .withDataAccessFitlerCondtitons(filterCondition)
-                    .withCommitId(commitId).build()
-            );
-            indexRefs = fixNullSortValue(indexRefs, sort);
-
-            Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream()
-                .filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
-
-            Collection<EntityRef> retRefs;
-            //combine two refs
-            if (sort != null && !sort.isOutOfOrder()) {
-                retRefs = merge(masterRefsWithoutDeleted, indexRefs, sort);
-            } else {
-                retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + indexRefs.size());
-                retRefs.addAll(masterRefsWithoutDeleted);
-                retRefs.addAll(indexRefs);
-            }
-
-            page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
-            if (page.isEmptyPage()) {
-                return Collections.emptyList();
-            }
-
-            if (!page.hasNextPage()) {
-                return Collections.emptyList();
-            }
-
-            PageScope scope = page.getNextPage();
-            long pageSize = page.getPageSize();
-
-            long skips = scope == null ? 0 : scope.getStartLine();
-            Collection<EntityRef> limitedSelect =
-                retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
-            return limitedSelect;
-        }
-
-        private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
-            StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
-            FieldType type = sort.getField().type();
-
-            EntityRefComparator entityRefComparator = refMapping.get(type);
-
-            if (entityRefComparator == null) {
-                //default
-                logger.error("unknown field type !! fallback to string");
-                entityRefComparator = new EntityRefComparator(FieldType.STRING);
-            }
-
-
-            if (useFullSort) {
-                Stream<EntityRef> masterRefStream = masterRefs.stream();
-                Stream<EntityRef> indexRefStream = indexRefs.stream();
-
-                return Stream.concat(masterRefStream, indexRefStream)
-                    .sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed())
-                    .collect(toList());
-
-            } else {
-                //sort masterRefs first
-                List<EntityRef> sortedMasterRefs =
-                    masterRefs.stream()
-                        .sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed())
-                        .collect(toList());
-                return streamMerger.merge(
-                    sortedMasterRefs.stream(),
-                    indexRefs.stream(),
-                    refMapping.get(type),
-                    sort.isAsc()).collect(toList());
-            }
-        }
-
-        // 如果排序,但是查询结果没有值.
-        private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort sort) {
-            if (sort != null && !sort.isOutOfOrder()) {
-                refs.parallelStream().forEach(r -> {
-                    if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
-                        if (sort.getField().config().isIdentifie()) {
-                            r.setOrderValue(Long.toString(r.getId()));
-                        } else {
-                            r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
-                            // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
-                            if (r.getOrderValue() == null) {
-                                r.setOrderValue("0");
-                            }
-                        }
-                    }
-                });
-            }
-
-            return refs;
         }
     }
 

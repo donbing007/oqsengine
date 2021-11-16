@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -21,27 +22,23 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collection<MasterStorageEntity>> {
-
-    private IEntityClass entityClass;
+public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<MasterStorageEntity>> {
 
     public static Executor<long[], Collection<MasterStorageEntity>> build(
-        String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, long timeout) {
-        return new MultipleQueryExecutor(tableName, resource, entityClass, timeout);
+        String tableName, TransactionResource<Connection> resource, long timeout) {
+        return new MultipleQueryExecutor(tableName, resource, timeout);
     }
 
     public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
         super(tableName, resource);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass,
-                                 long timeout) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
         super(tableName, resource, timeout);
-        this.entityClass = entityClass;
     }
 
     @Override
-    public Collection<MasterStorageEntity> execute(long[] ids) throws SQLException {
+    public Collection<MasterStorageEntity> execute(long[] ids) throws Exception {
         String sql = buildSQL(ids.length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;
@@ -49,7 +46,6 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
                 st.setLong(index++, id);
             }
             st.setBoolean(ids.length + 1, false);
-            st.setLong(ids.length + 2, entityClass.id());
 
             checkTimeout(st);
 
@@ -63,7 +59,8 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
                         .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
                         .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
                         .withOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR))
-                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE))
+                        .withProfile(rs.getString(FieldDefine.PROFILE));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
@@ -94,7 +91,8 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
             FieldDefine.VERSION,
             FieldDefine.OP,
             FieldDefine.OQS_MAJOR,
-            FieldDefine.ATTRIBUTE
+            FieldDefine.ATTRIBUTE,
+            FieldDefine.PROFILE
             )
         )
             .append(" FROM ")
@@ -102,10 +100,7 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
             .append(" WHERE ")
             .append(FieldDefine.ID).append(" IN (").append(String.join(",", Collections.nCopies(size, "?")))
             .append(") AND ")
-            .append(FieldDefine.DELETED).append("=").append("?")
-            .append(" AND ");
-        int level = entityClass.level();
-        sql.append(FieldDefine.ENTITYCLASS_LEVEL_LIST[level]).append("=?");
+            .append(FieldDefine.DELETED).append("=").append("?");
         return sql.toString();
     }
 }

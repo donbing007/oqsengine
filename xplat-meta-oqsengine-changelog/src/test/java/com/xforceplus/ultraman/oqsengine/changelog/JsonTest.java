@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JsonTest {
 

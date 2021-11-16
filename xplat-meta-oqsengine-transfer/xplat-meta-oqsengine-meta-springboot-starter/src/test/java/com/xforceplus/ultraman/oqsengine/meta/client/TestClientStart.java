@@ -1,5 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_HEAR_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.assertWatchElement;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+
 import com.xforceplus.ultraman.oqsengine.meta.Commons;
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
@@ -7,22 +14,21 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import org.junit.*;
-import org.junit.runner.RunWith;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
+import javax.annotation.Resource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiFunction;
-
-import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * desc :
@@ -33,7 +39,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  * @since : 1.8
  */
 @ActiveProfiles("client")
-@RunWith(SpringRunner.class)
+@ExtendWith({SpringExtension.class})
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestClientStart {
 
@@ -48,40 +54,37 @@ public class TestClientStart {
     @Autowired
     private MockSyncExecutor mockSyncExecutor;
 
-    boolean ifTest = false;
-
     private static final Map<String, BiFunction<String, WatchElement, Boolean>> functions = new HashMap<>();
 
-    @Before
+    @BeforeEach
     public void before() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(1_000);
 
-            functions.put(caseHeartBeat, this::heartBeatTest);
-            functions.put(caseRegisterPull, this::registerPullTest);
-            functions.put(caseRegisterPush, this::registerPushTest);
+            functions.put(CASE_HEAR_BEAT, this::heartBeatTest);
+            functions.put(CASE_REGISTER_PULL, this::registerPullTest);
+            functions.put(CASE_REGISTER_PUSH, this::registerPushTest);
         }
     }
 
-    @After
+    @AfterEach
     public void after() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(1_000);
         }
     }
-
 
     @Test
     public void test() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             Thread.sleep(5_000);
-            for (Map.Entry<String, WatchElement> e : Commons.cases.entrySet()) {
+            for (Map.Entry<String, WatchElement> e : Commons.CASES.entrySet()) {
                 BiFunction<String, WatchElement, Boolean> f = functions.get(e.getKey());
                 ThreadUtils.create(() -> {
                     try {
                         if (null != f) {
                             logger.info(String.format("start test [%s]...", e.getKey()));
-                            Assert.assertTrue(f.apply(e.getKey(), e.getValue()));
+                            Assertions.assertTrue(f.apply(e.getKey(), e.getValue()));
                             logger.info(String.format("successful test [%s]...", e.getKey()));
                         }
                     } catch (Exception ex) {
@@ -110,7 +113,7 @@ public class TestClientStart {
 
         boolean ret = requestHandler.register(w);
 
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         try {
             Thread.sleep(60_000);
@@ -118,10 +121,10 @@ public class TestClientStart {
             e.printStackTrace();
         }
 
-        Assert.assertEquals(uid, requestWatchExecutor.watcher().uid());
+        Assertions.assertEquals(uid, requestWatchExecutor.watcher().uid());
 
-        return assertWatchElement(caseHeartBeat, Confirmed,
-                requestHandler.watchExecutor().watcher().watches().get(caseName));
+        return assertWatchElement(CASE_HEAR_BEAT, Confirmed,
+            requestHandler.watchExecutor().watcher().watches().get(caseName));
     }
     /**
      * case registerPull
@@ -132,7 +135,7 @@ public class TestClientStart {
     public boolean registerPullTest(String caseName, WatchElement w) {
         boolean ret = requestHandler.register(w);
 
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         try {
             Thread.sleep(5_000);
@@ -162,7 +165,7 @@ public class TestClientStart {
     public boolean registerPushTest(String caseName, WatchElement w) {
         try {
             boolean ret = requestHandler.register(w);
-            Assert.assertTrue(ret);
+            Assertions.assertTrue(ret);
             mockSyncExecutor.status = RequestStatus.SYNC_FAIL;
 
             int expectedVersion = w.getVersion() + 1;
@@ -185,7 +188,7 @@ public class TestClientStart {
                 }
                 loop ++;
             }
-            Assert.assertNotNull(requestStatusVersion);
+            Assertions.assertNotNull(requestStatusVersion);
 
             loop = 0;
             while (loop < max) {
@@ -201,7 +204,7 @@ public class TestClientStart {
                 }
                 loop ++;
             }
-            Assert.assertTrue(isOk);
+            Assertions.assertTrue(isOk);
         } finally {
             mockSyncExecutor.status = RequestStatus.SYNC_OK;
         }
@@ -218,7 +221,7 @@ public class TestClientStart {
         mockSyncExecutor.status = RequestStatus.DATA_ERROR;
         try {
             boolean ret = requestHandler.register(w);
-            Assert.assertTrue(ret);
+            Assertions.assertTrue(ret);
 
             try {
                 Thread.sleep(5_000);
@@ -249,9 +252,9 @@ public class TestClientStart {
     }
 
     private void assertBySyncStatus(String caseName, MockSyncExecutor.RequestStatusVersion requestStatusVersion, RequestStatus requestStatus) {
-        Assert.assertNotNull(requestStatusVersion);
-        Assert.assertEquals(requestHandler.watchExecutor().watcher().watches().get(caseName).getVersion(),
+        Assertions.assertNotNull(requestStatusVersion);
+        Assertions.assertEquals(requestHandler.watchExecutor().watcher().watches().get(caseName).getVersion(),
                 requestStatusVersion.getVersion());
-        Assert.assertEquals(requestStatus, requestStatusVersion.getRequestStatus());
+        Assertions.assertEquals(requestStatus, requestStatusVersion.getRequestStatus());
     }
 }

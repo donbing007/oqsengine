@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ public class DefaultChangelogImpl implements ChangelogService {
     @Resource
     private ReplayService replayService;
 
-    @Resource(name = "snowflakeIdGenerator")
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private IdGenerator<Long> idGenerator;
 
     private Logger logger = LoggerFactory.getLogger(ChangelogService.class);
@@ -60,20 +60,22 @@ public class DefaultChangelogImpl implements ChangelogService {
         List<Changelog> changeLogs = new LinkedList<>();
         long entityClassId = changedEvent.getEntityClassId();
 
+        String profile = entityClass.ref().getProfile();
+
         /**
          * get main entityClass
          */
-        IEntityClass entityClassOp = metaManager.load(entityClassId)
+        IEntityClass entityClassOp = metaManager.load(entityClassId, profile)
                 .orElseThrow(() -> new RuntimeException(String.format(FATAL_ERR, entityClassId)));
 
         List<Changelog> sourceChangelog = handleEvent(changedEvent, entityClass, null);
 
         changeLogs.addAll(sourceChangelog);
-        List<Changelog> records = entityClass.oqsRelations().stream().filter(x -> x.isCompanion()).flatMap(x -> {
+        List<Changelog> records = entityClass.relationship().stream().filter(x -> x.isCompanion()).flatMap(x -> {
             /**
              * entityclass is self ? TODO
              */
-            return handleEvent(changedEvent, x.getRightEntityClass(), x).stream();
+            return handleEvent(changedEvent, x.getRightEntityClass(profile), x).stream();
         }).collect(Collectors.toList());
 
         changeLogs.addAll(records);
@@ -88,12 +90,12 @@ public class DefaultChangelogImpl implements ChangelogService {
      * @param entityClass
      * @return
      */
-    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass, OqsRelation oqsRelation) {
-        if (entityClass.id() == changedEvent.getEntityClassId() && oqsRelation == null) {
+    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass, Relationship relationship) {
+        if (entityClass.id() == changedEvent.getEntityClassId() && relationship == null) {
             return Collections.singletonList(genSourceChangelog(changedEvent));
         } else {
-            List<Changelog> changelogs = relationAwareChangeLogs.stream().filter(x -> x.require(oqsRelation))
-                    .flatMap(x -> x.generateOuterChangelog(oqsRelation, entityClass, changedEvent).stream())
+            List<Changelog> changelogs = relationAwareChangeLogs.stream().filter(x -> x.require(relationship))
+                    .flatMap(x -> x.generateOuterChangelog(relationship, entityClass, changedEvent).stream())
                     .collect(Collectors.toList());
 
             return changelogs;
@@ -183,7 +185,10 @@ public class DefaultChangelogImpl implements ChangelogService {
 
             changeVersionList = mergeSortedList(changeVersionList, currentList, Comparator.comparingLong(ChangeVersion::getVersion));
 
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId);
+            /**
+             * TODO current here losing fields
+             */
+            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, "");
             if(entityClassOp.isPresent()) {
                 IEntityClass entityClass = entityClassOp.get();
                 EntityRelation mainRelation = replayService.replayRelation(entityClass, objId, relatedChangelog);

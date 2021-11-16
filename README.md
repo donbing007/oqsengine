@@ -14,6 +14,15 @@
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
 * xplat-meta-oqsengine-cdc 数据同步相关.
 * xplat-meta-oqsengine-status 状态管理.
+* xplat-meta-oqsengine-calculate 计算字段计算.
+* xplat-meta-oqsengine-changelog 审计日志.
+* xplat-meta-oqsengine-event 事件.
+* xplat-meta-oqsengine-kv kv储存.
+* xplat-meta-oqsengine-lock 锁实现.
+* xplat-meta-oqsengine-task 任务队列.
+* xplat-meta-oqsengine-synchronizer 客户端使用的锁.
+* xplat-meta-oqsengine-testcontainer 测试使用的容器框架.
+* xplat-meta-oqsengine-tokenizer 分词.
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
 * xplat-meta-oqsengine-testreport 测试覆盖的聚合项目.不影响实际功能.
@@ -87,29 +96,55 @@ storage:
 
 ## master 结构
 查看script/mastdb.sql
-不过由于主库进行了分表设计,使用的是表名加上数字,从0开始.如里分表为3,那么如下需要3个物理表.
-oqsbigentity0, oqsbigentity1, oqsbigentity2
-storage.master.shard.enabled = true 才会启效.
+```sql
+create table oqsbigentity
+(
+    id             bigint                not null comment '数据主键',
+    entityclassl0  bigint  default 0     not null comment '数据家族中在0层的entityclass标识',
+    entityclassl1  bigint  default 0     not null comment '数据家族中在1层的entityclass标识',
+    entityclassl2  bigint  default 0     not null comment '数据家族中在2层的entityclass标识',
+    entityclassl3  bigint  default 0     not null comment '数据家族中在3层的entityclass标识',
+    entityclassl4  bigint  default 0     not null comment '数据家族中在4层的entityclass标识',
+    entityclassver int     default 0     not null comment '产生数据的entityclass版本号.',
+    tx             bigint  default 0     not null comment '提交事务号',
+    commitid       bigint  default 0     not null comment '提交号',
+    op             tinyint default 0     not null comment '最后操作类型,0(插入),1(更新),2(删除)',
+    version        int     default 0     not null comment '当前数据版本.',
+    createtime     bigint  default 0     not null comment '数据创建时间.',
+    updatetime     bigint  default 0     not null comment '数据操作最后时间.',
+    deleted        boolean default false not null comment '是否被删除.',
+    attribute      json                  not null comment '当前 entity 的属性集合.',
+    oqsmajor       int     default 0     not null comment '产生数据的oqs主版本号',
+    profile        varchar(64) default '' not null comment '替身',
+    primary key (id),
+    KEY commitid_entity_index (commitid, entityclassl0),
+    KEY tx_index (tx),
+    KEY update_time_index (updatetime)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+```
+依赖sharejdbc来进行客户端分表处理.
 
 ## mainticore (Sphinx) 结构
 查看script/manticore.sql
 以上索引结构中,id 是默认的其和主库保持同步.即同一个 id 表示同一个实例数据.
-* entity      实例数据的类型 id.
-* pref        指向实例父类实例id.
-* cref        指向实例子类实例 id.
-* jsonfields  搜索的索引属性集合,是一个 JSON 格式.
-* fullfields  搜索的全文索引属性集合结构如下.
-              <F{groupName}>F{fieldName}{fieldType} {value}</groupName>
-              
-jsonFields 可以理解作为一个普通的属性来使用,支持范围查询.
-fullfields 实际是一个全文索引字段,以文本形式组织了文档.并以 html 的格式将每一个字段分隔开.
-所以对于 mainticore 的服务端必须要打开如下配置.
-```text
-index_zones = F*              # 范围的 html 标识,所有以 F 开头的都是合法的字段标签.
-html_strip = 1                # 打开 html 标签索引支持.
-ngram_chars = U+3000..U+2FA1F # 非英文字符范围指定.
-ngram_len = 1                 # 非英文字符的分词最小单位.
+```sql
+create table oqsindex
+(
+    attrf        text indexed,
+    entityclassf text indexed,
+    tx           bigint,
+    commitid     bigint,
+    createtime   bigint,
+    updatetime   bigint,
+    maintainid   bigint,
+    oqsmajor     int,
+    attr         json
+) charset_table='non_cjk,cjk' rt_mem_limit='1024m';
 ```
+
+attr 可以理解作为一个普通的属性来使用,支持范围查询.
+attrf 实际是一个全文索引字段,以文本形式组织了文档.并会将不同的学段单独编码储存组成一个大的字符串.
+所以对于 mainticore 的服务端必须要打开如下配置.
 
 # 启动/关闭服务
 这是一个标准的 sprint boot 实现. 最低需求 jdk8.
@@ -137,7 +172,9 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_unsync_commitid_count_total | | 提交但未同步的提交号数量 |
 | oqs_cdc_sync_delay_latency | | CDC 同步的延时 |
 | oqs_mode | | 当前工作模式(1 正常, 2 只读) |
+| oqs_readonly_rease | | 如果进入了只读模式,此值表示原因. (取值 1 正常.<p>2 CDC心跳失败造成只读.<p>3 未提交号过多造成只读.<p>4 CDC服务离线造成只读.)|
 | oqs_now_commitid | | 当前最大提交号 |
+| oqs_calculation_logic_latency | logic(aggregation, autofill, formula, lookup)和action(calculate, scope, getTarget).| 计算字段处理延时 |
 
 # META同步工具(Meta/Client/Server)
 ## Meta逻辑

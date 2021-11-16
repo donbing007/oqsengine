@@ -101,7 +101,12 @@ public class FieldDefine {
     public static final String OQS_MAJOR = "oqsmajor";
 
     /**
+     * 替身JOJO.
+     */
+    public static final String PROFILE = "profile";
+
+    /**
      * 业务主键字段.
      */
-    public static final String UNIQUE_KEY = "key";
+    public static final String UNIQUE_KEY = "unique_key";
 }

@@ -1,34 +1,39 @@
 package com.xforceplus.ultraman.oqsengine.meta.server;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_HEAR_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.CASE_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_HEART_BEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_REGISTER_PULL;
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.WATCH_ELEMENT_REGISTER_PUSH;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.keyAppWithEnv;
+
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
-import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.oqsengine.meta.listener.dto.AppUpdateEvent;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Resource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import javax.annotation.Resource;
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Set;
-
-import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
-import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.keyAppWithEnv;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * desc :
@@ -39,7 +44,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecu
  * @since : 1.8
  */
 @ActiveProfiles("server")
-@RunWith(SpringRunner.class)
+@ExtendWith({SpringExtension.class})
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestServerStart {
 
@@ -57,18 +62,16 @@ public class TestServerStart {
     @Resource
     private SyncResponseHandler syncResponseHandler;
 
-    boolean ifTest = false;
-
     private Thread[] executors = new Thread[3];
 
     int max = 300;
 
-    @Before
+    @BeforeEach
     public void before() {
-        if (ifTest) {
-            executors[0] = ThreadUtils.create(() -> heartBeatTest(caseHeartBeat, watchElementHeartBeat));
-            executors[1] = ThreadUtils.create(() -> registerPullTest(caseRegisterPull, watchElementRegisterPull));
-            executors[2] = ThreadUtils.create(() -> registerPushTest(caseRegisterPush, watchElementRegisterPush));
+        if (IF_TEST) {
+            executors[0] = ThreadUtils.create(() -> heartBeatTest(CASE_HEAR_BEAT, WATCH_ELEMENT_HEART_BEAT));
+            executors[1] = ThreadUtils.create(() -> registerPullTest(CASE_REGISTER_PULL, WATCH_ELEMENT_REGISTER_PULL));
+            executors[2] = ThreadUtils.create(() -> registerPushTest(CASE_REGISTER_PUSH, WATCH_ELEMENT_REGISTER_PUSH));
 
             for (Thread exec : executors) {
                 exec.start();
@@ -76,18 +79,18 @@ public class TestServerStart {
         }
     }
 
-    @After
+    @AfterEach
     public void after() {
-        if (ifTest) {
+        if (IF_TEST) {
             for (Thread exec : executors) {
-                Assert.assertFalse(exec.isAlive());
+                Assertions.assertFalse(exec.isAlive());
             }
         }
     }
 
     @Test
     public void testStart() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             int max = 3;
             while (true) {
                 int down = 0;
@@ -119,9 +122,9 @@ public class TestServerStart {
                         if (null != responseWatcher) {
                             WatchElement watchElement = responseWatcher.watches().get(caseName);
                             if (null != watchElement) {
-                                Assert.assertEquals(w.getEnv(), watchElement.getEnv());
-                                Assert.assertEquals(w.getAppId(), watchElement.getAppId());
-                                Assert.assertEquals(w.getVersion(), watchElement.getVersion());
+                                Assertions.assertEquals(w.getEnv(), watchElement.getEnv());
+                                Assertions.assertEquals(w.getAppId(), watchElement.getAppId());
+                                Assertions.assertEquals(w.getVersion(), watchElement.getVersion());
                                 ret = true;
                                 break;
                             }
@@ -136,9 +139,9 @@ public class TestServerStart {
                 loop++;
             }
 
-            Assert.assertTrue(ret);
+            Assertions.assertTrue(ret);
             ResponseWatcher watcher = getWatchersFirst();
-            Assert.assertNotNull(watcher);
+            Assertions.assertNotNull(watcher);
             logger.info("finish heartBeat test, current uid : {}, watchers : {}", watcher.uid(), watcher.watches().values().toString());
             return true;
         } catch (Exception e) {
@@ -161,19 +164,19 @@ public class TestServerStart {
                 //  ignore
             }
         }
-        Assert.assertNotNull(responseWatcher);
+        Assertions.assertNotNull(responseWatcher);
         WatchElement we = responseWatcher.watches().get(caseName);
         try {
-            Assert.assertNotNull(we);
+            Assertions.assertNotNull(we);
             if (we.getVersion() <= w.getVersion()) {
                 Thread.sleep(5_000);
             }
             we = responseWatcher.watches().get(caseName);
 
-            Assert.assertTrue(w.getVersion() < we.getVersion());
+            Assertions.assertTrue(w.getVersion() < we.getVersion());
 
-            Assert.assertEquals(w.getEnv(), we.getEnv());
-            Assert.assertEquals(w.getAppId(), we.getAppId());
+            Assertions.assertEquals(w.getEnv(), we.getEnv());
+            Assertions.assertEquals(w.getAppId(), we.getAppId());
 
             logger.info("finish registerPullTest test, current uid : {}, watchers : {}"
                     , responseWatcher.uid(), responseWatcher.watches().values().toString());
@@ -225,14 +228,14 @@ public class TestServerStart {
             }
         }
 
-        Assert.assertNotNull(responseWatcher);
+        Assertions.assertNotNull(responseWatcher);
 
         WatchElement we = responseWatcher.watches().get(caseName);
-        Assert.assertNotNull(we);
+        Assertions.assertNotNull(we);
 
-        Assert.assertEquals(w.getEnv(), we.getEnv());
-        Assert.assertEquals(w.getAppId(), we.getAppId());
-        Assert.assertTrue(w.getVersion() < we.getVersion());
+        Assertions.assertEquals(w.getEnv(), we.getEnv());
+        Assertions.assertEquals(w.getAppId(), we.getAppId());
+        Assertions.assertTrue(w.getVersion() < we.getVersion());
 
         Integer ver = null;
         try {
@@ -241,8 +244,8 @@ public class TestServerStart {
             e.printStackTrace();
             throw new RuntimeException("registerPushTest error.");
         }
-        Assert.assertNotNull(ver);
-        Assert.assertEquals((int) ver, we.getVersion());
+        Assertions.assertNotNull(ver);
+        Assertions.assertEquals((int) ver, we.getVersion());
 
 
         logger.info("finish registerPushTest test, current uid : {}, watchers : {}"

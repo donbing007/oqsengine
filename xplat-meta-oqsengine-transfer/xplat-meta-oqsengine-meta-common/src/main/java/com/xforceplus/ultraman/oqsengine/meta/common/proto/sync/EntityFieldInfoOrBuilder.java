@@ -73,4 +73,17 @@ public interface EntityFieldInfoOrBuilder extends
    * <code>.FieldConfig fieldConfig = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfigOrBuilder getFieldConfigOrBuilder();
+
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  boolean hasCalculator();
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getCalculator();
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder getCalculatorOrBuilder();
 }

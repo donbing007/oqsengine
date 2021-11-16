@@ -5,34 +5,29 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * AutoTransactionExecutor Tester.
@@ -41,53 +36,20 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers(ContainerType.REDIS)
+@ExtendWith({RedisContainer.class})
 public class AutoJoinTransactionExecutorTest {
-
-    private LongIdGenerator idGenerator;
-    private LongIdGenerator commitIdGenerator;
-    private TransactionManager tm;
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-
-        commitIdStatusService = new CommitIdStatusServiceImpl();
-        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        commitIdStatusService.init();
-
-        idGenerator = new IncreasingOrderLongIdGenerator();
-        commitIdGenerator = new IncreasingOrderLongIdGenerator();
-
-        tm = DefaultTransactionManager.Builder.anDefaultTransactionManager()
-            .withTxIdGenerator(idGenerator)
-            .withCommitIdGenerator(commitIdGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
-            .build();
+        redisClient = CommonInitialization.getInstance().getRedisClient();
+        commitIdStatusService = StorageInitialization.getInstance().getCommitIdStatusService();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
-        Optional<Transaction> t = tm.getCurrent();
-        if (t.isPresent()) {
-            if (!t.get().isCompleted()) {
-                t.get().rollback();
-            }
-
-            tm.finish(t.get());
-        }
-
-        commitIdStatusService.destroy();
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
-        redisClient = null;
+        InitializationHelper.clearAll();
     }
 
     /**
@@ -102,7 +64,8 @@ public class AutoJoinTransactionExecutorTest {
 
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
+        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(StorageInitialization.getInstance()
+            .getTransactionManager(),
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
                 new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
             new NoSelector<>("table"));
@@ -110,7 +73,7 @@ public class AutoJoinTransactionExecutorTest {
         te.execute((transaction, resource, hint) -> {
 
             Connection conn = (Connection) resource.value();
-            Assert.assertEquals(expectedConn, conn);
+            Assertions.assertEquals(expectedConn, conn);
 
             return null;
         });
@@ -127,6 +90,9 @@ public class AutoJoinTransactionExecutorTest {
         when(mockDataSource.getConnection()).thenReturn(expectedConn);
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
+        TransactionManager tm = StorageInitialization.getInstance()
+            .getTransactionManager();
+
         Transaction tx = tm.create();
         tm.bind(tx.id());
 
@@ -137,17 +103,17 @@ public class AutoJoinTransactionExecutorTest {
         // 分片键不关心
         te.execute((transaction, resource, hint) -> {
             Connection conn = (Connection) resource.value();
-            Assert.assertEquals(expectedConn, conn);
+            Assertions.assertEquals(expectedConn, conn);
 
             return null;
         });
 
         Optional<Transaction> t = tm.getCurrent();
-        Assert.assertTrue(t.isPresent());
+        Assertions.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
-        Assert.assertTrue(resource.isPresent());
-        Assert.assertEquals(expectedConn, resource.get().value());
+        Optional<TransactionResource> resource = t.get().queryTransactionResource(mockDataSource.toString() + ".table");
+        Assertions.assertTrue(resource.isPresent());
+        Assertions.assertEquals(expectedConn, resource.get().value());
 
     }
 
@@ -159,6 +125,9 @@ public class AutoJoinTransactionExecutorTest {
         when(mockDataSource.getConnection()).thenReturn(expectedConn);
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
+        TransactionManager tm = StorageInitialization.getInstance()
+            .getTransactionManager();
+
         Transaction currentT = tm.create();
         tm.bind(currentT.id());
         currentT.join(new MockConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
@@ -169,17 +138,17 @@ public class AutoJoinTransactionExecutorTest {
             new NoSelector<>("table"));
         // 分片键不关心
         te.execute((tx, resource, hint) -> {
-            Assert.assertEquals(currentT.query(mockDataSource.toString() + ".table").get(), resource);
+            Assertions.assertEquals(currentT.queryTransactionResource(mockDataSource.toString() + ".table").get(), resource);
 
             return null;
         });
 
         Optional<Transaction> t = tm.getCurrent();
-        Assert.assertTrue(t.isPresent());
+        Assertions.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
-        Assert.assertTrue(resource.isPresent());
-        Assert.assertEquals(expectedConn, resource.get().value());
+        Optional<TransactionResource> resource = t.get().queryTransactionResource(mockDataSource.toString() + ".table");
+        Assertions.assertTrue(resource.isPresent());
+        Assertions.assertEquals(expectedConn, resource.get().value());
 
     }
 

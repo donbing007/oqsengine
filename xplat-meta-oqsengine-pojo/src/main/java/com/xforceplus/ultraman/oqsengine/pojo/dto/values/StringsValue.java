@@ -30,8 +30,10 @@ public class StringsValue extends AbstractValue<String[]> {
     }
 
     @Override
-    public IValue<String[]> shallowClone() {
-        return new StringsValue(this.getField(), this.getValue());
+    public IValue<String[]> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new StringsValue(newField, getValue());
     }
 
     @Override
@@ -80,5 +82,12 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
+    }
+
+    /**
+     * 将字符串拆分为字符串数组.
+     */
+    public static String[] toStrings(String stringValues) {
+        return stringValues.split(DELIMITER);
     }
 }

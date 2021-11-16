@@ -1,5 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Init;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
+
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -7,16 +11,14 @@ import com.xforceplus.ultraman.oqsengine.meta.connect.MockGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
 
 /**
  * desc :
@@ -28,13 +30,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  */
 public class EntityClassSyncClientTest extends BaseTest {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassSyncClientTest.class);
+    private final Logger logger = LoggerFactory.getLogger(EntityClassSyncClientTest.class);
 
     private EntityClassSyncClient entityClassSyncClient;
 
     private MockGRpcClient mockGRpcClient;
 
-    @Before
+    @BeforeEach
     public void before() {
         mockGRpcClient = new MockGRpcClient();
 
@@ -44,10 +46,10 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
-        ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParams);
+        ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", grpcParams);
     }
 
-    @After
+    @AfterEach
     public void after() throws InterruptedException {
         entityClassSyncClient.stop();
 
@@ -63,12 +65,12 @@ public class EntityClassSyncClientTest extends BaseTest {
     @Test
     public void hearBeatTest() throws InterruptedException {
         start();
-        Assert.assertTrue(null != requestWatchExecutor.watcher() && requestWatchExecutor.watcher().isActive());
+        Assertions.assertTrue(null != requestWatchExecutor.watcher() && requestWatchExecutor.watcher().isActive());
         int i = 0;
         int max = 40;
         while (i < max) {
-            Assert.assertTrue(System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat()
-                    < gRpcParams.getDefaultHeartbeatTimeout());
+            Assertions.assertTrue(System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat()
+                < grpcParams.getDefaultHeartbeatTimeout());
 
             logger.debug("current - heartBeat : {}", System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
             i++;
@@ -84,27 +86,27 @@ public class EntityClassSyncClientTest extends BaseTest {
         int version = 1;
 
         boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
         /**
          * 重复注册
          */
         ret = requestHandler.register(new WatchElement(appId, env, version, Register));
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
-        Assert.assertNotNull(requestWatchExecutor.watcher().watches());
+        Assertions.assertNotNull(requestWatchExecutor.watcher().watches());
 
-        Assert.assertEquals(1, requestWatchExecutor.watcher().watches().size());
+        Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
 
         WatchElement w = requestWatchExecutor.watcher().watches().get(appId);
 
-        Assert.assertNotNull(w);
+        Assertions.assertNotNull(w);
 
-        Assert.assertEquals(appId, w.getAppId());
-        Assert.assertEquals(version, w.getVersion());
+        Assertions.assertEquals(appId, w.getAppId());
+        Assertions.assertEquals(version, w.getVersion());
 
         w = requestWatchExecutor.watcher().watches().get(appId);
 
-        Assert.assertEquals(Confirmed, w.getStatus());
+        Assertions.assertEquals(Confirmed, w.getStatus());
     }
 
     @Test
@@ -114,13 +116,13 @@ public class EntityClassSyncClientTest extends BaseTest {
         int version = 1;
 
         boolean ret = requestHandler.register(new WatchElement(appId, env, version, Init));
-        Assert.assertFalse(ret);
-        Assert.assertEquals(1, ((SyncRequestHandler) requestHandler).getForgotQueue().size());
+        Assertions.assertFalse(ret);
+        Assertions.assertEquals(1, ((SyncRequestHandler) requestHandler).getForgotQueue().size());
         WatchElement element = ((SyncRequestHandler) requestHandler).getForgotQueue().peek();
-        Assert.assertNotNull(element);
-        Assert.assertEquals(appId, element.getAppId());
-        Assert.assertEquals(version, element.getVersion());
-        Assert.assertEquals(Init, element.getStatus());
+        Assertions.assertNotNull(element);
+        Assertions.assertEquals(appId, element.getAppId());
+        Assertions.assertEquals(version, element.getVersion());
+        Assertions.assertEquals(Init, element.getStatus());
 
         start();
 
@@ -166,7 +168,7 @@ public class EntityClassSyncClientTest extends BaseTest {
             }
         }
 
-        Assert.assertEquals(1, requestWatchExecutor.watcher().watches().size());
+        Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
         element = requestWatchExecutor.watcher().watches().get(appId);
         loops = 0;
         while (loops < 10) {
@@ -194,12 +196,12 @@ public class EntityClassSyncClientTest extends BaseTest {
         MockServer.isTestOk = false;
 
         boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
-        Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
+        Assertions.assertTrue(null != requestWatchExecutor.watcher().watches() &&
                 !requestWatchExecutor.watcher().watches().isEmpty());
         requestWatchExecutor.watcher().watches().forEach(
-                (key, value) -> Assert.assertNotEquals(Confirmed, value.getStatus())
+                (key, value) -> Assertions.assertNotEquals(Confirmed, value.getStatus())
         );
 
         String uid = requestWatchExecutor.watcher().uid();
@@ -243,12 +245,12 @@ public class EntityClassSyncClientTest extends BaseTest {
             e.printStackTrace();
         }
 
-        Assert.assertNotNull(requestWatchExecutor.watcher().observer());
-        Assert.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
-        Assert.assertNotNull(requestWatchExecutor.watcher().uid());
-        Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
+        Assertions.assertNotNull(requestWatchExecutor.watcher().observer());
+        Assertions.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
+        Assertions.assertNotNull(requestWatchExecutor.watcher().uid());
+        Assertions.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
 
-        Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
+        Assertions.assertTrue(null != requestWatchExecutor.watcher().watches() &&
                 !requestWatchExecutor.watcher().watches().isEmpty());
 
         WatchElement element = requestWatchExecutor.watcher().watches().get(appId);

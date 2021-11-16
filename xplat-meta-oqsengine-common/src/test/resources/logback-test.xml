@@ -5,7 +5,6 @@
     <property name="LOG_PATTERN"
               value="%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"/>
 
-    <!--?????. ch.qos.logback.core.ConsoleAppender : ??????-->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
@@ -13,12 +12,10 @@
         </encoder>
     </appender>
 
-    <!-- ??? name : ?????? level : ???????????? additivity : ??????? appender -->
     <logger name="io.lettuce" level="info" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <!-- ???? -->
     <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>

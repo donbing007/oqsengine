@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
  * @version 0.1 2021/2/20 14:50
  * @since 1.8
  */
-public class ExistExecutor extends AbstractMasterExecutor<Long, Boolean> {
+public class ExistExecutor extends AbstractJdbcTaskExecutor<Long, Boolean> {
 
     private static final String RESULT = "result";
 
@@ -32,7 +33,7 @@ public class ExistExecutor extends AbstractMasterExecutor<Long, Boolean> {
     }
 
     @Override
-    public Boolean execute(Long id) throws SQLException {
+    public Boolean execute(Long id) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, id);

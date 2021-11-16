@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.timerwheel.ITimerWheel;
+import com.xforceplus.ultraman.oqsengine.common.timerwheel.MultipleTimerWheel;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
 import io.micrometer.core.instrument.Metrics;
@@ -44,7 +46,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     /**
      * 当前是否处于冻结状态.true 是, false 不是.
      */
-    private AtomicBoolean frozenness = new AtomicBoolean(false);
+    private volatile boolean frozenness = false;
 
     /**
      * 允许的早小事务超时,毫秒.
@@ -76,7 +78,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     /**
      * 时间轮.处理事务超时.
      */
-    private TimerWheel<Transaction> timerWheel;
+    private ITimerWheel<Transaction> timerWheel;
 
     public AbstractTransactionManager() {
         this(3000);
@@ -95,7 +97,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         survival = new ConcurrentHashMap<>();
         using = new ConcurrentHashMap<>();
 
-        timerWheel = new TimerWheel(new TransaxtionTimeoutNotification());
+        timerWheel = new MultipleTimerWheel(new TransaxtionTimeoutNotification());
     }
 
     @Override
@@ -115,7 +117,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public Transaction create(long timeoutMs, String message) {
-        if (frozenness.get()) {
+        if (frozenness) {
             throw new IllegalStateException("Unable to create transaction, frozen.");
         }
 
@@ -243,12 +245,12 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public void freeze() {
-        frozenness.set(true);
+        frozenness = true;
     }
 
     @Override
     public void unfreeze() {
-        frozenness.set(false);
+        frozenness = false;
     }
 
     // 清理

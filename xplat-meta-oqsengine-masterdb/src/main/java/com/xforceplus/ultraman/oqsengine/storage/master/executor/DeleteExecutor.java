@@ -2,12 +2,15 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
 
 /**
  * 删除执行器.
@@ -16,9 +19,9 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DeleteExecutor extends AbstractMasterExecutor<MasterStorageEntity, Integer> {
+public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], int[]> {
 
-    public static Executor<MasterStorageEntity, Integer> build(
+    public static Executor<MasterStorageEntity[], int[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new DeleteExecutor(tableName, resource, timeout);
     }
@@ -32,41 +35,77 @@ public class DeleteExecutor extends AbstractMasterExecutor<MasterStorageEntity, 
     }
 
     @Override
-    public Integer execute(MasterStorageEntity masterStorageEntity) throws SQLException {
-        if (VersionHelp.isOmnipotence(masterStorageEntity.getVersion())) {
+    public int[] execute(MasterStorageEntity[] masterStorageEntity) throws Exception {
+        final int onlyOne = 1;
+        if (masterStorageEntity.length == onlyOne) {
+            MasterStorageEntity entity = masterStorageEntity[0];
 
-            String sql = buildForceSQL(masterStorageEntity);
-            try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                st.setInt(1, VersionHelp.OMNIPOTENCE_VERSION);
-                st.setBoolean(2, true);
-                st.setLong(3, masterStorageEntity.getUpdateTime());
-                st.setLong(4, masterStorageEntity.getTx());
-                st.setLong(5, masterStorageEntity.getCommitid());
-                st.setInt(6, masterStorageEntity.getOp());
-                st.setInt(7, masterStorageEntity.getEntityClassVersion());
-                st.setLong(8, masterStorageEntity.getId());
-                checkTimeout(st);
-                return st.executeUpdate();
+            if (VersionHelp.isOmnipotence(entity.getVersion())) {
+
+                String sql = buildForceSQL();
+                try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+                    checkTimeout(st);
+
+                    setForceParam(entity, st);
+
+                    return new int[] {st.executeUpdate()};
+                }
+            } else {
+
+                String sql = buildSQL();
+                try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+                    checkTimeout(st);
+
+                    setParam(entity, st);
+
+                    return new int[] {st.executeUpdate()};
+                }
             }
         } else {
-
-            String sql = buildSQL(masterStorageEntity);
+            // 批量全部强制删除
+            String sql = buildForceSQL();
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                st.setBoolean(1, true);
-                st.setLong(2, masterStorageEntity.getUpdateTime());
-                st.setLong(3, masterStorageEntity.getTx());
-                st.setLong(4, masterStorageEntity.getCommitid());
-                st.setInt(5, masterStorageEntity.getOp());
-                st.setInt(6, masterStorageEntity.getEntityClassVersion());
-                st.setLong(7, masterStorageEntity.getId());
-                st.setInt(8, masterStorageEntity.getVersion());
-                checkTimeout(st);
-                return st.executeUpdate();
+                for (MasterStorageEntity entity : masterStorageEntity) {
+                    setForceParam(entity, st);
+
+                    st.addBatch();
+                }
+
+                int[] flags = st.executeBatch();
+                return Arrays.stream(flags).map(f -> {
+                    if (f > 0 || f == Statement.SUCCESS_NO_INFO) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).toArray();
             }
         }
     }
 
-    private String buildForceSQL(MasterStorageEntity masterStorageEntity) {
+    private void setForceParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+        st.setInt(1, VersionHelp.OMNIPOTENCE_VERSION);
+        st.setBoolean(2, true);
+        st.setLong(3, entity.getUpdateTime());
+        st.setLong(4, entity.getTx());
+        st.setLong(5, entity.getCommitid());
+        st.setInt(6, entity.getOp());
+        st.setInt(7, entity.getEntityClassVersion());
+        st.setLong(8, entity.getId());
+    }
+
+    private void setParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+        st.setBoolean(1, true);
+        st.setLong(2, entity.getUpdateTime());
+        st.setLong(3, entity.getTx());
+        st.setLong(4, entity.getCommitid());
+        st.setInt(5, entity.getOp());
+        st.setInt(6, entity.getEntityClassVersion());
+        st.setLong(7, entity.getId());
+        st.setInt(8, entity.getVersion());
+    }
+
+    private String buildForceSQL() {
         //"update %s set version = ?, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ?";
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
@@ -84,7 +123,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<MasterStorageEntity, 
         return sql.toString();
     }
 
-    private String buildSQL(MasterStorageEntity masterStorageEntity) {
+    private String buildSQL() {
         //"update %s set version = version + 1, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ? and version = ?";
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())

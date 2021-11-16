@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

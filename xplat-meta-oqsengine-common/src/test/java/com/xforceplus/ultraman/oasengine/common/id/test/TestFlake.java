@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * snowflake 测试.

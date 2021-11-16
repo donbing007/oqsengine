@@ -30,21 +30,19 @@ public class GrpcServerConfiguration {
      * grcp 服务端实例.
      */
     @Bean(destroyMethod = "terminate")
-    public GrpcServer grpcServer(EntityServiceOqs oqs, EntityRebuildServiceOqs rebuild) {
-
+    public GrpcServer grpcServer(EntityServiceOqs oqs, EntityRebuildServiceOqs rebuildServiceOqs) {
         ActorSystem actorSystem = ActorSystem.create();
         ActorMaterializer actorMaterializer = ActorMaterializer.create(actorSystem);
 
         GrpcServer grpcServer = new GrpcServer(actorSystem, actorMaterializer);
 
+
         grpcServer.run(
             properties.getHost(),
             properties.getPort(),
-                EntityServicePowerApiHandlerFactory.create(oqs, actorSystem),
-                EntityRebuildServicePowerApiHandlerFactory.create(rebuild, actorSystem)
-        ).thenAccept(x ->
-                logger.info("EntityService is on {}", x.localAddress())
-        );
+            EntityServicePowerApiHandlerFactory.create(oqs, actorSystem),
+            EntityRebuildServicePowerApiHandlerFactory.create(rebuildServiceOqs, actorSystem)).thenAccept(x ->
+            logger.info("EntityService is on {}", x.localAddress()));
         return grpcServer;
     }
 }

@@ -94,4 +94,28 @@ public interface EntityClassInfoOrBuilder extends
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfoOrBuilder getRelationsOrBuilder(
       int index);
+
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> 
+      getProfilesList();
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo getProfiles(int index);
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  int getProfilesCount();
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder> 
+      getProfilesOrBuilderList();
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder getProfilesOrBuilder(
+      int index);
 }

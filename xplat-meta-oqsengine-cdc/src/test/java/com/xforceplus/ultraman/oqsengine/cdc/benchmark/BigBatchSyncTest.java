@@ -3,25 +3,16 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
-import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import java.sql.SQLException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * desc :.
@@ -30,42 +21,26 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author : xujia 2020/11/23
  * @since : 1.8
  */
-@RunWith(ContainerRunner.class)
-@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
-public class BigBatchSyncTest extends AbstractCDCContainer {
+
+public class BigBatchSyncTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
     private static int expectedSize = 0;
     private static int maxTestSize = 10;
 
-    private ConsumerRunner consumerRunner;
 
-    private MockRedisCallbackService mockRedisCallbackService;
-
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        consumerRunner = initConsumerRunner();
-        consumerRunner.start();
+        super.init(true);
     }
 
-    @After
-    public void after() throws SQLException {
-        consumerRunner.shutdown();
-        clear();
-        closeAll();
-    }
-
-    private ConsumerRunner initConsumerRunner() throws Exception {
-        ConsumerService consumerService = initAll(false);
-        CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        mockRedisCallbackService = new MockRedisCallbackService(commitIdStatusService);
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        return new ConsumerRunner(consumerService, cdcMetricsService, singleCDCConnector);
+    @AfterEach
+    public void after() throws Exception {
+        super.destroy(true);
     }
 
     @Test
-    public void test() throws InterruptedException, SQLException {
+    public void test() throws Exception {
         initData();
 
         boolean isStartUpdate = false;
@@ -84,21 +59,21 @@ public class BigBatchSyncTest extends AbstractCDCContainer {
             }
         }
 
-        Assert.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
+        Assertions.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
         logger.info("total build use time, {}", duration);
 
         mockRedisCallbackService.reset();
         Thread.sleep(5_000);
-        Assert.assertEquals(ZERO, mockRedisCallbackService.getExecuted().get());
+        Assertions.assertEquals(ZERO, mockRedisCallbackService.getExecuted().get());
     }
 
-    private void initData() throws SQLException {
+    private void initData() throws Exception {
         try {
             int i = 1;
             for (; i < maxTestSize; ) {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
                 for (IEntity entity : entities) {
-                    masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
+                    MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.entityClassRef().getId()));
                 }
                 expectedSize += entities.length;
                 i += entities.length;

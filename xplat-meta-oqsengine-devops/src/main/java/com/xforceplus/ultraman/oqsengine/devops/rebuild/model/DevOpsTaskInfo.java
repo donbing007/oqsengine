@@ -43,7 +43,7 @@ public interface DevOpsTaskInfo {
      *
      * @return 百分比0-100.
      */
-    int getProgressPercentage();
+    long getProgressPercentage();
 
     long getMaintainid();
 
@@ -57,7 +57,7 @@ public interface DevOpsTaskInfo {
 
     IEntityClass getEntityClass();
 
-    int getBatchSize();
+    long getBatchSize();
 
     int getFinishSize();
 
@@ -73,7 +73,7 @@ public interface DevOpsTaskInfo {
 
     long startId();
 
-    void setBatchSize(int size);
+    void setBatchSize(long size);
 
     int failedRecovers();
 

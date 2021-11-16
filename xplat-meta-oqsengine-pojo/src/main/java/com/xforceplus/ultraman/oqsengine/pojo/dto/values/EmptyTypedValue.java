@@ -1,19 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.util.Objects;
 
 /**
- * empty value will never use in real process.
+ * 一个空值表示.
  */
 public class EmptyTypedValue extends AbstractValue {
 
     public EmptyTypedValue(IEntityField field) {
-        super(field, EmptyValue.EMPTY_VALUE);
+        super(field, ValueWithEmpty.EMPTY_VALUE);
     }
 
     @Override
     Object fromString(String value) {
-        return EmptyValue.EMPTY_VALUE;
+        return ValueWithEmpty.EMPTY_VALUE;
     }
 
     @Override
@@ -22,7 +23,26 @@ public class EmptyTypedValue extends AbstractValue {
     }
 
     @Override
-    public IValue shallowClone() {
-        return this;
+    protected void checkType(IEntityField newFiled) {
+        return;
+    }
+
+    @Override
+    public IValue copy(IEntityField newField) {
+        return new EmptyTypedValue(newField);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EmptyTypedValue)) {
+            return false;
+        }
+
+        EmptyTypedValue that = (EmptyTypedValue) o;
+        
+        return Objects.equals(getField(), that.getField());
     }
 }

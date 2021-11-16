@@ -5,18 +5,19 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.netty.NettyServerBuilder;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.IF_TEST;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
 /**
@@ -28,7 +29,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  * @since : 1.8
  */
 @ActiveProfiles("clientLocal")
-@RunWith(SpringRunner.class)
+@ExtendWith({SpringExtension.class})
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestClientStartLocal {
 
@@ -37,19 +38,17 @@ public class TestClientStartLocal {
 
     Thread serverThread;
 
-    boolean ifTest = false;
-
-    @Before
+    @BeforeEach
     public void before() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             buildServer();
             Thread.sleep(1_000);
         }
     }
 
-    @After
+    @AfterEach
     public void after() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             ThreadUtils.shutdown(serverThread, 1);
 
             Thread.sleep(3_000);
@@ -58,11 +57,11 @@ public class TestClientStartLocal {
 
     @Test
     public void test() throws InterruptedException {
-        if (ifTest) {
+        if (IF_TEST) {
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
 
-            Assert.assertTrue(ret);
+            Assertions.assertTrue(ret);
 
             Thread.sleep(5_000);
         }

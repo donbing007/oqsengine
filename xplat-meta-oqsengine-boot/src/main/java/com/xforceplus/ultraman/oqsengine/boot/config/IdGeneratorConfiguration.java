@@ -35,13 +35,27 @@ public class IdGeneratorConfiguration {
         return new StaticNodeIdGenerator(instanceId);
     }
 
-    @Bean("snowflakeIdGenerator")
-    public LongIdGenerator longIdGenerator(@Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
+    /**
+     * 偏序,但不连续的long类型ID生成器.
+     *
+     * @param nodeIdGenerator 结点ID生成器.
+     * @return 实例.
+     */
+    @Bean("longNoContinuousPartialOrderIdGenerator")
+    public LongIdGenerator longNoContinuousPartialOrderIdGenerator(@Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
         return new SnowflakeLongIdGenerator(nodeIdGenerator);
     }
 
-    @Bean("redisIdGenerator")
-    public LongIdGenerator redisIdGenerator(RedisClient redisClient) {
+    /**
+     * 连续且偏序的long类型ID生成器.
+     * 这里设置了默认的命名空间,此命名空间专门供给commitId生成.
+     * 调用时一定需要设置namespace.
+     *
+     * @param redisClient redis客户端.
+     * @return 实例.
+     */
+    @Bean("longContinuousPartialOrderIdGenerator")
+    public LongIdGenerator longContinuousPartialOrderIdGenerator(@Qualifier("redisClientState") RedisClient redisClient) {
         return new RedisOrderContinuousLongIdGenerator(redisClient);
     }
 }

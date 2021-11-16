@@ -67,16 +67,10 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
                 );
             }
 
-            addMetrics();
-        }
-//
-//        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
-    }
-
-    private synchronized void addMetrics() {
-        if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
-            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
-            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+            if (this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
+                executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
+                lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+            }
         }
     }
 
@@ -92,13 +86,11 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
-//        logger.info("mock cdcUnCommitMetrics info : {}", JSON.toJSON(cdcMetrics));
         this.cdcMetrics = cdcMetrics;
     }
 
     @Override
     public CDCMetrics queryLastUnCommit() {
-//        logger.info("mock queryLastUnCommit info : {}", JSON.toJSON(cdcMetrics));
         return cdcMetrics;
     }
 

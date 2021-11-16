@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
@@ -298,8 +298,8 @@ public class ConditionHelper {
     /**
      * relation can be inherited.
      */
-    private static Optional<OqsRelation> findRelation(IEntityClass mainClass, long relationId) {
-        Optional<OqsRelation> relationOp = mainClass.oqsRelations().stream()
+    private static Optional<Relationship> findRelation(IEntityClass mainClass, long relationId) {
+        Optional<Relationship> relationOp = mainClass.relationship().stream()
             .filter(rel -> rel.getId() == relationId)
             .findFirst();
         if (!relationOp.isPresent()) {
@@ -321,10 +321,11 @@ public class ConditionHelper {
                                                                                            MetaManager manager) {
 
         IEntityClass targetEntityClass = mainClass;
+        String profile = mainClass.ref().getProfile();
         long fieldId = field.getId();
         long originEntityClassId = field.getOwnerClassId();
         if (originEntityClassId > 0 && originEntityClassId != mainClass.id()) {
-            Optional<IEntityClass> targetOp = manager.load(originEntityClassId);
+            Optional<IEntityClass> targetOp = manager.load(originEntityClassId, profile);
             if (targetOp.isPresent()) {
                 targetEntityClass = targetOp.get();
             } else {
@@ -391,7 +392,7 @@ public class ConditionHelper {
                     long relationId = fieldNode.getRelationId();
                     FieldUp fieldUp = fieldNode.getFieldUp();
                     Optional<Tuple2<IEntityClass, IEntityField>> fieldOp =
-                        findFieldOp(relationId, fieldUp, mainClass, manager);
+                        findFieldOp(relationId, fieldUp, mainClass, mainClass.ref().getProfile(), manager);
                     /*
                      * build field condition.
                      */
@@ -426,12 +427,12 @@ public class ConditionHelper {
         return null;
     }
 
+
     /**
      * if a condition has relation id than we should find in related class or in main class
      * should consider following cases:
      * 1 search field in main's sub / parent.
      * 2 search related 'sub / parent.
-     *
      */
     public static Optional<Conditions> toConditions(IEntityClass mainClass, ConditionsUp conditionsUp, List<Long> ids,
                                                     MetaManager manager) {
@@ -441,7 +442,7 @@ public class ConditionHelper {
             FieldUp field = x.getField();
             Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
 
-            fieldOp = findFieldOp(x.getRelationId(), field, mainClass, manager);
+            fieldOp = findFieldOp(x.getRelationId(), field, mainClass, mainClass.ref().getProfile(), manager);
 
             return toOneConditions(fieldOp, x);
         }).reduce((a, b) -> a.addAnd(b, true));
@@ -478,9 +479,33 @@ public class ConditionHelper {
             .collect(Collectors.toList());
     }
 
+    /**
+     * check if relation is belong to current entityclass.
+     *
+     * @param relation relation
+     * @param entityClass entityClass
+     */
+    private static boolean isRelationBelongsToEntityClass(Relationship relation, IEntityClass entityClass) {
+
+        boolean isMatched = entityClass.id() == relation.getLeftEntityClassId();
+
+        if (!isMatched) {
+            IEntityClass ptr = entityClass;
+            while (ptr.father() != null && ptr.father().isPresent()) {
+                ptr = ptr.father().get();
+                if (relation.getLeftEntityClassId() == ptr.id()) {
+                    isMatched = true;
+                    break;
+                }
+            }
+        }
+
+        return isMatched;
+    }
 
     private static Optional<Tuple2<IEntityClass, IEntityField>> findFieldOp(long relationId, FieldUp field,
                                                                             IEntityClass mainClass,
+                                                                            String profile,
                                                                             MetaManager manager) {
 
         Optional<Tuple2<IEntityClass, IEntityField>> fieldOp = Optional.empty();
@@ -488,16 +513,20 @@ public class ConditionHelper {
         //TODO relation is inherited
         if (relationId > 0) {
             //find in related
-            Optional<OqsRelation> relationOp = findRelation(mainClass, relationId);
+            Optional<Relationship> relationOp = findRelation(mainClass, relationId);
 
             if (relationOp.isPresent()) {
-                OqsRelation relation = relationOp.get();
-                if (relation.getLeftEntityClassId() == mainClass.id()) {
-                    Optional<IEntityClass> relatedEntityClassOp = manager.load(relation.getRightEntityClassId());
-                    if (relatedEntityClassOp.isPresent()) {
-                        fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
-                    } else {
-                        logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
+                Relationship relation = relationOp.get();
+
+                if (isRelationBelongsToEntityClass(relation, mainClass)) {
+                    if (relation.getLeftEntityClassId() == mainClass.id()) {
+                        Optional<IEntityClass> relatedEntityClassOp =
+                            manager.load(relation.getRightEntityClassId(), profile);
+                        if (relatedEntityClassOp.isPresent()) {
+                            fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
+                        } else {
+                            logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
+                        }
                     }
                 }
             }
@@ -505,7 +534,6 @@ public class ConditionHelper {
             //find in main
             fieldOp = findFieldWithInEntityClass(mainClass, field, manager);
         }
-
         return fieldOp;
     }
 }

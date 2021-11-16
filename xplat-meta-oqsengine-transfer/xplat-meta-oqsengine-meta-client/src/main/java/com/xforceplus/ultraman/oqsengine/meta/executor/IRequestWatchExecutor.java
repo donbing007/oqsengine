@@ -7,55 +7,45 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
 
 /**
- * desc :
- * name : IRequestWatchExecutor
+ * request watch executor interface.
  *
- * @author : xujia
- * date : 2021/2/7
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public interface IRequestWatchExecutor extends IWatchExecutor {
 
     /**
-     * 创建一个新的RequestWatcher
-     * @param uid
-     * @param observer
+     * 创建一个新的RequestWatcher.
      */
-    void create(String uid, StreamObserver<EntityClassSyncRequest> observer);
+    void create(String clientId, String uid, StreamObserver<EntityClassSyncRequest> observer);
 
     /**
-     * 增加WatchElement
-     * @param watchElement
+     * 增加WatchElement.
      */
     void add(WatchElement watchElement);
 
     /**
-     * 更新WatchElement
-     * @param watchElement
-     * @return
+     * 更新WatchElement.
      */
     boolean update(WatchElement watchElement);
 
     /**
-     * 当前RequestWatcher是否处于活动状态
-     * @param uid
-     * @return
+     * 当前RequestWatcher是否处于活动状态.
      */
     boolean isAlive(String uid);
 
     /**
-     * 返回当前RequestWatcher实例
-     * @return
+     * 返回当前RequestWatcher实例.
      */
     RequestWatcher watcher();
 
     /**
-     * 激活RequestWatcher
+     * 激活RequestWatcher.
      */
     void active();
 
     /**
-     * 禁用RequestWatcher
+     * 禁用RequestWatcher.
      */
     void inActive();
 }

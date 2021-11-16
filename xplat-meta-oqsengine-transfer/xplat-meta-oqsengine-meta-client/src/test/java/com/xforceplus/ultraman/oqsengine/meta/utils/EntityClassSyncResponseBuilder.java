@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
@@ -21,10 +19,7 @@ public class EntityClassSyncResponseBuilder {
     /**
      * 将生成随机的3层父子类结构[爷爷、父亲、儿子]
      * 每层有2个随机的EntityField [String、Long] 各一
-     * 每层存在2条关系
-     * @param appId
-     * @param version
-     * @return
+     * 每层存在2条关系.
      */
     public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
                                                                            boolean withMD5, List<ExpectedEntityStorage> expectedEntityStorages) {
@@ -40,8 +35,11 @@ public class EntityClassSyncResponseBuilder {
         return builder.build();
     }
 
+    /**
+     * entityClassSyncRspProtoGenerator.
+     */
     public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(List<ExpectedEntityStorage> expectedEntityStorages) {
-        /**
+        /*
          * 生成爷爷
          */
         List<EntityClassInfo> entityClassInfos = new ArrayList<>();
@@ -57,6 +55,10 @@ public class EntityClassSyncResponseBuilder {
                 .build();
     }
 
+
+    /**
+     * entityClassInfo.
+     */
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
         entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
@@ -75,9 +77,24 @@ public class EntityClassSyncResponseBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
+                .addAllProfiles(Collections.singletonList(profileInfo(id * 10)))
                 .build();
     }
 
+
+    /**
+     * profileInfo.
+     */
+    public static ProfileInfo profileInfo(long id) {
+        return ProfileInfo.newBuilder().setCode("common")
+                .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
+                .addEntityFieldInfo(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG))
+                .build();
+    }
+
+    /**
+     * entityFieldInfo.
+     */
     public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
         return EntityFieldInfo.newBuilder()
                 .setId(id)

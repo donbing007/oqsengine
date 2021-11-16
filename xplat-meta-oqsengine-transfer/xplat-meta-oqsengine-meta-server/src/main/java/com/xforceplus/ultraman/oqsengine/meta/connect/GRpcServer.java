@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
-
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
@@ -10,32 +9,28 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * desc :
- * name : GRpcServer
+ * grpc client implement.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class GRpcServer implements IBasicSyncExecutor {
 
-    private Logger logger = LoggerFactory.getLogger(GRpcServer.class);
+    private final Logger logger = LoggerFactory.getLogger(GRpcServer.class);
 
     @Resource(name = "grpcServerExecutor")
-    private ExecutorService gRpcExecutor;
+    private ExecutorService grpcExecutor;
 
     @Resource
     private EntityClassSyncServer entityClassSyncServer;
@@ -46,9 +41,9 @@ public class GRpcServer implements IBasicSyncExecutor {
     @Resource(name = "outerBindingService")
     private List<BindableService> outerServiceList;
 
-    private int port;
+    private final int port;
 
-    private Server gRpcServer;
+    private Server grpcServer;
 
     public GRpcServer(int port) {
         this.port = port;
@@ -61,8 +56,8 @@ public class GRpcServer implements IBasicSyncExecutor {
         entityClassSyncServer.start();
 
         try {
-            gRpcServer = serverBuilder().build()
-                            .start();
+            grpcServer = serverBuilder().build()
+                .start();
         } catch (IOException e) {
             logger.info("gRpcServer start failed, message : {}", e.getMessage());
             System.exit(-1);
@@ -80,14 +75,14 @@ public class GRpcServer implements IBasicSyncExecutor {
     }
 
     private void destroy() {
-        Optional.ofNullable(gRpcServer.isShutdown() ? null : gRpcServer).ifPresent(Server::shutdown);
+        Optional.ofNullable(grpcServer.isShutdown() ? null : grpcServer).ifPresent(Server::shutdown);
         logger.info("gRPC server stopped.");
     }
 
     private void awaitForTerminationThread() {
-        Thread serverThread = ThreadUtils.create(()->{
+        Thread serverThread = ThreadUtils.create(() -> {
             try {
-                gRpcServer.awaitTermination();
+                grpcServer.awaitTermination();
             } catch (InterruptedException e) {
                 logger.warn("gRPC server stopped failed, {}", e.getMessage());
             }
@@ -101,7 +96,7 @@ public class GRpcServer implements IBasicSyncExecutor {
     private ServerBuilder serverBuilder() {
         logger.info("server build start...");
         ServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-                        .executor(gRpcExecutor)
+            .executor(grpcExecutor)
                         .addService(entityClassSyncServer)
                         .maxInboundMetadataSize(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE)
                         .maxInboundMessageSize(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE)

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -16,7 +17,7 @@ import java.util.Collections;
  * @version 0.1 2021/3/3 11:48
  * @since 1.8
  */
-public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQLStorageEntity>, Integer> {
+public class SaveIndexExecutor extends AbstractJdbcTaskExecutor<Collection<SphinxQLStorageEntity>, Integer> {
 
     private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?)";
 
@@ -43,7 +44,7 @@ public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQL
         final String sql = buildSql(manticoreStorageEntities.size());
 
         int point = 1;
-        try (PreparedStatement st = ((Connection) getTransactionResource().value()).prepareStatement(sql)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             for (SphinxQLStorageEntity entity : manticoreStorageEntities) {
                 st.setLong(point++, entity.getId());
                 st.setString(point++, entity.getAttributeF());
@@ -71,7 +72,7 @@ public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQL
             sql.append("REPLACE ");
         }
         sql.append("INTO ")
-            .append(getIndexName())
+            .append(getTableName())
             .append(" (")
             .append(String.join(",",
                 FieldDefine.ID,

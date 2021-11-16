@@ -29,7 +29,6 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 
 /**
  * 基于jcseg的分词器实现.
- *
  * 储存模式将进行较细节的切分, 搜索模式将较为粗.
  *
  * @author dongbin

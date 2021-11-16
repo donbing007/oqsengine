@@ -1,10 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * UnsupportTokenizer Tester.
@@ -15,21 +13,15 @@ import org.junit.Test;
  */
 public class UnsupportTokenizerTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void test() throws Exception {
-        UnsupportTokenizer unsupportTokenizer = (UnsupportTokenizer) UnsupportTokenizer.getInstance();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            UnsupportTokenizer unsupportTokenizer = (UnsupportTokenizer) UnsupportTokenizer.getInstance();
 
-        Assert.assertEquals(FieldConfig.FuzzyType.UNKNOWN, unsupportTokenizer.support());
+            Assertions.assertEquals(FieldConfig.FuzzyType.UNKNOWN, unsupportTokenizer.support());
 
-        unsupportTokenizer.tokenize("test");
+            unsupportTokenizer.tokenize("test");
+        });
     }
 
 } 

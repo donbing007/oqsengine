@@ -7,10 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * DataSourceHashSelector Tester.
@@ -20,14 +18,6 @@ import org.junit.Test;
  * @since <pre>Feb 20, 2020</pre>
  */
 public class HashSelectorTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     /**
      * Method: select(String key).
@@ -41,11 +31,11 @@ public class HashSelectorTest {
         List<String> keyPool = buildKeys(keySize);
 
         HashSelector selector = new HashSelector(dsPool);
-        Time33Hash h = Time33Hash.build();
+        Time33Hash h = Time33Hash.getInstance();
         for (String key : keyPool) {
             int address = Math.abs(h.hash(key) % dsSize);
 
-            Assert.assertEquals(dsPool.get(address), selector.select(key));
+            Assertions.assertEquals(dsPool.get(address), selector.select(key));
         }
 
     }

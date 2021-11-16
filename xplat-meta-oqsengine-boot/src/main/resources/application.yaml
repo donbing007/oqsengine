@@ -46,6 +46,8 @@ storage:
     showsql: true
   timeoutMs:
     query: 3000
+  kv:
+    name: "kv"
   master:
     name: "oqsbigentity"
     shard:
@@ -92,6 +94,7 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
+  #uri: "redis://q1w2e3r4@127.0.0.1:6379"
   uri: "redis://127.0.0.1:6379"
   maxReqQueue: 10000
 
@@ -135,13 +138,12 @@ meta:
   grpc:
     # client 启动客户端、server 启动服务端、offline 离线模式、mock
     type: client
-    host: ultraman.xforcecloud.com
-    #    host: 120.55.249.44
+    host: 120.55.249.44
     #host: 169.254.106.127
-#    host: localhost
-#    port: 8081
-    #    port: 23111
-    port: 23120
+    #    host: localhost
+    #    port: 8081
+    port: 23111
+    #port: 23120
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30
@@ -151,7 +153,27 @@ meta:
   load:
     path: "-"
 
+discover:
+  sdk:
+    enable: false
+    connection:
+      host: ultraman-devops-service-test.n01103-oqs-cdc
+      port: 8916
+    time:
+      heartbeat:
+        expired: 60000
+        duration: 5000
+    agent:
+      erviceName: oqs-engine
+      serviceGroup: ${HOSTNAME}
+      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
+    threadPool:
+      task: 5
+      queue: 100
+
 changelog:
   enabled: false
   queue: local
 
+metadata:
+  enhanced: false

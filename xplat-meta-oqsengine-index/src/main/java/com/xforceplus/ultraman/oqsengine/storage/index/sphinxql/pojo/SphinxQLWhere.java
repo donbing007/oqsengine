@@ -13,12 +13,12 @@ import java.util.List;
  * @version 0.1 2021/04/09 15:21
  * @since 1.8
  */
-public class SphinxQLWhere {
+public final class SphinxQLWhere {
     private List<Long> filterIds;
     private long commitId;
     private List<String> match;
     private List<String> attrfilter;
-    private IEntityClass entityClass;
+    private List<IEntityClass> entityClasses;
 
     public SphinxQLWhere() {
         match = new LinkedList<>();
@@ -107,7 +107,7 @@ public class SphinxQLWhere {
      * 增加附加的条件,只会处理条件过滤和全文匹配.
      *
      * @param where 条件.
-     * @param and true 以 AND 连接, false 以 OR 连接.
+     * @param and   true 以 AND 连接, false 以 OR 连接.
      * @return 当前实例.
      */
     public SphinxQLWhere addWhere(SphinxQLWhere where, boolean and) {
@@ -164,8 +164,17 @@ public class SphinxQLWhere {
         return this;
     }
 
-    public SphinxQLWhere setEntityClass(IEntityClass entityClass) {
-        this.entityClass = entityClass;
+    /**
+     * 增加元信息.
+     *
+     * @param entityClass 元信息.
+     * @return 当前实例.
+     */
+    public SphinxQLWhere addEntityClass(IEntityClass entityClass) {
+        if (this.entityClasses == null) {
+            this.entityClasses = new LinkedList<>();
+        }
+        this.entityClasses.add(entityClass);
         return this;
     }
 
@@ -221,20 +230,36 @@ public class SphinxQLWhere {
 
             buff.append(")");
 
-            if (entityClass != null) {
-                buff.append(" (@").append(FieldDefine.ENTITYCLASSF).append(" =").append(entityClass.id()).append(')');
+            if (entityClasses != null) {
+                buff.append(" (@").append(FieldDefine.ENTITYCLASSF).append(" ");
+                int emptyLen = buff.length();
+                for (IEntityClass entityClass : this.entityClasses) {
+                    if (buff.length() > emptyLen) {
+                        buff.append(" | ");
+                    }
+                    buff.append(entityClass.id());
+                }
+                buff.append(')');
             }
 
             buff.append("')");
 
         } else {
 
-            if (entityClass != null) {
+            if (entityClasses != null && !entityClasses.isEmpty()) {
                 if (buff.length() > 0) {
                     buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
                 }
-                buff.append("MATCH('@").append(FieldDefine.ENTITYCLASSF).append(" =").append(entityClass.id())
-                    .append("')");
+                buff.append("MATCH('@").append(FieldDefine.ENTITYCLASSF).append(' ');
+                int emptyLen = buff.length();
+
+                for (IEntityClass entityClass : this.entityClasses) {
+                    if (buff.length() > emptyLen) {
+                        buff.append(" | ");
+                    }
+                    buff.append(entityClass.id());
+                }
+                buff.append("')");
             }
 
         }

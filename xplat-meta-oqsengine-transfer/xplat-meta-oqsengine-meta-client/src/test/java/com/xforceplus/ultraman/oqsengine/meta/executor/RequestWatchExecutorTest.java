@@ -5,10 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
@@ -26,41 +26,42 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  */
 public class RequestWatchExecutorTest extends BaseTest {
 
-    @Before
+
+    @BeforeEach
     public void before() {
         requestWatchExecutor = requestWatchExecutor();
-        RequestWatcher requestWatcher = new RequestWatcher(UUID.randomUUID().toString(), mockObserver());
+        RequestWatcher requestWatcher = new RequestWatcher(testClientId, UUID.randomUUID().toString(), mockObserver());
         ReflectionTestUtils.setField(requestWatchExecutor, "requestWatcher", requestWatcher);
 
         requestWatchExecutor.start();
     }
 
-    @After
+    @AfterEach
     public void after() {
         requestWatchExecutor.stop();
     }
 
     @Test
     public void resetHeartBeatTest() throws InterruptedException {
-        Assert.assertNotNull(requestWatchExecutor.watcher());
+        Assertions.assertNotNull(requestWatchExecutor.watcher());
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
         Thread.sleep(1);
         requestWatchExecutor.resetHeartBeat("uid");
-        Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
+        Assertions.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
     }
 
     @Test
     public void createTest() throws InterruptedException {
-        Assert.assertNotNull(requestWatchExecutor.watcher());
+        Assertions.assertNotNull(requestWatchExecutor.watcher());
         String uid = requestWatchExecutor.watcher().uid();
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
 
         Thread.sleep(1);
         StreamObserver<EntityClassSyncRequest> observer = requestWatchExecutor.watcher().observer();
-        requestWatchExecutor.create(UUID.randomUUID().toString(), mockObserver());
-        Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
-        Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
-        Assert.assertNotEquals(observer, requestWatchExecutor.watcher().observer());
+        requestWatchExecutor.create(testClientId, UUID.randomUUID().toString(), mockObserver());
+        Assertions.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
+        Assertions.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
+        Assertions.assertNotEquals(observer, requestWatchExecutor.watcher().observer());
     }
 
     @Test
@@ -72,13 +73,13 @@ public class RequestWatchExecutorTest extends BaseTest {
 
         requestWatchExecutor.add(w);
 
-        Assert.assertEquals(1, requestWatchExecutor.watcher().watches().size());
+        Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
 
         /**
          * 重复添加
          */
         requestWatchExecutor.add(w);
-        Assert.assertEquals(1, requestWatchExecutor.watcher().watches().size());
+        Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
     }
 
     @Test
@@ -95,28 +96,28 @@ public class RequestWatchExecutorTest extends BaseTest {
          */
         w = new WatchElement(appId, env, 9, Confirmed);
         boolean ret = requestWatchExecutor.update(w);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, init -> register,将被接收
          */
         w = new WatchElement(appId, env, 10, Register);
         ret = requestWatchExecutor.update(w);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> init,将被拒绝
          */
         w = new WatchElement(appId, env,10, Init);
         ret = requestWatchExecutor.update(w);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> confirm,将被接收
          */
         w = new WatchElement(appId, env,10, Confirmed);
         ret = requestWatchExecutor.update(w);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
     }
 
     @Test
@@ -127,7 +128,7 @@ public class RequestWatchExecutorTest extends BaseTest {
          * true
          */
         boolean ret = requestWatchExecutor.isAlive(expectedId);
-        Assert.assertTrue(ret);
+        Assertions.assertTrue(ret);
 
         /**
          * on server, uid = new Id
@@ -135,7 +136,7 @@ public class RequestWatchExecutorTest extends BaseTest {
          */
         String uid = UUID.randomUUID().toString();
         ret = requestWatchExecutor.isAlive(uid);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /**
          * off server, uid = expectedId
@@ -143,14 +144,14 @@ public class RequestWatchExecutorTest extends BaseTest {
          */
         requestWatchExecutor.inActive();
         ret = requestWatchExecutor.isAlive(expectedId);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
 
         /**
          * off server, uid = new Id
          * false
          */
         ret = requestWatchExecutor.isAlive(uid);
-        Assert.assertFalse(ret);
+        Assertions.assertFalse(ret);
     }
 
 

@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -15,6 +17,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/13 15:30
  * @since 1.8
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EntityField implements IEntityField, Serializable {
 
     /**
@@ -22,21 +25,21 @@ public class EntityField implements IEntityField, Serializable {
      */
     public static final IEntityField ID_ENTITY_FIELD =
         new EntityField(Long.MAX_VALUE, "id", FieldType.LONG,
-            FieldConfig.Builder.anFieldConfig().withIdentifie(true).build());
+                FieldConfig.Builder.anFieldConfig().withIdentifie(true).build());
 
     /**
      * 表示创建时间字段.
      */
     public static final IEntityField CREATE_TIME_FILED =
         new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
-            FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.CREATE_TIME).build());
+                FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.CREATE_TIME).build());
 
     /**
      * 表示最后更新时间字段.
      */
     public static final IEntityField UPDATE_TIME_FILED =
         new EntityField(Long.MAX_VALUE - 2, "updateTime", FieldType.LONG,
-            FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.UPDATE_TIME).build());
+                FieldConfig.Builder.anFieldConfig().withFieldSense(FieldConfig.FieldSense.UPDATE_TIME).build());
 
     /*
      * 字段的标识.
@@ -79,6 +82,12 @@ public class EntityField implements IEntityField, Serializable {
      */
     @JsonProperty(value = "config")
     private FieldConfig config;
+
+    /**
+     * 计算类型.
+     */
+    @JsonProperty(value = "calculationType")
+    private CalculationType calculationType;
 
     public EntityField() {
     }
@@ -186,6 +195,11 @@ public class EntityField implements IEntityField, Serializable {
         return this.defaultValue;
     }
 
+    @Override
+    public CalculationType calculationType() {
+        return this.calculationType;
+    }
+
     public String getDictId() {
         return dictId;
     }
@@ -219,17 +233,12 @@ public class EntityField implements IEntityField, Serializable {
             return false;
         }
         EntityField entityField = (EntityField) o;
-        return id == entityField.id
-            && Objects.equals(name, entityField.name)
-            && fieldType == entityField.fieldType
-            && Objects.equals(dictId, entityField.dictId)
-            && Objects.equals(defaultValue, entityField.defaultValue)
-            && Objects.equals(config, entityField.config);
+        return id == entityField.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fieldType, dictId, defaultValue, config);
+        return Objects.hash(id);
     }
 
     @Override
@@ -300,6 +309,7 @@ public class EntityField implements IEntityField, Serializable {
             return this;
         }
 
+
         /**
          * 构造实例.
          *
@@ -314,6 +324,9 @@ public class EntityField implements IEntityField, Serializable {
             entityField.dictId = this.dictId;
             entityField.defaultValue = this.defaultValue;
             entityField.config = this.config;
+            //  没有calculation时使用static
+            entityField.calculationType = (null == this.config || null == this.config.getCalculation())
+                                            ? CalculationType.STATIC : this.config.getCalculation().getCalculationType();
             return entityField;
         }
     }

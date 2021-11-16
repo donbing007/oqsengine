@@ -1,23 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.devops;
 
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.BOOL_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.DATE_TIME_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.DECIMAL_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.LONG_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.STRINGS_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.STRING_FIELD;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.entityClass0;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.entityClass1;
-import static com.xforceplus.ultraman.oqsengine.devops.EntityClassBuilder.entityClass2;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -28,7 +24,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import org.junit.Ignore;
 
 /**
  * entity生成工具.
@@ -36,8 +31,57 @@ import org.junit.Ignore;
  * @author xujia 2020/11/26
  * @since 1.8
  */
-@Ignore
 public class EntityGenerateTooBar {
+
+    public static final IEntityField
+        STRING_FIELD = new EntityField(1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField
+        LONG_FIELD = new EntityField(2, "long", FieldType.LONG, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField
+        BOOL_FIELD = new EntityField(3, "bool", FieldType.BOOLEAN, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField
+        DATE_TIME_FIELD =
+        new EntityField(4, "datetime", FieldType.DATETIME, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField
+        DECIMAL_FIELD =
+        new EntityField(5, "decimal", FieldType.DECIMAL, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField
+        STRINGS_FIELD =
+        new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
+
+    // level 1
+    public static final IEntityClass ENTITY_CLASS_0 =
+        EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE)
+            .withVersion(1)
+            .withLevel(0)
+            .withCode("c0")
+            .withFields(
+                Arrays.asList(LONG_FIELD, STRING_FIELD)
+            ).build();
+
+    // level 2
+    public static final IEntityClass ENTITY_CLASS_1 =
+        EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 1)
+            .withVersion(1)
+            .withLevel(1)
+            .withCode("c1")
+            .withFather(ENTITY_CLASS_0)
+            .withFields(
+                Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
+            ).build();
+    // level 3
+    public static final IEntityClass ENTITY_CLASS_2 =
+        EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 2)
+            .withVersion(1)
+            .withLevel(2)
+            .withCode("c2")
+            .withFather(ENTITY_CLASS_1)
+            .withFields(
+                Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
+            ).build();
 
     public static long startPos = 1;
     public static int testVersion = 0;
@@ -48,7 +92,7 @@ public class EntityGenerateTooBar {
 
     public static long longStringStartTime = 0;
     public static long longStringEndTime = 0;
-    public static final IEntityClass LONG_STRING_ENTITY_CLASS = entityClass0;
+    public static final IEntityClass LONG_STRING_ENTITY_CLASS = ENTITY_CLASS_0;
 
     /**
      * 准备数字字段的entity.
@@ -90,11 +134,11 @@ public class EntityGenerateTooBar {
 
     public static long surPlusStartTime = 0;
     public static long surPlusEndTime = 0;
-    public static final IEntityClass SUR_PLUS_ENTITY_CLASS = entityClass1;
+    public static final IEntityClass SUR_PLUS_ENTITY_CLASS = ENTITY_CLASS_1;
 
     /**
-        surplus test use.
-    */
+     * surplus test use.
+     */
     public static IEntity[] prepareSurPlusNeedDeleteEntity(int size) {
         IEntity[] entities = new IEntity[size];
         for (int i = 0; i < size; i++) {
@@ -132,11 +176,11 @@ public class EntityGenerateTooBar {
 
     public static long pauseResumeStartTime = 0;
     public static long pauseResumeEndTime = 0;
-    public static final IEntityClass PREPARE_PAUSE_RESUME_ENTITY_CLASS = entityClass2;
+    public static final IEntityClass PREPARE_PAUSE_RESUME_ENTITY_CLASS = ENTITY_CLASS_2;
 
     /**
-        resume test use.
-    */
+     * resume test use.
+     */
     public static IEntity[] preparePauseResumeEntity(int size) {
         IEntity[] entities = new IEntity[size];
         for (int i = 0; i < size; i++) {

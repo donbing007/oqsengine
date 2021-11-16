@@ -103,6 +103,19 @@ private static final long serialVersionUID = 0L;
 
             break;
           }
+          case 74: {
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder subBuilder = null;
+            if (calculator_ != null) {
+              subBuilder = calculator_.toBuilder();
+            }
+            calculator_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(calculator_);
+              calculator_ = subBuilder.buildPartial();
+            }
+
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -461,6 +474,27 @@ private static final long serialVersionUID = 0L;
     return getFieldConfig();
   }
 
+  public static final int CALCULATOR_FIELD_NUMBER = 9;
+  private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator_;
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  public boolean hasCalculator() {
+    return calculator_ != null;
+  }
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getCalculator() {
+    return calculator_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
+  }
+  /**
+   * <code>.Calculator calculator = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder getCalculatorOrBuilder() {
+    return getCalculator();
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -494,6 +528,9 @@ private static final long serialVersionUID = 0L;
     if (fieldConfig_ != null) {
       output.writeMessage(7, getFieldConfig());
     }
+    if (calculator_ != null) {
+      output.writeMessage(9, getCalculator());
+    }
     unknownFields.writeTo(output);
   }
 
@@ -525,6 +562,10 @@ private static final long serialVersionUID = 0L;
     if (fieldConfig_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(7, getFieldConfig());
+    }
+    if (calculator_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(9, getCalculator());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -558,6 +599,11 @@ private static final long serialVersionUID = 0L;
       result = result && getFieldConfig()
           .equals(other.getFieldConfig());
     }
+    result = result && (hasCalculator() == other.hasCalculator());
+    if (hasCalculator()) {
+      result = result && getCalculator()
+          .equals(other.getCalculator());
+    }
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -585,6 +631,10 @@ private static final long serialVersionUID = 0L;
     if (hasFieldConfig()) {
       hash = (37 * hash) + FIELDCONFIG_FIELD_NUMBER;
       hash = (53 * hash) + getFieldConfig().hashCode();
+    }
+    if (hasCalculator()) {
+      hash = (37 * hash) + CALCULATOR_FIELD_NUMBER;
+      hash = (53 * hash) + getCalculator().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -733,6 +783,12 @@ private static final long serialVersionUID = 0L;
         fieldConfig_ = null;
         fieldConfigBuilder_ = null;
       }
+      if (calculatorBuilder_ == null) {
+        calculator_ = null;
+      } else {
+        calculator_ = null;
+        calculatorBuilder_ = null;
+      }
       return this;
     }
 
@@ -765,6 +821,11 @@ private static final long serialVersionUID = 0L;
         result.fieldConfig_ = fieldConfig_;
       } else {
         result.fieldConfig_ = fieldConfigBuilder_.build();
+      }
+      if (calculatorBuilder_ == null) {
+        result.calculator_ = calculator_;
+      } else {
+        result.calculator_ = calculatorBuilder_.build();
       }
       onBuilt();
       return result;
@@ -831,6 +892,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.hasFieldConfig()) {
         mergeFieldConfig(other.getFieldConfig());
+      }
+      if (other.hasCalculator()) {
+        mergeCalculator(other.getCalculator());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1320,6 +1384,123 @@ private static final long serialVersionUID = 0L;
         fieldConfig_ = null;
       }
       return fieldConfigBuilder_;
+    }
+
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator_ = null;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder> calculatorBuilder_;
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public boolean hasCalculator() {
+      return calculatorBuilder_ != null || calculator_ != null;
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator getCalculator() {
+      if (calculatorBuilder_ == null) {
+        return calculator_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
+      } else {
+        return calculatorBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public Builder setCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator value) {
+      if (calculatorBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        calculator_ = value;
+        onChanged();
+      } else {
+        calculatorBuilder_.setMessage(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public Builder setCalculator(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder builderForValue) {
+      if (calculatorBuilder_ == null) {
+        calculator_ = builderForValue.build();
+        onChanged();
+      } else {
+        calculatorBuilder_.setMessage(builderForValue.build());
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public Builder mergeCalculator(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator value) {
+      if (calculatorBuilder_ == null) {
+        if (calculator_ != null) {
+          calculator_ =
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.newBuilder(calculator_).mergeFrom(value).buildPartial();
+        } else {
+          calculator_ = value;
+        }
+        onChanged();
+      } else {
+        calculatorBuilder_.mergeFrom(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public Builder clearCalculator() {
+      if (calculatorBuilder_ == null) {
+        calculator_ = null;
+        onChanged();
+      } else {
+        calculator_ = null;
+        calculatorBuilder_ = null;
+      }
+
+      return this;
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder getCalculatorBuilder() {
+      
+      onChanged();
+      return getCalculatorFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder getCalculatorOrBuilder() {
+      if (calculatorBuilder_ != null) {
+        return calculatorBuilder_.getMessageOrBuilder();
+      } else {
+        return calculator_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.getDefaultInstance() : calculator_;
+      }
+    }
+    /**
+     * <code>.Calculator calculator = 9;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder> 
+        getCalculatorFieldBuilder() {
+      if (calculatorBuilder_ == null) {
+        calculatorBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.CalculatorOrBuilder>(
+                getCalculator(),
+                getParentForChildren(),
+                isClean());
+        calculator_ = null;
+      }
+      return calculatorBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

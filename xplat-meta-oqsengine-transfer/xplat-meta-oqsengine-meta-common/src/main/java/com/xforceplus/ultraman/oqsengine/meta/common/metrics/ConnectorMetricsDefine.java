@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.metrics;
 
 /**
- * desc :.
- * name : ConnectorMetricsDefine
+ * interface.
  *
- * @author : xujia date : 2021/4/12
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ConnectorMetricsDefine {
 

@@ -37,7 +37,7 @@ public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
                     /**
                      * 处理心跳
                      */
-                    if (null != uid && isTestOk) {
+                    if (isTestOk) {
                         EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
                                 .setStatus(HEARTBEAT.ordinal());
                         responseStreamObserver.onNext(builder.build());
@@ -46,9 +46,10 @@ public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
                     /**
                      * 处理注册
                      */
-                    if (null != uid && isTestOk) {
+                    if (isTestOk) {
                         EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
                                 .setStatus(REGISTER_OK.ordinal())
+                                .setEnv(entityClassSyncRequest.getEnv())
                                 .setAppId(entityClassSyncRequest.getAppId())
                                 .setVersion(entityClassSyncRequest.getVersion());
 

@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionE
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -20,6 +21,7 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * 自定义事务配置.
@@ -36,16 +38,16 @@ public class CustomTransactionConfiguration {
      */
     @Bean
     public TransactionManager transactionManager(
-        LongIdGenerator snowflakeIdGenerator,
-        LongIdGenerator redisIdGenerator,
+        LongIdGenerator longNoContinuousPartialOrderIdGenerator,
+        LongIdGenerator longContinuousPartialOrderIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
         CommitIdStatusService commitIdStatusService,
         EventBus eventBus,
         CacheEventHandler cacheEventHandler) {
         return DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withSurvivalTimeMs(transactionTimeoutMs)
-            .withTxIdGenerator(snowflakeIdGenerator)
-            .withCommitIdGenerator(redisIdGenerator)
+            .withTxIdGenerator(longNoContinuousPartialOrderIdGenerator)
+            .withCommitIdGenerator(longContinuousPartialOrderIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
             .withWaitCommitSync(true)
             .withEventBus(eventBus)
@@ -85,6 +87,7 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
+    @Primary
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
@@ -104,10 +107,31 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
+    public SqlKvConnectionTransactionResourceFactory sqlKvConnectionTransactionResourceFactory() {
+        return new SqlKvConnectionTransactionResourceFactory();
+    }
+
+    @Bean
+    public TransactionExecutor kvStorageJDBCTransactionExecutor(
+        SqlKvConnectionTransactionResourceFactory factory,
+        TransactionManager tm,
+        DataSource masterDataSource,
+        @Value("${storage.kv.name:kv}") String tableName) {
+        return new AutoJoinTransactionExecutor(tm, factory, new NoSelector<>(masterDataSource),
+            new NoSelector<>(tableName));
+    }
+
+    /**
+     * serviceTransactionExecutor.
+     */
+    @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
     }
 
+    /**
+     * cacheEventHandler.
+     */
     @Bean
     public CacheEventHandler cacheEventHandler(RedisClient redisClientCacheEvent,
                                                ObjectMapper objectMapper,

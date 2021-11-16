@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -22,18 +20,6 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-    private static final ObjectMapper JSON_MAPPER = JsonMapper.builder()
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
-        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
-        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
 
     /**
      * 属性字符串表示解析为实际对象列表.
@@ -44,7 +30,7 @@ public class OriginalEntityUtils {
      */
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
         List<Object> attributes = new ArrayList<>();
-        Map<String, Object> keyValues = JSON_MAPPER.readValue(attrStr, Map.class);
+        Map<String, Object> keyValues = JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
         keyValues.forEach(
             (k, v) -> {
                 attributes.add(k);
@@ -66,8 +52,8 @@ public class OriginalEntityUtils {
         throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                JSON_MAPPER.readValue(orgStr,
-                    JSON_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                    JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
+                            JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);
@@ -86,7 +72,7 @@ public class OriginalEntityUtils {
      */
     public static String toOriginalEntityStr(List<OriginalEntity> originalEntities) throws JsonProcessingException {
         try {
-            return JSON_MAPPER.writeValueAsString(
+            return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(
                 originalEntities.stream()
                     .map(RawOriginalEntity::toRawOriginalEntity)
                     .collect(Collectors.toList())
@@ -111,7 +97,7 @@ public class OriginalEntityUtils {
         private long maintainid;
 
         public static OriginalEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
-            Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId());
+            Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId(), "");
             return entityClassOp.map(entityClass -> OriginalEntity.Builder
                 .anOriginalEntity()
                 .withDeleted(rawOriginalEntity.isDeleted())

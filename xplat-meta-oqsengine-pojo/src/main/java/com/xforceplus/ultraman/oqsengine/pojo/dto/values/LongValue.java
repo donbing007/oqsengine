@@ -50,17 +50,14 @@ public class LongValue extends AbstractValue<Long> {
     }
 
     @Override
-    public IValue<Long> shallowClone() {
-        return new LongValue(this.getField(), getValue());
+    public IValue<Long> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new LongValue(newField, getValue());
     }
 
     @Override
     public boolean compareByString() {
         return false;
-    }
-
-    @Override
-    public String toString() {
-        return "LongValue{" + "field=" + getField() + ", value=" + getValue() + '}';
     }
 }

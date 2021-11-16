@@ -1,20 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
 import io.grpc.stub.StreamObserver;
-
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * desc :.
- * name : IWatch
+ * watcher接口.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public interface IWatcher<T> {
+
+    String clientId();
 
     String uid();
 
@@ -35,9 +34,7 @@ public interface IWatcher<T> {
     boolean runWithCheck(Function<StreamObserver<T>, Boolean> function);
 
     /**
-     * 执行supplier后remove
-     * @param supplier
-     * @param <S>
+     * 执行supplier后remove.
      */
     <S> void release(Supplier<S> supplier);
 

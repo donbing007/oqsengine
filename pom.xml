@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>   
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.3.0-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -43,6 +43,38 @@
                     <skip>${test.skip}</skip>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    <argLine>
+                        -Dfile.encoding=UTF-8
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                    </argLine>
+                    <systemPropertyVariables>
+                        <allure.results.directory>${project.build.directory}/../../allure-results</allure.results.directory>
+                        <junit.jupiter.extensions.autodetection.enabled>true
+                        </junit.jupiter.extensions.autodetection.enabled>
+                        <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                        <junit.jupiter.execution.parallel.config.strategy>dynamic
+                        </junit.jupiter.execution.parallel.config.strategy>
+                    </systemPropertyVariables>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>${aspectj.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.10.0</version>
+                <configuration>
+                    <reportVersion>${allure.version}</reportVersion>
+                    <resultsDirectory>${project.build.directory}/../../allure-results</resultsDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -57,10 +89,10 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>../checkstyle.xml</configLocation>
+                    <configLocation>./checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                    <excludes>**/*Grpc.java</excludes>
+                    <excludes>**/*Grpc.java,**/proto/sync/**/*,**/oqsengine/sdk/**/*, **/mock/*</excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -106,19 +138,43 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>io.github.phillipuniverse</groupId>
+                <artifactId>githook-maven-plugin</artifactId>
+                <version>1.0.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>install</goal>
+                        </goals>
+                        <configuration>
+                            <hooks>
+                                <pre-commit>
+                                    echo "Begin the pre-Commit check."
+                                    exec mvn checkstyle:check
+                                </pre-commit>
+                            </hooks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <modules>
+        <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-tokenizer</module>
+        <module>xplat-meta-oqsengine-synchronizer</module>
         <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
-        <module>xplat-meta-oqsengine-testcontainer</module>
+        <module>xplat-meta-oqsengine-kv</module>
+        <module>xplat-meta-oqsengine-task</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-calculate</module>
         <module>xplat-meta-oqsengine-metadata</module>
         <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-cdc</module>
@@ -127,6 +183,8 @@
         <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
+        <module>xplat-meta-oqsengine-idgenerator</module>
+        <module>xplat-meta-oqsengine-lock</module>
     </modules>
 
     <distributionManagement>
@@ -169,90 +227,89 @@
         </repository>
     </repositories>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit5</artifactId>
+            <version>2.13.10</version>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.junit.vintage</groupId>
+                        <artifactId>junit-vintage-engine</artifactId>
+                    </exclusion>
+                </exclusions>
                 <version>2.2.1.RELEASE</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.9</version>
             </dependency>
-
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.45.Final</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.caucho</groupId>
+                <artifactId>hessian</artifactId>
+                <version>4.0.65</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>5.1.1</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.metamodel</groupId>
                 <artifactId>MetaModel-pojo</artifactId>
                 <version>5.3.2</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.metamodel</groupId>
                 <artifactId>MetaModel-json</artifactId>
                 <version>5.3.2</version>
             </dependency>
-
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>8.0.19</version>
             </dependency>
-
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>1.2.62</version>
             </dependency>
-
             <dependency>
                 <groupId>io.vavr</groupId>
                 <artifactId>vavr</artifactId>
-                <version>0.9.3</version>
+                <version>0.10.3</version>
             </dependency>
-
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
-                <scope>test</scope>
-            </dependency>
-
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>1.4.199</version>
-                <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.typesafe</groupId>
                 <artifactId>config</artifactId>
                 <version>1.4.0</version>
             </dependency>
-
-
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>3.1.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson-spring-boot-starter</artifactId>
-                <version>3.12.3</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers</artifactId>
-                <version>1.15.2</version>
+                <version>3.4.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -265,14 +322,6 @@
                 <artifactId>canal.client</artifactId>
                 <version>1.1.4</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>mysql</artifactId>
-                <version>1.14.3</version>
-                <scope>test</scope>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.shardingsphere</groupId>
                 <artifactId>sharding-jdbc-core</artifactId>
@@ -284,50 +333,100 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>30.0-jre</version>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>2.11.3</version>
             </dependency>
-
             <dependency>
                 <groupId>p6spy</groupId>
                 <artifactId>p6spy</artifactId>
                 <version>3.9.1</version>
             </dependency>
-
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-core</artifactId>
                 <version>1.28</version>
             </dependency>
-
             <dependency>
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-generator-annprocess</artifactId>
                 <version>1.28</version>
             </dependency>
-
             <dependency>
                 <groupId>com.github.javafaker</groupId>
                 <artifactId>javafaker</artifactId>
                 <version>1.0.2</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.lionsoul</groupId>
                 <artifactId>jcseg-core</artifactId>
                 <version>2.6.2</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.xforceplus.ultraman</groupId>
+                <artifactId>ultraman-devops-service-sdk</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>3.15.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.aviator</groupId>
+                <artifactId>aviator</artifactId>
+                <version>5.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>1.16.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xforceplus.ultraman.common</groupId>
+                <artifactId>oqsengine-sdk-server</artifactId>
+                <version>2.0.7</version>
+            </dependency>
+            <dependency>
+                <artifactId>reactive-grpc-server</artifactId>
+                <groupId>com.xforceplus.xplat-galaxy</groupId>
+                <version>6.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
+                <version>3.11.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-census</artifactId>
+                <version>1.28.1</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-all</artifactId>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+                <version>1.28.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -336,11 +435,13 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>
         <argLine>-Xmx4096m -Xms4096m</argLine>
+        <aspectj.version>1.9.1</aspectj.version>
+        <allure.version>2.13.10</allure.version>
     </properties>
 
 </project>

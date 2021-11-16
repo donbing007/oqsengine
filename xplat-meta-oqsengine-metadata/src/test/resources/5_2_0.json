@@ -696,6 +696,8 @@
       },
       "calculator": {
         "calculateType": 3,
+        "level": 1,
+        "domainNoSenior": "1",
         "min": "0",
         "patten": "CN-{yyyy}-{MM}-{dd}-{000000}",
         "model": "1",
@@ -1732,6 +1734,8 @@
       },
       "calculator": {
         "calculateType": 3,
+        "level": 1,
+        "domainNoSenior": "1",
         "min": "1",
         "patten": "APP-{yyyy}-{MM}-{dd}-{000000}",
         "model": "2",

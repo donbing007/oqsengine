@@ -53,11 +53,7 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public CDCMetrics queryLastUnCommit() {
         Optional<CDCMetrics> cdcMetricsOp = cdcStatusService.getUnCommit();
-        if (cdcMetricsOp.isPresent()) {
-            return cdcMetricsOp.get();
-        } else {
-            return null;
-        }
+        return cdcMetricsOp.orElse(null);
     }
 
     @Override

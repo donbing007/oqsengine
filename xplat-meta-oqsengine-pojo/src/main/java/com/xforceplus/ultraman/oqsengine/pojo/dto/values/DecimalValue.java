@@ -13,29 +13,14 @@ import java.util.Objects;
  */
 public class DecimalValue extends AbstractValue<BigDecimal> {
 
-    /**
-     * 构造一个新的DecimalValue实例.
-     * 会检查整数位和小数位,两者均不可以大于长整形的最大表示位数,即19位数字.
-     *
-     * @param field 目标字段.
-     * @param value 目标浮点数.
-     */
     public DecimalValue(IEntityField field, BigDecimal value) {
-        super(field, value);
-
-        // 这里校验,其整形长度不能超过Long.MAX_VALUE
-        String checkValue = value.toPlainString();
-        String[] checkValues = checkValue.split("\\.");
-        Long.parseLong(checkValues[0]);
-        if (checkValues.length > 1) {
-            Long.parseLong(checkValues[1]);
-        }
+        super(field, buildWellBigDecimal(field, value));
     }
 
     @Override
     BigDecimal fromString(String value) {
         if (value != null) {
-            return new BigDecimal(value);
+            return buildWellBigDecimal(getField(), new BigDecimal(value));
         }
         return null;
     }
@@ -47,23 +32,7 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     @Override
     public String valueToString() {
-        String value = getValue().toPlainString();
-        // 补足小数.
-        if (value.indexOf(".") < 0) {
-            return value + ".0";
-        } else {
-            return value;
-        }
-    }
-
-    public long integerValue() {
-        String[] values = getValue().toPlainString().split("\\.");
-        return Long.parseLong(values[0]);
-    }
-
-    public long decValue() {
-        String[] values = getValue().toPlainString().split("\\.");
-        return Long.parseLong(values[1]);
+        return getValue().toPlainString();
     }
 
     @Override
@@ -86,12 +55,23 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
-    public IValue<BigDecimal> shallowClone() {
-        return new DecimalValue(this.getField(), getValue());
+    public IValue<BigDecimal> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new DecimalValue(newField, getValue());
     }
 
-    @Override
-    public String toString() {
-        return "DecimalValue{" + "field=" + getField() + ", value=" + getValue() + '}';
+    // 保证至少有一位数度.
+    private static BigDecimal buildWellBigDecimal(IEntityField field, BigDecimal value) {
+        BigDecimal wellValue;
+        String plainValue = value.toPlainString();
+        if (plainValue.indexOf(".") < 0) {
+            plainValue = value.longValue() + ".0";
+            wellValue = new BigDecimal(plainValue);
+        } else {
+            wellValue = value;
+        }
+
+        return wellValue;
     }
 }

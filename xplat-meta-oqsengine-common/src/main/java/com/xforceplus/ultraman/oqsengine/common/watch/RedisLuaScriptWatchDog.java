@@ -16,9 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * redis的lua脚本缓存监控器,使用SCRIPT.EXISTS来判断指定脚本的KEY是否存在.
- * 如果不存在将将执行预期的方法重置脚本.
- * 最终保证脚本一直有效.
+ * redis的lua脚本缓存监控器,使用SCRIPT.EXISTS来判断指定脚本的KEY是否存在. 如果不存在将将执行预期的方法重置脚本. 最终保证脚本一直有效.
  *
  * @author dongbin
  * @version 0.1 2021/09/23 10:41

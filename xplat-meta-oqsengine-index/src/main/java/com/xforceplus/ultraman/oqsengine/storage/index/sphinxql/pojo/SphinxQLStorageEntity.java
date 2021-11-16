@@ -129,7 +129,7 @@ public class SphinxQLStorageEntity implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("ManticoreStorageEntity{");
+        final StringBuffer sb = new StringBuffer("SphinxQLStorageEntity{");
         sb.append("id=").append(id);
         sb.append(", entityClassF='").append(entityClassF).append('\'');
         sb.append(", attributeF='").append(attributeF).append('\'');
@@ -151,6 +151,7 @@ public class SphinxQLStorageEntity implements Serializable {
         private long id;
         private String entityClassF;
         private String attributeF;
+        private String searchAttributeF;
         private long tx;
         private long commitId;
         private long createTime;
@@ -213,6 +214,11 @@ public class SphinxQLStorageEntity implements Serializable {
 
         public Builder withAttribute(String attribute) {
             this.attribute = attribute;
+            return this;
+        }
+
+        public Builder withSearchAttributeF(String searchAttributeF) {
+            this.searchAttributeF = searchAttributeF;
             return this;
         }
 

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
 import java.util.concurrent.CompletableFuture;
@@ -8,10 +10,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * DefaultEventBus Tester.
@@ -26,7 +28,10 @@ public class DefaultEventBusTest {
     private EventStorage eventStorage;
     private ExecutorService worker;
 
-    @Before
+    /**
+     * 初始化.
+     */
+    @BeforeEach
     public void before() throws Exception {
         eventStorage = new MemoryEventStorage();
         worker = Executors.newFixedThreadPool(3);
@@ -34,20 +39,24 @@ public class DefaultEventBusTest {
         eventBus.init();
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         eventBus.destroy();
         worker.shutdown();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorNoEventStorage() throws Exception {
-        new DefaultEventBus(null, null);
+    @Test
+    public void testConstructorNoEventStorage() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new DefaultEventBus(null, null);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorNoWorker() throws Exception {
-        new DefaultEventBus(eventStorage, null);
+    @Test
+    public void testConstructorNoWorker() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new DefaultEventBus(eventStorage, null);
+        });
     }
 
     /**
@@ -60,9 +69,9 @@ public class DefaultEventBusTest {
 
         eventBus.watch(EventType.ENTITY_BUILD, (event) -> {
 
-            Assert.assertEquals(event.type(), EventType.ENTITY_BUILD);
-            Assert.assertTrue(event.payload().isPresent());
-            Assert.assertTrue(event.payload().get().toString().startsWith("test"));
+            Assertions.assertEquals(event.type(), EventType.ENTITY_BUILD);
+            Assertions.assertTrue(event.payload().isPresent());
+            Assertions.assertTrue(event.payload().get().toString().startsWith("test"));
 
             size.decrementAndGet();
             latch.countDown();
@@ -70,9 +79,9 @@ public class DefaultEventBusTest {
 
         eventBus.watch(EventType.ENTITY_BUILD, (event) -> {
 
-            Assert.assertEquals(event.type(), EventType.ENTITY_BUILD);
-            Assert.assertTrue(event.payload().isPresent());
-            Assert.assertTrue(event.payload().get().toString().startsWith("test"));
+            Assertions.assertEquals(event.type(), EventType.ENTITY_BUILD);
+            Assertions.assertTrue(event.payload().isPresent());
+            Assertions.assertTrue(event.payload().get().toString().startsWith("test"));
 
             size.decrementAndGet();
             latch.countDown();
@@ -89,7 +98,7 @@ public class DefaultEventBusTest {
 
         latch.await(6, TimeUnit.SECONDS);
 
-        Assert.assertEquals(0, size.get());
+        Assertions.assertEquals(0, size.get());
     }
 
     /**
@@ -98,7 +107,7 @@ public class DefaultEventBusTest {
     @Test
     public void testNoNotice() throws Exception {
         eventBus.notify(new TestEvent(EventType.ENTITY_DELETE, "delete0"));
-        Assert.assertEquals(0, eventStorage.size());
+        Assertions.assertEquals(0, eventStorage.size());
     }
 
     static class TestEvent extends ActualEvent<String> {

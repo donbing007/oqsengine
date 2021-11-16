@@ -1,13 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
-import io.micrometer.core.instrument.Metrics;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -20,58 +15,52 @@ import javax.annotation.PreDestroy;
  */
 public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
 
-    private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.common.id";
+    private static final String DEFAULT_NAMESPACE = "com.xforceplus.ultraman.oqsengine.default";
 
 
     private StatefulRedisConnection<String, String> connection;
 
-    private String key;
-    private Supplier<Long> supplier;
-
-    private AtomicLong commitIdNumber = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
+    private String ns;
 
     public RedisOrderContinuousLongIdGenerator(RedisClient redisClient) {
-        this(redisClient, DEFAULT_KEY, () -> 0L);
-    }
-
-    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, Supplier<Long> supplier) {
-        this(redisClient, DEFAULT_KEY, supplier);
+        this(redisClient, DEFAULT_NAMESPACE);
     }
 
     /**
      * 构造实例.
      *
      * @param redisClient redis 客户端实例.
-     * @param key         操作的key.
-     * @param supplier    初始化动作.
+     * @param ns         操作的key.
      */
-    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String key, Supplier<Long> supplier) {
+    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String ns) {
 
-        this.key = key;
+        this.ns = ns;
         this.connection = redisClient.connect();
-        this.supplier = supplier;
     }
 
     @Override
     public Long next() {
-        RedisStringCommands<String, String> sync = connection.sync();
-        Long newId = sync.incr(key);
+        return next(ns);
+    }
 
-        try {
-            return newId;
-        } finally {
-            Long finalNewId = newId;
-            CompletableFuture.runAsync(() -> commitIdNumber.set(finalNewId));
-        }
+    @Override
+    public Long next(String nameSpace) {
+        RedisStringCommands<String, String> sync = connection.sync();
+        Long newId = sync.incr(nameSpace);
+        return newId;
+    }
+
+    @Override
+    public boolean supportNameSpace() {
+        return true;
     }
 
     @PostConstruct
     public void init() {
         //do init will block startup
-        if (key == null || key.isEmpty()) {
-            key = DEFAULT_KEY;
+        if (ns == null || ns.isEmpty()) {
+            ns = DEFAULT_NAMESPACE;
         }
-        initializeId();
     }
 
     @PreDestroy
@@ -89,8 +78,9 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         return true;
     }
 
-    private synchronized void initializeId() {
+    @Override
+    public void reset() {
         RedisStringCommands<String, String> sync = connection.sync();
-        sync.setnx(key, supplier.get().toString());
+        sync.set(ns, "0");
     }
 }

@@ -12,6 +12,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * desc :.
@@ -21,6 +24,7 @@ import java.time.LocalDateTime;
  * @since : 1.8
  */
 public class IValueUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IValueUtils.class);
 
     /**
      * serialize to String.
@@ -86,5 +90,104 @@ public class IValueUtils {
         }
 
         return retValue;
+    }
+
+    /**
+     * 根据field与object转换IValue.
+     */
+    public static IValue<?> toIValue(IEntityField field, Object result) {
+        try {
+            LOGGER.debug("raw : [{}], fieldId : [{}], config : [{}]]", result, field.id(), field.config().toString());
+            switch (field.type()) {
+                case BOOLEAN: {
+                    return new BooleanValue(field, (Boolean) result);
+                }
+                case ENUM: {
+                    return new EnumValue(field, (String) result);
+                }
+                case DATETIME: {
+                    if (result instanceof Date) {
+                        return new DateTimeValue(field, TimeUtils.convert((Date) result));
+                    } else if (result instanceof LocalDateTime) {
+                        return new DateTimeValue(field, (LocalDateTime) result);
+                    }
+                    return new DateTimeValue(field, TimeUtils.convert((Long) result));
+                }
+                case LONG: {
+                    if (result instanceof Integer) {
+                        result = ((Integer) result).longValue();
+                    }
+                    return new LongValue(field, (Long) result);
+                }
+                case STRING: {
+                    return new StringValue(field, (String) result);
+                }
+                case STRINGS: {
+                    return new StringsValue(field, (String[]) result);
+                }
+                case DECIMAL: {
+                    LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]",
+                        result, field.id(), field.config().getPrecision(), field.config().scale());
+
+                    BigDecimal r;
+                    if (field.config().getPrecision() > 0) {
+                        Scale scale = Scale.getInstance(field.config().scale());
+                        if (!scale.equals(Scale.UN_KNOW)) {
+                            r = ((BigDecimal) result).setScale(field.config().getPrecision(), scale.getMode());
+                        } else {
+                            r = (BigDecimal) result;
+                        }
+                    } else {
+                        r = (BigDecimal) result;
+                    }
+                    return new DecimalValue(field, r);
+                }
+                default: {
+                    throw new IllegalArgumentException("unknown field type.");
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("toIValue failed, message [%s]", e.getMessage()));
+        }
+    }
+
+
+    /**
+     * scal enum class.
+     */
+    public enum Scale {
+        UN_KNOW(0, BigDecimal.ROUND_UNNECESSARY),
+        ROUND_HALF_UP(1, BigDecimal.ROUND_HALF_UP),
+        ROUND_DOWN(2, BigDecimal.ROUND_DOWN);
+
+        private int scale;
+        private int mode;
+
+        Scale(int scale, int mode) {
+            this.scale = scale;
+            this.mode = mode;
+        }
+
+        public int getScale() {
+            return scale;
+        }
+
+        public int getMode() {
+            return mode;
+        }
+
+        /**
+         * get instance.
+         *
+         * @return scale instance.
+         */
+        public static Scale getInstance(int v) {
+            for (Scale s : Scale.values()) {
+                if (s.scale == v) {
+                    return s;
+                }
+            }
+            return Scale.UN_KNOW;
+        }
     }
 }

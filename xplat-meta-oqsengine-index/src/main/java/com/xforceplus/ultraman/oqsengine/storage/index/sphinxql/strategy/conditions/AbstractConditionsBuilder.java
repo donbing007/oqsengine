@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
@@ -18,7 +19,8 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public abstract class AbstractConditionsBuilder
-    implements ConditionsBuilder<SphinxQLWhere>, StorageStrategyFactoryAble, TokenizerFactoryAble, Lifecycle {
+    implements ConditionsBuilder<Conditions, SphinxQLWhere>, StorageStrategyFactoryAble, TokenizerFactoryAble,
+    Lifecycle {
 
     private StorageStrategyFactory storageStrategyFactory;
 

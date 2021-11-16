@@ -56,12 +56,11 @@ public class BooleanValue extends AbstractValue<Boolean> {
     }
 
     @Override
-    public IValue<Boolean> shallowClone() {
-        return new BooleanValue(this.getField(), getValue());
+    public IValue<Boolean> copy(IEntityField newField) {
+        checkType(newField);
+
+        return new BooleanValue(newField, getValue());
     }
 
-    @Override
-    public String toString() {
-        return "BooleanValue{" + "field=" + getField() + ", value=" + getValue() + '}';
-    }
+
 }

@@ -5,10 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
-import org.junit.Assert;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
@@ -29,13 +29,17 @@ public class MockerSyncClient {
 
     public Map<String, WatchElement> success = new LinkedHashMap<>();
 
-
+    public MockerSyncClient(MockClient mockClient) {
+        this.mockClient = mockClient;
+    }
     public void start(String host, int port) {
         mockClient.start(host, port);
     }
 
-    public void stop() {
+    public void stop() throws InterruptedException {
         mockClient.stop();
+        watchElementMap.clear();
+        success.clear();
     }
 
     /**
@@ -46,21 +50,26 @@ public class MockerSyncClient {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
 
-                System.out.println("entityClassSyncResponse : " + entityClassSyncResponse.toString());
+//                System.out.println("entityClassSyncResponse : " + entityClassSyncResponse.toString());
 
                 if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
-                    WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                    WatchElement w =
+                        new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), Confirmed);
                     watchElementMap.put(w.getAppId(), w);
                 } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
-                    Assert.assertEquals(entityClassSyncResponse.getMd5(),
-                            getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
-                    WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                    Assertions.assertEquals(entityClassSyncResponse.getMd5(),
+                        getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
+                    WatchElement w =
+                        new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), Confirmed);
 
-                    success.put(entityClassSyncResponse.getAppId(), w);
+                    WatchElement watchElement = success.get(entityClassSyncResponse.getAppId());
+                    if (watchElement == null || watchElement.getVersion() < w.getVersion()) {
+                        success.put(entityClassSyncResponse.getAppId(), w);
+                    }
                 } else {
-                    Assert.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
+                    Assertions.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
                 }
             }
 

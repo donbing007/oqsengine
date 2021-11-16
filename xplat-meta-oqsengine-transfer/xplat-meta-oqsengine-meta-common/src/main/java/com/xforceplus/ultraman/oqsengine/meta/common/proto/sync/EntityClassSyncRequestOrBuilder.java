@@ -51,4 +51,14 @@ public interface EntityClassSyncRequestOrBuilder extends
    * <code>bool force = 6;</code>
    */
   boolean getForce();
+
+  /**
+   * <code>string clientId = 7;</code>
+   */
+  java.lang.String getClientId();
+  /**
+   * <code>string clientId = 7;</code>
+   */
+  com.google.protobuf.ByteString
+      getClientIdBytes();
 }

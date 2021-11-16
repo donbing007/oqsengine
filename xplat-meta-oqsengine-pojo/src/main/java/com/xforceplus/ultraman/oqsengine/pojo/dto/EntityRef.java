@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 表示一个 entity 的指针.
@@ -16,67 +17,104 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
     private int op;
     private int major;
     private String orderValue;
-
-    public EntityRef() {
-    }
-
-    public EntityRef(long id, int major) {
-        this(id, major, null);
-    }
-
-    public EntityRef(long id, int major, String orderValue) {
-        this(id, 0, major, orderValue);
-    }
-
-    public EntityRef(long id, int op, int major) {
-        this(id, op, major, null);
-    }
-
-    /**
-     * 实例化.
-     *
-     * @param id 实体标识.
-     * @param op 操作类型.
-     * @param major 大版本号.
-     * @param orderValue 排序值.
-     */
-    public EntityRef(long id, int op, int major, String orderValue) {
-        this.id = id;
-        this.op = op;
-        this.major = major;
-        this.orderValue = orderValue;
-    }
+    private String secondOrderValue;
+    private String thridOrderValue;
 
     public long getId() {
         return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getOrderValue() {
-        return orderValue;
-    }
-
-    public void setOrderValue(String orderValue) {
-        this.orderValue = orderValue;
     }
 
     public int getOp() {
         return op;
     }
 
-    public void setOp(int op) {
-        this.op = op;
-    }
-
     public int getMajor() {
         return major;
     }
 
+    /**
+     * 获取排序值.
+     *
+     * @param index 排序字段序号,从0开始,最大为2.
+     * @return 排序值.
+     */
+    public Optional<String> getSortValue(int index) {
+        switch (index) {
+            case 0: {
+                return Optional.ofNullable(getOrderValue());
+            }
+            case 1: {
+                return Optional.ofNullable(getSecondOrderValue());
+            }
+            case 2: {
+                return Optional.ofNullable(getThridOrderValue());
+            }
+            default: {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public String getOrderValue() {
+        return orderValue;
+    }
+
+    public String getSecondOrderValue() {
+        return secondOrderValue;
+    }
+
+    public String getThridOrderValue() {
+        return thridOrderValue;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setOp(int op) {
+        this.op = op;
+    }
+
     public void setMajor(int major) {
         this.major = major;
+    }
+
+    public void setOrderValue(String orderValue) {
+        this.orderValue = orderValue;
+    }
+
+    public void setSecondOrderValue(String secondOrderValue) {
+        this.secondOrderValue = secondOrderValue;
+    }
+
+    public void setThridOrderValue(String thridOrderValue) {
+        this.thridOrderValue = thridOrderValue;
+    }
+
+    /**
+     * 设置排序字段.
+     *
+     * @param index     序号,从0开始,最大接爱为2.
+     * @param sortValue 排序的值.
+     */
+    public void setSortValue(int index, String sortValue) {
+        switch (index) {
+            case 0: {
+                setOrderValue(sortValue);
+                break;
+            }
+            case 1: {
+                setSecondOrderValue(sortValue);
+                break;
+            }
+            case 2: {
+                setThridOrderValue(sortValue);
+                break;
+            }
+            default: {
+
+            }
+        }
     }
 
     @Override
@@ -106,6 +144,8 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
         sb.append(", op=").append(op);
         sb.append(", major=").append(major);
         sb.append(", orderValue='").append(orderValue).append('\'');
+        sb.append(", secondOrderValue='").append(secondOrderValue).append('\'');
+        sb.append(", thridOrderValue='").append(thridOrderValue).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -118,6 +158,93 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
             return 1;
         } else {
             return 0;
+        }
+    }
+
+    /**
+     * 构造器.
+     */
+    public static final class Builder {
+        private long id;
+        private int op;
+        private int major;
+        private String orderValue;
+        private String secondOrderValue;
+        private String thridOrderValue;
+
+        private Builder() {
+        }
+
+        public static Builder anEntityRef() {
+            return new Builder();
+        }
+
+        public Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder withOp(int op) {
+            this.op = op;
+            return this;
+        }
+
+        public Builder withMajor(int major) {
+            this.major = major;
+            return this;
+        }
+
+        public Builder withOrderValue(String orderValue) {
+            this.orderValue = orderValue;
+            return this;
+        }
+
+        public Builder withSecondOrderValue(String secondOrderValue) {
+            this.secondOrderValue = secondOrderValue;
+            return this;
+        }
+
+        public Builder withThridOrderValue(String thridOrderValue) {
+            this.thridOrderValue = thridOrderValue;
+            return this;
+        }
+
+        /**
+         * 根据顺序设置排序值.
+         *
+         * @param index      序号,从0开始.最大接爱的为2.
+         * @param orderValue 排序的值.
+         * @return 构造器.
+         */
+        public Builder withSortValue(int index, String orderValue) {
+            switch (index) {
+                case 0: {
+                    return withOrderValue(orderValue);
+                }
+                case 1: {
+                    return withSecondOrderValue(orderValue);
+                }
+                case 2: {
+                    return withThridOrderValue(orderValue);
+                }
+                default: {
+                    return this;
+                }
+            }
+        }
+
+        /**
+         * 构造.
+         */
+        public EntityRef build() {
+            EntityRef entityRef = new EntityRef();
+            entityRef.op = this.op;
+            entityRef.thridOrderValue = this.thridOrderValue;
+            entityRef.id = this.id;
+            entityRef.major = this.major;
+            entityRef.orderValue = this.orderValue;
+            entityRef.secondOrderValue = this.secondOrderValue;
+            return entityRef;
         }
     }
 }

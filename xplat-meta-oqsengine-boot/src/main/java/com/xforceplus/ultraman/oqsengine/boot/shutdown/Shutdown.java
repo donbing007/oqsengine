@@ -1,14 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
-import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import io.lettuce.core.RedisClient;
-import java.time.Duration;
+import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PreDestroy;
@@ -43,19 +41,10 @@ public class Shutdown {
     private ExecutorService taskThreadPool;
 
     @Resource
+    private TaskCoordinator taskCoordinator;
+
+    @Resource
     private CDCDaemonService cdcDaemonService;
-
-    @Resource
-    private RedisClient redisClient;
-
-    @Resource
-    private RedisClient redisClientChangeLog;
-
-    @Resource
-    private RedisClient redisClientCacheEvent;
-
-    @Resource
-    private DataSourcePackage dataSourcePackage;
 
     @Resource
     private RebuildIndexExecutor rebuildIndexExecutor;
@@ -85,42 +74,27 @@ public class Shutdown {
             }
         }
 
-        rebuildIndexExecutor.destroy();
-
-        if (DefaultEventBus.class.equals(eventBus.getClass())) {
-            ((DefaultEventBus) eventBus).destroy();
-        }
+        doClose(rebuildIndexExecutor);
+        doClose(eventBus);
+        doClose(taskCoordinator);
+        doClose(cdcDaemonService);
 
         // wait shutdown
+        logger.info("Start closing the io worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 30);
+        logger.info("Succeed closing the io worker thread...ok!");
 
-        logger.info("Start closing the IO read worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 3600);
-        logger.info("Succeed closing the IO read worker thread...ok!");
-
-        logger.info("Start closing the IO write worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(taskThreadPool, 3600);
-        logger.info("Succeed closing the IO write worker thread...ok!");
-
-        logger.info("Start closing the cdc consumer service...");
-        cdcDaemonService.stopDaemon();
-        logger.info("Succeed closing thd cdc consumer service...ok!");
-
-        logger.info("Start closing the redis client...");
-        redisClient.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client...ok!");
-
-        logger.info("Start closing the redis client for change-log...");
-        redisClientChangeLog.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client for change-log...ok!");
-
-        logger.info("Start closing the redis client for cache-event...");
-        redisClientCacheEvent.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));
-        logger.info("Succeed closing the redis client for cache-event...ok!");
-
-        logger.info("Start closing the datasource...");
-        dataSourcePackage.close();
-        logger.info("Succeed closing the datasource...ok!");
+        logger.info("Start closing the task worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(taskThreadPool, 30);
+        logger.info("Succeed closing the task worker thread...ok!");
 
         logger.info("Closing the process......ok!");
+    }
+
+    // 关闭.
+    private void doClose(Lifecycle lifecycle) throws Exception {
+        logger.info("Start shutting down the {}...", lifecycle.getClass().getSimpleName());
+        lifecycle.destroy();
+        logger.info("Start shutting down the {}...ok!", lifecycle.getClass().getSimpleName());
     }
 }

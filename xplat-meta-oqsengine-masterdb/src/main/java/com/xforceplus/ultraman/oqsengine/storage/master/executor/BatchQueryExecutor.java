@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
@@ -21,7 +22,7 @@ import java.util.List;
  * @author : xujia 2020/11/18
  * @since : 1.8
  */
-public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<MasterStorageEntity>> {
+public class BatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collection<MasterStorageEntity>> {
 
     private IEntityClass entityClass;
     private long startTime;
@@ -31,13 +32,13 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
     /**
      * 实例.
      *
-     * @param tableName 表名.
-     * @param resource 事务资源.
-     * @param timeout 超时毫秒.
+     * @param tableName   表名.
+     * @param resource    事务资源.
+     * @param timeout     超时毫秒.
      * @param entityClass 元信息.
-     * @param startTime 开始时间.
-     * @param endTime 结束时间.
-     * @param pageSize 分页大小.
+     * @param startTime   开始时间.
+     * @param endTime     结束时间.
+     * @param pageSize    分页大小.
      */
     public BatchQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
                               IEntityClass entityClass, long startTime, long endTime, int pageSize) {
@@ -55,7 +56,7 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
     }
 
     @Override
-    public Collection<MasterStorageEntity> execute(Long startId) throws SQLException {
+    public Collection<MasterStorageEntity> execute(Long startId) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);
@@ -86,6 +87,7 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
                         .withTx(rs.getLong(FieldDefine.TX))
                         .withCommitid(rs.getLong(FieldDefine.COMMITID))
                         .withAttribute(rs.getString(FieldDefine.ATTRIBUTE))
+                        .withProfile(rs.getString(FieldDefine.PROFILE))
                         .withEntityClasses(entityClassIds).build();
 
                     entities.add(entity);
@@ -112,7 +114,8 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
             FieldDefine.ATTRIBUTE,
             FieldDefine.OP,
             FieldDefine.TX,
-            FieldDefine.COMMITID
+            FieldDefine.COMMITID,
+            FieldDefine.PROFILE
             )
         );
 

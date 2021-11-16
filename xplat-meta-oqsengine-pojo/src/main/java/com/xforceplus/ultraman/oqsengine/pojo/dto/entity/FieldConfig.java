@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -11,6 +14,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/26 14:32
  * @since 1.8
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FieldConfig implements Serializable {
 
     /**
@@ -32,9 +36,9 @@ public class FieldConfig implements Serializable {
         UPDATE_USER_NAME(9),
         DELETE_FLAG(10);
 
-        private int symbol;
+        private final int symbol;
 
-        private FieldSense(int symbol) {
+        FieldSense(int symbol) {
             this.symbol = symbol;
         }
 
@@ -55,7 +59,7 @@ public class FieldConfig implements Serializable {
                 }
             }
 
-            return null;
+            return UNKNOWN;
         }
     }
 
@@ -78,9 +82,9 @@ public class FieldConfig implements Serializable {
          */
         SEGMENTATION(3);
 
-        private int symbol;
+        private final int symbol;
 
-        private FuzzyType(int symbol) {
+        FuzzyType(int symbol) {
             this.symbol = symbol;
         }
 
@@ -101,7 +105,7 @@ public class FieldConfig implements Serializable {
                 }
             }
 
-            return null;
+            return UNKNOWN;
         }
     }
 
@@ -112,26 +116,41 @@ public class FieldConfig implements Serializable {
     private boolean searchable = false;
 
     /**
-     * 字符串:     最大字符个数.
-     * 数字:       最大的数字.
-     * 日期/时间:   离现在最近的时间日期.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
     @JsonProperty(value = "max")
+    @Deprecated
     private long max = Long.MAX_VALUE;
 
     /**
-     * 字符串:     最小字符个数.
-     * 数字:       最小的数字.
-     * 日期/时间:   离现在最远的时间日期.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
     @JsonProperty(value = "min")
     private long min = Long.MIN_VALUE;
 
     /**
+     * 最大允许长度.
+     * 字符串表示字符数量.
+     * 数字表示位数.
+     */
+    @JsonProperty(value = "len")
+    private int len = 19;
+
+    /**
      * 字段精度.
      */
     @JsonProperty(value = "precision")
-    private int precision = 0;
+    private int precision = 6;
+
+    /**
+     * 尾数处理模式.
+     */
+    @JsonProperty(value = "scale")
+    private int scale = 0;
 
     /**
      * 是否为数据标识.
@@ -150,6 +169,12 @@ public class FieldConfig implements Serializable {
      */
     @JsonProperty(value = "fieldSense")
     private FieldSense fieldSense = FieldSense.NORMAL;
+
+    /**
+     * 是否支持跨元信息查询.
+     */
+    @JsonProperty(value = "crossSearch")
+    private boolean crossSearch = false;
 
     /**
      * 校验正则.
@@ -178,6 +203,9 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "uniqueName")
     private String uniqueName = "";
 
+    @JsonProperty(value = "calculation")
+    private AbstractCalculation calculation;
+
     /**
      * 创建一个新的 FieldConfig.
      *
@@ -204,6 +232,14 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 尾数处理模式.
+     */
+    public int scale() {
+        return scale;
+    }
+
+
+    /**
      * 设置是否可搜索,默认不搜索.
      *
      * @param searchable true 可搜索, false 不可搜索.
@@ -221,10 +257,16 @@ public class FieldConfig implements Serializable {
      *
      * @param max 值.
      * @return 当前实例.
+     * @deprecated 已经废弃.
      */
+    @Deprecated
     public FieldConfig max(long max) {
         this.max = max;
         return this;
+    }
+
+    public AbstractCalculation getCalculation() {
+        return calculation;
     }
 
     /**
@@ -234,7 +276,9 @@ public class FieldConfig implements Serializable {
      *
      * @param min 值.
      * @return 当前实例.
+     * @deprecated 已经废弃.
      */
+    @Deprecated
     public FieldConfig min(long min) {
         this.min = min;
         return this;
@@ -275,10 +319,21 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 是否可以跨元信息搜索.
+     *
+     * @return true 可以跨元信息,false不可跨元信息.
+     */
+    public boolean isCrossSearch() {
+        return crossSearch;
+    }
+
+    /**
      * 获取最大值.
      *
      * @return 最大值.
+     * @deprecated see getLen
      */
+    @Deprecated
     public long getMax() {
         return max;
     }
@@ -287,10 +342,13 @@ public class FieldConfig implements Serializable {
      * 获取最小值.
      *
      * @return 最小值.
+     * @deprecated see getLen
      */
+    @Deprecated
     public long getMin() {
         return min;
     }
+
 
     public String getDisplayType() {
         return this.displayType;
@@ -373,6 +431,37 @@ public class FieldConfig implements Serializable {
         return uniqueName;
     }
 
+    public int getLen() {
+        return len;
+    }
+
+    /**
+     * 克隆.
+     */
+    public FieldConfig clone() {
+        return FieldConfig.Builder.anFieldConfig()
+            .withDelimiter(this.getDelimiter())
+            .withDisplayType(this.getDisplayType())
+            .withFieldSense(this.getFieldSense())
+            .withFuzzyType(this.getFuzzyType())
+            .withIdentifie(this.isIdentifie())
+            .withMax(this.getMax())
+            .withMin(this.getMin())
+            .withPrecision(this.getPrecision())
+            .withRequired(this.isRequired())
+            .withSearchable(this.isSearchable())
+            .withSplittable(this.isSplittable())
+            .withUniqueName(this.getUniqueName())
+            .withValidateRegexString(this.getValidateRegexString())
+            .withWildcardMaxWidth(this.getWildcardMaxWidth())
+            .withWildcardMinWidth(this.getWildcardMinWidth())
+            .withCrossSearch(this.isCrossSearch())
+            .withLen(this.getLen())
+            .withScale(this.scale())
+            .withCalculation(this.getCalculation().clone())
+            .build();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -383,9 +472,8 @@ public class FieldConfig implements Serializable {
         }
         FieldConfig that = (FieldConfig) o;
         return isSearchable() == that.isSearchable()
-            && getMax() == that.getMax()
-            && getMin() == that.getMin()
             && precision() == that.precision()
+            && scale() == that.scale()
             && isIdentifie() == that.isIdentifie()
             && isRequired() == that.isRequired()
             && isSplittable() == that.isSplittable()
@@ -395,15 +483,15 @@ public class FieldConfig implements Serializable {
             && Objects.equals(getValidateRegexString(), that.getValidateRegexString())
             && Objects.equals(getDelimiter(), that.getDelimiter())
             && Objects.equals(getDisplayType(), that.getDisplayType())
-            && getFuzzyType() == that.getFuzzyType();
+            && getFuzzyType() == that.getFuzzyType()
+            && getLen() == that.getLen();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
             isSearchable(),
-            getMax(),
-            getMin(),
+            getLen(),
             precision(),
             isIdentifie(),
             isRequired(),
@@ -418,16 +506,21 @@ public class FieldConfig implements Serializable {
     public String toString() {
         final StringBuffer sb = new StringBuffer("FieldConfig{");
         sb.append("searchable=").append(searchable);
-        sb.append(", max=").append(max);
-        sb.append(", min=").append(min);
+        sb.append(", len=").append(len);
         sb.append(", precision=").append(precision);
+        sb.append(", scale=").append(scale);
         sb.append(", identifie=").append(identifie);
         sb.append(", required=").append(required);
         sb.append(", fieldSense=").append(fieldSense);
+        sb.append(", crossSearch=").append(crossSearch);
         sb.append(", validateRegexString='").append(validateRegexString).append('\'');
         sb.append(", splittable=").append(splittable);
         sb.append(", delimiter='").append(delimiter).append('\'');
         sb.append(", displayType='").append(displayType).append('\'');
+        sb.append(", fuzzyType=").append(fuzzyType);
+        sb.append(", wildcardMinWidth=").append(wildcardMinWidth);
+        sb.append(", wildcardMaxWidth=").append(wildcardMaxWidth);
+        sb.append(", uniqueName='").append(uniqueName).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -437,9 +530,12 @@ public class FieldConfig implements Serializable {
      */
     public static final class Builder {
         private boolean searchable = false;
+        private boolean crossSearch = false;
+        private int len = 19;
         private long max = Long.MAX_VALUE;
         private long min = Long.MIN_VALUE;
         private int precision = 0;
+        private int scale = 0;
         private boolean identifie = false;
         private boolean required = false;
         private FieldSense fieldSense = FieldSense.NORMAL;
@@ -451,6 +547,7 @@ public class FieldConfig implements Serializable {
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
         private String uniqueName = "";
+        private AbstractCalculation calculation = StaticCalculation.Builder.anStaticCalculation().build();
 
         private Builder() {
         }
@@ -464,18 +561,43 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
-        public Builder withMax(long max) {
-            this.max = max;
+        public Builder withCrossSearch(boolean crossSearch) {
+            this.crossSearch = crossSearch;
             return this;
         }
 
+        /**
+         * 已经淘汰.
+         *
+         * @deprecated 现在由len属性替代.
+         */
+        @Deprecated
+        public Builder withMax(long max) {
+            return this;
+        }
+
+        /**
+         * 已经淘汰.
+         *
+         * @deprecated 不再使用.
+         */
+        @Deprecated
         public Builder withMin(long min) {
-            this.min = min;
+            return this;
+        }
+
+        public Builder withLen(int len) {
+            this.len = len;
             return this;
         }
 
         public Builder withPrecision(int precision) {
             this.precision = precision;
+            return this;
+        }
+
+        public Builder withScale(int scale) {
+            this.scale = scale;
             return this;
         }
 
@@ -534,6 +656,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withCalculation(AbstractCalculation calculation) {
+            this.calculation = calculation;
+            return this;
+        }
+
         /**
          * 构造实例.
          *
@@ -542,20 +669,25 @@ public class FieldConfig implements Serializable {
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
             fieldConfig.validateRegexString = this.validateRegexString;
+            fieldConfig.len = this.len;
             fieldConfig.min = this.min;
+            fieldConfig.max = this.max;
             fieldConfig.fieldSense = this.fieldSense;
             fieldConfig.precision = this.precision;
+            fieldConfig.scale = this.scale;
             fieldConfig.delimiter = this.delimiter;
-            fieldConfig.max = this.max;
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;
             fieldConfig.searchable = this.searchable;
+            fieldConfig.crossSearch = this.crossSearch;
             fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
             fieldConfig.uniqueName = this.uniqueName;
+            fieldConfig.calculation = this.calculation;
+
             return fieldConfig;
         }
     }

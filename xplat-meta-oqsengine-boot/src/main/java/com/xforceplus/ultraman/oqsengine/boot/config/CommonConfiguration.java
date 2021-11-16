@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedisConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
@@ -13,6 +14,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang.StringUtils;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,9 +60,9 @@ public class CommonConfiguration {
      * @param configuration lettuce 配置.
      * @return redisClient 实例.
      */
-    @Bean(value = "redisClient")
-    public RedisClient redisClient(LettuceConfiguration configuration) {
-        RedisClient redisClient = RedisClient.create(configuration.getUri());
+    @Bean(value = {"redisClientState", "redisClient"}, destroyMethod = "shutdown")
+    public RedisClient redisClientState(RedisConfiguration configuration) {
+        RedisClient redisClient = RedisClient.create(configuration.uriWithStateDb());
 
         redisClient.setOptions(ClientOptions.builder()
             .autoReconnect(true)
@@ -73,8 +78,8 @@ public class CommonConfiguration {
      * @param configuration lettuce 配置.
      * @return redisClient 实例.
      */
-    @Bean(value = "redisClientChangeLog")
-    public RedisClient redisClientChangeLog(LettuceConfiguration configuration) {
+    @Bean(value = "redisClientChangeLog", destroyMethod = "shutdown")
+    public RedisClient redisClientChangeLog(RedisConfiguration configuration) {
         RedisClient redisClient = RedisClient.create(configuration.uriWithChangeLogDb());
 
         redisClient.setOptions(ClientOptions.builder()
@@ -91,8 +96,8 @@ public class CommonConfiguration {
      * @param configuration lettuce 配置.
      * @return redisClient 实例.
      */
-    @Bean(value = "redisClientCacheEvent")
-    public RedisClient redisClientCacheEvent(LettuceConfiguration configuration) {
+    @Bean(value = "redisClientCacheEvent", destroyMethod = "shutdown")
+    public RedisClient redisClientCacheEvent(RedisConfiguration configuration) {
         RedisClient redisClient = RedisClient.create(configuration.uriWithCacheEventDb());
 
         redisClient.setOptions(ClientOptions.builder()
@@ -101,6 +106,44 @@ public class CommonConfiguration {
             .build()
         );
         return redisClient;
+    }
+
+    /**
+     * 自动编号使用的redisson客户端.
+     *
+     * @param configuration redis配置.
+     * @return 实例.
+     */
+    @Bean(value = "redissonClientAutoId", destroyMethod = "shutdown")
+    public RedissonClient redissonClientAutoId(RedisConfiguration configuration) {
+        Config config = new Config();
+        config.useSingleServer()
+            .setAddress(configuration.uriWithAutoIdDb());
+        String url = configuration.uriWithAutoIdDb();
+        String password = RedisConfigUtil.getRedisUrlPassword(url);
+        if (!StringUtils.isBlank(password)) {
+            config.useSingleServer().setPassword(password);
+        }
+        return Redisson.create(config);
+    }
+
+    /**
+     * 锁使用的redisson实现.
+     *
+     * @param configuration redis配置.
+     * @return 实例.
+     */
+    @Bean(value = "redissonClientLocker", destroyMethod = "shutdown")
+    public RedissonClient redissonClientLocker(RedisConfiguration configuration) {
+        Config config = new Config();
+        config.useSingleServer()
+            .setAddress(configuration.uriWithLockerDb());
+        String url = configuration.uriWithLockerDb();
+        String password = RedisConfigUtil.getRedisUrlPassword(url);
+        if (!StringUtils.isBlank(password)) {
+            config.useSingleServer().setPassword(password);
+        }
+        return Redisson.create(config);
     }
 
     /**
@@ -121,8 +164,7 @@ public class CommonConfiguration {
     }
 
     /**
-     * redis的lua脚本 watch dog.
-     * 保证脚本可以正确处理.
+     * redis的lua脚本 watch dog. 保证脚本可以正确处理.
      *
      * @param redisClient 操作使用redis.
      * @return 实例.

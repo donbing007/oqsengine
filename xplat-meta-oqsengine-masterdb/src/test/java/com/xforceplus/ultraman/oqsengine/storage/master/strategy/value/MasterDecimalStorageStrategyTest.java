@@ -8,10 +8,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.math.BigDecimal;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * DecimalStorageStrategy Tester.
@@ -22,32 +20,22 @@ import org.junit.Test;
  */
 public class MasterDecimalStorageStrategyTest {
 
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
-
     @Test
     public void test() throws Exception {
         MasterDecimalStorageStrategy storageStrategy = new MasterDecimalStorageStrategy();
 
-        Assert.assertEquals(FieldType.DECIMAL, storageStrategy.fieldType());
-        Assert.assertFalse(storageStrategy.isMultipleStorageValue());
+        Assertions.assertEquals(FieldType.DECIMAL, storageStrategy.fieldType());
+        Assertions.assertFalse(storageStrategy.isMultipleStorageValue());
 
         IEntityField field = new EntityField(1L, "test", FieldType.DECIMAL);
         IValue logicValue = new DecimalValue(field, new BigDecimal("123.23"));
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
-        Assert.assertEquals(StringStorageValue.class, storageValue.getClass());
-        Assert.assertFalse(storageValue.next() != null);
-        Assert.assertEquals("123.23", storageValue.value().toString());
-        Assert.assertEquals("1S", storageValue.storageName());
+        Assertions.assertEquals(StringStorageValue.class, storageValue.getClass());
+        Assertions.assertNull(storageValue.next());
+        Assertions.assertEquals("123.23", storageValue.value().toString());
+        Assertions.assertEquals("1S", storageValue.storageName());
 
         IValue newLogicValue = storageStrategy.toLogicValue(field, storageValue);
-        Assert.assertEquals(logicValue, newLogicValue);
+        Assertions.assertEquals(logicValue, newLogicValue);
     }
-
-
 } 

@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -10,11 +12,13 @@ import java.util.Objects;
  * @since 1.8
  */
 public class OperationResult {
-    private long txId;
-    private long entityId;
-    private int version;
-    private int eventType;
+    private final long txId;
+    private final long entityId;
+    private final int version;
+    private final int eventType;
     private ResultStatus resultStatus;
+    private Collection<CalculationHint> hints;
+    private String message;
 
     /**
      * 实例化.
@@ -25,6 +29,44 @@ public class OperationResult {
         this.resultStatus = resultStatus;
         this.entityId = entityId;
         this.eventType = eventType;
+    }
+
+    /**
+     * 实例化.
+     */
+    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
+                           String message) {
+        this.txId = txId;
+        this.version = version;
+        this.resultStatus = resultStatus;
+        this.entityId = entityId;
+        this.eventType = eventType;
+        this.message = message;
+    }
+
+    /**
+     * 实例化.
+     */
+    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
+                           Collection<CalculationHint> hints, String message) {
+        this.txId = txId;
+        this.version = version;
+        this.resultStatus = resultStatus;
+        this.entityId = entityId;
+        this.eventType = eventType;
+        this.hints = hints;
+        this.message = message;
+    }
+
+    /**
+     * 半成功状态.
+     */
+    public void resetStatus(Collection<CalculationHint> hints) {
+        if (hints != null && !hints.isEmpty()) {
+            this.resultStatus = ResultStatus.HALF_SUCCESS;
+            this.hints = hints;
+            this.message = ResultStatus.HALF_SUCCESS.name();
+        }
     }
 
     public int getVersion() {
@@ -45,6 +87,14 @@ public class OperationResult {
 
     public long getEntityId() {
         return entityId;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Collection<CalculationHint> getHints() {
+        return hints;
     }
 
     @Override
@@ -87,6 +137,7 @@ public class OperationResult {
         private int version;
         private int eventType;
         private ResultStatus resultStatus;
+        private String message;
 
         private Builder() {
         }
@@ -120,8 +171,13 @@ public class OperationResult {
             return this;
         }
 
+        public Builder withMessage(String message) {
+            this.message = message;
+            return this;
+        }
+
         public OperationResult build() {
-            return new OperationResult(txId, entityId, version, eventType, resultStatus);
+            return new OperationResult(txId, entityId, version, eventType, resultStatus, message);
         }
     }
 }

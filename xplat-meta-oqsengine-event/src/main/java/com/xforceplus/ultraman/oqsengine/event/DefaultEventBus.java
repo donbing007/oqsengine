@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.event;
 
-import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import java.util.Optional;
 import java.util.Queue;
@@ -9,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -21,13 +19,19 @@ import javax.annotation.PreDestroy;
  * @version 0.1 2021/3/24 11:13
  * @since 1.8
  */
-public class DefaultEventBus implements EventBus, Lifecycle {
+public class DefaultEventBus implements EventBus {
 
     private ConcurrentMap<EventType, Queue<Consumer<Event>>> listeners;
     private EventStorage eventStorage;
     private ExecutorService worker;
     private volatile boolean closed;
 
+    /**
+     * 构造默认事务总线实例.
+     *
+     * @param eventStorage 事件储存器.
+     * @param worker       工作者线程组.
+     */
     public DefaultEventBus(EventStorage eventStorage, ExecutorService worker) {
         this.listeners = new ConcurrentHashMap<>();
         this.eventStorage = eventStorage;
@@ -103,8 +107,18 @@ public class DefaultEventBus implements EventBus, Lifecycle {
                     }
 
                 } else {
-                    // 进行短暂的休眠.
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+
+                    if (closed) {
+                        break;
+                    }
+
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(10);
+                    } catch (InterruptedException e) {
+                        if (closed) {
+                            break;
+                        }
+                    }
                 }
             }
         }

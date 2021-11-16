@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -10,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * desc :.
@@ -19,9 +17,7 @@ import java.util.Optional;
  * @author : xujia 2021/3/9
  * @since : 1.8
  */
-public class EntityClassBuilder implements MetaManager {
-
-    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
+public class EntityClassBuilder {
 
     public static final IEntityField STRING_FIELD =
         new EntityField(1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
@@ -37,7 +33,7 @@ public class EntityClassBuilder implements MetaManager {
         new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
     // level 1
-    public static IEntityClass entityClass0 =
+    public static final IEntityClass ENTITY_CLASS_0 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE)
             .withVersion(1)
@@ -47,54 +43,35 @@ public class EntityClassBuilder implements MetaManager {
             ).build();
 
     // level 2
-    public static IEntityClass entityClass1 =
+    public static final IEntityClass ENTITY_CLASS_1 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 1)
             .withVersion(1)
             .withCode("c1")
-            .withFather(entityClass0)
+            .withFather(ENTITY_CLASS_0)
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
     // level 3
-    public static IEntityClass entityClass2 =
+    public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withVersion(1)
             .withCode("c2")
-            .withFather(entityClass1)
+            .withFather(ENTITY_CLASS_1)
             .withFields(
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
 
-    static {
-        entityClassMap.put(entityClass0.id(), entityClass0);
-        entityClassMap.put(entityClass1.id(), entityClass1);
-        entityClassMap.put(entityClass2.id(), entityClass2);
-
-    }
+    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
 
     public static IEntityClass getEntityClass(long id) {
         return entityClassMap.get(id);
     }
 
-    @Override
-    public Optional<IEntityClass> load(long id) {
-        return Optional.of(getEntityClass(id));
-    }
-
-    @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
-        return Optional.empty();
-    }
-
-    @Override
-    public int need(String appId, String env) {
-        return 0;
-    }
-
-    @Override
-    public void invalidateLocal() {
-
+    static {
+        entityClassMap.put(ENTITY_CLASS_0.id(), ENTITY_CLASS_0);
+        entityClassMap.put(ENTITY_CLASS_1.id(), ENTITY_CLASS_1);
+        entityClassMap.put(ENTITY_CLASS_2.id(), ENTITY_CLASS_2);
     }
 }

@@ -43,7 +43,15 @@ public enum EventType {
     /**
      * 实例删除.
      */
-    ENTITY_DELETE(8);
+    ENTITY_DELETE(8),
+    /**
+     * 自动填充字段更新.
+     */
+    AUTO_FILL_UPGRADE(9),
+    /**
+     * 聚合字段解析树更新.
+     */
+    AGGREGATION_TREE_UPGRADE(10);
 
     private int value;
 
@@ -55,6 +63,9 @@ public enum EventType {
         return value;
     }
 
+    /**
+     * 获取eventType.
+     */
     public static EventType getInstance(int value) {
         for (EventType t : EventType.values()) {
             if (t.getValue() == value) {

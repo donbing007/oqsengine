@@ -17,14 +17,18 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +45,17 @@ public class MultiLocalTransaction implements Transaction {
 
     private final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
 
+    private static AtomicLong COMMIT_ID_NUMBER = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
+
+    // 每一次检查不通过的等待时间.
+    private final long checkCommitIdSyncMs = 5;
+
+    /**
+     * 提交号生成时的命名空间.
+     * 此值用以和其他生成的ID序列区分开.
+     */
+    private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.common.id";
+
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
@@ -54,13 +69,15 @@ public class MultiLocalTransaction implements Transaction {
     private TransactionAccumulator accumulator;
     private String msg;
     private EventBus eventBus;
-    // 每一次检查不通过的等待时间.
-    private final long checkCommitIdSyncMs = 5;
+    private Collection<Consumer<Transaction>> commitHooks;
+    private Collection<Consumer<Transaction>> rollbackHooks;
     /**
      * 一个标记,最终提交时是否进行过等待提交号同步.
      */
     private boolean waitedSync = false;
-
+    /**
+     * 记录事务开始的时间.
+     */
     private long startMs;
 
     private MultiLocalTransaction() {
@@ -98,7 +115,7 @@ public class MultiLocalTransaction implements Transaction {
         try {
             long commitId = 0;
             if (!isReadyOnly()) {
-                commitId = longIdGenerator.next();
+                commitId = longIdGenerator.next(COMMIT_ID_NS);
                 if (!CommitHelper.isLegal(commitId)) {
                     throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
                 }
@@ -106,6 +123,9 @@ public class MultiLocalTransaction implements Transaction {
                 if (logger.isDebugEnabled()) {
                     logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
                 }
+
+                // 当前提交号记录.
+                COMMIT_ID_NUMBER.set(commitId);
 
                 eventBus.notify(
                     new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
@@ -246,7 +266,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public Optional<TransactionResource> query(String key) {
+    public Optional<TransactionResource> queryTransactionResource(String key) {
 
         if (isCompleted()) {
             return Optional.empty();
@@ -259,6 +279,11 @@ public class MultiLocalTransaction implements Transaction {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public Collection<TransactionResource> listTransactionResource(TransactionResourceType type) {
+        return transactionResourceHolder.stream().filter(r -> r.type() == type).collect(Collectors.toList());
     }
 
     @Override
@@ -292,6 +317,24 @@ public class MultiLocalTransaction implements Transaction {
             logger.debug("The exclusive operation of the transaction({}) ends.", this.id());
         }
 
+    }
+
+    @Override
+    public synchronized void registerCommitHook(Consumer<Transaction> hook) {
+        if (commitHooks == null) {
+            commitHooks = new LinkedList<>();
+        }
+
+        commitHooks.add(hook);
+    }
+
+    @Override
+    public synchronized void registerRollbackHook(Consumer<Transaction> hook) {
+        if (rollbackHooks == null) {
+            rollbackHooks = new LinkedList<>();
+        }
+
+        rollbackHooks.add(hook);
     }
 
     public boolean isWaitedSync() {
@@ -331,7 +374,8 @@ public class MultiLocalTransaction implements Transaction {
     private void check() throws SQLException {
         if (isCompleted()) {
             throw new SQLException(
-                String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
+                String.format("The transaction has completed.[id=%d, commit=%b, rollback=%b]",
+                    id(), isCommitted(), isRollback()));
         }
     }
 
@@ -341,9 +385,13 @@ public class MultiLocalTransaction implements Transaction {
 
             committed = true;
 
+            doHooks(this.commitHooks);
+
         } else {
 
             rollback = true;
+
+            doHooks(this.rollbackHooks);
 
         }
 
@@ -359,6 +407,19 @@ public class MultiLocalTransaction implements Transaction {
 
         Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
             System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
+    }
+
+    // 执行hook.
+    private void doHooks(Collection<Consumer<Transaction>> hooks) {
+        if (hooks != null && !hooks.isEmpty()) {
+            hooks.forEach(a -> {
+                try {
+                    a.accept(this);
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+            });
+        }
     }
 
     // 等待提交号被同步成功或者超时.

@@ -1,13 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,6 +30,16 @@ public interface EntitySearchService {
      * @return 目标 entity 实体.
      */
     Optional<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException;
+
+    /**
+     * 根据业务主键搜索一个entity实例.
+     *
+     * @param key            业务主键.
+     * @param entityClassRef ref.
+     * @return 目标 entity 实体.
+     */
+    Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
+
 
     /**
      * 根据多个 id 搜索 entity 实例.
@@ -71,8 +84,15 @@ public interface EntitySearchService {
      * @param config         查询配置.
      * @return 查询结果列表.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, SearchConfig config)
+    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                           ServiceSelectConfig config)
         throws SQLException;
+
+    /**
+     * 搜索实例.
+     *
+     * @param config 搜索配置.
+     * @return 搜索结果.
+     */
+    Collection<IEntity> search(ServiceSearchConfig config) throws SQLException;
 }
-
-

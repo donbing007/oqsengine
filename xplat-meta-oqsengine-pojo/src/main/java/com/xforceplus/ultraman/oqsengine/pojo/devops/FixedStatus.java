@@ -13,7 +13,7 @@ public enum  FixedStatus {
     FIXED(3),
     FIX_ERROR(4);
 
-    private int status;
+    private final int status;
 
     public int getStatus() {
         return status;
@@ -22,4 +22,6 @@ public enum  FixedStatus {
     FixedStatus(int status) {
         this.status = status;
     }
+
+
 }

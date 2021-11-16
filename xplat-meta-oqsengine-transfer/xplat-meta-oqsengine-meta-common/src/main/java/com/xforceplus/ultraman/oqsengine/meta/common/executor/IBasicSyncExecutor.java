@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.executor;
 
 /**
- * desc :
- * name : IBasicSyncExecutor
+ * interface.
  *
- * @author : xujia
- * date : 2021/2/26
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public interface IBasicSyncExecutor {
     void start();

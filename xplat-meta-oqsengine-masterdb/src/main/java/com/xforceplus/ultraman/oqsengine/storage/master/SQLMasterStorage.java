@@ -3,12 +3,11 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -18,9 +17,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
@@ -34,6 +36,9 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommi
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -49,11 +54,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -71,19 +79,6 @@ public class SQLMasterStorage implements MasterStorage {
 
     private final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
-    private final ObjectMapper objectMapper = JsonMapper.builder()
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
-        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-        .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
-        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
-        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
-        .enable(JsonReadFeature.ALLOW_YAML_COMMENTS).build();
-
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
@@ -96,11 +91,20 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource
     private MetaManager metaManager;
 
+    @Resource
+    private UniqueKeyGenerator keyGenerator;
+
+    @Resource(name = "taskThreadPool")
+    private ExecutorService asyncErrorExecutor;
+
+    @Resource
+    private KeyValueStorage kv;
+
     private String tableName;
 
     private long queryTimeout;
 
-    public void setQueryTimeout(long queryTimeout) {
+    public void setTimeoutMs(long queryTimeout) {
         this.queryTimeout = queryTimeout;
     }
 
@@ -112,9 +116,6 @@ public class SQLMasterStorage implements MasterStorage {
     @PostConstruct
     public void init() {
 
-        if (queryTimeout <= 0) {
-            setQueryTimeout(3000L);
-        }
     }
 
     @Override
@@ -123,17 +124,28 @@ public class SQLMasterStorage implements MasterStorage {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action",
-        "condition"})
+    @Override
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
+                                                 int size) throws SQLException {
+        return new EntityIterator(entityClass, lastId, startTime, endTime, size);
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "condition"}
+    )
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
+
+        SelectConfig useConfig = optimizeToOrder(config);
+
         return (Collection<EntityRef>) transactionExecutor.execute((tx, resource, hint) -> {
             return QueryLimitCommitidByConditionsExecutor.build(
                 tableName,
                 resource,
                 entityClass,
-                config,
+                useConfig,
                 queryTimeout,
                 conditionsBuilderFactory,
                 storageStrategyFactory).execute(conditions);
@@ -149,16 +161,75 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
     @Override
-    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+    public Optional<IEntity> selectOne(long id) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<MasterStorageEntity> masterStorageEntityOptional =
-                QueryExecutor.buildHaveDetail(tableName, resource, entityClass, queryTimeout).execute(id);
+                QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
-                return buildEntityFromStorageEntity(masterStorageEntityOptional.get(), entityClass);
+                return Optional.ofNullable(buildEntityFromStorageEntity(masterStorageEntityOptional.get()));
             } else {
                 return Optional.empty();
             }
         });
+    }
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
+    @Override
+    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+        Optional<IEntity> entityOptional = selectOne(id);
+        if (entityOptional.isPresent()) {
+
+            // 校验类型是否正确.
+            IEntity e = entityOptional.get();
+            Optional<IEntityClass> actualEntityClassOp =
+                metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
+            if (actualEntityClassOp.isPresent()) {
+
+                if (actualEntityClassOp.get().isCompatibility(entityClass.id())) {
+                    return entityOptional;
+                } else {
+                    return Optional.empty();
+                }
+
+            } else {
+                return Optional.empty();
+            }
+
+        }
+        return entityOptional;
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "multiple"}
+    )
+    @Override
+    public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
+        // 排重.
+        long[] useIds = removeDuplicate(ids);
+
+        if (useIds.length == 0) {
+            return Collections.emptyList();
+        }
+
+        Collection<MasterStorageEntity> masterStorageEntities =
+            (Collection<MasterStorageEntity>) transactionExecutor.execute(
+                (tx, resource, hint) -> {
+
+                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(useIds);
+                }
+            );
+
+        List<IEntity> entities = new ArrayList<>(masterStorageEntities.size());
+        IEntity entity;
+        for (MasterStorageEntity masterStorageEntity : masterStorageEntities) {
+            entity = buildEntityFromStorageEntity(masterStorageEntity);
+            if (entity != null) {
+                entities.add(entity);
+            }
+        }
+
+        return entities;
     }
 
     @Timed(
@@ -167,28 +238,24 @@ public class SQLMasterStorage implements MasterStorage {
     )
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        Collection<IEntity> entities = selectMultiple(ids);
+        if (entities.isEmpty()) {
+            return entities;
+        }
 
-        Collection<MasterStorageEntity> storageEntities = (Collection<MasterStorageEntity>) transactionExecutor.execute(
-            (tx, resource, hint) -> {
+        return entities.stream().filter(e -> {
 
-                return MultipleQueryExecutor.build(tableName, resource, entityClass, queryTimeout).execute(ids);
+            Optional<IEntityClass> actualEntityClassOp =
+                metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
+            if (actualEntityClassOp.isPresent()) {
+
+                return actualEntityClassOp.get().isCompatibility(entityClass.id());
+
+            } else {
+                return false;
             }
-        );
 
-
-        Map<Long, IEntity> entityMap = storageEntities.stream().map(se -> {
-            Optional<IEntity> op;
-            try {
-                op = buildEntityFromStorageEntity(se, entityClass);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-
-            return op.get();
-        }).collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
-
-        return Arrays.stream(ids).mapToObj(id -> entityMap.get(id)).collect(Collectors.toList());
-
+        }).collect(Collectors.toList());
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})
@@ -199,39 +266,30 @@ public class SQLMasterStorage implements MasterStorage {
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
-                long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                MasterStorageEntity.Builder storageEntityBuilder;
-                try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(entity.id())
-                        /*
-                         * optimize: 创建时间和更新时间保证和系统字段同步.
-                         */
-                        .withCreateTime(createTime > 0 ? createTime : entity.time())
-                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
-                        .withDeleted(false)
-                        .withEntityClassVersion(entityClass.version())
-                        .withVersion(0)
-                        .withAttribute(toJson(entity.entityValue()))
-                        .withOp(OperationType.CREATE.getValue());
-                } catch (Exception ex) {
-                    throw new SQLException(ex.getMessage(), ex);
-                }
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
+                MasterStorageEntity entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
 
-                return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                int[] results = BuildExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {entityForBuild});
+
+                final int first = 0;
+                return results[first];
             });
-
     }
 
-    private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
-        OptionalLong op = entity.entityValue().values().parallelStream()
-            .filter(v -> sense == v.getField().config().getFieldSense())
-            .mapToLong(v -> v.valueToLong()).findFirst();
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
+    @Override
+    public int[] build(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+        return (int[]) transactionExecutor.execute(
+            (tx, resource, hint) -> {
 
-        return op.orElse(0);
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildNewMasterStorageEntity(e.getKey(), e.getValue(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            }
+        );
     }
 
     @Timed(
@@ -245,36 +303,34 @@ public class SQLMasterStorage implements MasterStorage {
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
-                /*
-                 * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
-                 */
-                if (updateTime == entity.time()) {
-                    updateTime = 0;
-                }
-                MasterStorageEntity.Builder storageEntityBuilder;
-                try {
-                    storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(entity.id())
-                        /*
-                         * optimize: 更新时间保证和系统字段同步.
-                         */
-                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
-                        .withVersion(entity.version())
-                        .withEntityClassVersion(entityClass.version())
-                        .withAttribute(toJson(entity.entityValue()))
-                        .withOp(OperationType.UPDATE.getValue());
-                } catch (Exception ex) {
-                    throw new SQLException(ex.getMessage(), ex);
-                }
 
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
+                MasterStorageEntity masterStorageEntity =
+                    buildReplaceMasterStorageEntity(entity, entityClass, resource);
 
-                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                int[] results = UpdateExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {masterStorageEntity});
 
+                final int first = 0;
+                return results[first];
             });
+    }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "replaces"}
+    )
+    @Override
+    public int[] replace(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+
+        return (int[]) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildReplaceMasterStorageEntity(e.getKey(), e.getValue(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
@@ -284,22 +340,40 @@ public class SQLMasterStorage implements MasterStorage {
 
         return (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
-                /*
-                 * 删除数据时不再关心字段信息.
-                 */
-                MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                    .withId(entity.id())
-                    .withOp(OperationType.DELETE.getValue())
-                    .withUpdateTime(entity.time())
-                    .withEntityClassVersion(entityClass.version())
-                    .withDeleted(true)
-                    .withVersion(entity.version());
 
-                fullEntityClassInformation(storageEntityBuilder, entityClass);
-                fullTransactionInformation(storageEntityBuilder, resource);
+                MasterStorageEntity masterStorageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
+                int[] results = DeleteExecutor.build(tableName, resource, queryTimeout)
+                    .execute(new MasterStorageEntity[] {masterStorageEntity});
 
-                return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntityBuilder.build());
+                final int first = 0;
+                return results[first];
             });
+    }
+
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "master", "action", "deletes"}
+    )
+    @Override
+    public int[] delete(EntityPackage entityPackage) throws SQLException {
+        checkId(entityPackage);
+
+        return (int[]) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+
+                MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
+                    .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
+                    .toArray(MasterStorageEntity[]::new);
+
+                return DeleteExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+            });
+    }
+
+    private void checkId(EntityPackage entityPackage) throws SQLException {
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        while (iter.hasNext()) {
+            checkId(iter.next().getKey());
+        }
     }
 
     private void checkId(IEntity entity) throws SQLException {
@@ -313,7 +387,7 @@ public class SQLMasterStorage implements MasterStorage {
         throws SQLException {
         Map<String, Object> object;
         try {
-            object = objectMapper.readValue(masterStorageEntity.getAttribute(), Map.class);
+            object = JacksonDefaultMapper.OBJECT_MAPPER.readValue(masterStorageEntity.getAttribute(), Map.class);
         } catch (JsonProcessingException e) {
             throw new SQLException(e.getMessage(), e);
         }
@@ -390,7 +464,7 @@ public class SQLMasterStorage implements MasterStorage {
         StorageValue storageValue;
         for (IValue logicValue : value.values()) {
 
-            if (logicValue != null && EmptyTypedValue.class.isInstance(logicValue)) {
+            if (logicValue != null && logicValue instanceof EmptyTypedValue) {
                 continue;
             }
 
@@ -402,54 +476,39 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        return objectMapper.writeValueAsString(values);
+        return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(values);
     }
 
-    private Optional<IEntity> buildEntityFromStorageEntity(MasterStorageEntity se, IEntityClass entityClass) throws
-        SQLException {
+    // 无法实例化的数据将返回null.
+    private IEntity buildEntityFromStorageEntity(MasterStorageEntity se) throws SQLException {
         if (se == null) {
-            return Optional.empty();
+            return null;
         }
-        /*
-         * 校验当前数据是否和预期类型匹配.
-         */
-        long[] dataEntityClassIds = se.getEntityClasses();
-        int level = entityClass.level();
-        long dataEntityClassId = dataEntityClassIds[level];
-        if (entityClass.id() != dataEntityClassId) {
-            throw new SQLException(
-                String.format(
-                    "The incorrect Entity type is expected to be %d, but the actual data type is %d.",
-                    entityClass.id(), dataEntityClassId));
+        Optional<IEntityClass> entityClassOp;
+        if (se.getProfile() == null || se.getProfile().isEmpty()) {
+            entityClassOp = metaManager.load(se.getSelfEntityClassId(), "");
+        } else {
+            entityClassOp = metaManager.load(
+                se.getSelfEntityClassId(),
+                se.getProfile()
+            );
         }
 
-        /*
-         * 实际的类型
-         */
-        long actualEntityClassId = 0;
-        for (int i = dataEntityClassIds.length - 1; i >= 0; i--) {
-            if (dataEntityClassIds[i] > 0) {
-                actualEntityClassId = dataEntityClassIds[i];
-                break;
-            }
+        if (!entityClassOp.isPresent()) {
+            return null;
         }
 
-        Optional<IEntityClass> actualEntityClassOp = metaManager.load(actualEntityClassId);
-        if (!actualEntityClassOp.isPresent()) {
-            throw new SQLException(
-                String.format("Unable to find the expected EntityClass.[%d]", actualEntityClassId));
-        }
-        IEntityClass actualEntityClass = actualEntityClassOp.get();
+        IEntityClass actualEntityClass = entityClassOp.get();
 
         Entity.Builder entityBuilder = Entity.Builder.anEntity()
             .withId(se.getId())
             .withTime(se.getUpdateTime())
-            .withEntityClassRef(actualEntityClass.ref())
+            .withEntityClassRef(EntityClassRefHelper.fullEntityClassRef(actualEntityClass, se.getProfile()))
             .withVersion(se.getVersion())
             .withEntityValue(toEntityValue(se, actualEntityClass))
             .withMajor(se.getOqsMajor());
 
-        return Optional.of(entityBuilder.build());
+        return entityBuilder.build();
     }
 
     // 填充事务信息.
@@ -459,9 +518,10 @@ public class SQLMasterStorage implements MasterStorage {
             entityBuilder.withTx(transactionOptional.get().id())
                 .withCommitid(CommitHelper.getUncommitId());
         } else {
-            logger.warn("With no transaction, unable to get the transaction ID.");
-            entityBuilder.withTx(0)
-                .withCommitid(0);
+            if (logger.isDebugEnabled()) {
+                logger.debug("With no transaction, unable to get the transaction ID.");
+            }
+            entityBuilder.withTx(0).withCommitid(0);
         }
 
     }
@@ -480,12 +540,12 @@ public class SQLMasterStorage implements MasterStorage {
     private class EntityIterator implements DataIterator<OriginalEntity> {
         private static final int DEFAULT_PAGE_SIZE = 100;
 
-        private IEntityClass entityClass;
+        private final IEntityClass entityClass;
         private long startId;
-        private long startTime;
-        private long endTime;
-        private int pageSize;
-        private List<OriginalEntity> buffer;
+        private final long startTime;
+        private final long endTime;
+        private final int pageSize;
+        private final List<OriginalEntity> buffer;
 
         public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
@@ -506,7 +566,7 @@ public class SQLMasterStorage implements MasterStorage {
                 if (buffer.isEmpty()) {
                     load();
                 }
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
 
@@ -524,7 +584,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         }
 
-        private void load() throws SQLException {
+        private void load() throws Exception {
             transactionExecutor.execute((tx, resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
                     BatchQueryExecutor
@@ -534,8 +594,22 @@ public class SQLMasterStorage implements MasterStorage {
                 Collection<OriginalEntity> originalEntities = new ArrayList<>();
                 for (MasterStorageEntity entity : storageEntities) {
                     try {
+                        IEntityClass realEntityClass = entityClass;
+
+                        //  这里获取一次带有JOJO的真实entityClass
+                        if (null != entity.getAttribute() && !entity.getProfile()
+                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
+                            Optional<IEntityClass> entityClassOp =
+                                metaManager.load(entityClass.id(), entity.getProfile());
+                            if (!entityClassOp.isPresent()) {
+                                throw new SQLException(
+                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
+                            }
+                            realEntityClass = entityClassOp.get();
+                        }
+
                         OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
-                            .withEntityClass(entityClass)
+                            .withEntityClass(realEntityClass)
                             .withId(entity.getId())
                             .withCreateTime(entity.getCreateTime())
                             .withUpdateTime(entity.getUpdateTime())
@@ -562,7 +636,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         @Override
-        public int size() {
+        public long size() {
             try {
                 return (int) transactionExecutor.execute((tx, resource, hint) -> {
                     return BatchQueryCountExecutor
@@ -573,18 +647,159 @@ public class SQLMasterStorage implements MasterStorage {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
+
+        @Override
+        public boolean provideSize() {
+            return true;
+        }
     }
 
     // 临时解析结果.
     static class EntityValuePack {
-        private IEntityField logicField;
-        private StorageValue storageValue;
-        private StorageStrategy strategy;
+        private final IEntityField logicField;
+        private final StorageValue storageValue;
+        private final StorageStrategy strategy;
 
         public EntityValuePack(IEntityField logicField, StorageValue storageValue, StorageStrategy strategy) {
             this.logicField = logicField;
             this.storageValue = storageValue;
             this.strategy = strategy;
         }
+    }
+
+    // 删除重复项
+    private static long[] removeDuplicate(long[] ids) {
+        if (ids.length == 0 || ids.length == 1) {
+            return ids;
+        }
+
+        long[] newIds = Arrays.copyOf(ids, ids.length);
+        Arrays.sort(newIds);
+
+        int fast = 1;
+        int slow = 1;
+        int len = newIds.length;
+        while (fast < len) {
+            if (newIds[fast] != newIds[fast - 1]) {
+                newIds[slow++] = newIds[fast];
+            }
+            ++fast;
+        }
+
+        return Arrays.copyOf(newIds, slow);
+    }
+
+    /**
+     * 一个查询排序优化. 1. 如果只按ID排序,且只有ID排序那么整个排序将被去掉.
+     */
+    private SelectConfig optimizeToOrder(SelectConfig config) {
+        if (config.getSecondarySort().isOutOfOrder() && config.getThirdSort().isOutOfOrder()) {
+            if (!config.getSort().isOutOfOrder()) {
+                if (config.getSort().getField() == EntityField.ID_ENTITY_FIELD) {
+                    return SelectConfig.Builder.anSelectConfig()
+                        .withCommitId(config.getCommitId())
+                        .withPage(config.getPage())
+                        .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
+                        .withExcludedIds(config.getExcludedIds())
+                        .withFacet(config.getFacet())
+                        .withSort(Sort.buildOutOfSort())
+                        .withSecondarySort(config.getSecondarySort())
+                        .withThirdSort(config.getThirdSort()).build();
+                }
+            }
+        }
+        return config;
+    }
+
+    // 更新时构造.
+    private MasterStorageEntity buildReplaceMasterStorageEntity(IEntity entity, IEntityClass entityClass,
+                                                                TransactionResource resource) {
+        long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+        /*
+         * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
+         */
+        if (updateTime == entity.time()) {
+            updateTime = 0;
+        }
+
+        MasterStorageEntity.Builder storageEntityBuilder;
+        try {
+            storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+                .withId(entity.id())
+                /*
+                 * optimize: 更新时间保证和系统字段同步.
+                 */
+                .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
+                .withVersion(entity.version())
+                .withEntityClassVersion(entityClass.version())
+                .withAttribute(toJson(entity.entityValue()))
+                .withOp(OperationType.UPDATE.getValue());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex.getMessage(), ex);
+        }
+
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    // 新建时构造.
+    private MasterStorageEntity buildNewMasterStorageEntity(
+        IEntity entity, IEntityClass entityClass, TransactionResource resource) {
+
+        long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
+        long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+        MasterStorageEntity.Builder storageEntityBuilder;
+        try {
+            storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+                .withId(entity.id())
+                /*
+                 * optimize: 创建时间和更新时间保证和系统字段同步.
+                 */
+                .withCreateTime(createTime > 0 ? createTime : entity.time())
+                .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
+                .withDeleted(false)
+                .withEntityClassVersion(entityClass.version())
+                .withVersion(0)
+                .withAttribute(toJson(entity.entityValue()))
+                .withOp(OperationType.CREATE.getValue())
+                .withProfile(entity.entityClassRef().getProfile());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex.getMessage(), ex);
+        }
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    // 删除时构造.
+    private MasterStorageEntity buildDeleteMasterStorageEntity(IEntity entity, IEntityClass entityClass,
+                                                               TransactionResource resource) {
+        MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
+            .withId(entity.id())
+            .withOp(OperationType.DELETE.getValue())
+            .withUpdateTime(entity.time())
+            .withEntityClassVersion(entityClass.version())
+            .withDeleted(true)
+            .withVersion(entity.version());
+
+        fullEntityClassInformation(storageEntityBuilder, entityClass);
+        fullTransactionInformation(storageEntityBuilder, resource);
+        return storageEntityBuilder.build();
+    }
+
+    /**
+     * 查找系统时间.
+     *
+     * @param entity 目标对象.
+     * @param sense  字段风格.
+     * @return 时间戳, 如果没有找到返回0.
+     */
+    private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
+        OptionalLong op = entity.entityValue().values().stream()
+            .filter(v -> sense == v.getField().config().getFieldSense())
+            .mapToLong(v -> v.valueToLong()).findFirst();
+
+        return op.orElse(0);
     }
 }

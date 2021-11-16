@@ -1,45 +1,48 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
-import io.grpc.stub.StreamObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.Operation.NEW;
 import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.Operation.RELEASE;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
+import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * desc :
- * name : ResponseWatchExecutor
+ * response executor implement.
  *
- * @author : xujia
- * date : 2021/2/4
- * @since : 1.8
+ * @author xujia
+ * @since 1.8
  */
 public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
-    private Logger logger = LoggerFactory.getLogger(ResponseWatchExecutor.class);
+    private final Logger logger = LoggerFactory.getLogger(ResponseWatchExecutor.class);
 
     /**
-     * 记录app + env的version
+     * 记录app + env的version.
      */
-    private static Map<String, Integer> appVersions = new HashMap<>();
+    private static final Map<String, Integer> appVersions = new HashMap<>();
 
     /**
-     * 记录app + env的UIDs
+     * 记录app + env的UIDs.
      */
-    private static Map<String, Set<String>> appWatchers = new HashMap<>();
+    private static final Map<String, Set<String>> appWatchers = new HashMap<>();
 
     /**
-     * 记录UID与Watcher的映射关系
+     * 记录UID与Watcher的映射关系.
      */
-    private static Map<String, ResponseWatcher> uidWatchers = new ConcurrentHashMap<>();
+    private static final Map<String, ResponseWatcher> uidWatchers = new ConcurrentHashMap<>();
 
 
     @Override
@@ -55,6 +58,9 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         v.release();
                     }
                 });
+        uidWatchers.clear();
+        appWatchers.clear();
+        appVersions.clear();
         logger.debug("responseWatchExecutor stop.");
     }
 
@@ -63,13 +69,13 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
         long current = System.currentTimeMillis();
         uidWatchers.forEach(
                 (k, v) -> {
-                    /**
-                     * 当最后获得的心跳时间与当前时间差值大于可容忍值时，对该watcher进行释放清理
-                     * 可容忍值 = 最大超时时间(heartbeatTimeout) - 1000ms(monitorSleepDuration);
+                    /*
+                        当最后获得的心跳时间与当前时间差值大于可容忍值时，对该watcher进行释放清理
+                        可容忍值 = 最大超时时间(heartbeatTimeout) - 1000ms(monitorSleepDuration);
                      */
                     if (current - v.heartBeat() >= heartbeatTimeout) {
                         release(k);
-                        logger.warn("heart-beat check error, watcher has been released,  uid [{}]", k);
+                        logger.warn("release broken stream, [client-uid : {}-{}]", v.clientId(), k);
                     }
                 }
         );
@@ -86,15 +92,11 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     /**
-     * 当注册时，初始化observer的映射关系
-     *
-     * @param uid
-     * @param observer
-     * @param watchElement
+     * 当注册时，初始化observer的映射关系.
      */
     @Override
-    public void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(uid, observer)).addWatch(watchElement);
+    public void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
+        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 
@@ -107,12 +109,6 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
 
-    /**
-     * 更新版本
-     *
-     * @param uid
-     * @param watchElement
-     */
     @Override
     public synchronized boolean update(String uid, WatchElement watchElement) {
         ResponseWatcher watcher = uidWatchers.get(uid);
@@ -126,9 +122,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     /**
-     * 当发生observer断流时，将watcher移除
-     *
-     * @param uid
+     * 当发生observer断流时，将watcher移除.
      */
     @Override
     public void release(String uid) {
@@ -150,9 +144,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     /**
-     * 获取关注列表
-     *
-     * @param watchElement
+     * 获取关注列表.
      */
     @Override
     public List<ResponseWatcher> need(WatchElement watchElement) {
@@ -172,13 +164,29 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     /**
-     * 返回watcher
-     *
-     * @param uid
+     * 返回watcher.
      */
     @Override
     public ResponseWatcher watcher(String uid) {
         return uidWatchers.get(uid);
+    }
+
+    @Override
+    public Optional<ServerMetricsInfo> showMetrics() {
+        List<ServerMetricsInfo.ClientWatches> clientWatches = new ArrayList<>();
+        uidWatchers.forEach(
+            (k, v) -> {
+                List<WatchElement> watchElements = new ArrayList<>();
+                v.watches().values().forEach(
+                    w -> {
+                        watchElements.add(new WatchElement(w.getAppId(), w.getEnv(), w.getVersion(), w.getStatus()));
+                    }
+                );
+
+                clientWatches.add(new ServerMetricsInfo.ClientWatches(v.clientId(), watchElements, v.heartBeat())) ;
+            }
+        );
+        return Optional.of(new ServerMetricsInfo(clientWatches));
     }
 
     @Override
@@ -188,10 +196,10 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     private boolean canUpdate(ResponseWatcher watcher, WatchElement watchElement) {
         WatchElement current =
-                watcher.watches().get(watchElement.getAppId());
+            watcher.watches().get(watchElement.getAppId());
 
-        return null != current && (current.getVersion() < watchElement.getVersion() ||
-                current.getStatus().ordinal() < watchElement.getStatus().ordinal());
+        return null != current && (current.getVersion() < watchElement.getVersion()
+            || current.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
     private synchronized boolean addVersionWithLock(String key, int version) {
@@ -221,9 +229,13 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                     }
                 }
                 break;
+            default:
         }
     }
 
+    /**
+     * operation.
+     */
     public enum Operation {
         NEW,
         RELEASE

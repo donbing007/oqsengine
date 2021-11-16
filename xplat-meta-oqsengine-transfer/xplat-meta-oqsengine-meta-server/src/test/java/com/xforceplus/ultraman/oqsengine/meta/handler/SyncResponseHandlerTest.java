@@ -1,24 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassGenerator;
 import io.grpc.stub.StreamObserver;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +42,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncReq
  */
 public class SyncResponseHandlerTest {
 
-    private Logger logger = LoggerFactory.getLogger(SyncResponseHandlerTest.class);
+    private final Logger logger = LoggerFactory.getLogger(SyncResponseHandlerTest.class);
 
     private ResponseWatchExecutor responseWatchExecutor;
     private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
@@ -53,7 +52,7 @@ public class SyncResponseHandlerTest {
 
     private SyncResponseHandler syncResponseHandler;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         responseWatchExecutor = new ResponseWatchExecutor();
@@ -71,15 +70,15 @@ public class SyncResponseHandlerTest {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", executor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "grpcParams", gRpcParamsConfig);
 
         syncResponseHandler.start();
     }
 
-    @After
+    @AfterEach
     public void after() {
         syncResponseHandler.stop();
-        ExecutorHelper.shutdownAndAwaitTermination(executor);
+        ExecutorHelper.shutdownAndAwaitTermination(executor, 10);
     }
 
     private GRpcParams gRpcParamsConfig() {
@@ -118,7 +117,7 @@ public class SyncResponseHandlerTest {
                             new WatchElement(tCase.getAppId(), tCase.getEnv(),
                                     tCase.getVersion() + 1, Register);
 
-                    Assert.assertTrue(responseWatchExecutor.watcher(tCase.getUid()).onWatch(w));
+                    Assertions.assertTrue(responseWatchExecutor.watcher(tCase.getUid()).onWatch(w));
                 }
         );
     }
@@ -146,7 +145,7 @@ public class SyncResponseHandlerTest {
                             new WatchElement(tCase.getAppId(), tCase.getEnv(),
                                     tCase.getVersion() + 1, Register);
 
-                    Assert.assertTrue(responseWatchExecutor.watcher(tCase.getUid()).onWatch(w));
+                    Assertions.assertTrue(responseWatchExecutor.watcher(tCase.getUid()).onWatch(w));
                 }
         );
 
@@ -159,9 +158,9 @@ public class SyncResponseHandlerTest {
             count ++;
         }
 
-        Assert.assertTrue(responseWatchExecutor.watcher(testCase.get(0).getUid()).isActive());
+        Assertions.assertTrue(responseWatchExecutor.watcher(testCase.get(0).getUid()).isActive());
 
-        Assert.assertNull(responseWatchExecutor.watcher(testCase.get(1).getUid()));
+        Assertions.assertNull(responseWatchExecutor.watcher(testCase.get(1).getUid()));
     }
 
     @Test
@@ -175,13 +174,13 @@ public class SyncResponseHandlerTest {
         Case t2 = new Case(uid1, "appId1", "test", 2, SYNC_OK.ordinal(), responseStreamObserver1);
 
         WatchElement w = responseWatchExecutor.watcher(uid1).watches().get(t.getAppId());
-        Assert.assertNotEquals(Confirmed, w.getStatus());
+        Assertions.assertNotEquals(Confirmed, w.getStatus());
 
         syncResponseHandler.invoke(entityClassSyncRequest(t2), t2.getStreamObserver());
 
         w = responseWatchExecutor.watcher(uid1).watches().get(t.getAppId());
-        Assert.assertNotNull(w);
-        Assert.assertEquals(Confirmed, w.getStatus());
+        Assertions.assertNotNull(w);
+        Assertions.assertEquals(Confirmed, w.getStatus());
     }
 
     @Test
@@ -201,10 +200,10 @@ public class SyncResponseHandlerTest {
         syncResponseHandler.invoke(entityClassSyncRequest(t2), t2.getStreamObserver());
 
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid1);
-        Assert.assertNotNull(watcher);
+        Assertions.assertNotNull(watcher);
         WatchElement w = watcher.watches().get(t.getAppId());
-        Assert.assertNotNull(w);
-        Assert.assertEquals(Register, w.getStatus());
+        Assertions.assertNotNull(w);
+        Assertions.assertEquals(Register, w.getStatus());
 
         Thread.sleep(5_000);
 
@@ -215,10 +214,10 @@ public class SyncResponseHandlerTest {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
                 if (entityClassSyncResponse.getStatus() == SYNC.ordinal()) {
-                    Assert.assertEquals(uid, entityClassSyncResponse.getUid());
-                    Assert.assertEquals(appId, entityClassSyncResponse.getAppId());
-                    Assert.assertEquals(env, entityClassSyncResponse.getEnv());
-                    Assert.assertEquals(version, entityClassSyncResponse.getVersion());
+                    Assertions.assertEquals(uid, entityClassSyncResponse.getUid());
+                    Assertions.assertEquals(appId, entityClassSyncResponse.getAppId());
+                    Assertions.assertEquals(env, entityClassSyncResponse.getEnv());
+                    Assertions.assertEquals(version, entityClassSyncResponse.getVersion());
 
                     logger.info("client get sync message : uid [{}], appId [{}], env [{}], version [{}], response [{}]"
                                 , entityClassSyncResponse.getUid()
@@ -261,15 +260,16 @@ public class SyncResponseHandlerTest {
 
 
     public static class Case {
-        private String uid;
-        private String appId;
-        private String env;
-        private int version;
+        private final String uid;
+        private final String appId;
+        private final String env;
+        private final int version;
         private int status;
 
-        private StreamObserver<EntityClassSyncResponse> streamObserver;
+        private final StreamObserver<EntityClassSyncResponse> streamObserver;
 
-        public Case(String uid, String appId, String env, int version, int status, StreamObserver<EntityClassSyncResponse> streamObserver) {
+        public Case(String uid, String appId, String env, int version, int status,
+                    StreamObserver<EntityClassSyncResponse> streamObserver) {
             this.uid = uid;
             this.appId = appId;
             this.env = env;
@@ -301,7 +301,6 @@ public class SyncResponseHandlerTest {
         public int getStatus() {
             return status;
         }
-
 
         public void resetStatus(int status) {
             this.status = status;

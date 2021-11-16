@@ -99,6 +99,11 @@ public class MetricsDefine {
     public static final String MODE = PREFIX + ".mode";
 
     /**
+     * 只读状态的原因.
+     */
+    public static final String READ_ONLEY_MODE_REASE = PREFIX + ".readonly.rease";
+
+    /**
      * 当前未进入消费流的.
      */
     public static final String CHANGELOG_IN_QUEUE = PREFIX + ".changelog.in-queue";
@@ -123,4 +128,9 @@ public class MetricsDefine {
      * 当前cache-event-handler本地线程队列中的等待重试数量.
      */
     public static final String CACHE_EVENT_CURRENT_RETRY_WAIT = PREFIX + ".event.cache.retry-wait-events";
+
+    /**
+     * 计算字段逻辑片计算.tag是 logic(aggregation, autofill, formula, lookup)和action(calculate, scope).
+     */
+    public static final String CALCULATION_LOGIC_DELAY_LATENCY_SECONDS = PREFIX + ".calculation.logic.delay.latency";
 }

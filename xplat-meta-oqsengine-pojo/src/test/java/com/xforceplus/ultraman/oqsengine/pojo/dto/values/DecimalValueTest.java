@@ -1,46 +1,38 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.math.BigDecimal;
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 /**
+ * 浮点数测试.
+ *
  * @author dongbin
- * @version 0.1 2021/09/22 17:35
+ * @version 0.1 2021/06/24 15:35
  * @since 1.8
  */
-public class DecimalValueTest extends TestCase {
+public class DecimalValueTest {
 
+    /**
+     * 测试0精度的.
+     */
     @Test
-    public void testIntTooLong() {
-        String value = "72001489717205223771.0000";
-        try {
-            DecimalValue decimalValue = new DecimalValue(EntityField.UPDATE_TIME_FILED, new BigDecimal(value));
-            Assert.fail("Shoud err.");
-        } catch(Exception ex) {
+    public void testZeroPrecision() throws Exception {
+        IEntityField field = EntityField.Builder.anEntityField()
+            .withId(123L)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                .withPrecision(0).build()
+            ).build();
 
-        }
+        DecimalValue value = new DecimalValue(field, new BigDecimal("123"));
+        Assertions.assertEquals("123.0", value.valueToString());
+
+        value = new DecimalValue(field, new BigDecimal("123.789"));
+        Assertions.assertEquals("123.789", value.valueToString());
     }
-
-    @Test
-    public void testDecTooLong() {
-        String value = "1.72001489717205223771";
-        try {
-            DecimalValue decimalValue = new DecimalValue(EntityField.UPDATE_TIME_FILED, new BigDecimal(value));
-            Assert.fail("Shoud err.");
-        } catch(Exception ex) {
-
-        }
-    }
-
-    @Test
-    public void testSuccess() {
-        String value = "7200148971720522377.8200148971720522377";
-        DecimalValue decimalValue = new DecimalValue(EntityField.UPDATE_TIME_FILED, new BigDecimal(value));
-        Assert.assertEquals(7200148971720522377L, decimalValue.integerValue());
-        Assert.assertEquals(8200148971720522377L, decimalValue.decValue());
-    }
-
 }

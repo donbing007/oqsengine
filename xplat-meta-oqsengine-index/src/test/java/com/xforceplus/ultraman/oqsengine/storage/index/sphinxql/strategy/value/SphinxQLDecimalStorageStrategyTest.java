@@ -10,10 +10,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import java.math.BigDecimal;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * DecimalStorageStrategy Tester.
@@ -23,14 +21,6 @@ import org.junit.Test;
  * @since <pre>Mar 5, 2020</pre>
  */
 public class SphinxQLDecimalStorageStrategyTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void testLogicValue() throws Exception {
@@ -43,8 +33,7 @@ public class SphinxQLDecimalStorageStrategyTest {
         IValue logicValue =
             sphinxQLDecimalStorageStrategy.toLogicValue(new EntityField(1, "test", FieldType.DECIMAL), value);
 
-        Assert.assertEquals("12354435.878783434000000000", logicValue.valueToString());
-
+        Assertions.assertEquals("12354435.878783434000000000", logicValue.valueToString());
     }
 
     @Test
@@ -54,21 +43,21 @@ public class SphinxQLDecimalStorageStrategyTest {
             new EntityField(1, "test", FieldType.DECIMAL), new BigDecimal("123123213213.78887788"));
         StorageValue storageValue = sphinxQLDecimalStorageStrategy.toStorageValue(logicValue);
 
-        Assert.assertEquals(123123213213L, storageValue.value());
-        Assert.assertEquals(StorageType.LONG, storageValue.type());
+        Assertions.assertEquals(123123213213L, storageValue.value());
+        Assertions.assertEquals(StorageType.LONG, storageValue.type());
 
         storageValue = storageValue.next();
-        Assert.assertEquals(788877880000000000L, storageValue.value());
-        Assert.assertEquals(StorageType.LONG, storageValue.type());
+        Assertions.assertEquals(788877880000000000L, storageValue.value());
+        Assertions.assertEquals(StorageType.LONG, storageValue.type());
 
         logicValue = new DecimalValue(new EntityField(1, "test", FieldType.DECIMAL), new BigDecimal("123.03"));
         storageValue = sphinxQLDecimalStorageStrategy.toStorageValue(logicValue);
 
-        Assert.assertEquals(123L, storageValue.value());
-        Assert.assertEquals(StorageType.LONG, storageValue.type());
+        Assertions.assertEquals(123L, storageValue.value());
+        Assertions.assertEquals(StorageType.LONG, storageValue.type());
         storageValue = storageValue.next();
-        Assert.assertEquals(30000000000000000L, storageValue.value());
-        Assert.assertEquals(StorageType.LONG, storageValue.type());
+        Assertions.assertEquals(30000000000000000L, storageValue.value());
+        Assertions.assertEquals(StorageType.LONG, storageValue.type());
     }
 
     @Test
@@ -76,8 +65,8 @@ public class SphinxQLDecimalStorageStrategyTest {
         SphinxQLDecimalStorageStrategy sphinxQLDecimalStorageStrategy = new SphinxQLDecimalStorageStrategy();
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         Collection<String> storageNames = sphinxQLDecimalStorageStrategy.toStorageNames(field);
-        Assert.assertEquals(2, storageNames.size());
-        Assert.assertArrayEquals(new String[] {"1L0", "1L1"}, storageNames.toArray(new String[0]));
+        Assertions.assertEquals(2, storageNames.size());
+        Assertions.assertArrayEquals(new String[] {"1L0", "1L1"}, storageNames.toArray(new String[0]));
     }
 
     /**
@@ -89,17 +78,17 @@ public class SphinxQLDecimalStorageStrategyTest {
         StorageValue storageValue = storageStrategy.convertIndexStorageValue("123456S", "789.123");
         StorageValue intStorageValue = storageValue;
         StorageValue decStorageValue = storageValue.next();
-        Assert.assertNotNull(intStorageValue);
-        Assert.assertNotNull(decStorageValue);
+        Assertions.assertNotNull(intStorageValue);
+        Assertions.assertNotNull(decStorageValue);
 
-        Assert.assertEquals(789L, intStorageValue.value());
-        Assert.assertEquals(123000000000000000L, decStorageValue.value());
+        Assertions.assertEquals(789L, intStorageValue.value());
+        Assertions.assertEquals(123000000000000000L, decStorageValue.value());
 
-        Assert.assertEquals(StorageType.LONG, intStorageValue.type());
-        Assert.assertEquals(StorageType.LONG, decStorageValue.type());
+        Assertions.assertEquals(StorageType.LONG, intStorageValue.type());
+        Assertions.assertEquals(StorageType.LONG, decStorageValue.type());
 
-        Assert.assertEquals(0, intStorageValue.location());
-        Assert.assertEquals(1, decStorageValue.location());
+        Assertions.assertEquals(0, intStorageValue.location());
+        Assertions.assertEquals(1, decStorageValue.location());
     }
 
-} 
+}

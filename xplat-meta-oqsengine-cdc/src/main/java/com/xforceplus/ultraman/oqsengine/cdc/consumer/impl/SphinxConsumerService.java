@@ -184,7 +184,6 @@ public class SphinxConsumerService implements ConsumerService {
                         if (commitId != UN_KNOW_ID) {
                             cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                         }
-
                         sphinxSyncExecutor.formatErrorHandle(columns, uniKeyPrefixOffset, pos, cdcMetrics.getBatchId(),
                             String.format("batch : %d, parse id, commitId from columns failed, message : %s",
                                 cdcMetrics.getBatchId(), e.getMessage()));

@@ -55,7 +55,15 @@ public interface IValue<T> {
      *
      * @return 新的值实例.
      */
-    public IValue<T> shallowClone();
+    public IValue<T> copy();
+
+    /**
+     * 构造一个新的实例,使用新的字段和旧有的值.
+     *
+     * @param newField 新的目标字段.
+     * @return 新实例.
+     */
+    public IValue<T> copy(IEntityField newField);
 
     /**
      * 是否可能转型成字符串表示.

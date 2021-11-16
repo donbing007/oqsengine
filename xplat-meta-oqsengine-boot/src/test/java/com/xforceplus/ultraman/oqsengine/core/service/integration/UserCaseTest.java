@@ -1,12 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -16,35 +17,44 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * 用户用例测试.
@@ -53,11 +63,20 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @version 0.1 2020/11/29 17:37
  * @since 1.8
  */
-@RunWith(SpringRunner.class)
+@ExtendWith({
+    RedisContainer.class,
+    MysqlContainer.class,
+    ManticoreContainer.class,
+    CanalContainer.class,
+    SpringExtension.class
+})
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class UserCaseTest {
 
     final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
+
+    private ApplicationContext applicationContext;
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -77,60 +96,44 @@ public class UserCaseTest {
     @Resource
     private TransactionManager transactionManager;
 
-    @MockBean
+    @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
-    private static ContainerStarter starter;
 
-    @BeforeClass
-    public static void beforeClass() {
-        starter = new ContainerStarter();
-        starter.init();
-
-        starter.startMysql();
-        starter.startManticore();
-        starter.startRedis();
-        starter.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        if (starter != null) {
-            starter.destroy();
-        }
-    }
-
+    /**
+     * 测试的重复次数.
+     */
     private static final int TEST_LOOPS = 10;
 
-    @Before
+    /**
+     * 每个测试的初始化.
+     */
+    @BeforeEach
     public void before() throws Exception {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
+
+
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.executeUpdate("truncate table oqsbigentity");
             }
         }
 
-
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }
 
-        Mockito.when(metaManager.load(MockMetaManager.l0EntityClass.id()))
-            .thenReturn(Optional.of(MockMetaManager.l0EntityClass));
-
-        Mockito.when(metaManager.load(MockMetaManager.l1EntityClass.id()))
-            .thenReturn(Optional.of(MockMetaManager.l1EntityClass));
-
-        Mockito.when(metaManager.load(MockMetaManager.l2EntityClass.id()))
-            .thenReturn(Optional.of(MockMetaManager.l2EntityClass));
+        MockEntityClassDefine.initMetaManager(metaManager);
     }
 
-    @After
+    /**
+     * 每个测试的清理.
+     */
+    @AfterEach
     public void after() throws Exception {
         while (commitIdStatusService.size() > 0) {
             logger.info("Wait for CDC synchronization to complete.");
@@ -143,16 +146,68 @@ public class UserCaseTest {
             }
         }
 
-
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex0");
-                    stat.executeUpdate("truncate table oqsindex1");
+                    stat.executeUpdate("truncate table oqsindex");
                 }
             }
         }
+    }
 
+    @Test
+    public void testCountEmptyPage() throws Exception {
+        Transaction tx = transactionManager.create(5000);
+        transactionManager.bind(tx.id());
+
+        IEntity[] targetEntities = IntStream.range(0, 10).mapToObj(i ->
+            Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ).build()
+        ).toArray(IEntity[]::new);
+
+        entityManagementService.build(targetEntities);
+
+        // 事务内统计.
+        Page page = Page.emptyPage();
+        transactionManager.bind(tx.id());
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+        );
+        Assertions.assertEquals(0, entities.size());
+        Assertions.assertEquals(targetEntities.length, page.getTotalCount());
+
+        transactionManager.bind(tx.id());
+        tx.commit();
+        transactionManager.finish();
+
+        // 事务外统计.
+        page = Page.emptyPage();
+        entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+        );
     }
 
     @Test
@@ -161,30 +216,31 @@ public class UserCaseTest {
         transactionManager.bind(tx.id());
 
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l0-long").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                         ConditionOperator.EQUALS,
-                        new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L)
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L)
                     )
                 ),
-            MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
         );
-        Assert.assertEquals(1, entities.size());
-        Assert.assertEquals(99L,
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertTrue(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
+        Assertions.assertEquals(99L,
             entities.stream().findFirst().get().entityValue().getValue("l0-long").get().getValue());
 
         tx.commit();
@@ -194,14 +250,14 @@ public class UserCaseTest {
     @Test
     public void testUpdateAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -209,35 +265,35 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        entity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L));
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+        entity.entityValue().addValue(new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L));
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
             new Condition(
-                MockMetaManager.l2EntityClass.field("l0-long").get(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                 ConditionOperator.NOT_EQUALS,
-                new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L)
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L)
             )
-        ), MockMetaManager.l2EntityClass.ref(), Page.newSinglePage(10));
+        ), MockEntityClassDefine.L2_ENTITY_CLASS.ref(), Page.newSinglePage(10));
 
-        Assert.assertEquals(0, result.size());
+        Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
-        transactionManager.unbind();
+        transactionManager.finish();
     }
 
     @Test
     public void testDeleteAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         // 等待CDC同步.
         TimeUnit.SECONDS.sleep(3L);
@@ -245,52 +301,54 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
         Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
             new Condition(
-                MockMetaManager.l2EntityClass.field("l0-long").get(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                 ConditionOperator.NOT_EQUALS,
-                new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L)
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L)
             )
-        ), MockMetaManager.l2EntityClass.ref(), Page.newSinglePage(10));
+        ), MockEntityClassDefine.L2_ENTITY_CLASS.ref(), Page.newSinglePage(10));
 
-        Assert.assertEquals(0, result.size());
+        Assertions.assertEquals(0, result.size());
 
         transactionManager.getCurrent().get().rollback();
-        transactionManager.unbind();
+        transactionManager.finish();
     }
 
     @Test
     public void testUpdateFatherSearchChild() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-        IEntity fatherEntity = entitySearchService.selectOne(entity.id(), MockMetaManager.l0EntityClass.ref()).get();
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        IEntity fatherEntity =
+            entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L0_ENTITY_CLASS.ref()).get();
 
-        fatherEntity.entityValue().addValue(new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 100L));
+        fatherEntity.entityValue()
+            .addValue(new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L));
 
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(
-                    MockMetaManager.l2EntityClass.field("l0-long").get(),
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                     ConditionOperator.EQUALS,
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 100L)
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L)
                 )),
-            MockMetaManager.l2EntityClass.ref(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             Page.newSinglePage(100)
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
     }
 
@@ -300,46 +358,45 @@ public class UserCaseTest {
     @Test
     public void testUpdateAfterNotEqCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 1; i <= TEST_LOOPS; i++) {
-            entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+            entity = entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
             entity.entityValue().addValue(
-                new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), Long.toString(i))
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l2-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
                         ConditionOperator.NOT_EQUALS,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                     )
                 ).addAnd(new Condition(
-                    MockMetaManager.l2EntityClass.field("l0-long").get(),
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                     ConditionOperator.EQUALS,
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L)
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L)
                 )),
-                MockMetaManager.l2EntityClass.ref(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 page
             );
 
-            Assert.assertEquals(1, page.getTotalCount());
+            Assertions.assertEquals(1, page.getTotalCount());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
-
+        Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
     /**
@@ -350,26 +407,26 @@ public class UserCaseTest {
         IEntity entity;
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = Entity.Builder.anEntity()
-                .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withEntityValue(
                     EntityValue.build().addValues(Arrays.asList(
-                        new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), i),
-                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), i),
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
             IEntity selectEntity =
-                entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+                entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
 
-            Assert.assertNotEquals(0, selectEntity.id());
+            Assertions.assertNotEquals(0, selectEntity.id());
 
-            Assert.assertEquals(i, selectEntity.entityValue().getValue("l0-long").get().valueToLong());
-            Assert.assertEquals("0", selectEntity.entityValue().getValue("l2-string").get().valueToString());
+            Assertions.assertEquals(i, selectEntity.entityValue().getValue("l0-long").get().valueToLong());
+            Assertions.assertEquals("0", selectEntity.entityValue().getValue("l2-string").get().valueToString());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
+        Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
     @Test
@@ -377,31 +434,32 @@ public class UserCaseTest {
         IEntity entity;
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = Entity.Builder.anEntity()
-                .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withEntityValue(
                     EntityValue.build().addValues(Arrays.asList(
-                        new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                     ))
                 ).build();
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions
+                .assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l2-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
                         ConditionOperator.NOT_EQUALS,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                     )
                 ),
-                MockMetaManager.l2EntityClass.ref(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 page
             );
 
-            Assert.assertEquals(0, entities.size());
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, entities.size());
+            Assertions.assertEquals(0, page.getTotalCount());
         }
     }
 
@@ -411,146 +469,217 @@ public class UserCaseTest {
     @Test
     public void testUpdateAfterRead() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
-            entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+            entity = entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
             entity.entityValue().addValue(
-                new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), Long.toString(i))
             );
 
             OperationResult opResult = entityManagementService.replace(entity);
             ResultStatus status = opResult.getResultStatus();
-            Assert.assertTrue(ResultStatus.SUCCESS == status);
+            Assertions.assertTrue(ResultStatus.SUCCESS == status);
 
             Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l2-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
                         ConditionOperator.NOT_EQUALS,
-                        new EnumValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
+                        new EnumValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), Long.toString(i))
                     )
                 ),
-                MockMetaManager.l2EntityClass.ref(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 page
             );
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, page.getTotalCount());
 
-            Assert.assertEquals(0, entities.size());
+            Assertions.assertEquals(0, entities.size());
         }
 
         TimeUnit.SECONDS.sleep(1);
 
-        Assert.assertEquals(0, commitIdStatusService.size());
+        Assertions.assertEquals(0, commitIdStatusService.size());
+    }
+
+    @Test
+    public void testOneSort() throws Exception {
+        long[] fistFieldValues = new long[] {
+            10, 9, 5, 8, 6, 10
+        };
+
+        List<IEntity> expectedEntities = new ArrayList<>(fistFieldValues.length);
+        for (int i = 0; i < fistFieldValues.length; i++) {
+            expectedEntities.add(Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                            fistFieldValues[i])
+                    )
+                ).build());
+        }
+        OperationResult[] results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
+        Assertions.assertEquals(expectedEntities.size(), results.length);
+        Arrays.stream(results).forEach(r ->
+            Assertions.assertEquals(ResultStatus.SUCCESS, r.getResultStatus())
+        );
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
+                .build()
+        );
+
+        long[] expectedFirstValues = new long[] {
+            10, 10, 9, 8, 6, 5
+        };
+
+        long[] firstValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l0-long").get().valueToLong()).toArray();
+        Assertions.assertArrayEquals(expectedFirstValues, firstValues);
+
+        // 两个数值一致的对象id应该从小到大.
+        IEntity firstEntity = entities.stream().findFirst().get();
+        IEntity secondEntity = entities.stream().skip(1).findFirst().get();
+
+        Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
+            String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
+                firstEntity.id(), secondEntity.id()));
     }
 
     /**
-     * 测试排序.
+     * 测试三字段排序.
      */
     @Test
-    public void testSort() throws Exception {
-        IEntity e0 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 0L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
-                ))
-            ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+    public void testThreeSort() throws Exception {
+        long[] fistFieldValues = new long[] {
+            10, 9, 5, 8, 6, 10
+        };
+        long[] secondFieldValues = new long[] {
+            7, 6, 4, 4, 5, 4
+        };
+        long[] thridFieldValues = new long[] {
+            5, 3, 3, 3, 4, 3
+        };
 
-        IEntity e1 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 1L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
-                ))
-            ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
-
-        IEntity e2 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 2L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
-                ))
-            ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
+        List<IEntity> expectedEntities = new ArrayList<>(fistFieldValues.length);
+        for (int i = 0; i < fistFieldValues.length; i++) {
+            expectedEntities.add(Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                            fistFieldValues[i])
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(),
+                            secondFieldValues[i])
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-long").get(),
+                            thridFieldValues[i])
+                    )
+                ).build());
+        }
+        OperationResult[] results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
+        Assertions.assertEquals(expectedEntities.size(), results.length);
+        Arrays.stream(results).forEach(r ->
+            Assertions.assertEquals(ResultStatus.SUCCESS, r.getResultStatus())
+        );
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions().addAnd(
-                new Condition(MockMetaManager.l2EntityClass.field("l2-string").get(), ConditionOperator.EQUALS,
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0"))
-            ),
-            MockMetaManager.l2EntityClass.ref(),
-            Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l0-long").get()), Page.newSinglePage(100));
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
+                .withSecondarySort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get()))
+                .withThridSort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-long").get()))
+                .build()
+        );
 
-        Assert.assertEquals(3, entities.size());
-        Assert.assertEquals(e0.id(), entities.stream().findFirst().get().id());
-        Assert.assertEquals(e1.id(), entities.stream().skip(1).findFirst().get().id());
-        Assert.assertEquals(e2.id(), entities.stream().skip(2).findFirst().get().id());
+        long[] expectedFirstValues = new long[] {
+            10, 10, 9, 8, 6, 5
+        };
+        long[] expectedSecondValues = new long[] {
+            7, 4, 6, 4, 5, 4
+        };
+        long[] expectedThridValues = new long[] {
+            5, 3, 3, 3, 4, 3
+        };
+
+        long[] firstValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l0-long").get().valueToLong()).toArray();
+        long[] secondValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l1-long").get().valueToLong()).toArray();
+        long[] thridValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l2-long").get().valueToLong()).toArray();
+
+        Assertions.assertArrayEquals(expectedFirstValues, firstValues);
+        Assertions.assertArrayEquals(expectedSecondValues, secondValues);
+        Assertions.assertArrayEquals(expectedThridValues, thridValues);
     }
 
     // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
     @Test
     public void testSortButNoValue() throws Exception {
         IEntity e0 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 100L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 200L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 200L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
         Collection<IEntity> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
-                    MockMetaManager.l2EntityClass.field("l2-string").get(),
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
                     ConditionOperator.EQUALS,
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 )),
-            MockMetaManager.l2EntityClass.ref(),
-            Sort.buildAscSort(MockMetaManager.l2EntityClass.field("l0-long").get()),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()),
             Page.newSinglePage(100));
 
-        Assert.assertEquals(3, entities.size());
+        Assertions.assertEquals(3, entities.size());
 
-        Assert.assertFalse(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
+        Assertions.assertFalse(entities.stream().findFirst().get().entityValue().getValue("l0-long").isPresent());
 
-        Assert.assertEquals(100L,
+        Assertions.assertEquals(100L,
             entities.stream().skip(1).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
-        Assert.assertEquals(200L,
+        Assertions.assertEquals(200L,
             entities.stream().skip(2).findFirst().get().entityValue().getValue("l0-long").get().valueToLong());
     }
 
@@ -560,53 +689,53 @@ public class UserCaseTest {
     @Test
     public void testUpdateAfterCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
-        Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         for (int i = 0; i < TEST_LOOPS; i++) {
-            entity = entitySearchService.selectOne(entity.id(), MockMetaManager.l2EntityClass.ref()).get();
+            entity = entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
             entity.entityValue().addValue(
-                new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), i)
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), i)
             );
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l0-long").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                         ConditionOperator.EQUALS,
-                        new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), i))
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), i))
                 ),
-                MockMetaManager.l2EntityClass.ref(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 page
             );
 
-            Assert.assertEquals(1, page.getTotalCount());
+            Assertions.assertEquals(1, page.getTotalCount());
         }
     }
 
     @Test
     public void testDeleteAfterCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
-                    new LongValue(MockMetaManager.l2EntityClass.field("l0-long").get(), 99L),
-                    new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                 ))
             ).build();
 
 
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity.resetId(0);
-            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
             entityManagementService.deleteForce(entity);
 
@@ -614,26 +743,112 @@ public class UserCaseTest {
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l2-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
                         ConditionOperator.EQUALS,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), "0")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
                     )),
-                MockMetaManager.l2EntityClass.ref(),
+                MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 page
             );
 
-            Assert.assertEquals(0, page.getTotalCount());
+            Assertions.assertEquals(0, page.getTotalCount());
         }
+    }
+
+    /**
+     * 测试浮点数是否正确写入并可以正确查询.
+     */
+    @Test
+    public void testDecimal() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        new BigDecimal("123.789"))
+                ))
+            ).build();
+
+        // 新创建
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        entity = entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
+
+        entity.entityValue().addValue(
+            new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(), new BigDecimal("789.123"))
+        );
+        // 更新保证进入索引中.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                    ConditionOperator.EQUALS,
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        new BigDecimal("789.123"))
+                )
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assertions.assertEquals(1, entities.size());
+        entity = entities.stream().findFirst().get();
+        Assertions.assertEquals("789.123", entity.entityValue().getValue("l2-dec").get().valueToString());
+    }
+
+    /**
+     * 测试多值字符串的写入后查询.
+     */
+    @Test
+    public void testStrings() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new StringsValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(),
+                        "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
+                ))
+            ).build();
+
+        // 新创建
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        entity = entitySearchService.selectOne(entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).get();
+
+        entity.entityValue().addValue(
+            new StringsValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(),
+                "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
+        );
+        // 更新保证进入索引中.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(),
+                    ConditionOperator.EQUALS,
+                    new StringsValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(), "PURPLE")
+                )
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assertions.assertEquals(1, entities.size());
     }
 
     @Test
     public void testLikeWithSegmentation() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockMetaManager.l2EntityClass.ref())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withEntityValue(
                 EntityValue.build().addValues(Arrays.asList(
                     new StringValue(
-                        MockMetaManager.l2EntityClass.field("l0-string").get(), "上海票易通股份有限公司分词查询")
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海票易通股份有限公司分词查询")
                 ))
             ).build();
 
@@ -643,17 +858,17 @@ public class UserCaseTest {
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
                         ConditionOperator.LIKE,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "上海")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海")
                     )
                 ),
-            MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig()
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
         // 更新会等等CDC同步结束才返回,这里是为了保证查询落在索引中.
         entityManagementService.replace(entity);
@@ -662,32 +877,290 @@ public class UserCaseTest {
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
                         ConditionOperator.LIKE,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "上海")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海")
                     )
                 ),
-            MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig()
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
 
         entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        MockMetaManager.l2EntityClass.field("l0-string").get(),
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
                         ConditionOperator.LIKE,
-                        new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "股份有限公司")
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "股份有限公司")
                     )
                 ),
-            MockMetaManager.l2EntityClass.ref(),
-            SearchConfig.Builder.anSearchConfig()
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
                 .withPage(Page.newSinglePage(100)).build()
         );
 
-        Assert.assertEquals(1, entities.size());
+        Assertions.assertEquals(1, entities.size());
+    }
+
+    @Test
+    public void testlookupString() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
+                )
+            ).build();
+        OperationResult result = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        // 创建200个lookup实例.
+        int lookupSize = 200;
+        Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
+        for (int i = 0; i < lookupSize; i++) {
+            IEntity lookupEntity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LookupValue(
+                            MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
+                            targetEntity.id())
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("l2-lookup.id").get(),
+                            targetEntity.id())
+                    )
+                ).build();
+            lookupEntities.add(lookupEntity);
+
+            result = entityManagementService.build(lookupEntity);
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        }
+
+
+        Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
+            lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
+        Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
+        // 验证是否成功lookup.
+        queryLookupEntities.forEach(e -> {
+
+            // 此次更新是为了验证,已经lookup过的字段再次更新是否正确.
+            try {
+                entityManagementService.replace(e);
+            } catch (SQLException exception) {
+                throw new RuntimeException(exception.getMessage(), exception);
+            }
+
+            Assertions.assertEquals(
+                targetEntity.entityValue().getValue("l2-string").get().valueToString(),
+                e.entityValue().getValue("lookup-l2-string").get().valueToString());
+        });
+
+
+        IEntity newTargetEntity = Entity.Builder.anEntity()
+            .withId(targetEntity.id())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
+                )
+            ).build();
+        result = entityManagementService.replace(newTargetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        boolean success = false;
+        long successSize = 0;
+        for (int i = 0; i < 10000; i++) {
+            queryLookupEntities = entitySearchService.selectMultiple(
+                lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
+                MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
+
+            successSize =
+                queryLookupEntities.stream()
+                    .filter(
+                        e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2"))
+                    .count();
+
+            if (lookupSize != successSize) {
+                logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
+                    lookupSize, successSize, lookupSize - successSize);
+            } else {
+                success = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
+            lookupSize, successSize));
+
+        Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
+                            "v2"))
+                ),
+            MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(200)).build()
+        );
+
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
+            e -> e.entityValue().getValue("lookup-l2-string").get().valueToString().equals("v2")
+        ).count());
+    }
+
+    @Test
+    public void testLookupDec() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        BigDecimal.valueOf(12.3333D))
+                )
+            ).build();
+        OperationResult result = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        // 创建200个lookup实例.
+        int lookupSize = 200;
+        Collection<IEntity> lookupEntities = new ArrayList<>(lookupSize);
+        for (int i = 0; i < lookupSize; i++) {
+            IEntity lookupEntity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
+                .withEntityValue(
+                    EntityValue.build().addValue(
+                        new LookupValue(
+                            MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-dec").get(),
+                            targetEntity.id())
+                    ).addValue(
+                        new LongValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("l2-lookup.id").get(),
+                            targetEntity.id())
+                    )
+                ).build();
+            lookupEntities.add(lookupEntity);
+
+            result = entityManagementService.build(lookupEntity);
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        }
+
+        Collection<IEntity> queryLookupEntities = entitySearchService.selectMultiple(
+            lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
+        Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.size());
+        // 验证是否成功lookup.
+        queryLookupEntities.forEach(e -> {
+            Assertions.assertEquals(
+                targetEntity.entityValue().getValue("l2-dec").get().valueToString(),
+                e.entityValue().getValue("lookup-l2-dec").get().valueToString());
+        });
+
+        IEntity newTargetEntity = Entity.Builder.anEntity()
+            .withId(targetEntity.id())
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        BigDecimal.valueOf(13.3333D))
+                )
+            ).build();
+        result = entityManagementService.replace(newTargetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+
+        boolean success = false;
+        long successSize = 0;
+        for (int i = 0; i < 10000; i++) {
+            queryLookupEntities = entitySearchService.selectMultiple(
+                lookupEntities.stream().mapToLong(e -> e.id()).toArray(),
+                MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
+
+            successSize =
+                queryLookupEntities.stream()
+                    .filter(
+                        e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333"))
+                    .count();
+
+            if (lookupSize != successSize) {
+                logger.info("There are {} entities lookup target, currently agreed number {}, remaining {}.",
+                    lookupSize, successSize, lookupSize - successSize);
+            } else {
+                success = true;
+                break;
+            }
+        }
+
+        Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
+            lookupSize, successSize));
+
+        Collection<IEntity> conditionQueryEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-dec").get(),
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-dec").get(),
+                            BigDecimal.valueOf(13.3333D)))
+                ),
+            MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(200)).build()
+        );
+
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.size());
+        Assertions.assertEquals(lookupSize, conditionQueryEntities.stream().filter(
+            e -> e.entityValue().getValue("lookup-l2-dec").get().valueToString().equals("13.3333")
+        ).count());
+    }
+
+    @Test
+    public void testSegmentation() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海云砺有限公司")
+                )
+            ).build();
+
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntity).getResultStatus());
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "有限公司")
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals("上海云砺有限公司",
+            entities.stream().findFirst().get().entityValue().getValue("l0-string").get().valueToString());
+
+        entityManagementService.replace(targetEntity);
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "有限公司")
+                    )
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
+        );
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals("上海云砺有限公司",
+            entities.stream().findFirst().get().entityValue().getValue("l0-string").get().valueToString());
     }
 }

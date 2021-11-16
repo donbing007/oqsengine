@@ -5,10 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * WildcardTokenizer Tester.
@@ -18,14 +16,6 @@ import org.junit.Test;
  * @since <pre>Mar 15, 2021</pre>
  */
 public class WildcardTokenizerTest {
-
-    @Before
-    public void before() throws Exception {
-    }
-
-    @After
-    public void after() throws Exception {
-    }
 
     @Test
     public void testTokeniz() throws Exception {
@@ -38,12 +28,12 @@ public class WildcardTokenizerTest {
                 wordList.add(words.next());
             }
 
-            Assert.assertEquals(
-                String.format("expected:%s, actual:%s", c.expectedWords, wordList), wordList.size(),
-                c.expectedWords.size());
+            Assertions.assertEquals(
+                wordList.size(), c.expectedWords.size(),
+                String.format("expected:%s, actual:%s", c.expectedWords, wordList));
 
             for (String word : wordList) {
-                Assert.assertTrue("", c.expectedWords.contains(word));
+                Assertions.assertTrue(c.expectedWords.contains(word), "");
             }
         });
     }

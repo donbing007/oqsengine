@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -14,10 +15,24 @@ public class EntityClassRef implements Serializable {
 
     private long id;
     private String code;
+    private String profile;
 
+    /**
+     * EntityClassRef.
+     */
     public EntityClassRef(long id, String code) {
         this.id = id;
         this.code = code;
+        this.profile = OqsProfile.UN_DEFINE_PROFILE;
+    }
+
+    /**
+     * EntityClassRef.
+     */
+    public EntityClassRef(long id, String code, String profile) {
+        this.id = id;
+        this.code = code;
+        this.profile = profile;
     }
 
     /**
@@ -38,6 +53,10 @@ public class EntityClassRef implements Serializable {
         return code;
     }
 
+    public String getProfile() {
+        return profile;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -47,13 +66,25 @@ public class EntityClassRef implements Serializable {
             return false;
         }
         EntityClassRef that = (EntityClassRef) o;
-        return getId() == that.getId() && Objects.equals(getCode(), that.getCode());
+        return getId() == that.getId()
+            && Objects.equals(getCode(), that.getCode())
+            && Objects.equals(profile, that.profile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getCode());
+        return Objects.hash(id, code, profile);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("id=").append(id);
+        sb.append(", profile=").append(profile);
+        sb.append('}');
+        return sb.toString();
+    }
+
 
     /**
      * builder.
@@ -61,6 +92,7 @@ public class EntityClassRef implements Serializable {
     public static final class Builder {
         private long entityClassId;
         private String entityClassCode;
+        private String profile;
 
         private Builder() {
         }
@@ -79,8 +111,20 @@ public class EntityClassRef implements Serializable {
             return this;
         }
 
+
+        public Builder withEntityClassProfile(String profile) {
+            this.profile = profile;
+            return this;
+        }
+
+        /**
+         * build.
+         */
         public EntityClassRef build() {
-            return new EntityClassRef(entityClassId, entityClassCode);
+            if (null == profile) {
+                profile = OqsProfile.UN_DEFINE_PROFILE;
+            }
+            return new EntityClassRef(entityClassId, entityClassCode, profile);
         }
     }
 }

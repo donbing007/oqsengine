@@ -24,6 +24,7 @@ private static final long serialVersionUID = 0L;
     version_ = 0;
     entityFields_ = java.util.Collections.emptyList();
     relations_ = java.util.Collections.emptyList();
+    profiles_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -107,6 +108,15 @@ private static final long serialVersionUID = 0L;
                 input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo.parser(), extensionRegistry));
             break;
           }
+          case 74: {
+            if (!((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
+              profiles_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo>();
+              mutable_bitField0_ |= 0x00000100;
+            }
+            profiles_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.parser(), extensionRegistry));
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -120,6 +130,9 @@ private static final long serialVersionUID = 0L;
       }
       if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
         relations_ = java.util.Collections.unmodifiableList(relations_);
+      }
+      if (((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
+        profiles_ = java.util.Collections.unmodifiableList(profiles_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -312,6 +325,41 @@ private static final long serialVersionUID = 0L;
     return relations_.get(index);
   }
 
+  public static final int PROFILES_FIELD_NUMBER = 9;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> profiles_;
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> getProfilesList() {
+    return profiles_;
+  }
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder> 
+      getProfilesOrBuilderList() {
+    return profiles_;
+  }
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  public int getProfilesCount() {
+    return profiles_.size();
+  }
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo getProfiles(int index) {
+    return profiles_.get(index);
+  }
+  /**
+   * <code>repeated .ProfileInfo profiles = 9;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder getProfilesOrBuilder(
+      int index) {
+    return profiles_.get(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -347,6 +395,9 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < relations_.size(); i++) {
       output.writeMessage(8, relations_.get(i));
+    }
+    for (int i = 0; i < profiles_.size(); i++) {
+      output.writeMessage(9, profiles_.get(i));
     }
     unknownFields.writeTo(output);
   }
@@ -386,6 +437,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(8, relations_.get(i));
     }
+    for (int i = 0; i < profiles_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(9, profiles_.get(i));
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -418,6 +473,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getEntityFieldsList());
     result = result && getRelationsList()
         .equals(other.getRelationsList());
+    result = result && getProfilesList()
+        .equals(other.getProfilesList());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -450,6 +507,10 @@ private static final long serialVersionUID = 0L;
     if (getRelationsCount() > 0) {
       hash = (37 * hash) + RELATIONS_FIELD_NUMBER;
       hash = (53 * hash) + getRelationsList().hashCode();
+    }
+    if (getProfilesCount() > 0) {
+      hash = (37 * hash) + PROFILES_FIELD_NUMBER;
+      hash = (53 * hash) + getProfilesList().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -578,6 +639,7 @@ private static final long serialVersionUID = 0L;
               .alwaysUseFieldBuilders) {
         getEntityFieldsFieldBuilder();
         getRelationsFieldBuilder();
+        getProfilesFieldBuilder();
       }
     }
     public Builder clear() {
@@ -605,6 +667,12 @@ private static final long serialVersionUID = 0L;
         bitField0_ = (bitField0_ & ~0x00000080);
       } else {
         relationsBuilder_.clear();
+      }
+      if (profilesBuilder_ == null) {
+        profiles_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000100);
+      } else {
+        profilesBuilder_.clear();
       }
       return this;
     }
@@ -653,6 +721,15 @@ private static final long serialVersionUID = 0L;
         result.relations_ = relations_;
       } else {
         result.relations_ = relationsBuilder_.build();
+      }
+      if (profilesBuilder_ == null) {
+        if (((bitField0_ & 0x00000100) == 0x00000100)) {
+          profiles_ = java.util.Collections.unmodifiableList(profiles_);
+          bitField0_ = (bitField0_ & ~0x00000100);
+        }
+        result.profiles_ = profiles_;
+      } else {
+        result.profiles_ = profilesBuilder_.build();
       }
       result.bitField0_ = to_bitField0_;
       onBuilt();
@@ -765,6 +842,32 @@ private static final long serialVersionUID = 0L;
                  getRelationsFieldBuilder() : null;
           } else {
             relationsBuilder_.addAllMessages(other.relations_);
+          }
+        }
+      }
+      if (profilesBuilder_ == null) {
+        if (!other.profiles_.isEmpty()) {
+          if (profiles_.isEmpty()) {
+            profiles_ = other.profiles_;
+            bitField0_ = (bitField0_ & ~0x00000100);
+          } else {
+            ensureProfilesIsMutable();
+            profiles_.addAll(other.profiles_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.profiles_.isEmpty()) {
+          if (profilesBuilder_.isEmpty()) {
+            profilesBuilder_.dispose();
+            profilesBuilder_ = null;
+            profiles_ = other.profiles_;
+            bitField0_ = (bitField0_ & ~0x00000100);
+            profilesBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getProfilesFieldBuilder() : null;
+          } else {
+            profilesBuilder_.addAllMessages(other.profiles_);
           }
         }
       }
@@ -1516,6 +1619,246 @@ private static final long serialVersionUID = 0L;
         relations_ = null;
       }
       return relationsBuilder_;
+    }
+
+    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> profiles_ =
+      java.util.Collections.emptyList();
+    private void ensureProfilesIsMutable() {
+      if (!((bitField0_ & 0x00000100) == 0x00000100)) {
+        profiles_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo>(profiles_);
+        bitField0_ |= 0x00000100;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder> profilesBuilder_;
+
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> getProfilesList() {
+      if (profilesBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(profiles_);
+      } else {
+        return profilesBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public int getProfilesCount() {
+      if (profilesBuilder_ == null) {
+        return profiles_.size();
+      } else {
+        return profilesBuilder_.getCount();
+      }
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo getProfiles(int index) {
+      if (profilesBuilder_ == null) {
+        return profiles_.get(index);
+      } else {
+        return profilesBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder setProfiles(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo value) {
+      if (profilesBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureProfilesIsMutable();
+        profiles_.set(index, value);
+        onChanged();
+      } else {
+        profilesBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder setProfiles(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder builderForValue) {
+      if (profilesBuilder_ == null) {
+        ensureProfilesIsMutable();
+        profiles_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        profilesBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder addProfiles(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo value) {
+      if (profilesBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureProfilesIsMutable();
+        profiles_.add(value);
+        onChanged();
+      } else {
+        profilesBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder addProfiles(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo value) {
+      if (profilesBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureProfilesIsMutable();
+        profiles_.add(index, value);
+        onChanged();
+      } else {
+        profilesBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder addProfiles(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder builderForValue) {
+      if (profilesBuilder_ == null) {
+        ensureProfilesIsMutable();
+        profiles_.add(builderForValue.build());
+        onChanged();
+      } else {
+        profilesBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder addProfiles(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder builderForValue) {
+      if (profilesBuilder_ == null) {
+        ensureProfilesIsMutable();
+        profiles_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        profilesBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder addAllProfiles(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo> values) {
+      if (profilesBuilder_ == null) {
+        ensureProfilesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, profiles_);
+        onChanged();
+      } else {
+        profilesBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder clearProfiles() {
+      if (profilesBuilder_ == null) {
+        profiles_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000100);
+        onChanged();
+      } else {
+        profilesBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public Builder removeProfiles(int index) {
+      if (profilesBuilder_ == null) {
+        ensureProfilesIsMutable();
+        profiles_.remove(index);
+        onChanged();
+      } else {
+        profilesBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder getProfilesBuilder(
+        int index) {
+      return getProfilesFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder getProfilesOrBuilder(
+        int index) {
+      if (profilesBuilder_ == null) {
+        return profiles_.get(index);  } else {
+        return profilesBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder> 
+         getProfilesOrBuilderList() {
+      if (profilesBuilder_ != null) {
+        return profilesBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(profiles_);
+      }
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder addProfilesBuilder() {
+      return getProfilesFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder addProfilesBuilder(
+        int index) {
+      return getProfilesFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ProfileInfo profiles = 9;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder> 
+         getProfilesBuilderList() {
+      return getProfilesFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder> 
+        getProfilesFieldBuilder() {
+      if (profilesBuilder_ == null) {
+        profilesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder>(
+                profiles_,
+                ((bitField0_ & 0x00000100) == 0x00000100),
+                getParentForChildren(),
+                isClean());
+        profiles_ = null;
+      }
+      return profilesBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

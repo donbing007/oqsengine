@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.tokenizer;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import java.io.IOException;
 import java.util.Iterator;
@@ -19,8 +18,9 @@ public interface Tokenizer {
      *
      * @param value 需要分词的目标字串.
      * @return 分词结果.
+     * @throws IOException 发生IO异常.
      */
-    default Iterator<String> tokenize(String value) {
+    public default Iterator<String> tokenize(String value) {
         return tokenize(value, TokenizerMode.SEARCH);
     }
 
@@ -28,22 +28,22 @@ public interface Tokenizer {
      * 分词.
      *
      * @param value 当前需要分词的目标字符串.
-     * @param mode 分词模式.
+     * @param mode  分词模式.
      * @return 分词结果.
      */
-    Iterator<String> tokenize(String value, TokenizerMode mode);
+    public Iterator<String> tokenize(String value, TokenizerMode mode);
 
     /**
      * 支持的模糊类型.
      *
      * @return 模糊类型.
      */
-    FieldConfig.FuzzyType support();
+    public FieldConfig.FuzzyType support();
 
     /**
      * 分词模式.
      */
-    enum TokenizerMode {
+    static enum TokenizerMode {
         /**
          * 未知,一般表示错误.
          */
@@ -59,7 +59,7 @@ public interface Tokenizer {
 
         private int symbol;
 
-        TokenizerMode(int symbol) {
+        private TokenizerMode(int symbol) {
             this.symbol = symbol;
         }
 

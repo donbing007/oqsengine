@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 
 import java.util.List;
 import java.util.Map;
@@ -30,9 +30,9 @@ public class EntityDomain {
      * oqsRelation is not self is related --- a reversed set
      * oqsRelation is self --- a id set
      */
-    private Map<OqsRelation, List<Long>> referenceMap;
+    private Map<Relationship, List<Long>> referenceMap;
 
-    public EntityDomain(long count, long version, IEntity entity, Map<OqsRelation, List<Long>> referenceMap) {
+    public EntityDomain(long count, long version, IEntity entity, Map<Relationship, List<Long>> referenceMap) {
         this.count = count;
         this.entity = entity;
         this.version = version;
@@ -52,7 +52,7 @@ public class EntityDomain {
         return entity;
     }
 
-    public Map<OqsRelation, List<Long>> getReferenceMap() {
+    public Map<Relationship, List<Long>> getReferenceMap() {
         return referenceMap;
     }
 

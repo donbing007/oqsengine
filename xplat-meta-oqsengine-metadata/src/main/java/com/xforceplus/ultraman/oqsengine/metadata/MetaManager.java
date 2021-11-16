@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -15,10 +20,21 @@ public interface MetaManager {
     /**
      * 加载指定的IEntityCalss实例.
      *
-     * @param id 元信息的标识.
+     * @param id      元信息标识.
+     * @param profile 个性化定制标识.
      * @return 元信息的实例.
      */
-    Optional<IEntityClass> load(long id);
+    Optional<IEntityClass> load(long id, String profile);
+
+    /**
+     * 加载指定的IEntityClass实例.
+     *
+     * @param ref entityClass指针.
+     * @return 元信息.
+     */
+    default Optional<IEntityClass> load(EntityClassRef ref) {
+        return load(ref.getId(), ref.getProfile());
+    }
 
     /**
      * 加载指定的IEntityCalss + version实例.
@@ -41,4 +57,21 @@ public interface MetaManager {
      * 这个操作将强制将本地缓存清除.
      */
     void invalidateLocal();
+
+    /**
+     * 导入.
+     */
+    boolean dataImport(String appId, String env, int version, String content);
+
+    /**
+     * 产看当前appId下的信息.
+     */
+    Optional<MetaMetrics> showMeta(String appId) throws Exception;
+
+    /**
+     * 查询同步日志.
+     */
+    default Collection<MetaLogs> metaLogs() {
+        return new ArrayList<>();
+    }
 }

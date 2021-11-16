@@ -21,31 +21,51 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorag
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-
+/**
+ * change log 配置.
+ */
 @Configuration
 public class ChangelogConfiguration {
 
+    /**
+     * redis.
+     */
     @Bean
     public RedisClient redisClient() {
+
         RedisClient redisClient = null;
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
         return redisClient;
+    }
+
+    @Bean("nodeIdGenerator")
+    public NodeIdGenerator staticNodeIdGenerator() {
+        return new StaticNodeIdGenerator(0);
+    }
+
+    @Bean("longNoContinuousPartialOrderIdGenerator")
+    public LongIdGenerator longNoContinuousPartialOrderIdGenerator(
+        @Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
+        return new SnowflakeLongIdGenerator(nodeIdGenerator);
     }
 
     @Bean
@@ -116,6 +136,11 @@ public class ChangelogConfiguration {
             }
 
             @Override
+            public void reset(String ns) {
+                LongIdGenerator.super.reset(ns);
+            }
+
+            @Override
             public Long next() {
                 return atomicLong.getAndIncrement();
             }
@@ -178,8 +203,9 @@ public class ChangelogConfiguration {
     @Bean
     public MetaManager metaManager(ChangelogExample example) {
         return new MetaManager() {
+
             @Override
-            public Optional<IEntityClass> load(long id) {
+            public Optional<IEntityClass> load(long id, String profile) {
                 return Optional.ofNullable(example.getEntityClassById(id));
             }
 
@@ -196,6 +222,16 @@ public class ChangelogConfiguration {
             @Override
             public void invalidateLocal() {
 
+            }
+
+            @Override
+            public boolean dataImport(String appId, String env, int version, String content) {
+                return true;
+            }
+
+            @Override
+            public Optional<MetaMetrics> showMeta(String appId) throws Exception {
+                return Optional.empty();
             }
         };
     }

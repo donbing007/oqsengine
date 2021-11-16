@@ -3,8 +3,14 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
-
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -12,7 +18,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 /**
- * value wrapper
+ * value wrapper.
  */
 public class ValueWrapper {
 
@@ -40,8 +46,8 @@ public class ValueWrapper {
     }
 
     @JsonIgnore
-    public IValue getIValue(){
-        switch (type){
+    public IValue getIValue() {
+        switch (type) {
             case LONG:
                 return new LongValue(null, Long.parseLong(value));
             case DECIMAL:
@@ -49,8 +55,8 @@ public class ValueWrapper {
             case DATETIME:
                 long timestamp = Long.parseLong(value);
                 LocalDateTime time =
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
-                                DateTimeValue.ZONE_ID);
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
+                        DateTimeValue.ZONE_ID);
                 return new DateTimeValue(null, time);
             case BOOLEAN:
                 boolean b = Boolean.parseBoolean(value);
@@ -66,7 +72,7 @@ public class ValueWrapper {
         }
     }
 
-    public Long valueToLong(){
+    public Long valueToLong() {
         return getIValue().valueToLong();
     }
 

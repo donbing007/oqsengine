@@ -1,11 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * 测试限制行号的分页对象.
@@ -17,22 +13,6 @@ import org.junit.Test;
 public class LimitedRangePageTest {
 
     public LimitedRangePageTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
     }
 
     /**
@@ -49,16 +29,16 @@ public class LimitedRangePageTest {
         Page page = new LimitedRangePage(index, size, rangeL, rangeR);
         page.setTotalCount(dataTotal);
         PageScope scope = page.getNextPage();
-        Assert.assertEquals(scope.startLine, 3);
-        Assert.assertEquals(scope.endLine, 7);
+        Assertions.assertEquals(scope.startLine, 3);
+        Assertions.assertEquals(scope.endLine, 7);
 
         scope = page.getNextPage();
-        Assert.assertEquals(scope.startLine, 13);
-        Assert.assertEquals(scope.endLine, 17);
+        Assertions.assertEquals(scope.startLine, 13);
+        Assertions.assertEquals(scope.endLine, 17);
 
         scope = page.getNextPage();
-        Assert.assertEquals(scope.startLine, 23);
-        Assert.assertEquals(scope.endLine, 27);
+        Assertions.assertEquals(scope.startLine, 23);
+        Assertions.assertEquals(scope.endLine, 27);
     }
 
     /**
@@ -75,11 +55,11 @@ public class LimitedRangePageTest {
         page.setTotalCount(dataTotal);
 
         PageScope scope = page.getAppointPage(5);
-        Assert.assertEquals(scope.startLine, 43);
-        Assert.assertEquals(scope.endLine, 47);
+        Assertions.assertEquals(scope.startLine, 43);
+        Assertions.assertEquals(scope.endLine, 47);
 
         //获取一个超出总量的页号.
         scope = page.getAppointPage(page.getPageCount() + 1);
-        Assert.assertNull(scope);
+        Assertions.assertNull(scope);
     }
 }

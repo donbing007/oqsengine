@@ -3,11 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 
 /**
- * 版权：    上海云砺信息科技有限公司.
- * 创建者:   youyifan
- * 创建时间: 3/25/2020 5:03 PM
- * 功能描述:
- * 修改历史:
+ * SQL 模板.
  */
 public class SQLConstant {
     /**
@@ -15,8 +11,10 @@ public class SQLConstant {
      * NO_ENTITY表示不会增加entity的过滤.
      */
     public static final String SELECT_SQL =
-        "SELECT " + FieldDefine.ID + ", " + FieldDefine.OQSMAJOR + " %s FROM %s WHERE %s %s LIMIT ?,? "
-            + "OPTION max_matches=?,max_query_time=?,ranker=none";
+        "SELECT " + FieldDefine.ID + " %s FROM %s WHERE %s %s LIMIT ?,? OPTION max_matches=?,max_query_time=?,ranker=none";
+
+    public static final String SEARCH_SQL =
+        "SELECT " + FieldDefine.ID + " FROM %s WHERE %s LIMIT ?,? OPTION max_matches=?,max_query_time=?,ranker=%s";
 
     public static final String SELECT_COUNT_SQL = "show meta";
 
