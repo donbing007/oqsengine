@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
-import com.xforceplus.ultraman.discover.server.common.exception.DiscoverClientException;
-import com.xforceplus.ultraman.discover.server.sdk.annotation.DiscoverAction;
-import com.xforceplus.ultraman.discover.server.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
+import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
+import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
