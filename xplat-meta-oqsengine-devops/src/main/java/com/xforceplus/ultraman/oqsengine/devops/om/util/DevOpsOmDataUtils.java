@@ -3,14 +3,15 @@ package com.xforceplus.ultraman.oqsengine.devops.om.util;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 
 /**
- * @copyright： 上海云砺信息科技有限公司
+ * 统一数据运维工具.
+ *
+ * @copyright: 上海云砺信息科技有限公司
  * @author: youyifan
  * @createTime: 11/3/2021 6:20 PM
  * @description:
@@ -18,6 +19,13 @@ import java.util.Date;
  */
 public class DevOpsOmDataUtils {
 
+    /**
+     * 类型转换.
+     *
+     * @param field 字段
+     * @param result 结果
+     * @return  返回结果
+     */
     public static Object convertDataObject(IEntityField field, Object result) {
         try {
             switch (field.type()) {
@@ -71,6 +79,12 @@ public class DevOpsOmDataUtils {
         }
     }
 
+    /**
+     * 操作符转换.
+     *
+     * @param operation 操作符
+     * @return 返回结果
+     */
     public static ConditionOperator convertOperation(String operation) {
         switch (operation) {
             case "eq":
@@ -81,7 +95,6 @@ public class DevOpsOmDataUtils {
                 return ConditionOperator.LIKE;
             case "in":
                 return ConditionOperator.MULTIPLE_EQUALS;
-//            case "ni" : return ConditionOperator.MULTIPLE_EQUALS;
             case "gt":
                 return ConditionOperator.GREATER_THAN;
             case "ge":
@@ -94,4 +107,5 @@ public class DevOpsOmDataUtils {
                 return null;
         }
     }
+
 }

@@ -19,13 +19,18 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
@@ -35,24 +40,24 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.sql.DataSource;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 
 /**
  * Created by justin.xu on 08/2021.
@@ -211,8 +216,8 @@ public class DiscoverDevOpsService {
                     CdcErrorTask task = cdcErrorTaskOp.get();
                     if (task.getErrorType() == ErrorType.DATA_FORMAT_ERROR.getType()
                             && task.getOp() > OperationType.UNKNOWN.getValue()
-                            && task.getEntity() > UN_KNOW_ID
-                            && task.getId() > UN_KNOW_ID) {
+                            && task.getEntity() > CDCConstant.UN_KNOW_ID
+                            && task.getId() > CDCConstant.UN_KNOW_ID) {
 
                         Optional<IEntity> entityOp =
                                 entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
@@ -408,9 +413,10 @@ public class DiscoverDevOpsService {
     }
 
     /**
-     * 统一数据运维-条件查询
-     * @param config
-     * @return
+     * 统一数据运维-条件查询.
+     *
+     * @param config 请求配置
+     * @return 返回结果
      */
     @DiscoverAction(describe = "条件查询", retClass = Collection.class)
     public DevOpsQueryResponse conditionQuery(
@@ -524,16 +530,16 @@ public class DiscoverDevOpsService {
     }
 
     /**
-     * 统一数据运维-新增
-     * @param entityClassId
-     * @param data
-     * @return
+     * 统一数据运维-新增.
+     *
+     * @param entityClassId 实体ID
+     * @param data 请求参数
+     * @return 返回结果
      */
     @DiscoverAction(describe = "新增", retClass = Collection.class)
     public DevOpsDataResponse singleCreate(
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "data", klass = Map.class) Map data
-    ) {
+            @MethodParam(name = "data", klass = Map.class) Map data) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
@@ -541,7 +547,6 @@ public class DiscoverDevOpsService {
         EntityClassRef entityClassRef = EntityClassRef
                 .Builder
                 .anEntityClassRef()
-//                .withEntityClassProfile(profile)
                 .withEntityClassId(entityClassId)
                 .withEntityClassCode(entityClassOptl.get().code())
                 .build();
@@ -581,18 +586,18 @@ public class DiscoverDevOpsService {
     }
 
     /**
-     * 统一数据运维-修改
-     * @param entityClassId
-     * @param entityValueId
-     * @param data
-     * @return
+     * 统一数据运维-修改.
+     *
+     * @param entityClassId 实体ID
+     * @param entityValueId 实体数据ID
+     * @param data 请求参数
+     * @return 返回结果
      */
     @DiscoverAction(describe = "修改", retClass = Collection.class)
     public DevOpsDataResponse singleModify(
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId,
-            @MethodParam(name = "data", klass = Map.class) Map data
-    ) {
+            @MethodParam(name = "data", klass = Map.class) Map data) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
@@ -600,7 +605,6 @@ public class DiscoverDevOpsService {
         EntityClassRef entityClassRef = EntityClassRef
                 .Builder
                 .anEntityClassRef()
-//                .withEntityClassProfile(profile)
                 .withEntityClassId(entityClassId)
                 .withEntityClassCode(entityClassOptl.get().code())
                 .build();
@@ -636,16 +640,16 @@ public class DiscoverDevOpsService {
     }
 
     /**
-     * 统一数据运维-删除
-     * @param entityClassId
-     * @param entityValueId
-     * @return
+     * 统一数据运维-删除.
+     *
+     * @param entityClassId 实体ID
+     * @param entityValueId 实体数据ID
+     * @return 返回结果
      */
     @DiscoverAction(describe = "删除", retClass = Collection.class)
     public DevOpsDataResponse singleDelete(
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId
-    ) {
+            @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
             return null;
@@ -654,7 +658,6 @@ public class DiscoverDevOpsService {
         EntityClassRef entityClassRef = EntityClassRef
                 .Builder
                 .anEntityClassRef()
-//                .withEntityClassProfile(profile)
                 .withEntityClassId(entityClassId)
                 .withEntityClassCode(entityClassOptl.get().code())
                 .build();

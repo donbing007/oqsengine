@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.devops.om.model;
 
 /**
- * @copyright： 上海云砺信息科技有限公司
+ * 统一数据运维查询排序.
+ *
+ * @copyright: 上海云砺信息科技有限公司
  * @author: youyifan
  * @createTime: 11/8/2021 4:56 PM
  * @description:
