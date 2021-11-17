@@ -56,6 +56,7 @@ public class CommitIdStatusServiceImplTest {
         impl = null;
 
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     /**
