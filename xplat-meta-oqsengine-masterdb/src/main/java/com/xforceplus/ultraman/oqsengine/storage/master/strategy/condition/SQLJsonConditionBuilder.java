@@ -76,8 +76,18 @@ public class SQLJsonConditionBuilder
     public String build(Condition condition) {
         IEntityField field = condition.getField();
         StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(field.type());
-        StringBuilder sql = new StringBuilder();
 
+        // 如果是空判断
+        if (ConditionOperator.IS_NULL == condition.getOperator()) {
+            return buildCheckNullOrNotNull(field, storageStrategy, ConditionOperator.IS_NULL);
+        }
+
+        // 非空判断.
+        if (ConditionOperator.IS_NOT_NULL == condition.getOperator()) {
+            return buildCheckNullOrNotNull(field, storageStrategy, ConditionOperator.IS_NOT_NULL);
+        }
+
+        StringBuilder sql = new StringBuilder();
         // id查询.
         if (field.config().isIdentifie()) {
 
@@ -192,6 +202,23 @@ public class SQLJsonConditionBuilder
             storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
             appendValue(sql, storageValue);
         }
+
+        return sql.toString();
+    }
+
+    // 构造特殊的空值判断.
+    private String buildCheckNullOrNotNull(IEntityField field, StorageStrategy storageStrategy,
+                                           ConditionOperator operator) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("JSON_CONTAINS_PATH")
+            .append("(")
+            .append(FieldDefine.ATTRIBUTE)
+            .append(", 'one', ")
+            .append("'$.")
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX)
+            .append(storageStrategy.toStorageNames(field).stream().findFirst().get())
+            .append("') = ")
+            .append(operator == ConditionOperator.IS_NOT_NULL ? 1 : 0);
 
         return sql.toString();
     }
