@@ -7,6 +7,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import java.util.Arrays;
 import java.util.List;
@@ -195,6 +196,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         syncConnect.close();
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "save"}
+    )
     @Override
     public boolean save(long commitId, boolean ready) {
         if (commitId <= INVALID_COMMITID) {
@@ -227,6 +232,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         return result;
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "isReady"}
+    )
     @Override
     public boolean isReady(long commitId) {
         if (commitId <= INVALID_COMMITID) {
@@ -269,6 +278,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "ready"}
+    )
     @Override
     public void ready(long commitId) {
         if (commitId <= INVALID_COMMITID) {
@@ -278,11 +291,19 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         changeStatus(commitId, CommitStatus.READY);
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "getUnreadiness"}
+    )
     @Override
     public long[] getUnreadiness() {
         return Arrays.stream(getAll()).filter(commitid -> !isReady(commitid)).toArray();
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "getMin"}
+    )
     @Override
     public Optional<Long> getMin() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
@@ -305,6 +326,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "getMax"}
+    )
     @Override
     public Optional<Long> getMax() {
         List<String> ids = syncCommands.zrevrange(commitidsKey, 0, 0);
@@ -328,17 +353,29 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "getAll"}
+    )
     @Override
     public long[] getAll() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, -1);
         return ids.parallelStream().mapToLong(id -> Long.parseLong(id)).toArray();
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "size"}
+    )
     @Override
     public long size() {
         return syncCommands.zcard(commitidsKey);
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "obsolete"}
+    )
     @Override
     public void obsolete(long... commitIds) {
 
@@ -362,11 +399,19 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         updateMetrics();
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "obsoleteAll"}
+    )
     @Override
     public void obsoleteAll() {
         obsolete(getAll());
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "commitid", "action", "isObsolete"}
+    )
     @Override
     public boolean isObsolete(long commitId) {
         CommitStatus status = getStatus(commitId);
