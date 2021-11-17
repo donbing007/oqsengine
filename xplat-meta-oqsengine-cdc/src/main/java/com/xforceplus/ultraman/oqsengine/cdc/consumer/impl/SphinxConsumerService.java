@@ -118,23 +118,30 @@ public class SphinxConsumerService implements ConsumerService {
                     cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             }
         }
-        logger.info("[cdc-consumer] batch end, batchId : {}, commitIds : {}, un-commitIds : {}",
-            cdcMetrics.getBatchId(),
-            JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()),
-            JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("[cdc-consumer] batch end, batchId : {}, commitIds : {}, un-commitIds : {}",
+                cdcMetrics.getBatchId(),
+                JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()),
+                JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+        }
     }
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
-            logger.warn(
-                "[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
-                cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (logger.isWarnEnabled()) {
+                logger.warn(
+                    "[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
+                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
         }
 
         cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
 
-        logger.debug("[cdc-consumer] transaction end, batchId : {}, add new commitIds : {}",
-            cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("[cdc-consumer] transaction end, batchId : {}, add new commitIds : {}",
+                cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+        }
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
