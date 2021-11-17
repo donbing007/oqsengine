@@ -251,65 +251,74 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     /**
-     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
+     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下.
+     * 1. 数据被删除,放弃.
+     * 2. 数据版本冲突,重试直到成功.(有上限)
      */
     private void persist(CalculationContext context, long targetEntityId) throws CalculationException {
 
-        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
-            // 过滤掉当前操作的实例.
-            e.id() != targetEntityId
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+        try {
 
-        ).collect(Collectors.toList());
+            List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
+                // 过滤掉当前操作的实例.
+                e.id() != targetEntityId
 
-        if (entities.isEmpty()) {
-            return;
-        }
+            ).collect(Collectors.toList());
 
-        final int batchSize = 1000;
+            if (entities.isEmpty()) {
+                return;
+            }
 
-        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+            final int batchSize = 1000;
 
-        EntityPackage entityPackage = new EntityPackage();
-        boolean persistResult;
-        for (int i = 0; i < entities.size(); i++) {
-            if (entityPackage.size() == batchSize) {
+            MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+
+            EntityPackage entityPackage = new EntityPackage();
+            boolean persistResult;
+            for (int i = 0; i < entities.size(); i++) {
+                if (entityPackage.size() == batchSize) {
 
 
+                    try {
+                        persistResult = doPersist(context, entityPackage);
+                    } catch (SQLException ex) {
+                        throw new CalculationException(ex.getMessage(), ex);
+                    }
+
+                    if (!persistResult) {
+                        throw new CalculationException(
+                            "An error occurred during maintenance and the number of conflicts reached the upper limit. Procedure");
+                    }
+
+                    entityPackage = null;
+
+                } else {
+
+                    if (entityPackage == null) {
+                        entityPackage = new EntityPackage();
+                    }
+
+                    Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
+                    if (!entityClassOp.isPresent()) {
+                        throw new CalculationException(
+                            String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
+                    }
+                    entityPackage.put(entities.get(i), entityClassOp.get());
+
+                }
+            }
+
+            if (entityPackage != null && !entityPackage.isEmpty()) {
                 try {
-                    persistResult = doPersist(context, entityPackage);
+                    doPersist(context, entityPackage);
                 } catch (SQLException ex) {
                     throw new CalculationException(ex.getMessage(), ex);
                 }
-
-                if (!persistResult) {
-                    throw new CalculationException(
-                        "An error occurred during maintenance and the number of conflicts reached the upper limit. Procedure");
-                }
-
-                entityPackage = null;
-
-            } else {
-
-                if (entityPackage == null) {
-                    entityPackage = new EntityPackage();
-                }
-
-                Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
-                if (!entityClassOp.isPresent()) {
-                    throw new CalculationException(
-                        String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
-                }
-                entityPackage.put(entities.get(i), entityClassOp.get());
-
             }
-        }
-
-        if (entityPackage != null && !entityPackage.isEmpty()) {
-            try {
-                doPersist(context, entityPackage);
-            } catch (SQLException ex) {
-                throw new CalculationException(ex.getMessage(), ex);
-            }
+        } finally {
+            processTimer(
+                null, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "persist", false);
         }
     }
 
@@ -417,124 +426,135 @@ public class DefaultCalculationImpl implements Calculation {
 
     // 获取影响树列表.
     private Infuence[] scope(CalculationContext context) throws CalculationException {
-        // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
-        Collection<IEntityField> calculationFields = parseChangeFields(context, false);
 
-        // 固定增加一个表示数量改变的特殊改变.
-        switch (context.getScenariso()) {
-            case BUILD: {
-                context.addValueChange(
-                    ValueChange.build(
-                        context.getFocusEntity().id(),
-                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
-                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
-                    )
-                );
-                calculationFields.add(EntityField.ID_ENTITY_FIELD);
-                break;
-            }
-            case DELETE: {
+        Timer.Sample allSample = Timer.start(Metrics.globalRegistry);
 
-                context.addValueChange(
-                    ValueChange.build(
-                        context.getFocusEntity().id(),
-                        new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id()),
-                        new EmptyTypedValue(EntityField.ID_ENTITY_FIELD)
-                    )
-                );
-                calculationFields.add(EntityField.ID_ENTITY_FIELD);
-                break;
-            }
-            case REPLACE: {
-                LongValue value = new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id());
-                context.addValueChange(ValueChange.build(context.getFocusEntity().id(), value, value));
-                calculationFields.add(EntityField.ID_ENTITY_FIELD);
-                break;
-            }
-            default: {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(
-                        "The current scenario {} does not affect the number of instances and does not add a "
-                            + "variable number of influence trees.",
-                        context.getScenariso().name());
+        try {
+            // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
+            Collection<IEntityField> calculationFields = parseChangeFields(context, false);
+
+            // 固定增加一个表示数量改变的特殊改变.
+            switch (context.getScenariso()) {
+                case BUILD: {
+                    context.addValueChange(
+                        ValueChange.build(
+                            context.getFocusEntity().id(),
+                            new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
+                            new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
+                        )
+                    );
+                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    break;
+                }
+                case DELETE: {
+
+                    context.addValueChange(
+                        ValueChange.build(
+                            context.getFocusEntity().id(),
+                            new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id()),
+                            new EmptyTypedValue(EntityField.ID_ENTITY_FIELD)
+                        )
+                    );
+                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    break;
+                }
+                case REPLACE: {
+                    LongValue value = new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id());
+                    context.addValueChange(ValueChange.build(context.getFocusEntity().id(), value, value));
+                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    break;
+                }
+                default: {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(
+                            "The current scenario {} does not affect the number of instances and does not add a "
+                                + "variable number of influence trees.",
+                            context.getScenariso().name());
+                    }
                 }
             }
-        }
 
-        CalculationLogicFactory calculationLogicFactory =
-            context.getResourceWithEx(() -> context.getCalculationLogicFactory());
+            CalculationLogicFactory calculationLogicFactory =
+                context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
-        /*
-        所有当前场景需要维护的计算逻辑片根据改变的字段最终汇聚一份影响树列表.
-        每一个改变的字段对应着一棵树.树的结构如下.
+            /*
+            所有当前场景需要维护的计算逻辑片根据改变的字段最终汇聚一份影响树列表.
+            每一个改变的字段对应着一棵树.树的结构如下.
                  当前被改变的实例和改变的字段信息
                     /             \
              被影响的元信息和字段   被影响的元信息和字段
                /           \
-       被影响的元信息和字段   被影响的元信息和字段
-       注意: 每一个改变字段会由所有logic共同来构造一颗影响树.
+            被影响的元信息和字段   被影响的元信息和字段
+            注意: 每一个改变字段会由所有logic共同来构造一颗影响树.
                                A
                            /       \
                       B(lookup)     C
                          /
                        D(sum)
              这里 B lookup 和A,但是D又SUM了B,所以需要多个logic来共同构造这个树.
-         */
+            */
 
-        // 只处理需要处理当前维护场景的logic.
-        Collection<CalculationLogic> logics =
-            getNeedMaintainScenariosLogic(calculationLogicFactory, context.getScenariso());
+            // 只处理需要处理当前维护场景的logic.
+            Collection<CalculationLogic> logics =
+                getNeedMaintainScenariosLogic(calculationLogicFactory, context.getScenariso());
 
-        Infuence[] infuences = calculationFields.stream().map(f -> {
+            Infuence[] infuences = calculationFields.stream().map(f -> {
 
-            Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
-            // 表示数量改变的id字段.
-            if (changeOp.isPresent()) {
-                Infuence infuence = new Infuence(
-                    context.getFocusEntity(),
-                    Participant.Builder.anParticipant()
-                        .withEntityClass(context.getFocusClass())
-                        .withField(f)
-                        .withAffectedEntities(Arrays.asList(
-                            context.getFocusEntity()
-                        ))
-                        .build(),
-                    changeOp.get());
+                Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
+                // 表示数量改变的id字段.
+                if (changeOp.isPresent()) {
+                    Infuence infuence = new Infuence(
+                        context.getFocusEntity(),
+                        Participant.Builder.anParticipant()
+                            .withEntityClass(context.getFocusClass())
+                            .withField(f)
+                            .withAffectedEntities(Arrays.asList(
+                                context.getFocusEntity()
+                            ))
+                            .build(),
+                        changeOp.get());
 
-                /*
-                不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
-                 */
-                int oldSize = infuence.getSize();
-                for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
-                    for (CalculationLogic logic : logics) {
-                        context.focusField(f);
+                    /*
+                    不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
+                    */
+                    int oldSize = infuence.getSize();
+                    for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
+                        for (CalculationLogic logic : logics) {
+                            context.focusField(f);
 
-                        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+                            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-                        logic.scope(context, infuence);
+                            logic.scope(context, infuence);
 
-                        processTimer(
-                            logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
+                            processTimer(
+                                logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
+                        }
+
+                        if (oldSize == infuence.getSize()) {
+                            break;
+                        } else {
+                            oldSize = infuence.getSize();
+                        }
                     }
 
-                    if (oldSize == infuence.getSize()) {
-                        break;
+                    if (infuence.empty()) {
+                        return Optional.empty();
                     } else {
-                        oldSize = infuence.getSize();
+                        return Optional.ofNullable(infuence);
                     }
                 }
 
-                if (infuence.empty()) {
-                    return Optional.empty();
-                } else {
-                    return Optional.ofNullable(infuence);
-                }
-            }
+                return Optional.empty();
+            }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
 
-            return Optional.empty();
-        }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
+            return infuences;
 
-        return infuences;
+        } finally {
+
+            processTimer(
+                null, allSample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
+
+        }
     }
 
     /**
@@ -639,7 +659,7 @@ public class DefaultCalculationImpl implements Calculation {
                               boolean ex) {
         sample.stop(Timer.builder(metricName)
             .tags(
-                "logic", logic.getClass().getSimpleName(),
+                "logic", logic != null ? logic.getClass().getSimpleName() : "all",
                 "action", action,
                 "exception", ex ? CalculationException.class.getSimpleName() : "none"
             )
