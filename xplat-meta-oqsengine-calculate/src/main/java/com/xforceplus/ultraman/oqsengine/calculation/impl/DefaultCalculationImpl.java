@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -251,9 +252,7 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     /**
-     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下.
-     * 1. 数据被删除,放弃.
-     * 2. 数据版本冲突,重试直到成功.(有上限)
+     * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
      */
     private void persist(CalculationContext context, long targetEntityId) throws CalculationException {
 
@@ -505,7 +504,7 @@ public class DefaultCalculationImpl implements Calculation {
                 if (changeOp.isPresent()) {
                     Infuence infuence = new Infuence(
                         context.getFocusEntity(),
-                        Participant.Builder.anParticipant()
+                        CalculationParticipant.Builder.anParticipant()
                             .withEntityClass(context.getFocusClass())
                             .withField(f)
                             .withAffectedEntities(Arrays.asList(

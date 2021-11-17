@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.devops.om.model;
 
 /**
- * @copyright： 上海云砺信息科技有限公司
+ * 统一数据运维响应.
+ *
+ * @copyright: 上海云砺信息科技有限公司
  * @author: youyifan
  * @createTime: 11/3/2021 4:45 PM
  * @description:
@@ -14,6 +16,15 @@ public class DevOpsDataResponse {
     private int eventType;
     private String message;
 
+    /**
+     * 构造函数.
+     *
+     * @param txId  事务ID
+     * @param entityId 实体ID
+     * @param version 版本
+     * @param eventType 事件类型
+     * @param message 消息
+     */
     public DevOpsDataResponse(long txId, long entityId, int version, int eventType, String message) {
         this.txId = txId;
         this.entityId = entityId;

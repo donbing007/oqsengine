@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -112,7 +113,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                         .forEach(f -> {
                             infuenceInner.impact(
                                 participant,
-                                Participant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                     .withEntityClass(relationshipClass)
                                     .withField(f)
                                     .withAttachment(r.isStrong())

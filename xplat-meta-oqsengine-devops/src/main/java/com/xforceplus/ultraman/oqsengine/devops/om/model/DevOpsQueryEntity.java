@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.devops.om.model;
 import java.util.List;
 
 /**
- * @copyright： 上海云砺信息科技有限公司
+ * 统一数据运维请求实体.
+ *
+ * @copyright: 上海云砺信息科技有限公司
  * @author: youyifan
  * @createTime: 11/8/2021 4:56 PM
  * @description:

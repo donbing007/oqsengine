@@ -47,7 +47,17 @@ public enum ConditionOperator {
     /**
      * 等于多个值.
      */
-    MULTIPLE_EQUALS("IN");
+    MULTIPLE_EQUALS("IN"),
+
+    /**
+     * 判断属性不存在,此操作符会忽略右值.
+     */
+    IS_NULL("ISNULL"),
+
+    /**
+     * 判断属性存在,此操作符会忽略右值.
+     */
+    IS_NOT_NULL("ISNOTNULL");
 
     private String symbol;
 
