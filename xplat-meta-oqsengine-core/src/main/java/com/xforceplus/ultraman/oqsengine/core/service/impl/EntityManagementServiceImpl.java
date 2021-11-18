@@ -303,6 +303,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
+        filter(entity);
+
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         preview(entity, entityClass);
@@ -399,6 +401,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
+
+        filter(entity);
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
@@ -720,11 +724,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw new SQLException(String.format("Incomplete entity(%d) type information.", entity.id()));
         }
 
-        if (entity.entityValue() == null || entity.entityValue().size() == 0) {
-            throw new SQLException(String.format("Entity(%d-%s) does not have any attributes.",
-                entity.id(), entity.entityClassRef().getCode()));
-        }
-
         IEntityField field;
         for (IValue value : entity.entityValue().values()) {
             field = value.getField();
@@ -865,6 +864,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         for (IValue newValue : filterValues) {
             newEntity.entityValue().addValue(newValue);
         }
+    }
+
+    // 只允许静态字段进入写事务.
+    private void filter(IEntity entity) {
+        entity.entityValue().filter(v ->
+            v.getField().calculationType() == CalculationType.STATIC
+        );
     }
 
 }

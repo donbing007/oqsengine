@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
-import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -17,7 +16,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -35,7 +33,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -417,9 +414,11 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
 
-        Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent() &&
-            !((String) order.entityValue().getValue("订单号").get().getValue()).isEmpty()
+        Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent()
+            && !((String) order.entityValue().getValue("订单号").get().getValue()).isEmpty()
         );
+
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
 
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("总金额sum").get().getValue());
