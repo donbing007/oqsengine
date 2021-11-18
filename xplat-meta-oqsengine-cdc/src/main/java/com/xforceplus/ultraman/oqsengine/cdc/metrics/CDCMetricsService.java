@@ -93,7 +93,11 @@ public class CDCMetricsService {
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
         cdcMetrics.consumeSuccess(originBatchId, temp, isConnectSync);
         callback();
-        logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp), originBatchId);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp),
+                originBatchId);
+        }
     }
 
     /**
