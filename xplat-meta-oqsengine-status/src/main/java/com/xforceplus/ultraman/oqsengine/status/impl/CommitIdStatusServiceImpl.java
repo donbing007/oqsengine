@@ -181,6 +181,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
+        unSyncCommitIdMin = Metrics.gauge(
+            MetricsDefine.UN_SYNC_COMMIT_ID_MIN, new AtomicLong(size()));
+        unSyncCommitIdMax = Metrics.gauge(
+            MetricsDefine.UN_SYNC_COMMIT_ID_MAX, new AtomicLong(size()));
 
         logger.info("Use {} as the key for the list of commit Numbers.", commitidsKey);
         logger.info("Use {} as the prefix key for the commit number status.", commitidStatusKeyPrefix);

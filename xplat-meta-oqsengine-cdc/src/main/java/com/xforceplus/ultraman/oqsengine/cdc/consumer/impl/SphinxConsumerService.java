@@ -179,11 +179,12 @@ public class SphinxConsumerService implements ConsumerService {
                         String.format("batch : %d, columns must not be null", cdcMetrics.getBatchId()));
                 }
 
-                Long id = UN_KNOW_ID;
-                Long commitId = UN_KNOW_ID;
+                long id;
+                long commitId = UN_KNOW_ID;
                 try {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
+
                     //  获取ID
                     id = getLongFromColumn(columns, ID);
                 } catch (Exception e) {
