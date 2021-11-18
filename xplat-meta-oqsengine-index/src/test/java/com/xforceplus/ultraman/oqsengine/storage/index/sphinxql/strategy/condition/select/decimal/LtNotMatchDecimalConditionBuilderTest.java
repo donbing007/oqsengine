@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
 import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -41,7 +40,8 @@ public class LtNotMatchDecimalConditionBuilderTest {
     @Test
     public void testBuild() throws Exception {
         LtNotMatchDecimalConditionBuilder
-            builder = new LtNotMatchDecimalConditionBuilder(storageStrategyFactory);
+            builder = new LtNotMatchDecimalConditionBuilder();
+        builder.setStorageStrategy(storageStrategyFactory);
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         String conditionSql = builder.build(
             new Condition(

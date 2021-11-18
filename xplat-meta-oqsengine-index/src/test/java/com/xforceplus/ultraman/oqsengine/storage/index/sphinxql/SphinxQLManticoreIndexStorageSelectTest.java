@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
@@ -135,6 +136,11 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2NullField = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - 9)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-null")
+        .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(2)
@@ -143,6 +149,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withField(l2TimeField)
         .withField(l2EnumField)
         .withField(l2DecField)
+        .withField(l2NullField)
         .withFather(l1EntityClass)
         .build();
 
@@ -480,6 +487,21 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
+            new Case(
+                "is not null",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-null").get(),
+                            ConditionOperator.IS_NOT_NULL,
+                            new EmptyTypedValue(l2EntityClass.field("l2-null").get())
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[0]
+            ),
             new Case(
                 "all",
                 Conditions.buildEmtpyConditions(),

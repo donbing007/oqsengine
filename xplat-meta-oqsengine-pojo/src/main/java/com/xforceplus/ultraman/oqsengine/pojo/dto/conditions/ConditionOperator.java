@@ -10,6 +10,10 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 public enum ConditionOperator {
 
     /**
+     * 未知.
+     */
+    UNKNOWN("UNKNOWN"),
+    /**
      * 模糊匹配.
      */
     LIKE("LIKE"),

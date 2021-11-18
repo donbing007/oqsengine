@@ -16,6 +16,8 @@ public class StringsConditionValidation implements ConditionValidation {
         switch (condition.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
+            case IS_NULL:
+            case IS_NOT_NULL:
             case MULTIPLE_EQUALS: {
                 return true;
             }

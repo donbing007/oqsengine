@@ -6,8 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.AbstractConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 
 /**
  * 含有OR但是没有范围查询.
@@ -51,7 +51,7 @@ public class HaveOrNoRanageConditionsBuilder extends AbstractConditionsBuilder {
                     throw new IllegalArgumentException("Cannot use primary key queries in queries containing OR.");
                 }
 
-                AbstractSphinxQLConditionBuilder builder =
+                ConditionBuilder<Condition, String> builder =
                     getConditionQueryBuilderFactory().getQueryBuilder(condition, true);
 
                 if (condition.getOperator() == ConditionOperator.NOT_EQUALS) {

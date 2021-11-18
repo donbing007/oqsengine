@@ -40,7 +40,8 @@ public class LtEqNotMatchDecimalConditionBuilderTest {
     @Test
     public void testBuild() throws Exception {
         LtEqNotMatchDecimalConditionBuilder
-            builder = new LtEqNotMatchDecimalConditionBuilder(storageStrategyFactory);
+            builder = new LtEqNotMatchDecimalConditionBuilder();
+        builder.setStorageStrategy(storageStrategyFactory);
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         String conditionSql = builder.build(
             new Condition(

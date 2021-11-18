@@ -17,6 +17,8 @@ public class BoolanConditionValidation implements ConditionValidation {
             case EQUALS:
             case NOT_EQUALS:
             case MULTIPLE_EQUALS:
+            case IS_NULL:
+            case IS_NOT_NULL:
                 return true;
             default:
                 return false;

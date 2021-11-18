@@ -46,8 +46,9 @@ public class MeqMatchConditionBuilderTest {
     public void testBuild() throws Exception {
 
         buildCases().stream().forEach(c -> {
-            MeqMatchConditionBuilder builder = new MeqMatchConditionBuilder(
-                storageStrategyFactory, c.condition.getField().type(), c.useGroupName);
+            MeqMatchConditionBuilder builder =
+                new MeqMatchConditionBuilder(c.condition.getField().type(), c.useGroupName);
+            builder.setStorageStrategy(storageStrategyFactory);
 
             String result = builder.build(c.condition);
             c.check.accept(result);
