@@ -145,7 +145,7 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 //TODO: 临时日志,这里需要清理的.
-                logger.info("[commitid]: {} commit.", commitId);
+                logger.info("[commitid]: {} commit.[]", commitId, System.currentTimeMillis());
 
                 // ===========之后的操作不能影响最终OQS事务的成功返回事实.===================
                 try {

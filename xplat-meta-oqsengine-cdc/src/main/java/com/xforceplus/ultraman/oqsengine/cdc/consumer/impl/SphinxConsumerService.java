@@ -186,7 +186,9 @@ public class SphinxConsumerService implements ConsumerService {
                     commitId = getLongFromColumn(columns, COMMITID);
 
                     //TODO: 临时日志,这里需要清理的.
-                    logger.info("[commitid]: {} cdc.", commitId);
+                    if (commitId != CommitHelper.getUncommitId()) {
+                        logger.info("[commitid]: {} cdc.[{}]", commitId, System.currentTimeMillis());
+                    }
 
                     //  获取ID
                     id = getLongFromColumn(columns, ID);
