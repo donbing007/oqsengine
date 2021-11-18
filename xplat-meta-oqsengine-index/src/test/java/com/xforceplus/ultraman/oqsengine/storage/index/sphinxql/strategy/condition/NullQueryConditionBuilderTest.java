@@ -43,7 +43,7 @@ public class NullQueryConditionBuilderTest {
 
         Condition condition = new Condition(field, ConditionOperator.IS_NULL, new EmptyTypedValue(field));
         Assertions.assertEquals(
-            String.format("%s.%s == null",
+            String.format("%s.%s is null",
                 FieldDefine.ATTRIBUTE,
                 storageStrategyFactory.getStrategy(FieldType.STRING)
                     .toStorageNames(field, true).stream().findFirst().get()),
@@ -67,7 +67,7 @@ public class NullQueryConditionBuilderTest {
 
         Condition condition = new Condition(field, ConditionOperator.IS_NOT_NULL, new EmptyTypedValue(field));
         Assertions.assertEquals(
-            String.format("%s.%s != null",
+            String.format("%s.%s is not null",
                 FieldDefine.ATTRIBUTE,
                 storageStrategyFactory.getStrategy(FieldType.STRING)
                     .toStorageNames(field, true).stream().findFirst().get()),
