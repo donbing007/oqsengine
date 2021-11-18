@@ -326,6 +326,10 @@ public class DefaultCalculationImpl implements Calculation {
         MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
+        /*
+         * TODO: 没有处理事务累加器,被动修改的对象现在不会出现在事务累加器中. by dongbin 2021/11/18
+         */
+
         EntityPackage replayPackage = entityPackage;
         for (int p = 0; p < MAX_REPLAY_NUMBER; p++) {
 
