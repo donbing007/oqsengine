@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -9,11 +10,14 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
+import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -29,7 +33,9 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -89,12 +95,17 @@ public class CalculationTest extends AbstractContainerExtends {
     private MasterStorage masterStorage;
 
     @Resource
+    private SegmentStorage segmentStorage;
+
+    @Resource
     private TransactionManager transactionManager;
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
     private Faker faker = new Faker(Locale.CHINA);
+
+    private SegmentInfo segmentInfo = MockEntityClassDefine.getDefaultSegmentInfo();
 
     /**
      * 每个测试的初始化.
@@ -117,6 +128,8 @@ public class CalculationTest extends AbstractContainerExtends {
                 }
             }
         }
+
+        initSegment(segmentInfo);
 
         MockEntityClassDefine.initMetaManager(metaManager);
     }
@@ -145,6 +158,15 @@ public class CalculationTest extends AbstractContainerExtends {
             }
         }
 
+        deleteSegment(segmentInfo);
+    }
+
+    public void deleteSegment(SegmentInfo info) throws SQLException {
+        segmentStorage.delete(info);
+    }
+
+    public void initSegment(SegmentInfo info) throws SQLException {
+        segmentStorage.build(info);
     }
 
     /**
@@ -362,7 +384,6 @@ public class CalculationTest extends AbstractContainerExtends {
             operationResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
 
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
@@ -379,8 +400,26 @@ public class CalculationTest extends AbstractContainerExtends {
         operationResult = entityManagementService.replace(orderItem);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        //  这里设置AUTO_FILL为空，判断是否重置了autoFill字段，期望是不会改变
+        order = Entity.Builder.anEntity()
+            .withId(order.id())
+            .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
+                        ""
+                    )
+                )
+            ).build();
+
+        operationResult = entityManagementService.replace(order);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+
+        Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent() &&
+            !((String) order.entityValue().getValue("订单号").get().getValue()).isEmpty()
+        );
 
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("总金额sum").get().getValue());

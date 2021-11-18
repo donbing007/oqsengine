@@ -31,3 +31,25 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `segment`
+(
+    `id`          bigint(20)                                                   NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `biz_type`    varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '业务标签，例如可以用来标识业务序列号的的对象字段,objectCode:fieldName',
+    `begin_id`    bigint(20)                                                   NOT NULL DEFAULT 1 COMMENT '号段起始ID',
+    `max_id`      bigint(20)                                                   NOT NULL DEFAULT 0 COMMENT '当前号段最大ID',
+    `step`        int(11)                                                      NOT NULL DEFAULT 1000 COMMENT '号段增加的步长',
+    `pattern`     varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '自定义模式',
+    `pattern_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '需要重置的模式记录上一次重置的key值',
+    `resetable`   tinyint(4)                                                   NOT NULL DEFAULT 0 COMMENT '是否需要根据pattern_key重置编号 0:不需要 1:需要',
+    `mode`        tinyint(4)                                                   NOT NULL DEFAULT 2 COMMENT '1：顺序递增 2: 趋势递增',
+    `version`     bigint(20)                                                   NOT NULL DEFAULT 1 COMMENT '版本号',
+    `create_time` timestamp(3)                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `update_time` timestamp(3)                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 1
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_general_ci
+  ROW_FORMAT = Dynamic;
+
+

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -12,9 +13,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
@@ -586,7 +589,15 @@ public class MockEntityClassDefine {
                             .withSearchable(true)
                             .withFuzzyType(FieldConfig.FuzzyType.NOT)
                             .withFieldSense(FieldConfig.FieldSense.NORMAL)
-                            .withRequired(true).build()
+                            .withRequired(false)
+                            .withCalculation(
+                                AutoFill.Builder.anAutoFill()
+                                    .withPatten("{0000}")
+                                    .withDomainNoType(AutoFill.DomainNoType.NORMAL)
+                                    .withLevel(1)
+                                    .build()
+                            )
+                            .build()
                     ).build()
             )
             .withField(
@@ -978,6 +989,21 @@ public class MockEntityClassDefine {
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
         }
+    }
+
+    public static SegmentInfo getDefaultSegmentInfo() {
+        return SegmentInfo.builder().withVersion(0L)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withStep(1000)
+            .withPatten("{0000}")
+            .withMode(AutoFill.DomainNoType.NORMAL.getType())
+            .withMaxId(9999L)
+            .withBizType(String.valueOf(orderCodeFieldId))
+            .withPatternKey("")
+            .withResetable(1)
+            .withBeginId(1L)
+            .build();
     }
 }
 
