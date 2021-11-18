@@ -75,7 +75,7 @@ public class WildcardTokenizer implements Tokenizer {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("WildcardTokenizer{");
+        final StringBuilder sb = new StringBuilder("WildcardTokenizer{");
         sb.append("width=").append(width);
         sb.append('}');
         return sb.toString();

@@ -57,6 +57,8 @@ public class CommonInitialization implements BeanInitialization {
     public void clear() throws Exception {
         if (null != redisClient) {
             redisClient.connect().sync().flushall();
+            redisClient.shutdown();
+            redisClient = null;
         }
     }
 

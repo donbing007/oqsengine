@@ -1132,17 +1132,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
             }
 
-            String force = "false";
-            try {
-                force = metadata.getText("force").orElse("false");
-                String finalForce = force;
-                logInfo(metadata, (displayname, username) ->
-                    String.format("Attempt to delete %s:%s by %s:%s with %s",
-                        in.getId(), in.getObjId(), displayname, username, finalForce));
-
-            } catch (Exception ex) {
-                logger.error("{}", ex);
-            }
+            String force = metadata.getText("force").orElse("false");
 
             OperationResult result;
             try {
@@ -1306,17 +1296,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
             List<Long> idList = in.getValuesList().stream().map(x -> x.getObjId()).collect(Collectors.toList());
-            String force = "false";
-            try {
-                force = metadata.getText("force").orElse("false");
-                String finalForce = force;
-                logInfo(metadata, (displayname, username) ->
-                    String.format("Attempt to delete %s:%s by %s:%s with %s",
-                        in.getId(), idList, displayname, username, finalForce));
-
-            } catch (Exception ex) {
-                logger.error("{}", ex);
-            }
+            String force = metadata.getText("force").orElse("false");
 
             OperationResult result;
 

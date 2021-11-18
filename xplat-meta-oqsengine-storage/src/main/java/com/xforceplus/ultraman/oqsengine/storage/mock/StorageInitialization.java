@@ -32,7 +32,7 @@ public class StorageInitialization implements BeanInitialization {
     /**
      * 获取单例.
      */
-    public static StorageInitialization getInstance() throws IllegalAccessException {
+    public static StorageInitialization getInstance() throws Exception {
         if (null == instance) {
             synchronized (StorageInitialization.class) {
                 if (null == instance) {
@@ -46,7 +46,7 @@ public class StorageInitialization implements BeanInitialization {
     }
 
     @Override
-    public void init() throws IllegalAccessException {
+    public void init() throws Exception {
         commitIdStatusService = new CommitIdStatusServiceImpl();
         Collection<Field> fields = ReflectionUtils.printAllMembers(commitIdStatusService);
         ReflectionUtils.reflectionFieldValue(fields, "redisClient",

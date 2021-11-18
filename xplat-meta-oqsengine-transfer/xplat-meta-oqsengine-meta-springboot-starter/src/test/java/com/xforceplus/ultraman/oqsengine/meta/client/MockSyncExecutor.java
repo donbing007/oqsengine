@@ -4,13 +4,12 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -45,8 +44,8 @@ public class MockSyncExecutor implements SyncExecutor {
             }
             return status.equals(RequestStatus.SYNC_OK);
         } catch (Exception e) {
-          e.printStackTrace();
-          throw e;
+            e.printStackTrace();
+            throw e;
         } finally {
             status = RequestStatus.SYNC_OK;
         }
