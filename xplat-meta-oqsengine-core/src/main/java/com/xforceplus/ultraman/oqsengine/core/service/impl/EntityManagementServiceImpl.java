@@ -724,6 +724,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw new SQLException(String.format("Incomplete entity(%d) type information.", entity.id()));
         }
 
+        if (entity.entityValue() == null || entity.entityValue().size() == 0) {
+            throw new SQLException(String.format("Entity(%d-%s) does not have any attributes.",
+                entity.id(), entity.entityClassRef().getCode()));
+        }
+
         IEntityField field;
         for (IValue value : entity.entityValue().values()) {
             field = value.getField();
