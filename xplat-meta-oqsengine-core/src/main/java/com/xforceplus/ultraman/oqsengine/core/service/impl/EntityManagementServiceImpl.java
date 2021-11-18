@@ -875,6 +875,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private void filter(IEntity entity) {
         entity.entityValue().filter(v ->
             v.getField().calculationType() == CalculationType.STATIC
+                || v.getField().calculationType() == CalculationType.LOOKUP
         );
     }
 
