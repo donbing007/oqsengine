@@ -440,7 +440,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 新的字段值加入当前实例.
                 // 注意:将会删选AUTO_FILL字段
-                withFilterValue(entity, newEntity);
+                withoutReplaceNoChange(entity, newEntity);
 
                 CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE, tx);
                 calculationContext.focusEntity(newEntity, entityClass);
@@ -857,9 +857,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    private void withFilterValue(IEntity entity, IEntity newEntity) {
+    private void withoutReplaceNoChange(IEntity entity, IEntity newEntity) {
         List<IValue> filterValues = entity.entityValue().values().stream().filter(e -> {
-            return !e.getField().calculationType().equals(CalculationType.AUTO_FILL);
+            return !e.getField().calculationType().isReplaceNeedNotChange();
         }).collect(Collectors.toList());
 
         for (IValue newValue : filterValues) {
