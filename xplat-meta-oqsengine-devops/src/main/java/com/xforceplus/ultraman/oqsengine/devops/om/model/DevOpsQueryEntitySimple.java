@@ -11,18 +11,18 @@ import java.util.List;
  * @description:
  * @history:
  */
-public class DevOpsQueryEntity {
+public class DevOpsQueryEntitySimple {
 
-    private List<DevOpsQueryEntitySimple> entities;
+    private String code;
 
     private List<String> fields;
 
-    public List<DevOpsQueryEntitySimple> getEntities() {
-        return entities;
+    public String getCode() {
+        return code;
     }
 
-    public void setEntities(List<DevOpsQueryEntitySimple> entities) {
-        this.entities = entities;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public List<String> getFields() {
