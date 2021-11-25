@@ -20,6 +20,7 @@ import java.util.Objects;
  * 不依赖任何实现的一种对象原始数据实体.
  * 可以用以在不同的storage中通信.
  * 这是一个抽像表示.
+ * 其内部使用了一个数组来表示属性键值对,即[key,value, key, value...],所以一定是偶数长度.
  *
  * @author dongbin
  * @version 0.1 2021/3/2 13:40

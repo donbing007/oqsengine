@@ -17,6 +17,10 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
         super(field, params);
     }
 
+    public FormulaTypedValue(IEntityField field, Map<String, Object> value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     Map<String, Object> fromString(String value) {
         return Collections.emptyMap();
@@ -28,14 +32,12 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
     }
 
     @Override
-    protected void checkType(IEntityField newFiled) {
-        return;
+    protected IValue<Map<String, Object>> doCopy(IEntityField newField, String attachment) {
+        return new FormulaTypedValue(newField, getValue(), attachment);
     }
 
     @Override
-    public IValue<Map<String, Object>> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new FormulaTypedValue(newField, getValue());
+    protected boolean skipTypeCheckWithCopy() {
+        return true;
     }
 }

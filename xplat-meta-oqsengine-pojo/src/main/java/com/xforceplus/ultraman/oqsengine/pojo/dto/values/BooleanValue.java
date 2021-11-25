@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import java.util.Objects;
 
 /**
  * 表示 boolean 的属性名.
@@ -15,6 +14,10 @@ public class BooleanValue extends AbstractValue<Boolean> {
 
     public BooleanValue(IEntityField field, Boolean value) {
         super(field, value);
+    }
+
+    public BooleanValue(IEntityField field, Boolean value, String attachment) {
+        super(field, value, attachment);
     }
 
     @Override
@@ -37,30 +40,8 @@ public class BooleanValue extends AbstractValue<Boolean> {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
+    protected IValue<Boolean> doCopy(IEntityField newField, String attachment) {
+        return new BooleanValue(newField, getValue(), attachment);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof BooleanValue)) {
-            return false;
-        }
-
-        BooleanValue that = (BooleanValue) o;
-
-        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
-    }
-
-    @Override
-    public IValue<Boolean> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new BooleanValue(newField, getValue());
-    }
-
 
 }

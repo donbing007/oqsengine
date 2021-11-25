@@ -2,12 +2,13 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -22,8 +23,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
-import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiveAction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -36,10 +37,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -136,16 +142,11 @@ public class LookupCalculationLogicTest {
             ).build()
         ).build();
 
-
-    private KeyValueStorage kv;
-
     /**
      * 初始化.
      */
     @BeforeEach
     public void before() throws Exception {
-        kv = new MemoryKeyValueStorage();
-
         targetEntityClass = EntityClass.Builder.anEntityClass()
             .withId(targetClassId)
             .withCode("targetClass")
@@ -227,7 +228,6 @@ public class LookupCalculationLogicTest {
 
     @AfterEach
     public void after() throws Exception {
-        kv = null;
     }
 
     @Test
@@ -335,19 +335,16 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(1, tasks.size());
 
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
-
-        LookupHelper.LookupLinkIterKey lookupLinkIterKey = LookupHelper.buildIteratorPrefixLinkKey(
-            context.getFocusField(), participant.getEntityClass(), participant.getField(),
-            context.getFocusEntity());
-        Assertions.assertEquals(lookupLinkIterKey.toString(), lookTask.getIterKey());
-        Assertions.assertNull(lookTask.getPointKey().orElse(null));
+        Assertions.assertEquals(0, lookTask.getLastStartLookupEntityId());
+        Assertions.assertEquals(weakLookupEntityClass.ref(), lookTask.getLookupClassRef());
+        Assertions.assertEquals(weakLongLookupField.id(), lookTask.getLookupFieldId());
     }
 
     @Test
     public void testStrongRelationship() throws Exception {
         MockTaskCoordinator coordinator = new MockTaskCoordinator();
         MockTransaction tx = new MockTransaction();
-        KeyValueStorage kv = new MemoryKeyValueStorage();
+        MockConditionsSelectStorage conditionsSelectStorage = new MockConditionsSelectStorage();
 
 
         IEntity targetEntity = Entity.Builder.anEntity()
@@ -359,22 +356,16 @@ public class LookupCalculationLogicTest {
                 )
             ).build();
 
-        // 比当前事务可处理上限多1.
-        for (int i = 0; i < 1001; i++) {
-            IEntity lookupEntity = Entity.Builder.anEntity()
-                .withId(Integer.MAX_VALUE - i)
-                .withEntityClassRef(strongLookupEntityClass.ref())
-                .build();
-            String key =
-                LookupHelper.buildLookupLinkKey(targetEntity, targetStringField, lookupEntity, strongStringLookupField)
-                    .toString();
-            kv.save(key, null);
-        }
+        // 准备超出事务内可处理的极限数量的实例.
+        List<EntityRef> refs = IntStream.range(0, 10000)
+            .mapToObj(i -> EntityRef.Builder.anEntityRef().withId(Long.MAX_VALUE - i).build())
+            .collect(Collectors.toList());
+        conditionsSelectStorage.put(strongLookupEntityClass, refs);
 
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withTransaction(tx)
             .withTaskCoordinator(coordinator)
-            .withKeyValueStorage(kv)
+            .withConditionsSelectStorage(conditionsSelectStorage)
             .build();
         context.focusEntity(targetEntity, targetEntityClass);
         context.focusField(targetStringField);
@@ -417,9 +408,8 @@ public class LookupCalculationLogicTest {
 
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
 
-        String startKey =
-            "lookup-tf9223372036854775806-lc9223372036854775806-lp-lf9223372036854775803-te9223372036854775807-le0000000002147483646";
-        Assertions.assertEquals(startKey, lookTask.getPointKey().get());
+        // 生成的时候id是降序的,但是mock的排序是从升序的,所以任务的开始是从尾部减1000开始的.
+        Assertions.assertEquals(refs.get(refs.size() - 1000).getId(), lookTask.getLastStartLookupEntityId());
     }
 
     private static class MockTaskCoordinator implements TaskCoordinator {
@@ -444,6 +434,45 @@ public class LookupCalculationLogicTest {
         public boolean addTask(Task task) {
             tasks.add(task);
             return true;
+        }
+    }
+
+    private static class MockConditionsSelectStorage implements ConditionsSelectStorage {
+
+        private Map<IEntityClass, List<EntityRef>> dataPool = new HashMap();
+
+        public void put(IEntityClass entityClass, List<EntityRef> refs) {
+            List<EntityRef> sortRefs = new ArrayList<>(refs);
+            Collections.sort(sortRefs);
+
+            dataPool.put(entityClass, sortRefs);
+        }
+
+
+        @Override
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
+            long startId = conditions.collectCondition().stream()
+                .filter(c -> c.getField().config().isIdentifie()).findFirst().get().getFirstValue().valueToLong();
+
+            long size = config.getPage().getPageSize();
+            List<EntityRef> refs = dataPool.get(entityClass);
+            int index = Collections.binarySearch(refs, EntityRef.Builder.anEntityRef().withId(startId).build());
+            if (index < 0) {
+                // 没有找到,从头开始迭代.
+                if (size > refs.size()) {
+                    return refs.subList(0, refs.size());
+                } else {
+                    return refs.subList(0, ((int) size));
+                }
+            } else {
+                if (index + size > refs.size()) {
+                    return refs.subList(index, refs.size());
+                } else {
+                    return refs.subList(index, (int) size);
+                }
+            }
+
         }
     }
 

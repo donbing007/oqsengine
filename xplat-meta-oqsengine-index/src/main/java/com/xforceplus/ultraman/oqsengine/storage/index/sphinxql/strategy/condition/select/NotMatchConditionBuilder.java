@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * 不用于 match 函数中的单值查询构造器.
@@ -23,9 +22,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class NotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public NotMatchConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
-        super(storageStrategyFactory, fieldType, operator, false);
+    public NotMatchConditionBuilder(FieldType fieldType, ConditionOperator operator) {
+        super(fieldType, operator, false);
     }
 
     @Override
@@ -58,7 +56,8 @@ public class NotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
                         break;
                     }
                     default: {
-                        buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                        buff.append(FieldDefine.ATTRIBUTE).append(".")
+                            .append(storageValue.shortStorageName().toString());
                     }
                 }
             }

@@ -44,8 +44,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         String firstStr = storageValue.value().toString();
         String secondStr = storageValue.next().value().toString();
 
@@ -61,7 +60,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String paddingStr = leftPaddingZero(secondStr, FIXED - secondStr.length());
 
         String value = isNeg ? NEG + firstStr + DIVIDE + paddingStr : firstStr + DIVIDE + paddingStr;
-        return new DecimalValue(field, new BigDecimal(value));
+        return new DecimalValue(field, new BigDecimal(value), attachemnt);
     }
 
     @Override

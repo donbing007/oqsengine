@@ -30,13 +30,14 @@ public abstract class AbstractConditionsBuilder
 
     @Override
     public void init() throws SQLException {
-        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
+        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory();
         this.conditionQueryBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        this.conditionQueryBuilderFactory.setStorageStrategyFactory(this.storageStrategyFactory);
         this.conditionQueryBuilderFactory.init();
     }
 
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 

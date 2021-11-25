@@ -111,6 +111,9 @@ public class DefaultCalculationImpl implements Calculation {
                 }
             } else {
 
+                // 计算没有结果,清理字段.
+                targetEntity.entityValue().remove(context.getFocusField());
+
                 if (logger.isDebugEnabled()) {
                     logger.debug("Instance {} field {} evaluates to {}.",
                         targetEntity.id(), field.name(), "NULL");
@@ -245,9 +248,9 @@ public class DefaultCalculationImpl implements Calculation {
 
                 return InfuenceConsumer.Action.CONTINUE;
             });
-
-            persist(context, targetEntityId);
         }
+
+        persist(context, targetEntityId);
     }
 
     /**

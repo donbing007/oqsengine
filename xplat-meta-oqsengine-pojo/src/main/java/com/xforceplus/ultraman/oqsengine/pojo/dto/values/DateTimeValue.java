@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +32,10 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
         super(field, value);
     }
 
+    public DateTimeValue(IEntityField field, LocalDateTime value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     LocalDateTime fromString(String value) {
         if (value == null) {
@@ -55,34 +58,13 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     }
 
     @Override
+    protected IValue<LocalDateTime> doCopy(IEntityField newField, String attachment) {
+        return new DateTimeValue(newField, getValue(), attachment);
+    }
+
+    @Override
     public String valueToString() {
         return Long.toString(valueToLong());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof DateTimeValue)) {
-            return false;
-        }
-
-        DateTimeValue that = (DateTimeValue) o;
-
-        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
-    }
-
-    @Override
-    public IValue<LocalDateTime> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new DateTimeValue(newField, getValue());
     }
 
     @Override

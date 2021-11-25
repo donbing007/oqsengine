@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
-import java.sql.SQLException;
 
 /**
  * 基于json的搜索构造器.
@@ -30,7 +29,7 @@ public class SQLJsonConditionsBuilder
     @Override
     public void init() throws Exception {
         this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory();
-        this.sqlConditionQueryBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        this.sqlConditionQueryBuilderFactory.setStorageStrategyFactory(storageStrategyFactory);
         this.sqlConditionQueryBuilderFactory.setTokenizerFacotry(tokenizerFactory);
         this.sqlConditionQueryBuilderFactory.init();
     }
@@ -56,7 +55,7 @@ public class SQLJsonConditionsBuilder
     }
 
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 

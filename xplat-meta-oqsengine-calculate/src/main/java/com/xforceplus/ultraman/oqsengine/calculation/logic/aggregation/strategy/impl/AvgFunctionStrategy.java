@@ -89,7 +89,7 @@ public class AvgFunctionStrategy implements FunctionStrategy {
             }
             Page emptyPage = Page.emptyPage();
             try {
-                context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
+                context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
                         SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
             } catch (SQLException e) {
                 e.printStackTrace();

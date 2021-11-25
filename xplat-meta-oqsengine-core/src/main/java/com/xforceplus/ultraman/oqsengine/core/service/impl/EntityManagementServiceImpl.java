@@ -50,14 +50,12 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -443,8 +441,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 newEntity.markTime(entity.time());
 
                 // 新的字段值加入当前实例.
-                // 注意:将会删选AUTO_FILL字段
-                withoutReplaceNoChange(entity, newEntity);
+                for (IValue newValue : entity.entityValue().values()) {
+                    newEntity.entityValue().addValue(newValue);
+                }
 
                 CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE, tx);
                 calculationContext.focusEntity(newEntity, entityClass);
@@ -542,7 +541,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
-                targetEntity.resetVersion(entity.version());
+                if (targetEntity.version() < entity.version()) {
+                    targetEntity.resetVersion(entity.version());
+                }
 
                 if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -818,7 +819,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withKeyValueStorage(this.kv)
             .withBizIDGenerator(this.bizIDGenerator)
             .withTransaction(tx)
-            .withCombindedSelectStorage(this.combinedSelectStorage)
+            .withConditionsSelectStorage(this.combinedSelectStorage)
             .build();
     }
 
@@ -858,16 +859,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     context.addValueChange(ValueChange.build(oldEntity.id(), oldValue, newValue));
                 }
             }
-        }
-    }
-
-    private void withoutReplaceNoChange(IEntity entity, IEntity newEntity) {
-        List<IValue> filterValues = entity.entityValue().values().stream().filter(e -> {
-            return !e.getField().calculationType().isReplaceNeedNotChange();
-        }).collect(Collectors.toList());
-
-        for (IValue newValue : filterValues) {
-            newEntity.entityValue().addValue(newValue);
         }
     }
 

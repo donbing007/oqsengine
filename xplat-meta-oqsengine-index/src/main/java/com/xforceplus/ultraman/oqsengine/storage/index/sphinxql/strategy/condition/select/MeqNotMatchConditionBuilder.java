@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import java.util.Arrays;
 
 /**
@@ -23,8 +22,8 @@ import java.util.Arrays;
  */
 public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public MeqNotMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType) {
-        super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, false);
+    public MeqNotMatchConditionBuilder(FieldType fieldType) {
+        super(fieldType, ConditionOperator.MULTIPLE_EQUALS, false);
     }
 
     @Override

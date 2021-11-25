@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -232,7 +233,7 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                        2021, Month.FEBRUARY, 27, 12, 32, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
@@ -304,6 +305,42 @@ public class SQLMasterStorageQueryTest {
     private Collection<Case> buildSelectCase() {
 
         return Arrays.asList(
+            // 查询指定附件.
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l0-long").get(),
+                            true,
+                            "634274"
+                        )
+                    ),
+                l2EntityClass,
+                r -> {
+                    long[] expectedIds = {
+                        1000
+                    };
+                    assertSelect(expectedIds, r, false);
+                }
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l0-long").get(),
+                            false,
+                            "634274"
+                        )
+                    ),
+                l2EntityClass,
+                r -> {
+                    long[] expectedIds = {
+                        1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, r, false);
+                },
+                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)
+            ),
             // sort asc,按照id排序应该被优化掉.
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -907,13 +944,13 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 26, 12, 15, 20)
+                        2021, Month.FEBRUARY, 26, 12, 15, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
             .withEntityValue(EntityValue.build().addValues(
                 Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 634274),
+                    new LongValue(l2EntityClass.field("l0-long").get(), 634274, "634274"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "TjguZT2nz9KT"),
                     new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "JPY", "USD"),
                     new EnumValue(l2EntityClass.field("l0-enum").get(), "Blue"),
@@ -934,20 +971,22 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 27, 12, 15, 20)
+                        2021, Month.FEBRUARY, 27, 12, 15, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
             .withEntityValue(EntityValue.build().addValues(
                 Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 381134),
+                    new LongValue(l2EntityClass.field("l0-long").get(), 381134, "381134"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "qqSDo69gZcGW"),
                     new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "JPY", "CHF"),
                     new EnumValue(l2EntityClass.field("l0-enum").get(), "Red"),
                     new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("741808930.09")),
                     new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
-                        LocalDateTime.of(2018, 11, 30, 11, 36, 41)),
-                    new LongValue(l2EntityClass.field("l1-long").get(), 443531115),
+                        LocalDateTime.of(2018, 11, 30, 11, 36, 41),
+                        "2018-11-30 11:36:41"
+                    ),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 443531115, "443531115"),
                     new StringValue(l2EntityClass.field("l1-string").get(), "Manuel_Vincent2662@naiker.biz"),
                     new LongValue(l2EntityClass.field("l2-long").get(), -251454086),
                     new StringValue(l2EntityClass.field("l2-string").get(), "Montenegro"),
@@ -961,13 +1000,13 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                        2021, Month.FEBRUARY, 27, 12, 32, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
             .withEntityValue(EntityValue.build().addValues(
                 Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 129848),
+                    new LongValue(l2EntityClass.field("l0-long").get(), 129848, "129848"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "oLS90hto8tSn"),
                     new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "FRF", "AUD", "BEF"),
                     new EnumValue(l2EntityClass.field("l0-enum").get(), "Aqua"),
@@ -988,13 +1027,13 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                        2021, Month.FEBRUARY, 27, 12, 32, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
             .withEntityValue(EntityValue.build().addValues(
                 Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 333326),
+                    new LongValue(l2EntityClass.field("l0-long").get(), 333326, "333326"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "Trm7n8Wd2ejj"),
                     new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY", "FIM"),
                     new EnumValue(l2EntityClass.field("l0-enum").get(), "Azure"),
@@ -1015,13 +1054,13 @@ public class SQLMasterStorageQueryTest {
             .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
-                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                        2021, Month.FEBRUARY, 27, 12, 32, 20)
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
             .withEntityValue(EntityValue.build().addValues(
                 Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 138293),
+                    new LongValue(l2EntityClass.field("l0-long").get(), 138293, "138293"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "H5qEkXkTvGWW"),
                     new StringsValue(l2EntityClass.field("l0-strings").get(), "KRW"),
                     new EnumValue(l2EntityClass.field("l0-enum").get(), "Lavender"),

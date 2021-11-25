@@ -30,6 +30,15 @@ public class EntityPackage implements Serializable {
     private List<Map.Entry<IEntity, IEntityClass>> entities;
 
     /**
+     * 构造新的package实例.
+     *
+     * @return 新实例.
+     */
+    public static EntityPackage build() {
+        return new EntityPackage();
+    }
+
+    /**
      * 包裹中的实例数量.
      *
      * @return 实例数量.
@@ -56,7 +65,7 @@ public class EntityPackage implements Serializable {
      *
      * @param entity 实例.
      */
-    public void put(IEntity entity, IEntityClass entityClass) {
+    public EntityPackage put(IEntity entity, IEntityClass entityClass) {
         if (entity == null) {
             throw new NullPointerException("The target IEntity instance is not valid.");
         }
@@ -77,6 +86,8 @@ public class EntityPackage implements Serializable {
         }
 
         entities.add(new AbstractMap.SimpleEntry<>(entity, entityClass));
+
+        return this;
     }
 
     /**

@@ -43,7 +43,7 @@ public class DefaultCalculationContext implements CalculationContext {
     private TaskCoordinator taskCoordinator;
     private Collection<CalculationHint> hints;
     private CalculationLogicFactory calculationLogicFactory;
-    private ConditionsSelectStorage combindedSelectStorage;
+    private ConditionsSelectStorage conditionsSelectStorage;
     // key为entityId.
     private Map<Long, IEntity> entityCache;
     // key为 entityId-fieldId的组合.
@@ -189,8 +189,8 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public Optional<ConditionsSelectStorage> getCombindStorage() {
-        return Optional.ofNullable(this.combindedSelectStorage);
+    public Optional<ConditionsSelectStorage> getConditionsSelectStorage() {
+        return Optional.ofNullable(this.conditionsSelectStorage);
     }
 
     @Override
@@ -227,7 +227,7 @@ public class DefaultCalculationContext implements CalculationContext {
         private BizIDGenerator bizIDGenerator;
         private KeyValueStorage keyValueStorage;
         private TaskCoordinator taskCoordinator;
-        private ConditionsSelectStorage combindedSelectStorage;
+        private ConditionsSelectStorage conditionsSelectStorage;
 
         private Builder() {
         }
@@ -271,8 +271,8 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
-        public Builder withCombindedSelectStorage(ConditionsSelectStorage combindedSelectStorage) {
-            this.combindedSelectStorage = combindedSelectStorage;
+        public Builder withConditionsSelectStorage(ConditionsSelectStorage conditionsSelectStorage) {
+            this.conditionsSelectStorage = conditionsSelectStorage;
             return this;
         }
 
@@ -288,7 +288,7 @@ public class DefaultCalculationContext implements CalculationContext {
             defaultCalculationContext.scenarios = this.scenarios;
             defaultCalculationContext.bizIDGenerator = this.bizIDGenerator;
             defaultCalculationContext.transaction = this.transaction;
-            defaultCalculationContext.combindedSelectStorage = this.combindedSelectStorage;
+            defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
             return defaultCalculationContext;
         }
     }

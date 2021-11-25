@@ -59,6 +59,7 @@ jvm:
   - -XX:+CMSScavengeBeforeRemark
   - -XX:CMSInitiatingOccupancyFraction=75
   - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:+UseStringDeduplication
 
 jmx:
   enabled: false

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import java.util.Optional;
 
 /**
  * 表示一个 entity 的属性值.
@@ -51,19 +52,39 @@ public interface IValue<T> {
     public long valueToLong();
 
     /**
-     * 浅copy.
+     * 复制一个新的实例,其带有和当前实例相同的字段信息和值信息.
      *
      * @return 新的值实例.
      */
-    public IValue<T> copy();
+    public default IValue<T> copy() {
+        return copy(getField());
+    }
 
     /**
-     * 构造一个新的实例,使用新的字段和旧有的值.
+     * 构造一个新的实例,使用新的字段和当前实例的值和其附件.
      *
      * @param newField 新的目标字段.
      * @return 新实例.
      */
-    public IValue<T> copy(IEntityField newField);
+    public default IValue<T> copy(IEntityField newField) {
+        return copy(newField, getAttachment().orElse(null));
+    }
+
+    /**
+     * 复制一个新的实体.使用新的字段和新的附件,但是值为当前实例的.
+     *
+     * @param newField 新的字段.
+     * @param attachment 新的附件.
+     * @return 新实例.
+     */
+    public IValue<T> copy(IEntityField newField, String attachment);
+
+    /**
+     * 获取附件.
+     *
+     * @return 附件.
+     */
+    public Optional<String> getAttachment();
 
     /**
      * 是否可能转型成字符串表示.

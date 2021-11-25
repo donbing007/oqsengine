@@ -12,7 +12,11 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
     /**
      * JSON属性字段前辍.
      */
-    public static final String ATTRIBUTE_PREFIX = "F";
+    public static final char ATTRIBUTE_PREFIX = 'F';
+    /**
+     * JSON属性附件字段前辍.
+     */
+    public static final char ATTACHMENT_PREFIX = 'A';
 
     /**
      * 使用物理字段名和名构造一个储存值实例.
@@ -43,11 +47,39 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
      * @return 兼容处理后的结果.
      */
     public static String compatibleStorageName(String name) {
-        if (name.startsWith(ATTRIBUTE_PREFIX)) {
-            //去除开头的F.
+        char flag = name.charAt(0);
+        if (ATTRIBUTE_PREFIX == flag || ATTACHMENT_PREFIX == flag) {
+            //去除开头的F或者A.
             return name.substring(1);
         } else {
             return name;
         }
+    }
+
+    /**
+     * 判断是否为普通属性的物理储存名称.
+     *
+     * @param name 目标名称.
+     * @return true 是, false 不是.
+     */
+    public static boolean isStorageValueName(String name) {
+        char flag = name.charAt(0);
+        if (ATTRIBUTE_PREFIX == flag) {
+            return true;
+        } else if (ATTRIBUTE_PREFIX != flag && ATTACHMENT_PREFIX != flag) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断名称是不是表示一个附件.
+     *
+     * @param name 目标名称.
+     * @return true 是附件, false不是.
+     */
+    public static boolean isAttachemntStorageName(String name) {
+        char flag = name.charAt(0);
+        return ATTACHMENT_PREFIX == flag;
     }
 }

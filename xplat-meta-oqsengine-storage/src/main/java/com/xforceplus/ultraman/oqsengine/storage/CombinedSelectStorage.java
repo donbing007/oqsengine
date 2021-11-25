@@ -28,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 联合搜索.主要执行如下逻辑. 1. 从unSyncStorage中搜索未同步的数据,预期数据量会较少. 2. 根据第一步的结果构造过滤列表,在syncedStorage中搜索. 3. 合并两者查询结果.
+ * 联合搜索.主要执行如下逻辑.
+ * 1. 从unSyncStorage中搜索未同步的数据,预期数据量会较少.
+ * 2. 根据第一步的结果构造过滤列表,在syncedStorage中搜索.
+ * 3. 合并两者查询结果.
  *
  * @author dongbin
  * @version 0.1 2021/10/14 17:50
