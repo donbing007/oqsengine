@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.AttachmentStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
@@ -89,27 +90,33 @@ public interface StorageStrategy {
      * @param storageValue 物理储存值.
      * @return 实例.
      */
-    default StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
         StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
-        switch (anyStorageValue.type()) {
-            case STRING:
-                return new StringStorageValue(storageName, (String) storageValue, false);
-            case LONG: {
-                long value = 0;
-                if (Integer.class.isInstance(storageValue)) {
-                    value = ((Integer) storageValue).longValue();
-                } else if (Long.class.isInstance(storageValue)) {
-                    value = ((Long) storageValue).longValue();
-                } else {
-                    throw new IllegalArgumentException(
-                        String.format("The expectation is an int or a long, but the actual type is %s.",
-                            storageValue.getClass().toString()));
+        if (!attachment) {
+            switch (anyStorageValue.type()) {
+                case STRING:
+                    return new StringStorageValue(storageName, (String) storageValue, false);
+                case LONG: {
+                    long value = 0;
+                    if (Integer.class.isInstance(storageValue)) {
+                        value = ((Integer) storageValue).longValue();
+                    } else if (Long.class.isInstance(storageValue)) {
+                        value = ((Long) storageValue).longValue();
+                    } else {
+                        throw new IllegalArgumentException(
+                            String.format("The expectation is an int or a long, but the actual type is %s.",
+                                storageValue.getClass().toString()));
+                    }
+                    return new LongStorageValue(storageName, value, false);
                 }
-                return new LongStorageValue(storageName, value, false);
+                default:
+                    throw new IllegalArgumentException(
+                        String.format("Unrecognized physical storage type.[%d]", storageName));
             }
-            default:
-                throw new IllegalArgumentException(
-                    String.format("Unrecognized physical storage type.[%d]", storageName));
+        } else {
+
+            return new AttachmentStorageValue(storageName, (String) storageValue, false);
+
         }
     }
 
