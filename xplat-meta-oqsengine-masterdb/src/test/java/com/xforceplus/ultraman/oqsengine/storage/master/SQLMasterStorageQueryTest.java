@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -305,6 +306,41 @@ public class SQLMasterStorageQueryTest {
     private Collection<Case> buildSelectCase() {
 
         return Arrays.asList(
+            // not null查询
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.IS_NOT_NULL,
+                            new EmptyTypedValue(l2EntityClass.field("l0-long").get())
+                        )
+                    ),
+                l2EntityClass,
+                r -> {
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, r, false);
+                }
+            ),
+            // is null查询
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.IS_NULL,
+                            new EmptyTypedValue(l2EntityClass.field("l0-long").get())
+                        )
+                    ),
+                l2EntityClass,
+                r -> {
+                    long[] expectedIds = {
+                    };
+                    assertSelect(expectedIds, r, false);
+                }
+            ),
             // 查询指定附件.
             new Case(
                 Conditions.buildEmtpyConditions()

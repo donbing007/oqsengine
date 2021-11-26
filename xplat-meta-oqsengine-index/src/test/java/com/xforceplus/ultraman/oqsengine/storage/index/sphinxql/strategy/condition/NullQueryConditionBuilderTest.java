@@ -30,7 +30,7 @@ public class NullQueryConditionBuilderTest {
     @Test
     public void testIsNullBuilder() throws Exception {
         NullQueryConditionBuilder builder = new NullQueryConditionBuilder(FieldType.STRING, ConditionOperator.IS_NULL);
-        builder.setStorageStrategy(storageStrategyFactory);
+        builder.setStorageStrategyFactory(storageStrategyFactory);
 
         IEntityField field = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE)
@@ -54,7 +54,7 @@ public class NullQueryConditionBuilderTest {
     public void testIsNotNullBuilder() throws Exception {
         NullQueryConditionBuilder builder =
             new NullQueryConditionBuilder(FieldType.STRING, ConditionOperator.IS_NOT_NULL);
-        builder.setStorageStrategy(storageStrategyFactory);
+        builder.setStorageStrategyFactory(storageStrategyFactory);
 
         IEntityField field = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE)

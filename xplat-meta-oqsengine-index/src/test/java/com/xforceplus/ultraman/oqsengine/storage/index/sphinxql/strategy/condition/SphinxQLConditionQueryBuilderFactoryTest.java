@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.AttachmentConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ public class SphinxQLConditionQueryBuilderFactoryTest {
         SphinxQLConditionQueryBuilderFactory factory = new SphinxQLConditionQueryBuilderFactory();
         factory.init();
 
-        AbstractSphinxQLConditionBuilder builder = factory.getQueryBuilder(condition, true);
+        ConditionBuilder builder = factory.getQueryBuilder(condition, true);
         Assertions.assertEquals(AttachmentConditionBuilder.class, builder.getClass());
 
 

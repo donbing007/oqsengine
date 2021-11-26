@@ -137,6 +137,11 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2NullField = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - 9)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-null")
+        .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(2)
@@ -145,6 +150,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withField(l2TimeField)
         .withField(l2EnumField)
         .withField(l2DecField)
+        .withField(l2NullField)
         .withFather(l1EntityClass)
         .build();
 

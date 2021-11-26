@@ -165,7 +165,7 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
             }
 
             if (StorageStrategyFactoryAble.class.isInstance(b)) {
-                ((StorageStrategyFactoryAble) b).setStorageStrategy(storageStrategyFactory);
+                ((StorageStrategyFactoryAble) b).setStorageStrategyFactory(storageStrategyFactory);
             }
         });
     }
@@ -186,14 +186,33 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
         }
     }
 
-        AbstractSphinxQLConditionBuilder builder = null;
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
+    }
+
+    @Override
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    private ConditionBuilder<Condition, String> getNullQueryBuilder(Condition condition) {
+        String key = buildNormalKey(
+            condition.getField().type(), condition.getOperator(), false, false);
+
+        return nullCondtitonBuilders.get(key);
+    }
+
+    private ConditionBuilder<Condition, String> getBuilder(Condition condition, boolean match) {
+        ConditionBuilder<Condition, String> builder = null;
         if (AttachmentCondition.class.isInstance(condition)) {
 
             String key = buildAttachmentKey(FieldType.STRING, condition.getOperator(), true, false);
             builder = builders.get(key);
 
             if (builder == null) {
-                throw new IllegalArgumentException("Unable to construct a valid attachment query condition constructor.");
+                throw new IllegalArgumentException(
+                    "Unable to construct a valid attachment query condition constructor.");
             }
 
         } else {
@@ -207,26 +226,20 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
                     b = new MatchConditionBuilder(condition.getField().type(), condition.getOperator(), false);
                 } else {
 
-                b = new NotMatchConditionBuilder(
-                    storageStrategyFactory, condition.getField().type(), condition.getOperator());
-            }
+                    b = new NotMatchConditionBuilder(condition.getField().type(), condition.getOperator());
+                }
 
-            if (TokenizerFactoryAble.class.isInstance(b)) {
-                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
-            }
-            return b;
-        });
+                if (TokenizerFactoryAble.class.isInstance(b)) {
+                    ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+                }
+
+                if (StorageStrategyFactoryAble.class.isInstance(b)) {
+                    ((StorageStrategyFactoryAble) b).setStorageStrategyFactory(storageStrategyFactory);
+                }
+                return b;
+            });
+        }
 
         return builder;
-    }
-
-    @Override
-    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
-        this.tokenizerFactory = tokenizerFacotry;
-    }
-
-    @Override
-    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
-        this.storageStrategyFactory = storageStrategyFactory;
     }
 }
