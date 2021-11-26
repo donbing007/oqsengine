@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
@@ -46,6 +47,9 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
     @Resource
     private CombinedSelectStorage combinedSelectStorage;
 
+    @Resource(name = "serviceTransactionExecutor")
+    private TransactionExecutor transactionExecutor;
+
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
         LookupMaintainingTask lookupMaintainingTask = (LookupMaintainingTask) task;
@@ -82,25 +86,37 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         final int bufferSize = 1000;
         List<IEntity> lookupEntities = new ArrayList<>(bufferSize);
-        int index = 0;
-        while (lookupEntityIterator.hasNext()) {
-            lookupEntities.add(lookupEntityIterator.next());
-            index++;
+        try {
+            transactionExecutor.execute((transaction, resource, hint) -> {
 
-            if (index == bufferSize - 1) {
-                // 进行一次更新
-                adjustLookupEntities(
-                    lookupMaintainingTask,
-                    lookupEntities,
-                    lookupEntityClass,
-                    lookupField,
-                    targetValueOp,
-                    lookupMaintainingTask.getTargetEntityId());
+                int index = 0;
+                while (lookupEntityIterator.hasNext()) {
+                    lookupEntities.add(lookupEntityIterator.next());
+                    index++;
 
-                index = 0;
-                lookupEntities.clear();
-            }
+                    if (index == bufferSize - 1) {
+                        // 进行一次更新
+                        adjustLookupEntities(
+                            lookupMaintainingTask,
+                            lookupEntities,
+                            lookupEntityClass,
+                            lookupField,
+                            targetValueOp,
+                            lookupMaintainingTask.getTargetEntityId());
+
+                        index = 0;
+                        lookupEntities.clear();
+                    }
+                }
+
+                return null;
+            });
+        } catch (SQLException ex) {
+            // 发生操作异常,将任务重新放放队列.
+            logger.error(ex.getMessage(), ex);
+            coordinator.addTask(task);
         }
+
 
         // 如果还有可迭代的数据,只是受限于失代上限限制造成的结束.
         if (lookupEntityIterator.more()) {

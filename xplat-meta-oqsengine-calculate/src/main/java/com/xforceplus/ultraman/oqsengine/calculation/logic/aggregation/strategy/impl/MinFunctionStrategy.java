@@ -40,12 +40,15 @@ public class MinFunctionStrategy implements FunctionStrategy {
 
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
-        logger.info("begin excuteMin agg:{}, o-value:{}, n-value:{}",
+        if (logger.isDebugEnabled()) {
+            logger.debug("begin excuteMin agg:{}, o-value:{}, n-value:{}",
                 agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+        }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
+        AggregationFunction function =
+            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count;
         if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
             || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {

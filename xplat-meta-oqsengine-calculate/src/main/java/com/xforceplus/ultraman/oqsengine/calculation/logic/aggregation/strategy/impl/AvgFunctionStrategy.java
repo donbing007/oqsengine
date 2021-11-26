@@ -35,14 +35,16 @@ public class AvgFunctionStrategy implements FunctionStrategy {
 
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
-        logger.info("begin excuteAvg agg:{}, o-value:{}, n-value:{}",
+        if (logger.isDebugEnabled()) {
+            logger.debug("begin excuteAvg agg:{}, o-value:{}, n-value:{}",
                 agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+        }
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
-        long count = 0;
-        count = countAggregationEntity(aggregation, context);
+        AggregationFunction function =
+            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
+        long count = countAggregationEntity(aggregation, context);
         if (count == 0) {
             if (!context.getFocusField().type().equals(FieldType.DATETIME)) {
                 aggValue.get().setStringValue("0");
