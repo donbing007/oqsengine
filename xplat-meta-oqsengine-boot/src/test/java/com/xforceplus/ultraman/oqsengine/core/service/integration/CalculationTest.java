@@ -269,6 +269,7 @@ public class CalculationTest extends AbstractContainerExtends {
         transactionManager.bind(tx.id());
         entityManagementService.replace(user);
 
+        transactionManager.bind(tx.id());
         orders = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.ORDER_CLASS.ref(),
