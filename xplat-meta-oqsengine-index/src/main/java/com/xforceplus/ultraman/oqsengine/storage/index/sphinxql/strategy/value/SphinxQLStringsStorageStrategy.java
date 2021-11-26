@@ -26,10 +26,14 @@ public class SphinxQLStringsStorageStrategy extends StringsStorageStrategy {
      * @return 物理储存实例.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
         String value = (String) storageValue;
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
+
+        if (attachment) {
+            return new StringStorageValue(logicName, value, true);
+        }
 
         StringBuilder buff = new StringBuilder();
         StorageValue head = null;

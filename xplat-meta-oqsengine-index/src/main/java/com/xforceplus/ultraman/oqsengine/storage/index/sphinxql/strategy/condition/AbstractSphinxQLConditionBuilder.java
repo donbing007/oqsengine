@@ -15,8 +15,8 @@ import java.util.Objects;
  * @version 0.1 2020/3/25 18:14
  * @since 1.8
  */
-public abstract class AbstractSphinxQLConditionBuilder
-    implements ConditionBuilder<Condition, String>, StorageStrategyFactoryAble {
+public abstract class AbstractSphinxQLConditionBuilder implements
+    ConditionBuilder<Condition, String>, StorageStrategyFactoryAble {
 
     /**
      * 生成条件时是否使用物理值组名称.
@@ -39,8 +39,7 @@ public abstract class AbstractSphinxQLConditionBuilder
      */
     private StorageStrategyFactory storageStrategyFactory;
 
-    public AbstractSphinxQLConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
+    public AbstractSphinxQLConditionBuilder(FieldType fieldType, ConditionOperator operator) {
         this(fieldType, operator, false, false);
     }
 
@@ -48,18 +47,13 @@ public abstract class AbstractSphinxQLConditionBuilder
         this(fieldType, operator, match, false);
     }
 
-    @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
-        this.storageStrategyFactory = storageStrategyFactory;
-    }
-
     /**
      * 实例化.
      *
-     * @param fieldType           逻辑字段类型.
-     * @param operator            操作符.
-     * @param match               true 全文,false非全文.
-     * @param useStorageGroupName 是否使用组名称.针对多值字段.
+     * @param fieldType              逻辑字段类型.
+     * @param operator               操作符.
+     * @param match                  true 全文,false非全文.
+     * @param useStorageGroupName    是否使用组名称.针对多值字段.
      */
     public AbstractSphinxQLConditionBuilder(
         FieldType fieldType,
@@ -117,6 +111,11 @@ public abstract class AbstractSphinxQLConditionBuilder
      */
     public boolean isUseStorageGroupName() {
         return useStorageGroupName;
+    }
+
+    @Override
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
     }
 
     @Override

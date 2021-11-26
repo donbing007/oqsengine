@@ -30,7 +30,7 @@ public class SphinxQLConditionsBuilderFactoryTest {
     @Test
     public void testGetBuilder() throws Exception {
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(StorageStrategyFactory.getDefaultFactory());
+        sphinxQLConditionsBuilderFactory.setStorageStrategyFactory(StorageStrategyFactory.getDefaultFactory());
 
         // no or no ranage
         Conditions conditions = new Conditions(

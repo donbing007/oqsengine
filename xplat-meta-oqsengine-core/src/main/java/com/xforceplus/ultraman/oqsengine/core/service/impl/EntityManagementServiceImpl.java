@@ -25,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -300,6 +301,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
+        filter(entity);
+
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         preview(entity, entityClass);
@@ -397,6 +400,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
 
+        filter(entity);
+
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         preview(entity, entityClass);
@@ -434,6 +439,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 操作时间
                 newEntity.markTime(entity.time());
+
                 // 新的字段值加入当前实例.
                 for (IValue newValue : entity.entityValue().values()) {
                     newEntity.entityValue().addValue(newValue);
@@ -535,7 +541,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
-                targetEntity.resetVersion(entity.version());
+                if (targetEntity.version() < entity.version()) {
+                    targetEntity.resetVersion(entity.version());
+                }
 
                 if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
                     hint.setRollback(true);
@@ -811,7 +819,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withKeyValueStorage(this.kv)
             .withBizIDGenerator(this.bizIDGenerator)
             .withTransaction(tx)
-            .withCombindedSelectStorage(this.combinedSelectStorage)
+            .withConditionsSelectStorage(this.combinedSelectStorage)
             .build();
     }
 
@@ -853,4 +861,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
     }
+
+    // 只允许静态字段进入写事务.
+    private void filter(IEntity entity) {
+        entity.entityValue().filter(v ->
+            v.getField().calculationType() == CalculationType.STATIC
+                || v.getField().calculationType() == CalculationType.LOOKUP
+        );
+    }
+
 }

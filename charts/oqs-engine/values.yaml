@@ -59,6 +59,7 @@ jvm:
   - -XX:+CMSScavengeBeforeRemark
   - -XX:CMSInitiatingOccupancyFraction=75
   - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:+UseStringDeduplication
 
 jmx:
   enabled: false
@@ -77,6 +78,7 @@ cdc:
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
+    destination: oqsengine
   consumer:
     checkCommitReady: true
     skipCommitId: -1

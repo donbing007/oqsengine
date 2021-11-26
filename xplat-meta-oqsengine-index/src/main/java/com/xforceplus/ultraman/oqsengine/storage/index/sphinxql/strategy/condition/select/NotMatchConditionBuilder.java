@@ -56,7 +56,8 @@ public class NotMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
                         break;
                     }
                     default: {
-                        buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                        buff.append(FieldDefine.ATTRIBUTE).append(".")
+                            .append(storageValue.shortStorageName().toString());
                     }
                 }
             }

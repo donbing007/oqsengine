@@ -14,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -55,7 +54,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
         builderMap.values().forEach(b -> {
             if (StorageStrategyFactoryAble.class.isInstance(b)) {
-                ((StorageStrategyFactoryAble) b).setStorageStrategy(storageStrategyFactory);
+                ((StorageStrategyFactoryAble) b).setStorageStrategyFactory(storageStrategyFactory);
             }
             if (TokenizerFactoryAble.class.isInstance(b)) {
                 ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
@@ -119,7 +118,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
 
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 

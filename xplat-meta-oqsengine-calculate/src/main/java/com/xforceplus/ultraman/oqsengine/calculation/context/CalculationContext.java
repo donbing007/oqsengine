@@ -176,11 +176,11 @@ public interface CalculationContext {
     Optional<CalculationLogicFactory> getCalculationLogicFactory();
 
     /**
-     * 联合查询.
+     * 条件查询器.
      *
-     * @return 联合查询.
+     * @return 条件查询器.
      */
-    Optional<ConditionsSelectStorage> getCombindStorage();
+    Optional<ConditionsSelectStorage> getConditionsSelectStorage();
 
     /**
      * 普通自增编号的生成器.

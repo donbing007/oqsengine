@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 import com.alibaba.fastjson.JSONArray;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -136,11 +137,6 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l2NullField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
-        .withFieldType(FieldType.LONG)
-        .withName("l2-null")
-        .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
         .withLevel(2)
@@ -149,7 +145,6 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withField(l2TimeField)
         .withField(l2EnumField)
         .withField(l2DecField)
-        .withField(l2NullField)
         .withFather(l1EntityClass)
         .build();
 
@@ -501,6 +496,40 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 SelectConfig.Builder.anSelectConfig()
                     .withPage(Page.newSinglePage(20)).build(),
                 new long[0]
+            ),
+            new Case(
+                "attahcment - (l1-long) 100",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l1-long").get(),
+                            true,
+                            "100"
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775807L
+                }
+            ),
+            new Case(
+                "attahcment - (l0-string) 方致远",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l0-string").get(),
+                            true,
+                            "方致远"
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775798L
+                }
             ),
             new Case(
                 "all",

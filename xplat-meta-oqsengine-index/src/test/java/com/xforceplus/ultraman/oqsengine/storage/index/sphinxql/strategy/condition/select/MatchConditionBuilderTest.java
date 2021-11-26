@@ -55,7 +55,7 @@ public class MatchConditionBuilderTest {
                 c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
             try {
                 builder.setTokenizerFacotry(new DefaultTokenizerFactory());
-                builder.setStorageStrategy(storageStrategyFactory);
+                builder.setStorageStrategyFactory(storageStrategyFactory);
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }

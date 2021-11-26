@@ -22,8 +22,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -182,7 +180,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
             Page emptyPage = Page.emptyPage();
             try {
                 logger.info("min count conditions:{}", conditions.toString());
-                context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
+                context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
                         SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -214,7 +212,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
 
             }
             Page emptyPage = Page.newSinglePage(2);
-            List<EntityRef> entityRefs = (List<EntityRef>) context.getCombindStorage().get().select(conditions, aggEntityClass.get(),
+            List<EntityRef> entityRefs = (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
                             .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
