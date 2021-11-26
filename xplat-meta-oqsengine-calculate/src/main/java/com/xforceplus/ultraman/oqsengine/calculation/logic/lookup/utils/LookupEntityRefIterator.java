@@ -102,5 +102,6 @@ public class LookupEntityRefIterator extends AbstractDataIterator<EntityRef> {
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         ));
+        startId = buff.get(buff.size() - 1).getId();
     }
 }

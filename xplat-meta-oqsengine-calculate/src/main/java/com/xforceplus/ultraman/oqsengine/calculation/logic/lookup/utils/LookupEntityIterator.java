@@ -117,5 +117,6 @@ public class LookupEntityIterator extends AbstractDataIterator<IEntity> {
 
         long[] ids = refs.stream().mapToLong(r -> r.getId()).toArray();
         buff.addAll(masterStorage.selectMultiple(ids));
+        this.startId = ids[ids.length - 1];
     }
 }
