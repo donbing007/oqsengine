@@ -395,8 +395,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 IEntityField field = fieldOp.get();
                 StorageValue storageValue =
                     storageStrategyFactory.getStrategy(field.type())
-                        .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()),
-                            attr.getValue());
+                        .convertIndexStorageValue(
+                            AnyStorageValue.compatibleStorageName(attr.getKey()),
+                            attr.getValue(),
+                            false);
 
                 while (storageValue != null) {
 
@@ -446,8 +448,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             if (AnyStorageValue.isStorageValueName(attr.getKey())) {
                 StorageValue storageValue =
                     storageStrategyFactory.getStrategy(field.type())
-                        .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()),
-                            attr.getValue());
+                        .convertIndexStorageValue(
+                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false);
 
                 if (StorageType.UNKNOWN == anyStorageValue.type()) {
                     if (fieldOp.isPresent()) {
@@ -467,7 +469,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             } else if (AnyStorageValue.isAttachemntStorageName(attr.getKey())) {
                 // 附件
                 StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
-                    .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue());
+                    .convertIndexStorageValue(
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true);
 
                 buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
             }

@@ -156,7 +156,7 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
         AbstractSphinxQLConditionBuilder builder = null;
         if (AttachmentCondition.class.isInstance(condition)) {
 
-            String key = buildAttachmentKey(condition.getField().type(), condition.getOperator(), true, false);
+            String key = buildAttachmentKey(FieldType.STRING, condition.getOperator(), true, false);
             builder = builders.get(key);
 
             if (builder == null) {

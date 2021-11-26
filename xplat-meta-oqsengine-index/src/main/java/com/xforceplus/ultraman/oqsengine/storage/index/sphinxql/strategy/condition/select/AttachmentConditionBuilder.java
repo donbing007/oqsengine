@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -40,17 +41,25 @@ public class AttachmentConditionBuilder extends AbstractSphinxQLConditionBuilder
     }
 
     @Override
-    public String doBuild(Condition condition) {
+    public String build(Condition condition) {
         if (!AttachmentCondition.class.isInstance(condition)) {
             throw new IllegalArgumentException(
                 "The attachment condition constructor expects an attachment query condition.");
         }
 
         IValue logicValue = condition.getFirstValue();
-        StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(logicValue.getField().type());
+        if (!StringValue.class.isInstance(logicValue)) {
+            throw new IllegalArgumentException("Attachment query criteria can only accept string values.");
+        }
+        StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(FieldType.STRING);
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
         return SphinxQLHelper.buildAttachemntQuery(storageValue);
+    }
+
+    @Override
+    protected String doBuild(Condition condition) {
+        return null;
     }
 
     @Override

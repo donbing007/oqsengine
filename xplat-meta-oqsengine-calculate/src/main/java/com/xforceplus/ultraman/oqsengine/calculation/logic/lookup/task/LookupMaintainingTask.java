@@ -56,6 +56,9 @@ public class LookupMaintainingTask extends AbstractTask {
         return LookupMaintainingTaskRunner.class;
     }
 
+    /**
+     * 构造器.
+     */
     public static final class Builder {
         private EntityClassRef targetClassRef;
         private EntityClassRef lookupClassRef;
@@ -106,6 +109,9 @@ public class LookupMaintainingTask extends AbstractTask {
             return this;
         }
 
+        /**
+         * 构造实例.
+         */
         public LookupMaintainingTask build() {
             LookupMaintainingTask lookupMaintainingTask = new LookupMaintainingTask();
             lookupMaintainingTask.maxSize = this.maxSize;

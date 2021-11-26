@@ -19,7 +19,8 @@ public class SphinxQLStringsStorageStrategyTest {
     @Test
     public void testConvert() throws Exception {
         SphinxQLStringsStorageStrategy storageStrategy = new SphinxQLStringsStorageStrategy();
-        StorageValue storageValue = storageStrategy.convertIndexStorageValue("123S", "[teal][fuchsia][cyan]");
+        StorageValue storageValue = storageStrategy.convertIndexStorageValue(
+            "123S", "[teal][fuchsia][cyan]", false);
         StorageValue firstStorageValue = storageValue;
         StorageValue secondStorageValue = storageValue.next();
         StorageValue thirdStorageValue = secondStorageValue.next();

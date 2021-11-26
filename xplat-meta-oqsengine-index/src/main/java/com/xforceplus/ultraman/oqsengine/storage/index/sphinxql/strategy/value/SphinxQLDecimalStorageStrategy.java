@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.AttachmentStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -97,8 +98,11 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
      * 预期是一个浮点数的字符串.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
+        if (attachment) {
+            return new AttachmentStorageValue(logicName, (String) storageValue, true);
+        }
         return doBuildStorageValue(logicName, (String) storageValue);
     }
 
