@@ -61,6 +61,16 @@ public interface IValue<T> {
     }
 
     /**
+     * 构造一个新的实例, 使用新的附件.
+     *
+     * @param attachment 新的附件.
+     * @return 新的实例.
+     */
+    public default IValue<T> copy(String attachment) {
+        return copy(getField(), attachment);
+    }
+
+    /**
      * 构造一个新的实例,使用新的字段和当前实例的值和其附件.
      *
      * @param newField 新的目标字段.
@@ -73,7 +83,7 @@ public interface IValue<T> {
     /**
      * 复制一个新的实体.使用新的字段和新的附件,但是值为当前实例的.
      *
-     * @param newField 新的字段.
+     * @param newField   新的字段.
      * @param attachment 新的附件.
      * @return 新实例.
      */
