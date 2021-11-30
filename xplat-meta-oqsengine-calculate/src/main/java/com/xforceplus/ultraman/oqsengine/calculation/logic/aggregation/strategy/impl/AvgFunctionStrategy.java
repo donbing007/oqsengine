@@ -16,12 +16,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.SQLException;
 import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,12 +115,12 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         Optional attachmentOp = value.getAttachment();
         if (attachmentOp.isPresent()) {
             String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment,"|");
+            String[] att = StringUtils.split(attachment, "|");
             if (att.length > 1) {
                 return Long.parseLong(att[0]);
             }
         }
-        return 0l;
+        return 0L;
     }
 
     /**
@@ -189,7 +187,7 @@ public class AvgFunctionStrategy implements FunctionStrategy {
                     }
                     Long temp;
                     if (count != 0) {
-                        temp = sum/count;
+                        temp = sum / count;
                     } else {
                         temp = Long.valueOf(0);
                     }

@@ -21,12 +21,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
-
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +62,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     aggValue.get().setStringValue(n.get().valueToString());
                     logger.info("第一条数据计算 - return agg-value:{}, n-value:{}",
                             aggValue.get().valueToString(), n.get().valueToString());
-                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
                     return attAggValue;
                 }
             }
@@ -75,7 +73,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
                         aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
-                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
                     return function.excute(attAggValue, o, n);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最小值，需要重新查找最小值-将最小值返回
@@ -88,11 +86,11 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     if (minValue.isPresent()) {
                         logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                         aggValue.get().setStringValue(minValue.get().valueToString());
-                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
                         return attAggValue;
                     } else {
                         aggValue.get().setStringValue("0");
-                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
                         return attAggValue;
                     }
                 } else {
@@ -158,10 +156,10 @@ public class MinFunctionStrategy implements FunctionStrategy {
         }
         if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
             // 如果不是删除最小的数据，无需额外判断，直接返回当前聚合值
-            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
             return attAggValue;
         } else if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
             return function.excute(attAggValue, o, n);
         }
 
@@ -215,12 +213,12 @@ public class MinFunctionStrategy implements FunctionStrategy {
         Optional attachmentOp = value.getAttachment();
         if (attachmentOp.isPresent()) {
             String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment,"|");
+            String[] att = StringUtils.split(attachment, "|");
             if (att.length > 1) {
                 return Long.parseLong(att[0]);
             }
         }
-        return 0l;
+        return 0L;
     }
 
     /**
