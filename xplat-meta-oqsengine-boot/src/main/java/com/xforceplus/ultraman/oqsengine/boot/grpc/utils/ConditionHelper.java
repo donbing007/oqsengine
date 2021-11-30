@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
@@ -63,11 +64,6 @@ public class ConditionHelper {
                 .stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-            //return if field with invalid
-            if (nonNullValueList.isEmpty()) {
-                throw new RuntimeException("Field: " + originField + " Value is Missing");
-            }
 
             EntityClassRef classRef = fieldOp.get()._1.ref();
 
@@ -283,8 +279,25 @@ public class ConditionHelper {
                         relationId,
                         toTypedValue(originField, nonNullValueList.get(0)).toArray(new IValue[] {})));
                     break;
+                case nil:
+                    conditions = new Conditions(
+                        new Condition(
+                            classRef,
+                            originField,
+                            ConditionOperator.IS_NULL,
+                            relationId, new EmptyTypedValue(originField))
+                    );
+                    break;
+                case exists:
+                    conditions = new Conditions(
+                        new Condition(
+                            classRef,
+                            originField,
+                            ConditionOperator.IS_NOT_NULL,
+                            relationId, new EmptyTypedValue(originField))
+                    );
+                    break;
                 default:
-
             }
         }
 
