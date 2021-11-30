@@ -88,11 +88,11 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 FieldType fieldType = aggField.type();
                 switch (fieldType) {
                     case LONG:
-                        return Optional.of(new LongValue(aggField, 0L));
+                        return Optional.of(new LongValue(aggField, 0L, "0|0"));
                     case DECIMAL:
-                        return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO));
+                        return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO,"0|0.0"));
                     default:
-                        return Optional.of(new DateTimeValue(aggField, DateTimeValue.MIN_DATE_TIME));
+                        return Optional.of(new DateTimeValue(aggField, DateTimeValue.MIN_DATE_TIME,"0|0"));
                 }
             }
             return aggValue;

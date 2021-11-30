@@ -2,9 +2,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
-import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
-import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
-import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -13,12 +10,19 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.SQLException;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +46,11 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        AggregationFunction function =
-            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
-        long count = countAggregationEntity(aggregation, context);
+        long count = countAggregationByAttachment(aggValue.get());
         if (count == 0) {
             if (!context.getFocusField().type().equals(FieldType.DATETIME)) {
-                aggValue.get().setStringValue("0");
-                return aggValue;
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.BUILD));
+                return attAggValue;
             }
             return aggValue;
         }
@@ -56,14 +58,18 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         // 判断聚合的对象信息是否是当前来源的数据
         if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                return ((AvgFunction) function).excuteAvg(agg, o, n, count - 1, count);
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.BUILD));
+                return attAggValue;
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                return ((AvgFunction) function).excuteAvg(agg, o, n, count + 1, count);
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.DELETE));
+                return attAggValue;
             } else {
-                return ((AvgFunction) function).excuteAvg(agg, o, n, count, count);
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.REPLACE));
+                return attAggValue;
             }
         } else {
-            return ((AvgFunction) function).excuteAvg(agg, o, n, count, count);
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.REPLACE));
+            return attAggValue;
         }
     }
 
@@ -99,5 +105,99 @@ public class AvgFunctionStrategy implements FunctionStrategy {
             count = emptyPage.getTotalCount();
         }
         return count;
+    }
+
+    /**
+     * 用于统计该聚合下有多少条数据.
+     *
+     * @param value 字段信息.
+     * @return 附件中的数量信息.
+     */
+    private long countAggregationByAttachment(IValue value) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment,"|");
+            if (att.length > 1) {
+                return Long.parseLong(att[0]);
+            }
+        }
+        return 0l;
+    }
+
+    /**
+     * 替换附件信息.
+     *
+     * @param value 字段.
+     * @param o 旧值参数.
+     * @param n 新值参数.
+     * @param calculationScenarios 操作类型.
+     * @return 新的附件.
+     */
+    private IValue attachmentReplace(IValue value, IValue o, IValue n, CalculationScenarios calculationScenarios) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment, "|");
+            if (att.length > 1) {
+                if (value instanceof DecimalValue) {
+                    if (o instanceof EmptyTypedValue) {
+                        o = new DecimalValue(o.getField(), BigDecimal.ZERO);
+                    }
+                    if (n instanceof EmptyTypedValue) {
+                        n = new DecimalValue(n.getField(), BigDecimal.ZERO);
+                    }
+                    BigDecimal sum;
+                    long count;
+                    if (calculationScenarios.equals(CalculationScenarios.BUILD)) {
+                        sum = new BigDecimal(att[1]).add(new BigDecimal(n.valueToString()));
+                        count = Long.parseLong(att[0]) + 1;
+                    } else if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
+                        sum = new BigDecimal(att[1]).subtract(new BigDecimal(o.valueToString()));
+                        count = Long.parseLong(att[0]) - 1;
+                    } else {
+                        count = Long.parseLong(att[0]);
+                        sum = new BigDecimal(att[1]).add(new BigDecimal(n.valueToString()))
+                                .subtract(new BigDecimal(o.valueToString()));
+                    }
+                    BigDecimal temp;
+                    if (count != 0) {
+                        temp = sum.divide(new BigDecimal(count), MathContext.DECIMAL64);
+                    } else {
+                        temp = BigDecimal.ZERO;
+                    }
+                    value.setStringValue(temp.toString());
+                    return value.copy(count + "|" + sum);
+                } else if (value instanceof LongValue) {
+                    if (o instanceof EmptyTypedValue) {
+                        o = new LongValue(o.getField(), 0L);
+                    }
+                    if (n instanceof EmptyTypedValue) {
+                        n = new LongValue(n.getField(), 0L);
+                    }
+                    long sum;
+                    long count;
+                    if (calculationScenarios.equals(CalculationScenarios.BUILD)) {
+                        sum = Long.parseLong(att[1]) + Long.parseLong(n.valueToString());
+                        count = Long.parseLong(att[0]) + 1;
+                    } else if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
+                        sum = Long.parseLong(att[1]) - Long.parseLong(o.valueToString());
+                        count = Long.parseLong(att[0]) - 1;
+                    } else {
+                        sum = Long.parseLong(att[1]) + Long.parseLong(n.valueToString()) - Long.parseLong(o.valueToString());
+                        count = Long.parseLong(att[0]);
+                    }
+                    Long temp;
+                    if (count != 0) {
+                        temp = sum/count;
+                    } else {
+                        temp = Long.valueOf(0);
+                    }
+                    value.setStringValue(temp.toString());
+                    return value.copy(count + "|" + sum);
+                }
+            }
+        }
+        return value;
     }
 }

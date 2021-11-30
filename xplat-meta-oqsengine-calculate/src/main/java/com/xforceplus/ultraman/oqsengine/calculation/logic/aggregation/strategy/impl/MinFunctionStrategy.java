@@ -21,9 +21,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +56,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
         long count;
         if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
             || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
-            count = countAggregationEntity(aggregation, context);
+            count = countAggregationByAttachment(aggValue.get());
             logger.info("minExcute Count:{}, agg-value:{}, n-value:{}", count,
                     aggValue.get().valueToString(), n.get().valueToString());
             if ((context.getScenariso()).equals(CalculationScenarios.BUILD)) {
-                if (count == 1) {
+                if (count == 0) {
                     aggValue.get().setStringValue(n.get().valueToString());
                     logger.info("第一条数据计算 - return agg-value:{}, n-value:{}",
                             aggValue.get().valueToString(), n.get().valueToString());
-                    return aggValue;
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+                    return attAggValue;
                 }
             }
         }
@@ -70,7 +75,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
                         aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
-                    return function.excute(aggValue, o, n);
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+                    return function.excute(attAggValue, o, n);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最小值，需要重新查找最小值-将最小值返回
                     Optional<IValue> minValue = null;
@@ -82,10 +88,12 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     if (minValue.isPresent()) {
                         logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
                         aggValue.get().setStringValue(minValue.get().valueToString());
-                        return aggValue;
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+                        return attAggValue;
                     } else {
                         aggValue.get().setStringValue("0");
-                        return aggValue;
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+                        return attAggValue;
                     }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
@@ -150,7 +158,11 @@ public class MinFunctionStrategy implements FunctionStrategy {
         }
         if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
             // 如果不是删除最小的数据，无需额外判断，直接返回当前聚合值
-            return aggValue;
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"-1","0"));
+            return attAggValue;
+        } else if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(),"1","0"));
+            return function.excute(attAggValue, o, n);
         }
 
         logger.info("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
@@ -191,6 +203,52 @@ public class MinFunctionStrategy implements FunctionStrategy {
             count = emptyPage.getTotalCount();
         }
         return count;
+    }
+
+    /**
+     * 用于统计该聚合下有多少条数据.
+     *
+     * @param value 字段信息.
+     * @return 附件中的数量信息.
+     */
+    private long countAggregationByAttachment(IValue value) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment,"|");
+            if (att.length > 1) {
+                return Long.parseLong(att[0]);
+            }
+        }
+        return 0l;
+    }
+
+    /**
+     * 替换附件信息.
+     *
+     * @param value 字段.
+     * @param count 统计数量.
+     * @param sum 求和参数.
+     * @return 新的附件.
+     */
+    private IValue attachmentReplace(IValue value, String count, String sum) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment, "|");
+            if (att.length > 1) {
+                if (value instanceof DecimalValue) {
+                    return value.copy((Long.parseLong(att[0]) + Long.parseLong(count))
+                            + "|" + (new BigDecimal(att[1]).add(new BigDecimal(sum))));
+                } else if (value instanceof LongValue) {
+                    return value.copy((Long.parseLong(att[0]) + Long.parseLong(count))
+                            + "|" + (Long.parseLong(att[1]) + Long.parseLong(sum)));
+                } else if (value instanceof DateTimeValue) {
+                    return value.copy(Long.valueOf(att[0]) + Long.valueOf(count) + "|" + att[1]);
+                }
+            }
+        }
+        return value;
     }
 
     /**
