@@ -63,8 +63,12 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
         //目标实例
         IEntity entity = context.getFocusEntity();
-        logger.info("begin aggregation entity:{}, field:{}",
-            context.getFocusClass().name(), context.getFocusField().name());
+        if (logger.isDebugEnabled()) {
+
+            logger.info("begin aggregation entity:{}, field:{}",
+                context.getFocusClass().name(), context.getFocusField().name());
+
+        }
         //焦点字段
         IEntityField aggField = context.getFocusField();
         //聚合字段的值

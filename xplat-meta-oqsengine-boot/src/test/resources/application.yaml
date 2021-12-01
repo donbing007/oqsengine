@@ -11,7 +11,7 @@ server:
 
 logging:
   level:
-    root: debug
+    root: info
     io:
       lettuce: info
   pattern:
@@ -27,7 +27,7 @@ threadPool:
     queue: 1000
   task:
     # 后端任务,或者IO线程池中放入的任务执行线程池.
-    worker: 10
+    worker: 32
     queue: 1000
 
 sync:
@@ -51,7 +51,7 @@ storage:
         # 字典URL
         url: "-"
   debug:
-    showsql: true
+    showsql: false
   timeoutMs:
     query: 10000
   kv:

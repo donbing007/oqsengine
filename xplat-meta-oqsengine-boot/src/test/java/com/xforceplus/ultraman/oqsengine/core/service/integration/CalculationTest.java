@@ -41,6 +41,7 @@ import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.Resource;
@@ -106,6 +107,9 @@ public class CalculationTest extends AbstractContainerExtends {
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
+
+    @Resource(name = "taskThreadPool")
+    private ExecutorService taskThreadPool;
 
     private Faker faker = new Faker(Locale.CHINA);
 
@@ -241,9 +245,18 @@ public class CalculationTest extends AbstractContainerExtends {
     public void testLookupReplaceOutofTx() throws Exception {
         IEntity user = buildUserEntity();
         entityManagementService.build(user);
-        for (int i = 0; i < 2000; i++) {
+
+        int orderSize = 2000;
+        Transaction tx = transactionManager.create(TimeUnit.SECONDS.toMillis(30));
+        for (int i = 0; i < orderSize; i++) {
+            transactionManager.bind(tx.id());
             entityManagementService.build(buildOrderEntity(user));
         }
+        transactionManager.bind(tx.id());
+        tx.commit();
+        transactionManager.bind(tx.id());
+        transactionManager.finish();
+
 
         Collection<IEntity> orders = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
@@ -265,7 +278,7 @@ public class CalculationTest extends AbstractContainerExtends {
         );
 
         // 在事务内更新.
-        Transaction tx = transactionManager.create();
+        tx = transactionManager.create();
         transactionManager.bind(tx.id());
         entityManagementService.replace(user);
 
@@ -300,14 +313,14 @@ public class CalculationTest extends AbstractContainerExtends {
                 )
             ).count();
 
-            if (syncedOrderCount == 2000) {
+            if (syncedOrderCount == orderSize) {
                 fail = false;
                 break;
             } else {
 
                 LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000));
 
-                logger.info("There are {} orders that have not been processed.", 2000 - syncedOrderCount);
+                logger.info("There are {} orders that have not been processed.", orderSize - syncedOrderCount);
             }
         }
 

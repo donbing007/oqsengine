@@ -340,6 +340,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     );
                 }
 
+                // 修改未同步.
+                currentEntity.dirty();
+
                 if (masterStorage.build(currentEntity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), currentEntity.id(), UN_KNOW_VERSION,
                         EventType.ENTITY_BUILD.getValue(),
@@ -463,6 +466,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         )
                     );
                 }
+
+                // 修改未同步.
+                newEntity.dirty();
 
                 if (isConflict(masterStorage.replace(newEntity, entityClass))) {
                     hint.setRollback(true);

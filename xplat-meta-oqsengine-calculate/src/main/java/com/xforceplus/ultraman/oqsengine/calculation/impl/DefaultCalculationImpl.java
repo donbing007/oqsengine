@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -220,10 +221,11 @@ public class DefaultCalculationImpl implements Calculation {
                                 affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
                         }
 
-                        if (!oldValue.equals(newValue)) {
+                        if (!valueEquals(oldValue, newValue)) {
                             context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
                             affectedEntitiy.entityValue().addValue(newValueOp.get());
+                            affectedEntitiy.dirty();
                         } else {
 
                             if (logger.isDebugEnabled()) {
@@ -253,6 +255,11 @@ public class DefaultCalculationImpl implements Calculation {
         persist(context, targetEntityId);
     }
 
+    // 比较值是否相等.
+    private boolean valueEquals(IValue oldValue, IValue newValue) {
+        return Objects.equals(oldValue.getValue(), newValue.getValue());
+    }
+
     /**
      * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下.
      * 1. 数据被删除,放弃.
@@ -266,8 +273,7 @@ public class DefaultCalculationImpl implements Calculation {
             List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
                 // 过滤掉当前操作的实例.
                 e.id() != targetEntityId
-
-            ).collect(Collectors.toList());
+            ).filter(e -> e.isDirty()).collect(Collectors.toList());
 
             if (entities.isEmpty()) {
                 return;
