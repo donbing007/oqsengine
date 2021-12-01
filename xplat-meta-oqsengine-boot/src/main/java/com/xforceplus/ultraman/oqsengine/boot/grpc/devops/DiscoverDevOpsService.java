@@ -696,16 +696,14 @@ public class DiscoverDevOpsService {
     public List<Long> getUnReadyCommits() {
         List<Long> ids = new ArrayList<>();
         try {
-            long[] unReadies = commitIdStatusService.getUnreadiness();
-            if (null != unReadies && unReadies.length > 0) {
+            long size = commitIdStatusService.size();
+            if (size > 0) {
                 //  将数量作为ids[0]输出
-                ids.add(Integer.valueOf(unReadies.length).longValue());
+                Optional<Long> min = commitIdStatusService.getMin();
+                min.ifPresent(ids::add);
 
-                //  排序数字从小到大写入ids
-                Arrays.stream(unReadies)
-                    .sorted()
-                    //  .boxed()
-                    .forEach(ids::add);
+                Optional<Long> max = commitIdStatusService.getMax();
+                max.ifPresent(ids::add);
             } else {
                 ids.add(0L);
             }
