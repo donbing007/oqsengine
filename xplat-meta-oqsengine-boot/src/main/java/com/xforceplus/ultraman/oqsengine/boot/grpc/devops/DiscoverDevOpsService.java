@@ -40,6 +40,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -82,6 +83,9 @@ public class DiscoverDevOpsService {
 
     @Autowired
     private EntitySearchService entitySearchService;
+
+    @Autowired
+    private CommitIdStatusService commitIdStatusService;
 
     /**
      * 导入meta信息.
@@ -678,6 +682,39 @@ public class DiscoverDevOpsService {
 
         return null;
     }
+
+    /**
+     * 获得当前CDC中未同步的commitIds水位.
+     * 当前redis中 un-commits 的水位.
+     * 返回值为0代表redis中没有未处理的commit如果为空.
+     * 当第一个值>0时代表当前总数位count.
+     * 从第二个值开始代表会显示当前的un-commitIds列表(un-commitIds按从小到大排列).
+     *
+     * @return ids.
+     */
+    @DiscoverAction(describe = "获得当前CDC中未同步的commitIds水位", retClass = List.class, retInner = Long.class)
+    public List<Long> getUnReadyCommits() {
+        List<Long> ids = new ArrayList<>();
+        try {
+            long[] unReadies = commitIdStatusService.getUnreadiness();
+            if (null != unReadies && unReadies.length > 0) {
+                //  将数量作为ids[0]输出
+                ids.add(Integer.valueOf(unReadies.length).longValue());
+
+                //  排序数字从小到大写入ids
+                Arrays.stream(unReadies)
+                    .sorted()
+                    //  .boxed()
+                    .forEach(ids::add);
+            } else {
+                ids.add(0L);
+            }
+        } catch (Exception e) {
+            exceptionHandle("get un-ready commits exception", e);
+        }
+        return ids;
+    }
+
 
     private void exceptionHandle(String businessMessage, Exception e) {
         String error = String.format("%s, message : %s", businessMessage, e.getMessage());
