@@ -42,7 +42,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     /**
      * 事务内处理的最大极限数量.
      */
-    private static final int TRANSACTION_LIMIT_NUMBER = 1000;
+    private static final int TRANSACTION_LIMIT_NUMBER = 1;
     /**
      * 单个任务处理的实例上限.
      */
@@ -191,18 +191,20 @@ public class LookupCalculationLogic implements CalculationLogic {
                 if (refIter.more()) {
                     TaskCoordinator coordinator = context.getResourceWithEx(() -> context.getTaskCoordinator());
 
+
+                    LookupMaintainingTask lookupMaintainingTask =
+                        LookupMaintainingTask.Builder.anLookupMaintainingTask()
+                            .withTargetEntityId(context.getFocusEntity().id())
+                            .withTargetClassRef(context.getFocusEntity().entityClassRef())
+                            .withTargetFieldId(
+                                ((Lookup) participant.getField().config().getCalculation()).getFieldId())
+                            .withLookupClassRef(participant.getEntityClass().ref())
+                            .withLookupFieldId(participant.getField().id())
+                            .withLastStartLookupEntityId(ids[ids.length - 1])
+                            .withMaxSize(TASK_LIMIT_NUMBER)
+                            .build();
+
                     context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
-                        LookupMaintainingTask lookupMaintainingTask =
-                            LookupMaintainingTask.Builder.anLookupMaintainingTask()
-                                .withTargetEntityId(context.getFocusEntity().id())
-                                .withTargetClassRef(context.getFocusEntity().entityClassRef())
-                                .withTargetFieldId(
-                                    ((Lookup) participant.getField().config().getCalculation()).getFieldId())
-                                .withLookupClassRef(participant.getEntityClass().ref())
-                                .withLookupFieldId(participant.getField().id())
-                                .withLastStartLookupEntityId(ids[ids.length - 1])
-                                .withMaxSize(TASK_LIMIT_NUMBER)
-                                .build();
                         coordinator.addTask(lookupMaintainingTask);
                     });
                 }
