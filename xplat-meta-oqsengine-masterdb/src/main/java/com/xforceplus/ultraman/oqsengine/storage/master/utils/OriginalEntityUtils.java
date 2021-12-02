@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -20,6 +19,28 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
+    static List<Object> objects = toFixedObjects();
+
+    private static List<Object> toFixedObjects() {
+        List<Object> fixed = new ArrayList<>();
+
+        for (int i = 0; i < 52; i++) {
+
+            boolean isLong = false;
+            if (i % 2 == 0) {
+                isLong = true;
+            }
+            addFixed(i, isLong, Long.MAX_VALUE - 1, fixed);
+        }
+
+        return fixed;
+    }
+
+    private static void addFixed(int i, boolean isLong, Long v, List<Object> fixed) {
+        fixed.add("F" + (1100811015106670593L + i) + (isLong ? "L" : "S"));
+        fixed.add(isLong ? (v - i) : "商品AAAAAAAAAAAAAAAAAAFSSSSSSSSSSSSSSSSSS:" + (v - i) + "KKKDSSSSSSSSSSKKKKKKKKKKKKKK" + i);
+    }
+
 
     /**
      * 属性字符串表示解析为实际对象列表.
@@ -29,6 +50,7 @@ public class OriginalEntityUtils {
      * @throws JsonProcessingException JSON解析失败.
      */
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
+        /*
         List<Object> attributes = new ArrayList<>();
         Map<String, Object> keyValues = JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
         keyValues.forEach(
@@ -38,6 +60,9 @@ public class OriginalEntityUtils {
             }
         );
         return attributes;
+        */
+
+        return objects;
     }
 
     /**

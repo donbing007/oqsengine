@@ -270,6 +270,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
     @SuppressWarnings("unchecked")
     private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
+        /*
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
             return new ArrayList<>();
@@ -280,6 +281,18 @@ public class SphinxSyncExecutor implements SyncExecutor {
             String error = String
                 .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
                     e.getMessage(), attrStr);
+            logger.warn(error);
+            throw new SQLException(error);
+        }
+        */
+
+        //  for test
+        try {
+            return attributesToList("");
+        } catch (Exception e) {
+            String error = String
+                .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
+                    e.getMessage(), "");
             logger.warn(error);
             throw new SQLException(error);
         }
