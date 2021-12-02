@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-
     /**
      * 属性字符串表示解析为实际对象列表.
      *

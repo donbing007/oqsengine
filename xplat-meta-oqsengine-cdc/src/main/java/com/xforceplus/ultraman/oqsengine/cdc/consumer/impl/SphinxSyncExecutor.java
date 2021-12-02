@@ -290,7 +290,6 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 throw new SQLException(error);
             }
         } finally {
-
             sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
                 .tags(
                     "initiator", "cdc-attribute-parse",
