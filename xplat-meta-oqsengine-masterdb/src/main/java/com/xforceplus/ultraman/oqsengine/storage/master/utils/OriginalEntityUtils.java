@@ -20,31 +20,6 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-    static List<Object> objects = toFixedObjects();
-
-    private static List<Object> toFixedObjects() {
-        List<Object> fixed = new ArrayList<>();
-
-        for (int i = 0; i < 52; i++) {
-
-            boolean isLong = false;
-            if (i % 2 == 0) {
-                isLong = true;
-            }
-            addFixed(i, isLong, Long.MAX_VALUE - 1, fixed);
-        }
-
-        return fixed;
-    }
-
-    private static void addFixed(int i, boolean isLong, Long v, List<Object> fixed) {
-        fixed.add("F" + (1100811015106670593L + i) + (isLong ? "L" : "S"));
-        fixed.add(isLong ? (v - i) : "商品AAAAAAAAAAAAAAAAAAFSSSSSSSSSSSSSSSSSS:" + (v - i) + "KKKDSSSSSSSSSSKKKKKKKKKKKKKK" + i);
-    }
-
-    public static List<Object> attributesToListMock() {
-        return objects;
-    }
 
     /**
      * 属性字符串表示解析为实际对象列表.
@@ -77,8 +52,8 @@ public class OriginalEntityUtils {
         throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                    JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
-                            JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
+                    JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);
