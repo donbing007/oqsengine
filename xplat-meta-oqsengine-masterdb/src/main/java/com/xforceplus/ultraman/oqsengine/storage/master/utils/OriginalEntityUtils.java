@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
  */
 public class OriginalEntityUtils {
 
-
     /**
      * 属性字符串表示解析为实际对象列表.
      *
@@ -52,8 +51,8 @@ public class OriginalEntityUtils {
         throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
-                    JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
-                            JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
+                    JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
 
             return rawOriginalEntities.stream().map(entity -> {
                 return RawOriginalEntity.toOriginalEntity(metaManager, entity);

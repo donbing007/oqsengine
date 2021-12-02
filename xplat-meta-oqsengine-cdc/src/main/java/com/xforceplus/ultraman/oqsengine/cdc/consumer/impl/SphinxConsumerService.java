@@ -15,11 +15,15 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,6 +57,7 @@ public class SphinxConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService)
         throws SQLException {
@@ -81,6 +86,10 @@ public class SphinxConsumerService implements ConsumerService {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
+
+
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
         for (CanalEntry.Entry entry : entries) {
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
@@ -98,6 +107,17 @@ public class SphinxConsumerService implements ConsumerService {
                 }
             }
         }
+
+
+        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+            .tags(
+                "initiator", "cdc",
+                "action", "init",
+                "exception", "none"
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {

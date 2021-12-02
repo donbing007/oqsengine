@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 public class ExpressionWrapper {
 
     /**
-     * 表达式唯一key,目前由expression的md5编码构成.
+     * 表达式唯一key,目前由expression构成.
      */
     private String code;
 

@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
@@ -45,6 +46,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +90,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
         List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         RawEntry start = null;
+
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
         for (RawEntry rawEntry : rawEntries) {
             if (null == start) {
                 start = rawEntry;
@@ -105,6 +110,16 @@ public class SphinxSyncExecutor implements SyncExecutor {
                     cdcMetrics.getBatchId(), e.getMessage());
             }
         }
+
+        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+            .tags(
+                "initiator", "cdc",
+                "action", "attribute-parse",
+                "exception", "none"
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
 
         if (!storageEntityList.isEmpty()) {
             try {
@@ -270,6 +285,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
     @SuppressWarnings("unchecked")
     private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
+
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
             return new ArrayList<>();
