@@ -90,6 +90,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
         List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         RawEntry start = null;
+
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
         for (RawEntry rawEntry : rawEntries) {
             if (null == start) {
                 start = rawEntry;
@@ -108,6 +110,16 @@ public class SphinxSyncExecutor implements SyncExecutor {
                     cdcMetrics.getBatchId(), e.getMessage());
             }
         }
+
+        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+            .tags(
+                "initiator", "cdc-attribute-parse",
+                "action", "wait",
+                "exception", "none"
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
 
         if (!storageEntityList.isEmpty()) {
             try {
@@ -274,31 +286,18 @@ public class SphinxSyncExecutor implements SyncExecutor {
     @SuppressWarnings("unchecked")
     private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
 
-        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+        String attrStr = getStringFromColumn(columns, ATTRIBUTE);
+        if (null == attrStr || attrStr.isEmpty()) {
+            return new ArrayList<>();
+        }
         try {
-            String attrStr = getStringFromColumn(columns, ATTRIBUTE);
-            if (null == attrStr || attrStr.isEmpty()) {
-                return new ArrayList<>();
-            }
-            try {
-                return attributesToList(attrStr);
-            } catch (Exception e) {
-                String error = String
-                    .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
-                        e.getMessage(), attrStr);
-                logger.warn(error);
-                throw new SQLException(error);
-            }
-        } finally {
-            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-                .tags(
-                    "initiator", "cdc-attribute-parse",
-                    "action", "wait",
-                    "exception", "none"
-                )
-                .publishPercentileHistogram(false)
-                .publishPercentiles(null)
-                .register(Metrics.globalRegistry));
+            return attributesToList(attrStr);
+        } catch (Exception e) {
+            String error = String
+                .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
+                    e.getMessage(), attrStr);
+            logger.warn(error);
+            throw new SQLException(error);
         }
     }
 
