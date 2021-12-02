@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,9 @@ public class OriginalEntityUtils {
         fixed.add(isLong ? (v - i) : "商品AAAAAAAAAAAAAAAAAAFSSSSSSSSSSSSSSSSSS:" + (v - i) + "KKKDSSSSSSSSSSKKKKKKKKKKKKKK" + i);
     }
 
+    public static List<Object> attributesToListMock() {
+        return objects;
+    }
 
     /**
      * 属性字符串表示解析为实际对象列表.
@@ -50,7 +54,6 @@ public class OriginalEntityUtils {
      * @throws JsonProcessingException JSON解析失败.
      */
     public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
-        /*
         List<Object> attributes = new ArrayList<>();
         Map<String, Object> keyValues = JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
         keyValues.forEach(
@@ -60,9 +63,6 @@ public class OriginalEntityUtils {
             }
         );
         return attributes;
-        */
-
-        return objects;
     }
 
     /**
