@@ -15,11 +15,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,6 +55,7 @@ public class SphinxConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "consume"})
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService)
         throws SQLException {
