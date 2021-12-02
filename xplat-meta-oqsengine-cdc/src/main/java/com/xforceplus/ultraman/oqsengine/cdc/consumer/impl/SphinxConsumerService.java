@@ -22,6 +22,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,6 +86,10 @@ public class SphinxConsumerService implements ConsumerService {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
+
+
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
         for (CanalEntry.Entry entry : entries) {
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
@@ -101,6 +107,17 @@ public class SphinxConsumerService implements ConsumerService {
                 }
             }
         }
+
+
+        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+            .tags(
+                "initiator", "cdc",
+                "action", "init",
+                "exception", "none"
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {

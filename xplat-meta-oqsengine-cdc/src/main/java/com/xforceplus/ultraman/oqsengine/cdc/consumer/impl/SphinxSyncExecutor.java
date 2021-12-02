@@ -113,8 +113,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
             .tags(
-                "initiator", "cdc-attribute-parse",
-                "action", "wait",
+                "initiator", "cdc",
+                "action", "attribute-parse",
                 "exception", "none"
             )
             .publishPercentileHistogram(false)
