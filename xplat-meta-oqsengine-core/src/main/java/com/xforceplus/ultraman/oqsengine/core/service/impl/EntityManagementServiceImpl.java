@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -116,6 +117,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private Calculation calculation;
+
+    @Resource(name = "taskThreadPool")
+    public ExecutorService taskThreadPool;
 
     /**
      * 字段校验器工厂.
@@ -823,6 +827,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMasterStorage(this.masterStorage)
             .withTaskCoordinator(this.taskCoordinator)
             .withKeyValueStorage(this.kv)
+            .withEventBus(this.eventBus)
+            .withTaskExecutorService(this.taskThreadPool)
             .withBizIDGenerator(this.bizIDGenerator)
             .withTransaction(tx)
             .withConditionsSelectStorage(this.combinedSelectStorage)

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 字段计算器上下文.
@@ -38,9 +40,11 @@ public class DefaultCalculationContext implements CalculationContext {
     private Transaction transaction;
     private MetaManager metaManager;
     private MasterStorage masterStorage;
+    private EventBus eventBus;
     private BizIDGenerator bizIDGenerator;
     private KeyValueStorage keyValueStorage;
     private TaskCoordinator taskCoordinator;
+    private ExecutorService taskExecutorService;
     private Collection<CalculationHint> hints;
     private CalculationLogicFactory calculationLogicFactory;
     private ConditionsSelectStorage conditionsSelectStorage;
@@ -76,6 +80,11 @@ public class DefaultCalculationContext implements CalculationContext {
     @Override
     public Optional<KeyValueStorage> getKvStorage() {
         return Optional.ofNullable(this.keyValueStorage);
+    }
+
+    @Override
+    public Optional<EventBus> getEvnetBus() {
+        return Optional.ofNullable(this.eventBus);
     }
 
     @Override
@@ -199,6 +208,11 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
+    public Optional<ExecutorService> getTaskExecutorService() {
+        return Optional.ofNullable(taskExecutorService);
+    }
+
+    @Override
     public void hint(IEntityField field, String hint) {
         if (this.hints == null) {
             this.hints = new LinkedList<>();
@@ -220,6 +234,7 @@ public class DefaultCalculationContext implements CalculationContext {
      * 构造器.
      */
     public static final class Builder {
+        private EventBus eventBus;
         private Transaction transaction;
         private CalculationScenarios scenarios;
         private MetaManager metaManager;
@@ -227,6 +242,7 @@ public class DefaultCalculationContext implements CalculationContext {
         private BizIDGenerator bizIDGenerator;
         private KeyValueStorage keyValueStorage;
         private TaskCoordinator taskCoordinator;
+        private ExecutorService taskExecutorService;
         private ConditionsSelectStorage conditionsSelectStorage;
 
         private Builder() {
@@ -276,12 +292,24 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
+        public Builder withEventBus(EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        public Builder withTaskExecutorService(ExecutorService taskExecutorService) {
+            this.taskExecutorService = taskExecutorService;
+            return this;
+        }
+
         /**
          * 构造.
          */
         public DefaultCalculationContext build() {
             DefaultCalculationContext defaultCalculationContext = new DefaultCalculationContext();
+            defaultCalculationContext.eventBus = this.eventBus;
             defaultCalculationContext.taskCoordinator = this.taskCoordinator;
+            defaultCalculationContext.taskExecutorService = this.taskExecutorService;
             defaultCalculationContext.masterStorage = this.masterStorage;
             defaultCalculationContext.metaManager = this.metaManager;
             defaultCalculationContext.keyValueStorage = this.keyValueStorage;

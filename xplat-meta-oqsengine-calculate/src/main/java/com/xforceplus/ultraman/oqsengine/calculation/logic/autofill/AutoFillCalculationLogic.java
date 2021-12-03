@@ -5,13 +5,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,32 +50,16 @@ public class AutoFillCalculationLogic implements CalculationLogic {
     }
 
     private Optional<IValue> onNormal(CalculationContext context) throws CalculationException {
+        Object result = context.getResourceWithEx(() -> context.getBizIDGenerator())
+            .nextId(String.valueOf(context.getFocusField().id()));
 
-        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
-        try {
-            Object result = context.getResourceWithEx(() -> context.getBizIDGenerator())
-                .nextId(String.valueOf(context.getFocusField().id()));
-
-            if (null == result) {
-                throw new CalculationException("autoFill id generate is null.");
-            }
-            return Optional.of(IValueUtils.toIValue(context.getFocusField(), result.toString()));
-        } finally {
-            sample.stop(Timer.builder(MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS)
-                .tags(
-                    "logic", "autoFill",
-                    "action", "normal",
-                    "exception", "none"
-                )
-                .publishPercentileHistogram(false)
-                .publishPercentiles(null)
-                .register(Metrics.globalRegistry));
-
+        if (null == result) {
+            throw new CalculationException("autoFill id generate is null.");
         }
+        return Optional.of(IValueUtils.toIValue(context.getFocusField(), result.toString()));
     }
 
     private Optional<IValue> onSenior(CalculationContext context, AutoFill autoFill) throws CalculationException {
-        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
         try {
             //  调用公式执行器执行
             return Optional.of(IValueUtils.toIValue(context.getFocusField(),
@@ -87,17 +68,6 @@ public class AutoFillCalculationLogic implements CalculationLogic {
             logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
                 context.getFocusField().id(), e.getMessage());
             throw new CalculationException(e.getMessage(), e);
-        } finally {
-            sample.stop(Timer.builder(MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS)
-                .tags(
-                    "logic", "autoFill",
-                    "action", "senior",
-                    "exception", "none"
-                )
-                .publishPercentileHistogram(false)
-                .publishPercentiles(null)
-                .register(Metrics.globalRegistry));
-
         }
     }
 }

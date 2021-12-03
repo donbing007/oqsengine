@@ -245,7 +245,7 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testLookupReplaceOutofTx() throws Exception {
-        Field field = LookupCalculationLogic.class.getField("TRANSACTION_LIMIT_NUMBER");
+        Field field = LookupCalculationLogic.class.getDeclaredField("TRANSACTION_LIMIT_NUMBER");
         field.setAccessible(true);
         // 事务内处理上限.
         int transactionLimitNumber = (int) field.get(null);

@@ -384,17 +384,15 @@ public class MultiLocalTransaction implements Transaction {
 
         if (commit) {
 
-            doHooks(this.commitHooks);
-
             committed = true;
 
+            doHooks(commitHooks);
 
         } else {
 
-            doHooks(this.rollbackHooks);
-
             rollback = true;
 
+            doHooks(rollbackHooks);
         }
 
         for (TransactionResource tr : transactionResourceHolder) {

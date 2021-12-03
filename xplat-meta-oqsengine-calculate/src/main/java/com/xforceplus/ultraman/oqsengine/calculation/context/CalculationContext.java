@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -16,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 /**
@@ -162,6 +164,13 @@ public interface CalculationContext {
     Optional<KeyValueStorage> getKvStorage();
 
     /**
+     * 获取事件总线.
+     *
+     * @return 事件总线.
+     */
+    Optional<EventBus> getEvnetBus();
+
+    /**
      * 获取任务协调实例.
      *
      * @return 任务协调实例.
@@ -188,6 +197,13 @@ public interface CalculationContext {
      * @return 实例.
      */
     Optional<BizIDGenerator> getBizIDGenerator();
+
+    /**
+     * 获取线程池.
+     *
+     * @return 任务线程池.
+     */
+    Optional<ExecutorService> getTaskExecutorService();
 
     /**
      * 获取指定的资源.如果没有将抛出异常.
