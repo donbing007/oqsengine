@@ -50,24 +50,6 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
     @Resource(name = "serviceTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
-    private boolean withTx;
-
-    /**
-     * 默认运行时启用事务.
-     */
-    public LookupMaintainingTaskRunner() {
-        this(true);
-    }
-
-    /**
-     * 是否以事务方式执行.
-     *
-     * @param withTx true 启用,false 不启用.
-     */
-    public LookupMaintainingTaskRunner(boolean withTx) {
-        this.withTx = withTx;
-    }
-
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
         LookupMaintainingTask lookupMaintainingTask = (LookupMaintainingTask) task;
@@ -114,28 +96,13 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         }
 
         try {
-            // 进行一次更新
-            if (withTx) {
-                transactionExecutor.execute((transaction, resource, hint) -> {
-                    adjustLookupEntities(
-                        lookupMaintainingTask,
-                        lookupEntities,
-                        lookupEntityClass,
-                        lookupField,
-                        targetValueOp,
-                        lookupMaintainingTask.getTargetEntityId());
-                    return null;
-                });
-            } else {
-
-                adjustLookupEntities(
-                    lookupMaintainingTask,
-                    lookupEntities,
-                    lookupEntityClass,
-                    lookupField,
-                    targetValueOp,
-                    lookupMaintainingTask.getTargetEntityId());
-            }
+            adjustLookupEntities(
+                lookupMaintainingTask,
+                lookupEntities,
+                lookupEntityClass,
+                lookupField,
+                targetValueOp,
+                lookupMaintainingTask.getTargetEntityId());
         } catch (Exception ex) {
             // 重新加入任务队列进行计算.
             logger.error(ex.getMessage(), ex);
