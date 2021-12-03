@@ -29,11 +29,11 @@ ingress:
 
 resources:
   limits:
-    cpu: 2000m
-    memory: 4096Mi
+    cpu: 4000m
+    memory: 6144Mi
   requests:
-    cpu: 1000m
-    memory: 2048Mi
+    cpu: 4000m
+    memory: 6144Mi
 
 nodeSelector: {}
 
@@ -51,14 +51,12 @@ jvm:
   - -server
   - -Xms4096M
   - -Xmx4096M
-  - -Xmn1536M
-  - -XX:MetaspaceSize=256M
-  - -XX:MaxMetaspaceSize=256M
-  - -XX:+UseParNewGC
-  - -XX:+UseConcMarkSweepGC
-  - -XX:+CMSScavengeBeforeRemark
-  - -XX:CMSInitiatingOccupancyFraction=75
-  - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:+UseG1GC
+  - -XX:MaxGCPauseMillis=50
+  - -XX:ParallelGCThreads=4
+  - -XX:+UseCompressedOops
+  - -XX:+UseStringDeduplication
+  - -XX:ReservedCodeCacheSize=256m
   - -XX:+UseStringDeduplication
 
 jmx:

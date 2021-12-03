@@ -51,28 +51,14 @@ public class OffsetTest {
         Map<String, Object> params = Maps.newHashMap();
         params.put("createTime", LocalDateTime.now());
         TimeOffsetFunction function = new TimeOffsetFunction();
-        Object result = function.call(params, FunctionUtils.wrapReturn(LocalDateTime.now())
-            , new AviatorBigInt(1), new AviatorBigInt(1));
+        Object result = function.call(
+            params,
+            FunctionUtils.wrapReturn(LocalDateTime.now()),
+            new AviatorBigInt(1),
+            new AviatorBigInt(1));
         Date expect = (Date) ((AviatorRuntimeJavaType) result).getValue(params);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime((Date) expect);
         Assertions.assertEquals(calendar.get(Calendar.YEAR), LocalDateTime.now().getYear() + 1);
     }
-
-    //@Test
-    //public void testOffsetDataHours() throws CalculationException {
-    //    ExpressionWrapper wrapper = ExpressionWrapper.Builder.anExpression()
-    //        .withCached(true)
-    //        .withExpression("timeOffset(createTime,4,1)").build();
-    //    Map<String, Object> params = Maps.newHashMap();
-    //    params.put("createTime", LocalDateTime.now());
-    //
-    //    Object result = AviatorHelper.execute(new ExecutionWrapper(wrapper, params));
-    //    Assertions.assertTrue(result instanceof Date);
-    //    System.out.println(result.toString());
-    //    Calendar calendar = Calendar.getInstance();
-    //    calendar.setTime((Date) result);
-    //    Assertions.assertEquals(calendar.get(Calendar.HOUR), LocalDateTime.now().getHour() + 1);
-    //    System.out.println(result);
-    //}
 }

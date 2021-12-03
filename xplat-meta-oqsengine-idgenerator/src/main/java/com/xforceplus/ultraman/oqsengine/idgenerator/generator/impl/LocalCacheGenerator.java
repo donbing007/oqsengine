@@ -1,11 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.IDResult;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.ResultCode;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -136,22 +139,37 @@ public class LocalCacheGenerator implements IDGenerator {
 
     @Override
     public String nextId() {
-        while (true) {
-            if (current == null) {
-                loadCurrent();
-                continue;
-            }
-            IDResult result = current.nextId();
-            if (result.getCode() == ResultCode.OVER) {
-                loadCurrent();
-            } else if (result.getCode() == ResultCode.RESET) {
-                resetBizType(result);
-            } else {
-                if (result.getCode() == ResultCode.LOADING) {
-                    loadNext();
+
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
+        try {
+            while (true) {
+                if (current == null) {
+                    loadCurrent();
+                    continue;
                 }
-                return result.getId();
+                IDResult result = current.nextId();
+                if (result.getCode() == ResultCode.OVER) {
+                    loadCurrent();
+                } else if (result.getCode() == ResultCode.RESET) {
+                    resetBizType(result);
+                } else {
+                    if (result.getCode() == ResultCode.LOADING) {
+                        loadNext();
+                    }
+                    return result.getId();
+                }
             }
+        } finally {
+            sample.stop(Timer.builder(MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "logic", "local-nextId",
+                    "action", "nextId",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(null)
+                .register(Metrics.globalRegistry));
         }
     }
 
