@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.map;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Map帮助工具.
  *
@@ -8,6 +11,25 @@ package com.xforceplus.ultraman.oqsengine.common.map;
  * @since 1.8
  */
 public class MapUtils {
+
+    /**
+     * 将一个偶数数组构造成一个Map.
+     *
+     * @param v 值列表.
+     * @return 哈希实例.
+     */
+    public static Map asMap(Object... v) {
+        if (v.length % 2 != 0) {
+            throw new IllegalArgumentException("Must be an even length array.");
+        }
+
+        Map<Object, Object> map = new HashMap<>();
+        for (int i = 0; i < v.length; i += 2) {
+            map.put(v[i], v[i + 1]);
+        }
+        return map;
+    }
+
 
     /**
      * 计算Map的初始大小.

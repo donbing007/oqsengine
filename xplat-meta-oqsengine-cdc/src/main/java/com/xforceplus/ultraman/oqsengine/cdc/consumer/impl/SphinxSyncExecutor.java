@@ -51,7 +51,9 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -284,11 +286,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
+    private Map<String, Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
 
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
-            return new ArrayList<>();
+            return Collections.emptyMap();
         }
         try {
             return attributesToList(attrStr);
@@ -310,7 +312,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
             throw new SQLException(
                 String.format("[cdc-sync-executor] id [%d], commitId [%d] has no entityClass...", id, commitId));
         }
-        Collection<Object> attributes = attrCollection(id, columns);
+        Map<String, Object> attributes = attrCollection(id, columns);
         if (attributes.isEmpty()) {
             throw new SQLException(
                 String.format("[cdc-sync-executor] id [%d], commitId [%d] has no attributes...", id, commitId));

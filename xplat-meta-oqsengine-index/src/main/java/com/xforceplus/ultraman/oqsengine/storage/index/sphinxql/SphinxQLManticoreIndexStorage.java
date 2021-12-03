@@ -375,11 +375,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     // 转换成JSON类型属性.
     private String toAttribute(OriginalEntity originalEntity) {
-        int attrSize = originalEntity.getAttributes().length / 2;
+        Map<String, Object> attributeMap = new HashMap(
+            MapUtils.calculateInitSize(originalEntity.attributeSize(), 0.75F));
 
-
-        Map<String, Object> attributeMap = new HashMap(MapUtils.calculateInitSize(attrSize, 0.75F));
-        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
+        for (Map.Entry<String, Object> attr : originalEntity.getAttributes().entrySet()) {
 
             if (AnyStorageValue.isStorageValueName(attr.getKey())) {
 
@@ -436,7 +435,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         StringBuilder buff = new StringBuilder();
         IEntityClass entityClass = source.getEntityClass();
         IEntityField field;
-        for (Map.Entry<String, Object> attr : source.listAttributes()) {
+        for (Map.Entry<String, Object> attr : source.getAttributes().entrySet()) {
             StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
             Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
             if (!needField(fieldOp, false)) {
