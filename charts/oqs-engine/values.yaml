@@ -52,7 +52,7 @@ jvm:
   - -Xms4096M
   - -Xmx4096M
   - -XX:+UseG1GC
-  - -XX:MaxGCPauseMillis=50
+  - -XX:MaxGCPauseMillis=200
   - -XX:ParallelGCThreads=4
   - -XX:+UseCompressedOops
   - -XX:+UseStringDeduplication
