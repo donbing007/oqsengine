@@ -26,7 +26,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.UPDATETIME;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.VERSION;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.getByOrdinal;
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
@@ -293,7 +293,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
             return Collections.emptyMap();
         }
         try {
-            return attributesToList(attrStr);
+            return attributesToMap(attrStr);
         } catch (Exception e) {
             String error = String
                 .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,

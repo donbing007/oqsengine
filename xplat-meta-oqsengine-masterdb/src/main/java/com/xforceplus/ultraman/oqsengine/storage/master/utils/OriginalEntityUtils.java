@@ -25,7 +25,7 @@ public class OriginalEntityUtils {
      * @return 解析结果.
      * @throws JsonProcessingException JSON解析失败.
      */
-    public static Map<String, Object> attributesToList(String attrStr) throws JsonProcessingException {
+    public static Map<String, Object> attributesToMap(String attrStr) throws JsonProcessingException {
         return JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
     }
 

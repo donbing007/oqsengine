@@ -21,7 +21,7 @@ public class JsonTest {
 
     @Test
     public void test() throws JsonProcessingException {
-        Map<String, Object> objects = OriginalEntityUtils.attributesToList(str);
+        Map<String, Object> objects = OriginalEntityUtils.attributesToMap(str);
         Assertions.assertNotNull(objects);
     }
 }
