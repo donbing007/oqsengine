@@ -88,6 +88,20 @@ public class CommitIdStatusServiceImplTest {
         expected = new boolean[notExistCommitIds.length];
         Arrays.fill(expected, true);
         Assertions.assertArrayEquals(expected, status);
+
+        long[] mixCommitIds = LongStream.rangeClosed(1000, 1100).map(i -> {
+            impl.save(i, i % 2 == 0);
+            return i;
+        }).toArray();
+
+        status = impl.isReady(mixCommitIds);
+        expected = new boolean[status.length];
+        int number = 1000;
+        for (int i = 0; i <= 1100 - 1000; i++) {
+            expected[i] = number++ % 2 == 0;
+        }
+
+        Assertions.assertArrayEquals(expected, status);
     }
 
     /**

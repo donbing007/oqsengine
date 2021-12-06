@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
@@ -11,7 +12,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -403,7 +406,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
     // 获取提交号状态.
     private CommitStatus getStatus(long commitId) {
-        String statusKey = commitidStatusKeyPrefix + commitId;
+        String statusKey = String.format("%s%d", commitidStatusKeyPrefix, commitId);
         String value = syncCommands.get(statusKey);
 
         CommitStatus status = CommitStatus.getInstance(value);
@@ -422,25 +425,32 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
             return new CommitStatus[0];
         }
 
-        String[] keys = new String[len];
-        StringBuilder buff = new StringBuilder();
+        String[] keys =
+            Arrays.stream(commitIds)
+                .mapToObj(c -> String.format("%s%d", commitidStatusKeyPrefix, c)).toArray(String[]::new);
+
+        // 帮助定位key所在的下标.
+        Map<String, Integer> keyPos = new HashMap<>(MapUtils.calculateInitSize(len));
         for (int i = 0; i < len; i++) {
-
-            buff.append(commitidStatusKeyPrefix).append(commitIds[i]);
-
-            keys[i] = buff.toString();
-
-            buff.delete(0, buff.length());
+            keyPos.put(keys[i], i);
         }
 
         List<KeyValue<String, String>> keyValues = syncCommands.mget(keys);
-        return keyValues.stream().map(kv -> {
+        CommitStatus[] statuses = new CommitStatus[len];
+        KeyValue<String, String> kv;
+        int pos;
+        for (int i = 0; i < keyValues.size(); i++) {
+            kv = keyValues.get(i);
+            pos = keyPos.get(kv.getKey());
+
             if (kv.hasValue()) {
-                return CommitStatus.getInstance(kv.getValue());
+                statuses[pos] = CommitStatus.getInstance(kv.getValue());
             } else {
-                return CommitStatus.READY;
+                statuses[pos] = CommitStatus.READY;
             }
-        }).toArray(CommitStatus[]::new);
+        }
+
+        return statuses;
     }
 
     // 修改提交号状态.
