@@ -557,7 +557,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     @Override
     public int version(Long entityClassId) {
-        /*
         if (null == entityClassId || entityClassId <= 0) {
             return -1;
         }
@@ -573,8 +572,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
             keys, Long.toString(entityClassId));
 
         return null != v ? Integer.parseInt(v) : NOT_EXIST_VERSION;
-         */
-        return 61;
     }
 
     /**
