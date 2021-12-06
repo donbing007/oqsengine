@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import com.alibaba.fastjson.JSONArray;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -54,6 +55,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
  */
 @ExtendWith({RedisContainer.class, ManticoreContainer.class})
 public class SphinxQLManticoreIndexStorageSelectTest {
+
+    private Collection<OriginalEntity> expectedDatas;
 
     /*
     使用的字段名和其id.
@@ -1272,7 +1275,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     private void initData() throws Exception {
         Path path = Paths.get(ClassLoader.getSystemResource("OriginalEntityTestData.json").toURI());
         String value = new String(Files.readAllBytes(path), "utf8");
-        Collection<OriginalEntity> datas = JSONArray.parseArray(value, OriginalEntity.class);
+
+        Collection<OriginalEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
+            new TypeReference<List<OriginalEntity>>() {});
         datas.stream().forEach(o -> {
             o.setEntityClass(l2EntityClass);
         });
@@ -1281,6 +1286,4 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
         this.expectedDatas = datas;
     }
-
-    private Collection<OriginalEntity> expectedDatas;
 }
