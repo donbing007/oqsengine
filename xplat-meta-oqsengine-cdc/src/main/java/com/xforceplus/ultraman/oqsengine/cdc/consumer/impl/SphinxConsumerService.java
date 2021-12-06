@@ -22,8 +22,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -90,8 +88,6 @@ public class SphinxConsumerService implements ConsumerService {
 
         List<Long> commitIDs = new ArrayList<>();
 
-        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
-
         for (CanalEntry.Entry entry : entries) {
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
@@ -115,16 +111,6 @@ public class SphinxConsumerService implements ConsumerService {
             cdcMetricsService.isReadyCommit(commitIDs);
         }
 
-        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-            .tags(
-                "initiator", "cdc",
-                "action", "init",
-                "exception", "none"
-            )
-            .publishPercentileHistogram(false)
-            .publishPercentiles(null)
-            .register(Metrics.globalRegistry));
-
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
             //  通过执行器执行Sphinx同步
@@ -137,8 +123,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.info("[cdc-consumer] batch : {} end with un-commit ids : {}",
-                cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (logger.isDebugEnabled()) {
+                logger.debug("[cdc-consumer] batch : {} end with un-commit ids : {}",
+                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
             if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
                 logger.warn("[cdc-consumer] batch : {}, one transaction has more than one commitId, ids : {}",
                     cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
