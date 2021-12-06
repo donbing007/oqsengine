@@ -105,7 +105,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
             try {
                 //  获取记录
                 OriginalEntity entity =
-                    prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId(), entityClassMap);
+                    prepareForUpdateDelete(
+                        rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId(), entityClassMap);
 
                 //  加入更新列表
                 storageEntityList.add(entity);
@@ -272,11 +273,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
         return UN_KNOW_ID;
     }
 
-    private IEntityClass getEntityClass(long id, Map<String, IEntityClass> entityClassMap, List<CanalEntry.Column> columns) throws SQLException {
-
-
-
-
+    private IEntityClass getEntityClass(
+        long id, Map<String, IEntityClass> entityClassMap, List<CanalEntry.Column> columns) throws SQLException {
 
         long entityId = getEntity(columns);
 
@@ -292,8 +290,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
             //  当前批次cache不存在
 
-            Optional<IEntityClass> entityClassOptional =
-                metaManager.load(entityId, profile);
+            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId, profile);
 
             if (entityClassOptional.isPresent()) {
                 IEntityClass finalClass = entityClassOptional.get();
@@ -302,8 +299,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
                 return finalClass;
             }
-            logger
-                .warn("[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+            }
         }
 
 
@@ -330,10 +330,10 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
     }
 
-    private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId, Map<String, IEntityClass> entityClassMap)
+    private OriginalEntity prepareForUpdateDelete(
+        List<CanalEntry.Column> columns, long id, long commitId, Map<String, IEntityClass> entityClassMap)
         throws SQLException {
         //  通过解析binlog获取
-
         IEntityClass entityClass = getEntityClass(id, entityClassMap, columns);
         if (null == entityClass) {
             throw new SQLException(
