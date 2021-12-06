@@ -25,6 +25,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,7 @@ public class SphinxConsumerService implements ConsumerService {
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
 
+        List<Long> commitIDs = new ArrayList<>();
 
         Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
@@ -99,7 +101,7 @@ public class SphinxConsumerService implements ConsumerService {
                     break;
                 }
                 case ROWDATA: {
-                    internalDataSync(entry, cdcMetrics, cdcMetricsService, rawEntries);
+                    internalDataSync(entry, cdcMetrics, commitIDs, rawEntries);
                     break;
                 }
                 default: {
@@ -108,6 +110,10 @@ public class SphinxConsumerService implements ConsumerService {
             }
         }
 
+        //  等待isReady
+        if (!commitIDs.isEmpty()) {
+            cdcMetricsService.isReadyCommit(commitIDs);
+        }
 
         sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
             .tags(
@@ -167,10 +173,9 @@ public class SphinxConsumerService implements ConsumerService {
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
-
     private void internalDataSync(CanalEntry.Entry entry,
-                                  CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
-                                  Map<Long, RawEntry> rawEntries) throws SQLException {
+                                  CDCMetrics cdcMetrics,
+                                  List<Long> commitIDs, Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
 
         String uniKeyPrefixOffset = entry.getHeader().getLogfileName() + "-" + entry.getHeader().getLogfileOffset();
@@ -228,11 +233,9 @@ public class SphinxConsumerService implements ConsumerService {
                      */
                     if (commitId > skipCommitId || (commitId == NO_TRANSACTION_COMMIT_ID
                         && skipCommitId != NO_TRANSACTION_COMMIT_ID)) {
-                        if (checkCommitReady) {
-                            if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                                //  阻塞直到成功
-                                cdcMetricsService.isReadyCommit(commitId);
-                            }
+
+                        if (checkCommitReady && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                            commitIDs.add(commitId);
                         }
 
                         //  更新
@@ -250,6 +253,8 @@ public class SphinxConsumerService implements ConsumerService {
             }
         }
     }
+
+
 
     /*
         由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作

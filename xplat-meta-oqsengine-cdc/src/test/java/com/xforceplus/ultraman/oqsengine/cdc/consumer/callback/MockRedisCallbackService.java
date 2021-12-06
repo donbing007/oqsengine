@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +99,11 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     @Override
     public boolean isReadyCommit(long commitId) {
         return true;
+    }
+
+    @Override
+    public List<Long> isNotReadyCommits(List<Long> commitIds) {
+        return new ArrayList<>();
     }
 
     public AtomicInteger getExecuted() {
