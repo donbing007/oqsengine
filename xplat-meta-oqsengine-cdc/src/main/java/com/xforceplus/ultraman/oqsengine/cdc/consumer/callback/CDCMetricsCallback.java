@@ -53,7 +53,7 @@ public interface CDCMetricsCallback {
 
 
     /**
-     * 判断当前批量commitIds中没有ready的Ids
+     * 判断当前批量commitIds中没有ready的Ids.
      *
      * @param commitIds 提交号.
      */
