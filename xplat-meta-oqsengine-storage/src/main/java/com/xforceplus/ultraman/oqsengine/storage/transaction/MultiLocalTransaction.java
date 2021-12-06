@@ -57,6 +57,11 @@ public class MultiLocalTransaction implements Transaction {
      */
     private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.common.id";
 
+    /*
+    如果此值为true表示即使累加器中没有数据写入也认为当前事务非只读事务.
+    主要用以后台任务中,不需要真的对累加器进行更新.
+     */
+    private boolean notReadOnly;
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
@@ -299,7 +304,14 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isReadyOnly() {
-        return (accumulator.getBuildNumbers() + accumulator.getReplaceNumbers() + accumulator.getDeleteNumbers()) == 0;
+        return notReadOnly
+            ? false
+            : (accumulator.getBuildNumbers() + accumulator.getReplaceNumbers() + accumulator.getDeleteNumbers()) == 0;
+    }
+
+    @Override
+    public void focusNotReadOnly() {
+        this.notReadOnly = true;
     }
 
     @Override

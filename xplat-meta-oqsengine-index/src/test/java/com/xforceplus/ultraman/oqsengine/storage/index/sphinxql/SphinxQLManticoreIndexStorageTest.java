@@ -44,10 +44,12 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -459,7 +461,7 @@ public class SphinxQLManticoreIndexStorageTest {
         target = initDatas.get(3);
         OriginalEntity u1 = OriginalEntity.Builder.anOriginalEntity()
             .withId(target.getId())
-            .withAttributes(Arrays.asList(target.getAttributes()))
+            .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
             .withVersion(target.getVersion())
             .withEntityClass(target.getEntityClass())
@@ -476,7 +478,7 @@ public class SphinxQLManticoreIndexStorageTest {
         target = initDatas.get(4);
         OriginalEntity u2 = OriginalEntity.Builder.anOriginalEntity()
             .withId(target.getId())
-            .withAttributes(Arrays.asList(target.getAttributes()))
+            .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
             .withVersion(target.getVersion())
             .withEntityClass(target.getEntityClass())
@@ -637,10 +639,9 @@ public class SphinxQLManticoreIndexStorageTest {
 
         });
 
-        List<Object> attrs = new ArrayList<>(svs.size() * 2);
+        Map<String, Object> attrs = new HashMap<>();
         for (StorageValue sv : svs) {
-            attrs.add(sv.storageName());
-            attrs.add(sv.value());
+            attrs.put(sv.storageName(), sv.value());
         }
 
         builder.withAttributes(attrs);

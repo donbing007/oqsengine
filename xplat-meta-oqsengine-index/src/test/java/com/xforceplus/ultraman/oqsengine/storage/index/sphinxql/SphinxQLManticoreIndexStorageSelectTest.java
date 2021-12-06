@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.alibaba.fastjson.JSONArray;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
@@ -328,7 +329,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withDeleted(false)
             .withOp(OperationType.CREATE.getValue())
             .withAttributes(
-                Arrays.asList(
+                MapUtils.asMap(
                     l2TimeField.id() + "L",
                     LocalDateTime.of(1970, 1, 1, 0, 0, 0)
                         .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli()
@@ -377,7 +378,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .withDeleted(false)
                 .withOp(OperationType.CREATE.getValue())
                 .withAttributes(
-                    Arrays.asList(
+                    MapUtils.asMap(
                         l1StringField.id() + "S", "scan" + i
                     )
                 ).build());
@@ -391,7 +392,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withDeleted(false)
             .withOp(OperationType.CREATE.getValue())
             .withAttributes(
-                Arrays.asList(
+                MapUtils.asMap(
                     l1StringField.id() + "S", "scan"
                 )
             ).build();

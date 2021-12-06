@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
@@ -669,7 +669,7 @@ public class SQLMasterStorage implements MasterStorage {
                             .withCommitid(entity.getCommitid())
                             .withVersion(entity.getVersion())
                             .withOqsMajor(entity.getOqsMajor())
-                            .withAttributes(attributesToList(entity.getAttribute()))
+                            .withAttributes(attributesToMap(entity.getAttribute()))
                             .build();
 
                         originalEntities.add(originalEntity);

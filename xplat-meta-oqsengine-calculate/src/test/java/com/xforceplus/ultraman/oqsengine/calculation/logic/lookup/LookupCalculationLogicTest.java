@@ -548,6 +548,11 @@ public class LookupCalculationLogicTest {
         }
 
         @Override
+        public void focusNotReadOnly() {
+
+        }
+
+        @Override
         public TransactionAccumulator getAccumulator() {
             return null;
         }

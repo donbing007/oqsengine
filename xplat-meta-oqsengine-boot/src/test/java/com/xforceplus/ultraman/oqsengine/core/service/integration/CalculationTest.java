@@ -249,7 +249,7 @@ public class CalculationTest extends AbstractContainerExtends {
         field.setAccessible(true);
         // 事务内处理上限.
         int transactionLimitNumber = (int) field.get(null);
-        int outTransactionNumber = 10;
+        int outTransactionNumber = 1000;
 
         IEntity user = buildUserEntity();
         entityManagementService.build(user);
@@ -303,14 +303,14 @@ public class CalculationTest extends AbstractContainerExtends {
             MockEntityClassDefine.ORDER_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(3000)).build()
         );
-        // 应该有1000个已经和目标一致了.
+        // 事务内
         long syncedOrderCount = orders.stream().filter(e ->
             Objects.equals(
                 e.entityValue().getValue("用户编号lookup").get().getValue(),
                 newUseNumber
             )
         ).count();
-        Assertions.assertEquals(1, syncedOrderCount);
+        Assertions.assertEquals(transactionLimitNumber, syncedOrderCount);
         logger.info("The \"用户编号lookup\" field for the expected 1000 orders has been changed from {} to {}.",
             userNumber, newUseNumber);
 

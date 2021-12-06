@@ -5,8 +5,6 @@ import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaul
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,16 +25,8 @@ public class OriginalEntityUtils {
      * @return 解析结果.
      * @throws JsonProcessingException JSON解析失败.
      */
-    public static List<Object> attributesToList(String attrStr) throws JsonProcessingException {
-        List<Object> attributes = new ArrayList<>();
-        Map<String, Object> keyValues = JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
-        keyValues.forEach(
-            (k, v) -> {
-                attributes.add(k);
-                attributes.add(v);
-            }
-        );
-        return attributes;
+    public static Map<String, Object> attributesToMap(String attrStr) throws JsonProcessingException {
+        return JacksonDefaultMapper.OBJECT_MAPPER.readValue(attrStr, Map.class);
     }
 
     /**
@@ -52,11 +42,12 @@ public class OriginalEntityUtils {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
                 JacksonDefaultMapper.OBJECT_MAPPER.readValue(orgStr,
-                    JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RawOriginalEntity.class));
+                    JacksonDefaultMapper.OBJECT_MAPPER.getTypeFactory()
+                        .constructParametricType(List.class, RawOriginalEntity.class));
 
-            return rawOriginalEntities.stream().map(entity -> {
-                return RawOriginalEntity.toOriginalEntity(metaManager, entity);
-            }).collect(Collectors.toList());
+            return rawOriginalEntities.stream().map(entity ->
+                RawOriginalEntity.toOriginalEntity(metaManager, entity)
+            ).collect(Collectors.toList());
         } catch (Exception e) {
             throw e;
         }
@@ -92,24 +83,24 @@ public class OriginalEntityUtils {
         private long tx;
         private long commitid;
         private long entityId;
-        private Object[] attributes;
+        private Map<String, Object> attributes;
         private long maintainid;
 
         public static OriginalEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
             Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId(), "");
             return entityClassOp.map(entityClass -> OriginalEntity.Builder
                 .anOriginalEntity()
-                .withDeleted(rawOriginalEntity.isDeleted())
-                .withOp(rawOriginalEntity.getOp())
-                .withVersion(rawOriginalEntity.getVersion())
-                .withOqsMajor(rawOriginalEntity.getOqsMajor())
-                .withId(rawOriginalEntity.getId())
-                .withCreateTime(rawOriginalEntity.getCreateTime())
-                .withUpdateTime(rawOriginalEntity.getUpdateTime())
-                .withTx(rawOriginalEntity.getTx())
-                .withCommitid(rawOriginalEntity.getCommitid())
-                .withEntityClass(entityClass)
-                .withAttributes(Arrays.asList(rawOriginalEntity.getAttributes()))
+                    .withDeleted(rawOriginalEntity.isDeleted())
+                    .withOp(rawOriginalEntity.getOp())
+                    .withVersion(rawOriginalEntity.getVersion())
+                    .withOqsMajor(rawOriginalEntity.getOqsMajor())
+                    .withId(rawOriginalEntity.getId())
+                    .withCreateTime(rawOriginalEntity.getCreateTime())
+                    .withUpdateTime(rawOriginalEntity.getUpdateTime())
+                    .withTx(rawOriginalEntity.getTx())
+                    .withCommitid(rawOriginalEntity.getCommitid())
+                    .withEntityClass(entityClass)
+                    .withAttributes(rawOriginalEntity.getAttributes())
                 .withMaintainid(rawOriginalEntity.getMaintainid())
                 .build())
                 .orElse(null);
@@ -174,11 +165,11 @@ public class OriginalEntityUtils {
             this.id = id;
         }
 
-        public Object[] getAttributes() {
+        public Map<String, Object> getAttributes() {
             return attributes;
         }
 
-        public void setAttributes(Object[] attributes) {
+        public void setAttributes(Map<String, Object> attributes) {
             this.attributes = attributes;
         }
 

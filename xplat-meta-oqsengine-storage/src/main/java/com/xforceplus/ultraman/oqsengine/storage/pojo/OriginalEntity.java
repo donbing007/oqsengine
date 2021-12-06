@@ -5,13 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import java.io.Serializable;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,7 +23,7 @@ import java.util.Objects;
  */
 public class OriginalEntity implements Serializable, Cloneable, Comparable<OriginalEntity> {
     private static final IEntityClass ANY_ENTITYCLASS = AnyEntityClass.getInstance();
-    private static final Object[] EMTPY_ATTRIBUTES = new Object[0];
+    private static final Map<String, Object> EMTPY_ATTRIBUTES = Collections.emptyMap();
 
     private boolean deleted;
     private int op;
@@ -40,7 +35,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     private long tx;
     private long commitid;
     private IEntityClass entityClass;
-    private Object[] attributes;
+    private Map<String, Object> attributes;
     private long maintainid;
 
     /**
@@ -101,7 +96,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         return entityClass;
     }
 
-    public Object[] getAttributes() {
+    public Map<String, Object> getAttributes() {
         return attributes;
     }
 
@@ -149,7 +144,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         this.maintainid = maintainid;
     }
 
-    public void setAttributes(Object[] attributes) {
+    public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
     }
 
@@ -157,18 +152,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         return maintainid;
     }
 
-    /**
-     * 列出所有属性.
-     *
-     * @return 属性集合.
-     */
-    public Collection<Map.Entry<String, Object>> listAttributes() {
-        final int space = 2;
-        List<Map.Entry<String, Object>> attributeList = new ArrayList<>(attributes.length / space);
-        for (int i = 0; i < attributes.length; i += space) {
-            attributeList.add(new AbstractMap.SimpleEntry(attributes[i], attributes[i + 1]));
-        }
-        return attributeList;
+    public int attributeSize() {
+        return this.attributes.size();
     }
 
     @Override
@@ -176,43 +161,25 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         if (this == o) {
             return true;
         }
-        if (!(o instanceof OriginalEntity)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         OriginalEntity that = (OriginalEntity) o;
-        return isDeleted() == that.isDeleted()
-            && getOp() == that.getOp()
-            && getVersion() == that.getVersion()
-            && getOqsMajor() == that.getOqsMajor()
-            && getId() == that.getId()
-            && getCreateTime() == that.getCreateTime()
-            && getUpdateTime() == that.getUpdateTime()
-            && getTx() == that.getTx()
-            && getCommitid() == that.getCommitid()
-            && Objects.equals(getEntityClass(), that.getEntityClass())
-            && Arrays.equals(getAttributes(), that.getAttributes());
+        return deleted == that.deleted && op == that.op && version == that.version && oqsMajor == that.oqsMajor
+            && id == that.id && createTime == that.createTime && updateTime == that.updateTime && tx == that.tx
+            && commitid == that.commitid && maintainid == that.maintainid && Objects.equals(entityClass,
+            that.entityClass) && Objects.equals(attributes, that.attributes);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(
-            isDeleted(),
-            getOp(),
-            getVersion(),
-            getOqsMajor(),
-            getId(),
-            getCreateTime(),
-            getUpdateTime(),
-            getTx(),
-            getCommitid(),
-            getEntityClass());
-        result = 31 * result + Arrays.hashCode(getAttributes());
-        return result;
+        return Objects.hash(deleted, op, version, oqsMajor, id, createTime, updateTime, tx, commitid, entityClass,
+            attributes, maintainid);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("OriginalEntity{");
+        final StringBuilder sb = new StringBuilder("OriginalEntity{");
         sb.append("deleted=").append(deleted);
         sb.append(", op=").append(op);
         sb.append(", version=").append(version);
@@ -223,7 +190,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         sb.append(", tx=").append(tx);
         sb.append(", commitid=").append(commitid);
         sb.append(", entityClass=").append(entityClass);
-        sb.append(", attributes=").append(attributes == null ? "null" : Arrays.toString(attributes));
+        sb.append(", attributes=").append(attributes);
+        sb.append(", maintainid=").append(maintainid);
         sb.append('}');
         return sb.toString();
     }
@@ -233,7 +201,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         return OriginalEntity.Builder.anOriginalEntity()
             .withId(id)
             .withEntityClass(entityClass)
-            .withAttributes(Arrays.asList(attributes))
+            .withAttributes(new HashMap<>(attributes))
             .withOqsMajor(oqsMajor)
             .withDeleted(deleted)
             .withTx(tx)
@@ -269,12 +237,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         private long tx;
         private long commitid;
         private IEntityClass entityClass = ANY_ENTITYCLASS;
-        private Collection<Object> attributes = Collections.emptyList();
+        private Map<String, Object> attributes = Collections.emptyMap();
         private long maintainid;
-
-        private Builder() {
-            attributes = new LinkedList();
-        }
 
         public static Builder anOriginalEntity() {
             return new Builder();
@@ -338,9 +302,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         /**
          * 属性集合.
          */
-        public Builder withAttributes(Collection<Object> attributes) {
-            this.attributes.clear();
-            this.attributes.addAll(attributes);
+        public Builder withAttributes(Map<String, Object> attributes) {
+            this.attributes = attributes;
             return this;
         }
 
@@ -348,8 +311,10 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
          * 属性.
          */
         public Builder withAttribute(String key, Object value) {
-            this.attributes.add(key);
-            this.attributes.add(value);
+            if (Collections.emptyMap().getClass().equals(this.attributes.getClass())) {
+                this.attributes = new HashMap<>();
+            }
+            this.attributes.put(key, value);
             return this;
         }
 
@@ -366,17 +331,9 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             originalEntity.entityClass = this.entityClass;
             originalEntity.op = this.op;
             originalEntity.id = this.id;
-            originalEntity.attributes = this.attributes.toArray();
+            originalEntity.attributes = this.attributes;
             originalEntity.version = this.version;
             originalEntity.tx = this.tx;
-
-            // 预期 attributes一定是偶数的长度,[key,value,key,valye...]方式储存.
-            final int space = 2;
-            // 必须是偶数.
-            if (this.attributes.size() % space != 0) {
-                throw new IllegalArgumentException(
-                    String.format("Incomplete attributes.[%d].", originalEntity.getId()));
-            }
 
             return originalEntity;
         }
