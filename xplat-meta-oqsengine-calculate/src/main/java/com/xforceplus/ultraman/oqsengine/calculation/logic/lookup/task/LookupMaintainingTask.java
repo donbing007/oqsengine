@@ -52,6 +52,20 @@ public class LookupMaintainingTask extends AbstractTask {
     }
 
     @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("LookupMaintainingTask{");
+        sb.append("targetClassRef=").append(targetClassRef);
+        sb.append(", lookupClassRef=").append(lookupClassRef);
+        sb.append(", lookupFieldId=").append(lookupFieldId);
+        sb.append(", targetEntityId=").append(targetEntityId);
+        sb.append(", targetFieldId=").append(targetFieldId);
+        sb.append(", lastStartLookupEntityId=").append(lastStartLookupEntityId);
+        sb.append(", maxSize=").append(maxSize);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
     public Class runnerType() {
         return LookupMaintainingTaskRunner.class;
     }

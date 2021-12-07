@@ -228,7 +228,11 @@ public class LookupCalculationLogic implements CalculationLogic {
              * 有可能会使用一个已经被关闭的事务,另启一个线程保证新开启事务.
              */
             taskExecutor.submit(() -> {
-                logger.info("增加新的事务外处理任务.");
+
+                if (logger.isDebugEnabled()) {
+                    logger.info("Added a Lookup maintenance asynchronous task.{}", lookupMaintainingTask);
+                }
+
                 coordinator.addTask(lookupMaintainingTask);
             });
         });
