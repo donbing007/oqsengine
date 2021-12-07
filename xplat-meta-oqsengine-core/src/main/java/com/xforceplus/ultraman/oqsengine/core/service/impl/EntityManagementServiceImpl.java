@@ -876,10 +876,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     // 只允许静态字段进入写事务.
     private void filter(IEntity entity) {
-        entity.entityValue().filter(v ->
-            v.getField().calculationType() == CalculationType.STATIC
-                || v.getField().calculationType() == CalculationType.LOOKUP
-        );
+        if (entity.entityValue() != null) {
+            entity.entityValue().filter(v ->
+                v.getField().calculationType() == CalculationType.STATIC
+                    || v.getField().calculationType() == CalculationType.LOOKUP
+            );
+        }
     }
 
 }
