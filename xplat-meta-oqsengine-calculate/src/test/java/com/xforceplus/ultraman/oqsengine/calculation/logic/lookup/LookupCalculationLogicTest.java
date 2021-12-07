@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -42,12 +43,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -63,6 +71,8 @@ import org.slf4j.LoggerFactory;
 public class LookupCalculationLogicTest {
 
     final Logger logger = LoggerFactory.getLogger(LookupCalculationLogicTest.class);
+
+    private static ExecutorService TASK_POOL;
 
     private long targetClassId = Long.MAX_VALUE;
     private long strongLookupClassId = Long.MAX_VALUE - 1;
@@ -141,6 +151,24 @@ public class LookupCalculationLogicTest {
 
             ).build()
         ).build();
+
+    /**
+     * 全局初始化.
+     */
+    @BeforeAll
+    public static void beforeAll() throws Exception {
+        TASK_POOL = new ThreadPoolExecutor(3, 3,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(1000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @AfterAll
+    public static void afterAll() throws Exception {
+        ExecutorHelper.shutdownAndAwaitTermination(TASK_POOL);
+    }
 
     /**
      * 初始化.
@@ -284,6 +312,7 @@ public class LookupCalculationLogicTest {
 
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withTransaction(tx)
+            .withTaskExecutorService(TASK_POOL)
             .withTaskCoordinator(coordinator)
             .build();
 
@@ -331,7 +360,17 @@ public class LookupCalculationLogicTest {
 
         tx.commit();
 
-        List<Task> tasks = coordinator.getTasks();
+        List<Task> tasks = null;
+        for (int i = 0; i < 10000; i++) {
+            tasks = coordinator.getTasks();
+            if (tasks.isEmpty()) {
+                logger.info("No asynchronous task found, wait 1 second and try again.[{}/{}]", i, 10000);
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000));
+            } else {
+                break;
+            }
+        }
+        Assertions.assertNotNull(tasks);
         Assertions.assertEquals(1, tasks.size());
 
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
@@ -345,7 +384,6 @@ public class LookupCalculationLogicTest {
         MockTaskCoordinator coordinator = new MockTaskCoordinator();
         MockTransaction tx = new MockTransaction();
         MockConditionsSelectStorage conditionsSelectStorage = new MockConditionsSelectStorage();
-
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
@@ -365,6 +403,7 @@ public class LookupCalculationLogicTest {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withTransaction(tx)
             .withTaskCoordinator(coordinator)
+            .withTaskExecutorService(TASK_POOL)
             .withConditionsSelectStorage(conditionsSelectStorage)
             .build();
         context.focusEntity(targetEntity, targetEntityClass);
@@ -403,7 +442,17 @@ public class LookupCalculationLogicTest {
 
         tx.commit();
 
-        List<Task> tasks = coordinator.getTasks();
+        List<Task> tasks = null;
+        for (int i = 1; i <= 10000; i++) {
+            tasks = coordinator.getTasks();
+            if (tasks.isEmpty()) {
+                logger.info("No asynchronous task found, wait 1 second and try again.[{}/{}]", i, 10000);
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000));
+            } else {
+                break;
+            }
+        }
+        Assertions.assertNotNull(tasks);
         Assertions.assertEquals(1, tasks.size());
 
         LookupMaintainingTask lookTask = (LookupMaintainingTask) tasks.get(0);
