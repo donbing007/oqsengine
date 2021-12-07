@@ -497,16 +497,16 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 unSyncCommitIdSize.set(size());
                 Optional<Long> commitId = getMin();
                 if (commitId.isPresent()) {
-                    unSyncCommitIdMin.set(getMin().get());
+                    unSyncCommitIdMin.set(commitId.get());
                 } else {
                     unSyncCommitIdMin.set(-1);
                 }
 
                 commitId = getMax();
                 if (commitId.isPresent()) {
-                    unSyncCommitIdMax.set(getMax().get());
+                    unSyncCommitIdMax.set(commitId.get());
                 } else {
-                    unSyncCommitIdMax.set(-1);
+                    unSyncCommitIdMax.set(0);
                 }
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);

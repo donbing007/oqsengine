@@ -193,7 +193,8 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity order = buildOrderEntity(user);
         operationResult = entityManagementService.build(order);
         // 由于公式计算触发了除0异常,所以这里是半成功.
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
         Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
@@ -207,7 +208,7 @@ public class CalculationTest extends AbstractContainerExtends {
     public void testLookupReplace() throws Exception {
         IEntity user0 = buildUserEntity();
         IEntity user1 = buildUserEntity();
-        entityManagementService.build(new IEntity[]{ user0, user1});
+        entityManagementService.build(new IEntity[] {user0, user1});
 
         IEntity order = buildOrderEntity(user0);
         entityManagementService.build(order);
