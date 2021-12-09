@@ -35,6 +35,20 @@ public interface CacheExecutor {
      */
     Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
+    /**
+     * 读取storageList原始信息，由外部进行EntityClass拼装.
+     *
+     * @param entityClassId 元信息标识.
+     * @param version 版本.
+     * @return 元信息.
+     * @throws JsonProcessingException JSON异常.
+     */
+    Map<Long, EntityClassStorage> read(long entityClassId, int version) throws JsonProcessingException;
+
+
+
+
+
 
     /**
      * 读取内存中应用下的配置信息.
@@ -90,6 +104,15 @@ public interface CacheExecutor {
      * @return 版本号.
      */
     int version(Long entityClassId);
+
+    /**
+     * 获取entityClassIds列表的版本号对应的版本信息.
+     * 小于0表示没有相应的元信息.
+     *
+     * @param entityClassIds 元信息版本号标识.
+     * @return 版本号.
+     */
+    Map<Long, Integer> versions(List<Long> entityClassIds, boolean isSilence);
 
     /**
      * 重置appId对应的版本信息.
