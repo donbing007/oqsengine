@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -28,6 +27,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Created by justin.xu on 11/2021.
+ *
+ * 本来考虑到本地缓存直接存储
+ * key : ID + VERSION + PROFILE
+ * val : EntityClass的结构，考虑到改动较大，
+ *
  *
  * @since 1.8
  */
@@ -97,10 +101,7 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
             entityClassStorage.getFields()
                 .forEach(
                     e -> {
-                        IEntityField entityField = cloneEntityField(e);
-                        if (null != entityField) {
-                            entityFields.add(entityField);
-                        }
+                        entityFields.add(cloneEntityField(e));
                     }
                 );
         }
@@ -113,10 +114,7 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
                 if (null != profileStorage.getEntityFieldList()) {
                     profileStorage.getEntityFieldList().forEach(
                         ps -> {
-                            IEntityField entityField = cloneEntityField(ps);
-                            if (null != entityField) {
-                                entityFields.add(entityField);
-                            }
+                            entityFields.add(cloneEntityField(ps));
                         }
                     );
                 }
@@ -174,18 +172,13 @@ public class DefaultEntityClassFormatHandler implements EntityClassFormatHandler
         return relationships;
     }
 
+    /**
+     *
+     * @param entityField
+     * @return
+     */
     private IEntityField cloneEntityField(IEntityField entityField) {
-        if (null != entityField) {
-            return EntityField.Builder.anEntityField()
-                .withName(entityField.name())
-                .withCnName(entityField.cnName())
-                .withFieldType(entityField.type())
-                .withDictId(entityField.dictId())
-                .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue())
-                .withConfig(entityField.config().clone())
-                .build();
-        }
-        return null;
+        //  由于EntityClass并不会提供set fx，所以直接采用引用赋值代替Clone.
+        return entityField;
     }
 }

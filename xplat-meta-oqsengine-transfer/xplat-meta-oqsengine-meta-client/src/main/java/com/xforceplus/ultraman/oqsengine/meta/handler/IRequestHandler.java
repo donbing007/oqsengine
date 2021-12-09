@@ -45,4 +45,9 @@ public interface IRequestHandler extends IObserverHandler<EntityClassSyncRespons
      */
     void ready();
 
+    /**
+     * 刷新一个watchElement的状态
+     */
+    boolean reset(WatchElement watchElement);
+
 }

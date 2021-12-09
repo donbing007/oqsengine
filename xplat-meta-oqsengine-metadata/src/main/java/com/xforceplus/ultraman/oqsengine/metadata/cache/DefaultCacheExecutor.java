@@ -466,6 +466,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     @Override
     public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
+        //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         int version = version(entityClassId);
         /*
          * 不存在时抛出异常

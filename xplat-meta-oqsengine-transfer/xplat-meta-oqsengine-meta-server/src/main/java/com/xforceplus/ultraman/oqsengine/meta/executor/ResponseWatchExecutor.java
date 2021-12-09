@@ -95,8 +95,8 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      * 当注册时，初始化observer的映射关系.
      */
     @Override
-    public void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement);
+    public void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement, boolean force) {
+        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement, true);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 

@@ -87,5 +87,14 @@ public class WatchElement {
             + '}';
     }
 
+    /**
+     * clone一个新对象
+     */
+    public WatchElement clone(boolean register) {
+        if (register) {
+            return new WatchElement(this.appId, this.env, this.version, ElementStatus.Register);
+        }
 
+        return new WatchElement(this.appId, this.env, this.version, this.status);
+    }
 }

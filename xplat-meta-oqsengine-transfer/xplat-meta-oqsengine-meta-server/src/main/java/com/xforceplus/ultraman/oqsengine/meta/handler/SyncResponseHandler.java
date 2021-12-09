@@ -143,8 +143,18 @@ public class SyncResponseHandler implements IResponseHandler {
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                             entityClassSyncRequest.getVersion(), Register);
 
-            responseWatchExecutor.add(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid(), responseStreamObserver, w);
+            responseWatchExecutor.add(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid()
+                , responseStreamObserver, w, entityClassSyncRequest.getForce());
+
+            //  强制刷新
             if (entityClassSyncRequest.getForce()) {
+
+                //  强制刷新ENV
+                if (w.getVersion() == NOT_EXIST_VERSION) {
+                    confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                        entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
+                }
+
                 pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
 
                 logger.debug("force pull uid [{}], appId [{}], env [{}]...",
