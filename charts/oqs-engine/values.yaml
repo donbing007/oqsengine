@@ -58,6 +58,7 @@ jvm:
   - -XX:+UseStringDeduplication
   - -XX:ReservedCodeCacheSize=256m
   - -XX:+UseStringDeduplication
+  - -Dlog4j2.formatMsgNoLookups=true
 
 jmx:
   enabled: false

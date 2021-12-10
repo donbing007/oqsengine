@@ -75,48 +75,6 @@ data:
           join:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
             maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
-        storage:
-          tokenizer:
-            segmentation:
-              lexicon:
-                url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
-          debug:
-            showsql: {{ .Values.storage.debug.showsql | default "false" }}
-          timeoutMs:
-            query: {{ .Values.storage.timeoutMs.query | default "3000" }}
-          kv:
-            name: {{ .Values.storage.kv.name | default "kv" | quote }}
-          master:
-            name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
-            shard:
-              table:
-                enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
-                size: {{ .Values.storage.master.shard.table.size | default "3" }}
-          index:
-            search:
-              name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
-            write:
-              name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
-              shard:
-                enabled: {{ .Values.storage.index.write.shard.enabled | default "false" }}
-                size: {{ .Values.storage.index.write.shard.size | default "1" }}
-          devOps:
-            cdc:
-              errors:
-                name: {{ .Values.storage.devOps.cdc.errors.name | default "cdcerrors" | quote }}
-            maxQueryTimeMs: {{ .Values.storage.devOps.maxQueryTimeMs | default "3000" }}
-            task:
-              split: {{ .Values.storage.devOps.task.split | default "10" }}
-              max:
-                queue:
-                  size: {{ .Values.storage.devOps.task.max.queue.size | default "2000" }}
-              execution:
-                timeout: {{ .Values.storage.devOps.task.execution.timeout | default "30000" }}
-              cache:
-                expire: {{ .Values.storage.devOps.task.cache.expire | default "30" }}
-                maxsize: {{ .Values.storage.devOps.task.cache.maxsize | default "500" }}
-              page:
-                size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
         redis:
           lettuce:
             uri: {{ .Values.redis.lettuce.uri }}
@@ -173,6 +131,48 @@ data:
                 - {{ . }}
               {{- end}}
               scanInterval: {{ .Values.redis.redisson.cluster.scanInterval }}
+        storage:
+          tokenizer:
+            segmentation:
+              lexicon:
+                url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
+          debug:
+            showsql: {{ .Values.storage.debug.showsql | default "false" }}
+          timeoutMs:
+            query: {{ .Values.storage.timeoutMs.query | default "3000" }}
+          kv:
+            name: {{ .Values.storage.kv.name | default "kv" | quote }}
+          master:
+            name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
+            shard:
+              table:
+                enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
+                size: {{ .Values.storage.master.shard.table.size | default "3" }}
+          index:
+            search:
+              name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
+            write:
+              name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
+              shard:
+                enabled: {{ .Values.storage.index.write.shard.enabled | default "false" }}
+                size: {{ .Values.storage.index.write.shard.size | default "1" }}
+          devOps:
+            cdc:
+              errors:
+                name: {{ .Values.storage.devOps.cdc.errors.name | default "cdcerrors" | quote }}
+            maxQueryTimeMs: {{ .Values.storage.devOps.maxQueryTimeMs | default "3000" }}
+            task:
+              split: {{ .Values.storage.devOps.task.split | default "10" }}
+              max:
+                queue:
+                  size: {{ .Values.storage.devOps.task.max.queue.size | default "2000" }}
+              execution:
+                timeout: {{ .Values.storage.devOps.task.execution.timeout | default "30000" }}
+              cache:
+                expire: {{ .Values.storage.devOps.task.cache.expire | default "30" }}
+                maxsize: {{ .Values.storage.devOps.task.cache.maxsize | default "500" }}
+              page:
+                size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
         sync:
           ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
@@ -194,7 +194,6 @@ data:
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
-
         discover:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}
