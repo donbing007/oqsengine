@@ -75,6 +75,7 @@ data:
           join:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
             maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
+
         redis:
           lettuce:
             uri: {{ .Values.redis.lettuce.uri }}
