@@ -147,32 +147,32 @@ data:
             masterConnectionPoolSize: {{ .Values.redis.redisson.masterConnectionPoolSize }}
             readMode: {{ .Values.redis.redisson.readMode }}
             singel:
-              enabled: {{ .Values.redis.redisson.enabled }}
-              address: {{ .Values.redis.redisson.address }}
-              subscriptionConnectionPoolSize: {{ .Values.redis.redisson.subscriptionConnectionPoolSize }}
-              connectionMinimumIdleSize: {{ .Values.redis.redisson.connectionMinimumIdleSize }}
-              connectionPoolSize: {{ .Values.redis.redisson.connectionPoolSize }}
+              enabled: {{ .Values.redis.redisson.singel.enabled }}
+              address: {{ .Values.redis.redisson.singel.address }}
+              subscriptionConnectionPoolSize: {{ .Values.redis.redisson.singel.subscriptionConnectionPoolSize }}
+              connectionMinimumIdleSize: {{ .Values.redis.redisson.singel.connectionMinimumIdleSize }}
+              connectionPoolSize: {{ .Values.redis.redisson.singel.connectionPoolSize }}
             sentine:
-              enabled: {{ .Values.redis.redisson.enabled }}
+              enabled: {{ .Values.redis.redisson.sentine.enabled }}
               sentinelAddresses:
                 {{- range .Values.redis.redisson.sentine.sentinelAddresses }}
                 - {{ . }}
                 {{- end}}
-              masterName: {{ .Values.redis.redisson. }}
+              masterName: {{ .Values.redis.redisson.sentine.masterName }}
             masterSlave:
-              enabled: {{ .Values.redis.redisson. }}
+              enabled: {{ .Values.redis.redisson.masterSlave.enabled }}
               slaveAddresses:
               {{- range .Values.redis.redisson.masterSlave.slaveAddresses }}
                 - {{ . }}
               {{- end}}
-              masterAddress: {{ .Values.redis.redisson. }}
+              masterAddress: {{ .Values.redis.redisson.masterSlave.masterAddress }}
             cluster:
-              enabled: {{ .Values.redis.redisson. }}
+              enabled: {{ .Values.redis.redisson.cluster.enabled }}
               nodeAddresses:
               {{- range .Values.redis.redisson.cluster.nodeAddresses }}
                 - {{ . }}
               {{- end}}
-              scanInterval: {{ .Values.redis.redisson. }}
+              scanInterval: {{ .Values.redis.redisson.cluster.scanInterval }}
         sync:
           ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
