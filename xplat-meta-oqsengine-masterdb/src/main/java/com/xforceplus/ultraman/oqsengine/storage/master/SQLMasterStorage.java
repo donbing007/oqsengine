@@ -64,7 +64,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import javafx.util.Pair;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -392,7 +391,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<Pair<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         while (iter.hasNext()) {
             checkId(iter.next().getKey());
         }
