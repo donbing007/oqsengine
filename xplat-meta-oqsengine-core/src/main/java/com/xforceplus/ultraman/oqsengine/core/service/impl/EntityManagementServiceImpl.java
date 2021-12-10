@@ -21,6 +21,8 @@ import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
+import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -120,6 +122,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource(name = "taskThreadPool")
     public ExecutorService taskThreadPool;
+
+    @Resource
+    private ResourceLocker resourceLocker;
+
+    @Resource
+    private MultiResourceLocker multiResourceLocker;
 
     /**
      * 字段校验器工厂.
@@ -832,6 +840,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withBizIDGenerator(this.bizIDGenerator)
             .withTransaction(tx)
             .withConditionsSelectStorage(this.combinedSelectStorage)
+            .withResourceLocker(this.resourceLocker)
+            .withMultiResourceLocker(this.multiResourceLocker)
             .build();
     }
 

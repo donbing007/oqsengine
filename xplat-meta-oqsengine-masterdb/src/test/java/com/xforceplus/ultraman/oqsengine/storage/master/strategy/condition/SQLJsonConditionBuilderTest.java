@@ -201,7 +201,7 @@ public class SQLJsonConditionBuilderTest {
                     ConditionOperator.LIKE,
                     new StringValue(segmentationStringField, "-这是一个测试")
                 ),
-                "attribute->>'$.F4S' LIKE \"%这是%一个%测试%\""
+                "attribute->>'$.F4S' LIKE \"%-%这是%一个%测试%\""
             )
         );
     }

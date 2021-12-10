@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedisConfiguration;
-import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceRedisConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedissonRedisConfiguration;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
@@ -14,7 +14,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -60,52 +59,25 @@ public class CommonConfiguration {
      * @param configuration lettuce 配置.
      * @return redisClient 实例.
      */
-    @Bean(value = {"redisClientState", "redisClient"}, destroyMethod = "shutdown")
-    public RedisClient redisClientState(RedisConfiguration configuration) {
-        RedisClient redisClient = RedisClient.create(configuration.uriWithStateDb());
+    @Bean(
+        value = {"redisClient", "redisClientState", "redisClientChangeLog", "redisClientCacheEvent"},
+        destroyMethod = "shutdown"
+    )
+    public RedisClient lettuceClient(LettuceRedisConfiguration configuration) {
+        if (configuration.isCluster()) {
+            throw new UnsupportedOperationException("Cluster mode is not supported.");
 
-        redisClient.setOptions(ClientOptions.builder()
-            .autoReconnect(true)
-            .requestQueueSize(configuration.getMaxReqQueue())
-            .build()
-        );
-        return redisClient;
-    }
-
-    /**
-     * change log 使用redis client构造.
-     *
-     * @param configuration lettuce 配置.
-     * @return redisClient 实例.
-     */
-    @Bean(value = "redisClientChangeLog", destroyMethod = "shutdown")
-    public RedisClient redisClientChangeLog(RedisConfiguration configuration) {
-        RedisClient redisClient = RedisClient.create(configuration.uriWithChangeLogDb());
-
-        redisClient.setOptions(ClientOptions.builder()
-            .autoReconnect(true)
-            .requestQueueSize(configuration.getMaxReqQueue())
-            .build()
-        );
-        return redisClient;
-    }
-
-    /**
-     * 事件使用的redis客户端实例.
-     *
-     * @param configuration lettuce 配置.
-     * @return redisClient 实例.
-     */
-    @Bean(value = "redisClientCacheEvent", destroyMethod = "shutdown")
-    public RedisClient redisClientCacheEvent(RedisConfiguration configuration) {
-        RedisClient redisClient = RedisClient.create(configuration.uriWithCacheEventDb());
-
-        redisClient.setOptions(ClientOptions.builder()
-            .autoReconnect(true)
-            .requestQueueSize(configuration.getMaxReqQueue())
-            .build()
-        );
-        return redisClient;
+        } else {
+            RedisClient redisClient = RedisClient.create(configuration.getUri());
+            redisClient.setOptions(ClientOptions.builder()
+                .autoReconnect(true)
+                .disconnectedBehavior(configuration.getDisconnectedBehavior())
+                .requestQueueSize(configuration.getRequestQueueSize())
+                .pingBeforeActivateConnection(configuration.isPingBeforeActivateConnection())
+                .suspendReconnectOnProtocolFailure(configuration.isSuspendReconnectOnProtocolFailure())
+                .build());
+            return redisClient;
+        }
     }
 
     /**
@@ -114,35 +86,93 @@ public class CommonConfiguration {
      * @param configuration redis配置.
      * @return 实例.
      */
-    @Bean(value = "redissonClientAutoId", destroyMethod = "shutdown")
-    public RedissonClient redissonClientAutoId(RedisConfiguration configuration) {
-        Config config = new Config();
-        config.useSingleServer()
-            .setAddress(configuration.uriWithAutoIdDb());
-        String url = configuration.uriWithAutoIdDb();
-        String password = RedisConfigUtil.getRedisUrlPassword(url);
-        if (!StringUtils.isBlank(password)) {
-            config.useSingleServer().setPassword(password);
-        }
-        return Redisson.create(config);
-    }
+    @Bean(value = {"redissonClient", "redissonClientAutoId"}, destroyMethod = "shutdown")
+    public RedissonClient redissonClient(RedissonRedisConfiguration configuration) {
+        Config config = new Config()
+            .setThreads(configuration.getThreads())
+            .setNettyThreads(configuration.getNettyThreads())
+            .setKeepPubSubOrder(configuration.isKeepPubSubOrder())
+            .setLockWatchdogTimeout(configuration.getLockWatchdogTimeout());
 
-    /**
-     * 锁使用的redisson实现.
-     *
-     * @param configuration redis配置.
-     * @return 实例.
-     */
-    @Bean(value = "redissonClientLocker", destroyMethod = "shutdown")
-    public RedissonClient redissonClientLocker(RedisConfiguration configuration) {
-        Config config = new Config();
-        config.useSingleServer()
-            .setAddress(configuration.uriWithLockerDb());
-        String url = configuration.uriWithLockerDb();
-        String password = RedisConfigUtil.getRedisUrlPassword(url);
-        if (!StringUtils.isBlank(password)) {
-            config.useSingleServer().setPassword(password);
+        if (configuration.getSingel().isEnabled()) {
+            config.useSingleServer()
+                .setDatabase(configuration.getDatabase())
+                .setRetryAttempts(configuration.getRetryAttempts())
+                .setRetryInterval(configuration.getRetryInterval())
+                .setDnsMonitoringInterval(configuration.getDnsMonitoringInterval())
+                .setIdleConnectionTimeout(configuration.getIdleConnectionTimeout())
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setTimeout(configuration.getTimeout())
+                .setPassword(configuration.getPassword())
+                .setClientName(configuration.getClientName())
+                .setAddress(configuration.getSingel().getAddress())
+                .setSubscriptionConnectionPoolSize(configuration.getSubscriptionConnectionPoolSize())
+                .setConnectionMinimumIdleSize(configuration.getSingel().getConnectionMinimumIdleSize())
+                .setConnectionPoolSize(configuration.getSingel().getConnectionPoolSize());
+
+        } else if (configuration.getSentine().isEnabled()) {
+            config.useSentinelServers()
+                .setDatabase(configuration.getDatabase())
+                .setRetryAttempts(configuration.getRetryAttempts())
+                .setRetryInterval(configuration.getRetryInterval())
+                .setDnsMonitoringInterval(configuration.getDnsMonitoringInterval())
+                .setIdleConnectionTimeout(configuration.getIdleConnectionTimeout())
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setTimeout(configuration.getTimeout())
+                .setPassword(configuration.getPassword())
+                .setClientName(configuration.getClientName())
+                .setSubscriptionConnectionPoolSize(configuration.getSubscriptionConnectionPoolSize())
+                .setMasterName(configuration.getSentine().getMasterName())
+                .setReadMode(configuration.getReadMode())
+                .addSentinelAddress(configuration.getSentine().getSentinelAddresses())
+                .setSlaveConnectionMinimumIdleSize(configuration.getSlaveConnectionMinimumIdleSize())
+                .setSlaveConnectionPoolSize(configuration.getSlaveConnectionPoolSize())
+                .setMasterConnectionMinimumIdleSize(configuration.getMasterConnectionMinimumIdleSize())
+                .setMasterConnectionPoolSize(configuration.getMasterConnectionPoolSize());
+
+        } else if (configuration.getMasterSlave().isEnabled()) {
+            config.useMasterSlaveServers()
+                .setDatabase(configuration.getDatabase())
+                .setRetryAttempts(configuration.getRetryAttempts())
+                .setRetryInterval(configuration.getRetryInterval())
+                .setDnsMonitoringInterval(configuration.getDnsMonitoringInterval())
+                .setIdleConnectionTimeout(configuration.getIdleConnectionTimeout())
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setTimeout(configuration.getTimeout())
+                .setPassword(configuration.getPassword())
+                .setClientName(configuration.getClientName())
+                .setSubscriptionConnectionPoolSize(configuration.getSubscriptionConnectionPoolSize())
+                .setReadMode(configuration.getReadMode())
+                .setSlaveConnectionMinimumIdleSize(configuration.getSlaveConnectionMinimumIdleSize())
+                .setSlaveConnectionPoolSize(configuration.getSlaveConnectionPoolSize())
+                .setMasterConnectionMinimumIdleSize(configuration.getMasterConnectionMinimumIdleSize())
+                .setMasterConnectionPoolSize(configuration.getMasterConnectionPoolSize())
+                .setMasterAddress(configuration.getMasterSlave().getMasterAddress())
+                .addSlaveAddress(configuration.getMasterSlave().getSlaveAddresses());
+
+        } else if (configuration.getCluster().isEnabled()) {
+            config.useClusterServers()
+                .setRetryAttempts(configuration.getRetryAttempts())
+                .setRetryInterval(configuration.getRetryInterval())
+                .setDnsMonitoringInterval(configuration.getDnsMonitoringInterval())
+                .setIdleConnectionTimeout(configuration.getIdleConnectionTimeout())
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setTimeout(configuration.getTimeout())
+                .setPassword(configuration.getPassword())
+                .setClientName(configuration.getClientName())
+                .setSubscriptionConnectionPoolSize(configuration.getSubscriptionConnectionPoolSize())
+                .setReadMode(configuration.getReadMode())
+                .setSlaveConnectionMinimumIdleSize(configuration.getSlaveConnectionMinimumIdleSize())
+                .setSlaveConnectionPoolSize(configuration.getSlaveConnectionPoolSize())
+                .setMasterConnectionMinimumIdleSize(configuration.getMasterConnectionMinimumIdleSize())
+                .setMasterConnectionPoolSize(configuration.getMasterConnectionPoolSize())
+                .setScanInterval(configuration.getCluster().getScanInterval())
+                .addNodeAddress(configuration.getCluster().getNodeAddresses());
+
+        } else {
+            throw new IllegalStateException("Invalid Redisson connection mode configuration.");
         }
+
         return Redisson.create(config);
     }
 

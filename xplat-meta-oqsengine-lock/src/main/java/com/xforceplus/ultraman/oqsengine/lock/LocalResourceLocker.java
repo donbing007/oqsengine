@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.lock;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 只能用于同一JVM进程的KEY资源锁.支持重入.
@@ -49,7 +48,7 @@ public class LocalResourceLocker extends AbstractResourceLocker {
     }
 
     @Override
-    protected Optional<LockInfo> isLocked(String key) {
+    protected Optional<LockInfo> getLockInfo(String key) {
         return Optional.ofNullable(lockPool.get(key));
     }
 

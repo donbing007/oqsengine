@@ -118,8 +118,61 @@ data:
               page:
                 size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
         redis:
-          uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
-          maxReqQueue: {{ .Values.redis.maxReqQueue | default "2147483647" }}
+          lettuce:
+            uri: {{ .Values.redis.lettuce.uri }}
+            cluster: {{ .Values.redis.lettuce.cluster }}
+            pingBeforeActivateConnection: {{ .Values.redis.lettuce.pingBeforeActivateConnection }}
+            maxReqQueue: {{ .Values.redis.lettuce.maxReqQueue }}
+          redisson:
+            threads: {{ .Values.redis.redisson.threads }}
+            nettyThreads: {{ .Values.redis.redisson.nettyThreads }}
+            lockWatchdogTimeout: {{ .Values.redis.redisson.lockWatchdogTimeout }}
+            keepPubSubOrder: {{ .Values.redis.redisson.keepPubSubOrder }}
+            idleConnectionTimeout: {{ .Values.redis.redisson.idleConnectionTimeout }}
+            connectTimeout: {{ .Values.redis.redisson.connectTimeout }}
+            timeout: {{ .Values.redis.redisson.timeout }}
+            retryAttempts: {{ .Values.redis.redisson.retryAttempts }}
+            retryInterval: {{ .Values.redis.redisson.retryInterval }}
+            password: {{ .Values.redis.redisson.password }}
+            subscriptionsPerConnection: {{ .Values.redis.redisson.subscriptionsPerConnection }}
+            clientName: {{ .Values.redis.redisson.clientName }}
+            subscriptionConnectionMinimumIdleSize: {{ .Values.redis.redisson.subscriptionConnectionMinimumIdleSize }}
+            database: {{ .Values.redis.redisson.database }}
+            dnsMonitoringInterval: {{ .Values.redis.redisson.dnsMonitoringInterval }}
+            slaveSubscriptionConnectionMinimumIdleSize: {{ .Values.redis.redisson.slaveSubscriptionConnectionMinimumIdleSize }}
+            slaveSubscriptionConnectionPoolSize: {{ .Values.redis.redisson.slaveSubscriptionConnectionPoolSize }}
+            slaveConnectionMinimumIdleSize: {{ .Values.redis.redisson.slaveConnectionMinimumIdleSize }}
+            slaveConnectionPoolSize: {{ .Values.redis.redisson.slaveConnectionPoolSize }}
+            masterConnectionMinimumIdleSize: {{ .Values.redis.redisson.masterConnectionMinimumIdleSize }}
+            masterConnectionPoolSize: {{ .Values.redis.redisson.masterConnectionPoolSize }}
+            readMode: {{ .Values.redis.redisson.readMode }}
+            singel:
+              enabled: {{ .Values.redis.redisson.enabled }}
+              address: {{ .Values.redis.redisson.address }}
+              subscriptionConnectionPoolSize: {{ .Values.redis.redisson.subscriptionConnectionPoolSize }}
+              connectionMinimumIdleSize: {{ .Values.redis.redisson.connectionMinimumIdleSize }}
+              connectionPoolSize: {{ .Values.redis.redisson.connectionPoolSize }}
+            sentine:
+              enabled: {{ .Values.redis.redisson.enabled }}
+              sentinelAddresses:
+                {{- range .Values.redis.redisson.sentine.sentinelAddresses }}
+                - {{ . }}
+                {{- end}}
+              masterName: {{ .Values.redis.redisson. }}
+            masterSlave:
+              enabled: {{ .Values.redis.redisson. }}
+              slaveAddresses:
+              {{- range .Values.redis.redisson.masterSlave.slaveAddresses }}
+                - {{ . }}
+              {{- end}}
+              masterAddress: {{ .Values.redis.redisson. }}
+            cluster:
+              enabled: {{ .Values.redis.redisson. }}
+              nodeAddresses:
+              {{- range .Values.redis.redisson.cluster.nodeAddresses }}
+                - {{ . }}
+              {{- end}}
+              scanInterval: {{ .Values.redis.redisson. }}
         sync:
           ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}

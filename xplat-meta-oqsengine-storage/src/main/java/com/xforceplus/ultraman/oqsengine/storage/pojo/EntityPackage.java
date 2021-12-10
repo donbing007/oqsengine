@@ -3,13 +3,12 @@ package com.xforceplus.ultraman.oqsengine.storage.pojo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javafx.util.Pair;
 
 /**
  * 多个Entity实例包裹.
@@ -25,9 +24,9 @@ public class EntityPackage implements Serializable {
     /**
      * 最大上限.
      */
-    private static int MAX_SIZE = 10000;
+    public static int MAX_SIZE = 10000;
 
-    private List<Map.Entry<IEntity, IEntityClass>> entities;
+    private List<Pair<IEntity, IEntityClass>> entities;
 
     /**
      * 构造新的package实例.
@@ -48,6 +47,20 @@ public class EntityPackage implements Serializable {
             return 0;
         } else {
             return entities.size();
+        }
+    }
+
+    /**
+     * 判断是否已经满.
+     * 持有的实例达到上限.
+     *
+     * @return true 达到上限, false 没有达到.
+     */
+    public boolean isFull() {
+        if (entities == null) {
+            return false;
+        } else {
+            return entities.size() == MAX_SIZE;
         }
     }
 
@@ -85,7 +98,7 @@ public class EntityPackage implements Serializable {
             throw new IllegalStateException(String.format("The maximum number of packages is %d.", MAX_SIZE));
         }
 
-        entities.add(new AbstractMap.SimpleEntry<>(entity, entityClass));
+        entities.add(new Pair<>(entity, entityClass));
 
         return this;
     }
@@ -96,7 +109,7 @@ public class EntityPackage implements Serializable {
      * @param index 从0开始的序号.
      * @return 实例.
      */
-    public Optional<Map.Entry<IEntity, IEntityClass>> get(int index) {
+    public Optional<Pair<IEntity, IEntityClass>> get(int index) {
         if (index > this.entities.size() - 1) {
             return Optional.empty();
         }
@@ -113,7 +126,7 @@ public class EntityPackage implements Serializable {
      *
      * @return 实例流.
      */
-    public Stream<Map.Entry<IEntity, IEntityClass>> stream() {
+    public Stream<Pair<IEntity, IEntityClass>> stream() {
         if (entities == null) {
 
             return Stream.empty();
@@ -129,17 +142,17 @@ public class EntityPackage implements Serializable {
      *
      * @return 实例迭代器.
      */
-    public Iterator<Map.Entry<IEntity, IEntityClass>> iterator() {
+    public Iterator<Pair<IEntity, IEntityClass>> iterator() {
         if (entities == null) {
 
-            return new Iterator<Map.Entry<IEntity, IEntityClass>>() {
+            return new Iterator<Pair<IEntity, IEntityClass>>() {
                 @Override
                 public boolean hasNext() {
                     return false;
                 }
 
                 @Override
-                public Map.Entry<IEntity, IEntityClass> next() {
+                public Pair<IEntity, IEntityClass> next() {
                     return null;
                 }
             };

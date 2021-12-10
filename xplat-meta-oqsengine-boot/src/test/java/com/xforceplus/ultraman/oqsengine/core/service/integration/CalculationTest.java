@@ -43,6 +43,10 @@ import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -355,6 +359,52 @@ public class CalculationTest extends AbstractContainerExtends {
         if (fail) {
             Assertions.fail("The number of transactions exceeded was not completed in the expected time.");
         }
+    }
+
+    /**
+     * 测试如下场景.
+     * 1 : N
+     * User对象  ->  Order对象.
+     * <br>
+     * 并发的创建某个User实例关联的Order对象实例最终判断User实例上的计算字段的正确性.
+     */
+    @Test
+    public void testBuildCalculationConcurrent() throws Exception {
+        IEntity user = buildUserEntity();
+        entityManagementService.build(user);
+
+        int size = 30;
+        long userId = user.id();
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(size);
+        Queue<IEntity> queue = new ConcurrentLinkedQueue();
+        for (int i = 0; i < size; i++) {
+            taskThreadPool.submit(() -> {
+                // 阻塞等待同时开始.
+                try {
+                    startLatch.await();
+                    entityManagementService.build(buildOrderEntity(user));
+
+                    Optional<IEntity> currentUserOp = entitySearchService.selectOne(
+                        userId, MockEntityClassDefine.USER_CLASS.ref());
+                    queue.add(currentUserOp.get());
+
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    return;
+                } finally {
+                    finishLatch.countDown();
+                }
+            });
+        }
+        startLatch.countDown();
+        finishLatch.await();
+
+        Assertions.assertEquals(size, queue.size());
+        long max = queue.stream()
+            .mapToLong(u -> u.entityValue().getValue("订单总数count").get().valueToLong()).max().getAsLong();
+        Assertions.assertEquals(size, max);
+
     }
 
     /**
