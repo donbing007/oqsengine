@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
     DataSourceAutoConfiguration.class,
     DataSourceTransactionManagerAutoConfiguration.class,
     HibernateJpaAutoConfiguration.class})
-@ComponentScan("com.xforceplus.ultraman.oqsengine.meta.config")
+@ComponentScan("com.xforceplus.ultraman.oqsengine")
 public class OqsengineBootApplication {
 
     public static void main(String[] args) throws Exception {
