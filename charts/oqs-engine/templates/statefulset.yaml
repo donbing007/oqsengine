@@ -37,8 +37,8 @@ spec:
         {{- range $k,$v := . }}
         - name: {{ $k }}
           value: {{ $v |quote }}
-        {{ - end }}
-        {{ - end }}
+        {{- end }}
+        {{- end }}
         command: [ "java" ]
         args:
           {{- if .Values.storage.debug.remote.enabled }}
