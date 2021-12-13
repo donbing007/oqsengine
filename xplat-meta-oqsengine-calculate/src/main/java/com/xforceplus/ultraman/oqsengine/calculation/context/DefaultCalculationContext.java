@@ -271,8 +271,12 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     @Override
     public Object clone() throws CloneNotSupportedException {
         DefaultCalculationContext newContext = new DefaultCalculationContext();
-        newContext.valueChanges = new HashMap<>(this.valueChanges);
-        newContext.entityCache = new HashMap<>(this.entityCache);
+        if (this.valueChanges != null) {
+            newContext.valueChanges = new HashMap<>(this.valueChanges);
+        }
+        if (this.entityCache != null) {
+            newContext.entityCache = new HashMap<>(this.entityCache);
+        }
         newContext.focusEntity = this.focusEntity;
         newContext.focusField = this.focusField;
         newContext.focusEntityClass = this.focusEntityClass;
