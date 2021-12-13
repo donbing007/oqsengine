@@ -11,7 +11,7 @@ server:
 
 logging:
   level:
-    root: info
+    root: debug
     io:
       lettuce: info
     com.xforceplus.ultraman.oqsengine.changelog: debug
@@ -88,7 +88,7 @@ redis:
   # sentinel: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
   # cluster: redis://127.0.0.1:6379/0?timeout=6000ms
   lettuce:
-    uri: "redis://127.0.0.1:6379/0?timeout=6000ms"
+    uri: "redis://8eSf4M97VLhP6hq8@127.0.0.1:6379/0?timeout=6000ms"
     cluster: false
     pingBeforeActivateConnection: true
     maxReqQueue: 10000
@@ -103,9 +103,9 @@ redis:
     timeout: 6000
     retryAttempts: 3
     retryInterval: 1500
-    password: null
+    password: 8eSf4M97VLhP6hq8
     subscriptionsPerConnection: 5
-    clientName: null
+    clientName:
     subscriptionConnectionMinimumIdleSize: 1
     database: 0
     dnsMonitoringInterval: -1
