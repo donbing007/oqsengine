@@ -649,6 +649,14 @@ public class CalculationTest extends AbstractContainerExtends {
                         ""
                     )
                 )
+            ).withEntityValue(
+                // 此值是为了防止空对象更新检查被触发.
+                EntityValue.build().addValue(
+                    new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    )
+                )
             ).build();
 
         operationResult = entityManagementService.replace(order);

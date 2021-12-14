@@ -66,7 +66,8 @@ public class LookupCalculationLogic implements CalculationLogic {
             非维护状态计算只会处理LookupValue类型的值.
              */
             if (!LookupValue.class.isInstance(lookupValue)) {
-                return Optional.empty();
+                // 保持原样.
+                return Optional.ofNullable(lookupValue);
             } else {
 
                 return doLookup(context, (LookupValue) lookupValue);
@@ -85,7 +86,8 @@ public class LookupCalculationLogic implements CalculationLogic {
             long lookUpFieldId = ((Lookup) focusField.config().getCalculation()).getFieldId();
             IValue nowTargetValue = sourceEntity.entityValue().getValue(lookUpFieldId).get();
             if (nowTargetValue.equals(nowLookupValue)) {
-                return Optional.empty();
+                // 保持原样.
+                return Optional.ofNullable(nowLookupValue);
             }
 
             LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
