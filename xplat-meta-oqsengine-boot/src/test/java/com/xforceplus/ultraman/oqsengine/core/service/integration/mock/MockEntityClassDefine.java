@@ -35,10 +35,6 @@ public class MockEntityClassDefine {
 
     public static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
     /**
-     * 关系标识的开始值,依次递减.
-     */
-    private static long baseRelationsId = Integer.MAX_VALUE;
-    /**
      * 类型标识的开始值,依次递减.
      */
     private static long baseClassId = Long.MAX_VALUE;
@@ -87,6 +83,9 @@ public class MockEntityClassDefine {
         lookupL2DecFieldId,
         l2LookupIdFieldId,
         l2LongFieldId,
+        l2DriveId,
+        l2OneToManyId,
+        l2OneToManyLookupId,
 
         // 用户名称标识
         userNameFieldId,
@@ -253,7 +252,7 @@ public class MockEntityClassDefine {
                     .withName("l2-long")
                     .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(DRIVCER_ID_FEILD_ID)
+                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
@@ -261,7 +260,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(DRIVCER_ID_FEILD_ID)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyId.ordinal())
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
@@ -270,9 +269,9 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(DRIVCER_ID_FEILD_ID)
+                                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                                 .withFieldType(FieldType.LONG)
-                                .withName("driver.id")
+                                .withName("l2-driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
@@ -281,7 +280,7 @@ public class MockEntityClassDefine {
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(DRIVCER_ID_FEILD_ID)
+                        .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
@@ -290,9 +289,9 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(DRIVCER_ID_FEILD_ID)
+                                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                                 .withFieldType(FieldType.LONG)
-                                .withName("driver.id")
+                                .withName("l2-driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
@@ -301,12 +300,22 @@ public class MockEntityClassDefine {
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 2)
-                        .withCode("l2-one-to-many")
+                        .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                        .withCode("l2-one-to-many-lookup")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withIdentity(false)
                         .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
                         .withLeftEntityClassId(l2EntityClassId)
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
@@ -337,7 +346,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 3)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyId.ordinal())
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
@@ -348,19 +357,6 @@ public class MockEntityClassDefine {
                         .withRightEntityClassId(L2_ENTITY_CLASS.id())
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
-                        .build(),
-                    Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 4)
-                        .withCode("l2-many-to-one")
-                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
-                        .withBelongToOwner(true)
-                        .withIdentity(false)
-                        .withLeftEntityClassId(L2_ENTITY_CLASS.id())
-                        .withLeftEntityClassCode(L2_ENTITY_CLASS.code())
-                        .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
-                        .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id, a) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -434,18 +430,52 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 5)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyLookupId.ordinal())
                         .withCode("l2-one-to-many-lookup")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withIdentity(false)
                         .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
+                        .withLeftEntityClassId(l2EntityClassId)
+                        .withLeftEntityClassCode("l2")
+                        .withRightEntityClassId(lookupEntityClassId)
+                        .withRightEntityClassLoader((id, a) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(LOOKUP_ENTITY_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                        .withCode("l2-many-to-one-lookup")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withBelongToOwner(true)
+                        .withIdentity(false)
+                        .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
                         .withLeftEntityClassId(lookupEntityClassId)
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build()
+
                 )
             ).build();
 
