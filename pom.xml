@@ -57,16 +57,15 @@
                         <include>**/*Tests.java</include>
                     </includes>
                     <argLine>
+                        -Xmx4096m -Xms4096m
                         -Dfile.encoding=UTF-8
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/../../allure-results</allure.results.directory>
-                        <junit.jupiter.extensions.autodetection.enabled>true
-                        </junit.jupiter.extensions.autodetection.enabled>
+                        <junit.jupiter.extensions.autodetection.enabled>true</junit.jupiter.extensions.autodetection.enabled>
                         <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                        <junit.jupiter.execution.parallel.config.strategy>dynamic
-                        </junit.jupiter.execution.parallel.config.strategy>
+                        <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
                     </systemPropertyVariables>
                 </configuration>
                 <dependencies>
@@ -443,7 +442,6 @@
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>
-        <argLine>-Xmx4096m -Xms4096m</argLine>
         <aspectj.version>1.9.1</aspectj.version>
         <allure.version>2.13.10</allure.version>
     </properties>
