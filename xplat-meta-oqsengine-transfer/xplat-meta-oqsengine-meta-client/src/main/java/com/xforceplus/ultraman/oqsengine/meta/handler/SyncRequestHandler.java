@@ -151,7 +151,7 @@ public class SyncRequestHandler implements IRequestHandler {
                 .setClientId(clientId)
                 .build();
 
-        requestWatchExecutor.add(v);
+        requestWatchExecutor.add(v, false);
 
         try {
             sendRequestWithALiveCheck(requestWatchExecutor.watcher(), entityClassSyncRequest);
@@ -279,6 +279,24 @@ public class SyncRequestHandler implements IRequestHandler {
     @Override
     public void ready() {
         requestWatchExecutor.active();
+    }
+
+
+    @Override
+    public boolean reset(WatchElement watchElement) {
+        WatchElement old = requestWatchExecutor.watcher().watches().get(watchElement.getAppId());
+        try {
+
+            watchElement.setStatus(WatchElement.ElementStatus.Register);
+
+            requestWatchExecutor.add(watchElement, true);
+
+            return sendRegister(requestWatchExecutor.watcher().clientId(), requestWatchExecutor.watcher().uid(), true, watchElement);
+        } catch (Exception e) {
+            requestWatchExecutor.add(old, true);
+        }
+
+        return false;
     }
 
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {

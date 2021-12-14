@@ -20,7 +20,7 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
     /**
      * 新增一个客户端及关注元素,如果当前的uid为一个新的uid，server将持有这个observer.
      */
-    void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
+    void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement, boolean force);
 
     /**
      * 更新watchElement.

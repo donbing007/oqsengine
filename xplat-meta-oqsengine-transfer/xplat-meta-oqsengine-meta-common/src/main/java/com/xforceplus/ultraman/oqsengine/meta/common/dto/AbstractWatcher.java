@@ -67,8 +67,12 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public void addWatch(WatchElement w) {
-        watches.putIfAbsent(w.getAppId(), w);
+    public void addWatch(WatchElement w, boolean force) {
+        if (force) {
+            watches.put(w.getAppId(), w);
+        } else {
+            watches.putIfAbsent(w.getAppId(), w);
+        }
     }
 
     @Override

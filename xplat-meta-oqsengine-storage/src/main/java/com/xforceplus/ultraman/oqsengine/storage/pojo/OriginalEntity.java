@@ -28,7 +28,7 @@ import java.util.Objects;
  */
 public class OriginalEntity implements Serializable, Cloneable, Comparable<OriginalEntity> {
     private static final IEntityClass ANY_ENTITYCLASS = AnyEntityClass.getInstance();
-    private static final Object[] EMTPY_ATTRIBUTES = new Object[0];
+    private static final Object[] EMPTY_ATTRIBUTES = new Object[0];
 
     private boolean deleted;
     private int op;
@@ -58,7 +58,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         commitid = 0;
         maintainid = 0;
         entityClass = ANY_ENTITYCLASS;
-        attributes = EMTPY_ATTRIBUTES;
+        attributes = EMPTY_ATTRIBUTES;
     }
 
     public boolean isDeleted() {

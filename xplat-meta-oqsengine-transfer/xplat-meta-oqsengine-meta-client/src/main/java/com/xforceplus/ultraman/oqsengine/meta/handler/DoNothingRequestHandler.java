@@ -43,6 +43,11 @@ public class DoNothingRequestHandler implements IRequestHandler {
     }
 
     @Override
+    public boolean reset(WatchElement watchElement) {
+        return true;
+    }
+
+    @Override
     public void start() {
 
     }

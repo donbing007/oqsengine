@@ -466,7 +466,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     @Override
     public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
+        //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         int version = version(entityClassId);
+
+        return read(entityClassId, version);
+    }
+
+    public Map<Long, EntityClassStorage> read(long entityClassId, int version) throws JsonProcessingException {
         /*
          * 不存在时抛出异常
          */
@@ -509,6 +515,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         return entityClassStorageMap;
     }
+
+
 
     /**
      * 根据Ids读取EntityStorage列表.
@@ -572,6 +580,36 @@ public class DefaultCacheExecutor implements CacheExecutor {
             keys, Long.toString(entityClassId));
 
         return null != v ? Integer.parseInt(v) : NOT_EXIST_VERSION;
+    }
+
+    @Override
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean isSilence) {
+
+        Map<Long, Integer> vs = new HashMap<>();
+        Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
+        if (null != versions && !versions.isEmpty()) {
+            for (Long entityClassId : entityClassIds) {
+                String version = versions.get(String.valueOf(entityClassId));
+                if (null != version) {
+                    vs.put(entityClassId, Integer.parseInt(version));
+                } else {
+                    String error = String.format("get versions failed, entityClassId : %s", entityClassId);
+                    logger.warn(error);
+                    //  存在未找到，抛出异常
+                    if (!isSilence) {
+                        throw new RuntimeException(error);
+                    }
+                }
+            }
+        } else {
+            String error = "get versions failed, target version in cache is empty.";
+            logger.warn(error);
+            if (!isSilence) {
+                throw new RuntimeException(error);
+            }
+        }
+
+        return vs;
     }
 
     /**

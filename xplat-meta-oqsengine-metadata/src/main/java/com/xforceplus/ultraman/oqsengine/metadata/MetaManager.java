@@ -74,4 +74,12 @@ public interface MetaManager {
     default Collection<MetaLogs> metaLogs() {
         return new ArrayList<>();
     }
+
+    /**
+     * 表示将刷新某个appId所关注的env信息
+     *
+     * @param appId 应用标识.
+     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
+     */
+    int reset(String appId, String env);
 }

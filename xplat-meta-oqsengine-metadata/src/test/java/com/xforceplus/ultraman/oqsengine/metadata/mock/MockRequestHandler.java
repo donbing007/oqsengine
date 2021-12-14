@@ -71,6 +71,11 @@ public class MockRequestHandler implements IRequestHandler {
 
     }
 
+    @Override
+    public boolean reset(WatchElement watchElement) {
+        return true;
+    }
+
 
     @Override
     public void start() {

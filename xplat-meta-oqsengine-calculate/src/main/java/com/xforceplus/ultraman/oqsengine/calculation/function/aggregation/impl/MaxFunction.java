@@ -86,7 +86,7 @@ public class MaxFunction implements AggregationFunction {
             aggValue.get().setStringValue(String.valueOf(temp.getMax()));
         } else if (agg.get() instanceof DateTimeValue) {
             ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
-            LongSummaryStatistics temp = values.stream().map(v -> ((DateTimeValue) v.get()).getValue().toEpochSecond(zone))
+            LongSummaryStatistics temp = values.stream().map(v -> v.get().valueToLong())
                     .collect(Collectors.summarizingLong(Long::longValue));
             aggValue.get().setStringValue(String.valueOf(temp.getMax()));
         }

@@ -122,37 +122,7 @@ public class StorageMetaManager implements MetaManager {
                 requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register));
 
                 if (version < 0) {
-                    CompletableFuture<Integer> future = async(() -> {
-                        int ver;
-                        /*
-                         * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
-                         */
-                        while (true) {
-                            ver = cacheExecutor.version(appId);
-                            if (ver < 0) {
-                                try {
-                                    Thread.sleep(10);
-                                } catch (InterruptedException e) {
-                                    break;
-                                }
-                            } else {
-                                return ver;
-                            }
-                        }
-                        return NOT_EXIST_VERSION;
-                    });
-
-                    try {
-                        version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e.getMessage());
-                    }
-
-                    if (version == NOT_EXIST_VERSION) {
-                        throw new RuntimeException(
-                            String.format("get version of appId [%s] failed, reach max wait time", appId));
-                    }
+                    version = waitForMetaSync(appId);
                 }
             } else {
                 if (version < 0) {
@@ -257,6 +227,32 @@ public class StorageMetaManager implements MetaManager {
 
     }
 
+    @Override
+    public int reset(String appId, String env) {
+        String cacheEnv = cacheExecutor.appEnvGet(appId);
+        //  重置
+        if (null == env || env.isEmpty()) {
+            return need(appId, env);
+        } else {
+            int version = cacheExecutor.version(appId);
+
+            if (!cacheEnv.equals(env)) {
+                if (version > NOT_EXIST_VERSION) {
+                    cacheExecutor.clean(appId, version, true);
+                }
+
+                cacheExecutor.appEnvSet(appId, env);
+
+                requestHandler.reset(new WatchElement(appId, env, NOT_EXIST_VERSION, WatchElement.ElementStatus.Register));
+
+                return waitForMetaSync(appId);
+            }
+
+            return version;
+        }
+
+    }
+
     private void loadFromLocal(String path) {
         if (!path.endsWith(File.separator)) {
             path = path + File.separator;
@@ -287,5 +283,43 @@ public class StorageMetaManager implements MetaManager {
                 //  ignore current file
             }
         }
+    }
+
+    private int waitForMetaSync(String appId) {
+        CompletableFuture<Integer> future = async(() -> {
+            int ver;
+            /*
+             * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
+             */
+            while (true) {
+                ver = cacheExecutor.version(appId);
+                if (ver < 0) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                } else {
+                    return ver;
+                }
+            }
+            return NOT_EXIST_VERSION;
+        });
+
+        int version = NOT_EXIST_VERSION;
+
+        try {
+            version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if (version == NOT_EXIST_VERSION) {
+            throw new RuntimeException(
+                String.format("get version of appId [%s] failed, reach max wait time", appId));
+        }
+
+        return version;
     }
 }

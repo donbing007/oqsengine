@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.SystemOpsService;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
@@ -37,7 +37,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
 
     @Autowired
-    private DiscoverDevOpsService discoverDevOpsService;
+    private SystemOpsService discoverDevOpsService;
 
     @MockBean(name = "keyValueStorage")
     private KeyValueStorage keyValueStorage;
