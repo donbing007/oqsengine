@@ -58,8 +58,6 @@
                     </includes>
                     <argLine>
                         -Xmx4096m -Xms4096m
-                        -Dfile.encoding=UTF-8
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/../../allure-results</allure.results.directory>
