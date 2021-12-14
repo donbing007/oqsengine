@@ -4,12 +4,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -49,24 +46,16 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
         }
 
-        for (IValue v : values.values()) {
-            if (v.getField().name().equals(fieldName)) {
-                return Optional.of(v);
-            }
-        }
-
-        return Optional.empty();
+        return values.values().stream().filter(v -> v.getField().name().equals(fieldName)).findFirst();
     }
 
     @Override
     public Optional<IValue> getValue(long fieldId) {
         if (values == null) {
             return Optional.empty();
-
         }
 
-        return values.entrySet().stream().filter(x -> x.getKey() == fieldId)
-            .map(Map.Entry::getValue).findFirst();
+        return Optional.ofNullable(values.get(fieldId));
     }
 
     @Override
@@ -88,6 +77,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     @Override
     public IEntityValue addValues(Collection<IValue> values) {
         lazyInit();
+
         values.stream().forEach(v -> {
             this.values.put(v.getField().id(), v);
         });
@@ -96,7 +86,9 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Optional<IValue> remove(IEntityField field) {
-        lazyInit();
+        if (values == null) {
+            return Optional.empty();
+        }
 
         return Optional.ofNullable(values.remove(field.id()));
     }
@@ -105,13 +97,6 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public void filter(Predicate<? super IValue> predicate) {
         if (values != null) {
             values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
-        }
-    }
-
-    @Override
-    public void sort(Comparator<IValue> comparator) {
-        if (values != null) {
-            ((List) values.values()).sort(comparator);
         }
     }
 
@@ -131,8 +116,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     private void lazyInit() {
         if (this.values == null) {
-            // 这里为了保存顺序为加入顺序.
-            this.values = new LinkedHashMap<>();
+            this.values = new HashMap<>();
         }
     }
 

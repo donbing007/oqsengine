@@ -91,7 +91,14 @@ public class MysqlContainer extends AbstractContainerExtension {
         System.setProperty(
             "MYSQL_JDBC_WITH_AUTH",
             String.format(
-                "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8&user=%s&password=%s",
+                "jdbc:mysql://%s:%s/oqsengine?"
+                    + "useUnicode=true"
+                    + "&serverTimezone=GMT"
+                    + "&useSSL=false"
+                    + "&characterEncoding=utf8"
+                    + "&allowMultiQueries=true"
+                    + "&rewriteBatchedStatements=true"
+                    + "&user=%s&password=%s",
                 address, port, MYSQL_USER_PASS, MYSQL_USER_PASS)
         );
 

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,8 +152,6 @@ public class LookupCalculationLogic implements CalculationLogic {
                 弱关系,不会在事务内处理.
                 交由异步队列异步处理.
                  */
-                TaskCoordinator coordinator = context.getResourceWithEx(() -> context.getTaskCoordinator());
-
                 LookupMaintainingTask lookupMaintainingTask = LookupMaintainingTask.Builder.anLookupMaintainingTask()
                     .withTargetEntityId(context.getFocusEntity().id())
                     .withTargetClassRef(context.getFocusEntity().entityClassRef())
@@ -164,9 +163,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                     .build();
 
 
-                context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
-                    coordinator.addTask(lookupMaintainingTask);
-                });
+                addAfterCommitTask(context, lookupMaintainingTask);
 
                 return new long[0];
 
@@ -190,22 +187,18 @@ public class LookupCalculationLogic implements CalculationLogic {
                 long[] ids = refs.stream().mapToLong(r -> r.getId()).toArray();
 
                 if (refIter.more()) {
-                    TaskCoordinator coordinator = context.getResourceWithEx(() -> context.getTaskCoordinator());
-
-                    context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
-                        LookupMaintainingTask lookupMaintainingTask =
-                            LookupMaintainingTask.Builder.anLookupMaintainingTask()
-                                .withTargetEntityId(context.getFocusEntity().id())
-                                .withTargetClassRef(context.getFocusEntity().entityClassRef())
-                                .withTargetFieldId(
-                                    ((Lookup) participant.getField().config().getCalculation()).getFieldId())
-                                .withLookupClassRef(participant.getEntityClass().ref())
-                                .withLookupFieldId(participant.getField().id())
-                                .withLastStartLookupEntityId(ids[ids.length - 1])
-                                .withMaxSize(TASK_LIMIT_NUMBER)
-                                .build();
-                        coordinator.addTask(lookupMaintainingTask);
-                    });
+                    LookupMaintainingTask lookupMaintainingTask =
+                        LookupMaintainingTask.Builder.anLookupMaintainingTask()
+                            .withTargetEntityId(context.getFocusEntity().id())
+                            .withTargetClassRef(context.getFocusEntity().entityClassRef())
+                            .withTargetFieldId(
+                                ((Lookup) participant.getField().config().getCalculation()).getFieldId())
+                            .withLookupClassRef(participant.getEntityClass().ref())
+                            .withLookupFieldId(participant.getField().id())
+                            .withLastStartLookupEntityId(ids[ids.length - 1])
+                            .withMaxSize(TASK_LIMIT_NUMBER)
+                            .build();
+                    addAfterCommitTask(context, lookupMaintainingTask);
                 }
 
                 return ids;
@@ -223,6 +216,27 @@ public class LookupCalculationLogic implements CalculationLogic {
         return new CalculationScenarios[] {
             CalculationScenarios.REPLACE,
         };
+    }
+
+    // 提交的任务,必须保证是在事务提交后执行.
+    private void addAfterCommitTask(CalculationContext context, LookupMaintainingTask lookupMaintainingTask) {
+        TaskCoordinator coordinator = context.getResourceWithEx(() -> context.getTaskCoordinator());
+        ExecutorService taskExecutor = context.getResourceWithEx(() -> context.getTaskExecutorService());
+        context.getResourceWithEx(() -> context.getCurrentTransaction()).registerCommitHook(t -> {
+            /*
+             * 开启线程是为了不和当前事务共享连接.
+             * 当前事务已经结束,底层的TaskCoordinator的实现中依赖基于数据库的KV.
+             * 有可能会使用一个已经被关闭的事务,另启一个线程保证新开启事务.
+             */
+            taskExecutor.submit(() -> {
+
+                if (logger.isDebugEnabled()) {
+                    logger.info("Added a Lookup maintenance asynchronous task.{}", lookupMaintainingTask);
+                }
+
+                coordinator.addTask(lookupMaintainingTask);
+            });
+        });
     }
 
     /**

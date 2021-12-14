@@ -20,17 +20,58 @@ import java.util.Map;
 public class EntityClassBuilder {
 
     public static final IEntityField STRING_FIELD =
-        new EntityField(1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
+         EntityField.Builder
+                .anEntityField()
+                .withId(1)
+                .withName("string")
+                .withFieldType(FieldType.STRING)
+                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                .build();
+
     public static final IEntityField LONG_FIELD =
-        new EntityField(2, "long", FieldType.LONG, FieldConfig.build().searchable(true), null, null);
+        EntityField.Builder
+            .anEntityField()
+            .withId(2)
+            .withName("long")
+            .withFieldType(FieldType.LONG)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
     public static final IEntityField BOOL_FIELD =
-        new EntityField(3, "bool", FieldType.BOOLEAN, FieldConfig.build().searchable(true), null, null);
+        EntityField.Builder
+            .anEntityField()
+            .withId(3)
+            .withName("bool")
+            .withFieldType(FieldType.BOOLEAN)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
     public static final IEntityField DATE_TIME_FIELD =
-        new EntityField(4, "datetime", FieldType.DATETIME, FieldConfig.build().searchable(true), null, null);
+        EntityField.Builder
+            .anEntityField()
+            .withId(4)
+            .withName("datetime")
+            .withFieldType(FieldType.DATETIME)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
     public static final IEntityField DECIMAL_FIELD =
-        new EntityField(5, "decimal", FieldType.DECIMAL, FieldConfig.build().searchable(true), null, null);
+        EntityField.Builder
+            .anEntityField()
+            .withId(5)
+            .withName("decimal")
+            .withFieldType(FieldType.DECIMAL)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
     public static final IEntityField STRINGS_FIELD =
-        new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
+        EntityField.Builder
+            .anEntityField()
+            .withId(6)
+            .withName("strings")
+            .withFieldType(FieldType.STRINGS)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
 
     // level 1
     public static final IEntityClass ENTITY_CLASS_0 =
@@ -52,6 +93,7 @@ public class EntityClassBuilder {
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
+
     // level 3
     public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()

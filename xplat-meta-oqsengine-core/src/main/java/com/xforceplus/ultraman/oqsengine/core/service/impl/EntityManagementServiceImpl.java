@@ -21,6 +21,8 @@ import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
+import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -116,6 +119,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private Calculation calculation;
+
+    @Resource(name = "taskThreadPool")
+    public ExecutorService taskThreadPool;
+
+    @Resource
+    private ResourceLocker resourceLocker;
+
+    @Resource
+    private MultiResourceLocker multiResourceLocker;
 
     /**
      * 字段校验器工厂.
@@ -340,6 +352,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     );
                 }
 
+                // 修改未同步.
+                currentEntity.dirty();
+
                 if (masterStorage.build(currentEntity, entityClass) <= 0) {
                     return new OperationResult(tx.id(), currentEntity.id(), UN_KNOW_VERSION,
                         EventType.ENTITY_BUILD.getValue(),
@@ -463,6 +478,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         )
                     );
                 }
+
+                // 修改未同步.
+                newEntity.dirty();
 
                 if (isConflict(masterStorage.replace(newEntity, entityClass))) {
                     hint.setRollback(true);
@@ -817,9 +835,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withMasterStorage(this.masterStorage)
             .withTaskCoordinator(this.taskCoordinator)
             .withKeyValueStorage(this.kv)
+            .withEventBus(this.eventBus)
+            .withTaskExecutorService(this.taskThreadPool)
             .withBizIDGenerator(this.bizIDGenerator)
             .withTransaction(tx)
             .withConditionsSelectStorage(this.combinedSelectStorage)
+            .withResourceLocker(this.resourceLocker)
+            .withMultiResourceLocker(this.multiResourceLocker)
             .build();
     }
 
@@ -864,10 +886,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     // 只允许静态字段进入写事务.
     private void filter(IEntity entity) {
-        entity.entityValue().filter(v ->
-            v.getField().calculationType() == CalculationType.STATIC
-                || v.getField().calculationType() == CalculationType.LOOKUP
-        );
+        if (entity.entityValue() != null) {
+            entity.entityValue().filter(v ->
+                v.getField().calculationType() == CalculationType.STATIC
+                    || v.getField().calculationType() == CalculationType.LOOKUP
+            );
+        }
     }
 
 }

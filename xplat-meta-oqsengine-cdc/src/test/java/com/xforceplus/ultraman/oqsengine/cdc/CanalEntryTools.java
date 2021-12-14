@@ -210,7 +210,8 @@ public class CanalEntryTools {
         }
         builder.addRowDatas(
             buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version,
-                buildError));
+                buildError)
+        );
 
         return builder.build();
     }
@@ -285,6 +286,8 @@ public class CanalEntryTools {
                 } else {
                     return getBuilder(v).setValue(Long.toString(0)).build();
                 }
+            case ENTITYCLASSVER:
+                return buildVersion(v, 1);
             case OP:
                 return buildOP(v, op);
             case TX:
@@ -306,6 +309,8 @@ public class CanalEntryTools {
                 return buildOqsmajor(v, oqsmajor);
             case VERSION:
                 return buildVersion(v, version);
+            case PROFILE:
+                return buildProfile(v, "");
             default:
                 return null;
         }
@@ -383,6 +388,12 @@ public class CanalEntryTools {
     private static CanalEntry.Column buildErrorAttribute(OqsBigEntityColumns v, int attrIndex) {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(Prepared.attrErrors[attrIndex]);
+        return builder.build();
+    }
+
+    private static CanalEntry.Column buildProfile(OqsBigEntityColumns v, String profile) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(profile);
         return builder.build();
     }
 

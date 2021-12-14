@@ -338,6 +338,11 @@ public class TestAbstractTransactionManagerTest {
         }
 
         @Override
+        public void focusNotReadOnly() {
+            transaction.focusNotReadOnly();
+        }
+
+        @Override
         public TransactionAccumulator getAccumulator() {
             return transaction.getAccumulator();
         }

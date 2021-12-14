@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -118,6 +119,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             if (withTx) {
                 transactionExecutor.execute((transaction, resource, hint) -> {
                     adjustLookupEntities(
+                        transaction,
                         lookupMaintainingTask,
                         lookupEntities,
                         lookupEntityClass,
@@ -129,6 +131,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             } else {
 
                 adjustLookupEntities(
+                    null,
                     lookupMaintainingTask,
                     lookupEntities,
                     lookupEntityClass,
@@ -162,6 +165,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
     // 调整lookup实例.
     private void adjustLookupEntities(
+        Transaction transaction,
         LookupMaintainingTask task,
         List<IEntity> lookupEntities,
         IEntityClass lookupEntityClass,
@@ -171,7 +175,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         updateLookupEntityesValue(lookupEntities, lookupField, targetValueOp, targetEntityId);
 
-        long[] notSuccessIds = persist(lookupEntities, lookupEntityClass);
+        long[] notSuccessIds = persist(transaction, lookupEntities, lookupEntityClass);
 
         List<IEntity> needReplayEntities = null;
         // 发生错误,进入重试.
@@ -191,7 +195,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
             if (!needReplayEntities.isEmpty()) {
                 updateLookupEntityesValue(needReplayEntities, lookupField, replayTargetValueOp, targetEntityId);
-                notSuccessIds = persist(needReplayEntities, lookupEntityClass);
+                notSuccessIds = persist(transaction, needReplayEntities, lookupEntityClass);
             }
         }
     }
@@ -220,7 +224,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         return entity.entityValue().getValue(lookupMaintainingTask.getTargetFieldId());
     }
 
-    private long[] persist(List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
+    private long[] persist(Transaction transaction, List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
         EntityPackage entityPackage = new EntityPackage();
         for (IEntity lookupEntity : lookupEntities) {
             entityPackage.put(lookupEntity, lookupEntityClass);
@@ -231,6 +235,13 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             results = masterStorage.replace(entityPackage);
         } catch (SQLException e) {
             return lookupEntities.stream().mapToLong(le -> le.id()).toArray();
+        }
+
+        if (transaction != null) {
+            if (transaction.isReadyOnly()) {
+                // 强制当前事务非只读事务.
+                transaction.focusNotReadOnly();
+            }
         }
 
         return IntStream.range(0, results.length)

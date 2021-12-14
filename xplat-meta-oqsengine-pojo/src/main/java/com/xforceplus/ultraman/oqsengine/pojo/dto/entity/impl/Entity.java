@@ -14,6 +14,15 @@ import java.util.Objects;
  */
 public class Entity implements IEntity, Serializable {
 
+    private boolean dirty;
+    /*
+     * 数据版本
+     */
+    private int version;
+    /*
+     * 产生数据的oqs版本.
+     */
+    private int major;
     /*
      * 数据id
      */
@@ -23,6 +32,10 @@ public class Entity implements IEntity, Serializable {
      */
     private long time;
     /*
+     * 维护标识.
+     */
+    private long maintainid;
+    /*
      * 数据结构
      */
     private EntityClassRef entityClassRef;
@@ -30,21 +43,6 @@ public class Entity implements IEntity, Serializable {
      * 数据集合
      */
     private IEntityValue entityValue;
-
-    /*
-     * 数据版本
-     */
-    private int version;
-
-    /*
-     * 维护标识.
-     */
-    private long maintainid;
-
-    /*
-     * 产生数据的oqs版本.
-     */
-    private int major;
 
     @Override
     public long id() {
@@ -129,6 +127,21 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void restMaintainId(long maintainId) {
         this.maintainid = maintainId;
+    }
+
+    @Override
+    public boolean isDirty() {
+        return this.dirty;
+    }
+
+    @Override
+    public void dirty() {
+        this.dirty = true;
+    }
+
+    @Override
+    public void neat() {
+        this.dirty = false;
     }
 
     @Override

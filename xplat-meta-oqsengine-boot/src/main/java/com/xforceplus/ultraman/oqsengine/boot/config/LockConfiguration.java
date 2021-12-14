@@ -1,10 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import akka.actor.ActorSystem;
-import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedisConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceRedisConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.util.RedisConfigUtil;
-import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
-import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
+import com.xforceplus.ultraman.oqsengine.lock.RedisResourceLocker;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.impl.LockStateServiceImpl;
 import org.apache.commons.lang.StringUtils;
@@ -26,8 +25,8 @@ import org.springframework.context.annotation.Configuration;
 public class LockConfiguration {
 
     @Bean
-    public ResourceLocker locker() {
-        return new LocalResourceLocker();
+    public RedisResourceLocker resourceLocker() {
+        return new RedisResourceLocker();
     }
 
     @Bean
@@ -42,12 +41,12 @@ public class LockConfiguration {
      * @return lock state service
      */
     @Bean
-    public LockStateService lockStateService(RedisConfiguration configuration) {
+    public LockStateService lockStateService(LettuceRedisConfiguration configuration) {
 
         Config config = new Config();
-        config.useSingleServer().setAddress(configuration.uriWithStateDb());
+        config.useSingleServer().setAddress(configuration.getUri());
         Config configCopy = new Config(config);
-        String password = RedisConfigUtil.getRedisUrlPassword(configuration.uriWithStateDb());
+        String password = RedisConfigUtil.getRedisUrlPassword(configuration.getUri());
         if (!StringUtils.isBlank(password)) {
             if (password.startsWith(":")) {
                 password = password.substring(1);

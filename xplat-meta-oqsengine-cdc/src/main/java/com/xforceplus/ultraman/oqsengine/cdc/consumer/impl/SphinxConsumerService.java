@@ -15,12 +15,15 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,7 @@ public class SphinxConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService)
         throws SQLException {
@@ -81,6 +85,9 @@ public class SphinxConsumerService implements ConsumerService {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new LinkedHashMap<>();
+
+        List<Long> commitIDs = new ArrayList<>();
+
         for (CanalEntry.Entry entry : entries) {
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
@@ -90,13 +97,18 @@ public class SphinxConsumerService implements ConsumerService {
                     break;
                 }
                 case ROWDATA: {
-                    internalDataSync(entry, cdcMetrics, cdcMetricsService, rawEntries);
+                    internalDataSync(entry, cdcMetrics, commitIDs, rawEntries);
                     break;
                 }
                 default: {
                     continue;
                 }
             }
+        }
+
+        //  等待isReady
+        if (!commitIDs.isEmpty()) {
+            cdcMetricsService.isReadyCommit(commitIDs);
         }
 
         //  批次数据整理完毕，开始执行index写操作。
@@ -111,8 +123,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.info("[cdc-consumer] batch : {} end with un-commit ids : {}",
-                cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (logger.isDebugEnabled()) {
+                logger.debug("[cdc-consumer] batch : {} end with un-commit ids : {}",
+                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
             if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
                 logger.warn("[cdc-consumer] batch : {}, one transaction has more than one commitId, ids : {}",
                     cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
@@ -147,10 +161,9 @@ public class SphinxConsumerService implements ConsumerService {
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
-
     private void internalDataSync(CanalEntry.Entry entry,
-                                  CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
-                                  Map<Long, RawEntry> rawEntries) throws SQLException {
+                                  CDCMetrics cdcMetrics,
+                                  List<Long> commitIDs, Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
 
         String uniKeyPrefixOffset = entry.getHeader().getLogfileName() + "-" + entry.getHeader().getLogfileOffset();
@@ -208,11 +221,9 @@ public class SphinxConsumerService implements ConsumerService {
                      */
                     if (commitId > skipCommitId || (commitId == NO_TRANSACTION_COMMIT_ID
                         && skipCommitId != NO_TRANSACTION_COMMIT_ID)) {
-                        if (checkCommitReady) {
-                            if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                                //  阻塞直到成功
-                                cdcMetricsService.isReadyCommit(commitId);
-                            }
+
+                        if (checkCommitReady && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                            commitIDs.add(commitId);
                         }
 
                         //  更新
@@ -230,6 +241,8 @@ public class SphinxConsumerService implements ConsumerService {
             }
         }
     }
+
+
 
     /*
         由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作

@@ -1,17 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -201,10 +204,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         syncConnect.close();
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "save"}
-    )
     @Override
     public boolean save(long commitId, boolean ready) {
         if (commitId <= INVALID_COMMITID) {
@@ -235,10 +234,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         return result;
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "isReady"}
-    )
     @Override
     public boolean isReady(long commitId) {
         if (commitId <= INVALID_COMMITID) {
@@ -281,10 +276,27 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         }
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "ready"}
-    )
+    /**
+     * 同时判断多个提交号是否就绪.
+     *
+     * @param commitIds 提交号列表.
+     * @return true 就绪, false 没有就绪.
+     */
+    public boolean[] isReady(long[] commitIds) {
+        if (commitIds == null || commitIds.length == 0) {
+            return new boolean[0];
+        }
+
+        int len = commitIds.length;
+        CommitStatus[] commitStatuses = getStatus(commitIds);
+        boolean[] statues = new boolean[commitStatuses.length];
+        for (int i = 0; i < len; i++) {
+            statues[i] = CommitStatus.READY == commitStatuses[i];
+        }
+
+        return statues;
+    }
+
     @Override
     public void ready(long commitId) {
         if (commitId <= INVALID_COMMITID) {
@@ -294,19 +306,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         changeStatus(commitId, CommitStatus.READY);
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "getUnreadiness"}
-    )
     @Override
     public long[] getUnreadiness() {
         return Arrays.stream(getAll()).filter(commitid -> !isReady(commitid)).toArray();
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "getMin"}
-    )
     @Override
     public Optional<Long> getMin() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
@@ -329,10 +333,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         }
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "getMax"}
-    )
     @Override
     public Optional<Long> getMax() {
         List<String> ids = syncCommands.zrevrange(commitidsKey, 0, 0);
@@ -356,29 +356,17 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         }
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "getAll"}
-    )
     @Override
     public long[] getAll() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, -1);
         return ids.parallelStream().mapToLong(id -> Long.parseLong(id)).toArray();
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "size"}
-    )
     @Override
     public long size() {
         return syncCommands.zcard(commitidsKey);
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "obsolete"}
-    )
     @Override
     public void obsolete(long... commitIds) {
 
@@ -401,19 +389,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         }
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "obsoleteAll"}
-    )
     @Override
     public void obsoleteAll() {
         obsolete(getAll());
     }
 
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "commitid", "action", "isObsolete"}
-    )
     @Override
     public boolean isObsolete(long commitId) {
         CommitStatus status = getStatus(commitId);
@@ -426,7 +406,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
     // 获取提交号状态.
     private CommitStatus getStatus(long commitId) {
-        String statusKey = commitidStatusKeyPrefix + commitId;
+        String statusKey = String.format("%s%d", commitidStatusKeyPrefix, commitId);
         String value = syncCommands.get(statusKey);
 
         CommitStatus status = CommitStatus.getInstance(value);
@@ -436,6 +416,41 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         }
 
         return status;
+    }
+
+    // 批量获取提交号状态.
+    private CommitStatus[] getStatus(long[] commitIds) {
+        int len = commitIds.length;
+        if (len == 0) {
+            return new CommitStatus[0];
+        }
+
+        String[] keys =
+            Arrays.stream(commitIds)
+                .mapToObj(c -> String.format("%s%d", commitidStatusKeyPrefix, c)).toArray(String[]::new);
+
+        // 帮助定位key所在的下标.
+        Map<String, Integer> keyPos = new HashMap<>(MapUtils.calculateInitSize(len));
+        for (int i = 0; i < len; i++) {
+            keyPos.put(keys[i], i);
+        }
+
+        List<KeyValue<String, String>> keyValues = syncCommands.mget(keys);
+        CommitStatus[] statuses = new CommitStatus[len];
+        KeyValue<String, String> kv;
+        int pos;
+        for (int i = 0; i < keyValues.size(); i++) {
+            kv = keyValues.get(i);
+            pos = keyPos.get(kv.getKey());
+
+            if (kv.hasValue()) {
+                statuses[pos] = CommitStatus.getInstance(kv.getValue());
+            } else {
+                statuses[pos] = CommitStatus.READY;
+            }
+        }
+
+        return statuses;
     }
 
     // 修改提交号状态.
@@ -482,16 +497,16 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 unSyncCommitIdSize.set(size());
                 Optional<Long> commitId = getMin();
                 if (commitId.isPresent()) {
-                    unSyncCommitIdMin.set(getMin().get());
+                    unSyncCommitIdMin.set(commitId.get());
                 } else {
                     unSyncCommitIdMin.set(-1);
                 }
 
                 commitId = getMax();
                 if (commitId.isPresent()) {
-                    unSyncCommitIdMax.set(getMax().get());
+                    unSyncCommitIdMax.set(commitId.get());
                 } else {
-                    unSyncCommitIdMax.set(-1);
+                    unSyncCommitIdMax.set(0);
                 }
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);

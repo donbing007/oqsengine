@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
@@ -264,7 +264,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
-        return (int) transactionExecutor.execute(
+        int result = (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
@@ -275,13 +275,19 @@ public class SQLMasterStorage implements MasterStorage {
                 final int first = 0;
                 return results[first];
             });
+
+        if (result > 0) {
+            entity.neat();
+        }
+
+        return result;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
     @Override
     public int[] build(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
-        return (int[]) transactionExecutor.execute(
+        int[] results = (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
@@ -291,6 +297,10 @@ public class SQLMasterStorage implements MasterStorage {
                 return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             }
         );
+
+        entityPackage.stream().forEach(e -> e.getKey().neat());
+
+        return results;
     }
 
     @Timed(
@@ -301,7 +311,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
-        return (int) transactionExecutor.execute(
+        int result = (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
 
@@ -314,6 +324,12 @@ public class SQLMasterStorage implements MasterStorage {
                 final int first = 0;
                 return results[first];
             });
+
+        if (result > 0) {
+            entity.neat();
+        }
+
+        return result;
     }
 
     @Timed(
@@ -324,7 +340,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int[] replace(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        return (int[]) transactionExecutor.execute(
+        int[] results = (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
                     .map(e -> buildReplaceMasterStorageEntity(e.getKey(), e.getValue(), resource))
@@ -332,6 +348,10 @@ public class SQLMasterStorage implements MasterStorage {
 
                 return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             });
+
+        entityPackage.stream().forEach(e -> e.getKey().neat());
+
+        return results;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
@@ -649,7 +669,7 @@ public class SQLMasterStorage implements MasterStorage {
                             .withCommitid(entity.getCommitid())
                             .withVersion(entity.getVersion())
                             .withOqsMajor(entity.getOqsMajor())
-                            .withAttributes(attributesToList(entity.getAttribute()))
+                            .withAttributes(attributesToMap(entity.getAttribute()))
                             .build();
 
                         originalEntities.add(originalEntity);

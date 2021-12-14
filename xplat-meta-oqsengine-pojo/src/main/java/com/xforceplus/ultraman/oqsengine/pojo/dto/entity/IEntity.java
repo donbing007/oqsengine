@@ -101,4 +101,21 @@ public interface IEntity extends Cloneable {
      * @param maintainId 维护ID
      */
     public void restMaintainId(long maintainId);
+
+    /**
+     * 判断是否"脏",表示修改但未持久.
+     *
+     * @return true 脏, false 干净.
+     */
+    public boolean isDirty();
+
+    /**
+     * 设置为脏对象.表示修改没有持久化.
+     */
+    public void dirty();
+
+    /**
+     * 设置为非脏对象.表示修改已经持久化了.
+     */
+    public void neat();
 }

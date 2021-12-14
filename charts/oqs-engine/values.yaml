@@ -29,11 +29,11 @@ ingress:
 
 resources:
   limits:
-    cpu: 2000m
-    memory: 4096Mi
+    cpu: 4000m
+    memory: 6144Mi
   requests:
-    cpu: 1000m
-    memory: 2048Mi
+    cpu: 4000m
+    memory: 6144Mi
 
 nodeSelector: {}
 
@@ -51,15 +51,14 @@ jvm:
   - -server
   - -Xms4096M
   - -Xmx4096M
-  - -Xmn1536M
-  - -XX:MetaspaceSize=256M
-  - -XX:MaxMetaspaceSize=256M
-  - -XX:+UseParNewGC
-  - -XX:+UseConcMarkSweepGC
-  - -XX:+CMSScavengeBeforeRemark
-  - -XX:CMSInitiatingOccupancyFraction=75
-  - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:+UseG1GC
+  - -XX:MaxGCPauseMillis=200
+  - -XX:ParallelGCThreads=4
+  - -XX:+UseCompressedOops
   - -XX:+UseStringDeduplication
+  - -XX:ReservedCodeCacheSize=256m
+  - -XX:+UseStringDeduplication
+  - -Dlog4j2.formatMsgNoLookups=true
 
 jmx:
   enabled: false
@@ -178,8 +177,64 @@ storage:
         size: 1000
 
 redis:
-  uri: "redis://localhost:6379"
-  maxReqQueue: 2147483647
+  # standalone: redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # standaloneSSL: rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # sentinel: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
+  # cluster: redis://127.0.0.1:6379/0?timeout=6000ms
+  lettuce:
+    uri: "redis://127.0.0.1:6379/0?timeout=6000ms"
+    cluster: false
+    pingBeforeActivateConnection: true
+    maxReqQueue: 10000
+  # https://github.com/redisson/redisson/wiki/2.-%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95
+  redisson:
+    threads: 0
+    nettyThreads: 0
+    lockWatchdogTimeout: 30000
+    keepPubSubOrder: true
+    idleConnectionTimeout: 10000
+    connectTimeout: 10000
+    timeout: 6000
+    retryAttempts: 3
+    retryInterval: 1500
+    password: null
+    subscriptionsPerConnection: 5
+    clientName: null
+    subscriptionConnectionMinimumIdleSize: 1
+    database: 0
+    dnsMonitoringInterval: -1
+    slaveSubscriptionConnectionMinimumIdleSize: 1
+    slaveSubscriptionConnectionPoolSize: 50
+    slaveConnectionMinimumIdleSize: 32
+    slaveConnectionPoolSize: 64
+    masterConnectionMinimumIdleSize: 32
+    masterConnectionPoolSize: 64
+    readMode: "SLAVE"
+    singel:
+      enabled: true
+      address: "redis://127.0.0.1:6379"
+      subscriptionConnectionPoolSize: 50
+      connectionMinimumIdleSize: 32
+      connectionPoolSize: 64
+    sentine:
+      enabled: false
+      sentinelAddresses:
+        - "redis://127.0.0.1:26379"
+        - "redis://127.0.0.1:26389"
+      masterName: "mymaster"
+    masterSlave:
+      enabled: false
+      slaveAddresses:
+        - "redis://127.0.0.1:6381"
+        - "redis://127.0.0.1:6380"
+      masterAddress: "redis://127.0.0.1:6379"
+    cluster:
+      enabled: false
+      nodeAddresses:
+        - "redis://127.0.0.1:7004"
+        - "redis://127.0.0.1:7001"
+        - "redis://127.0.0.1:7000"
+      scanInterval: 1000
 
 sync:
   ignoreCDCStatusCheck: false
