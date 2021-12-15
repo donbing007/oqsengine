@@ -401,8 +401,9 @@ public class CalculationTest extends AbstractContainerExtends {
         finishLatch.await();
 
         Assertions.assertEquals(size, queue.size());
-        long max = queue.stream()
-            .mapToLong(u -> u.entityValue().getValue("订单总数count").get().valueToLong()).max().getAsLong();
+
+        IEntity currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).get();
+        long max = currentUser.entityValue().getValue("订单总数count").get().valueToLong();
         Assertions.assertEquals(size, max);
 
     }
