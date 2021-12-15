@@ -66,8 +66,10 @@ public class MockEntityClassDefine {
     public static IEntityClass ORDER_CLASS;
     public static IEntityClass ORDER_ITEM_CLASS;
 
-    // 字段ID定义.
-    private static enum FieldId {
+    /**
+     * 字段定义.
+     */
+    public static enum FieldId {
         l0LongFieldId,
         l0StringFieldId,
         l0StringsFieldId,
