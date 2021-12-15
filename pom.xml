@@ -59,28 +59,6 @@
                     <argLine>
                         -Xmx4096m -Xms4096m
                     </argLine>
-                    <systemPropertyVariables>
-                        <allure.results.directory>${project.build.directory}/../../allure-results</allure.results.directory>
-                        <junit.jupiter.extensions.autodetection.enabled>true</junit.jupiter.extensions.autodetection.enabled>
-                        <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                        <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
-                    </systemPropertyVariables>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjweaver</artifactId>
-                        <version>${aspectj.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>io.qameta.allure</groupId>
-                <artifactId>allure-maven</artifactId>
-                <version>2.10.0</version>
-                <configuration>
-                    <reportVersion>${allure.version}</reportVersion>
-                    <resultsDirectory>${project.build.directory}/../../allure-results</resultsDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -124,7 +102,12 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.6</version>
+                <version>0.8.7</version>
+                <configuration>
+                    <excludes>
+                        <exclude>META-INF/**</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>pre-unit-test</id>
@@ -171,6 +154,7 @@
         <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
+        <module>xplat-meta-oqsengine-lock</module>
         <module>xplat-meta-oqsengine-tokenizer</module>
         <module>xplat-meta-oqsengine-synchronizer</module>
         <module>xplat-meta-oqsengine-event</module>
@@ -180,6 +164,7 @@
         <module>xplat-meta-oqsengine-task</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-idgenerator</module>
         <module>xplat-meta-oqsengine-calculate</module>
         <module>xplat-meta-oqsengine-metadata</module>
         <module>xplat-meta-oqsengine-devops</module>
@@ -189,8 +174,6 @@
         <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
-        <module>xplat-meta-oqsengine-idgenerator</module>
-        <module>xplat-meta-oqsengine-lock</module>
     </modules>
 
     <distributionManagement>
@@ -232,14 +215,6 @@
             <url>${repository.host}/content/repositories/thirdparty/</url>
         </repository>
     </repositories>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-junit5</artifactId>
-            <version>2.13.10</version>
-        </dependency>
-    </dependencies>
 
     <dependencyManagement>
         <dependencies>
