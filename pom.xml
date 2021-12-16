@@ -412,7 +412,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.skip>false</checkstyle.skip>
-        <repository.host>http://120.27.140.65:8081/nexus</repository.host>
+        <repository.host>http://nexus.xforceplus.com/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>
         <aspectj.version>1.9.1</aspectj.version>
