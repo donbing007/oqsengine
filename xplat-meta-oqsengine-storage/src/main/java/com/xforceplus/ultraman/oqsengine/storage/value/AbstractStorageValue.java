@@ -15,7 +15,10 @@ import java.util.Objects;
  */
 public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
-    static final int EMPTY_LOCATION = -1;
+    /**
+     * 序号开始.
+     */
+    static final int FIRST_LOCATION = 0;
 
     private StorageValue<V> next;
     private String logicName;
@@ -33,7 +36,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     public AbstractStorageValue(String name, V value, boolean logicName) {
         if (logicName) {
             this.logicName = name;
-            this.location = EMPTY_LOCATION;
+            this.location = StorageValue.NOT_LOCATION;
             this.type = parseValueType(value);
         } else {
             this.logicName = parseLocigName(name);
@@ -45,51 +48,25 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
     @Override
     public StorageValue<V> stick(StorageValue<V> nextValue) {
-        if (this.location() == EMPTY_LOCATION) {
-            throw new IllegalStateException("The current node has no specified order.");
+        StorageValue point = this;
+
+        int loc = point.location();
+        // 首结点.
+        if (loc == StorageValue.NOT_LOCATION) {
+            point.locate(FIRST_LOCATION);
+            loc = FIRST_LOCATION;
         }
 
-        // 表示追加到尾部
-        int loc;
-        if (nextValue.location() == EMPTY_LOCATION) {
-            // 表示最后一个位置.
-            loc = Integer.MAX_VALUE;
-        } else {
-            loc = nextValue.location();
+        // 找到目标点.
+        while (point.haveNext()) {
+            point.locate(loc++);
+            point = point.next();
         }
 
-        StorageValue head = this;
-        // 更新首结点.
-        if (head.location() > loc) {
+        point.next(nextValue);
+        nextValue.locate(point.location() + 1);
 
-            nextValue.next(head);
-            head = nextValue;
-
-        } else {
-
-            StorageValue point = this;
-            while (true) {
-
-                if (point.haveNext()) {
-                    if (point.location() > loc) {
-                        break;
-                    } else {
-                        point = point.next();
-                    }
-                } else {
-                    break;
-                }
-            }
-            AbstractStorageValue temp = (AbstractStorageValue) point.next();
-            point.next(nextValue);
-            nextValue.next(temp);
-
-            if (nextValue.location() == EMPTY_LOCATION) {
-                nextValue.locate(point.location() + 1);
-            }
-        }
-
-        return head;
+        return this;
     }
 
     @Override
@@ -136,7 +113,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         StringBuilder buff = new StringBuilder();
         buff.append(base)
             .append(this.type().getType());
-        if (location != EMPTY_LOCATION) {
+        if (location != StorageValue.NOT_LOCATION) {
             buff.append(location);
         }
 
