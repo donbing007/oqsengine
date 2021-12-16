@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  * @version 0.1 2021/09/08 15:13
  * @since 1.8
  */
-public class SortField {
+public class SortInfo {
 
     // 字段名称.
     private String fieldName;
@@ -21,8 +21,6 @@ public class SortField {
     private boolean identifie;
     // 是否为降序.
     private boolean desc;
-    // 是否和上个排序字段组合.
-    private boolean stick;
     // 逻辑字段类型.
     private IEntityField field;
 
@@ -46,10 +44,6 @@ public class SortField {
         return desc;
     }
 
-    public boolean isStick() {
-        return stick;
-    }
-
     public IEntityField getField() {
         return field;
     }
@@ -68,8 +62,6 @@ public class SortField {
         private boolean identifie = false;
         // 是否为降序.
         private boolean desc = false;
-        // 是否和上个排序字段组合.
-        private boolean stick = false;
         // 逻辑字段类型.
         private IEntityField field;
 
@@ -105,11 +97,6 @@ public class SortField {
             return this;
         }
 
-        public Builder withStick(boolean stick) {
-            this.stick = stick;
-            return this;
-        }
-
         public Builder withField(IEntityField field) {
             this.field = field;
             return this;
@@ -118,16 +105,15 @@ public class SortField {
         /**
          * 构造.
          */
-        public SortField build() {
-            SortField sortField = new SortField();
-            sortField.system = this.system;
-            sortField.number = this.number;
-            sortField.identifie = this.identifie;
-            sortField.desc = this.desc;
-            sortField.field = this.field;
-            sortField.fieldName = this.fieldName;
-            sortField.stick = this.stick;
-            return sortField;
+        public SortInfo build() {
+            SortInfo sortInfo = new SortInfo();
+            sortInfo.system = this.system;
+            sortInfo.number = this.number;
+            sortInfo.identifie = this.identifie;
+            sortInfo.desc = this.desc;
+            sortInfo.field = this.field;
+            sortInfo.fieldName = this.fieldName;
+            return sortInfo;
         }
     }
 }
