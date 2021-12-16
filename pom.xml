@@ -56,9 +56,6 @@
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
                     </includes>
-                    <argLine>
-                        -Xmx4096m -Xms4096m
-                    </argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -103,11 +100,6 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.7</version>
-                <configuration>
-                    <excludes>
-                        <exclude>META-INF/**</exclude>
-                    </excludes>
-                </configuration>
                 <executions>
                     <execution>
                         <id>pre-unit-test</id>
@@ -416,7 +408,7 @@
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>
         <aspectj.version>1.9.1</aspectj.version>
-        <allure.version>2.13.10</allure.version>
+        <argLine>-Xmx4096m -Xms4096m</argLine>
     </properties>
 
 </project>
