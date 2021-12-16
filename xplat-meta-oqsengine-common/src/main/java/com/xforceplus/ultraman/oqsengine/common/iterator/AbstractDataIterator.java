@@ -86,6 +86,10 @@ public abstract class AbstractDataIterator<E> implements DataIterator<E> {
         }
 
         if (buff.isEmpty()) {
+            if (!more) {
+                return false;
+            }
+
             try {
                 load(buff, getBuffSize());
             } catch (Exception e) {

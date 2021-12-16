@@ -35,10 +35,6 @@ public class MockEntityClassDefine {
 
     public static long DRIVCER_ID_FEILD_ID = Long.MAX_VALUE;
     /**
-     * 关系标识的开始值,依次递减.
-     */
-    private static long baseRelationsId = Integer.MAX_VALUE;
-    /**
      * 类型标识的开始值,依次递减.
      */
     private static long baseClassId = Long.MAX_VALUE;
@@ -61,16 +57,19 @@ public class MockEntityClassDefine {
     public static IEntityClass LOOKUP_ENTITY_CLASS;
 
     /*
-     * 用户(用户编号, 订单总数(count), 总消费金额(sum), 平均消费金额(avg), 最大消费金额(max), 最小消费金额(min))
-     *   |---订单 (单号, 下单时间, 订单项总数(count), 总金额(sum), 用户编号(lookup), 最大数量(max), 最小数量(min), 平均数量(avg), 总数量(sum), 最大时间(max), 最小时间(min))
-     *        |---订单项 (单号(lookup), 物品名称, 金额, 数量, 时间)
+     * 用户(用户名称, 用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
+     *   |---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 最大金额max, 最小金额min, 用户编号lookup, 总数量sum, 最大数量max, 最小数量min, 最大时间max,
+     *   最小时间min, 平均数量avg, 订单项平均价格formula)
+     *        |---订单项 (单号lookup, 物品名称, 金额, 数量, 时间)
      */
     public static IEntityClass USER_CLASS;
     public static IEntityClass ORDER_CLASS;
     public static IEntityClass ORDER_ITEM_CLASS;
 
-    // 字段ID定义.
-    private static enum FieldId {
+    /**
+     * 字段定义.
+     */
+    public static enum FieldId {
         l0LongFieldId,
         l0StringFieldId,
         l0StringsFieldId,
@@ -86,6 +85,9 @@ public class MockEntityClassDefine {
         lookupL2DecFieldId,
         l2LookupIdFieldId,
         l2LongFieldId,
+        l2DriveId,
+        l2OneToManyId,
+        l2OneToManyLookupId,
 
         // 用户名称标识
         userNameFieldId,
@@ -111,6 +113,10 @@ public class MockEntityClassDefine {
         orderTotalNumberCountFieldId,
         // 订单总金额.
         orderTotalPriceSumFieldId,
+        // 订单最小金额.
+        orderMinPriceSumFieldId,
+        // 订单最大金额.
+        orderMaxPriceSumFieldId,
         // 订单总数量.
         orderTotalNumSumFieldId,
         // 订单最大数量.
@@ -248,7 +254,7 @@ public class MockEntityClassDefine {
                     .withName("l2-long")
                     .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
-                .withId(DRIVCER_ID_FEILD_ID)
+                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                 .withFieldType(FieldType.LONG)
                 .withName("l2-driver.id")
                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
@@ -256,7 +262,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(DRIVCER_ID_FEILD_ID)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyId.ordinal())
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
@@ -265,9 +271,9 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(DRIVCER_ID_FEILD_ID)
+                                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                                 .withFieldType(FieldType.LONG)
-                                .withName("driver.id")
+                                .withName("l2-driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
@@ -276,7 +282,7 @@ public class MockEntityClassDefine {
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(DRIVCER_ID_FEILD_ID)
+                        .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                         .withCode("l2-many-to-one")
                         .withRelationType(Relationship.RelationType.MANY_TO_ONE)
                         .withBelongToOwner(true)
@@ -285,9 +291,9 @@ public class MockEntityClassDefine {
                         .withLeftEntityClassCode("l2")
                         .withEntityField(
                             EntityField.Builder.anEntityField()
-                                .withId(DRIVCER_ID_FEILD_ID)
+                                .withId(Long.MAX_VALUE - FieldId.l2DriveId.ordinal())
                                 .withFieldType(FieldType.LONG)
-                                .withName("driver.id")
+                                .withName("l2-driver.id")
                                 .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
                                 .build()
                         )
@@ -296,12 +302,22 @@ public class MockEntityClassDefine {
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build(),
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 2)
-                        .withCode("l2-one-to-many")
+                        .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                        .withCode("l2-one-to-many-lookup")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
                         .withIdentity(false)
                         .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
                         .withLeftEntityClassId(l2EntityClassId)
                         .withLeftEntityClassCode("l2")
                         .withRightEntityClassId(lookupEntityClassId)
@@ -332,7 +348,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 3)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyId.ordinal())
                         .withCode("l2-one-to-many")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(false)
@@ -343,19 +359,6 @@ public class MockEntityClassDefine {
                         .withRightEntityClassId(L2_ENTITY_CLASS.id())
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
-                        .build(),
-                    Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 4)
-                        .withCode("l2-many-to-one")
-                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
-                        .withBelongToOwner(true)
-                        .withIdentity(false)
-                        .withLeftEntityClassId(L2_ENTITY_CLASS.id())
-                        .withLeftEntityClassCode(L2_ENTITY_CLASS.code())
-                        .withEntityField(L2_ENTITY_CLASS.field("l2-driver.id").get())
-                        .withRightEntityClassId(driverEntityClassId)
-                        .withRightEntityClassLoader((id, a) -> Optional.ofNullable(DRIVER_ENTITY_CLASS))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(DRIVER_ENTITY_CLASS))
                         .build()
                 )
             ).build();
@@ -429,18 +432,52 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(baseRelationsId - 5)
+                        .withId(Long.MAX_VALUE - FieldId.l2OneToManyLookupId.ordinal())
                         .withCode("l2-one-to-many-lookup")
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withIdentity(false)
                         .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
+                        .withLeftEntityClassId(l2EntityClassId)
+                        .withLeftEntityClassCode("l2")
+                        .withRightEntityClassId(lookupEntityClassId)
+                        .withRightEntityClassLoader((id, a) -> Optional.ofNullable(LOOKUP_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(LOOKUP_ENTITY_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                        .withCode("l2-many-to-one-lookup")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withBelongToOwner(true)
+                        .withIdentity(false)
+                        .withStrong(true)
+                        .withEntityField(
+                            EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.l2LookupIdFieldId.ordinal())
+                                .withName("l2-lookup.id")
+                                .withFieldType(FieldType.LONG)
+                                .withConfig(
+                                    FieldConfig.Builder.anFieldConfig().withSearchable(true)
+                                        .withLen(Integer.MAX_VALUE).build()
+                                ).build()
+                        )
                         .withLeftEntityClassId(lookupEntityClassId)
                         .withLeftEntityClassCode("lookup")
                         .withRightEntityClassId(l2EntityClassId)
                         .withRightEntityClassLoader((id, a) -> Optional.ofNullable(L2_ENTITY_CLASS))
                         .withRightFamilyEntityClassLoader(id -> Arrays.asList(L2_ENTITY_CLASS))
                         .build()
+
                 )
             ).build();
 
@@ -664,7 +701,7 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
+                    .withId(Long.MAX_VALUE - FieldId.orderMaxPriceSumFieldId.ordinal())
                     .withFieldType(FieldType.DECIMAL)
                     .withName("最大金额max")
                     .withConfig(
@@ -683,7 +720,7 @@ public class MockEntityClassDefine {
             )
             .withField(
                 EntityField.Builder.anEntityField()
-                    .withId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
+                    .withId(Long.MAX_VALUE - FieldId.orderMinPriceSumFieldId.ordinal())
                     .withFieldType(FieldType.DECIMAL)
                     .withName("最小金额min")
                     .withConfig(

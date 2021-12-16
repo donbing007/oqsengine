@@ -39,7 +39,9 @@ public class FormulaHelper {
     private static Map<String, Object> toRuntimeParams(List<String> args, IEntity entity)
         throws CalculationException {
         Map<String, Object> map = new HashMap<>();
-        LOGGER.info("runtimeArgs is {}", args);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("runtimeArgs is {}", args);
+        }
         if (null != args) {
             for (String arg : args) {
                 Optional<IValue> valueOp = entity.entityValue().getValue(arg);

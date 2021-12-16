@@ -26,7 +26,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.UPDATETIME;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.VERSION;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.getByOrdinal;
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
@@ -48,7 +48,10 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -87,6 +90,10 @@ public class SphinxSyncExecutor implements SyncExecutor {
         List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         RawEntry start = null;
+
+
+        Map<String, IEntityClass> entityClassMap = new HashMap<>();
+
         for (RawEntry rawEntry : rawEntries) {
             if (null == start) {
                 start = rawEntry;
@@ -94,7 +101,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
             try {
                 //  获取记录
                 OriginalEntity entity =
-                    prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
+                    prepareForUpdateDelete(
+                        rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId(), entityClassMap);
 
                 //  加入更新列表
                 storageEntityList.add(entity);
@@ -251,31 +259,54 @@ public class SphinxSyncExecutor implements SyncExecutor {
         return UN_KNOW_ID;
     }
 
-    private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns) throws SQLException {
+    private IEntityClass getEntityClass(
+        long id, Map<String, IEntityClass> entityClassMap, List<CanalEntry.Column> columns) throws SQLException {
+
         long entityId = getEntity(columns);
-        String profile = getStringWithoutNullCheck(columns, PROFILE);
 
         if (entityId > ZERO) {
-            Optional<IEntityClass> entityClassOptional =
-                metaManager.load(entityId, profile);
+            String profile = getStringWithoutNullCheck(columns, PROFILE);
+            String key = toClassKeyWithProfile(id, profile);
+
+            //  读取当前批次cache
+            IEntityClass entityClass = entityClassMap.get(key);
+            if (null != entityClass) {
+                return entityClass;
+            }
+
+            //  当前批次cache不存在
+
+            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId, profile);
 
             if (entityClassOptional.isPresent()) {
-                return entityClassOptional.get();
+                IEntityClass finalClass = entityClassOptional.get();
+                //  加入当前批次cache
+                entityClassMap.put(key, finalClass);
+
+                return finalClass;
             }
-            logger.warn("[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+            }
         }
+
+
+
 
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    private Collection<Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
+    private Map<String, Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
+
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
-            return new ArrayList<>();
+            return Collections.emptyMap();
         }
         try {
-            return attributesToList(attrStr);
+            return attributesToMap(attrStr);
         } catch (Exception e) {
             String error = String
                 .format("[cdc-sync-executor] id [%d], jsonToObject error, message : [%s], attrStr [%s] ", id,
@@ -285,16 +316,16 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
     }
 
-    private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId)
+    private OriginalEntity prepareForUpdateDelete(
+        List<CanalEntry.Column> columns, long id, long commitId, Map<String, IEntityClass> entityClassMap)
         throws SQLException {
         //  通过解析binlog获取
-
-        IEntityClass entityClass = getEntityClass(id, columns);
+        IEntityClass entityClass = getEntityClass(id, entityClassMap, columns);
         if (null == entityClass) {
             throw new SQLException(
                 String.format("[cdc-sync-executor] id [%d], commitId [%d] has no entityClass...", id, commitId));
         }
-        Collection<Object> attributes = attrCollection(id, columns);
+        Map<String, Object> attributes = attrCollection(id, columns);
         if (attributes.isEmpty()) {
             throw new SQLException(
                 String.format("[cdc-sync-executor] id [%d], commitId [%d] has no attributes...", id, commitId));
@@ -315,5 +346,9 @@ public class SphinxSyncExecutor implements SyncExecutor {
             .withEntityClass(entityClass)
             .withAttributes(attributes)
             .build();
+    }
+
+    private String toClassKeyWithProfile(long id, String profile) {
+        return id + "_" + (null == profile ? "" : profile);
     }
 }

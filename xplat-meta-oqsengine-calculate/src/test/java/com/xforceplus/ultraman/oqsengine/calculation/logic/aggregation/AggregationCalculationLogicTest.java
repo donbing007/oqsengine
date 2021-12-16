@@ -886,6 +886,11 @@ public class AggregationCalculationLogicTest {
         }
 
         @Override
+        public void focusNotReadOnly() {
+
+        }
+
+        @Override
         public TransactionAccumulator getAccumulator() {
             return null;
         }

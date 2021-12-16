@@ -24,7 +24,9 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -114,13 +116,13 @@ public class SphinxConsumerServiceTest extends AbstractCDCTestHelper {
         SphinxSyncExecutor sphinxSyncExecutor = CdcInitialization.getInstance().getSphinxSyncExecutor();
 
         Method m = sphinxSyncExecutor.getClass()
-            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class});
+            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class, Map.class});
         m.setAccessible(true);
 
         originalEntities.add((OriginalEntity) m
-            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(0)), RANDOM_INSERT_1, commitId}));
+            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(0)), RANDOM_INSERT_1, commitId, new HashMap<>()}));
         originalEntities.add((OriginalEntity) m
-            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(1)), EXPECTED_CREF, commitId}));
+            .invoke(sphinxSyncExecutor, new Object[] {columns(goodEntries.get(1)), EXPECTED_CREF, commitId, new HashMap<>()}));
 
         String value = OriginalEntityUtils.toOriginalEntityStr(originalEntities);
         CdcErrorTask cdcErrorTask = cdcErrorTasks.iterator().next();

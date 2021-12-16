@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.datasource;
 
+import com.xforceplus.ultraman.oqsengine.common.datasource.log.LoggerDataSource;
 import com.zaxxer.hikari.HikariDataSource;
 import java.util.List;
 import javax.sql.DataSource;
@@ -86,8 +87,15 @@ public class DataSourcePackage {
     }
 
     private void doClose(List<DataSource> master) {
+        DataSource d = null;
         for (DataSource ds : master) {
-            ((HikariDataSource) ds).close();
+            if (LoggerDataSource.class.isInstance(ds)) {
+                d = ((LoggerDataSource) ds).getDelegate();
+            }
+
+            if (HikariDataSource.class.isInstance(d)) {
+                ((HikariDataSource) d).close();
+            }
         }
     }
 }

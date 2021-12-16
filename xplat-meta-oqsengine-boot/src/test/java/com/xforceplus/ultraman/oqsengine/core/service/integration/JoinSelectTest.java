@@ -134,7 +134,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
+                    Long.MAX_VALUE - MockEntityClassDefine.FieldId.l2OneToManyId.ordinal(),
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), Long.MAX_VALUE)
                 )
             )
@@ -161,7 +161,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
+                    Long.MAX_VALUE - MockEntityClassDefine.FieldId.l2OneToManyId.ordinal(),
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 1L)
                 )
             )
@@ -186,7 +186,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref(),
                     MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(),
                     ConditionOperator.EQUALS,
-                    MockEntityClassDefine.DRIVCER_ID_FEILD_ID,
+                    Long.MAX_VALUE - MockEntityClassDefine.FieldId.l2OneToManyId.ordinal(),
                     new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 2L)
                 )
             )

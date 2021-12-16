@@ -39,8 +39,8 @@ public class MassageUnpackBenchmarkTest extends AbstractCDCTestHelper {
     @BeforeEach
     public void before() throws Exception {
         super.init(true);
-        entries = new ArrayList<>(size);
-        preWarms = new ArrayList<>(1);
+        entries = new ArrayList<>();
+        preWarms = new ArrayList<>();
         build(preWarms, 1, Long.MAX_VALUE);
         build(entries, 1000, startId);
     }

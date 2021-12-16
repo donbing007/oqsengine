@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -59,5 +61,23 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public boolean isReadyCommit(long commitId) {
         return commitIdStatusService.isReady(commitId);
+    }
+
+    @Override
+    public List<Long> isNotReadyCommits(List<Long> commitIds) {
+        long[] checks = new long[commitIds.size()];
+        for (int i = 0; i < commitIds.size(); i++) {
+            checks[i] = commitIds.get(i);
+        }
+        boolean[] res = commitIdStatusService.isReady(checks);
+
+        List<Long> notReadyIds = new ArrayList<>();
+        for (int i = 0; i < res.length; i++) {
+            if (!res[i]) {
+                notReadyIds.add(checks[i]);
+            }
+        }
+
+        return notReadyIds;
     }
 }

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common.datasource;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
+import com.xforceplus.ultraman.oqsengine.common.datasource.log.LoggerDataSource;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -153,21 +154,13 @@ public class DataSourceFactory {
             }
         });
 
-        if (showSql) {
-            hikariConfig.setDriverClassName("com.p6spy.engine.spy.P6SpyDriver");
-            final String jdbcPreifx = "jdbc:";
-            final String loggerJdbcPrefix = jdbcPreifx + "p6spy:";
-            if (!hikariConfig.getJdbcUrl().startsWith(loggerJdbcPrefix)) {
-                StringBuffer loggerJdbc = new StringBuffer();
-                loggerJdbc.append(loggerJdbcPrefix);
-                loggerJdbc.append(hikariConfig.getJdbcUrl().substring(jdbcPreifx.length()));
-                hikariConfig.setJdbcUrl(loggerJdbc.toString());
-            }
-        }
-
         hikariConfig.setThreadFactory(ExecutorHelper.buildNameThreadFactory("jdbc-pool", false));
 
-        return new HikariDataSource(hikariConfig);
+        if (showSql) {
+            return new LoggerDataSource(new HikariDataSource(hikariConfig));
+        } else {
+            return new HikariDataSource(hikariConfig);
+        }
     }
 
     private static void invokeMethod(HikariConfig hikariConfig, String attrName, ConfigValue value) throws Exception {

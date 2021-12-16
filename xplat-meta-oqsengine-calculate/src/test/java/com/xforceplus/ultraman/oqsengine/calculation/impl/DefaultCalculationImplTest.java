@@ -328,38 +328,6 @@ public class DefaultCalculationImplTest {
             String.format("The target instance (%s) was expected to be found, but was not.", "entityC"));
     }
 
-    /**
-     * 测试持久化部份错误情况.
-     * 执行批量持久化,发生错误会针对错误数据进行重试.
-     * 这里测试是否进行了重试,同时重试的次数是否有上限.
-     */
-    @Test
-    public void testPersistenceErrReplayMax() throws Exception {
-        // entityB实例持久化会一直错误.因为这里指定了判断其是否等于entityB,实际更新的是entityA.
-        masterStorage.setReplaceTest(e -> !(e.id() == entityB.id()));
-
-        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
-            .withMetaManager(metaManager)
-            .withMasterStorage(masterStorage)
-            .withScenarios(CalculationScenarios.REPLACE).build();
-        context.getCalculationLogicFactory().get().register(lookupLogic);
-        context.getCalculationLogicFactory().get().register(aggregationLogic);
-
-        context.focusEntity(entityA, A_CLASS);
-        context.addValueChange(
-            ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
-        );
-
-        calculation.maintain(context);
-
-        // b 重试了多少次.
-        long size = masterStorage.getReplaceEntities().stream()
-            .filter(e -> e.id() == entityB.id())
-            .count();
-
-        Assertions.assertEquals(100, size);
-    }
-
     static class MockMasterStorage implements MasterStorage {
 
         private Map<Long, IEntity> entities = new HashMap<>();

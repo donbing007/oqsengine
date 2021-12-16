@@ -50,17 +50,23 @@ public class LocalCacheGenerator implements IDGenerator {
      */
     public synchronized void loadCurrent() {
         if (current != null && !current.useful()) {
-            logger.info("不可用 current :{}", current);
+            if (logger.isDebugEnabled()) {
+                logger.debug("不可用 current :{}", current);
+            }
         }
         if (current == null || !current.useful()) {
             if (next == null) {
                 SegmentId segmentId = querySegmentId();
                 this.current = segmentId;
-                logger.info("next 为空 {}");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("next 为空 {}");
+                }
             } else {
                 current = next;
                 next = null;
-                logger.info("可用了{}", current);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("可用了{}", current);
+                }
             }
         }
     }

@@ -21,9 +21,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,24 +42,36 @@ public class MinFunctionStrategy implements FunctionStrategy {
 
     @Override
     public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
-        logger.info("begin excuteMin agg:{}, o-value:{}, n-value:{}",
+        if (logger.isDebugEnabled()) {
+            logger.debug("begin excuteMin agg:{}, o-value:{}, n-value:{}",
                 agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+        }
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
+        AggregationFunction function =
+            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         long count;
         if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
             || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
-            count = countAggregationEntity(aggregation, context);
-            logger.info("minExcute Count:{}, agg-value:{}, n-value:{}", count,
+            count = countAggregationByAttachment(aggValue.get());
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("minExcute Count:{}, agg-value:{}, n-value:{}", count,
                     aggValue.get().valueToString(), n.get().valueToString());
+            }
+
             if ((context.getScenariso()).equals(CalculationScenarios.BUILD)) {
-                if (count == 1) {
+                if (count == 0) {
                     aggValue.get().setStringValue(n.get().valueToString());
-                    logger.info("第一条数据计算 - return agg-value:{}, n-value:{}",
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("第一条数据计算 - return agg-value:{}, n-value:{}",
                             aggValue.get().valueToString(), n.get().valueToString());
-                    return aggValue;
+                    }
+
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
+                    return attAggValue;
                 }
             }
         }
@@ -65,9 +79,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
         if (aggValue.get().valueToString().equals(o.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                    logger.info("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
-                        aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
-                    return function.excute(aggValue, o, n);
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
+                            aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
+                    }
+                    Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
+                    return function.excute(attAggValue, o, n);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最小值，需要重新查找最小值-将最小值返回
                     Optional<IValue> minValue = null;
@@ -77,12 +95,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         e.printStackTrace();
                     }
                     if (minValue.isPresent()) {
-                        logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                        }
                         aggValue.get().setStringValue(minValue.get().valueToString());
-                        return aggValue;
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
+                        return attAggValue;
                     } else {
                         aggValue.get().setStringValue("0");
-                        return aggValue;
+                        Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
+                        return attAggValue;
                     }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
@@ -99,7 +121,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
                             e.printStackTrace();
                         }
                         if (minValue.isPresent()) {
-                            logger.info("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("找到最小数据 - minValue:{}", minValue.get().valueToString());
+                            }
                             if (checkMaxValue(minValue.get(), n.get())) {
                                 // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
                                 aggValue.get().setStringValue(n.get().valueToString());
@@ -147,47 +171,83 @@ public class MinFunctionStrategy implements FunctionStrategy {
         }
         if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
             // 如果不是删除最小的数据，无需额外判断，直接返回当前聚合值
-            return aggValue;
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
+            return attAggValue;
+        } else if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
+            return function.excute(attAggValue, o, n);
         }
 
-        logger.info("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
-            aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
+        if (logger.isDebugEnabled()) {
+            logger.debug("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
+                aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
+        }
         return function.excute(aggValue, o, n);
     }
 
     /**
-     * 得到统计值.
+     * 用于统计该聚合下有多少条数据.
      *
-     * @param aggregation 聚合配置.
-     * @param context     上下文信息.
-     * @return 统计数字.
+     * @param value 字段信息.
+     * @return 附件中的数量信息.
      */
-    private long countAggregationEntity(Aggregation aggregation, CalculationContext context) {
-        // 得到count值
-        Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
-        long count = 0;
-        if (aggEntityClass.isPresent()) {
-            Conditions conditions = Conditions.buildEmtpyConditions();
-            // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
-            if (entityField.isPresent()) {
-                logger.info("min count relationId:{}, relationValue:{}",
-                        entityField.get().id(), context.getFocusEntity().id());
-                conditions.addAnd(new Condition(entityField.get(),
-                        ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
+    private long countAggregationByAttachment(IValue value) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment, "|");
+            if (att.length > 1) {
+                return Long.parseLong(att[0]);
             }
-            Page emptyPage = Page.emptyPage();
-            try {
-                logger.info("min count conditions:{}", conditions.toString());
-                context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
-                        SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            count = emptyPage.getTotalCount();
         }
-        return count;
+        return 0L;
+    }
+
+    /**
+     * 替换附件信息.
+     *
+     * @param value 字段.
+     * @param count 统计数量.
+     * @param sum 求和参数.
+     * @return 新的附件.
+     */
+    private IValue attachmentReplace(IValue value, String count, String sum) {
+        Optional attachmentOp = value.getAttachment();
+        if (attachmentOp.isPresent()) {
+            String attachment = (String) attachmentOp.get();
+            String[] att = StringUtils.split(attachment, "|");
+            // 需要处理的最小附件长度.
+            final int minAttchemntSize = 1;
+            if (att.length > minAttchemntSize) {
+
+                StringBuilder attachmentBuff = new StringBuilder();
+
+                if (value instanceof DecimalValue) {
+
+                    attachmentBuff.append(Long.parseLong(att[0]) + Long.parseLong(count))
+                        .append('|')
+                        .append(new BigDecimal(att[1]).add(new BigDecimal(sum)));
+
+                    return value.copy(attachmentBuff.toString());
+
+                } else if (value instanceof LongValue) {
+
+                    attachmentBuff.append(Long.parseLong(att[0]) + Long.parseLong(count))
+                        .append('|')
+                        .append(Long.parseLong(att[1]) + Long.parseLong(sum));
+
+                    return value.copy(attachmentBuff.toString());
+
+                } else if (value instanceof DateTimeValue) {
+
+                    attachmentBuff.append(Long.valueOf(att[0]) + Long.valueOf(count))
+                        .append('|')
+                        .append(att[1]);
+                    return value.copy(attachmentBuff.toString());
+                }
+            }
+        }
+        return value;
     }
 
     /**
@@ -208,17 +268,20 @@ public class MinFunctionStrategy implements FunctionStrategy {
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(entityField.get(),
-                        ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
+                    ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
 
             }
             Page emptyPage = Page.newSinglePage(2);
-            List<EntityRef> entityRefs = (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
+            List<EntityRef> entityRefs =
+                (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
-                            .withPage(emptyPage)
-                            .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
-                            .build()
-            );
-            logger.info("minAggregationEntity:entityRefs:{}", entityRefs.size());
+                        .withPage(emptyPage)
+                        .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
+                        .build()
+                );
+            if (logger.isDebugEnabled()) {
+                logger.debug("minAggregationEntity:entityRefs:{}", entityRefs.size());
+            }
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
                     if (entityRefs.size() == 1) {
@@ -226,8 +289,12 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
                             return Optional.empty();
                         }
-                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
-                        logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
+                        Optional<IEntity> entity =
+                            context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        if (logger.isDebugEnabled()) {
+                            logger.info("minAggregationEntity:entityRefs:{}",
+                                entity.get().entityValue().values().stream().toArray());
+                        }
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());
                         }
@@ -241,7 +308,10 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     }
                 }
                 Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
-                logger.info("minAggregationEntity:entityRefs:{}", entity.get().entityValue().values().stream().toArray());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("minAggregationEntity:entityRefs:{}",
+                        entity.get().entityValue().values().stream().toArray());
+                }
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }
@@ -258,7 +328,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
      * @return 旧值大返回true，旧值小返回false.
      */
     private boolean checkMaxValue(IValue o, IValue n) {
-        logger.info("checkMaxValue - o-value:{}, n-value:{}", o.valueToString(), n.valueToString());
+        if (logger.isDebugEnabled()) {
+            logger.debug("checkMaxValue - o-value:{}, n-value:{}", o.valueToString(), n.valueToString());
+        }
         if (o instanceof EmptyTypedValue) {
             return false;
         }
@@ -266,7 +338,8 @@ public class MinFunctionStrategy implements FunctionStrategy {
             return true;
         }
         if (o instanceof DecimalValue) {
-            double temp = Math.max(((DecimalValue) o).getValue().doubleValue(), ((DecimalValue) n).getValue().doubleValue());
+            double temp =
+                Math.max(((DecimalValue) o).getValue().doubleValue(), ((DecimalValue) n).getValue().doubleValue());
             return Double.compare(temp, ((DecimalValue) o).getValue().doubleValue()) == 0;
         } else if (o instanceof LongValue) {
             long temp = Math.max(o.valueToLong(), n.valueToLong());

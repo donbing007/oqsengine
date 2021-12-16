@@ -6,9 +6,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -43,8 +45,29 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
     @Resource
     private MetaManager metaManager;
 
-    @Resource
-    private CombinedSelectStorage combinedSelectStorage;
+    @Resource(name = "combinedSelectStorage")
+    private ConditionsSelectStorage conditionsSelectStorage;
+
+    @Resource(name = "serviceTransactionExecutor")
+    private TransactionExecutor transactionExecutor;
+
+    private boolean withTx;
+
+    /**
+     * 默认运行时启用事务.
+     */
+    public LookupMaintainingTaskRunner() {
+        this(true);
+    }
+
+    /**
+     * 是否以事务方式执行.
+     *
+     * @param withTx true 启用,false 不启用.
+     */
+    public LookupMaintainingTaskRunner(boolean withTx) {
+        this.withTx = withTx;
+    }
 
     @Override
     public void run(TaskCoordinator coordinator, Task task) {
@@ -71,7 +94,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
          */
         LookupEntityIterator lookupEntityIterator =
             new LookupEntityIterator(entityIterBuffer, lookupMaintainingTask.getMaxSize());
-        lookupEntityIterator.setCombinedSelectStorage(combinedSelectStorage);
+        lookupEntityIterator.setCombinedSelectStorage(conditionsSelectStorage);
         lookupEntityIterator.setMasterStorage(masterStorage);
         lookupEntityIterator.setEntityClass(lookupEntityClass);
         lookupEntityIterator.setField(lookupField);
@@ -82,24 +105,45 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         final int bufferSize = 1000;
         List<IEntity> lookupEntities = new ArrayList<>(bufferSize);
-        int index = 0;
-        while (lookupEntityIterator.hasNext()) {
-            lookupEntities.add(lookupEntityIterator.next());
-            index++;
 
-            if (index == bufferSize - 1) {
-                // 进行一次更新
+        for (int i = 0; i < lookupMaintainingTask.getMaxSize(); i++) {
+            if (lookupEntityIterator.hasNext()) {
+                lookupEntities.add(lookupEntityIterator.next());
+            } else {
+                break;
+            }
+        }
+
+        try {
+            // 进行一次更新
+            if (withTx) {
+                transactionExecutor.execute((transaction, resource, hint) -> {
+                    adjustLookupEntities(
+                        transaction,
+                        lookupMaintainingTask,
+                        lookupEntities,
+                        lookupEntityClass,
+                        lookupField,
+                        targetValueOp,
+                        lookupMaintainingTask.getTargetEntityId());
+                    return null;
+                });
+            } else {
+
                 adjustLookupEntities(
+                    null,
                     lookupMaintainingTask,
                     lookupEntities,
                     lookupEntityClass,
                     lookupField,
                     targetValueOp,
                     lookupMaintainingTask.getTargetEntityId());
-
-                index = 0;
-                lookupEntities.clear();
             }
+        } catch (Exception ex) {
+            // 重新加入任务队列进行计算.
+            logger.error(ex.getMessage(), ex);
+            coordinator.addTask(task);
+            return;
         }
 
         // 如果还有可迭代的数据,只是受限于失代上限限制造成的结束.
@@ -121,6 +165,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
     // 调整lookup实例.
     private void adjustLookupEntities(
+        Transaction transaction,
         LookupMaintainingTask task,
         List<IEntity> lookupEntities,
         IEntityClass lookupEntityClass,
@@ -130,7 +175,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         updateLookupEntityesValue(lookupEntities, lookupField, targetValueOp, targetEntityId);
 
-        long[] notSuccessIds = persist(lookupEntities, lookupEntityClass);
+        long[] notSuccessIds = persist(transaction, lookupEntities, lookupEntityClass);
 
         List<IEntity> needReplayEntities = null;
         // 发生错误,进入重试.
@@ -150,7 +195,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
             if (!needReplayEntities.isEmpty()) {
                 updateLookupEntityesValue(needReplayEntities, lookupField, replayTargetValueOp, targetEntityId);
-                notSuccessIds = persist(needReplayEntities, lookupEntityClass);
+                notSuccessIds = persist(transaction, needReplayEntities, lookupEntityClass);
             }
         }
     }
@@ -179,7 +224,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         return entity.entityValue().getValue(lookupMaintainingTask.getTargetFieldId());
     }
 
-    private long[] persist(List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
+    private long[] persist(Transaction transaction, List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
         EntityPackage entityPackage = new EntityPackage();
         for (IEntity lookupEntity : lookupEntities) {
             entityPackage.put(lookupEntity, lookupEntityClass);
@@ -190,6 +235,13 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             results = masterStorage.replace(entityPackage);
         } catch (SQLException e) {
             return lookupEntities.stream().mapToLong(le -> le.id()).toArray();
+        }
+
+        if (transaction != null) {
+            if (transaction.isReadyOnly()) {
+                // 强制当前事务非只读事务.
+                transaction.focusNotReadOnly();
+            }
         }
 
         return IntStream.range(0, results.length)

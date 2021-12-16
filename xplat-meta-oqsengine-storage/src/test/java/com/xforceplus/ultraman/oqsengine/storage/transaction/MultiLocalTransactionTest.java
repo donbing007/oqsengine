@@ -39,6 +39,9 @@ public class MultiLocalTransactionTest {
     private CommitIdStatusServiceImpl commitIdStatusService;
     private RedisEventHandler redisEventHandler;
 
+    /**
+     * 初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         redisClient = CommonInitialization.getInstance().getRedisClient();
@@ -52,6 +55,25 @@ public class MultiLocalTransactionTest {
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+    }
+
+    @Test
+    public void testFocusNotReadyOnly() throws Exception {
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withCacheEventHandler(redisEventHandler)
+            .withMaxWaitCommitIdSyncMs(0)
+            .build();
+
+        Assertions.assertTrue(tx.isReadyOnly());
+
+        tx.focusNotReadOnly();
+
+        Assertions.assertFalse(tx.isReadyOnly());
     }
 
     @Test

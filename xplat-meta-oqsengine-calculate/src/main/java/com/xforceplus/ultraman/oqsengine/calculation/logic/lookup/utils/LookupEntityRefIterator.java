@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -81,7 +82,7 @@ public class LookupEntityRefIterator extends AbstractDataIterator<EntityRef> {
 
     @Override
     protected void load(List<EntityRef> buff, int limit) throws Exception {
-        buff.addAll(combinedSelectStorage.select(
+        Collection<EntityRef> refs = combinedSelectStorage.select(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new AttachmentCondition(
@@ -101,6 +102,11 @@ public class LookupEntityRefIterator extends AbstractDataIterator<EntityRef> {
                 .withPage(Page.newSinglePage(limit))
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
-        ));
+        );
+
+        if (!refs.isEmpty()) {
+            buff.addAll(refs);
+            startId = buff.get(buff.size() - 1).getId();
+        }
     }
 }
