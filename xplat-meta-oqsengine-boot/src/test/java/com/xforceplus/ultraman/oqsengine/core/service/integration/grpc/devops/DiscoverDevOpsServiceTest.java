@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
@@ -80,7 +81,7 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
      */
     @BeforeEach
     public void before() throws IllegalAccessException {
-        MetaManager metaManager = new StorageMetaManager();
+        MetaManager metaManager = new StorageMetaManager(new ClientModel());
 
         Collection<Field> cacheFields = ReflectionUtils.printAllMembers(metaManager);
         ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,

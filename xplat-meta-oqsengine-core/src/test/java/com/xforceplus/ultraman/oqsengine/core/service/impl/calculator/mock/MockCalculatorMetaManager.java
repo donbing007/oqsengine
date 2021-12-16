@@ -216,8 +216,13 @@ public class MockCalculatorMetaManager implements MetaManager {
     }
 
     @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
+    public Optional<IEntityClass> load(long entityClassId, int version, String profile) {
         return Optional.empty();
+    }
+
+    @Override
+    public Collection<IEntityClass> familyLoad(long entityClassId) {
+        return null;
     }
 
     @Override
@@ -231,12 +236,17 @@ public class MockCalculatorMetaManager implements MetaManager {
     }
 
     @Override
-    public boolean dataImport(String appId, String env, int version, String content) {
+    public boolean metaImport(String appId, String env, int version, String content) {
         return true;
     }
 
     @Override
     public Optional<MetaMetrics> showMeta(String appId) throws Exception {
         return Optional.empty();
+    }
+
+    @Override
+    public int reset(String appId, String env) {
+        return 0;
     }
 }

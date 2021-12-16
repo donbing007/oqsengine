@@ -1,17 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.metadata.integeration.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.DefaultEntityClassFormatHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -32,7 +27,6 @@ public class RemoteRedisTest {
     private DefaultCacheExecutor cacheExecutor;
 
     private StorageMetaManager storageMetaManager;
-    public EntityClassFormatHandler entityClassFormatHandler;
 
     @BeforeEach
     public void before() throws Exception {
@@ -47,12 +41,9 @@ public class RemoteRedisTest {
             ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
             cacheExecutor.init();
 
-            entityClassFormatHandler = new DefaultEntityClassFormatHandler();
-            ReflectionTestUtils.setField(entityClassFormatHandler, "cacheExecutor", cacheExecutor);
 
-            storageMetaManager = new StorageMetaManager();
+            storageMetaManager = new StorageMetaManager(new ClientModel());
             ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
-            ReflectionTestUtils.setField(storageMetaManager, "entityClassFormatHandler", entityClassFormatHandler);
         }
     }
 

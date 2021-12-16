@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
@@ -8,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.util.ArrayList;
@@ -47,6 +49,9 @@ public class CacheExecutorTest {
         InitializationHelper.destroy();
     }
 
+    /**
+     * 测试版本
+     */
     @Test
     public void prepare9to13Test() {
         /*
@@ -217,9 +222,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
-            throw new RuntimeException("save error.");
-        }
+        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, entityClassStorageList);
 
@@ -237,9 +240,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE - 1;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
-            throw new RuntimeException("save error.");
-        }
+        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, null);
 
@@ -273,22 +274,20 @@ public class CacheExecutorTest {
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
-            Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
+            Map<String, String> results = cacheExecutor.read(e.getSelf());
 
-            Assertions.assertNotNull(results.remove(e.getSelf()));
+            Assertions.assertTrue(null != results && !results.isEmpty());
 
             if (null != e.getAncestors()) {
                 for (Long id : e.getAncestors()) {
-                    EntityClassStorage r = results.remove(id);
+                    Map<String, String> r = cacheExecutor.read(id);
                     Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {
-                        checkEntity(fullCheckMaps.get(id), r);
+                        checkEntity(fullCheckMaps.get(id), CacheToStorageGenerator.toEntityClassStorage(DefaultCacheExecutor.OBJECT_MAPPER, r));
                     }
                 }
             }
-
-            Assertions.assertEquals(0, results.size());
         }
     }
 
@@ -339,7 +338,7 @@ public class CacheExecutorTest {
          * set self
          */
         ExpectedEntityStorage self =
-            new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
+            new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Collections.singletonList(10L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(self));
         expectedEntityStorageList.add(self);
 
@@ -348,7 +347,7 @@ public class CacheExecutorTest {
          */
         ExpectedEntityStorage father =
             new ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L),
-                Arrays.asList(20L));
+                Collections.singletonList(20L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(father));
         expectedEntityStorageList.add(father);
 

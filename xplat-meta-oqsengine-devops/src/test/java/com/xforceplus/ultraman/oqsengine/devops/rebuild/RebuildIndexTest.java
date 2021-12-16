@@ -20,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;

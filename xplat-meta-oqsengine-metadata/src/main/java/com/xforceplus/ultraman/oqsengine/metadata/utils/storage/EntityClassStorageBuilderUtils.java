@@ -1,6 +1,5 @@
-package com.xforceplus.ultraman.oqsengine.metadata.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils.storage;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 
@@ -18,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -65,7 +65,7 @@ public class EntityClassStorageBuilderUtils {
         return temp.values().stream().peek(
             v -> {
                 Long fatherId = v.getFatherId();
-                while (null != fatherId && fatherId >= MIN_ID) {
+                while (CacheUtils.validBusinessId(fatherId)) {
                     EntityClassStorage entityClassStorage = temp.get(fatherId);
                     if (null == entityClassStorage) {
                         throw new MetaSyncClientException(
@@ -87,7 +87,7 @@ public class EntityClassStorageBuilderUtils {
 
     private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap,
                                       RelationStorage relationStorage) {
-        if (relationStorage.getRightEntityClassId() <= 0) {
+        if (!CacheUtils.validBusinessId(relationStorage.getRightEntityClassId())) {
             throw new MetaSyncClientException(
                 String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0.",
                     id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
@@ -115,7 +115,7 @@ public class EntityClassStorageBuilderUtils {
 
         //  id
         long id = entityClassInfo.getId();
-        if (id < MIN_ID) {
+        if (!CacheUtils.validBusinessId(id)) {
             throw new MetaSyncClientException("id is invalid.", false);
         }
         storage.setId(id);
@@ -213,7 +213,7 @@ public class EntityClassStorageBuilderUtils {
 
     private static EntityField toEntityField(boolean isRelationEntity, EntityFieldInfo e) {
         long eid = e.getId();
-        if (eid < MIN_ID) {
+        if (!CacheUtils.validBusinessId(eid)) {
             throw new MetaSyncClientException("entityFieldId is invalid.", false);
         }
         FieldType fieldType = FieldType.fromRawType(e.getFieldType().name());
@@ -244,7 +244,7 @@ public class EntityClassStorageBuilderUtils {
                 return toFormula(fieldType, calculator);
             }
             case LOOKUP: {
-                return toLookup(calculator);
+                return toLookup(fieldId, calculator);
             }
             case AGGREGATION: {
                 return toAggregation(calculator);
@@ -255,10 +255,15 @@ public class EntityClassStorageBuilderUtils {
         }
     }
 
-    private static Lookup toLookup(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
-        if (calculator.getLookupEntityClassId() < MIN_ID || calculator.getLookupEntityFieldId() < MIN_ID) {
-            throw new MetaSyncClientException("lookup [classId] or [fieldId] could not be 0.",
-                false);
+    private static Lookup toLookup(long fieldId, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+        if (!CacheUtils.validBusinessId(calculator.getLookupEntityClassId())) {
+            throw new MetaSyncClientException(
+                String.format("[lookup-entityClassId] could not be zero, current-fieldId %d", fieldId), false);
+        }
+
+        if (!CacheUtils.validBusinessId(calculator.getLookupEntityFieldId())) {
+            throw new MetaSyncClientException(
+                String.format("[lookup-entityField] could not be zero, current-fieldId %d.", fieldId), false);
         }
 
         return Lookup.Builder.anLookup()
@@ -276,7 +281,7 @@ public class EntityClassStorageBuilderUtils {
         //  判断表达式层级逻辑是否允许
         if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
             throw new MetaSyncClientException(
-                String.format("fieldId [%d], autoFill [level] could not be less than %d.",
+                String.format("[autoFill-level] could not be less than %d, fieldId [%d]",
                     fieldId, MIN_FORMULA_LEVEL), false);
         }
 
@@ -284,7 +289,7 @@ public class EntityClassStorageBuilderUtils {
             //  普通自增编号
             case NORMAL: {
                 if (calculator.getPatten().isEmpty()) {
-                    throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [patten] could not be null.", fieldId),
+                    throw new MetaSyncClientException(String.format("[autoFill-patten] could not be null, fieldId [%d]", fieldId),
                         false);
                 }
 
@@ -294,14 +299,14 @@ public class EntityClassStorageBuilderUtils {
             case SENIOR: {
                 //  判断表达式不能为空
                 if (calculator.getExpression().isEmpty()) {
-                    throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [expression] could not be null.", fieldId),
+                    throw new MetaSyncClientException(String.format("[autoFill-expression] could not be null, fieldId [%d]", fieldId),
                         false);
                 }
 
                 break;
             }
             default: {
-                throw new MetaSyncClientException(String.format("fieldId [%d], autoFill [domainNoType] should not be null.", fieldId),
+                throw new MetaSyncClientException(String.format("[autoFill-domainNoType] should not be null, fieldId [%d]", fieldId),
                     false);
             }
         }
@@ -325,14 +330,14 @@ public class EntityClassStorageBuilderUtils {
         //  判断表达式不能为空
         if (calculator.getExpression().isEmpty()) {
             throw new MetaSyncClientException(
-                "formula-[expression] could not be null.",
+                "[formula-expression] could not be null.",
                 false);
         }
 
         //  判断表达式层级逻辑是否允许
         if (calculator.getLevel() < MIN_FORMULA_LEVEL) {
             throw new MetaSyncClientException(
-                String.format("formula [level] could not be less than %d.",
+                String.format("[formula-level] could not be less than %d.",
                     MIN_FORMULA_LEVEL), false);
         }
 
@@ -343,12 +348,12 @@ public class EntityClassStorageBuilderUtils {
         Formula.FailedPolicy policy = Formula.FailedPolicy.instance(calculator.getFailedPolicy());
         if (policy.equals(Formula.FailedPolicy.UNKNOWN)) {
             throw new MetaSyncClientException(
-                "calculator [failedPolicy] could not be unknown with type [formula].", false);
+                "[calculator-failedPolicy] could not be unknown with type [formula].", false);
         } else if (policy.equals((Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE))) {
             //  当失败策略为RECORD_ERROR_RESUME时,失败默认值不能为空
             if (!calculator.getFailedDefaultValue().isInitialized()) {
                 throw new MetaSyncClientException(
-                    "calculator [failedDefaultValueCould] could not be null when policy [USE_FAILED_DEFAULT_VALUE] with type [formula].",
+                    "[calculator-failedDefaultValueCould] could not be null when policy [USE_FAILED_DEFAULT_VALUE] with type [formula].",
                     false);
             }
 

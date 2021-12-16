@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;

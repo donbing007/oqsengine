@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils.offline;
 
 import java.io.File;
 import java.util.ArrayList;

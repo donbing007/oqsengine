@@ -37,7 +37,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo;
 import com.xforceplus.ultraman.oqsengine.sdk.RepairRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.ShowTask;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils.offline;
 
 import com.google.protobuf.BoolValue;
 import com.google.protobuf.DoubleValue;
@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-public class EntityClassStorageHelper {
+public class OffLineMetaHelper {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(EntityClassStorageHelper.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(OffLineMetaHelper.class);
 
     private static final int SPLITTER_LENGTH = 3;
 
@@ -90,5 +90,14 @@ public class EntityClassStorageHelper {
         }
 
         throw new RuntimeException("file name invalid or null.");
+    }
+
+    /**
+     * 判断是否为合法的loadPath
+     * @param path
+     * @return
+     */
+    public static boolean isValidPath(String path) {
+        return null != path && !path.isEmpty() && !path.equals("-");
     }
 }

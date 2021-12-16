@@ -21,11 +21,12 @@ public class EnhancedSyncExecutor extends EntityClassSyncExecutor {
      */
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        try {
-            return super.sync(appId, version, entityClassSyncRspProto);
-        } finally {
-            syncedEntityClassMaps.putIfAbsent(appId + "_" + version, entityClassSyncRspProto.getEntityClassesList());
+        boolean result = super.sync(appId, version, entityClassSyncRspProto);
+        if (result) {
+            syncedEntityClassMaps
+                .putIfAbsent(appId + "_" + version, entityClassSyncRspProto.getEntityClassesList());
         }
+        return result;
     }
 
     public List<EntityClassInfo> getEntityClasses(String appId, int version) {

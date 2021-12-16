@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.utils;
+package com.xforceplus.ultraman.oqsengine.metadata.utils.storage;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
@@ -16,15 +16,18 @@ import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,12 +37,32 @@ import java.util.Map;
  * @author xujia 2021/2/9
  * @since 1.8
  */
-public class EntityClassStorageConvert {
+public class CacheToStorageGenerator {
+
+    /**
+     * 批量转换EntityClassStorageMap.
+     * @param objectMapper
+     * @param raw
+     * @return
+     * @throws JsonProcessingException
+     */
+    public static Map<Long, EntityClassStorage> toEntityClassStorages(ObjectMapper objectMapper, Map<String, Map<String, String>> raw)
+        throws JsonProcessingException {
+        Map<Long, EntityClassStorage> entityClassStorages = new LinkedHashMap<>();
+        if (null != raw) {
+            for (Map.Entry<String, Map<String, String>> value : raw.entrySet()) {
+                entityClassStorages.put(
+                    Long.parseLong(value.getKey()),
+                    CacheToStorageGenerator.toEntityClassStorage(objectMapper, value.getValue()));
+            }
+        }
+        return entityClassStorages;
+    }
 
     /**
      * 将redis存储结构转为EntityClassStorage.
      */
-    public static EntityClassStorage redisValuesToLocalStorage(ObjectMapper objectMapper, Map<String, String> keyValues)
+    public static EntityClassStorage toEntityClassStorage(ObjectMapper objectMapper, Map<String, String> keyValues)
         throws JsonProcessingException {
 
         if (0 == keyValues.size()) {
@@ -116,11 +139,11 @@ public class EntityClassStorageConvert {
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
-                fields.add(resetAutoFill(objectMapper.readValue(entry.getValue(), EntityField.class)));
+                fields.add(CacheUtils.resetAutoFill(objectMapper.readValue(entry.getValue(), EntityField.class)));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
-                    .addField(resetAutoFill(objectMapper.readValue(entry.getValue(), EntityField.class)));
+                    .addField(CacheUtils.resetAutoFill(objectMapper.readValue(entry.getValue(), EntityField.class)));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS)) {
                 String key = parseOneKeyFromProfileRelations(entry.getKey());
                 String profileRelations = keyValues.get(entry.getKey());
@@ -134,23 +157,5 @@ public class EntityClassStorageConvert {
         entityClassStorage.setProfileStorageMap(profileStorageMap);
 
         return entityClassStorage;
-    }
-
-    /**
-     * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
-     */
-    private static EntityField resetAutoFill(EntityField entityField) {
-        if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
-            AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
-            if (autoFill.getDomainNoType() == null) {
-                autoFill.setDomainNoType(AutoFill.DomainNoType.NORMAL);
-            }
-
-            if (autoFill.getLevel() == 0) {
-                autoFill.setLevel(DEFAULT_LEVEL);
-            }
-        }
-
-        return entityField;
     }
 }

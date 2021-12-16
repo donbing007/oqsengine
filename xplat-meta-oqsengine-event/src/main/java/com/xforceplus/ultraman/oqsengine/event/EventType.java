@@ -45,13 +45,9 @@ public enum EventType {
      */
     ENTITY_DELETE(8),
     /**
-     * 自动填充字段更新.
+     * 元数据变更.
      */
-    AUTO_FILL_UPGRADE(9),
-    /**
-     * 聚合字段解析树更新.
-     */
-    AGGREGATION_TREE_UPGRADE(10);
+    META_DATA_CHANGE(9);
 
     private int value;
 

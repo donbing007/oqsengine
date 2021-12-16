@@ -23,7 +23,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;

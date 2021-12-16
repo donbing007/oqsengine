@@ -142,6 +142,17 @@ public class EntityClassStorage {
         return fields;
     }
 
+    public EntityField find(long id, String profile) {
+        if (null != profile) {
+            ProfileStorage profileStorage =
+                profileStorageMap.get(profile);
+
+            return null != profileStorage ? profileStorage.find(id) : null;
+        } else {
+            return fields.stream().filter(f -> f.id() == id).findFirst().orElse(null);
+        }
+    }
+
     public void setFields(List<EntityField> fields) {
         this.fields = fields;
     }

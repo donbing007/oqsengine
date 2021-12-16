@@ -15,7 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;

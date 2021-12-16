@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.define;
+package com.xforceplus.ultraman.oqsengine.pojo.define;
 
 /**
  * 数据操作类型.

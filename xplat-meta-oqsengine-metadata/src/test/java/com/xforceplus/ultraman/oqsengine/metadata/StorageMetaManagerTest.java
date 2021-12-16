@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
@@ -15,7 +15,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSync
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -117,7 +117,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     @Test
     public void showMeta() throws Exception {
 
-        dataImportTest();
+        metaImportTest();
 
         Optional<MetaMetrics> result =
             MetaInitialization.getInstance().getMetaManager().showMeta(defaultTestAppId);
@@ -131,17 +131,18 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
-    public void dataImportTest() throws IOException, IllegalAccessException {
+    public void metaImportTest() throws IOException, IllegalAccessException {
 
-        Boolean result = false;
         InputStream in = null;
         try {
             StorageMetaManager storageMetaManager = (StorageMetaManager) MetaInitialization.getInstance().getMetaManager();
             storageMetaManager.init();
             in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            boolean result = MetaInitialization.getInstance()
+                .getMetaManager()
+                .metaImport(defaultTestAppId, env, defaultTestVersion,
+                    OffLineMetaHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
             Assertions.assertTrue(result);
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -151,7 +152,8 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
             }
         }
 
-        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L, "");
+        Optional<IEntityClass> op =
+            MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L, "");
 
         Assertions.assertTrue(op.isPresent());
 
@@ -161,8 +163,8 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
             int failTestVersion = 1;
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, failTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
+            boolean result = MetaInitialization.getInstance().getMetaManager().metaImport(defaultTestAppId, env, failTestVersion,
+                OffLineMetaHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
             Assertions.assertFalse(result);
         } catch (Exception e) {
             Assertions.fail();
@@ -189,12 +191,14 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         long expectedId = System.currentTimeMillis() + 3600_000;
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
+
+        Optional<IEntityClass> entityClassOp = Optional.empty();
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+            entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
-            Assertions.assertTrue(
-                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            //  ignore
         }
+        Assertions.assertFalse(entityClassOp.isPresent());
 
         EntityClassSyncResponse entityClassSyncResponse =
             EntityClassSyncProtoBufMocker.Response
@@ -202,7 +206,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         //  测试替身1
-        Optional<IEntityClass> entityClassOp =
+        entityClassOp =
             MetaInitialization.getInstance().getMetaManager().load(expectedId, GeneralConstant.PROFILE_CODE_1.getKey());
         Assertions.assertTrue(entityClassOp.isPresent());
 
@@ -250,26 +254,27 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
-    public void loadTest() throws InterruptedException, IllegalAccessException {
+    public void loadTest() throws IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = 1 + 3600;
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
+        Optional<IEntityClass> entityClassOp = Optional.empty();
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+            entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
-            Assertions.assertTrue(
-                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            //  ignore
         }
+        Assertions.assertFalse(entityClassOp.isPresent());
 
         EntityClassSyncResponse entityClassSyncResponse =
             EntityClassSyncProtoBufMocker.Response
                 .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
-        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         Assertions.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
@@ -479,6 +484,6 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
      */
     private InputStream initInputStreamByResource(String appId, Integer version, String env) {
         String path = String.format("/%s_%d_%s.json", appId, version, env);
-        return EntityClassStorageHelper.class.getResourceAsStream(path);
+        return OffLineMetaHelper.class.getResourceAsStream(path);
     }
 }

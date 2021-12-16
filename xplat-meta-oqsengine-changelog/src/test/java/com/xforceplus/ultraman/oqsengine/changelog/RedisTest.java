@@ -1,33 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.changelog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogConfiguration;
-import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.ValueWrapper;
-import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
-import com.xforceplus.ultraman.oqsengine.changelog.gateway.impl.DefaultChangelogGateway;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogCommandHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogEventHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.impl.RedisChangelogHandler;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import javax.annotation.Resource;
-import java.util.*;
-
-import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.*;
-
 /**
  * redis test
  */

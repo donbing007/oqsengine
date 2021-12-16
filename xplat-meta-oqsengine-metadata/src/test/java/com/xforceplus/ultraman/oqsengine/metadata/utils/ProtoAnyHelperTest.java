@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
 import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;

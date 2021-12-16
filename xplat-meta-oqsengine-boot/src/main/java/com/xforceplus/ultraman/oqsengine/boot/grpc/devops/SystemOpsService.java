@@ -22,7 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class SystemOpsService {
                               @MethodParam(name = "data", klass = String.class, required = true) String data) {
 
         try {
-            return metaManager.dataImport(appId, env, version, data);
+            return metaManager.metaImport(appId, env, version, data);
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(String.format("dataImport exception, [%s-%s-%s]", appId, env, version), e);
         }

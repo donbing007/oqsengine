@@ -1,10 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,12 +81,29 @@ public class MockMetaManager implements MetaManager {
                     }
                 }).get().getValue());
         }
-
     }
 
     @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
-        return Optional.ofNullable(entityClassPool.get(buildKey(id, version)));
+    public Optional<IEntityClass> load(long entityClassId, int version, String profile) {
+        if (profile == null || profile.isEmpty()) {
+            return load(entityClassId, version, profile);
+        } else {
+            return Optional.ofNullable(profileEntityClassPool.entrySet().stream().filter(e -> e.getValue().id() == entityClassId)
+                .max((e0, e1) -> {
+                    if (e0.getValue().version() < e1.getValue().version()) {
+                        return -1;
+                    } else if (e0.getValue().version() > e1.getValue().version()) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).get().getValue());
+        }
+    }
+
+    @Override
+    public Collection<IEntityClass> familyLoad(long entityClassId) {
+        return null;
     }
 
     @Override
@@ -100,9 +118,9 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
-    public boolean dataImport(String appId, String env, int version, String content) {
+    public boolean metaImport(String appId, String env, int version, String content) {
         try {
-            EntityClassStorageHelper.toEntityClassSyncRspProto(content);
+            OffLineMetaHelper.toEntityClassSyncRspProto(content);
             return true;
         } catch (InvalidProtocolBufferException e) {
             return false;
@@ -112,6 +130,11 @@ public class MockMetaManager implements MetaManager {
     @Override
     public Optional<MetaMetrics> showMeta(String appId) {
         return Optional.empty();
+    }
+
+    @Override
+    public int reset(String appId, String env) {
+        return 0;
     }
 
     private String buildKey(long id, int version) {

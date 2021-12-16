@@ -11,8 +11,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.DefaultEntityClassFormatHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -29,8 +27,6 @@ public class MetaInitialization implements BeanInitialization {
     public DefaultCacheExecutor cacheExecutor;
 
     public EntityClassSyncExecutor entityClassSyncExecutor;
-
-    public EntityClassFormatHandler entityClassFormatHandler;
 
     public MetaManager metaManager;
 
@@ -62,11 +58,6 @@ public class MetaInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRedisClient());
         cacheExecutor.init();
 
-        entityClassFormatHandler = new DefaultEntityClassFormatHandler();
-        Collection<Field> classLoaderFields = ReflectionUtils.printAllMembers(entityClassFormatHandler);
-        ReflectionUtils.reflectionFieldValue(classLoaderFields, "cacheExecutor", entityClassFormatHandler,
-            MetaInitialization.getInstance().getCacheExecutor());
-
         entityClassSyncExecutor = new EntityClassSyncExecutor();
 
         Collection<Field> cacheFields = ReflectionUtils.printAllMembers(entityClassSyncExecutor);
@@ -76,17 +67,17 @@ public class MetaInitialization implements BeanInitialization {
 
             @Override
             public void watch(EventType type, Consumer<Event> listener) {
-                if (!(type.equals(EventType.AUTO_FILL_UPGRADE) || type.equals(EventType.AGGREGATION_TREE_UPGRADE))) {
+                if (!type.equals(EventType.META_DATA_CHANGE)) {
                     throw new IllegalArgumentException(
-                        String.format("type %s not equals to %s", type, EventType.AUTO_FILL_UPGRADE + "or" + EventType.AGGREGATION_TREE_UPGRADE));
+                        String.format("type %s not equals to %s", type, EventType.META_DATA_CHANGE));
                 }
             }
 
             @Override
             public void notify(Event event) {
-                if (!(event.type().equals(EventType.AUTO_FILL_UPGRADE) || event.type().equals(EventType.AGGREGATION_TREE_UPGRADE))) {
+                if (!event.type().equals(EventType.META_DATA_CHANGE)) {
                     throw new IllegalArgumentException(
-                        String.format("type %s not equals to %s", event.type(), EventType.AUTO_FILL_UPGRADE + "or" + EventType.AGGREGATION_TREE_UPGRADE));
+                        String.format("type %s not equals to %s", event.type(), EventType.META_DATA_CHANGE));
                 }
             }
         });
@@ -121,15 +112,6 @@ public class MetaInitialization implements BeanInitialization {
 
     public EntityClassSyncExecutor getEntityClassSyncExecutor() {
         return entityClassSyncExecutor;
-    }
-
-    public EntityClassFormatHandler getEntityClassFormatHandler() {
-        return entityClassFormatHandler;
-    }
-
-    public void setEntityClassFormatHandler(
-        EntityClassFormatHandler entityClassFormatHandler) {
-        this.entityClassFormatHandler = entityClassFormatHandler;
     }
 
     public MetaManager getMetaManager() {

@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 
 /**
  * desc :.

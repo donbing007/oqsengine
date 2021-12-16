@@ -20,11 +20,11 @@ public interface MetaManager {
     /**
      * 加载指定的IEntityCalss实例.
      *
-     * @param id      元信息标识.
-     * @param profile 个性化定制标识.
+     * @param entityClassId     元信息标识.
+     * @param profile           个性化定制标识.
      * @return 元信息的实例.
      */
-    Optional<IEntityClass> load(long id, String profile);
+    Optional<IEntityClass> load(long entityClassId, String profile);
 
     /**
      * 加载指定的IEntityClass实例.
@@ -37,12 +37,20 @@ public interface MetaManager {
     }
 
     /**
-     * 加载指定的IEntityCalss + version实例.
-     *
-     * @param id 元信息的标识.
-     * @return 元信息的实例.
+     * 加载指定的IEntityCalss实例.
+     * @param entityClassId
+     * @param version
+     * @param profile
+     * @return
      */
-    Optional<IEntityClass> loadHistory(long id, int version);
+    Optional<IEntityClass> load(long entityClassId, int version, String profile);
+
+    /**
+     * 获取当前entityClassId下的所有EntityClassWithProfile.
+     * @param entityClassId
+     * @return
+     */
+    Collection<IEntityClass> familyLoad(long entityClassId);
 
     /**
      * 表示需要关注此appid代表的应用的元信息.
@@ -61,7 +69,7 @@ public interface MetaManager {
     /**
      * 导入.
      */
-    boolean dataImport(String appId, String env, int version, String content);
+    boolean metaImport(String appId, String env, int version, String content);
 
     /**
      * 产看当前appId下的信息.

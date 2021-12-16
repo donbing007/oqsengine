@@ -25,12 +25,17 @@ import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -210,8 +215,13 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public Optional<IEntityClass> loadHistory(long id, int version) {
-                return Optional.empty();
+            public Optional<IEntityClass> load(long id, int version, String profile) {
+                return Optional.ofNullable(example.getEntityClassById(id));
+            }
+
+            @Override
+            public Collection<IEntityClass> familyLoad(long id) {
+                return Collections.singletonList(example.getEntityClassById(id));
             }
 
             @Override
@@ -225,13 +235,18 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public boolean dataImport(String appId, String env, int version, String content) {
+            public boolean metaImport(String appId, String env, int version, String content) {
                 return true;
             }
 
             @Override
             public Optional<MetaMetrics> showMeta(String appId) throws Exception {
                 return Optional.empty();
+            }
+
+            @Override
+            public int reset(String appId, String env) {
+                return 0;
             }
         };
     }

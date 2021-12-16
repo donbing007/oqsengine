@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.pojo;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
