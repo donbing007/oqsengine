@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -138,31 +139,35 @@ public class DefaultCalculationImpl implements Calculation {
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
 
+        /*
+        乐观的方式运行,达到最大尝试次数后将以事务失败收场.
+         */
+        CalculationContext userContext;
         for (int i = 0; i < MAINTAINING_MAX_TRY_NUMBER; i++) {
             try {
-                if (doMaintain((CalculationContext) context.clone())) {
-                    return;
-                } else {
-                    if (logger.isWarnEnabled()) {
-                        logger.warn("Maintenance segments conflict, wait {} milliseconds and try again.",
-                            MAINTAINING_TRY_WAIT_MS);
-                    }
+                userContext = (CalculationContext) context.clone();
+            } catch (CloneNotSupportedException ex) {
+                throw new CalculationException(ex.getMessage(), ex);
+            }
+            if (doMaintain(userContext)) {
 
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(MAINTAINING_TRY_WAIT_MS));
+                // 复制提示信息.
+                for (CalculationHint h : userContext.getHints()) {
+                    context.hint(h.getField(), h.getHint());
                 }
-            } catch (CloneNotSupportedException e) {
-                // 理论上不会异常.
-                throw new CalculationException(e.getMessage(), e);
 
+                return;
+            } else {
+                if (logger.isWarnEnabled()) {
+                    logger.warn("Maintenance segments conflict, wait {} milliseconds and try again.",
+                        MAINTAINING_TRY_WAIT_MS);
+                }
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(MAINTAINING_TRY_WAIT_MS));
             }
         }
 
         throw new CalculationException("Conflicts are calculated and the attempt limit is reached. To give up!");
-    }
-
-    // 重置为第一次调用.
-    private void resetContext(CalculationContext context) {
-
     }
 
     /**

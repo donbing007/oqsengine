@@ -277,6 +277,8 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
         if (this.entityCache != null) {
             newContext.entityCache = new HashMap<>(this.entityCache);
         }
+        newContext.maintenance = this.maintenance;
+        newContext.sourceEntity = this.sourceEntity;
         newContext.focusEntity = this.focusEntity;
         newContext.focusField = this.focusField;
         newContext.focusEntityClass = this.focusEntityClass;
