@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -34,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -54,11 +55,15 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultCalculationImpl implements Calculation {
 
-    /**
-     * 如果出现冲突的加锁等待时间.
+    /*
+    维护尝试上限.
      */
-    private static long PESSIMISTIC_LOCK_WATI_TIME_MS = 1000 * 60 * 5;
-    /**
+    private static final int MAINTAINING_MAX_TRY_NUMBER = 10000;
+    /*
+    维护冲突后等待重试的毫秒.
+     */
+    private static final int MAINTAINING_TRY_WAIT_MS = 300;
+    /*
      * 每一个字段修改维护构造影响树的最大迭代次数.
      */
     private static int MAX_BUILD_INFUENCE_NUMBER = 1000;
@@ -132,44 +137,26 @@ public class DefaultCalculationImpl implements Calculation {
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
 
-        // 备份一个当冲突时重新计算用的上下文.
-        CalculationContext backupContext = null;
-        try {
-            backupContext = (CalculationContext) context.clone();
-        } catch (CloneNotSupportedException e) {
-            // 不会异常.
-        }
+        for (int i = 0; i < MAINTAINING_MAX_TRY_NUMBER; i++) {
+            try {
+                if (doMaintain((CalculationContext) context.clone())) {
+                    return;
+                } else {
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("Maintenance segments conflict, wait {} milliseconds and try again.",
+                            MAINTAINING_TRY_WAIT_MS);
+                    }
 
-        boolean result = doMaintain(context);
-
-        // 失败,加锁重新开始维护.
-        if (!result) {
-
-            resetContext(context);
-
-            // 所有受影响的实例id为依据计算出的资源key.
-            String[] lockKeys = context.getEntitiesFormCache().stream().filter(e ->
-                // 过滤掉当前操作的实例.
-                e.id() != context.getFocusEntity().id()
-
-            ).map(e -> buildKey(e.id())).toArray(String[]::new);
-
-            MultiResourceLocker locker = context.getResourceWithEx(() -> context.getMultiResourceLocker());
-            if (locker.tryLocks(PESSIMISTIC_LOCK_WATI_TIME_MS, lockKeys)) {
-                try {
-
-                    result = doMaintain(backupContext);
-
-                } finally {
-                    locker.unlocks(lockKeys);
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(MAINTAINING_TRY_WAIT_MS));
                 }
-            }
+            } catch (CloneNotSupportedException e) {
+                // 理论上不会异常.
+                throw new CalculationException(e.getMessage(), e);
 
-            // 加锁处理仍然失败.
-            if (!result) {
-                throw new CalculationException("Calculation field maintenance failed!");
             }
         }
+
+        throw new CalculationException("Conflicts are calculated and the attempt limit is reached. To give up!");
     }
 
     // 重置为第一次调用.
