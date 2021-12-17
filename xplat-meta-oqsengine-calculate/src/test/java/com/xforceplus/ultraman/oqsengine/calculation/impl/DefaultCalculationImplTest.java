@@ -298,35 +298,6 @@ public class DefaultCalculationImplTest {
         Assertions.assertEquals(200L, newEntity.entityValue().getValue(C_LOOKUP.id()).get().valueToLong());
     }
 
-    @Test
-    public void testReplaceMaintenance() throws Exception {
-        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
-            .withMetaManager(metaManager)
-            .withMasterStorage(masterStorage)
-            .withScenarios(CalculationScenarios.REPLACE).build();
-        context.getCalculationLogicFactory().get().register(lookupLogic);
-        context.getCalculationLogicFactory().get().register(aggregationLogic);
-
-        context.focusEntity(entityA, A_CLASS);
-        context.addValueChange(
-            ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
-        );
-
-        calculation.maintain(context);
-
-        long[] replaceIds = masterStorage.getReplaceEntities().stream().mapToLong(e -> e.id()).sorted().toArray();
-
-        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityA.id()) < 0,
-            String.format("The target instance (%s) was not expected to be found, but it was.", "entityA"));
-
-        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityB.id()) >= 0,
-            String.format("The target instance (%s) was expected to be found, but was not.", "entityB"));
-        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityD.id()) >= 0,
-            String.format("The target instance (%s) was expected to be found, but was not.", "entityD"));
-        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityC.id()) >= 0,
-            String.format("The target instance (%s) was expected to be found, but was not.", "entityC"));
-    }
-
     static class MockMasterStorage implements MasterStorage {
 
         private Map<Long, IEntity> entities = new HashMap<>();
