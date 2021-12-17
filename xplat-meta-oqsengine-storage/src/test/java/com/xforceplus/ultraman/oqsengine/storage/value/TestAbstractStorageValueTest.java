@@ -39,54 +39,53 @@ public class TestAbstractStorageValueTest {
 
     @Test
     public void testStick() throws Exception {
-        MockLongStorageValue v1 = new MockLongStorageValue("111", 0L, true);
-        v1.locate(0);
-        MockLongStorageValue v2 = new MockLongStorageValue("222", 0L, true);
-        StorageValue head = v1.stick(v2);
-        StorageValue point = head;
+        MockLongStorageValue v1 = new MockLongStorageValue("1", 1L, true);
+        MockLongStorageValue v2 = new MockLongStorageValue("2", 2L, true);
+        MockLongStorageValue v3 = new MockLongStorageValue("3", 3L, true);
+        MockLongStorageValue v4 = new MockLongStorageValue("4", 4L, true);
 
-        Assertions.assertEquals(point, v1);
-        Assertions.assertEquals("111", point.logicName());
-        Assertions.assertEquals("111L0", point.storageName());
-        Assertions.assertEquals(0, point.location());
-        Assertions.assertTrue(point.haveNext());
+        // 使用中间结点粘贴.
+        v1.stick(v2);
+        v2.stick(v3);
+        v3.stick(v4);
 
+        Assertions.assertEquals(0, v1.location());
+        Assertions.assertEquals(1, v2.location());
+        Assertions.assertEquals(2, v3.location());
+        Assertions.assertEquals(3, v4.location());
+
+        StorageValue point = v1;
+        Assertions.assertEquals(v1.value(), point.value());
         point = point.next();
-
-        Assertions.assertEquals("222", point.logicName());
-        Assertions.assertEquals("222L1", point.storageName());
-        Assertions.assertEquals(1, point.location());
-        Assertions.assertFalse(point.haveNext());
-
-        MockLongStorageValue v3 = new MockLongStorageValue("333L4", 0L, false);
-        head = head.stick(v3);
-        point = head;
-        Assertions.assertEquals(point, v1);
-        Assertions.assertEquals("111", point.logicName());
-        Assertions.assertEquals("111L0", point.storageName());
-        Assertions.assertEquals(0, point.location());
-        Assertions.assertTrue(point.haveNext());
-
+        Assertions.assertEquals(v2.value(), point.value());
         point = point.next();
-
-        Assertions.assertEquals("222", point.logicName());
-        Assertions.assertEquals("222L1", point.storageName());
-        Assertions.assertEquals(1, point.location());
-        Assertions.assertTrue(point.haveNext());
-
+        Assertions.assertEquals(v3.value(), point.value());
         point = point.next();
+        Assertions.assertEquals(v4.value(), point.value());
 
-        Assertions.assertEquals("333", point.logicName());
-        Assertions.assertEquals("333L4", point.storageName());
-        Assertions.assertEquals(4, point.location());
-        Assertions.assertFalse(point.haveNext());
+        // 始终使用首结点来粘贴.
+        v1 = new MockLongStorageValue("1", 1L, true);
+        v2 = new MockLongStorageValue("2", 2L, true);
+        v3 = new MockLongStorageValue("3", 3L, true);
+        v4 = new MockLongStorageValue("4", 4L, true);
+        v1.stick(v2);
+        v1.stick(v3);
+        v1.stick(v4);
 
+        Assertions.assertEquals(0, v1.location());
+        Assertions.assertEquals(1, v2.location());
+        Assertions.assertEquals(2, v3.location());
+        Assertions.assertEquals(3, v4.location());
 
-        MockLongStorageValue one = new MockLongStorageValue("111L1", 0L, false);
-        MockLongStorageValue two = new MockLongStorageValue("222L0", 0L, false);
-        head = one.stick(two);
-        Assertions.assertEquals(two, head);
-        Assertions.assertTrue(two.haveNext());
+        point = v1;
+        Assertions.assertEquals(v1.value(), point.value());
+        point = point.next();
+        Assertions.assertEquals(v2.value(), point.value());
+        point = point.next();
+        Assertions.assertEquals(v3.value(), point.value());
+        point = point.next();
+        Assertions.assertEquals(v4.value(), point.value());
+
     }
 
     @Test

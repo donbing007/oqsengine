@@ -79,6 +79,7 @@ public class MockEntityClassDefine {
         l2TimeFieldId,
         l2EnumFieldId,
         l2DecFieldId,
+        l2Dec2FieldId,
         driverLongFieldId,
         lookupL2StringFieldId,
         lookupL0StringFieldId,
@@ -244,6 +245,13 @@ public class MockEntityClassDefine {
                 .withId(Long.MAX_VALUE - FieldId.l2DecFieldId.ordinal())
                 .withFieldType(FieldType.DECIMAL)
                 .withName("l2-dec")
+                .withConfig(
+                    FieldConfig.Builder.anFieldConfig().withLen(100).withPrecision(6).withSearchable(true).build())
+                .build())
+            .withField(EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - FieldId.l2Dec2FieldId.ordinal())
+                .withFieldType(FieldType.DECIMAL)
+                .withName("l2-dec2")
                 .withConfig(
                     FieldConfig.Builder.anFieldConfig().withLen(100).withPrecision(6).withSearchable(true).build())
                 .build())

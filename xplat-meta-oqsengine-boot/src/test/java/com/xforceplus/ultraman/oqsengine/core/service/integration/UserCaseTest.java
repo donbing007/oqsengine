@@ -630,6 +630,50 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedThridValues, thridValues);
     }
 
+    @Test
+    public void testSortTwoDec() throws Exception {
+        IEntity e0 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        new BigDecimal("123.17")),
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec2").get(),
+                        new BigDecimal("123.15"))
+                ))
+            ).build();
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
+
+        IEntity e1 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValues(Arrays.asList(
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
+                        new BigDecimal("123.17")),
+                    new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec2").get(),
+                        new BigDecimal("122"))
+                ))
+            ).build();
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
+
+        entityManagementService.replace(e0);
+        entityManagementService.replace(e1);
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .withSort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get()))
+                .withSecondarySort(Sort.buildAscSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec2").get()))
+                .build()
+        );
+
+        Assertions.assertEquals(2, entities.size());
+        Assertions.assertEquals(e1.id(), entities.stream().findFirst().get().id());
+        Assertions.assertEquals(e0.id(), entities.stream().skip(1).findFirst().get().id());
+    }
+
     // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
     @Test
     public void testSortButNoValue() throws Exception {
