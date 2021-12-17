@@ -31,4 +31,15 @@ public class StringUtils {
         }
         return buff.toString();
     }
+
+    /**
+     * 判断目标字符串是否为空.
+     * 为空标准为 == null或者长度为0.
+     *
+     * @param value 目标字符串.
+     * @return true 为空, false非空.
+     */
+    public static boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
+    }
 }

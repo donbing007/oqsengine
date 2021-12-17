@@ -557,6 +557,36 @@ public class UserCaseTest {
         Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
             String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
                 firstEntity.id(), secondEntity.id()));
+
+        // 为了保证已经同步.
+        for (IEntity entity : expectedEntities) {
+            entityManagementService.replace(entity);
+        }
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildDescSort(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()))
+                .build()
+        );
+
+        expectedFirstValues = new long[] {
+            10, 10, 9, 8, 6, 5
+        };
+
+        firstValues = entities.stream()
+            .mapToLong(e -> e.entityValue().getValue("l0-long").get().valueToLong()).toArray();
+        Assertions.assertArrayEquals(expectedFirstValues, firstValues);
+
+        // 两个数值一致的对象id应该从小到大.
+        firstEntity = entities.stream().findFirst().get();
+        secondEntity = entities.stream().skip(1).findFirst().get();
+
+        Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
+            String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
+                firstEntity.id(), secondEntity.id()));
     }
 
     /**

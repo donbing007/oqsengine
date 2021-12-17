@@ -301,10 +301,12 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     // 如果排序,但是查询结果没有值.
     private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort[] sorts) {
         int sortIndex = 0;
-        for (Sort sort : sorts) {
+        Sort sort;
+        for (int i = 0; i < sorts.length; i++) {
+            sort = sorts[i];
             if (!sort.isOutOfOrder()) {
                 for (EntityRef r : refs) {
-                    if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
+                    if (!haveSortValue(r, i)) {
                         if (sort.getField().config().isIdentifie()) {
                             setSortValue(sortIndex, r, Long.toString(r.getId()));
                         } else {
@@ -321,6 +323,23 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         return refs;
+    }
+
+    private boolean haveSortValue(EntityRef r, int sortIndex) {
+        switch (sortIndex) {
+            case 0: {
+                return !(r.getOrderValue() == null || r.getOrderValue().isEmpty());
+            }
+            case 1: {
+                return !(r.getSecondOrderValue() == null || r.getSecondOrderValue().isEmpty());
+            }
+            case 2: {
+                return !(r.getThridOrderValue() == null || r.getThridOrderValue().isEmpty());
+            }
+            default: {
+                return false;
+            }
+        }
     }
 
     private void setSortValue(int sortIndex, EntityRef ref, String value) {
