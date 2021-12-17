@@ -5,7 +5,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerConnectorInfo;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import java.util.Arrays;
 import java.util.List;
@@ -93,10 +93,10 @@ public class MetricsTest extends BaseInit {
             }
         }
 
-        Optional<ServerMetricsInfo> metricsInfoOptional = serverMetrics.showMetrics();
+        Optional<ServerConnectorInfo> metricsInfoOptional = serverMetrics.connectorInfo();
         Assertions.assertTrue(metricsInfoOptional.isPresent());
 
-        ServerMetricsInfo smi = metricsInfoOptional.get();
+        ServerConnectorInfo smi = metricsInfoOptional.get();
 
         Assertions.assertEquals(testClientSize, smi.getClientWatches().size());
 

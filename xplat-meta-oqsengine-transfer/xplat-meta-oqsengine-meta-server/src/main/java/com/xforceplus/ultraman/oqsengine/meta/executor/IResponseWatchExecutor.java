@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerConnectorInfo;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
 import java.util.Optional;
@@ -61,5 +61,5 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
      * 获取当前监控指标
      * @return
      */
-    Optional<ServerMetricsInfo> showMetrics();
+    Optional<ServerConnectorInfo> connectorInfo();
 }

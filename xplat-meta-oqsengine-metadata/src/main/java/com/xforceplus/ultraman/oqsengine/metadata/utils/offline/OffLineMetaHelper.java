@@ -40,7 +40,8 @@ public class OffLineMetaHelper {
                 sb.append(scanner.nextLine());
             }
         } catch (Exception e) {
-            throw new RuntimeException(String.format("read [$path/%s_%d_%s.json] error, message [%s]", appId, version, env, e.getMessage()));
+            throw new RuntimeException(
+                String.format("read [$path/%s_%d_%s.json] error, message [%s]", appId, version, env, e.getMessage()));
         }
 
         return sb.toString();
@@ -67,7 +68,8 @@ public class OffLineMetaHelper {
     /**
      * 将content转为EntityClassSyncRspProto.
      */
-    public static EntityClassSyncRspProto toEntityClassSyncRspProto(String content) throws InvalidProtocolBufferException {
+    public static EntityClassSyncRspProto toEntityClassSyncRspProto(String content)
+        throws InvalidProtocolBufferException {
         EntityClassSyncRspProto.Builder builder = EntityClassSyncRspProto.newBuilder();
         JsonFormat.parser().usingTypeRegistry(TYPE_REGISTRY).ignoringUnknownFields().merge(content, builder);
 
@@ -93,9 +95,7 @@ public class OffLineMetaHelper {
     }
 
     /**
-     * 判断是否为合法的loadPath
-     * @param path
-     * @return
+     * 判断是否为合法的loadPath.
      */
     public static boolean isValidPath(String path) {
         return null != path && !path.isEmpty() && !path.equals("-");

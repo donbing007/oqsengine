@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -18,10 +18,10 @@ import java.util.Optional;
 public interface MetaManager {
 
     /**
-     * 加载指定的IEntityCalss实例.
+     * 加载指定的IEntityClass实例.
      *
-     * @param entityClassId     元信息标识.
-     * @param profile           个性化定制标识.
+     * @param entityClassId 元信息标识.
+     * @param profile       个性化定制标识.
      * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long entityClassId, String profile);
@@ -37,23 +37,25 @@ public interface MetaManager {
     }
 
     /**
-     * 加载指定的IEntityCalss实例.
-     * @param entityClassId
-     * @param version
-     * @param profile
-     * @return
+     * 加载指定的IEntityClass实例.
+     *
+     * @param entityClassId 元信息标识.
+     * @param version 版本.
+     * @param profile 个性化定制标识.
+     * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long entityClassId, int version, String profile);
 
     /**
      * 获取当前entityClassId下的所有EntityClassWithProfile.
-     * @param entityClassId
-     * @return
+     *
+     * @param entityClassId 元信息标识.
+     * @return 元信息的实例.
      */
-    Collection<IEntityClass> familyLoad(long entityClassId);
+    Collection<IEntityClass> withProfilesLoad(long entityClassId);
 
     /**
-     * 表示需要关注此appid代表的应用的元信息.
+     * 表示需要关注此appId代表的应用的元信息.
      *
      * @param appId 应用标识.
      * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
@@ -67,7 +69,7 @@ public interface MetaManager {
     void invalidateLocal();
 
     /**
-     * 导入.
+     * 导入Meta信息.
      */
     boolean metaImport(String appId, String env, int version, String content);
 
@@ -79,15 +81,23 @@ public interface MetaManager {
     /**
      * 查询同步日志.
      */
-    default Collection<MetaLogs> metaLogs() {
+    default Collection<MetricsLog> metaLogs(MetricsLog.ShowType showType) {
         return new ArrayList<>();
     }
 
     /**
-     * 表示将刷新某个appId所关注的env信息
+     * 表示将刷新某个appId所关注的env信息.
      *
      * @param appId 应用标识.
-     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
+     * @return 当前的元信息版本号, 小于0表示没有持有任何版本的元信息.
      */
     int reset(String appId, String env);
+
+    /**
+     * 清除某个appId下的所有缓存信息.
+     *
+     * @param appId 业务ID.
+     * @return true, false.
+     */
+    boolean remove(String appId);
 }

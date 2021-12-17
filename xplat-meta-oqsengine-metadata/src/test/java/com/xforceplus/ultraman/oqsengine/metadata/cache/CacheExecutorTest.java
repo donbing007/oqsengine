@@ -254,7 +254,7 @@ public class CacheExecutorTest {
 
     private void invalid(Long id, String message) {
         try {
-            cacheExecutor.read(id);
+            cacheExecutor.remoteRead(id);
         } catch (Exception e) {
             Assertions.assertEquals(message, e.getMessage());
         }
@@ -274,13 +274,13 @@ public class CacheExecutorTest {
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
-            Map<String, String> results = cacheExecutor.read(e.getSelf());
+            Map<String, String> results = cacheExecutor.remoteRead(e.getSelf());
 
             Assertions.assertTrue(null != results && !results.isEmpty());
 
             if (null != e.getAncestors()) {
                 for (Long id : e.getAncestors()) {
-                    Map<String, String> r = cacheExecutor.read(id);
+                    Map<String, String> r = cacheExecutor.remoteRead(id);
                     Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {

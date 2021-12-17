@@ -102,7 +102,7 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<IEntityClass> familyLoad(long entityClassId) {
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
         return null;
     }
 
@@ -135,6 +135,11 @@ public class MockMetaManager implements MetaManager {
     @Override
     public int reset(String appId, String env) {
         return 0;
+    }
+
+    @Override
+    public boolean remove(String appId) {
+        return true;
     }
 
     private String buildKey(long id, int version) {

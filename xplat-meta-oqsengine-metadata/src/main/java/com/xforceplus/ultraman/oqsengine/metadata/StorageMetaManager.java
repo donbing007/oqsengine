@@ -14,16 +14,17 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.AbstractMetaModel;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.MetaModel;
@@ -120,14 +121,14 @@ public class StorageMetaManager implements MetaManager {
             throw new RuntimeException(String.format("invalid entityClassId : [%d], no version pair", entityClassId));
         }
 
-        Optional<IEntityClass> ecOp = cacheExecutor.getFromLocal(entityClassId, version, profile);
+        Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
         if (ecOp.isPresent()) {
             return ecOp;
         } else {
             IEntityClass entityClass = null;
             try {
                 //  从cache中读取原始数据
-                Map<String, String> keyValues = cacheExecutor.read(entityClassId, version);
+                Map<String, String> keyValues = cacheExecutor.remoteRead(entityClassId, version);
 
                 if (keyValues.isEmpty()) {
                     throw new RuntimeException("entityClassStorage is null, may be delete.");
@@ -137,7 +138,7 @@ public class StorageMetaManager implements MetaManager {
 
                 //  加入本地cache
                 if (null != entityClass) {
-                    cacheExecutor.addToLocal(entityClassId, version, profile, entityClass);
+                    cacheExecutor.localAdd(entityClassId, version, profile, entityClass);
                 }
             } catch (Exception e) {
                 logger.warn("load entityClass failed, message : {}", e.getMessage());
@@ -147,19 +148,19 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<IEntityClass> familyLoad(long entityClassId) {
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
         try {
-           List<IEntityClass> entityClassList = new ArrayList<>();
-           //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
-           int version = cacheExecutor.version(entityClassId);
+            List<IEntityClass> entityClassList = new ArrayList<>();
 
-           Optional<IEntityClass> entityClassOp =
-              load(entityClassId, version, null);
+            int version = cacheExecutor.version(entityClassId);
 
-           if (entityClassOp.isPresent()) {
-               entityClassList.add(entityClassOp.get());
+            Optional<IEntityClass> entityClassOp =
+                load(entityClassId, version, null);
 
-               List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+            if (entityClassOp.isPresent()) {
+                entityClassList.add(entityClassOp.get());
+
+                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
                 if (!profiles.isEmpty()) {
                     for (String profile : profiles) {
                         Optional<IEntityClass> ecOp =
@@ -168,11 +169,11 @@ public class StorageMetaManager implements MetaManager {
                         ecOp.ifPresent(entityClassList::add);
                     }
                 }
-           }
+            }
 
-           return entityClassList;
+            return entityClassList;
         } catch (Exception e) {
-           logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
+            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
         }
         return new ArrayList<>();
     }
@@ -252,9 +253,12 @@ public class StorageMetaManager implements MetaManager {
                     String.format("parse data to EntityClassSyncRspProto failed, message [%s]", e.getMessage()));
             }
 
-            if (!syncExecutor.sync(appId, version, entityClassSyncRspProto)) {
+            try {
+                syncExecutor.sync(appId, version, entityClassSyncRspProto);
+            } catch (Exception e) {
                 throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
             }
+
             return true;
         } else {
             String message = String
@@ -274,10 +278,9 @@ public class StorageMetaManager implements MetaManager {
                 return Optional.empty();
             }
 
-            Collection<EntityClassStorage> result = CacheToStorageGenerator.
-                toEntityClassStorages(
+            Collection<EntityClassStorage> result = CacheToStorageGenerator.toEntityClassStorages(
                     DefaultCacheExecutor.OBJECT_MAPPER,
-                    cacheExecutor.remoteMultiStorageRead(
+                    cacheExecutor.multiRemoteRead(
                         cacheExecutor.appEntityIdList(appId, currentVersion), currentVersion
                     )
                 ).values();
@@ -293,25 +296,8 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<MetaLogs> metaLogs() {
-        Map<String, String> result = cacheExecutor.getSyncLog();
-        List<MetaLogs> metaLogs = new ArrayList<>();
-
-        if (!result.isEmpty()) {
-            result.forEach(
-                (k, v) -> {
-                    String[] keySplitter = k.split("\\.");
-                    if (keySplitter.length == 3) {
-                        metaLogs.add(
-                            new MetaLogs(keySplitter[0], Integer.parseInt(keySplitter[1]),
-                                Long.parseLong(keySplitter[2]), v)
-                        );
-                    }
-                }
-            );
-        }
-
-        return metaLogs;
+    public Collection<MetricsLog> metaLogs(MetricsLog.ShowType showType) {
+        return requestHandler.metricsRecorder().showLogs(showType);
     }
 
     @Override
@@ -328,15 +314,29 @@ public class StorageMetaManager implements MetaManager {
                     cacheExecutor.clean(appId, version, true);
                 }
 
+                requestHandler
+                    .reset(new WatchElement(appId, env, NOT_EXIST_VERSION, WatchElement.ElementStatus.Register));
+
+                version = waitForMetaSync(appId);
+
                 cacheExecutor.appEnvSet(appId, env);
-
-                requestHandler.reset(new WatchElement(appId, env, NOT_EXIST_VERSION, WatchElement.ElementStatus.Register));
-
-                return waitForMetaSync(appId);
             }
 
             return version;
         }
+    }
+
+    @Override
+    public boolean remove(String appId) {
+        int version = cacheExecutor.version(appId);
+
+        if (version > NOT_EXIST_VERSION) {
+            cacheExecutor.clean(appId, version, true);
+        }
+
+        cacheExecutor.appEnvRemove(appId);
+
+        return true;
     }
 
     private void offLineInit(String path) {
@@ -416,13 +416,8 @@ public class StorageMetaManager implements MetaManager {
         return version;
     }
 
-
     /**
      * 获取一个完整的EntityClass.
-     * @param entityClassId
-     * @param profile
-     * @param keyValues
-     * @return
      */
     public IEntityClass classLoad(long entityClassId, String profile, Map<String, String> keyValues) {
         try {
@@ -431,7 +426,8 @@ public class StorageMetaManager implements MetaManager {
             //  set id
             String id = keyValues.remove(ELEMENT_ID);
             if (null == id || id.isEmpty()) {
-                throw new RuntimeException(String.format("catch id is null from cache, query entityClassId : %d", entityClassId));
+                throw new RuntimeException(
+                    String.format("catch id is null from cache, query entityClassId : %d", entityClassId));
             }
             builder.withId(Long.parseLong(id));
 
@@ -463,7 +459,7 @@ public class StorageMetaManager implements MetaManager {
             builder.withVersion(Integer.parseInt(vn));
 
             //  entityFields & profile & relations
-            withFieldsRelations(builder, profile, keyValues, this::load, this::familyLoad);
+            withFieldsRelations(builder, profile, keyValues, this::load, this::withProfilesLoad);
 
             //  father
             String father = keyValues.remove(ELEMENT_FATHER);
@@ -485,8 +481,8 @@ public class StorageMetaManager implements MetaManager {
     }
 
     private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues,
-                                            BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                            Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
+                                     BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
+                                     Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
         JsonProcessingException {
 
         List<IEntityField> fields = new ArrayList<>();
@@ -501,18 +497,18 @@ public class StorageMetaManager implements MetaManager {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
                 fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
-            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_FIELDS)) {
+            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
                     fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
                 }
-            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS)) {
+            } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {
                     String key = parseOneKeyFromProfileRelations(entry.getKey());
                     if (profile.equals(key)) {
                         relationships.addAll(toQqsRelation(OBJECT_MAPPER.readValue(keyValues.get(entry.getKey()),
-                            OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RelationStorage.class))
-                            , rightEntityClassLoader, rightFamilyEntityClassLoader));
+                            OBJECT_MAPPER.getTypeFactory().constructParametricType(
+                                List.class, RelationStorage.class)), rightEntityClassLoader, rightFamilyEntityClassLoader));
                     }
                 }
             }
@@ -523,9 +519,10 @@ public class StorageMetaManager implements MetaManager {
         //  relations
         String relations = keyValues.remove(ELEMENT_RELATIONS);
         if (null != relations && !relations.isEmpty()) {
-            List<RelationStorage> relationStorageList = OBJECT_MAPPER.readValue(relations,
-                OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
-            relationships.addAll(toQqsRelation(relationStorageList, rightEntityClassLoader, rightFamilyEntityClassLoader));
+            List<RelationStorage> relationStorageList = OBJECT_MAPPER.readValue(
+                relations, OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
+            relationships
+                .addAll(toQqsRelation(relationStorageList, rightEntityClassLoader, rightFamilyEntityClassLoader));
         }
 
         builder.withRelations(relationships);
@@ -535,8 +532,8 @@ public class StorageMetaManager implements MetaManager {
      * 加载relation.
      */
     private List<Relationship> toQqsRelation(List<RelationStorage> relationStorageList,
-                                                    BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                                    Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
+                                             BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
+                                             Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
         List<Relationship> relationships = new ArrayList<>();
         if (null != relationStorageList) {
             relationStorageList.forEach(

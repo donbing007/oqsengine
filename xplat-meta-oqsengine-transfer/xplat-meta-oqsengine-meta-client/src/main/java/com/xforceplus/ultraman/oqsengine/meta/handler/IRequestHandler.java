@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.handler.IObserverHandler;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
@@ -50,4 +51,8 @@ public interface IRequestHandler extends IObserverHandler<EntityClassSyncRespons
      */
     boolean reset(WatchElement watchElement);
 
+    /**
+     * 记录当前指标记录器.
+     */
+    MetricsRecorder metricsRecorder();
 }

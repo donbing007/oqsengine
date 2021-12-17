@@ -51,10 +51,9 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
             EntityClassSyncProtoBufMocker.Response.entityClassSyncRspProtoGenerator(expectedEntityStorageList);
 
         int newVersion = expectedVersion + 1;
-        boolean ret =
-            MetaInitialization.getInstance().getEntityClassSyncExecutor().sync(expectedAppId, newVersion, entityClassSyncRspProto);
 
-        Assertions.assertTrue(ret);
+        MetaInitialization.getInstance().getEntityClassSyncExecutor()
+                .sync(expectedAppId, newVersion, entityClassSyncRspProto);
 
         Thread.sleep(70_000);
 
@@ -63,7 +62,7 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Collection<EntityClassStorage> res = CacheToStorageGenerator.toEntityClassStorages(
                     DefaultCacheExecutor.OBJECT_MAPPER,
-                    MetaInitialization.getInstance().getCacheExecutor().remoteMultiStorageRead(
+                    MetaInitialization.getInstance().getCacheExecutor().multiRemoteRead(
                         Collections.singletonList(e.getSelf()), newVersion
                     )
                 ).values();

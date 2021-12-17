@@ -53,7 +53,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -310,7 +309,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         this.prepareExpire = prepareExpire;
     }
 
-    public  <V> Cache<String, V> initCache() {
+    /**
+     * 初始化cache.
+     */
+    public <V> Cache<String, V> initCache() {
         return CacheBuilder.newBuilder()
             .maximumSize(maxCacheSize)
             .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)
@@ -360,7 +362,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         AppMetaChangePayLoad appMetaChangePayLoad = new AppMetaChangePayLoad(appId, version);
 
         Map<Long, EntityClassStorage> oldMetas =
-            CacheToStorageGenerator.toEntityClassStorages(OBJECT_MAPPER, remoteMultiplyLoading(appEntityIdList(appId, version), version));
+            CacheToStorageGenerator
+                .toEntityClassStorages(OBJECT_MAPPER, remoteMultiplyLoading(appEntityIdList(appId, version), version));
 
         //  set data
         for (EntityClassStorage newStorage : storageList) {
@@ -369,7 +372,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
             //  存入到cache中，并获得entityClass的变更事件
             AppMetaChangePayLoad.EntityChange entityChange =
-                saveToCache(toCacheSetKey(version, newStorage.getId()), oldMetas.remove(newStorage.getId()), newStorage);
+                saveToCache(toCacheSetKey(version, newStorage.getId()), oldMetas.remove(newStorage.getId()),
+                    newStorage);
 
             if (null != entityChange) {
                 appMetaChangePayLoad.getEntityChanges().add(entityChange);
@@ -387,7 +391,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         );
 
         //  reset version
-        if(!resetVersion(appId, version,
+        if (!resetVersion(appId, version,
             storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()))) {
             throw new RuntimeException(String.format("reset version failed, appId : %s, %d", appId, version));
         }
@@ -399,18 +403,18 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象.
      */
     @Override
-    public Map<String, String> read(long entityClassId) throws JsonProcessingException {
+    public Map<String, String> remoteRead(long entityClassId) throws JsonProcessingException {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         int version = version(entityClassId);
 
-        return read(entityClassId, version);
+        return remoteRead(entityClassId, version);
     }
 
     /**
      * 读取当前版本entityClassId, version所对应的EntityClass及所有父对象、子对象.
      */
     @Override
-    public Map<String, String> read(long entityClassId, int version) throws JsonProcessingException {
+    public Map<String, String> remoteRead(long entityClassId, int version) throws JsonProcessingException {
         String[] keys = {
             entityStorageKeys
         };
@@ -430,7 +434,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 根据Ids读取EntityStorage列表.
      */
     @Override
-    public Map<String, Map<String, String>> remoteMultiStorageRead(Collection<Long> ids, int version)
+    public Map<String, Map<String, String>> multiRemoteRead(Collection<Long> ids, int version)
         throws JsonProcessingException {
         if (null != ids && ids.size() > 0) {
             return remoteMultiplyLoading(ids, version);
@@ -657,35 +661,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public void addSyncLog(String appId, Integer version, String message) {
-        String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now()));
-        String fieldName = String.format("%s.%d.%d", appId, version, System.currentTimeMillis());
-
-        try {
-            syncCommands.expire(key, logExpire * logExpire);
-            syncCommands.hset(key, fieldName, message);
-        } catch (Exception e) {
-            //  失败时什么都不做
-            //  ignore
-        }
-    }
-
-    @Override
-    public Map<String, String> getSyncLog() {
-        Map<String, String> logs = new LinkedHashMap<>();
-        for (int i = 0; i < logExpire; i++) {
-            String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now().minusDays(i)));
-            Map<String, String> part = syncCommands.hgetall(key);
-            if (!part.isEmpty()) {
-                logs.putAll(part);
-            }
-        }
-
-        return logs;
-    }
-
-
-    @Override
     public Collection<Long> appEntityIdList(String appId, Integer version) {
         String fieldName = String.format("%s.%d", appId, version);
 
@@ -705,7 +680,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Optional<IEntityClass> getFromLocal(long entityClassId, int version, String profile) {
+    public Optional<IEntityClass> localRead(long entityClassId, int version, String profile) {
         Map<String, IEntityClass> entityClassMap =
             entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
 
@@ -723,11 +698,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null == profiles || profiles.isEmpty()) {
             try {
                 //  从remoteCache读取,并写入本地cache
-                profileCache.put(key, CacheUtils.parseProfileCodes(read(entityClassId, version)));
+                profileCache.put(key, CacheUtils.parseProfileCodes(remoteRead(entityClassId, version)));
             } catch (Exception e) {
                 throw new RuntimeException(
-                    String.format("entityId : %d, version : %d, read profiles failed, message : %s"
-                        , entityClassId, version, e.getMessage())
+                    String.format("entityId : %d, version : %d, read profiles failed, message : %s",
+                        entityClassId, version, e.getMessage())
                 );
             }
         }
@@ -735,7 +710,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public synchronized void addToLocal(long entityClassId, int version, String profile, IEntityClass entityClass) {
+    public synchronized void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
         String key = generateEntityCacheKey(entityClassId, version);
         Map<String, IEntityClass> e = entityClassStorageCache.getIfPresent(key);
         if (null == e) {
@@ -849,14 +824,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
             return new AppMetaChangePayLoad.FieldChange(newOne.id(), OperationType.CREATE, profile);
         } else if (null == newOne) {
             return new AppMetaChangePayLoad.FieldChange(oldOne.id(), OperationType.DELETE, profile);
-        } else if (!oldOne.toString().equals(newOne.toString())){
+        } else if (!oldOne.toString().equals(newOne.toString())) {
             return new AppMetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
             //  entityField变更的标准为toString后两边不一致
         }
         return null;
     }
 
-    private AppMetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage, EntityClassStorage newStorage) {
+    private AppMetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage,
+                                                          EntityClassStorage newStorage) {
 
         AppMetaChangePayLoad.EntityChange entityChange = null;
 
@@ -895,7 +871,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             for (IEntityField entityField : newStorage.getFields()) {
                 try {
                     AppMetaChangePayLoad.FieldChange change =
-                        appEventHandle(null == oldStorage ? null : oldStorage.find(entityField.id(), null), entityField, null);
+                        appEventHandle(null == oldStorage ? null : oldStorage.find(entityField.id(), null), entityField,
+                            null);
                     if (null != change) {
                         if (null == entityChange) {
                             entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
@@ -922,7 +899,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
 
                             AppMetaChangePayLoad.FieldChange change =
-                                appEventHandle(null == oldStorage ? null : oldStorage.find(entityField.id(), ps.getCode()), entityField, ps.getCode());
+                                appEventHandle(
+                                    null == oldStorage ? null : oldStorage.find(entityField.id(), ps.getCode()),
+                                    entityField, ps.getCode());
                             if (null != change) {
                                 if (null == entityChange) {
                                     entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
@@ -955,14 +934,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     /**
-     * 反向寻找已被删除的字段, 查找范围包括EntityField, Profile->EntityField
-     * @param oldStorage
-     * @param newFields
-     * @param newProfiles
-     * @param entityChange
+     * 反向寻找已被删除的字段, 查找范围包括EntityField, Profile->EntityField.
      */
     private void reverseEventCheck(EntityClassStorage oldStorage, List<EntityField> newFields,
-                                   Map<String, ProfileStorage> newProfiles, AppMetaChangePayLoad.EntityChange entityChange) {
+                                   Map<String, ProfileStorage> newProfiles,
+                                   AppMetaChangePayLoad.EntityChange entityChange) {
         //  普通field删除事件
         oldStorage.getFields().forEach(
             f -> {
@@ -977,14 +953,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
                 v.getEntityFieldList().forEach(
                     e -> {
-                        findAndAddEvent(e, null != newProfile ? newProfile.getEntityFieldList() : null, k, entityChange);
+                        findAndAddEvent(e, null != newProfile ? newProfile.getEntityFieldList() : null, k,
+                            entityChange);
                     }
                 );
             }
         );
     }
 
-    private void findAndAddEvent(IEntityField origin, List<EntityField> newFields, String profile, AppMetaChangePayLoad.EntityChange entityChange) {
+    /**
+     * 寻找并加入event.
+     */
+    private void findAndAddEvent(IEntityField origin, List<EntityField> newFields, String profile,
+                                 AppMetaChangePayLoad.EntityChange entityChange) {
         IEntityField findEntityField = origin;
         if (null != newFields) {
             findEntityField = newFields.stream().filter(n -> n.id() != origin.id()).findFirst()

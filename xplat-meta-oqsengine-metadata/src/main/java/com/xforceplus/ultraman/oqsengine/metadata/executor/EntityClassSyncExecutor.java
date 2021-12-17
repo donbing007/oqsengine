@@ -79,7 +79,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      * 同步appId对应的EntityClass package.
      */
     @Override
-    public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         int expiredVersion = -1;
         AppMetaChangePayLoad appMetaChangePayLoad = null;
 
@@ -93,14 +93,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             //  准备,是否可以加锁更新，不成功直接返回失败
             step = prepared(appId, version);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
             openPrepare = true;
 
             //  查询当前版本
             step = querySyncVersion(appId);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
             expiredVersion = (int) step.getData();
 
@@ -108,18 +108,16 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             step = parserProto(entityClassSyncRspProto);
             //  同步数据失败的情况下需要抛出异常，而不是直接返回false.
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                throw new MetaSyncClientException(step.getMessage(), false);
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
 
             // step3 update new Hash in redis
             step = save(appId, version, (List<EntityClassStorage>) step.getData());
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
 
             appMetaChangePayLoad = (AppMetaChangePayLoad) step.getData();
-
-            step = SyncStep.ok();
 
         } finally {
             //  如果成功、执行publish
@@ -136,19 +134,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             if (openPrepare) {
                 cacheExecutor.endPrepare(appId);
             }
-
-            //  record sync logs to redis
-            cacheExecutor.addSyncLog(appId, version, step.toPersistentMessage());
         }
-
-        return step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS);
     }
-
-    @Override
-    public void recordSyncFailed(String appId, Integer version, String message) {
-        cacheExecutor.addSyncLog(appId, version,  SyncStep.StepDefinition.SYNC_CLIENT_FAILED + ":" + message);
-    }
-
 
     private SyncStep<Boolean> prepared(String appId, int version) {
         return cacheExecutor.prepare(appId, version) ? SyncStep.ok(true) : SyncStep.failed(SyncStep.StepDefinition.DUPLICATE_PREPARE_FAILED,

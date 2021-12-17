@@ -27,7 +27,7 @@ public interface IWatcher<T> {
 
     boolean isAlive(String uid);
 
-    void addWatch(WatchElement watchElement, boolean force);
+    void addWatch(WatchElement watchElement, boolean isReset);
 
     Map<String, WatchElement> watches();
 
