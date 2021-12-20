@@ -18,6 +18,13 @@
                 </includes>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -52,13 +59,6 @@
                     <skip>${test.skip}</skip>
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
-                    <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                    </includes>
-                    <argLine>
-                        -Xmx4096m -Xms4096m
-                    </argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -103,17 +103,16 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.7</version>
-                <configuration>
-                    <excludes>
-                        <exclude>META-INF/**</exclude>
-                    </excludes>
-                </configuration>
                 <executions>
                     <execution>
                         <id>pre-unit-test</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <!-- 排除lettuce,由于jdk11开始的jfr会造成jacoc无法增强 -->
+                            <excludes>io/lettuce/*</excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>post-unit-test</id>
@@ -412,11 +411,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.skip>false</checkstyle.skip>
-        <repository.host>http://120.27.140.65:8081/nexus</repository.host>
+        <repository.host>https://nexus.xforceplus.com/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
         <test.skip>false</test.skip>
         <aspectj.version>1.9.1</aspectj.version>
-        <allure.version>2.13.10</allure.version>
+        <argLine>-Xmx4096m</argLine>
     </properties>
 
 </project>

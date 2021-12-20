@@ -389,7 +389,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
                         TimeUnit.MILLISECONDS.sleep(syncGapTimeMs);
                     } catch (InterruptedException e) {
                         if (!running) {
-                            return;
+                            break;
                         }
                     }
 

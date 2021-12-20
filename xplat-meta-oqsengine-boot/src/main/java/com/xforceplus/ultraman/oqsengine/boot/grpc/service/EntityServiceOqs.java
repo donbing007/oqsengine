@@ -27,6 +27,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -80,6 +81,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
+import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.sql.SQLException;
@@ -200,6 +202,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         throw new RuntimeException(RESOURCE_IS_LOCKED);
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "begin"})
     @Override
     public CompletionStage<OperationResult> begin(TransactionUp in, Metadata metadata) {
         try {
@@ -364,6 +367,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * create.
      */
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "build"})
     @Override
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -537,6 +541,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * @param metadata ss
      * @return ss
      */
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "buildMulti"})
     @Override
     public CompletionStage<OperationResult> buildMulti(EntityMultiUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -667,6 +672,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "replace"})
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -822,6 +828,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      * @param metadata ss
      * @return dss
      */
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "replaceMulti"}
+    )
     @Override
     public CompletionStage<OperationResult> replaceMulti(EntityMultiUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -971,6 +981,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * need to return affected ids.
      */
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "replaceByCondition"}
+    )
     @Override
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -1101,6 +1115,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "remove"}
+    )
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -1256,6 +1274,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "removeMulti"}
+    )
     @Override
     public CompletionStage<OperationResult> removeMulti(EntityMultiUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -1392,6 +1414,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "selectOne"}
+    )
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return asyncRead(() -> {
@@ -1508,6 +1534,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * modify to use IEntityReader.
      */
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "selectByConditions"}
+    )
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return asyncRead(() -> {
@@ -1643,6 +1673,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "commit"}
+    )
     @Override
     public CompletionStage<OperationResult> commit(TransactionUp in, Metadata metadata) {
         Long id = Long.parseLong(in.getId());
@@ -1665,6 +1699,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return CompletableFuture.completedFuture(result);
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "rollback"}
+    )
     @Override
     public CompletionStage<OperationResult> rollBack(TransactionUp in, Metadata metadata) {
 
@@ -1691,6 +1729,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * 未实现.
      */
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "selectByTreeFilter"}
+    )
     @Override
     public CompletionStage<OperationResult> selectByTreeFilter(SelectByTree in, Metadata metadata) {
         return asyncRead(() -> {
@@ -1799,6 +1841,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * SDK连接应该第一个调用的准备动作.
      */
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "service", "action", "prepare"}
+    )
     @Override
     public CompletionStage<OperationResult> prepare(EntityUp entityUp, Metadata metadata) {
         return asyncRead(() -> {
