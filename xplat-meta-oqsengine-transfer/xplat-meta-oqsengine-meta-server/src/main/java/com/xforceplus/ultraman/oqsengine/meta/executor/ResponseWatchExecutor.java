@@ -6,7 +6,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecu
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerConnectorInfo;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -172,8 +172,8 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     @Override
-    public Optional<ServerMetricsInfo> showMetrics() {
-        List<ServerMetricsInfo.ClientWatches> clientWatches = new ArrayList<>();
+    public Optional<ServerConnectorInfo> connectorInfo() {
+        List<ServerConnectorInfo.ClientWatches> clientWatches = new ArrayList<>();
         uidWatchers.forEach(
             (k, v) -> {
                 List<WatchElement> watchElements = new ArrayList<>();
@@ -183,10 +183,10 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                     }
                 );
 
-                clientWatches.add(new ServerMetricsInfo.ClientWatches(v.clientId(), watchElements, v.heartBeat())) ;
+                clientWatches.add(new ServerConnectorInfo.ClientWatches(v.clientId(), watchElements, v.heartBeat())) ;
             }
         );
-        return Optional.of(new ServerMetricsInfo(clientWatches));
+        return Optional.of(new ServerConnectorInfo(clientWatches));
     }
 
     @Override

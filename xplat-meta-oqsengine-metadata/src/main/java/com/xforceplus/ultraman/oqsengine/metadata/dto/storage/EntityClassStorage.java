@@ -142,6 +142,9 @@ public class EntityClassStorage {
         return fields;
     }
 
+    /**
+     * 获取一个EntityField.
+     */
     public EntityField find(long id, String profile) {
         if (null != profile) {
             ProfileStorage profileStorage =

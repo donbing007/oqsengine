@@ -45,9 +45,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public void add(WatchElement watchElement, boolean force) {
+    public void add(WatchElement watchElement, boolean isReset) {
         if (null != requestWatcher) {
-            requestWatcher.addWatch(watchElement, force);
+            requestWatcher.addWatch(watchElement, isReset);
         }
     }
 

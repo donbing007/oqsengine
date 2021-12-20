@@ -12,12 +12,12 @@ import java.util.List;
  */
 public class AppMetaChangePayLoad implements Serializable {
     /**
-     * appId
+     * appId.
      */
     private String appId;
 
     /**
-     * version
+     * version.
      */
     private int version;
 
@@ -33,6 +33,9 @@ public class AppMetaChangePayLoad implements Serializable {
      */
     private List<EntityChange> entityChanges;
 
+    /**
+     * construct fx.
+     */
     public AppMetaChangePayLoad(String appId, int version) {
         this.appId = appId;
         this.version = version;
@@ -73,6 +76,9 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         private List<RelationChange> relationChanges;
 
+        /**
+         * construct fx.
+         */
         public EntityChange(Long entityClassId) {
             this.entityClassId = entityClassId;
             this.fieldChanges = new ArrayList<>();
@@ -110,6 +116,9 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         protected String profile;
 
+        /**
+         * construct fx.
+         */
         public FieldChange(Long fieldId, OperationType op, String profile) {
             this.fieldId = fieldId;
             this.op = op;
@@ -146,6 +155,9 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         protected String profile;
 
+        /**
+         * construct fx.
+         */
         public RelationChange(Long relationId, OperationType op, String profile) {
             this.relationId = relationId;
             this.op = op;

@@ -43,6 +43,13 @@ public class SyncStep<T> {
     }
 
     /**
+     * 格式化输出code, message.
+     */
+    public String messageFormat() {
+        return String.format("step : %s, message : %s", stepDefinition.name(), message);
+    }
+
+    /**
      * 返回一个成功的包装对象.
      */
     public static SyncStep ok() {
@@ -72,6 +79,7 @@ public class SyncStep<T> {
         return step;
     }
 
+
     /**
      * StepDefinition.
      */
@@ -86,5 +94,4 @@ public class SyncStep<T> {
         BUILD_EVENT_FAILED,
         SUCCESS
     }
-
 }

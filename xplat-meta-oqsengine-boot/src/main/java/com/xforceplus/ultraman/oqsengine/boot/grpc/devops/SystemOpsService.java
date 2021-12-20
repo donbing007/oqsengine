@@ -9,8 +9,8 @@ import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaLogs;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -102,10 +102,10 @@ public class SystemOpsService {
     /**
      * 显示meta同步日志.
      */
-    @DiscoverAction(describe = "显示meta同步日志", retClass = Collection.class, retInner = MetaLogs.class)
-    public Collection<MetaLogs> metaLogs() {
+    @DiscoverAction(describe = "显示meta同步日志", retClass = Collection.class, retInner = MetricsLog.class)
+    public Collection<MetricsLog> metaLogs(@MethodParam(name = "type", klass = String.class, required = true) String type) {
         try {
-            return metaManager.metaLogs();
+            return metaManager.metaLogs(MetricsLog.ShowType.getInstance(type));
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("metaLogs exception", e);
         }

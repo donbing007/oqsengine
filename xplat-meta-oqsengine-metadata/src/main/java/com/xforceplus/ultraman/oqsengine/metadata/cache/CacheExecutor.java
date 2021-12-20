@@ -36,28 +36,28 @@ public interface CacheExecutor {
      * @return 元信息.
      * @throws JsonProcessingException JSON异常.
      */
-    Map<String, String> read(long entityClassId) throws JsonProcessingException;
+    Map<String, String> remoteRead(long entityClassId) throws JsonProcessingException;
 
     /**
      * 读取原始信息，由外部进行EntityClass拼装.
      *
      * @param entityClassId 元信息标识.
-     * @param version 版本.
+     * @param version       版本.
      * @return 元信息.
      * @throws JsonProcessingException JSON异常.
      */
-    Map<String, String> read(long entityClassId, int version) throws JsonProcessingException;
+    Map<String, String> remoteRead(long entityClassId, int version) throws JsonProcessingException;
 
 
     /**
-     * 批量从REDIS中读取EntityClass的存储结构(未转换EntityClass)
+     * 批量从REDIS中读取EntityClass的存储结构(未转换EntityClass).
      *
      * @param ids     元信息列表.
      * @param version 版本号.
      * @return 元信息结果.
      * @throws JsonProcessingException JSON异常.
      */
-    Map<String, Map<String, String>> remoteMultiStorageRead(Collection<Long> ids, int version) throws JsonProcessingException;
+    Map<String, Map<String, String>> multiRemoteRead(Collection<Long> ids, int version) throws JsonProcessingException;
 
     /**
      * 清除AppId + version对应的存储记录.
@@ -72,11 +72,11 @@ public interface CacheExecutor {
     /**
      * 获取当前appId的entityId列表.
      *
-     * @param appId  应用标识.
+     * @param appId   应用标识.
      * @param version 版本号.
      * @return entityId列表.
      */
-    public Collection<Long> appEntityIdList(String appId, Integer version);
+    Collection<Long> appEntityIdList(String appId, Integer version);
 
     /**
      * 获取appId对应的版本信息.
@@ -163,40 +163,31 @@ public interface CacheExecutor {
     void invalidateLocal();
 
     /**
-     * 写入同步日志.
-     */
-    void addSyncLog(String appId, Integer version, String message);
-
-    /**
-     * 查询同步日志.
-     */
-    Map<String, String> getSyncLog();
-
-
-    /**
      * 从本地缓存获取.
-     * @param entityClassId
-     * @param version
-     * @param profile
-     * @return
+     *
+     * @param entityClassId entityClassId.
+     * @param version       版本号.
+     * @param profile       定制code
+     * @return IEntityClass.
      */
-    Optional<IEntityClass> getFromLocal(long entityClassId, int version, String profile);
+    Optional<IEntityClass> localRead(long entityClassId, int version, String profile);
 
     /**
      * 获取profileCodes列表.
-     * @param entityClassId
-     * @param version
-     * @return
+     *
+     * @param entityClassId entityClassId.
+     * @param version       版本号.
+     * @return 租户定制Code列表.
      */
     List<String> readProfileCodes(long entityClassId, int version);
 
-
     /**
      * 加入本地缓存.
-     * @param entityClassId
-     * @param version
-     * @param profile
-     * @param entityClass
+     *
+     * @param entityClassId entityClassId.
+     * @param version       版本号.
+     * @param profile       租户定制Code
+     * @param entityClass   entityClass.
      */
-    void addToLocal(long entityClassId, int version, String profile, IEntityClass entityClass);
+    void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass);
 }

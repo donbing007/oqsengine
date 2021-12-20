@@ -99,11 +99,13 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     public static class Element {
         private final WatchElement watch;
         private final String uid;
+        private final String clientId;
 
 
-        public Element(WatchElement w, String uid) {
+        public Element(WatchElement w, String uid, String clientId) {
             this.uid = uid;
             this.watch = w;
+            this.clientId = clientId;
         }
 
         public String getUid() {
@@ -112,6 +114,10 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
 
         public WatchElement getElement() {
             return watch;
+        }
+
+        public String getClientId() {
+            return clientId;
         }
     }
 

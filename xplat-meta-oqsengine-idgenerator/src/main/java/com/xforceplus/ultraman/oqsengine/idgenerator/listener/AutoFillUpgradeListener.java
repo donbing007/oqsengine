@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.listener;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;

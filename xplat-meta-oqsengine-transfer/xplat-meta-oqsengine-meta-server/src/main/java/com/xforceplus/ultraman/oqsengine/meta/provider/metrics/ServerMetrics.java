@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.provider.metrics;
 
-import com.xforceplus.ultraman.oqsengine.meta.dto.ServerMetricsInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ServerConnectorInfo;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -10,7 +12,14 @@ import java.util.Optional;
  */
 public interface ServerMetrics {
     /**
-     * 获取当前关注列表
+     * 获取当前连接信息.
      */
-    Optional<ServerMetricsInfo> showMetrics();
+    Optional<ServerConnectorInfo> connectorInfo();
+
+    /**
+     * 获取处理日志.
+     * @param showType
+     * @return
+     */
+    Collection<MetricsLog> metricsLogs(MetricsLog.ShowType showType);
 }

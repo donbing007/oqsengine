@@ -41,10 +41,6 @@ public class CacheToStorageGenerator {
 
     /**
      * 批量转换EntityClassStorageMap.
-     * @param objectMapper
-     * @param raw
-     * @return
-     * @throws JsonProcessingException
      */
     public static Map<Long, EntityClassStorage> toEntityClassStorages(ObjectMapper objectMapper, Map<String, Map<String, String>> raw)
         throws JsonProcessingException {

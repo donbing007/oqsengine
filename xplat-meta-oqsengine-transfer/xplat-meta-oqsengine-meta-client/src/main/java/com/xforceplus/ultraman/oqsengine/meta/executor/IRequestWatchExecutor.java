@@ -22,7 +22,7 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
     /**
      * 增加WatchElement.
      */
-    void add(WatchElement watchElement, boolean force);
+    void add(WatchElement watchElement, boolean isReset);
 
     /**
      * 更新WatchElement.

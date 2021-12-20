@@ -8,10 +8,10 @@ import java.util.List;
  *
  * @since 1.8
  */
-public class ServerMetricsInfo {
+public class ServerConnectorInfo {
     private List<ClientWatches> clientWatches;
 
-    public ServerMetricsInfo(
+    public ServerConnectorInfo(
         List<ClientWatches> clientWatches) {
         this.clientWatches = clientWatches;
     }

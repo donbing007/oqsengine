@@ -220,7 +220,7 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public Collection<IEntityClass> familyLoad(long id) {
+            public Collection<IEntityClass> withProfilesLoad(long id) {
                 return Collections.singletonList(example.getEntityClassById(id));
             }
 
@@ -247,6 +247,11 @@ public class ChangelogConfiguration {
             @Override
             public int reset(String appId, String env) {
                 return 0;
+            }
+
+            @Override
+            public boolean remove(String appId) {
+                return true;
             }
         };
     }

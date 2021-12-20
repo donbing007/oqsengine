@@ -32,9 +32,7 @@ public class CacheUtils {
     private static final int PROFILE_CODE_POS = 2;
 
     /**
-     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherI)等
-     * @param id
-     * @return
+     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherId)等.
      */
     public static boolean validBusinessId(String id) {
         try {
@@ -45,9 +43,7 @@ public class CacheUtils {
     }
 
     /**
-     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherI)等
-     * @param id
-     * @return
+     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherId)等.
      */
     public static boolean validBusinessId(Long id) {
         return null != id && id >= MIN_ID;
@@ -125,15 +121,17 @@ public class CacheUtils {
         return entityField;
     }
 
+    /**
+     * 解析profileCode.
+     */
     public static List<String> parseProfileCodes(Map<String, String> keyValues) {
         Set<String> profiles = new HashSet<>();
         if (null != keyValues && !keyValues.isEmpty()) {
             Iterator<Map.Entry<String, String>> iterator = keyValues.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<String, String> entry = iterator.next();
-                if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS) ||
-                    entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
-
+                if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)
+                    || entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                     profiles.add(parseOneKeyFromProfileEntity(entry.getKey()));
                 }
             }

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
@@ -45,6 +46,11 @@ public class DoNothingRequestHandler implements IRequestHandler {
     @Override
     public boolean reset(WatchElement watchElement) {
         return true;
+    }
+
+    @Override
+    public MetricsRecorder metricsRecorder() {
+        return null;
     }
 
     @Override
