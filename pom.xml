@@ -18,6 +18,13 @@
                 </includes>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
