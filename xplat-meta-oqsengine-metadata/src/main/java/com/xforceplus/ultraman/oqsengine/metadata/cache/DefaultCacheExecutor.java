@@ -877,7 +877,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                         if (null == entityChange) {
                             entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
                         }
-                        entityChange.getFieldChanges().add(change);
+                        entityChange.getFieldChanges().computeIfAbsent(entityField.calculationType(), (k) -> new ArrayList<>()).add(change);
                     }
 
                     String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
@@ -906,7 +906,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 if (null == entityChange) {
                                     entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
                                 }
-                                entityChange.getFieldChanges().add(change);
+                                entityChange.getFieldChanges().computeIfAbsent(entityField.calculationType(), (k) -> new ArrayList<>()).add(change);
                             }
                         } catch (JsonProcessingException e) {
                             throw new MetaSyncClientException("parse profile-entityFields failed.", false);
@@ -975,7 +975,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null != findEntityField) {
             AppMetaChangePayLoad.FieldChange change =
                 appEventHandle(findEntityField, null, profile);
-            entityChange.getFieldChanges().add(change);
+            entityChange.getFieldChanges().computeIfAbsent(findEntityField.calculationType(), (k) -> new ArrayList<>()).add(change);
         }
     }
 

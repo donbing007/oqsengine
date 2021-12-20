@@ -1,9 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.event.payload.calculator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by justin.xu on 12/2021.
@@ -68,9 +71,9 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         private Long entityClassId;
         /**
-         * 变更的Field列表.
+         * 变更的Field列表,已按照CalculationType分类.
          */
-        private List<FieldChange> fieldChanges;
+        private Map<CalculationType, List<FieldChange>> fieldChanges;
         /**
          * 变更的Relation列表.
          */
@@ -81,7 +84,7 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         public EntityChange(Long entityClassId) {
             this.entityClassId = entityClassId;
-            this.fieldChanges = new ArrayList<>();
+            this.fieldChanges = new HashMap<>();
             this.relationChanges = new ArrayList<>();
         }
 
@@ -89,7 +92,7 @@ public class AppMetaChangePayLoad implements Serializable {
             return entityClassId;
         }
 
-        public List<FieldChange> getFieldChanges() {
+        public Map<CalculationType, List<FieldChange>> getFieldChanges() {
             return fieldChanges;
         }
 

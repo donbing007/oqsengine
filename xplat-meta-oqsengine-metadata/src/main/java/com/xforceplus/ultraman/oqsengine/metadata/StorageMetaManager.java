@@ -118,7 +118,11 @@ public class StorageMetaManager implements MetaManager {
          * 不存在时抛出异常
          */
         if (NOT_EXIST_VERSION == version) {
-            throw new RuntimeException(String.format("invalid entityClassId : [%d], no version pair", entityClassId));
+            version = cacheExecutor.version(entityClassId);
+            if (NOT_EXIST_VERSION == version) {
+                throw new RuntimeException(
+                    String.format("invalid entityClassId : [%d], no version pair", entityClassId));
+            }
         }
 
         Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
