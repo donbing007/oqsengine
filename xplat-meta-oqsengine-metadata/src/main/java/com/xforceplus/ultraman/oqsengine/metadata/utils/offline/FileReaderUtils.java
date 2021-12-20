@@ -17,14 +17,8 @@ public class FileReaderUtils {
 
         List<String> files = new ArrayList<>();
         File[] tempList = null;
-        try {
-            File file = new File(path);
-            tempList = file.listFiles();
-
-        } catch (Exception e) {
-            //  ignore
-            return files;
-        }
+        File file = new File(path);
+        tempList = file.listFiles();
         if (null != tempList) {
             for (int i = 0; i < tempList.length; i++) {
                 if (tempList[i].isFile()) {
