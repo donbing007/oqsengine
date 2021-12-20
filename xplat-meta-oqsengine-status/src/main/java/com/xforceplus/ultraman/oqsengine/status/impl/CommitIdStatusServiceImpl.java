@@ -509,7 +509,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                     unSyncCommitIdMax.set(0);
                 }
             } catch (Throwable ex) {
-                logger.error(ex.getMessage(), ex);
+                //do not care.
             }
         }
     }

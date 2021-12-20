@@ -18,6 +18,13 @@
                 </includes>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -50,12 +57,8 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <skip>${test.skip}</skip>
-                    <forkCount>0</forkCount>
+                    <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
-                    <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                    </includes>
                 </configuration>
             </plugin>
             <plugin>
@@ -106,6 +109,10 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <!-- 排除lettuce,由于jdk11开始的jfr会造成jacoc无法增强 -->
+                            <excludes>io/lettuce/*</excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>post-unit-test</id>
