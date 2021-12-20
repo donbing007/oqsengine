@@ -30,8 +30,8 @@ public class MasterDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-        return new DecimalValue(field, new BigDecimal((String) storageValue.value()));
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
+        return new DecimalValue(field, new BigDecimal((String) storageValue.value()), attachemnt);
     }
 
     @Override

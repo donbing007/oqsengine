@@ -154,7 +154,7 @@ public class DefaultTaskCoordinator implements TaskCoordinator {
         /**
          * 无任务的检查间隔毫秒时间.
          */
-        private final long checkTimeoutMs = 50000L;
+        private final long checkTimeoutMs = 5000L;
 
         @Override
         public void run() {

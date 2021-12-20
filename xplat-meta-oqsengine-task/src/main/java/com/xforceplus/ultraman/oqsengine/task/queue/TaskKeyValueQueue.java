@@ -37,7 +37,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     private static final String DEFAULT_NAME = "default";
     private Logger logger = LoggerFactory.getLogger(TaskKeyValueQueue.class);
 
-    @Resource
+    @Resource(name = "resourceLocker")
     private ResourceLocker locker;
 
     @Resource(name = "longContinuousPartialOrderIdGenerator")
@@ -133,7 +133,13 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
     /**
      * 构造器注入.
      */
-    public TaskKeyValueQueue(ResourceLocker locker, LongIdGenerator idGenerator, KeyValueStorage kv, SerializeStrategy serializeStrategy, long initPoint, String name) {
+    public TaskKeyValueQueue(
+        ResourceLocker locker,
+        LongIdGenerator idGenerator,
+        KeyValueStorage kv,
+        SerializeStrategy serializeStrategy,
+        long initPoint, String name) {
+
         this.locker = locker;
         this.idGenerator = idGenerator;
         this.kv = kv;
@@ -383,7 +389,7 @@ public class TaskKeyValueQueue implements TaskQueue, Lifecycle {
                         TimeUnit.MILLISECONDS.sleep(syncGapTimeMs);
                     } catch (InterruptedException e) {
                         if (!running) {
-                            return;
+                            break;
                         }
                     }
 

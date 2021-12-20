@@ -148,11 +148,7 @@ public class SQLMasterStorageTest {
     @BeforeEach
     public void before() throws Exception {
         MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(l2EntityClass));
-
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
         expectedEntitys = initData(storage, 100);
-        transactionManager.finish();
     }
 
     @AfterEach
@@ -192,6 +188,35 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(0, targetEntity.version());
         Assertions.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
             entityOptional.get().time());
+    }
+
+    @Test
+    public void testSelectOne() throws Exception {
+        List<IEntity> entities = new ArrayList<>(expectedEntitys.size());
+        expectedEntitys.stream().mapToLong(e -> e.id()).forEach(id -> {
+            Optional<IEntity> entityOp;
+            try {
+                entityOp = storage.selectOne(id, l1EntityClass);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+            entities.add(entityOp.get());
+        });
+
+        Assertions.assertEquals(expectedEntitys.size(), entities.size());
+        for (int i = 0; i < expectedEntitys.size(); i++) {
+            IEntity expectedEntity = expectedEntitys.get(i);
+            IEntity targetEntity = entities.get(i);
+
+            Collection<IValue> expectValues = expectedEntity.entityValue().values();
+            Assertions.assertEquals(expectValues.size(), targetEntity.entityValue().size());
+
+            for (IValue expectedValue : expectValues) {
+                IValue targetValue = targetEntity.entityValue().getValue(expectedValue.getField().id()).get();
+
+                Assertions.assertTrue(expectedValue.equals(targetValue));
+            }
+        }
     }
 
     @Test
@@ -240,23 +265,6 @@ public class SQLMasterStorageTest {
     }
 
     @Test
-    public void testSelectOne() throws Exception {
-        List<IEntity> entities = new ArrayList<>(expectedEntitys.size());
-        expectedEntitys.stream().mapToLong(e -> e.id()).forEach(id -> {
-            Optional<IEntity> entityOp;
-            try {
-                entityOp = storage.selectOne(id, l1EntityClass);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-            entities.add(entityOp.get());
-        });
-
-        Assertions.assertEquals(expectedEntitys.size(), entities.size());
-
-    }
-
-    @Test
     public void testSelectMultiple() throws Exception {
         long[] ids = expectedEntitys.stream().mapToLong(e -> e.id()).toArray();
         Collection<IEntity> entities = storage.selectMultiple(ids, l1EntityClass);
@@ -283,7 +291,8 @@ public class SQLMasterStorageTest {
         LocalDateTime updateTime = LocalDateTime.now();
         IEntity targetEntity = expectedEntitys.get(0);
         targetEntity.entityValue().addValue(
-            new LongValue(l1EntityClass.father().get().field("l0-long").get(), 1000000)
+            new LongValue(
+                l1EntityClass.father().get().field("l0-long").get(), 1000000, "new-attachement")
         ).addValue(
             new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
         );
@@ -301,6 +310,8 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(oldVersion + 1, targetEntityOp.get().version());
         Assertions.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
             targetEntityOp.get().time());
+        Assertions.assertEquals("new-attachement",
+            targetEntityOp.get().entityValue().getValue("l0-long").get().getAttachment().get());
     }
 
     @Test
@@ -404,6 +415,8 @@ public class SQLMasterStorageTest {
 
     // 初始化数据
     private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
         List<IEntity> expectedEntitys = new ArrayList<>(size);
         EntityPackage entityPackage = new EntityPackage();
         for (int i = 1; i <= size; i++) {
@@ -421,7 +434,7 @@ public class SQLMasterStorageTest {
         }
 
         //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
+        tx = transactionManager.getCurrent().get();
 
         // 表示为非可读事务.
         for (IEntity e : expectedEntitys) {
@@ -450,12 +463,20 @@ public class SQLMasterStorageTest {
     private IEntityValue buildEntityValue(long id, Collection<IEntityField> fields) {
         Collection<IValue> values = fields.stream().map(f -> {
             switch (f.type()) {
-                case STRING:
-                    return new StringValue(f, buildRandomString(10));
-                case STRINGS:
-                    return new StringsValue(f, buildRandomString(5), buildRandomString(3), buildRandomString(7));
-                default:
-                    return new LongValue(f, (long) buildRandomLong(10, 100000));
+                case STRING: {
+                    String randomString = buildRandomString(10);
+                    return new StringValue(f, randomString, randomString);
+                }
+                case STRINGS: {
+                    String randomString0 = buildRandomString(5);
+                    String randomString1 = buildRandomString(3);
+                    String randomString2 = buildRandomString(7);
+                    return new StringsValue(f, new String[] { randomString0, randomString1, randomString2}, randomString0);
+                }
+                default: {
+                    long randomLong = buildRandomLong(10, 100000);
+                    return new LongValue(f, randomLong, Long.toString(randomLong));
+                }
             }
         }).collect(Collectors.toList());
 

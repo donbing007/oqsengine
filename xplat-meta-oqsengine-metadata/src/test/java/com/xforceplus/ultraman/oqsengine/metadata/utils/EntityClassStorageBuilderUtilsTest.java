@@ -7,8 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.logging.Logger;
-
 /**
  * 转换测试.
  *
@@ -22,24 +20,24 @@ public class EntityClassStorageBuilderUtilsTest {
     @Test
     public void toAggregation() {
         Calculator calculator = Calculator.newBuilder()
-                .setAggregationBoId(1000)
-                .setAggregationFieldId(10001)
-                .setAggregationRelationId(1000001)
-                .setAggregationType(1)
-                .build();
+            .setAggregationBoId(1000)
+            .setAggregationFieldId(10001)
+            .setAggregationRelationId(1000001)
+            .setAggregationType(1)
+            .build();
 
         Conditions conditions = null;
         Aggregation.Builder builder = Aggregation.Builder.anAggregation()
-                .withClassId(calculator.getAggregationBoId())
-                .withFieldId(calculator.getAggregationFieldId())
-                .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
-                .withRelationId(calculator.getAggregationRelationId())
-                .withConditions(conditions);
+            .withClassId(calculator.getAggregationBoId())
+            .withFieldId(calculator.getAggregationFieldId())
+            .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
+            .withRelationId(calculator.getAggregationRelationId())
+            .withConditions(conditions);
 
         Aggregation aggregation = builder.build();
 
         Assertions.assertNotNull(aggregation);
-        Assertions.assertEquals(aggregation.getClassId(),calculator.getAggregationBoId());
+        Assertions.assertEquals(aggregation.getClassId(), calculator.getAggregationBoId());
 
     }
 

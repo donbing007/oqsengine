@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.task.AbstractTask;
-import java.io.Serializable;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * lookup维护任务.
@@ -12,50 +10,41 @@ import java.util.Optional;
  * @version 0.1 2021/08/16 14:54
  * @since 1.8
  */
-public class LookupMaintainingTask extends AbstractTask implements Serializable {
+public class LookupMaintainingTask extends AbstractTask {
 
     private static final int DEFAULT_SIZE = 10000;
 
-    private String iterKey;
-    private String pointKey;
+    private EntityClassRef targetClassRef;
+    private EntityClassRef lookupClassRef;
+    private long lookupFieldId;
+    private long targetEntityId;
+    private long targetFieldId;
+    private long lastStartLookupEntityId;
     private int maxSize;
 
-    public LookupMaintainingTask(String iterKey) {
-        this(iterKey, null);
+
+    public long getTargetEntityId() {
+        return targetEntityId;
     }
 
-    public LookupMaintainingTask(String iterKey, String seekKey) {
-        this(iterKey, seekKey, DEFAULT_SIZE);
+    public long getTargetFieldId() {
+        return targetFieldId;
     }
 
-    public LookupMaintainingTask(String iterKey, int maxSize) {
-        this(iterKey, null, maxSize);
+    public long getLookupFieldId() {
+        return lookupFieldId;
     }
 
-    /**
-     * 构造任务实例.
-     *
-     * @param iterKey 迭代的key.
-     * @param seekKey 从此key之后开始.
-     * @param maxSize 最大处理数据量.
-     */
-    public LookupMaintainingTask(String iterKey, String seekKey, int maxSize) {
-        this.iterKey = iterKey;
-        this.pointKey = seekKey;
-        this.maxSize = maxSize;
+    public EntityClassRef getTargetClassRef() {
+        return targetClassRef;
     }
 
-    @Override
-    public Class runnerType() {
-        return LookupMaintainingTaskRunner.class;
+    public EntityClassRef getLookupClassRef() {
+        return lookupClassRef;
     }
 
-    public String getIterKey() {
-        return iterKey;
-    }
-
-    public Optional<String> getPointKey() {
-        return Optional.ofNullable(pointKey);
+    public long getLastStartLookupEntityId() {
+        return lastStartLookupEntityId;
     }
 
     public int getMaxSize() {
@@ -63,20 +52,90 @@ public class LookupMaintainingTask extends AbstractTask implements Serializable 
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        LookupMaintainingTask that = (LookupMaintainingTask) o;
-        return getMaxSize() == that.getMaxSize() && Objects.equals(getIterKey(), that.getIterKey())
-            && Objects.equals(getPointKey(), that.getPointKey());
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("LookupMaintainingTask{");
+        sb.append("targetClassRef=").append(targetClassRef);
+        sb.append(", lookupClassRef=").append(lookupClassRef);
+        sb.append(", lookupFieldId=").append(lookupFieldId);
+        sb.append(", targetEntityId=").append(targetEntityId);
+        sb.append(", targetFieldId=").append(targetFieldId);
+        sb.append(", lastStartLookupEntityId=").append(lastStartLookupEntityId);
+        sb.append(", maxSize=").append(maxSize);
+        sb.append('}');
+        return sb.toString();
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getIterKey(), getPointKey(), getMaxSize());
+    public Class runnerType() {
+        return LookupMaintainingTaskRunner.class;
+    }
+
+    /**
+     * 构造器.
+     */
+    public static final class Builder {
+        private EntityClassRef targetClassRef;
+        private EntityClassRef lookupClassRef;
+        private long lookupFieldId;
+        private long targetEntityId;
+        private long targetFieldId;
+        private long lastStartLookupEntityId;
+        private int maxSize = DEFAULT_SIZE;
+
+        private Builder() {}
+
+        public static Builder anLookupMaintainingTask() {
+            return new Builder();
+        }
+
+        public Builder withTargetClassRef(EntityClassRef targetClassRef) {
+            this.targetClassRef = targetClassRef;
+            return this;
+        }
+
+        public Builder withLookupClassRef(EntityClassRef lookupClassRef) {
+            this.lookupClassRef = lookupClassRef;
+            return this;
+        }
+
+        public Builder withLookupFieldId(long lookupFieldId) {
+            this.lookupFieldId = lookupFieldId;
+            return this;
+        }
+
+        public Builder withTargetEntityId(long targetEntityId) {
+            this.targetEntityId = targetEntityId;
+            return this;
+        }
+
+        public Builder withTargetFieldId(long targetFieldId) {
+            this.targetFieldId = targetFieldId;
+            return this;
+        }
+
+        public Builder withMaxSize(int maxSize) {
+            this.maxSize = maxSize;
+            return this;
+        }
+
+        public Builder withLastStartLookupEntityId(long lastStartLookupEntityId) {
+            this.lastStartLookupEntityId = lastStartLookupEntityId;
+            return this;
+        }
+
+        /**
+         * 构造实例.
+         */
+        public LookupMaintainingTask build() {
+            LookupMaintainingTask lookupMaintainingTask = new LookupMaintainingTask();
+            lookupMaintainingTask.maxSize = this.maxSize;
+            lookupMaintainingTask.targetClassRef = this.targetClassRef;
+            lookupMaintainingTask.lookupClassRef = this.lookupClassRef;
+            lookupMaintainingTask.targetEntityId = this.targetEntityId;
+            lookupMaintainingTask.lookupFieldId = this.lookupFieldId;
+            lookupMaintainingTask.targetFieldId = this.targetFieldId;
+            lookupMaintainingTask.lastStartLookupEntityId = this.lastStartLookupEntityId;
+            return lookupMaintainingTask;
+        }
     }
 }

@@ -117,6 +117,11 @@ public interface Transaction {
     boolean isReadyOnly();
 
     /**
+     * Forces the current transaction to be a non-read-only transaction.
+     */
+    void focusNotReadOnly();
+
+    /**
      * Returns the transaction accumulator.
      *
      * @return Accumulator instance, not NULL.

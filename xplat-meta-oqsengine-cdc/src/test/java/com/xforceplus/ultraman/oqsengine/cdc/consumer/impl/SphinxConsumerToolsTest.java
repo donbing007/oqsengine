@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class SphinxConsumerToolsTest {
 
     private void initGetEntityClass() throws NoSuchMethodException {
         testGetEntityClass = sphinxSyncExecutor.getClass()
-            .getDeclaredMethod("getEntityClass", new Class[] {long.class, List.class});
+            .getDeclaredMethod("getEntityClass", new Class[] {long.class, Map.class, List.class});
         testGetEntityClass.setAccessible(true);
     }
 
@@ -60,7 +61,7 @@ public class SphinxConsumerToolsTest {
 
     private void initPrepareForUpdateDelete() throws NoSuchMethodException {
         testPrepareForUpdateDelete = sphinxSyncExecutor.getClass()
-            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class});
+            .getDeclaredMethod("prepareForUpdateDelete", new Class[] {List.class, long.class, long.class, Map.class});
         testPrepareForUpdateDelete.setAccessible(true);
     }
 
@@ -181,35 +182,24 @@ public class SphinxConsumerToolsTest {
 
     private void assertGetEntityClass(List<CanalEntry.Column> columns) throws Exception {
         IEntityClass entityClass = (IEntityClass) testGetEntityClass
-            .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
+            .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), new HashMap<>(), columns);
         Assertions.assertNotNull(entityClass);
     }
 
     @SuppressWarnings("unchecked")
     private void assertAttributes(List<CanalEntry.Column> columns, int index) throws Exception {
-        List<Object> objects = (List<Object>) testAttrCollection
+        Map<String, Object> objects = (Map<String, Object>) testAttrCollection
             .invoke(sphinxSyncExecutor, getLongFromColumn(columns, OqsBigEntityColumns.ID), columns);
-        Assertions.assertTrue(null != objects && !objects.isEmpty() && objects.size() % 2 == 0);
+        Assertions.assertTrue(null != objects && !objects.isEmpty());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> kv = objectMapper.readValue(CanalEntryTools.Prepared.attrs[index], Map.class);
 
+        Map<String, Object> kv = objectMapper.readValue(CanalEntryTools.Prepared.attrs[index], Map.class);
 
         kv.forEach(
             (k, v) -> {
-                boolean findKey = false;
-                for (int i = 0; i < objects.size(); i++) {
-                    Object object = objects.get(i);
-                    if (i % 2 == 0) {
-                        Assertions.assertEquals(String.class, object.getClass());
-                        if (object.equals(k)) {
-                            findKey = true;
-                            Assertions.assertEquals(v, objects.get(i + 1));
-                            break;
-                        }
-                    }
-                }
-                Assertions.assertTrue(findKey);
+                Object val = objects.get(k);
+                Assertions.assertTrue(null != val && val.equals(v));
             }
         );
     }
@@ -218,7 +208,9 @@ public class SphinxConsumerToolsTest {
         throws InvocationTargetException, IllegalAccessException, SQLException {
         OriginalEntity originalEntity = (OriginalEntity) testPrepareForUpdateDelete.invoke(sphinxSyncExecutor, columns,
             getLongFromColumn(columns, OqsBigEntityColumns.ID),
-            getLongFromColumn(columns, OqsBigEntityColumns.COMMITID));
+            getLongFromColumn(columns, OqsBigEntityColumns.COMMITID),
+            new HashMap<>()
+        );
         Assertions.assertNotNull(originalEntity);
         assertByCaseEntry(caseEntry, originalEntity);
     }
@@ -259,8 +251,9 @@ public class SphinxConsumerToolsTest {
             builder.setHeader(buildHeader());
 
             builder.setStoreValue(
-                buildRowChange(i, 3, ENTITY_CLASS_2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1, false)
-                    .toByteString());
+                buildRowChange(i, 3, ENTITY_CLASS_2.id(), i % 2 == 0, tx, 1, "0",
+                    2, OqsVersion.MAJOR, 1, false).toByteString()
+            );
 
             entries.add(builder.build());
 

@@ -28,7 +28,9 @@ import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -234,18 +236,18 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
 
-    private List<Object> toIndexAttrs(IEntityValue value) throws Exception {
+    private Map<String, Object> toIndexAttrs(IEntityValue value) throws Exception {
 
         StorageStrategy storageStrategy;
 
-        List<Object> objects = new ArrayList<>();
+        Map<String, Object> objects = new HashMap<>();
         for (IValue logicValue : value.values()) {
-            storageStrategy = MasterDBInitialization.getInstance().getMasterStorageStrategyFactory().getStrategy(logicValue.getField().type());
+            storageStrategy = MasterDBInitialization.getInstance().getMasterStorageStrategyFactory()
+                .getStrategy(logicValue.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
             while (storageValue != null) {
 
-                objects.add(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName());
-                objects.add(storageValue.value());
+                objects.put(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
 
                 storageValue = storageValue.next();
             }

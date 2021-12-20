@@ -27,7 +27,7 @@ public class UnsupportStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
     }
 

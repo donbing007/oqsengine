@@ -15,10 +15,10 @@ import com.xforceplus.ultraman.oqsengine.storage.kv.sql.SqlKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.transaction.SqlKvConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.task.Task;
+import com.xforceplus.ultraman.oqsengine.task.mock.MockTask;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * TaskQueue磁盘测试.
@@ -71,10 +70,10 @@ public class TaskKeyValueQueueSQLTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
         worker = new ThreadPoolExecutor(5, 5,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue(10000),
-            ExecutorHelper.buildNameThreadFactory("task", false),
-            new ThreadPoolExecutor.AbortPolicy()
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue(10000),
+                ExecutorHelper.buildNameThreadFactory("task", false),
+                new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);
@@ -85,10 +84,10 @@ public class TaskKeyValueQueueSQLTest {
         ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
-            StorageInitialization.getInstance().getTransactionManager(),
-            new SqlKvConnectionTransactionResourceFactory(),
-            NoSelector.build(ds),
-            NoSelector.build("kv"));
+                StorageInitialization.getInstance().getTransactionManager(),
+                new SqlKvConnectionTransactionResourceFactory(),
+                NoSelector.build(ds),
+                NoSelector.build("kv"));
 
         Collection<Field> fields = ReflectionUtils.printAllMembers(keyValueStorage);
         ReflectionUtils.reflectionFieldValue(fields, "transactionExecutor", keyValueStorage, executor);
@@ -151,7 +150,7 @@ public class TaskKeyValueQueueSQLTest {
         Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
         unSubmitTask.setAccessible(true);
         ConcurrentHashMap<String, byte[]> unSubmitTaskMap =
-            (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+                (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
 
         long millis = System.currentTimeMillis();
         while (!unSubmitTaskMap.isEmpty()) {
@@ -217,7 +216,7 @@ public class TaskKeyValueQueueSQLTest {
             worker.submit(new Runnable() {
                 @Override
                 public void run() {
-                    instance.append(new TaskKeyValueQueueTest.MockTask());
+                    instance.append(new MockTask());
                     latch.countDown();
                 }
             });
@@ -227,7 +226,7 @@ public class TaskKeyValueQueueSQLTest {
         Field unSubmitTask = instance.getClass().getDeclaredField("unSubmitTask");
         unSubmitTask.setAccessible(true);
         ConcurrentHashMap<String, byte[]> unSubmitTaskMap =
-            (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
+                (ConcurrentHashMap<String, byte[]>) unSubmitTask.get(instance);
 
         long millis = System.currentTimeMillis();
         while (!unSubmitTaskMap.isEmpty()) {
@@ -292,7 +291,7 @@ public class TaskKeyValueQueueSQLTest {
             worker.submit(new Runnable() {
                 @Override
                 public void run() {
-                    instance.append(new TaskKeyValueQueueTest.MockTask());
+                    instance.append(new MockTask());
                 }
             });
         }
@@ -356,7 +355,7 @@ public class TaskKeyValueQueueSQLTest {
             worker.submit(new Runnable() {
                 @Override
                 public void run() {
-                    instance.append(new TaskKeyValueQueueTest.MockTask());
+                    instance.append(new MockTask());
                 }
             });
         }
@@ -423,7 +422,7 @@ public class TaskKeyValueQueueSQLTest {
             worker.submit(new Runnable() {
                 @Override
                 public void run() {
-                    instance.append(new TaskKeyValueQueueTest.MockTask());
+                    instance.append(new MockTask());
                 }
             });
         }
@@ -461,8 +460,8 @@ public class TaskKeyValueQueueSQLTest {
      */
     @Test
     public void testShutdown()
-        throws InterruptedException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
-        InvocationTargetException {
+            throws InterruptedException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
+            InvocationTargetException {
         int count = 1000;
         AtomicLong appendCount = new AtomicLong(0);
         CountDownLatch latch = new CountDownLatch(count);
@@ -470,7 +469,7 @@ public class TaskKeyValueQueueSQLTest {
             worker.submit(new Runnable() {
                 @Override
                 public void run() {
-                    instance.append(new TaskKeyValueQueueTest.MockTask());
+                    instance.append(new MockTask());
                     appendCount.addAndGet(1);
                     latch.countDown();
                 }
@@ -507,39 +506,6 @@ public class TaskKeyValueQueueSQLTest {
         }
         Assertions.assertTrue(lostSize <= count);
 
-    }
-
-    /**
-     * mockTask.
-     */
-    public static class MockTask implements Task, Serializable {
-        private static final long serialVersionUID = 1L;
-        private long location;
-
-        @Override
-        public String id() {
-            return null;
-        }
-
-        @Override
-        public long location() {
-            return location;
-        }
-
-        @Override
-        public void setLocation(long l) {
-            this.location = l;
-        }
-
-        @Override
-        public long createTime() {
-            return 0;
-        }
-
-        @Override
-        public Class runnerType() {
-            return null;
-        }
     }
 
 }

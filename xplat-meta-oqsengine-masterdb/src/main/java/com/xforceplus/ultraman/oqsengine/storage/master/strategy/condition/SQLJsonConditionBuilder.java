@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator.MULTIPLE_EQUALS;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -63,7 +64,7 @@ public class SQLJsonConditionBuilder
     }
 
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
@@ -75,9 +76,29 @@ public class SQLJsonConditionBuilder
     @Override
     public String build(Condition condition) {
         IEntityField field = condition.getField();
-        StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(field.type());
+        StorageStrategy storageStrategy;
         StringBuilder sql = new StringBuilder();
 
+        if (AttachmentCondition.class.isInstance(condition)) {
+            storageStrategy = storageStrategyFactory.getStrategy(FieldType.STRING);
+
+            StorageValue storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
+
+            // 附件只能是字符串
+            sql.append(FieldDefine.ATTRIBUTE)
+                .append("->>'$.")
+                .append(AnyStorageValue.ATTACHMENT_PREFIX)
+                .append(storageStrategy.toStorageNames(field).stream().findFirst().get())
+                .append("\' ")
+                .append(condition.getOperator().getSymbol())
+                .append(' ');
+
+            appendValue(sql, storageValue);
+
+            return sql.toString();
+        }
+
+        storageStrategy = storageStrategyFactory.getStrategy(field.type());
         // id查询.
         if (field.config().isIdentifie()) {
 
@@ -108,12 +129,14 @@ public class SQLJsonConditionBuilder
         if (storageStrategy.storageType() == StorageType.LONG) {
             sql.append("CAST(");
         }
+
         // attr->>'$.attribute_name'
         sql.append(FieldDefine.ATTRIBUTE)
             .append("->>'$.")
             .append(AnyStorageValue.ATTRIBUTE_PREFIX)
             .append(storageStrategy.toStorageNames(field).stream().findFirst().get())
             .append("\'");
+
         if (storageStrategy.storageType() == StorageType.LONG) {
             sql.append(" AS SIGNED)");
         }

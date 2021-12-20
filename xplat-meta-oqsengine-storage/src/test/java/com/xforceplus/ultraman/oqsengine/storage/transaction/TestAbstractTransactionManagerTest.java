@@ -39,6 +39,9 @@ public class TestAbstractTransactionManagerTest {
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
+    /**
+     * 测试初始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         redisClient = CommonInitialization.getInstance().getRedisClient();
@@ -49,6 +52,7 @@ public class TestAbstractTransactionManagerTest {
     @AfterEach
     public void after() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test
@@ -331,6 +335,11 @@ public class TestAbstractTransactionManagerTest {
         @Override
         public boolean isReadyOnly() {
             return transaction.isReadyOnly();
+        }
+
+        @Override
+        public void focusNotReadOnly() {
+            transaction.focusNotReadOnly();
         }
 
         @Override

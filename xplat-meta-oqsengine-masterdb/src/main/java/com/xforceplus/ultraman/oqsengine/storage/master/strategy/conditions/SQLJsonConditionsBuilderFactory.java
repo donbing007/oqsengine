@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
-import java.sql.SQLException;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
@@ -28,7 +27,7 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
     @PostConstruct
     public void init() throws Exception {
         SQLJsonConditionsBuilder cb = new SQLJsonConditionsBuilder();
-        cb.setStorageStrategy(storageStrategyFactory);
+        cb.setStorageStrategyFactory(storageStrategyFactory);
         cb.setTokenizerFacotry(tokenizerFactory);
         cb.init();
 
@@ -37,7 +36,7 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
 
     @Resource(name = "masterStorageStrategy")
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 

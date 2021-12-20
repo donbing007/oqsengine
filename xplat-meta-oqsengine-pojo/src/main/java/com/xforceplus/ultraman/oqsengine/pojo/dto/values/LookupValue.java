@@ -27,6 +27,17 @@ public class LookupValue extends AbstractValue<Long> {
         super(field, value);
     }
 
+    /**
+     * 构造一个新的外部字段指向.
+     *
+     * @param field 目标字段元信息.
+     * @param value 实际值.
+     * @param attachment 附件.
+     */
+    public LookupValue(IEntityField field, long value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     Long fromString(String value) {
         return Long.parseLong(value);
@@ -38,9 +49,12 @@ public class LookupValue extends AbstractValue<Long> {
     }
 
     @Override
-    public IValue<Long> copy(IEntityField newField) {
-        checkType(newField);
+    protected IValue<Long> doCopy(IEntityField newField, String attachment) {
+        return new LongValue(newField, getValue(), attachment);
+    }
 
-        return new LookupValue(newField, getValue());
+    @Override
+    protected boolean skipTypeCheckWithCopy() {
+        return true;
     }
 }

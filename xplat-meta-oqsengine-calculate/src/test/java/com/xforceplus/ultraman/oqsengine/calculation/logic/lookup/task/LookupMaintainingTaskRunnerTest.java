@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
-import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.helper.LookupHelper;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -21,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Static
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -29,8 +28,11 @@ import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.queue.MemoryTaskKeyQueue;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -162,7 +164,7 @@ public class LookupMaintainingTaskRunnerTest {
         .build();
 
     private MockMasterStorage masterStorage;
-    private MemoryKeyValueStorage kv;
+    private MockConditionsSelectStorage conditionsSelectStorage;
     private MockMetaManager metaManager;
     private DefaultTaskCoordinator coordinator;
     private LookupMaintainingTaskRunner runner;
@@ -177,14 +179,14 @@ public class LookupMaintainingTaskRunnerTest {
      */
     @BeforeEach
     public void before() throws Exception {
-        kv = new MemoryKeyValueStorage();
+        conditionsSelectStorage = new MockConditionsSelectStorage();
         masterStorage = new MockMasterStorage();
         metaManager = new MockMetaManager();
 
-        runner = new LookupMaintainingTaskRunner();
-        Field field = LookupMaintainingTaskRunner.class.getDeclaredField("kv");
+        runner = new LookupMaintainingTaskRunner(false);
+        Field field = LookupMaintainingTaskRunner.class.getDeclaredField("conditionsSelectStorage");
         field.setAccessible(true);
-        field.set(runner, kv);
+        field.set(runner, conditionsSelectStorage);
 
         field = LookupMaintainingTaskRunner.class.getDeclaredField("masterStorage");
         field.setAccessible(true);
@@ -241,11 +243,16 @@ public class LookupMaintainingTaskRunnerTest {
         );
         masterStorage.replace(targetEntity, targetEntityClass);
 
-        LookupMaintainingTask task = new LookupMaintainingTask(
-            LookupHelper.buildIteratorPrefixLinkKey(targetField0, lookupEntityClass, lookupField0, targetEntity)
-                .toString(),
-            1000
-        );
+        LookupMaintainingTask task =
+            LookupMaintainingTask.Builder.anLookupMaintainingTask()
+                .withTargetEntityId(targetEntity.id())
+                .withTargetClassRef(targetEntityClass.ref())
+                .withTargetFieldId(targetField0.id())
+                .withLookupClassRef(lookupEntityClass.ref())
+                .withLookupFieldId(lookupField0.id())
+                .withLastStartLookupEntityId(0)
+                .withMaxSize(1000)
+                .build();
 
         runner.run(coordinator, task);
 
@@ -306,24 +313,21 @@ public class LookupMaintainingTaskRunnerTest {
                 .withTime(System.currentTimeMillis())
                 .withVersion(0)
                 .withEntityValue(
-                    EntityValue.build().addValue(targetValue0.copy(lookupField0))
-                        .addValue(targetValue1.copy(lookupField1))
+                    EntityValue.build().addValue(targetValue0.copy(lookupField0, Long.toString(targetEntity.id())))
+                        .addValue(targetValue1.copy(lookupField1, Long.toString(targetEntity.id())))
                 ).build();
 
             lookupEntityIds[i] = lookupEntity.id();
             masterStorage.build(lookupEntity, lookupEntityClass);
-
-            // 创建 lookup link.
-            String key =
-                LookupHelper.buildLookupLinkKey(targetEntity, targetField0, lookupEntity, lookupField0).toString();
-            kv.save(key, null);
-            key =
-                LookupHelper.buildLookupLinkKey(targetEntity, targetField1, lookupEntity, lookupField1).toString();
-            kv.save(key, null);
+            conditionsSelectStorage.add(
+                EntityRef.Builder.anEntityRef()
+                    .withId(lookupEntity.id())
+                    .build()
+            );
         }
     }
 
-    static class MockMasterStorage implements MasterStorage {
+    class MockMasterStorage implements MasterStorage {
 
         private Map<Long, IEntity> data;
 
@@ -364,7 +368,8 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size) throws SQLException {
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
             return null;
         }
 
@@ -381,7 +386,7 @@ public class LookupMaintainingTaskRunnerTest {
 
         @Override
         public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-            throw new UnsupportedOperationException();
+            return Optional.ofNullable(data.get(id));
         }
 
         @Override
@@ -401,4 +406,41 @@ public class LookupMaintainingTaskRunnerTest {
         }
     }
 
+    class MockConditionsSelectStorage implements ConditionsSelectStorage {
+
+        private List<EntityRef> refs;
+
+        public void add(EntityRef ref) {
+            if (refs == null) {
+                refs = new ArrayList<>();
+            }
+
+            refs.add(ref);
+            Collections.sort(refs);
+        }
+
+        @Override
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
+            throws SQLException {
+            if (lookupEntityClass.id() == entityClass.id()) {
+
+                long startId =
+                    conditions.collectCondition().stream().filter(c -> c.getField().config().isIdentifie())
+                        .findFirst().get().getFirstValue().valueToLong();
+
+                int index = Collections.binarySearch(refs, EntityRef.Builder.anEntityRef().withId(startId).build());
+                if (index < 0) {
+                    long toSize = config.getPage().getPageSize();
+                    toSize = Math.min(toSize, refs.size());
+                    return refs.subList(0, (int) toSize);
+                } else {
+                    long toSize = index + config.getPage().getPageSize() + 1;
+                    toSize = Math.min(toSize, refs.size());
+                    return refs.subList(index + 1, (int) toSize);
+                }
+            }
+
+            return Collections.emptyList();
+        }
+    }
 }

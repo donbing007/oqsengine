@@ -56,6 +56,52 @@ public class CommitIdStatusServiceImplTest {
         impl = null;
 
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
+    }
+
+    @Test
+    public void testIsReadyMutil() throws Exception {
+        long[] readyCommitIds = LongStream.rangeClosed(1, 10).map(i -> {
+            impl.save(i, true);
+            return i;
+        }).toArray();
+
+        long[] notReadyCommitIds = LongStream.rangeClosed(12, 19).map(i -> {
+            impl.save(i, false);
+            return i;
+        }).toArray();
+
+        long[] notExistCommitIds = LongStream.rangeClosed(22, 32).toArray();
+
+        boolean[] expected;
+        boolean[] status = impl.isReady(readyCommitIds);
+        expected = new boolean[readyCommitIds.length];
+        Arrays.fill(expected, true);
+        Assertions.assertArrayEquals(expected, status);
+
+        status = impl.isReady(notReadyCommitIds);
+        expected = new boolean[notReadyCommitIds.length];
+        Arrays.fill(expected, false);
+        Assertions.assertArrayEquals(expected, status);
+
+        status = impl.isReady(notExistCommitIds);
+        expected = new boolean[notExistCommitIds.length];
+        Arrays.fill(expected, true);
+        Assertions.assertArrayEquals(expected, status);
+
+        long[] mixCommitIds = LongStream.rangeClosed(1000, 1100).map(i -> {
+            impl.save(i, i % 2 == 0);
+            return i;
+        }).toArray();
+
+        status = impl.isReady(mixCommitIds);
+        expected = new boolean[status.length];
+        int number = 1000;
+        for (int i = 0; i <= 1100 - 1000; i++) {
+            expected[i] = number++ % 2 == 0;
+        }
+
+        Assertions.assertArrayEquals(expected, status);
     }
 
     /**

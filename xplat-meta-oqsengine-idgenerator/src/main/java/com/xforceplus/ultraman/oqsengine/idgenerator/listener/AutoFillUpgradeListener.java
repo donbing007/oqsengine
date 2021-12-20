@@ -64,7 +64,7 @@ public class AutoFillUpgradeListener {
                     .withPatten(calculator.getPatten())
                     .withMode(Integer.valueOf(calculator.getModel()))
                     .withMaxId(Long.valueOf(calculator.getMin())).withBizType(bizType)
-                    .withPatternKey("").withResetable(1)
+                    .withPatternKey("").withResetable(calculator.getResetType())
                     .withBeginId(1L).build();
                 storage.build(info);
             } else {
@@ -73,6 +73,7 @@ public class AutoFillUpgradeListener {
                 info.setStep(calculator.getStep());
                 info.setPattern(calculator.getPatten());
                 info.setMode(Integer.valueOf(calculator.getModel()));
+                info.setResetable(Integer.valueOf(calculator.getResetType()));
                 storage.udpate(info);
             }
         }

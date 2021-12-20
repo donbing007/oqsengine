@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import java.util.List;
 
 /**
  * CDC 指标信息的通知回调.
@@ -50,6 +51,13 @@ public interface CDCMetricsCallback {
      */
     boolean isReadyCommit(long commitId);
 
+
+    /**
+     * 判断当前批量commitIds中没有ready的Ids.
+     *
+     * @param commitIds 提交号.
+     */
+    List<Long> isNotReadyCommits(List<Long> commitIds);
 }
 
 

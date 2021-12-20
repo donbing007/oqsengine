@@ -64,7 +64,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     @Resource(name = "kvStorageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
-    @Resource
+    @Resource(name = "resourceLocker")
     private ResourceLocker locker;
 
     private String tableName;

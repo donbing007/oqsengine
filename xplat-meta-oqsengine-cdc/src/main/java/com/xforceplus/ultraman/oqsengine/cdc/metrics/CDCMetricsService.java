@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallbac
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import java.sql.SQLException;
+import java.util.List;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,11 @@ public class CDCMetricsService {
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
         cdcMetrics.consumeSuccess(originBatchId, temp, isConnectSync);
         callback();
-        logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp), originBatchId);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp),
+                originBatchId);
+        }
     }
 
     /**
@@ -132,18 +137,20 @@ public class CDCMetricsService {
      * 判断提交号是否已经准备完成.
      * 没有准备将进行等待.
      *
-     * @param commitId 提交号.
+     * @param commitIds 提交号.
      */
-    public void isReadyCommit(long commitId) {
+    public void isReadyCommit(List<Long> commitIds) {
         long start = System.currentTimeMillis();
         int loops = 0;
         boolean recoverMonitor = false;
         try {
             if (logger.isDebugEnabled()) {
-                logger.debug("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
+                logger.debug("[cdc-metrics] attempt check ready to commitIds , commitIds : {}", commitIds);
             }
             while (true) {
-                if (cdcMetricsCallback.isReadyCommit(commitId)) {
+                //  获取一个批次中没有ready的commitIds
+                commitIds = cdcMetricsCallback.isNotReadyCommits(commitIds);
+                if (commitIds.isEmpty()) {
                     break;
                 }
 
@@ -160,21 +167,23 @@ public class CDCMetricsService {
                     loops = 0;
                     logger.warn(
                         "[cdc-metrics] loops for wait ready commit missed current check point (10s), commitId : {}",
-                        commitId);
+                        commitIds);
 
                     //  输出NotReady指标
-                    notReady(commitId);
+                    commitIds.forEach(this::notReady);
                 }
             }
         } finally {
             long duration = System.currentTimeMillis() - start;
             if (logger.isDebugEnabled()) {
-                logger.debug("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
+                logger.debug("[cdc-metrics] success check ready to commitIds, commitIds : {}", commitIds);
             }
+
             if (duration > READY_WARM_MAX_INTERVAL) {
-                logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms",
-                    commitId, duration);
+                logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitIds {}, use time : {}ms",
+                    commitIds, duration);
             }
+
             if (recoverMonitor) {
                 //  恢复isReady指标
                 notReady(INIT_ID);

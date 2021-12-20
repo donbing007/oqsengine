@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * 非 match.
@@ -12,8 +11,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class GtEqNotMatchDecimalConditionBuilder extends AbstractNotMatchDecimalConditionBuilder {
 
-    public GtEqNotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
-        super(storageStrategyFactory, ConditionOperator.GREATER_THAN_EQUALS);
+    public GtEqNotMatchDecimalConditionBuilder() {
+        super(ConditionOperator.GREATER_THAN_EQUALS);
     }
 
     @Override

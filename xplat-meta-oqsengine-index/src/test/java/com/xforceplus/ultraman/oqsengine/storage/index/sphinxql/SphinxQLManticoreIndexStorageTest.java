@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
@@ -40,12 +41,15 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -457,7 +461,7 @@ public class SphinxQLManticoreIndexStorageTest {
         target = initDatas.get(3);
         OriginalEntity u1 = OriginalEntity.Builder.anOriginalEntity()
             .withId(target.getId())
-            .withAttributes(Arrays.asList(target.getAttributes()))
+            .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
             .withVersion(target.getVersion())
             .withEntityClass(target.getEntityClass())
@@ -474,7 +478,7 @@ public class SphinxQLManticoreIndexStorageTest {
         target = initDatas.get(4);
         OriginalEntity u2 = OriginalEntity.Builder.anOriginalEntity()
             .withId(target.getId())
-            .withAttributes(Arrays.asList(target.getAttributes()))
+            .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
             .withVersion(target.getVersion())
             .withEntityClass(target.getEntityClass())
@@ -546,24 +550,27 @@ public class SphinxQLManticoreIndexStorageTest {
             .withEntityClass(l2EntityClass)
             .withOqsMajor(OqsVersion.MAJOR);
 
-        List<Object> attrs = new LinkedList<>();
+        List<StorageValue> svs = new ArrayList<>();
         entityClass.fields().forEach(f -> {
             StorageStrategy storageStrategy = null;
             try {
                 storageStrategy = IndexInitialization.getInstance().getStorageStrategyFactory().getStrategy(f.type());
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new RuntimeException("storageStrategy is null.");
             }
-            StorageValue storageValue = null;
             switch (f.name()) {
                 case "l0-long": {
-                    storageValue = storageStrategy.toStorageValue(new LongValue(f,
-                        faker.number().numberBetween(1, Long.MAX_VALUE)));
+                    long v = faker.number().numberBetween(1, Long.MAX_VALUE);
+                    IValue iv = new LongValue(f, v, Long.toString(v));
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l0-string": {
-                    storageValue = storageStrategy.toStorageValue(new StringValue(f, faker.name().fullName()));
+                    String v = faker.name().fullName();
+                    IValue iv = new StringValue(f, v, v);
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l0-strings": {
@@ -571,44 +578,56 @@ public class SphinxQLManticoreIndexStorageTest {
                     buff.append("[").append(faker.color().name()).append("]");
                     buff.append("[").append(faker.color().name()).append("]");
                     buff.append("[").append(faker.color().name()).append("]");
-                    storageValue = new StringStorageValue(
+                    svs.add(new StringStorageValue(
                         Long.toString(f.id()),
                         buff.toString(),
                         true
-                    );
+                    ));
+
                     break;
                 }
                 case "l1-long": {
-                    storageValue = storageStrategy.toStorageValue(
-                        new LongValue(f, faker.number().numberBetween(100, 200)));
+                    long v = faker.number().numberBetween(100, 200);
+                    IValue iv = new LongValue(f, v, Long.toString(v));
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l1-string": {
-                    storageValue = storageStrategy.toStorageValue(
-                        new StringValue(f, faker.phoneNumber().cellPhone()));
+                    String v = faker.phoneNumber().cellPhone();
+                    IValue iv = new StringValue(f, v, v);
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-string": {
-                    storageValue = storageStrategy.toStorageValue(
-                        new StringValue(f, faker.idNumber().invalid()));
+                    String v = faker.idNumber().invalid();
+                    IValue iv = new StringValue(f, v, v);
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-time": {
-                    storageValue = storageStrategy.toStorageValue(
-                        new DateTimeValue(f,
-                            LocalDateTime.ofInstant(faker.date().birthday().toInstant(), ZoneId.systemDefault())));
+                    LocalDateTime localDateTime =
+                        LocalDateTime.ofInstant(faker.date().birthday().toInstant(), ZoneId.systemDefault());
+                    IValue iv = new DateTimeValue(f, localDateTime, localDateTime.toString());
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-enum": {
-                    storageValue = storageStrategy.toStorageValue(new EnumValue(f, faker.color().name()));
+                    String v = faker.color().name();
+                    IValue iv = new EnumValue(f, v, v);
+                    svs.add(storageStrategy.toStorageValue(iv));
+                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-dec": {
-                    storageValue = new StringStorageValue(
+                    svs.add(new StringStorageValue(
                         Long.toString(f.id()),
                         Double.toString(faker.number().randomDouble(10, 100, 100000)),
                         true
-                    );
+                    ));
 
                     break;
                 }
@@ -618,14 +637,12 @@ public class SphinxQLManticoreIndexStorageTest {
 
             }
 
-            while (storageValue != null) {
-                attrs.add(storageValue.storageName());
-                attrs.add(storageValue.value());
-
-                storageValue = storageValue.next();
-            }
-
         });
+
+        Map<String, Object> attrs = new HashMap<>();
+        for (StorageValue sv : svs) {
+            attrs.put(sv.storageName(), sv.value());
+        }
 
         builder.withAttributes(attrs);
 

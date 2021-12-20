@@ -75,6 +75,63 @@ data:
           join:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
             maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
+
+        redis:
+          lettuce:
+            uri: {{ .Values.redis.lettuce.uri }}
+            cluster: {{ .Values.redis.lettuce.cluster }}
+            pingBeforeActivateConnection: {{ .Values.redis.lettuce.pingBeforeActivateConnection }}
+            maxReqQueue: {{ .Values.redis.lettuce.maxReqQueue }}
+          redisson:
+            threads: {{ .Values.redis.redisson.threads }}
+            nettyThreads: {{ .Values.redis.redisson.nettyThreads }}
+            lockWatchdogTimeout: {{ .Values.redis.redisson.lockWatchdogTimeout }}
+            keepPubSubOrder: {{ .Values.redis.redisson.keepPubSubOrder }}
+            idleConnectionTimeout: {{ .Values.redis.redisson.idleConnectionTimeout }}
+            connectTimeout: {{ .Values.redis.redisson.connectTimeout }}
+            timeout: {{ .Values.redis.redisson.timeout }}
+            retryAttempts: {{ .Values.redis.redisson.retryAttempts }}
+            retryInterval: {{ .Values.redis.redisson.retryInterval }}
+            password: {{ .Values.redis.redisson.password }}
+            subscriptionsPerConnection: {{ .Values.redis.redisson.subscriptionsPerConnection }}
+            clientName: {{ .Values.redis.redisson.clientName }}
+            subscriptionConnectionMinimumIdleSize: {{ .Values.redis.redisson.subscriptionConnectionMinimumIdleSize }}
+            database: {{ .Values.redis.redisson.database }}
+            dnsMonitoringInterval: {{ .Values.redis.redisson.dnsMonitoringInterval }}
+            slaveSubscriptionConnectionMinimumIdleSize: {{ .Values.redis.redisson.slaveSubscriptionConnectionMinimumIdleSize }}
+            slaveSubscriptionConnectionPoolSize: {{ .Values.redis.redisson.slaveSubscriptionConnectionPoolSize }}
+            slaveConnectionMinimumIdleSize: {{ .Values.redis.redisson.slaveConnectionMinimumIdleSize }}
+            slaveConnectionPoolSize: {{ .Values.redis.redisson.slaveConnectionPoolSize }}
+            masterConnectionMinimumIdleSize: {{ .Values.redis.redisson.masterConnectionMinimumIdleSize }}
+            masterConnectionPoolSize: {{ .Values.redis.redisson.masterConnectionPoolSize }}
+            readMode: {{ .Values.redis.redisson.readMode }}
+            singel:
+              enabled: {{ .Values.redis.redisson.singel.enabled }}
+              address: {{ .Values.redis.redisson.singel.address }}
+              subscriptionConnectionPoolSize: {{ .Values.redis.redisson.singel.subscriptionConnectionPoolSize }}
+              connectionMinimumIdleSize: {{ .Values.redis.redisson.singel.connectionMinimumIdleSize }}
+              connectionPoolSize: {{ .Values.redis.redisson.singel.connectionPoolSize }}
+            sentine:
+              enabled: {{ .Values.redis.redisson.sentine.enabled }}
+              sentinelAddresses:
+                {{- range .Values.redis.redisson.sentine.sentinelAddresses }}
+                - {{ . }}
+                {{- end}}
+              masterName: {{ .Values.redis.redisson.sentine.masterName }}
+            masterSlave:
+              enabled: {{ .Values.redis.redisson.masterSlave.enabled }}
+              slaveAddresses:
+              {{- range .Values.redis.redisson.masterSlave.slaveAddresses }}
+                - {{ . }}
+              {{- end}}
+              masterAddress: {{ .Values.redis.redisson.masterSlave.masterAddress }}
+            cluster:
+              enabled: {{ .Values.redis.redisson.cluster.enabled }}
+              nodeAddresses:
+              {{- range .Values.redis.redisson.cluster.nodeAddresses }}
+                - {{ . }}
+              {{- end}}
+              scanInterval: {{ .Values.redis.redisson.cluster.scanInterval }}
         storage:
           tokenizer:
             segmentation:
@@ -117,9 +174,6 @@ data:
                 maxsize: {{ .Values.storage.devOps.task.cache.maxsize | default "500" }}
               page:
                 size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
-        redis:
-          uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
-          maxReqQueue: {{ .Values.redis.maxReqQueue | default "2147483647" }}
         sync:
           ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
@@ -128,12 +182,12 @@ data:
           enabled: {{ .Values.changelog.enabled | default "false" }}
         cdc:
           connect:
-            type: {{ .Values.cdc.connect.type }}
-            host: {{ .Values.cdc.connect.host }}
-            port: {{ .Values.cdc.connect.port }}
-            destination: {{ template "oqsengine.fullname" . }}-0
-            username: {{ .Values.cdc.connect.username }}
-            password: {{ .Values.cdc.connect.password }}
+            type: {{ .Values.cdc.connect.type | default "single" }}
+            host: {{ .Values.cdc.connect.host | default "127.0.0.1" }}
+            port: {{ .Values.cdc.connect.port | default "11111" }}
+            destination: {{ .Values.cdc.connect.destination | quote | default "oqsengine" }}
+            username: {{ .Values.cdc.connect.username | default "canal" }}
+            password: {{ .Values.cdc.connect.password | default "canal" }}
             subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | quote }}
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
           consumer:
@@ -141,7 +195,6 @@ data:
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
-
         discover:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}

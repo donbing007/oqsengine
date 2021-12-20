@@ -61,6 +61,7 @@ public class CDCStatusServiceImplTest {
 
         conn.close();
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test

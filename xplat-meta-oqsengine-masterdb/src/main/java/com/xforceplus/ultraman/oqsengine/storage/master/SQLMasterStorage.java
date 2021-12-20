@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -263,7 +264,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
-        return (int) transactionExecutor.execute(
+        int result = (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
@@ -274,13 +275,19 @@ public class SQLMasterStorage implements MasterStorage {
                 final int first = 0;
                 return results[first];
             });
+
+        if (result > 0) {
+            entity.neat();
+        }
+
+        return result;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
     @Override
     public int[] build(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
-        return (int[]) transactionExecutor.execute(
+        int[] results = (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
@@ -290,6 +297,10 @@ public class SQLMasterStorage implements MasterStorage {
                 return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             }
         );
+
+        entityPackage.stream().forEach(e -> e.getKey().neat());
+
+        return results;
     }
 
     @Timed(
@@ -300,7 +311,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
-        return (int) transactionExecutor.execute(
+        int result = (int) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
 
@@ -313,6 +324,12 @@ public class SQLMasterStorage implements MasterStorage {
                 final int first = 0;
                 return results[first];
             });
+
+        if (result > 0) {
+            entity.neat();
+        }
+
+        return result;
     }
 
     @Timed(
@@ -323,7 +340,7 @@ public class SQLMasterStorage implements MasterStorage {
     public int[] replace(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        return (int[]) transactionExecutor.execute(
+        int[] results = (int[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
                 MasterStorageEntity[] masterStorageEntities = entityPackage.stream()
                     .map(e -> buildReplaceMasterStorageEntity(e.getKey(), e.getValue(), resource))
@@ -331,6 +348,10 @@ public class SQLMasterStorage implements MasterStorage {
 
                 return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             });
+
+        entityPackage.stream().forEach(e -> e.getKey().neat());
+
+        return results;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
@@ -400,45 +421,56 @@ public class SQLMasterStorage implements MasterStorage {
         StorageValue oldStorageValue;
         // key 为物理储存名称,值为构造出的储存值.
         Map<String, EntityValuePack> storageValueCache = new HashMap<>(object.size());
+        Map<String, String> valueAttachmentCache = new HashMap<>(object.size());
 
         for (String storageName : object.keySet()) {
             try {
-                // 为了找出物理名称中的逻辑字段名称.
-                fieldId = Long.parseLong(AnyStorageValue.getInstance(storageName).logicName());
-                fieldOp = entityClass.field(fieldId);
 
-                if (!fieldOp.isPresent()) {
-                    continue;
+                if (AnyStorageValue.isAttachemntStorageName(storageName)) {
+
+                    valueAttachmentCache.put(
+                        AnyStorageValue.compatibleStorageName(storageName),
+                        (String) object.get(storageName));
+
                 } else {
-                    field = fieldOp.get();
-                }
 
-                storageStrategy = this.storageStrategyFactory.getStrategy(field.type());
-                newStorageValue = StorageValueFactory.buildStorageValue(
-                    storageStrategy.storageType(),
-                    AnyStorageValue.getInstance(storageName).storageName(),
-                    object.get(storageName));
+                    // 为了找出物理名称中的逻辑字段名称.
+                    fieldId = Long.parseLong(AnyStorageValue.getInstance(storageName).logicName());
+                    fieldOp = entityClass.field(fieldId);
 
-                // 如果是多值.使用 stick 追加.
-                if (storageStrategy.isMultipleStorageValue()) {
-                    Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(
-                        storageValueCache.get(String.valueOf(field.id()))
-                    ).map(x -> x.storageValue);
-
-                    if (oldStorageValueOp.isPresent()) {
-                        oldStorageValue = oldStorageValueOp.get();
-                        storageValueCache.put(
-                            String.valueOf(field.id()),
-                            new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
+                    if (!fieldOp.isPresent()) {
+                        continue;
                     } else {
-                        storageValueCache.put(
-                            String.valueOf(field.id()),
+                        field = fieldOp.get();
+                    }
+
+                    storageStrategy = this.storageStrategyFactory.getStrategy(field.type());
+                    newStorageValue = StorageValueFactory.buildStorageValue(
+                        storageStrategy.storageType(),
+                        AnyStorageValue.getInstance(storageName).storageName(),
+                        object.get(storageName));
+
+                    // 如果是多值.使用 stick 追加.
+                    if (storageStrategy.isMultipleStorageValue()) {
+                        Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(
+                            storageValueCache.get(String.valueOf(field.id()))
+                        ).map(x -> x.storageValue);
+
+                        if (oldStorageValueOp.isPresent()) {
+                            oldStorageValue = oldStorageValueOp.get();
+                            storageValueCache.put(
+                                String.valueOf(field.id()),
+                                new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
+                        } else {
+                            storageValueCache.put(
+                                String.valueOf(field.id()),
+                                new EntityValuePack(field, newStorageValue, storageStrategy));
+                        }
+                    } else {
+                        // 单值
+                        storageValueCache.put(String.valueOf(field.id()),
                             new EntityValuePack(field, newStorageValue, storageStrategy));
                     }
-                } else {
-                    // 单值
-                    storageValueCache.put(String.valueOf(field.id()),
-                        new EntityValuePack(field, newStorageValue, storageStrategy));
                 }
 
             } catch (Exception ex) {
@@ -447,8 +479,13 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         IEntityValue values = EntityValue.build();
+        StorageStrategy attachmentStorageStrategy = this.storageStrategyFactory.getStrategy(FieldType.STRING);
         storageValueCache.values().stream().forEach(e -> {
-            values.addValue(e.strategy.toLogicValue(e.logicField, e.storageValue));
+
+            String attachment = valueAttachmentCache.get(attachmentStorageStrategy.toFirstStorageName(e.logicField));
+            values.addValue(
+                e.strategy.toLogicValue(e.logicField, e.storageValue, attachment));
+
         });
 
         return values;
@@ -470,9 +507,22 @@ public class SQLMasterStorage implements MasterStorage {
 
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
-            while (storageValue != null) {
-                values.put(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
-                storageValue = storageValue.next();
+            while (true) {
+                values.put(String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
+                    storageValue.value());
+                if (storageValue.next() != null) {
+                    storageValue = storageValue.next();
+                } else {
+                    break;
+                }
+            }
+
+            // 处理附件.
+            Optional<StorageValue> attachmentSvOp = storageStrategy.toAttachmentStorageValue(logicValue);
+            if (attachmentSvOp.isPresent()) {
+                StorageValue attachmentSv = attachmentSvOp.get();
+                values.put(String.format("%s%s", AnyStorageValue.ATTACHMENT_PREFIX, attachmentSv.storageName()),
+                    logicValue.getAttachment().get());
             }
         }
 
@@ -619,7 +669,7 @@ public class SQLMasterStorage implements MasterStorage {
                             .withCommitid(entity.getCommitid())
                             .withVersion(entity.getVersion())
                             .withOqsMajor(entity.getOqsMajor())
-                            .withAttributes(attributesToList(entity.getAttribute()))
+                            .withAttributes(attributesToMap(entity.getAttribute()))
                             .build();
 
                         originalEntities.add(originalEntity);
