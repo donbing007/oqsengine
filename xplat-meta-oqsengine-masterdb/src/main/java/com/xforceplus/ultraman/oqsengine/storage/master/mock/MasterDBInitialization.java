@@ -72,7 +72,7 @@ public class MasterDBInitialization implements BeanInitialization {
         masterStorageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
 
         sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
-        sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.setStorageStrategyFactory(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
         sqlJsonConditionsBuilderFactory.init();
 

@@ -30,7 +30,7 @@ public class StringsStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         StorageValue point = storageValue;
         List<String> vs = new ArrayList();
         while (point != null) {
@@ -39,7 +39,7 @@ public class StringsStorageStrategy implements StorageStrategy {
             point = point.next();
         }
 
-        return new StringsValue(field, vs.toArray(new String[0]));
+        return new StringsValue(field, vs.toArray(new String[0]), attachemnt);
     }
 
     @Override

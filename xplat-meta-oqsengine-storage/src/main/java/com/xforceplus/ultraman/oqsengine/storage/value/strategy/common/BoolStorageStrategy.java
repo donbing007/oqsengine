@@ -20,10 +20,9 @@ public class BoolStorageStrategy extends LongStorageStrategy {
         return FieldType.BOOLEAN;
     }
 
-
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-        return new BooleanValue(field, convert(storageValue));
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
+        return new BooleanValue(field, convert(storageValue), attachemnt);
     }
 
     private boolean convert(StorageValue storageValue) {

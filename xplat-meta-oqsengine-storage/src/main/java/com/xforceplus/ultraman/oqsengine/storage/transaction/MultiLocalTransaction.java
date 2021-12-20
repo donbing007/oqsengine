@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Transac
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,6 +57,11 @@ public class MultiLocalTransaction implements Transaction {
      */
     private static String COMMIT_ID_NS = "com.xforceplus.ultraman.oqsengine.common.id";
 
+    /*
+    如果此值为true表示即使累加器中没有数据写入也认为当前事务非只读事务.
+    主要用以后台任务中,不需要真的对累加器进行更新.
+     */
+    private boolean notReadOnly;
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
@@ -298,7 +304,14 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isReadyOnly() {
-        return (accumulator.getBuildNumbers() + accumulator.getReplaceNumbers() + accumulator.getDeleteNumbers()) == 0;
+        return notReadOnly
+            ? false
+            : (accumulator.getBuildNumbers() + accumulator.getReplaceNumbers() + accumulator.getDeleteNumbers()) == 0;
+    }
+
+    @Override
+    public void focusNotReadOnly() {
+        this.notReadOnly = true;
     }
 
     @Override
@@ -385,14 +398,13 @@ public class MultiLocalTransaction implements Transaction {
 
             committed = true;
 
-            doHooks(this.commitHooks);
+            doHooks(commitHooks);
 
         } else {
 
             rollback = true;
 
-            doHooks(this.rollbackHooks);
-
+            doHooks(rollbackHooks);
         }
 
         for (TransactionResource tr : transactionResourceHolder) {
@@ -425,33 +437,49 @@ public class MultiLocalTransaction implements Transaction {
     // 等待提交号被同步成功或者超时.
     private long awitCommitSync(long commitId) {
 
-        if (maxWaitCommitIdSyncMs <= 0) {
-            return 0;
-        }
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-        int maxLoop = 1;
-        if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
-            maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
-        }
-
-        for (int i = 0; i < maxLoop; i++) {
-
-            if (commitIdStatusService.isObsolete(commitId)) {
-
-                return i * checkCommitIdSyncMs;
-
-            } else {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
-                        commitId, checkCommitIdSyncMs);
-                }
-
-                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+        try {
+            if (maxWaitCommitIdSyncMs <= 0) {
+                return 0;
             }
+
+            int maxLoop = 1;
+            if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
+                maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
+            }
+
+            for (int i = 0; i < maxLoop; i++) {
+
+                if (commitIdStatusService.isObsolete(commitId)) {
+
+                    return i * checkCommitIdSyncMs;
+
+                } else {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
+                            commitId, checkCommitIdSyncMs);
+                    }
+
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+                }
+            }
+
+            return maxWaitCommitIdSyncMs;
+        } finally {
+
+            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "initiator", "transaction",
+                    "action", "wait",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(null)
+                .register(Metrics.globalRegistry));
         }
 
-        return maxWaitCommitIdSyncMs;
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {

@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
+import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -19,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 字段计算器上下文.
@@ -27,7 +31,7 @@ import java.util.Optional;
  * @version 0.1 2021/09/17 15:18
  * @since 1.8
  */
-public class DefaultCalculationContext implements CalculationContext {
+public class DefaultCalculationContext implements CalculationContext, Cloneable {
 
     private IEntity sourceEntity;
     private boolean maintenance;
@@ -38,12 +42,16 @@ public class DefaultCalculationContext implements CalculationContext {
     private Transaction transaction;
     private MetaManager metaManager;
     private MasterStorage masterStorage;
+    private EventBus eventBus;
     private BizIDGenerator bizIDGenerator;
     private KeyValueStorage keyValueStorage;
     private TaskCoordinator taskCoordinator;
+    private ExecutorService taskExecutorService;
     private Collection<CalculationHint> hints;
+    private ResourceLocker resourceLocker;
+    private MultiResourceLocker multiResourceLocker;
     private CalculationLogicFactory calculationLogicFactory;
-    private ConditionsSelectStorage combindedSelectStorage;
+    private ConditionsSelectStorage conditionsSelectStorage;
     // key为entityId.
     private Map<Long, IEntity> entityCache;
     // key为 entityId-fieldId的组合.
@@ -76,6 +84,11 @@ public class DefaultCalculationContext implements CalculationContext {
     @Override
     public Optional<KeyValueStorage> getKvStorage() {
         return Optional.ofNullable(this.keyValueStorage);
+    }
+
+    @Override
+    public Optional<EventBus> getEvnetBus() {
+        return Optional.ofNullable(this.eventBus);
     }
 
     @Override
@@ -140,8 +153,7 @@ public class DefaultCalculationContext implements CalculationContext {
             this.valueChanges = new HashMap<>();
         }
 
-        this.valueChanges.put(String.join("-",
-            Long.toString(valueChange.getEntityId()), Long.toString(valueChange.getField().id())), valueChange);
+        this.valueChanges.put(buildValueChangeKey(valueChange.getEntityId(), valueChange.getField().id()), valueChange);
     }
 
     @Override
@@ -149,8 +161,26 @@ public class DefaultCalculationContext implements CalculationContext {
         if (this.valueChanges == null) {
             return Optional.empty();
         } else {
-            String key = String.join("-", Long.toString(entity.id()), Long.toString(field.id()));
+            String key = buildValueChangeKey(entity.id(), field.id());
             return Optional.ofNullable(this.valueChanges.get(key));
+        }
+    }
+
+    @Override
+    public Collection<ValueChange> getValueChanges() {
+        if (this.valueChanges == null) {
+            return Collections.emptyList();
+        } else {
+            return this.valueChanges.values();
+        }
+    }
+
+    @Override
+    public void removeValueChange(IEntity entity, IEntityField field) {
+        if (this.valueChanges != null) {
+
+            String key = buildValueChangeKey(entity.id(), field.id());
+            this.valueChanges.remove(key);
         }
     }
 
@@ -174,6 +204,13 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
+    public void removeEntityFromCache(long entityId) {
+        if (this.entityCache != null) {
+            this.entityCache.remove(entityId);
+        }
+    }
+
+    @Override
     public Collection<IEntity> getEntitiesFormCache() {
         if (this.entityCache == null) {
             return Collections.emptyList();
@@ -189,13 +226,28 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public Optional<ConditionsSelectStorage> getCombindStorage() {
-        return Optional.ofNullable(this.combindedSelectStorage);
+    public Optional<ConditionsSelectStorage> getConditionsSelectStorage() {
+        return Optional.ofNullable(this.conditionsSelectStorage);
     }
 
     @Override
     public Optional<BizIDGenerator> getBizIDGenerator() {
         return Optional.ofNullable(this.bizIDGenerator);
+    }
+
+    @Override
+    public Optional<ExecutorService> getTaskExecutorService() {
+        return Optional.ofNullable(taskExecutorService);
+    }
+
+    @Override
+    public Optional<ResourceLocker> getResourceLocker() {
+        return Optional.ofNullable(resourceLocker);
+    }
+
+    @Override
+    public Optional<MultiResourceLocker> getMultiResourceLocker() {
+        return Optional.ofNullable(multiResourceLocker);
     }
 
     @Override
@@ -216,10 +268,44 @@ public class DefaultCalculationContext implements CalculationContext {
         }
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        DefaultCalculationContext newContext = new DefaultCalculationContext();
+        if (this.valueChanges != null) {
+            newContext.valueChanges = new HashMap<>(this.valueChanges);
+        }
+        if (this.entityCache != null) {
+            newContext.entityCache = new HashMap<>(this.entityCache);
+        }
+        newContext.maintenance = this.maintenance;
+        newContext.sourceEntity = this.sourceEntity;
+        newContext.focusEntity = this.focusEntity;
+        newContext.focusField = this.focusField;
+        newContext.focusEntityClass = this.focusEntityClass;
+        newContext.eventBus = this.eventBus;
+        newContext.transaction = this.transaction;
+        newContext.scenarios = this.scenarios;
+        newContext.metaManager = this.metaManager;
+        newContext.masterStorage = this.masterStorage;
+        newContext.bizIDGenerator = this.bizIDGenerator;
+        newContext.keyValueStorage = this.keyValueStorage;
+        newContext.taskCoordinator = this.taskCoordinator;
+        newContext.taskExecutorService = this.taskExecutorService;
+        newContext.resourceLocker = this.resourceLocker;
+        newContext.multiResourceLocker = this.multiResourceLocker;
+        newContext.conditionsSelectStorage = this.conditionsSelectStorage;
+        return newContext;
+    }
+
+    private String buildValueChangeKey(long entityId, long fieldId) {
+        return String.join("-", Long.toString(entityId), Long.toString(fieldId));
+    }
+
     /**
      * 构造器.
      */
     public static final class Builder {
+        private EventBus eventBus;
         private Transaction transaction;
         private CalculationScenarios scenarios;
         private MetaManager metaManager;
@@ -227,7 +313,10 @@ public class DefaultCalculationContext implements CalculationContext {
         private BizIDGenerator bizIDGenerator;
         private KeyValueStorage keyValueStorage;
         private TaskCoordinator taskCoordinator;
-        private ConditionsSelectStorage combindedSelectStorage;
+        private ExecutorService taskExecutorService;
+        private ResourceLocker resourceLocker;
+        private MultiResourceLocker multiResourceLocker;
+        private ConditionsSelectStorage conditionsSelectStorage;
 
         private Builder() {
         }
@@ -271,8 +360,28 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
-        public Builder withCombindedSelectStorage(ConditionsSelectStorage combindedSelectStorage) {
-            this.combindedSelectStorage = combindedSelectStorage;
+        public Builder withConditionsSelectStorage(ConditionsSelectStorage conditionsSelectStorage) {
+            this.conditionsSelectStorage = conditionsSelectStorage;
+            return this;
+        }
+
+        public Builder withEventBus(EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        public Builder withTaskExecutorService(ExecutorService taskExecutorService) {
+            this.taskExecutorService = taskExecutorService;
+            return this;
+        }
+
+        public Builder withResourceLocker(ResourceLocker resourceLocker) {
+            this.resourceLocker = resourceLocker;
+            return this;
+        }
+
+        public Builder withMultiResourceLocker(MultiResourceLocker multiResourceLocker) {
+            this.multiResourceLocker = multiResourceLocker;
             return this;
         }
 
@@ -281,14 +390,18 @@ public class DefaultCalculationContext implements CalculationContext {
          */
         public DefaultCalculationContext build() {
             DefaultCalculationContext defaultCalculationContext = new DefaultCalculationContext();
+            defaultCalculationContext.eventBus = this.eventBus;
             defaultCalculationContext.taskCoordinator = this.taskCoordinator;
+            defaultCalculationContext.taskExecutorService = this.taskExecutorService;
             defaultCalculationContext.masterStorage = this.masterStorage;
             defaultCalculationContext.metaManager = this.metaManager;
             defaultCalculationContext.keyValueStorage = this.keyValueStorage;
             defaultCalculationContext.scenarios = this.scenarios;
             defaultCalculationContext.bizIDGenerator = this.bizIDGenerator;
             defaultCalculationContext.transaction = this.transaction;
-            defaultCalculationContext.combindedSelectStorage = this.combindedSelectStorage;
+            defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
+            defaultCalculationContext.resourceLocker = this.resourceLocker;
+            defaultCalculationContext.multiResourceLocker = this.multiResourceLocker;
             return defaultCalculationContext;
         }
     }

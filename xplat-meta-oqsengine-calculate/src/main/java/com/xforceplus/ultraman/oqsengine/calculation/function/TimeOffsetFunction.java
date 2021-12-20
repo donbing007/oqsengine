@@ -31,7 +31,9 @@ public class TimeOffsetFunction extends AbstractFunction {
 
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject date, AviatorObject no, AviatorObject amount) {
-        LOGGER.info("INPUT DATA is {}", date.getValue(env).toString());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("INPUT DATA is {}", date.getValue(env).toString());
+        }
         Preconditions.checkNotNull(env);
         Preconditions.checkNotNull(amount);
         Preconditions.checkArgument(date.getValue(env) instanceof LocalDateTime, "must be LocalDateTime instance!");
@@ -72,7 +74,9 @@ public class TimeOffsetFunction extends AbstractFunction {
                 break;
         }
         ZoneId zoneId = ZoneId.systemDefault();
-        LOGGER.info("ZoneID is {}", zoneId);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("ZoneID is {}", zoneId);
+        }
         Date newDate = Date.from(result.atZone(zoneId).toInstant());
         return FunctionUtils.wrapReturn(newDate);
     }

@@ -28,18 +28,21 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import io.vavr.Tuple;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO abstract
@@ -73,7 +76,8 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
     @Resource
     private EventBus eventBus;
 
-    public RedisEventLifecycleHandler(RedisClient redisClient, ChangelogHandler changelogHandler, ObjectMapper mapper, FlowRegistry flowRegistry, MetaManager manager) {
+    public RedisEventLifecycleHandler(RedisClient redisClient, ChangelogHandler changelogHandler, ObjectMapper mapper,
+                                      FlowRegistry flowRegistry, MetaManager manager) {
         this.redisClient = redisClient;
         this.syncCommands = redisClient.connect().sync();
         this.changelogHandler = changelogHandler;
@@ -83,7 +87,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         eventBus.watch(EventType.ENTITY_BUILD, x -> {
             this.onEntityCreate((ActualEvent<BuildPayload>) x);
         });
@@ -167,8 +171,6 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     /**
      * TODO
-     *
-     * @param delete
      */
     @Override
     public void onEntityDelete(ActualEvent<DeletePayload> delete) {
@@ -183,7 +185,6 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     /**
      * move committed logic here
-     * @param preCommit
      */
     @Override
     public void onTxPreCommit(ActualEvent<CommitPayload> preCommit) {
@@ -209,9 +210,11 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
             CompletableFuture<Void> future = new CompletableFuture<>();
             flow.feed(Tuple.of(future, () -> {
                 List<ChangedEvent> changedEvents = popQueue(txId);
-                if(changedEvents.size() > 0) {
+                if (changedEvents.size() > 0) {
                     String comment = changedEvents.get(0).getComment();
-                    TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, Optional.ofNullable(comment).orElse(""), changedEvents);
+                    TransactionalChangelogEvent changelogEvent =
+                        toTransactionalChangelogEvent(commitId, time, Optional.ofNullable(comment).orElse(""),
+                            changedEvents);
                     changelogHandler.handle(changelogEvent);
                 }
                 dropQueue(txId);
@@ -246,9 +249,6 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     /**
      * entity to Changed event
-     *
-     * @param entity
-     * @return
      */
     private ChangedEvent entityToChangedEvent(IEntity entity) {
         ChangedEvent changedEvent = new ChangedEvent();
@@ -258,7 +258,8 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         Map<Long, ValueWrapper> valueMap = new HashMap<>();
         changedEvent.setValueMap(valueMap);
         entity.entityValue().values().stream().forEach(x -> {
-            ValueWrapper valueWrapper = new ValueWrapper(ChangelogHelper.serialize(x), x.getField().type(), x.getField().id());
+            ValueWrapper valueWrapper =
+                new ValueWrapper(ChangelogHelper.serialize(x), x.getField().type(), x.getField().id());
             valueMap.put(x.getField().id(), valueWrapper);
         });
         return changedEvent;
@@ -271,7 +272,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
      */
     private void createQueueIfNotExists(long txId, String msg) {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));
-        if(syncCommands.llen(queue) == 0) {
+        if (syncCommands.llen(queue) == 0) {
             logger.debug("create tx {} with {}", txId, msg);
             syncCommands.rpush(queue, msg);
         }
@@ -279,41 +280,41 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     /**
      * popA queue and get a TransactionalChangelog
-     * changedEvent within a transaction will have differenct id we should make sure one changelog only associated with one commit id
-     *
-     * @return
+     * changedEvent within a transaction will have differenct id we should make sure one changelog only associated with
+     * one commit id
      */
-    private TransactionalChangelogEvent toTransactionalChangelogEvent(long commitId, long timestamp, String comment, List<ChangedEvent> changedEventList) {
+    private TransactionalChangelogEvent toTransactionalChangelogEvent(long commitId, long timestamp, String comment,
+                                                                      List<ChangedEvent> changedEventList) {
         TransactionalChangelogEvent transactionalChangelogEvent = new TransactionalChangelogEvent();
         transactionalChangelogEvent.setCommitId(commitId);
 
         //update commitId
-        changedEventList.forEach( x -> {
+        changedEventList.forEach(x -> {
             x.setCommitId(commitId);
             x.setUsername(getUsername(x));
         });
 
         Map<Long, Optional<ChangedEvent>> groupedEvent = changedEventList
-                .stream()
-                .collect(Collectors.groupingBy(x -> x.getId(), Collectors.reducing((prev, next) -> {
-                    ChangedEvent changedEvent = new ChangedEvent();
-                    changedEvent.setEntityClassId(prev.getEntityClassId());
-                    changedEvent.setComment(comment);
-                    changedEvent.setUsername(getUsername(prev));
-                    changedEvent.setTimestamp(timestamp);
-                    changedEvent.setCommitId(commitId);
-                    Map<Long, ValueWrapper> prevValueMap = prev.getValueMap();
-                    Map<Long, ValueWrapper> nextValueMap = next.getValueMap();
+            .stream()
+            .collect(Collectors.groupingBy(x -> x.getId(), Collectors.reducing((prev, next) -> {
+                ChangedEvent changedEvent = new ChangedEvent();
+                changedEvent.setEntityClassId(prev.getEntityClassId());
+                changedEvent.setComment(comment);
+                changedEvent.setUsername(getUsername(prev));
+                changedEvent.setTimestamp(timestamp);
+                changedEvent.setCommitId(commitId);
+                Map<Long, ValueWrapper> prevValueMap = prev.getValueMap();
+                Map<Long, ValueWrapper> nextValueMap = next.getValueMap();
 
-                    /**
-                     * casue here only override value
-                     */
-                    Map<Long, ValueWrapper> newValueMap = new HashMap<>(prevValueMap);
-                    newValueMap.putAll(nextValueMap);
+                /**
+                 * casue here only override value
+                 */
+                Map<Long, ValueWrapper> newValueMap = new HashMap<>(prevValueMap);
+                newValueMap.putAll(nextValueMap);
 
-                    changedEvent.setValueMap(newValueMap);
-                    return next;
-                })));
+                changedEvent.setValueMap(newValueMap);
+                return next;
+            })));
 
 
         List<ChangedEvent> mergedChangeEvent = groupedEvent.values().stream().peek(x -> {
@@ -327,10 +328,10 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         return transactionalChangelogEvent;
     }
 
-    private String getUsername(ChangedEvent prev){
-        if(!StringUtils.isEmpty(prev.getUsername())) {
+    private String getUsername(ChangedEvent prev) {
+        if (!StringUtils.isEmpty(prev.getUsername())) {
             return prev.getUsername();
-        }else{
+        } else {
 
             Map<Long, ValueWrapper> valueMap = prev.getValueMap();
 
@@ -338,7 +339,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
              * TODO profile
              */
             Optional<IEntityClass> targetEntityClass = metaManager.load(prev.getEntityClassId(), "");
-            if(targetEntityClass.isPresent()){
+            if (targetEntityClass.isPresent()) {
                 IEntityClass entityClass = targetEntityClass.get();
                 Optional<IEntityField> createUserNameField = entityClass.field("create_user_name");
                 Optional<Object> createUserName = createUserNameField.map(x -> {
@@ -357,11 +358,11 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                     return null;
                 });
 
-                if(updateUserName.isPresent()){
+                if (updateUserName.isPresent()) {
                     return updateUserName.get().toString();
                 }
 
-                if(createUserName.isPresent()){
+                if (createUserName.isPresent()) {
                     return createUserName.get().toString();
                 }
 
@@ -379,7 +380,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         List<String> orderedList = syncCommands.lrange(queue, 0, -1);
 
         String comment = "";
-        if(orderedList.size() > 0){
+        if (orderedList.size() > 0) {
             comment = orderedList.get(0);
         }
 
@@ -412,8 +413,6 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     /**
      * remove queue in redis
-     *
-     * @param txId
      */
     private void dropQueue(long txId) {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));

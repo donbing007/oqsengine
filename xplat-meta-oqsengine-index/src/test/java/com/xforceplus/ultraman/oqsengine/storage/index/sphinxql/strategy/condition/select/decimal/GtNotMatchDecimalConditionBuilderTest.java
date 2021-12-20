@@ -39,8 +39,8 @@ public class GtNotMatchDecimalConditionBuilderTest {
 
     @Test
     public void testBuild() throws Exception {
-        GtNotMatchDecimalConditionBuilder
-            builder = new GtNotMatchDecimalConditionBuilder(storageStrategyFactory);
+        GtNotMatchDecimalConditionBuilder builder = new GtNotMatchDecimalConditionBuilder();
+        builder.setStorageStrategyFactory(storageStrategyFactory);
         IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
         String conditionSql = builder.build(
             new Condition(

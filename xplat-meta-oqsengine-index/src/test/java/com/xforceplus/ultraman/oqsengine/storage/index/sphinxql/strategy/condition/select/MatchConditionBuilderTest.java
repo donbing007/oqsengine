@@ -52,9 +52,10 @@ public class MatchConditionBuilderTest {
 
         buildCases().stream().forEach(c -> {
             MatchConditionBuilder builder = new MatchConditionBuilder(
-                storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
+                c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
             try {
                 builder.setTokenizerFacotry(new DefaultTokenizerFactory());
+                builder.setStorageStrategyFactory(storageStrategyFactory);
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }

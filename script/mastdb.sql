@@ -34,3 +34,22 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+/**
+* 自增编号
+*/
+CREATE TABLE `segment` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `biz_type` varchar(64) NOT NULL DEFAULT '' COMMENT ',objectCode:fieldName',
+  `begin_id` bigint(20) NOT NULL DEFAULT '1' COMMENT 'ID',
+  `max_id` bigint(20) NOT NULL DEFAULT '0' COMMENT 'ID',
+  `step` int(11) NOT NULL DEFAULT '1000',
+  `pattern` varchar(64) NOT NULL DEFAULT '',
+  `pattern_key` varchar(64) NOT NULL DEFAULT '' COMMENT 'key',
+  `resetable` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'pattern_key 0: 1:',
+  `mode` tinyint(4) NOT NULL DEFAULT '2' COMMENT '1 2: ',
+  `version` bigint(20) NOT NULL DEFAULT '1',
+  `create_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `update_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

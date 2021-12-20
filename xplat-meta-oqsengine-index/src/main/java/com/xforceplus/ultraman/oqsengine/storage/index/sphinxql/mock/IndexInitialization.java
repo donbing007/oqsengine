@@ -72,7 +72,7 @@ public class IndexInitialization implements BeanInitialization {
 
         tokenizerFactory = new DefaultTokenizerFactory();
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
-        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setStorageStrategyFactory(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
         sphinxQLConditionsBuilderFactory.init();
 

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.AttachmentStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -44,8 +45,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         String firstStr = storageValue.value().toString();
         String secondStr = storageValue.next().value().toString();
 
@@ -61,7 +61,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String paddingStr = leftPaddingZero(secondStr, FIXED - secondStr.length());
 
         String value = isNeg ? NEG + firstStr + DIVIDE + paddingStr : firstStr + DIVIDE + paddingStr;
-        return new DecimalValue(field, new BigDecimal(value));
+        return new DecimalValue(field, new BigDecimal(value), attachemnt);
     }
 
     @Override
@@ -98,8 +98,11 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
      * 预期是一个浮点数的字符串.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
+        if (attachment) {
+            return new AttachmentStorageValue(logicName, (String) storageValue, true);
+        }
         return doBuildStorageValue(logicName, (String) storageValue);
     }
 

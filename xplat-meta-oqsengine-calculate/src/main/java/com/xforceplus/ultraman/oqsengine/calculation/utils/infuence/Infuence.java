@@ -419,8 +419,9 @@ public class Infuence {
         public String toString() {
             final StringBuilder sb = new StringBuilder();
 
+            Participant participant = getParticipant();
             sb.append("(")
-                .append(getParticipant().getEntityClass().code())
+                .append(participant.getEntityClass().code())
                 .append(",")
                 .append(getChange().getField().name())
                 .append(")");

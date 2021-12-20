@@ -1,17 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -31,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/11/13 17:33
  * @since 1.8
  */
-public class CommitIdStatusServiceImpl implements CommitIdStatusService {
+public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecycle {
 
     final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
 
@@ -105,6 +111,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Resource
     private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
+    public Timer timer;
+
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
@@ -156,7 +164,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     @PostConstruct
-    public void init() {
+    public void init() throws Exception {
         if (redisClient == null) {
             throw new IllegalStateException("Invalid redisClient.");
         }
@@ -176,22 +184,23 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
-
         unSyncCommitIdMin = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_MIN, new AtomicLong(0));
-
+            MetricsDefine.UN_SYNC_COMMIT_ID_MIN, new AtomicLong(size()));
         unSyncCommitIdMax = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_MAX, new AtomicLong(0));
+            MetricsDefine.UN_SYNC_COMMIT_ID_MAX, new AtomicLong(size()));
 
         logger.info("Use {} as the key for the list of commit Numbers.", commitidsKey);
         logger.info("Use {} as the prefix key for the commit number status.", commitidStatusKeyPrefix);
         logger.info("Use {} as the prefix key for the commit number status unknown.",
             COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX);
 
+        timer = new Timer("commit-update-metrics", true);
+        timer.schedule(new UpdateMetricsTask(), 1000L, 6000L);
     }
 
     @PreDestroy
-    public void destroy() {
+    public void destroy() throws Exception {
+        timer.cancel();
         syncConnect.close();
     }
 
@@ -221,8 +230,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 logger.debug("The submission number {} is obsolete and will not be saved.", commitId);
             }
         }
-
-        updateMetrics();
 
         return result;
     }
@@ -267,6 +274,27 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             }
 
         }
+    }
+
+    /**
+     * 同时判断多个提交号是否就绪.
+     *
+     * @param commitIds 提交号列表.
+     * @return true 就绪, false 没有就绪.
+     */
+    public boolean[] isReady(long[] commitIds) {
+        if (commitIds == null || commitIds.length == 0) {
+            return new boolean[0];
+        }
+
+        int len = commitIds.length;
+        CommitStatus[] commitStatuses = getStatus(commitIds);
+        boolean[] statues = new boolean[commitStatuses.length];
+        for (int i = 0; i < len; i++) {
+            statues[i] = CommitStatus.READY == commitStatuses[i];
+        }
+
+        return statues;
     }
 
     @Override
@@ -359,7 +387,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         if (logger.isDebugEnabled()) {
             logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
         }
-        updateMetrics();
     }
 
     @Override
@@ -377,28 +404,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         this.limitUnknownNumber = limitUnknownNumber;
     }
 
-    private void updateMetrics() {
-        CompletableFuture.runAsync(() -> {
-            unSyncCommitIdSize.set(size());
-            Optional<Long> commitId = getMin();
-            if (commitId.isPresent()) {
-                unSyncCommitIdMin.set(getMin().get());
-            } else {
-                unSyncCommitIdMin.set(-1);
-            }
-
-            commitId = getMax();
-            if (commitId.isPresent()) {
-                unSyncCommitIdMax.set(getMax().get());
-            } else {
-                unSyncCommitIdMax.set(-1);
-            }
-        });
-    }
-
     // 获取提交号状态.
     private CommitStatus getStatus(long commitId) {
-        String statusKey = commitidStatusKeyPrefix + commitId;
+        String statusKey = String.format("%s%d", commitidStatusKeyPrefix, commitId);
         String value = syncCommands.get(statusKey);
 
         CommitStatus status = CommitStatus.getInstance(value);
@@ -408,6 +416,41 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
 
         return status;
+    }
+
+    // 批量获取提交号状态.
+    private CommitStatus[] getStatus(long[] commitIds) {
+        int len = commitIds.length;
+        if (len == 0) {
+            return new CommitStatus[0];
+        }
+
+        String[] keys =
+            Arrays.stream(commitIds)
+                .mapToObj(c -> String.format("%s%d", commitidStatusKeyPrefix, c)).toArray(String[]::new);
+
+        // 帮助定位key所在的下标.
+        Map<String, Integer> keyPos = new HashMap<>(MapUtils.calculateInitSize(len));
+        for (int i = 0; i < len; i++) {
+            keyPos.put(keys[i], i);
+        }
+
+        List<KeyValue<String, String>> keyValues = syncCommands.mget(keys);
+        CommitStatus[] statuses = new CommitStatus[len];
+        KeyValue<String, String> kv;
+        int pos;
+        for (int i = 0; i < keyValues.size(); i++) {
+            kv = keyValues.get(i);
+            pos = keyPos.get(kv.getKey());
+
+            if (kv.hasValue()) {
+                statuses[pos] = CommitStatus.getInstance(kv.getValue());
+            } else {
+                statuses[pos] = CommitStatus.READY;
+            }
+        }
+
+        return statuses;
     }
 
     // 修改提交号状态.
@@ -440,6 +483,34 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             }
 
             return UNKNOWN;
+        }
+    }
+
+    /**
+     * 更新指标定时任务.
+     */
+    private class UpdateMetricsTask extends TimerTask {
+
+        @Override
+        public void run() {
+            try {
+                unSyncCommitIdSize.set(size());
+                Optional<Long> commitId = getMin();
+                if (commitId.isPresent()) {
+                    unSyncCommitIdMin.set(commitId.get());
+                } else {
+                    unSyncCommitIdMin.set(-1);
+                }
+
+                commitId = getMax();
+                if (commitId.isPresent()) {
+                    unSyncCommitIdMax.set(commitId.get());
+                } else {
+                    unSyncCommitIdMax.set(0);
+                }
+            } catch (Throwable ex) {
+                //do not care.
+            }
         }
     }
 }

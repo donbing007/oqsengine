@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 
 /**
  * 表达式.
@@ -13,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 public class ExpressionWrapper {
 
     /**
-     * 表达式唯一key,目前由expression的md5编码构成.
+     * 表达式唯一key,目前由expression构成.
      */
     private String code;
 
@@ -94,7 +93,7 @@ public class ExpressionWrapper {
             expressionWrapper.expression = this.expression;
             expressionWrapper.cached = (null != this.cached && this.cached);
 
-            expressionWrapper.code = MD5Utils.encrypt(this.expression);
+            expressionWrapper.code = this.expression;
 
             return expressionWrapper;
         }

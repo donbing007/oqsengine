@@ -19,6 +19,10 @@ public class StringsValue extends AbstractValue<String[]> {
         super(field, value);
     }
 
+    public StringsValue(IEntityField field, String[] value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     String[] fromString(String value) {
         return value == null ? null : value.split(DELIMITER);
@@ -27,13 +31,6 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public long valueToLong() {
         throw new UnsupportedOperationException("A string cannot be represented by a number.");
-    }
-
-    @Override
-    public IValue<String[]> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new StringsValue(newField, getValue());
     }
 
     @Override
@@ -53,6 +50,10 @@ public class StringsValue extends AbstractValue<String[]> {
         String[] thatValues = ((StringsValue) o).getValue();
         if (thatValues.length != this.getValue().length) {
             return false;
+        }
+
+        if (Objects.equals(this.getAttachment(), ((StringsValue) o).getAttachment())) {
+            return true;
         }
 
         boolean found;
@@ -82,6 +83,11 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" + "field=" + getField() + ", value=" + Arrays.toString(this.getValue()) + '}';
+    }
+
+    @Override
+    protected IValue<String[]> doCopy(IEntityField newField, String attachment) {
+        return new StringsValue(newField, getValue(), attachment);
     }
 
     /**

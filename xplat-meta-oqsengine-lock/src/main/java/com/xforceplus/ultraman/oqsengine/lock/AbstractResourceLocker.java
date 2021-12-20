@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.lock;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -20,7 +21,7 @@ import java.util.concurrent.locks.LockSupport;
  * @version 0.1 2020/11/26 11:10
  * @since 1.5
  */
-public abstract class AbstractResourceLocker implements ResourceLocker {
+public abstract class AbstractResourceLocker implements MultiResourceLocker {
 
     /*
      * 重试的默认间隔,{@value}毫秒.
@@ -53,6 +54,13 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
         this.retryDelay = retryDelay;
     }
 
+    @Override
+    public boolean isLocking(String key) {
+        String storeKey = buildStoreResourceKey(key);
+        Optional<LockInfo> lockInfoOp = this.getLockInfo(storeKey);
+        return lockInfoOp.isPresent();
+    }
+
     /**
      * 锁定资源,如果不能获得资源的锁那么调用线程将一直阻塞到获取锁为止.
      *
@@ -73,6 +81,22 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
         }
     }
 
+    @Override
+    public void locks(String... keys) {
+        int successfulSize = 0;
+        String[] userKeys = Arrays.stream(keys).distinct().sorted().toArray(String[]::new);
+        try {
+            for (String k : userKeys) {
+                lock(k);
+                successfulSize++;
+            }
+        } finally {
+            if (successfulSize > 0 && successfulSize < keys.length) {
+                unlocks(keys);
+            }
+        }
+    }
+
     /**
      * 尝试获取资源的锁,获取成功返回true,否则返回false.
      *
@@ -81,17 +105,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      */
     @Override
     public boolean tryLock(String key) {
-        boolean result = false;
-        try {
-            result = doLock(buildStoreResourceKey(key), new LockInfo(makeThreadId(key)));
-        } finally {
-            if (!result) {
-                //没有加锁成功,去除本次准备的lockingId
-                removeThreadId(key);
-            }
-        }
-
-        return result;
+        return doTryLock(-1, key, true);
     }
 
     /**
@@ -99,45 +113,38 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      * 在指定的时间内还没有成功获取锁将返回false,否则返回true.
      * 如果设置的等待数值为小于等于0,那么将退化成没有等待时间.
      *
-     * @param key  资源的键.
-     * @param time 最大等待时间.
-     * @param unit 时间单位.
+     * @param waitTimeoutMs 最大等待时间.(毫秒)
+     * @param key           资源的键.
      * @return true表示成功获取锁, false表示没有获取到锁.
      */
     @Override
-    public boolean tryLock(String key, long time, TimeUnit unit) {
-        boolean ok = false;
+    public boolean tryLock(long waitTimeoutMs, String key) {
+        return doTryLock(waitTimeoutMs, key, true);
+    }
+
+    @Override
+    public boolean tryLocks(String... keys) {
+        return tryLocks(-1, keys);
+    }
+
+    @Override
+    public boolean tryLocks(long waitTimeoutMs, String... keys) {
+        String[] userKeys = Arrays.stream(keys).distinct().sorted().toArray(String[]::new);
+        boolean fail = false;
         try {
-            if (time <= 0) {
-                return tryLock(key);
-            }
-
-            long timeout = unit.toMillis(time);
-            long timePass = 0;
-            String storeKey = buildStoreResourceKey(key);
-            String lockingId = makeThreadId(key);
-            long delay = getRetryDelay();
-            while (!ok) {
-                ok = doLock(storeKey, new LockInfo(lockingId));
-
-                if (!ok) {
-
-                    await(delay);
-
-                    timePass += delay;
-                    if (timePass >= timeout) {
-                        break;
-                    }
+            for (String k : userKeys) {
+                if (!doTryLock(waitTimeoutMs, k, false)) {
+                    fail = true;
+                    return false;
                 }
             }
         } finally {
-            if (!ok) {
-                //没有加锁成功,去除本次准备的lockingId
-                removeThreadId(key);
+            if (fail) {
+                unlocks(keys);
             }
         }
 
-        return ok;
+        return true;
     }
 
     /**
@@ -152,7 +159,7 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
 
         String unLockingId = getThreadId(key);
 
-        Optional<LockInfo> lockInfoOp = isLocked(storeKey);
+        Optional<LockInfo> lockInfoOp = this.getLockInfo(storeKey);
 
         if (lockInfoOp.isPresent()) {
 
@@ -179,6 +186,48 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
             //资源没有锁定
             return true;
         }
+    }
+
+    @Override
+    public void unlocks(String... keys) {
+        Arrays.stream(keys).distinct().sorted().forEachOrdered(k -> unlock(k));
+    }
+
+    private boolean doTryLock(long waitTimeoutMs, String key, boolean clear) {
+        boolean ok = false;
+        try {
+            long timePass = 0;
+            String storeKey = buildStoreResourceKey(key);
+            String lockingId = makeThreadId(key);
+            long delay = getRetryDelay();
+            while (!ok) {
+                ok = doLock(storeKey, new LockInfo(lockingId));
+
+                // 无需等待
+                if (waitTimeoutMs <= 0) {
+                    break;
+                }
+
+                if (!ok) {
+
+                    await(delay);
+
+                    timePass += delay;
+                    if (timePass >= waitTimeoutMs) {
+                        break;
+                    }
+                }
+            }
+        } finally {
+            if (!ok) {
+                //没有加锁成功,去除本次准备的lockingId
+                if (clear) {
+                    removeThreadId(key);
+                }
+            }
+        }
+
+        return ok;
     }
 
     /**
@@ -240,9 +289,11 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
 
     private void removeThreadId(String key) {
         Map<String, String> idMap = threadInfo.get();
-        idMap.remove(key);
-        if (idMap.isEmpty()) {
-            threadInfo.remove();
+        if (idMap != null) {
+            idMap.remove(key);
+            if (idMap.isEmpty()) {
+                threadInfo.remove();
+            }
         }
     }
 
@@ -278,5 +329,5 @@ public abstract class AbstractResourceLocker implements ResourceLocker {
      * @param key 资源的键。
      * @return 加锁者的标识，没有锁定返回null.
      */
-    protected abstract Optional<LockInfo> isLocked(String key);
+    protected abstract Optional<LockInfo> getLockInfo(String key);
 }

@@ -39,14 +39,14 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         StringStorageValue stringStorageValue = (StringStorageValue) storageValue;
         String value = stringStorageValue.value();
 
         if (isNewStyle(value)) {
-            return doNewStyleToLogicValue(field, value);
+            return doNewStyleToLogicValue(field, value, attachemnt);
         } else {
-            return doOldStyleToLogicValue(field, value);
+            return doOldStyleToLogicValue(field, value, attachemnt);
         }
     }
 
@@ -65,7 +65,7 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
         return false;
     }
 
-    private IValue doNewStyleToLogicValue(IEntityField field, String value) {
+    private IValue doNewStyleToLogicValue(IEntityField field, String value, String attachemnt) {
         List<String> list = new ArrayList<>();
         StringBuffer buff = new StringBuffer();
         boolean watch = false;
@@ -81,10 +81,10 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
             }
         }
 
-        return new StringsValue(field, list.toArray(new String[0]));
+        return new StringsValue(field, list.toArray(new String[0]), attachemnt);
     }
 
-    private IValue doOldStyleToLogicValue(IEntityField field, String value) {
+    private IValue doOldStyleToLogicValue(IEntityField field, String value, String attachemnt) {
         List<String> list = new ArrayList<>();
         StringBuilder buff = new StringBuilder();
         for (char v : value.toCharArray()) {
@@ -95,7 +95,7 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
                 buff.append(v);
             }
         }
-        return new StringsValue(field, list.toArray(new String[0]));
+        return new StringsValue(field, list.toArray(new String[0]), attachemnt);
     }
 
     private boolean isNewStyle(String value) {

@@ -34,7 +34,7 @@ public class SQLConditionQueryBuilderFactory implements TokenizerFactoryAble, St
 
 
     @Override
-    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
@@ -100,7 +100,7 @@ public class SQLConditionQueryBuilderFactory implements TokenizerFactoryAble, St
                     new SQLJsonConditionBuilder(
                         condition.getField().type(), condition.getOperator());
 
-                ((SQLJsonConditionBuilder) builder).setStorageStrategy(storageStrategyFactory);
+                ((SQLJsonConditionBuilder) builder).setStorageStrategyFactory(storageStrategyFactory);
                 ((SQLJsonConditionBuilder) builder).setTokenizerFacotry(tokenizerFactory);
 
                 builders.put(key, builder);

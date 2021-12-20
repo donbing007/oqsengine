@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -9,8 +10,12 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
+import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
@@ -19,20 +24,32 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -65,7 +82,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CalculationTest extends AbstractContainerExtends {
 
-    final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
+    final Logger logger = LoggerFactory.getLogger(CalculationTest.class);
 
     @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator idGenerator;
@@ -89,12 +106,20 @@ public class CalculationTest extends AbstractContainerExtends {
     private MasterStorage masterStorage;
 
     @Resource
+    private SegmentStorage segmentStorage;
+
+    @Resource
     private TransactionManager transactionManager;
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
+    @Resource(name = "taskThreadPool")
+    private ExecutorService taskThreadPool;
+
     private Faker faker = new Faker(Locale.CHINA);
+
+    private SegmentInfo segmentInfo = MockEntityClassDefine.getDefaultSegmentInfo();
 
     /**
      * 每个测试的初始化.
@@ -117,6 +142,8 @@ public class CalculationTest extends AbstractContainerExtends {
                 }
             }
         }
+
+        initSegment(segmentInfo);
 
         MockEntityClassDefine.initMetaManager(metaManager);
     }
@@ -144,6 +171,240 @@ public class CalculationTest extends AbstractContainerExtends {
                 }
             }
         }
+
+        deleteSegment(segmentInfo);
+    }
+
+    public void deleteSegment(SegmentInfo info) throws SQLException {
+        segmentStorage.delete(info);
+    }
+
+    public void initSegment(SegmentInfo info) throws SQLException {
+        segmentStorage.build(info);
+    }
+
+    /**
+     * lookup目标对象字段值不存在.
+     * 预计发起lookup的对象此值也不存在.
+     */
+    @Test
+    public void testLookupEmptyValue() throws Exception {
+        IEntity user = buildUserEntity();
+        user.entityValue().remove(MockEntityClassDefine.USER_CLASS.field("用户编号").get());
+        OperationResult operationResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+
+        IEntity order = buildOrderEntity(user);
+        operationResult = entityManagementService.build(order);
+        // 由于公式计算触发了除0异常,所以这里是半成功.
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
+            operationResult.getMessage());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
+    }
+
+    /**
+     * 测试对已经存在的的实体中的lookup字段进行更新.
+     * 预计应该重新lookup.
+     */
+    @Test
+    public void testLookupReplace() throws Exception {
+        IEntity user0 = buildUserEntity();
+        IEntity user1 = buildUserEntity();
+        entityManagementService.build(new IEntity[] {user0, user1});
+
+        IEntity order = buildOrderEntity(user0);
+        entityManagementService.build(order);
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        Assertions.assertEquals(
+            user0.entityValue().getValue("用户编号").get().getValue(),
+            order.entityValue().getValue("用户编号lookup").get().getValue()
+        );
+
+        order.entityValue()
+            .addValue(
+                new LookupValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                    user1.id()
+                )
+            )
+            .addValue(
+                new LongValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
+                    user1.id()
+                )
+            );
+
+        entityManagementService.replace(order);
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        Assertions.assertEquals(
+            user1.entityValue().getValue("用户编号").get().getValue(),
+            order.entityValue().getValue("用户编号lookup").get().getValue()
+        );
+    }
+
+    /**
+     * 测试lookup目标字段被更新,需要更新的lookup实例超过事务上限.
+     */
+    @Test
+    public void testLookupReplaceOutofTx() throws Exception {
+        Field field = LookupCalculationLogic.class.getDeclaredField("TRANSACTION_LIMIT_NUMBER");
+        field.setAccessible(true);
+        // 事务内处理上限.
+        int transactionLimitNumber = (int) field.get(null);
+        int outTransactionNumber = 1000;
+
+        IEntity user = buildUserEntity();
+        entityManagementService.build(user);
+
+        int orderSize = transactionLimitNumber + outTransactionNumber;
+        Transaction tx = transactionManager.create(TimeUnit.SECONDS.toMillis(300));
+        for (int i = 0; i < orderSize; i++) {
+            transactionManager.bind(tx.id());
+            entityManagementService.build(buildOrderEntity(user));
+            logger.info("Successfully created order.[{}/{}]", i + 1, orderSize);
+        }
+        transactionManager.bind(tx.id());
+        tx.commit();
+        transactionManager.bind(tx.id());
+        transactionManager.finish();
+
+
+        logger.info("Query {} orders.", orderSize);
+        Collection<IEntity> orders = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.ORDER_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(orderSize)).build()
+        );
+
+        String userNumber = user.entityValue().getValue("用户编号").get().valueToString();
+        logger.info("Verify that the value of the \"用户编号lookup\" field in {} orders is equal to {}.",
+            orderSize, userNumber);
+        for (IEntity order : orders) {
+            Assertions.assertEquals(Long.toString(user.id()),
+                order.entityValue().getValue("用户编号lookup").get().getAttachment().get());
+            Assertions.assertEquals(userNumber,
+                order.entityValue().getValue("用户编号lookup").get().getValue());
+        }
+
+        String newUseNumber = "U" + idGenerator.next();
+        logger.info("The user id is changed from {} to {}.", userNumber, newUseNumber);
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        user.entityValue().addValue(
+            new StringValue(
+                MockEntityClassDefine.USER_CLASS.field("用户编号").get(), newUseNumber)
+        );
+
+        // 在事务内更新.
+        tx = transactionManager.create(Integer.MAX_VALUE);
+        transactionManager.bind(tx.id());
+        entityManagementService.replace(user);
+
+        transactionManager.bind(tx.id());
+        orders = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.ORDER_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(3000)).build()
+        );
+        // 事务内
+        long syncedOrderCount = orders.stream().filter(e ->
+            Objects.equals(
+                e.entityValue().getValue("用户编号lookup").get().getValue(),
+                newUseNumber
+            )
+        ).count();
+        Assertions.assertEquals(transactionLimitNumber, syncedOrderCount);
+        logger.info("The \"用户编号lookup\" field for the expected 1000 orders has been changed from {} to {}.",
+            userNumber, newUseNumber);
+
+        transactionManager.bind(tx.id());
+        tx = transactionManager.getCurrent().get();
+        // 应该触发外部任务,将额外的1000 order中的 "用户编号lookup"字段进行更新.
+        tx.commit();
+        transactionManager.finish();
+
+        orders = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.ORDER_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(3000)).build());
+
+        boolean fail = true;
+        for (int i = 0; i < 10000; i++) {
+            syncedOrderCount = orders.stream().filter(e ->
+                Objects.equals(
+                    e.entityValue().getValue("用户编号lookup").get().getValue(),
+                    newUseNumber
+                )
+            ).count();
+
+            if (syncedOrderCount == orderSize) {
+                fail = false;
+                break;
+            } else {
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(5000));
+
+                logger.info("There are {} orders that have not been processed.", orderSize - syncedOrderCount);
+
+                orders = entitySearchService.selectByConditions(
+                    Conditions.buildEmtpyConditions(),
+                    MockEntityClassDefine.ORDER_CLASS.ref(),
+                    ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(3000)).build()
+                );
+            }
+        }
+
+        if (fail) {
+            Assertions.fail("The number of transactions exceeded was not completed in the expected time.");
+        }
+    }
+
+    /**
+     * 测试如下场景.
+     * 1 : N
+     * User对象  ->  Order对象.
+     * <br>
+     * 并发的创建某个User实例关联的Order对象实例最终判断User实例上的计算字段的正确性.
+     */
+    @Test
+    public void testBuildCalculationConcurrent() throws Exception {
+        IEntity user = buildUserEntity();
+        entityManagementService.build(user);
+
+        int size = 30;
+        long userId = user.id();
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(size);
+        Queue<IEntity> queue = new ConcurrentLinkedQueue();
+        for (int i = 0; i < size; i++) {
+            taskThreadPool.submit(() -> {
+                // 阻塞等待同时开始.
+                try {
+                    startLatch.await();
+                    entityManagementService.build(buildOrderEntity(user));
+
+                    Optional<IEntity> currentUserOp = entitySearchService.selectOne(
+                        userId, MockEntityClassDefine.USER_CLASS.ref());
+                    queue.add(currentUserOp.get());
+
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    return;
+                } finally {
+                    finishLatch.countDown();
+                }
+            });
+        }
+        startLatch.countDown();
+        finishLatch.await();
+
+        Assertions.assertEquals(size, queue.size());
+
+        IEntity currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).get();
+        long max = currentUser.entityValue().getValue("订单总数count").get().valueToLong();
+        Assertions.assertEquals(size, max);
 
     }
 
@@ -362,7 +623,6 @@ public class CalculationTest extends AbstractContainerExtends {
             operationResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
 
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
@@ -379,8 +639,36 @@ public class CalculationTest extends AbstractContainerExtends {
         operationResult = entityManagementService.replace(orderItem);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        //  这里设置AUTO_FILL为空，判断是否重置了autoFill字段，期望是不会改变
+        order = Entity.Builder.anEntity()
+            .withId(order.id())
+            .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+            .withEntityValue(
+                EntityValue.build().addValue(
+                    new StringValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
+                        ""
+                    )
+                )
+            ).withEntityValue(
+                // 此值是为了防止空对象更新检查被触发.
+                EntityValue.build().addValue(
+                    new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    )
+                )
+            ).build();
+
+        operationResult = entityManagementService.replace(order);
+        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+
+        Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent()
+            && !((String) order.entityValue().getValue("订单号").get().getValue()).isEmpty()
+        );
+
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
 
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("总金额sum").get().getValue());
@@ -445,6 +733,10 @@ public class CalculationTest extends AbstractContainerExtends {
                         new StringValue(
                             MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
                             "U" + idGenerator.next())
+                    ).addValue(
+                        new StringValue(
+                            MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
+                            faker.name().name())
                     )
             ).build();
     }

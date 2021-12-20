@@ -15,7 +15,7 @@ public interface CommitIdStatusService {
      * 保存一个新的提交号.
      *
      * @param commitId 提交号.
-     * @param ready true就绪,false还没就绪.
+     * @param ready    true就绪,false还没就绪.
      * @return 保存的提交号.
      */
     boolean save(long commitId, boolean ready);
@@ -28,6 +28,14 @@ public interface CommitIdStatusService {
      * @return true 就绪,false没有就绪.
      */
     boolean isReady(long commitId);
+
+    /**
+     * 判断指定的提交号是否就绪.
+     *
+     * @param commitIds 提交号列表.
+     * @return true 就绪, false 没有就绪.
+     */
+    boolean[] isReady(long[] commitIds);
 
     /**
      * 使某个提交个状态进入就绪.

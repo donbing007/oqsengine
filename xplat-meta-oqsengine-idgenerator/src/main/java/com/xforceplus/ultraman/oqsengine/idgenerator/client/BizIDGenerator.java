@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.client;
 
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
-import io.micrometer.core.annotation.Timed;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
@@ -27,10 +25,6 @@ public class BizIDGenerator {
      * @param fieldId fieldId
      * @return next id
      */
-    @Timed(
-        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "generator", "action", "nextId"}
-    )
     public String nextId(String fieldId) {
         if (fieldId == null) {
             throw new IllegalArgumentException("type is null");

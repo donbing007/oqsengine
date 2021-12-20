@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.AttachmentConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MatchConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MeqMatchConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.MeqNotMatchConditionBuilder;
@@ -12,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.LtEqNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal.LtNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,18 +27,37 @@ import java.util.concurrent.ConcurrentMap;
  * @version 0.1 2020/3/26 10:22
  * @since 1.8
  */
-public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAble {
+public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAble, StorageStrategyFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
     private ConcurrentMap<String, AbstractSphinxQLConditionBuilder> builders;
     private TokenizerFactory tokenizerFactory;
 
-    public SphinxQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
-        this.storageStrategyFactory = storageStrategyFactory;
+    private static final String NORMAL_PREIFX = "normal";
+    private static final String ATTACHMENT_PREFIX = "attachemnt";
+
+    private static String buildKey(String prefix, FieldType fieldType, ConditionOperator operator, boolean match,
+                                   boolean id) {
+        StringBuilder buff = new StringBuilder();
+        buff.append(prefix)
+            .append('-')
+            .append(fieldType.getType())
+            .append('-')
+            .append(operator.getSymbol())
+            .append('-')
+            .append(match)
+            .append('-')
+            .append(id);
+        return buff.toString();
     }
 
-    private static String buildKey(FieldType fieldType, ConditionOperator operator, boolean match, boolean id) {
-        return fieldType.getType() + "-" + operator.getSymbol() + "-" + match + "-" + id;
+    private static String buildNormalKey(FieldType fieldType, ConditionOperator operator, boolean match, boolean id) {
+        return buildKey(NORMAL_PREIFX, fieldType, operator, match, id);
+    }
+
+    private static String buildAttachmentKey(
+        FieldType fieldType, ConditionOperator operator, boolean match, boolean id) {
+        return buildKey(ATTACHMENT_PREFIX, fieldType, operator, match, id);
     }
 
     /**
@@ -44,67 +66,80 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
     public void init() {
         builders = new ConcurrentHashMap<>();
 
+        builders.put(
+            buildAttachmentKey(FieldType.STRING, ConditionOperator.EQUALS, true, false),
+            new AttachmentConditionBuilder(ConditionOperator.EQUALS)
+        );
+
+        builders.put(
+            buildAttachmentKey(FieldType.STRING, ConditionOperator.NOT_EQUALS, true, false),
+            new AttachmentConditionBuilder(ConditionOperator.NOT_EQUALS)
+        );
 
         // decimal
         builders.put(
-            buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN, false, false),
-            new GtNotMatchDecimalConditionBuilder(storageStrategyFactory)
+            buildNormalKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN, false, false),
+            new GtNotMatchDecimalConditionBuilder()
         );
         builders.put(
-            buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN_EQUALS, false, false),
-            new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory)
+            buildNormalKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN_EQUALS, false, false),
+            new GtEqNotMatchDecimalConditionBuilder()
         );
         builders.put(
-            buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN, false, false),
-            new LtNotMatchDecimalConditionBuilder(storageStrategyFactory)
+            buildNormalKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN, false, false),
+            new LtNotMatchDecimalConditionBuilder()
         );
         builders.put(
-            buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN_EQUALS, false, false),
-            new LtEqNotMatchDecimalConditionBuilder(storageStrategyFactory)
+            buildNormalKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN_EQUALS, false, false),
+            new LtEqNotMatchDecimalConditionBuilder()
         );
 
         // meq
         builders.put(
-            buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.LONG, false)
+            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionBuilder(FieldType.LONG, false)
         );
         builders.put(
-            buildKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRING, false)
+            buildNormalKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionBuilder(FieldType.STRING, false)
         );
         builders.put(
-            buildKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
+            buildNormalKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionBuilder(FieldType.BOOLEAN, false)
         );
         builders.put(
-            buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.ENUM, false)
+            buildNormalKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionBuilder(FieldType.ENUM, false)
         );
 
         // long
         builders.put(
-            buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(storageStrategyFactory, FieldType.LONG)
+            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
+            new MeqNotMatchConditionBuilder(FieldType.LONG)
         );
 
         // strings
         builders.put(
-            buildKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
-            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
+            buildNormalKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
+            new MatchConditionBuilder(FieldType.STRINGS, ConditionOperator.EQUALS, true)
         );
         builders.put(
-            buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
-            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS,
+            buildNormalKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
+            new MatchConditionBuilder(FieldType.STRINGS, ConditionOperator.NOT_EQUALS,
                 true)
         );
         builders.put(
-            buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, true)
+            buildNormalKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionBuilder(FieldType.STRINGS, true)
         );
 
         builders.values().stream().forEach(b -> {
             if (TokenizerFactoryAble.class.isInstance(b)) {
                 ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+
+            if (StorageStrategyFactoryAble.class.isInstance(b)) {
+                ((StorageStrategyFactoryAble) b).setStorageStrategyFactory(storageStrategyFactory);
             }
         });
     }
@@ -118,25 +153,40 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
      */
     public AbstractSphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {
 
-        String key = buildKey(
-            condition.getField().type(), condition.getOperator(), match, condition.getField().config().isIdentifie());
+        AbstractSphinxQLConditionBuilder builder = null;
+        if (AttachmentCondition.class.isInstance(condition)) {
 
-        AbstractSphinxQLConditionBuilder builder = builders.computeIfAbsent(key, k -> {
-            AbstractSphinxQLConditionBuilder b;
-            if (match) {
-                b = new MatchConditionBuilder(
-                    storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
-            } else {
+            String key = buildAttachmentKey(FieldType.STRING, condition.getOperator(), true, false);
+            builder = builders.get(key);
 
-                b = new NotMatchConditionBuilder(
-                    storageStrategyFactory, condition.getField().type(), condition.getOperator());
+            if (builder == null) {
+                throw new IllegalArgumentException("Unable to construct a valid attachment query condition constructor.");
             }
 
-            if (TokenizerFactoryAble.class.isInstance(b)) {
-                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
-            }
-            return b;
-        });
+        } else {
+            String key = buildNormalKey(
+                condition.getField().type(), condition.getOperator(), match,
+                condition.getField().config().isIdentifie());
+
+            builder = builders.computeIfAbsent(key, k -> {
+                AbstractSphinxQLConditionBuilder b;
+                if (match) {
+                    b = new MatchConditionBuilder(condition.getField().type(), condition.getOperator(), false);
+                } else {
+
+                    b = new NotMatchConditionBuilder(condition.getField().type(), condition.getOperator());
+                }
+
+                if (TokenizerFactoryAble.class.isInstance(b)) {
+                    ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+                }
+
+                if (StorageStrategyFactoryAble.class.isInstance(b)) {
+                    ((StorageStrategyFactoryAble) b).setStorageStrategyFactory(storageStrategyFactory);
+                }
+                return b;
+            });
+        }
 
         return builder;
     }
@@ -144,5 +194,10 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
     @Override
     public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
         this.tokenizerFactory = tokenizerFacotry;
+    }
+
+    @Override
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
     }
 }

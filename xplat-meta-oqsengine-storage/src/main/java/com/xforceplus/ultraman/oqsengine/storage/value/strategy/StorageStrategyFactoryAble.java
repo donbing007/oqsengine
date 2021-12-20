@@ -14,5 +14,5 @@ public interface StorageStrategyFactoryAble {
      *
      * @param storageStrategyFactory 工厂实例.
      */
-    void setStorageStrategy(StorageStrategyFactory storageStrategyFactory);
+    void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory);
 }

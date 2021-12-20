@@ -321,11 +321,7 @@ public class Conditions implements Serializable {
         Conditions that = (Conditions) o;
         boolean result = size == that.size && or == that.or && range == that.range;
         if (result) {
-            if (head == null) {
-                return that.head == null ? true : false;
-            } else {
-                return that.head == null ? false : Objects.equals(head, that.head);
-            }
+            return Objects.equals(o.toString(), that.toString());
         }
 
         return result;

@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
@@ -24,9 +23,8 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
 
     private TokenizerFactory tokenizerFactory;
 
-    public MatchConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean useGroupName) {
-        super(storageStrategyFactory, fieldType, operator, true, useGroupName);
+    public MatchConditionBuilder(FieldType fieldType, ConditionOperator operator, boolean useGroupName) {
+        super(fieldType, operator, true, useGroupName);
     }
 
     @Override

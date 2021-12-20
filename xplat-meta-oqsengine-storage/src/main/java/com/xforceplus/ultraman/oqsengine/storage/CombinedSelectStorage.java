@@ -28,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 联合搜索.主要执行如下逻辑. 1. 从unSyncStorage中搜索未同步的数据,预期数据量会较少. 2. 根据第一步的结果构造过滤列表,在syncedStorage中搜索. 3. 合并两者查询结果.
+ * 联合搜索.主要执行如下逻辑.
+ * 1. 从unSyncStorage中搜索未同步的数据,预期数据量会较少.
+ * 2. 根据第一步的结果构造过滤列表,在syncedStorage中搜索.
+ * 3. 合并两者查询结果.
  *
  * @author dongbin
  * @version 0.1 2021/10/14 17:50
@@ -298,10 +301,12 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     // 如果排序,但是查询结果没有值.
     private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort[] sorts) {
         int sortIndex = 0;
-        for (Sort sort : sorts) {
+        Sort sort;
+        for (int i = 0; i < sorts.length; i++) {
+            sort = sorts[i];
             if (!sort.isOutOfOrder()) {
                 for (EntityRef r : refs) {
-                    if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
+                    if (!haveSortValue(r, i)) {
                         if (sort.getField().config().isIdentifie()) {
                             setSortValue(sortIndex, r, Long.toString(r.getId()));
                         } else {
@@ -318,6 +323,23 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         return refs;
+    }
+
+    private boolean haveSortValue(EntityRef r, int sortIndex) {
+        switch (sortIndex) {
+            case 0: {
+                return !(r.getOrderValue() == null || r.getOrderValue().isEmpty());
+            }
+            case 1: {
+                return !(r.getSecondOrderValue() == null || r.getSecondOrderValue().isEmpty());
+            }
+            case 2: {
+                return !(r.getThridOrderValue() == null || r.getThridOrderValue().isEmpty());
+            }
+            default: {
+                return false;
+            }
+        }
     }
 
     private void setSortValue(int sortIndex, EntityRef ref, String value) {

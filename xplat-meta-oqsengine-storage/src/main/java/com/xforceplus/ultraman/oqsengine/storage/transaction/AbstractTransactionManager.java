@@ -5,13 +5,11 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.ITimerWheel;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.MultipleTimerWheel;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
-import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -219,6 +217,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         transactionNumber.decrementAndGet();
 
         clean(tx);
+
 
         if (!tx.isCompleted()) {
             tx.rollback();

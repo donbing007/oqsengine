@@ -24,8 +24,8 @@ public class DateTimeStorageStrategy extends LongStorageStrategy {
 
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
         Instant instant = Instant.ofEpochMilli((long) storageValue.value());
-        return new DateTimeValue(field, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID));
+        return new DateTimeValue(field, LocalDateTime.ofInstant(instant, DateTimeValue.ZONE_ID), attachemnt);
     }
 }

@@ -28,8 +28,8 @@ public class StringStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-        return new StringValue(field, (String) storageValue.value());
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
+        return new StringValue(field, (String) storageValue.value(), attachemnt);
     }
 
     @Override

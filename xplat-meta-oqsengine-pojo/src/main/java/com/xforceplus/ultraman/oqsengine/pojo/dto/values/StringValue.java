@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import java.util.Objects;
 
 /**
  * 字符串值表示.
@@ -16,6 +15,10 @@ public class StringValue extends AbstractValue<String> {
         super(field, value);
     }
 
+    public StringValue(IEntityField field, String value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     String fromString(String value) {
         return value;
@@ -27,28 +30,7 @@ public class StringValue extends AbstractValue<String> {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof StringValue)) {
-            return false;
-        }
-
-        StringValue that = (StringValue) o;
-
-        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
-    }
-
-    @Override
-    public IValue<String> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new StringValue(newField, getValue());
+    protected IValue<String> doCopy(IEntityField newField, String attachment) {
+        return new StringValue(newField, getValue(), attachment);
     }
 }

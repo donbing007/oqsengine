@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import java.util.Objects;
 
 /**
@@ -14,7 +15,8 @@ import java.util.Objects;
  * @version 0.1 2020/3/25 18:14
  * @since 1.8
  */
-public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuilder<Condition, String> {
+public abstract class AbstractSphinxQLConditionBuilder implements
+    ConditionBuilder<Condition, String>, StorageStrategyFactoryAble {
 
     /**
      * 生成条件时是否使用物理值组名称.
@@ -37,27 +39,23 @@ public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuild
      */
     private StorageStrategyFactory storageStrategyFactory;
 
-    public AbstractSphinxQLConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
-        this(storageStrategyFactory, fieldType, operator, false, false);
+    public AbstractSphinxQLConditionBuilder(FieldType fieldType, ConditionOperator operator) {
+        this(fieldType, operator, false, false);
     }
 
-    public AbstractSphinxQLConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean match) {
-        this(storageStrategyFactory, fieldType, operator, match, false);
+    public AbstractSphinxQLConditionBuilder(FieldType fieldType, ConditionOperator operator, boolean match) {
+        this(fieldType, operator, match, false);
     }
 
     /**
      * 实例化.
      *
-     * @param storageStrategyFactory 逻辑物理字段转换策略工厂.
      * @param fieldType              逻辑字段类型.
      * @param operator               操作符.
      * @param match                  true 全文,false非全文.
      * @param useStorageGroupName    是否使用组名称.针对多值字段.
      */
     public AbstractSphinxQLConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory,
         FieldType fieldType,
         ConditionOperator operator,
         boolean match,
@@ -65,7 +63,6 @@ public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuild
         this.fieldType = fieldType;
         this.operator = operator;
         this.match = match;
-        this.storageStrategyFactory = storageStrategyFactory;
         this.useStorageGroupName = useStorageGroupName;
     }
 
@@ -114,6 +111,11 @@ public abstract class AbstractSphinxQLConditionBuilder implements ConditionBuild
      */
     public boolean isUseStorageGroupName() {
         return useStorageGroupName;
+    }
+
+    @Override
+    public void setStorageStrategyFactory(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
     }
 
     @Override

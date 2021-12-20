@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.kv.memory.MemoryKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.task.Task;
-import java.io.Serializable;
+import com.xforceplus.ultraman.oqsengine.task.mock.MockTask;
 import java.lang.reflect.Field;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * 基于KV的任务队列.
@@ -46,10 +45,10 @@ public class TaskKeyValueQueueTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
         worker = new ThreadPoolExecutor(5, 5,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue(10000),
-            ExecutorHelper.buildNameThreadFactory("task", false),
-            new ThreadPoolExecutor.AbortPolicy()
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue(10000),
+                ExecutorHelper.buildNameThreadFactory("task", false),
+                new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);
@@ -357,36 +356,6 @@ public class TaskKeyValueQueueTest {
 
         Assertions.assertEquals(longMap.get(point).get(), count);
         Assertions.assertEquals(longMap.get(unused).get(), 0);
-    }
-
-    public static class MockTask implements Task, Serializable {
-        private static final long serialVersionUID = 1L;
-        private long location;
-
-        @Override
-        public String id() {
-            return null;
-        }
-
-        @Override
-        public long location() {
-            return location;
-        }
-
-        @Override
-        public void setLocation(long l) {
-            this.location = l;
-        }
-
-        @Override
-        public long createTime() {
-            return 0;
-        }
-
-        @Override
-        public Class runnerType() {
-            return null;
-        }
     }
 
     public static class MockIdGenerator implements LongIdGenerator {

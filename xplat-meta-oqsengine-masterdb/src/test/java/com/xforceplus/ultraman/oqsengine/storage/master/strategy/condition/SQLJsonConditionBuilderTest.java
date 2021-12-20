@@ -47,7 +47,7 @@ public class SQLJsonConditionBuilderTest {
         buildCases().stream().forEach(c -> {
             SQLJsonConditionBuilder builder =
                 new SQLJsonConditionBuilder(c.condition.getField().type(), c.condition.getOperator());
-            builder.setStorageStrategy(StorageStrategyFactory.getDefaultFactory());
+            builder.setStorageStrategyFactory(StorageStrategyFactory.getDefaultFactory());
 
             try {
                 builder.setTokenizerFacotry(new DefaultTokenizerFactory());
