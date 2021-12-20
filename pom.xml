@@ -109,6 +109,10 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <!-- 排除lettuce,由于jdk11开始的jfr会造成jacoc无法增强 -->
+                            <excludes>io/lettuce/*</excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>post-unit-test</id>
