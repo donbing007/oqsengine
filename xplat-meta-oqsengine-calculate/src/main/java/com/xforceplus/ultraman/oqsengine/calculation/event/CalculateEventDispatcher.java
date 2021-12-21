@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.event;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.executor.CalculationEventExecutor;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;

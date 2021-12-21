@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.event.dto;
+package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
 import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
 import java.util.HashMap;
