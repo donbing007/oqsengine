@@ -11,10 +11,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MinFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.SumFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationAbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -222,7 +222,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
                                     participant,
-                                    CalculationParticipant.Builder.anParticipant()
+                                    CalculationAbstractParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(f)
                                         .build()
@@ -230,7 +230,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             } else {
                                 infuenceInner.impact(
                                     participant,
-                                        CalculationParticipant.Builder.anParticipant()
+                                        CalculationAbstractParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(fieldId.ID_ENTITY_FIELD)
                                         .build()
@@ -240,7 +240,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
                                     participant,
-                                        CalculationParticipant.Builder.anParticipant()
+                                        CalculationAbstractParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(f)
                                         .build()
@@ -256,9 +256,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+    public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant, Collection<IEntity> entities)
         throws CalculationException {
-        IEntityField entityField = participant.getField();
+        IEntityField entityField = abstractParticipant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
         if (entities.isEmpty()) {
             return new long[ZERO];

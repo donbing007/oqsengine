@@ -24,8 +24,16 @@ public class Infuence {
     private RootNode rootNode;
     private int size;
 
-    public Infuence(IEntity entity, Participant participant, ValueChange change) {
-        rootNode = new RootNode(entity, participant, change);
+    /**
+     * 影响树构造器.
+     *
+     * @param entity 实体.
+     * @param abstractParticipant 参与者.
+     * @param change 变更.
+     */
+    public Infuence(IEntity entity, AbstractParticipant abstractParticipant, ValueChange change) {
+        rootNode = new RootNode(entity, abstractParticipant, change);
+        abstractParticipant.setNode(rootNode);
         size++;
     }
 
@@ -40,33 +48,65 @@ public class Infuence {
     /**
      * 增加影响.默认以根为传递者.
      *
-     * @param participant 新的参与者.
+     * @param abstractParticipant 新的参与者.
      */
-    public void impact(Participant participant) {
-        impact(rootNode.getParticipant(), participant);
+    public void impact(AbstractParticipant abstractParticipant) {
+        impact(rootNode.getParticipant(), abstractParticipant);
     }
 
     /**
      * 增加影响.
      *
      * @param parent      传递影响的参与者.
-     * @param participant 新的参与者.
+     * @param abstractParticipant 新的参与者.
      * @return true 成功,false失败.
      */
-    public boolean impact(Participant parent, Participant participant) {
+    public boolean impact(AbstractParticipant parent, AbstractParticipant abstractParticipant) {
         if (rootNode.getParticipant().equals(parent)) {
-            insert(rootNode, participant);
+            insert(rootNode, abstractParticipant);
             return true;
         }
 
         Optional<ChildNode> childOp = searchChild(parent);
         if (childOp.isPresent()) {
             ChildNode childNode = childOp.get();
-            insert(childNode, participant);
+            insert(childNode, abstractParticipant);
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * 删除参与者影响列表中指定参与者.
+     */
+    public boolean remove(AbstractParticipant parent, AbstractParticipant abstractParticipant) {
+        if (parent.equals(rootNode.getParticipant())) {
+            remove(rootNode, abstractParticipant);
+            return true;
+        }
+        Optional<ChildNode> childOp = searchChild(parent);
+        if (childOp.isPresent()) {
+            ChildNode childNode = childOp.get();
+            remove(childNode, abstractParticipant);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 指定节点删除指定参与者.
+     */
+    private void remove(Node point, AbstractParticipant abstractParticipant) {
+        for (Node n : point.getChildren()) {
+            ChildNode c = (ChildNode) n;
+            if (c.getParticipant().equals(abstractParticipant)) {
+                // 这里找到表示已经存在.
+                point.getChildren().remove(c);
+                this.size--;
+                return;
+            }
+        }
     }
 
     /**
@@ -92,9 +132,17 @@ public class Infuence {
     /**
      * 以广度优先的方式遍历整个影响树.
      *
-     * @param consumer 对于每一个结点(不包含根结点)调用的消费实现.
+     * @param consumer 对于每一个结点调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
+        scan(consumer, rootNode.getParticipant());
+    }
+
+
+    /**
+     * 指定参与者所在节点开始遍历.
+     */
+    public void scan(InfuenceConsumer consumer, AbstractParticipant abstractParticipant) {
         bfsIter((node, level) -> {
             if (RootNode.class.isInstance(node)) {
                 RootNode rootNode = (RootNode) node;
@@ -107,12 +155,12 @@ public class Infuence {
                 Optional<Node> parentNode = childNode.getParent();
 
                 return consumer.accept(
-                    parentNode.isPresent() ? Optional.of(parentNode.get().getParticipant()) : Optional.empty(),
-                    childNode.getParticipant(),
-                    this
+                        parentNode.isPresent() ? Optional.of(parentNode.get().getParticipant()) : Optional.empty(),
+                        childNode.getParticipant(),
+                        this
                 );
             }
-        });
+        }, abstractParticipant);
     }
 
     @Override
@@ -208,21 +256,29 @@ public class Infuence {
     }
 
     // 插入影响
-    private void insert(Node point, Participant participant) {
+    private void insert(Node point, AbstractParticipant abstractParticipant) {
         for (Node n : point.getChildren()) {
             ChildNode c = (ChildNode) n;
-            if (c.getParticipant().equals(participant)) {
+            if (c.getParticipant().equals(abstractParticipant)) {
                 // 这里找到表示已经存在.
                 return;
             }
         }
+        ChildNode childNode = new ChildNode(abstractParticipant);
+        point.addChild(childNode);
+        childNode.setLevel(point.getLevel() + 1);
+        abstractParticipant.setNode(childNode);
+        abstractParticipant.setPre(point.abstractParticipant);
 
-        point.addChild(new ChildNode(participant));
         size++;
     }
 
+    public boolean contains(AbstractParticipant abstractParticipant) {
+        return searchChild(abstractParticipant).isPresent() || rootNode.getParticipant().equals(abstractParticipant);
+    }
+
     // 搜索子类结点.
-    private Optional<ChildNode> searchChild(Participant participant) {
+    private Optional<ChildNode> searchChild(AbstractParticipant abstractParticipant) {
 
         AtomicReference<ChildNode> ref = new AtomicReference<>();
         bfsIter((node, level) -> {
@@ -231,7 +287,7 @@ public class Infuence {
             } else {
 
                 ChildNode childNode = (ChildNode) node;
-                if (childNode.getParticipant().equals(participant)) {
+                if (childNode.getParticipant().equals(abstractParticipant)) {
 
                     ref.set((ChildNode) node);
 
@@ -241,16 +297,16 @@ public class Infuence {
                     return InfuenceConsumer.Action.CONTINUE;
                 }
             }
-        });
+        }, rootNode.getParticipant());
 
         return Optional.ofNullable(ref.get());
     }
 
     // 广度优先方式迭代.
-    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer) {
+    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer, AbstractParticipant abstractParticipant) {
         Queue<Node> stack = new LinkedList<>();
         int level = 0;
-        stack.add(rootNode);
+        stack.add(abstractParticipant.getNode());
         stack.add(LevelNode.getInstance());
         Node node;
         InfuenceConsumer.Action action;
@@ -313,7 +369,7 @@ public class Infuence {
             }
 
             return InfuenceConsumer.Action.CONTINUE;
-        });
+        }, rootNode.getParticipant());
 
         return new TreeSize(maxWide.get(), maxHigh.get());
     }
@@ -338,21 +394,26 @@ public class Infuence {
 
 
     // 树的结点.
-    private static class Node {
-        private Participant participant;
+
+    /**
+     * 树节点.
+     */
+    protected static class Node {
+        private AbstractParticipant abstractParticipant;
         private Node parent;
         private List<Node> children;
+        private int level;
 
-        public Node(Participant participant) {
-            this.participant = participant;
+        public Node(AbstractParticipant abstractParticipant) {
+            this.abstractParticipant = abstractParticipant;
         }
 
         public Optional<Node> getParent() {
             return Optional.ofNullable(parent);
         }
 
-        public Participant getParticipant() {
-            return participant;
+        public AbstractParticipant getParticipant() {
+            return abstractParticipant;
         }
 
         public List<Node> getChildren() {
@@ -367,6 +428,14 @@ public class Infuence {
             this.parent = parent;
         }
 
+        public int getLevel() {
+            return level;
+        }
+
+        public void setLevel(int level) {
+            this.level = level;
+        }
+
         public void addChild(Node child) {
             if (this.children == null) {
                 this.children = new LinkedList<>();
@@ -375,16 +444,26 @@ public class Infuence {
             child.setParent(this);
             this.children.add(child);
         }
+
+        public void removeChild(Node child) {
+            if (this.children == null) {
+                return;
+            }
+            children.remove(child);
+        }
     }
 
-    private static class RootNode extends Node {
+    /**
+     * 根节点.
+     */
+    protected static class RootNode extends Node {
         // 触发影响的实例.
         private IEntity entity;
         // 触发影响的实例字段值.
         private ValueChange change;
 
-        public RootNode(IEntity entity, Participant participant, ValueChange change) {
-            super(participant);
+        public RootNode(IEntity entity, AbstractParticipant abstractParticipant, ValueChange change) {
+            super(abstractParticipant);
             this.entity = entity;
             this.change = change;
         }
@@ -419,21 +498,24 @@ public class Infuence {
         public String toString() {
             final StringBuilder sb = new StringBuilder();
 
-            Participant participant = getParticipant();
+            AbstractParticipant abstractParticipant = getParticipant();
             sb.append("(")
-                .append(participant.getEntityClass().code())
+                .append(abstractParticipant.getEntityClass().code())
                 .append(",")
-                .append(getChange().getField().name())
+                .append(getChange() == null ? this.getParticipant().getField().name() : getChange().getField().name())
                 .append(")");
 
             return sb.toString();
         }
     }
 
-    private static class ChildNode extends Node implements Comparable<ChildNode> {
+    /**
+     * 孩子节点.
+     */
+    protected static class ChildNode extends Node implements Comparable<ChildNode> {
 
-        public ChildNode(Participant participant) {
-            super(participant);
+        public ChildNode(AbstractParticipant abstractParticipant) {
+            super(abstractParticipant);
         }
 
         @Override
@@ -464,8 +546,11 @@ public class Infuence {
         }
     }
 
-    // 这是一个表示层结束的结点.
-    private static class LevelNode extends Node {
+
+    /**
+     * 这是一个表示层结束的结点.
+     */
+    protected static class LevelNode extends Node {
 
         public static Node INSTANCE = new LevelNode();
 

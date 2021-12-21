@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CalculateEventDispatcher {
 
-    private Logger log = LoggerFactory.getLogger(CalculateEventDispatcher .class);
+    private Logger log = LoggerFactory.getLogger(CalculateEventDispatcher.class);
 
     @Resource
     private EventBus eventBus;
@@ -47,11 +47,11 @@ public class CalculateEventDispatcher {
         CachedEntityClass entityClassCacheHelper = new CachedEntityClass();
         if (op.isPresent()) {
             try {
-                /**
+                /*
                  * 处理FieldChanges事件
                  */
                 fieldEventDispatcher(op.get(), entityClassCacheHelper);
-                /**
+                /*
                  * 处理RelationChanges事件
                  */
                 relationEventDispatcher(op.get(), entityClassCacheHelper);
@@ -62,7 +62,7 @@ public class CalculateEventDispatcher {
     }
 
     private void relationEventDispatcher(AppMetaChangePayLoad appMetaChangePayLoad, CachedEntityClass cachedEntityClass) {
-        /**
+        /*
          * todo 处理RelationChanges事件
          */
     }
@@ -86,7 +86,6 @@ public class CalculateEventDispatcher {
      * 这里会按照CalculationType分类,然后生成一个对应的事件进行执行.
      *
      * @param appMetaChangePayLoad 事件负载.
-     * @return
      */
     private Map<CalculationType, CalculationEvent>
                     toFieldChanges(AppMetaChangePayLoad appMetaChangePayLoad) {

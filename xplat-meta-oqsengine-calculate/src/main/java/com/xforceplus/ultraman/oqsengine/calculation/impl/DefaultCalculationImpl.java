@@ -9,10 +9,9 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationAbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -510,7 +509,7 @@ public class DefaultCalculationImpl implements Calculation {
                 if (changeOp.isPresent()) {
                     Infuence infuence = new Infuence(
                         context.getFocusEntity(),
-                        CalculationParticipant.Builder.anParticipant()
+                        CalculationAbstractParticipant.Builder.anParticipant()
                             .withEntityClass(context.getFocusClass())
                             .withField(f)
                             .withAffectedEntities(Arrays.asList(

@@ -66,6 +66,9 @@ public class MockEntityClassDefine {
     public static IEntityClass ORDER_CLASS;
     public static IEntityClass ORDER_ITEM_CLASS;
 
+    // 初始化使用，只有一个静态字段的简单订单
+    public static IEntityClass SIMPLE_ORDER_CLASS;
+
     /**
      * 字段定义.
      */
@@ -633,6 +636,24 @@ public class MockEntityClassDefine {
                 )
             ).build();
 
+        SIMPLE_ORDER_CLASS = EntityClass.Builder.anEntityClass()
+                .withId(orderClassId)
+                .withCode("order")
+                .withLevel(0)
+                .withField(
+                        EntityField.Builder.anEntityField()
+                                .withId(Long.MAX_VALUE - FieldId.orderCreateTimeFieldId.ordinal())
+                                .withFieldType(FieldType.DATETIME)
+                                .withName("下单时间")
+                                .withConfig(
+                                        FieldConfig.Builder.anFieldConfig()
+                                                .withSearchable(true)
+                                                .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                                                .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                                                .withRequired(true).build()
+                                ).build()
+                ).build();
+
         ORDER_CLASS = EntityClass.Builder.anEntityClass()
             .withId(orderClassId)
             .withCode("order")
@@ -868,7 +889,7 @@ public class MockEntityClassDefine {
                             .withSearchable(true)
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
-                                    .withAggregationType(AggregationType.MIN)
+                                    .withAggregationType(AggregationType.AVG)
                                     .withClassId(orderItemClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderItemNumFieldId.ordinal())
                                     .withRelationId(orderOrderItemForeignField.id()).build()
@@ -900,7 +921,7 @@ public class MockEntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(orderOrderItemForeignField.id() - 100)
+                        .withId(orderOrderItemForeignField.id())
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withBelongToOwner(true)
                         .withLeftEntityClassId(orderClassId)
@@ -935,6 +956,7 @@ public class MockEntityClassDefine {
                 )
             )
             .build();
+
 
         ORDER_ITEM_CLASS = EntityClass.Builder.anEntityClass()
             .withId(orderItemClassId)
@@ -1050,6 +1072,16 @@ public class MockEntityClassDefine {
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
         }
+    }
+
+    /**
+     * 模拟部署新对象.
+     */
+    public static void changeOrder(MetaManager metaManager) {
+        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), "")).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
+        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
+        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), null)).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
+        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.ref())).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
     }
 
     /**

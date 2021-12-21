@@ -6,96 +6,73 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 初始化参与者.
  */
-public class InitCalculationParticipant implements Participant {
+public class InitCalculationAbstractParticipant extends AbstractParticipant implements Comparable<InitCalculationAbstractParticipant> {
     private IEntityClass sourceEntityClass;
-    private IEntityField sourceField;
-    private IEntityClass entityClass;
-    private IEntityField field;
-    private Collection<IEntity> affectedEntities;
-    private Object attachment;
+    private List<IEntityField> sourceField;
+
+    /**
+     * 候选年龄，用于相同class内不同字段排序的依据.
+     */
+    private int age;
+
+    /**
+     * 正在初始化的实例.
+     */
+    private IEntity process;
 
 
     public IEntityClass getSourceEntityClass() {
         return sourceEntityClass;
     }
 
-    public IEntityField getSourceField() {
+    /**
+     * 获取源字段列表.
+     */
+    public List<IEntityField> getSourceField() {
+        if (sourceField == null) {
+            return Collections.emptyList();
+        }
         return sourceField;
     }
 
-    @Override
-    public IEntityClass getEntityClass() {
-        return entityClass;
+    /**
+     * 年龄加一.
+     */
+    public int growUp() {
+        return ++age;
     }
 
-    @Override
-    public IEntityField getField() {
-        return field;
+    public int getAge() {
+        return age;
+    }
+
+    public int getLevel() {
+        return node.getLevel();
+    }
+
+
+    public IEntity getProcess() {
+        return process;
+    }
+
+    public void setProcess(IEntity process) {
+        this.process = process;
     }
 
     /**
-     * 获得得当前参与者的影响entity列表.
-     *
-     * @return 影响entity列表.
+     * entity实例是否变化.
      */
-    @Override
-    public Collection<IEntity> getAffectedEntities() {
-        if (affectedEntities == null) {
-            return Collections.emptyList();
-        } else {
-            return affectedEntities;
+    public boolean isChange(IEntity entity) {
+        if (this.process == null) {
+            return false;
         }
-    }
-
-    /**
-     * 增加受影响的实例.
-     *
-     * @param entity 实例.
-     */
-    @Override
-    public void addAffectedEntity(IEntity entity) {
-        if (affectedEntities == null) {
-            this.affectedEntities = new ArrayList<>();
-        }
-
-        this.affectedEntities.add(entity);
-    }
-
-    /**
-     * 删除受影响的实例.
-     *
-     * @param id 实例标识.
-     * @return 删除的实例.
-     */
-    @Override
-    public Optional<IEntity> removeAffectedEntities(long id) {
-        if (affectedEntities == null) {
-            return Optional.empty();
-        } else {
-            AtomicReference<IEntity> targetEntity = new AtomicReference<>();
-            this.affectedEntities.removeIf(e -> {
-                if (e.id() == id) {
-                    targetEntity.set(e);
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-
-            return Optional.ofNullable(targetEntity.get());
-        }
-    }
-
-    @Override
-    public Optional<Object> getAttachment() {
-        return Optional.ofNullable(attachment);
+        return this.process.equals(entity);
     }
 
     @Override
@@ -103,7 +80,7 @@ public class InitCalculationParticipant implements Participant {
         final StringBuilder sb = new StringBuilder("Participant{");
         sb.append("sourceEntityClass").append(sourceEntityClass);
         sb.append("sourceField").append(sourceField);
-        sb.append("entityClass=").append(entityClass);
+        sb.append("entityClass=").append(super.getEntityClass());
         sb.append(", field=").append(field);
         sb.append(", attachment=").append(attachment);
         sb.append('}');
@@ -118,7 +95,7 @@ public class InitCalculationParticipant implements Participant {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        InitCalculationParticipant that = (InitCalculationParticipant) o;
+        InitCalculationAbstractParticipant that = (InitCalculationAbstractParticipant) o;
         return Objects.equals(entityClass, that.entityClass) && Objects.equals(field, that.field);
     }
 
@@ -127,16 +104,28 @@ public class InitCalculationParticipant implements Participant {
         return Objects.hash(entityClass, field);
     }
 
+    @Override
+    public int compareTo(InitCalculationAbstractParticipant participant) {
+        if (this.age - participant.age == 0) {
+            return this.getField().compareTo(participant.getField());
+        } else {
+            // 降序.
+            return participant.age - this.age;
+        }
+    }
+
     /**
      * 构造器.
      */
     public static final class Builder {
         private IEntityClass sourceEntityClass;
-        private IEntityField sourceField;
+        private List<IEntityField> sourceField;
         private IEntityClass entityClass;
         private IEntityField field;
         private Collection<IEntity> affectedEntities;
         private Object attachment;
+        private int age;
+        private AbstractParticipant pre;
 
         private Builder() {
         }
@@ -146,12 +135,14 @@ public class InitCalculationParticipant implements Participant {
         }
 
         public Builder withSourceEntityClass(IEntityClass sourceEntityClass) {
-            this.sourceEntityClass = entityClass;
+            this.sourceEntityClass = sourceEntityClass;
             return this;
         }
 
-        public Builder withSourceField(IEntityField sourceField) {
-            this.sourceField = field;
+
+
+        public Builder withSourceField(List<IEntityField> sourceField) {
+            this.sourceField = sourceField;
             return this;
         }
 
@@ -166,6 +157,11 @@ public class InitCalculationParticipant implements Participant {
             return this;
         }
 
+        public Builder withAge(int age) {
+            this.age = age;
+            return this;
+        }
+
         public Builder withAffectedEntities(Collection<IEntity> affectedEntities) {
             this.affectedEntities = new ArrayList<>(affectedEntities);
             return this;
@@ -176,17 +172,24 @@ public class InitCalculationParticipant implements Participant {
             return this;
         }
 
+        public Builder withPre(AbstractParticipant pre) {
+            this.pre = pre;
+            return this;
+        }
+
         /**
          * 构造.
          */
-        public InitCalculationParticipant build() {
-            InitCalculationParticipant participant = new InitCalculationParticipant();
+        public InitCalculationAbstractParticipant build() {
+            InitCalculationAbstractParticipant participant = new InitCalculationAbstractParticipant();
             participant.sourceEntityClass = this.sourceEntityClass;
             participant.sourceField = this.sourceField;
             participant.affectedEntities = this.affectedEntities;
             participant.entityClass = this.entityClass;
             participant.attachment = this.attachment;
             participant.field = this.field;
+            participant.age = this.age;
+            participant.pre = this.pre;
             return participant;
         }
     }

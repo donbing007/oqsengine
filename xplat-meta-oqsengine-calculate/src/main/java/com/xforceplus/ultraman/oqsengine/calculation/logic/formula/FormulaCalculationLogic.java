@@ -5,10 +5,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationAbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -87,7 +87,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
                         if (args.contains(participantField.name())) {
                             infuenceInner.impact(
                                 participant,
-                                    CalculationParticipant.Builder.anParticipant()
+                                    CalculationAbstractParticipant.Builder.anParticipant()
                                     .withEntityClass(participantClass)
                                     .withField(f)
                                     .build()
@@ -102,7 +102,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+    public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant, Collection<IEntity> entities)
         throws CalculationException {
 
         return entities.stream().mapToLong(e -> e.id()).filter(id -> id > 0).toArray();

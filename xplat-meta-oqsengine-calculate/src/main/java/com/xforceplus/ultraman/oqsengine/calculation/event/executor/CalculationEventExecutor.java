@@ -19,7 +19,7 @@ public interface CalculationEventExecutor {
      * @param cachedEntityClass 该次计算的entityClass缓存.
      * @param resource 计算所依赖的资源,通常是系统启动时所注入的resource.
      * @return true、false.
-     * @throws SQLException
+     * @throws SQLException .
      */
     boolean execute(CalculationEvent calculationEvent, CachedEntityClass cachedEntityClass, CalculationEventResource resource) throws SQLException;
 }
