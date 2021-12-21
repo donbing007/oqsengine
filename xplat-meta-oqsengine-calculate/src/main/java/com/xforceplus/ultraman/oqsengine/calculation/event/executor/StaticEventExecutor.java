@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.event.executor;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 import java.sql.SQLException;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @since 1.8
  */
-public class StaticEventExecutor implements CalculationEventExecutor {
+public class StaticEventExecutor extends AbstractEventExecutor {
 
     @Override
     public boolean execute(CalculationEvent feedBack, CachedEntityClass cachedEntityClass, CalculationEventResource resource) throws SQLException {

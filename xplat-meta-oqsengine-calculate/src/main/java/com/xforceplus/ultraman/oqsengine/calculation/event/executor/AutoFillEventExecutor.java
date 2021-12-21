@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.event.executor;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-public class AutoFillEventExecutor implements CalculationEventExecutor {
+public class AutoFillEventExecutor extends AbstractEventExecutor {
 
     private Logger log = LoggerFactory.getLogger(AutoFillEventExecutor.class);
 

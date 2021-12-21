@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.event.executor;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 import java.sql.SQLException;
