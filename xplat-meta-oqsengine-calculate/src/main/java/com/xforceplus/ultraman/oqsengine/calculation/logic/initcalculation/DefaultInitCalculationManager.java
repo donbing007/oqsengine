@@ -684,10 +684,10 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                         if (accept.get(SUCCESS) != null && !accept.get(SUCCESS).isEmpty()) {
                             List<InitCalculationParticipant> successRes = accept.get(SUCCESS);
                             for (InitCalculationParticipant success : successRes) {
-                                if (initResultInfo.getFailedInfo().containsKey(success.getEntityClass().id())) {
-                                    initResultInfo.getFailedInfo().get(success.getEntityClass().id()).add(success.getField().id());
+                                if (initResultInfo.getSuccessInfo().containsKey(success.getEntityClass().id())) {
+                                    initResultInfo.getSuccessInfo().get(success.getEntityClass().id()).add(success.getField().id());
                                 } else {
-                                    initResultInfo.getFailedInfo().put(success.getEntityClass().id(), Stream.of(success.getField().id()).collect(Collectors.toList()));
+                                    initResultInfo.getSuccessInfo().put(success.getEntityClass().id(), Stream.of(success.getField().id()).collect(Collectors.toList()));
                                 }
 
                                 done.put(INIT_FLAG + success.getField().id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
