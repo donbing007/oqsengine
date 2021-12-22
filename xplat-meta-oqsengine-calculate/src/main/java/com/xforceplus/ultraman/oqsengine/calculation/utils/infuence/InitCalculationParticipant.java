@@ -12,7 +12,7 @@ import java.util.Objects;
 /**
  * 初始化参与者.
  */
-public class InitCalculationAbstractParticipant extends AbstractParticipant implements Comparable<InitCalculationAbstractParticipant> {
+public class InitCalculationParticipant extends AbstractParticipant implements Comparable<InitCalculationParticipant> {
     private IEntityClass sourceEntityClass;
     private List<IEntityField> sourceField;
 
@@ -95,7 +95,7 @@ public class InitCalculationAbstractParticipant extends AbstractParticipant impl
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        InitCalculationAbstractParticipant that = (InitCalculationAbstractParticipant) o;
+        InitCalculationParticipant that = (InitCalculationParticipant) o;
         return Objects.equals(entityClass, that.entityClass) && Objects.equals(field, that.field);
     }
 
@@ -105,7 +105,7 @@ public class InitCalculationAbstractParticipant extends AbstractParticipant impl
     }
 
     @Override
-    public int compareTo(InitCalculationAbstractParticipant participant) {
+    public int compareTo(InitCalculationParticipant participant) {
         if (this.age - participant.age == 0) {
             return this.getField().compareTo(participant.getField());
         } else {
@@ -180,8 +180,8 @@ public class InitCalculationAbstractParticipant extends AbstractParticipant impl
         /**
          * 构造.
          */
-        public InitCalculationAbstractParticipant build() {
-            InitCalculationAbstractParticipant participant = new InitCalculationAbstractParticipant();
+        public InitCalculationParticipant build() {
+            InitCalculationParticipant participant = new InitCalculationParticipant();
             participant.sourceEntityClass = this.sourceEntityClass;
             participant.sourceField = this.sourceField;
             participant.affectedEntities = this.affectedEntities;

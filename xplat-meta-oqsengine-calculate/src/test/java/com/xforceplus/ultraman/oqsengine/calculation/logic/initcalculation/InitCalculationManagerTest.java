@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.serializable.HessianSerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
@@ -361,7 +361,7 @@ class InitCalculationManagerTest {
         while (!manager.isComplete(info)) {
             Map<IEntityClass, HashSet<AbstractParticipant>> candidate = manager.voteCandidate(info);
             Collection<AbstractParticipant> abstractParticipants = manager.voteRun(info);
-            ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> map = manager.sortRun(abstractParticipants, info);
+            ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
         Assertions.assertTrue(info.getNeed().isEmpty());
     }
@@ -374,7 +374,7 @@ class InitCalculationManagerTest {
         while (!manager.isComplete(info)) {
             Map<IEntityClass, HashSet<AbstractParticipant>> candidate = manager.voteCandidate(info);
             Collection<AbstractParticipant> abstractParticipants = manager.voteRun(info);
-            ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> map = manager.sortRun(abstractParticipants, info);
+            ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
 
         Assertions.assertEquals(info.getAll(), all);

@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.init
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -65,7 +65,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
     }
 
     @Override
-    public IEntity init(IEntity entity, InitCalculationAbstractParticipant participant) throws RuntimeException, SQLException {
+    public IEntity init(IEntity entity, InitCalculationParticipant participant) throws RuntimeException, SQLException {
 
         Optional<IValue> value = entity.entityValue().getValue(participant.getField().id());
 

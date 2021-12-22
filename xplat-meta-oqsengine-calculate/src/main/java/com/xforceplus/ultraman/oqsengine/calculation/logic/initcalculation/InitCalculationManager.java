@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.vavr.control.Either;
@@ -64,7 +64,7 @@ public interface InitCalculationManager {
      * [A,B], [C]
      * 同组内并发初始化，不同组需等前组完成.
      */
-    public  ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo);
+    public  ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo);
 
     /**
      * 如果当前app已经在队列中，无需加入.否则返回一个需要初始化的字段列表.

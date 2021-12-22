@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -129,13 +129,13 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                 infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
                     abstractParticipants.forEach(p -> {
-                        InitCalculationAbstractParticipant pt = (InitCalculationAbstractParticipant) p;
+                        InitCalculationParticipant pt = (InitCalculationParticipant) p;
                         if (pt.getSourceField().contains(participant.getField()) && canImpact(pt, participant)) {
                             boolean needImpact = true;
                             for (Infuence in : infuences) {
                                 // 去除别的树中重复的参与者，根据当前层数大小决定
                                 if (in.contains(pt)) {
-                                    if (pt.getLevel() - ((InitCalculationAbstractParticipant) participant).getLevel() <= 1) {
+                                    if (pt.getLevel() - ((InitCalculationParticipant) participant).getLevel() <= 1) {
                                         needImpact = false;
                                         in.remove(pt.getPre(), pt);
                                         infuenceInner.impact(participant, pt);
@@ -224,7 +224,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
             // 历史候选人年龄加一
             if (candidate.size() > 0) {
                 candidate.values().forEach(participants ->
-                        participants.forEach(participant -> ((InitCalculationAbstractParticipant) participant).growUp()));
+                        participants.forEach(participant -> ((InitCalculationParticipant) participant).growUp()));
             }
 
             // 候选池中计算字段参与者
@@ -274,26 +274,29 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
-        Map<IEntityClass, Collection<InitCalculationAbstractParticipant>> map = new HashMap<>();
+    public ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
+        if (abstractParticipants.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Map<IEntityClass, Collection<InitCalculationParticipant>> map = new HashMap<>();
         // 相同entityClass的计算字段按照年龄降序排序.
         abstractParticipants.forEach(participant -> {
             if (map.containsKey(participant.getEntityClass())) {
-                map.get(participant.getEntityClass()).add((InitCalculationAbstractParticipant) participant);
+                map.get(participant.getEntityClass()).add((InitCalculationParticipant) participant);
             } else {
-                TreeSet<InitCalculationAbstractParticipant> set = new TreeSet<>();
-                set.add((InitCalculationAbstractParticipant) participant);
+                TreeSet<InitCalculationParticipant> set = new TreeSet<>();
+                set.add((InitCalculationParticipant) participant);
                 map.put(participant.getEntityClass(), set);
             }
         });
 
         ArrayList<HashSet<IEntityClass>> hashSets = individualClasses(null, map, new ArrayList<>());
-        ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> run = new ArrayList<>(hashSets.size());
+        ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = new ArrayList<>(hashSets.size());
         // 转换成kv，participant按照entityClass分类，按照年龄排序.
         for (HashSet<IEntityClass> hashSet : hashSets) {
-            Map<IEntityClass, Collection<InitCalculationAbstractParticipant>> hashMap = new HashMap<>();
+            Map<IEntityClass, Collection<InitCalculationParticipant>> hashMap = new HashMap<>();
             hashSet.forEach(entityClass -> {
-                List<InitCalculationAbstractParticipant> collect = map.get(entityClass).stream().filter(initCalculationParticipant ->
+                List<InitCalculationParticipant> collect = map.get(entityClass).stream().filter(initCalculationParticipant ->
                         !initCalculationInfo.getSkip().contains(initCalculationParticipant)).collect(Collectors.toList());
                 if (collect.size() > 0) {
                     hashMap.put(entityClass, collect);
@@ -331,7 +334,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
      * 解析entityClass依赖顺序.
      */
     private ArrayList<HashSet<IEntityClass>> individualClasses(Collection<IEntityClass> up,
-                                                               Map<IEntityClass, Collection<InitCalculationAbstractParticipant>> map,
+                                                               Map<IEntityClass, Collection<InitCalculationParticipant>> map,
                                                                ArrayList<HashSet<IEntityClass>> individuals) {
         if (map == null || map.isEmpty()) {
             return new ArrayList<>();
@@ -352,7 +355,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                 }
             }
             if (temp.isEmpty()) {
-                logger.error("sortRun error ");
+                logger.error("sortRun error");
                 return new ArrayList<>();
             }
             individuals.add(temp);
@@ -362,8 +365,8 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
 
         } else {
             // 寻找up的下一层
+            Collection<IEntityClass> finalUp = up;
             for (IEntityClass entityClass : all) {
-                Collection<IEntityClass> finalUp = up;
                 if (map.get(entityClass).stream().anyMatch(initCalculationParticipant -> (finalUp.contains(initCalculationParticipant.getSourceEntityClass())
                         && !initCalculationParticipant.getEntityClass().equals(initCalculationParticipant.getSourceEntityClass())))) {
                     temp.add(entityClass);
@@ -406,7 +409,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                 && !child.getField().calculationType().equals(CalculationType.AUTO_FILL)) {
             return true;
         } else {
-            InitCalculationAbstractParticipant initCalculationParticipant = (InitCalculationAbstractParticipant) child;
+            InitCalculationParticipant initCalculationParticipant = (InitCalculationParticipant) child;
             HashSet<IEntityField> fields = new HashSet<>(initCalculationParticipant.getSourceField());
             fields.remove(father.getField());
             if (child.getField().calculationType().equals(CalculationType.FORMULA) || child.getField().calculationType().equals(CalculationType.AUTO_FILL)) {
@@ -435,7 +438,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     /**
-     * 得到传递依赖的entityClass集合.
+     * 得到传递向上依赖的entityClass集合.
      */
     private Set<IEntityClass> transitiveEntityClass(IEntityClass entityClass, InitCalculationInfo initCalculationInfo) {
         Set<IEntityClass> set = new HashSet<>();
@@ -512,7 +515,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
      * 根节点判定.
      */
     private boolean isRootNode(AbstractParticipant abstractParticipant) {
-        InitCalculationAbstractParticipant initCalculationParticipant = (InitCalculationAbstractParticipant) abstractParticipant;
+        InitCalculationParticipant initCalculationParticipant = (InitCalculationParticipant) abstractParticipant;
         AbstractCalculation calculation = initCalculationParticipant.getField().config().getCalculation();
 
         if (calculation.getCalculationType().equals(CalculationType.AGGREGATION)) {
@@ -541,9 +544,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
             }
             return autoFill.getArgs().stream().noneMatch(arg -> {
                 if (entityClass.field(arg).isPresent()) {
-                    if (!isStaticField(entityClass.id(), entityClass.field(arg).get().id())) {
-                        return true;
-                    }
+                    return !isStaticField(entityClass.id(), entityClass.field(arg).get().id());
                 }
                 return false;
             });
@@ -575,7 +576,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
      * 构建参与者.
      */
     private AbstractParticipant build(IEntityClass entityClass, IEntityField entityField, CalculationType calculationType) {
-        InitCalculationAbstractParticipant.Builder builder = InitCalculationAbstractParticipant.Builder.anParticipant().withEntityClass(entityClass).withField(entityField);
+        InitCalculationParticipant.Builder builder = InitCalculationParticipant.Builder.anParticipant().withEntityClass(entityClass).withField(entityField);
         switch (calculationType) {
             case FORMULA:
                 Formula formula = (Formula) entityField.config().getCalculation();
@@ -671,18 +672,18 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                     // 选举本次可执行初始化计算字段参与者.
                     Collection<AbstractParticipant> abstractParticipants = voteRun(initCalculationInfo);
                     // 可执行计算字段参与者分类.
-                    ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> run = sortRun(abstractParticipants, initCalculationInfo);
+                    ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = sortRun(abstractParticipants, initCalculationInfo);
 
                     if (!run.isEmpty()) {
                         // 执行初始化
-                        Map<String, List<InitCalculationAbstractParticipant>> accept = calculationInitLogic.accept(run);
+                        Map<String, List<InitCalculationParticipant>> accept = calculationInitLogic.accept(run);
 
                         Map<String, byte[]> done = new HashMap<>();
 
                         // 记录初始化成功的计算参与者
                         if (accept.get(SUCCESS) != null && !accept.get(SUCCESS).isEmpty()) {
-                            List<InitCalculationAbstractParticipant> successRes = accept.get(SUCCESS);
-                            for (InitCalculationAbstractParticipant success : successRes) {
+                            List<InitCalculationParticipant> successRes = accept.get(SUCCESS);
+                            for (InitCalculationParticipant success : successRes) {
                                 if (initResultInfo.getFailedInfo().containsKey(success.getEntityClass().id())) {
                                     initResultInfo.getFailedInfo().get(success.getEntityClass().id()).add(success.getField().id());
                                 } else {
@@ -698,8 +699,8 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
 
                         // 记录初始化失败的计算参与者
                         if (accept.get(FAILED) != null && !accept.get(FAILED).isEmpty()) {
-                            List<InitCalculationAbstractParticipant> failedRes = accept.get(FAILED);
-                            for (InitCalculationAbstractParticipant failedRe : failedRes) {
+                            List<InitCalculationParticipant> failedRes = accept.get(FAILED);
+                            for (InitCalculationParticipant failedRe : failedRes) {
                                 if (initResultInfo.getFailedInfo().containsKey(failedRe.getEntityClass().id())) {
                                     initResultInfo.getFailedInfo().get(failedRe.getEntityClass().id()).add(failedRe.getField().id());
                                 } else {

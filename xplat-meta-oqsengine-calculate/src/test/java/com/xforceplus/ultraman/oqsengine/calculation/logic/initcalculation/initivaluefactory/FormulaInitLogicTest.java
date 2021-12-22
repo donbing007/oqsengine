@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory;
 
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -29,7 +29,7 @@ class FormulaInitLogicTest {
     private static IEntityField B_FML;
     private static IEntityField B1;
     private IEntity entity;
-    private InitCalculationAbstractParticipant participant;
+    private InitCalculationParticipant participant;
 
    @BeforeEach
    public void before() {
@@ -75,7 +75,7 @@ class FormulaInitLogicTest {
                new LongValue(B1, 10)
        ))).build();
 
-       participant = InitCalculationAbstractParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
+       participant = InitCalculationParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
    }
     @Test
     public void testInit() {

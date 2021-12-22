@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.init
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
@@ -25,7 +25,7 @@ public class FormulaInitLogic implements InitIvalueLogic {
     }
 
     @Override
-    public IEntity init(IEntity entity, InitCalculationAbstractParticipant participant) {
+    public IEntity init(IEntity entity, InitCalculationParticipant participant) {
         Optional<IValue> value = entity.entityValue().getValue(participant.getField().id());
         if (!value.isPresent() || (value.get().getValue() instanceof EmptyTypedValue)) {
             participant.setProcess(entity);

@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -118,7 +118,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                         .forEach(f -> {
                             infuenceInner.impact(
                                 participant,
-                                    CalculationAbstractParticipant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                     .withEntityClass(relationshipClass)
                                     .withField(f)
                                     .withAttachment(r.isStrong())

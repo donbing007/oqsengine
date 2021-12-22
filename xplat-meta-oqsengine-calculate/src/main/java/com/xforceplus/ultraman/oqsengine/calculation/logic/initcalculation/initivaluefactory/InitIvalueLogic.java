@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory;
 
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.sql.SQLException;
@@ -15,5 +15,5 @@ import java.sql.SQLException;
 public interface InitIvalueLogic {
     public CalculationType getCalculationType();
 
-    public IEntity init(IEntity entity, InitCalculationAbstractParticipant participant) throws SQLException;
+    public IEntity init(IEntity entity, InitCalculationParticipant participant) throws SQLException;
 }

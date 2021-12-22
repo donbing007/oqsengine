@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 
 
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.vavr.Tuple2;
@@ -25,13 +25,13 @@ public interface CalculationInitLogic extends Lifecycle {
      * @param run 本次初始化的计算字段参与者集合.
      * @return 失败列表、成功列表.
      */
-    public Map<String, List<InitCalculationAbstractParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> run) throws InterruptedException;
+    public Map<String, List<InitCalculationParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException;
 
 
     /**
      * 具体计算字段初始化逻辑.
      */
-    public Tuple2<Boolean, List<InitCalculationAbstractParticipant>> initLogic(IEntityClass entityClass, Collection<InitCalculationAbstractParticipant> participants);
+    public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(IEntityClass entityClass, Collection<InitCalculationParticipant> participants);
 
 
 }

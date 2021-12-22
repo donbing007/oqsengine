@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  * 计算字段影响树参与者.
  */
-public class CalculationAbstractParticipant extends AbstractParticipant {
+public class CalculationParticipant extends AbstractParticipant {
 
     @Override
     public String toString() {
@@ -30,7 +30,7 @@ public class CalculationAbstractParticipant extends AbstractParticipant {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        CalculationAbstractParticipant that = (CalculationAbstractParticipant) o;
+        CalculationParticipant that = (CalculationParticipant) o;
         return Objects.equals(entityClass, that.entityClass) && Objects.equals(field, that.field);
     }
 
@@ -78,8 +78,8 @@ public class CalculationAbstractParticipant extends AbstractParticipant {
         /**
          * 构造.
          */
-        public CalculationAbstractParticipant build() {
-            CalculationAbstractParticipant participant = new CalculationAbstractParticipant();
+        public CalculationParticipant build() {
+            CalculationParticipant participant = new CalculationParticipant();
             participant.affectedEntities = this.affectedEntities;
             participant.entityClass = this.entityClass;
             participant.attachment = this.attachment;

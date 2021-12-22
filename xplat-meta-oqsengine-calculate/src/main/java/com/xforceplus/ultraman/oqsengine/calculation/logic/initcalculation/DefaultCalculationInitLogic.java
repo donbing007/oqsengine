@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory.InitIvalueFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory.InitIvalueLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -87,10 +87,10 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
     @Override
-    public Map<String, List<InitCalculationAbstractParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> run) throws InterruptedException {
-        Map<String, List<InitCalculationAbstractParticipant>> res = new HashMap<>();
-        List<Future<Tuple2<Boolean, List<InitCalculationAbstractParticipant>>>> futures = new ArrayList<>();
-        for (Map<IEntityClass, Collection<InitCalculationAbstractParticipant>> classCollectionMap : run) {
+    public Map<String, List<InitCalculationParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException {
+        Map<String, List<InitCalculationParticipant>> res = new HashMap<>();
+        List<Future<Tuple2<Boolean, List<InitCalculationParticipant>>>> futures = new ArrayList<>();
+        for (Map<IEntityClass, Collection<InitCalculationParticipant>> classCollectionMap : run) {
 
             for (IEntityClass entityClass : classCollectionMap.keySet()) {
                 // 同组内entityClass可以并发
@@ -107,7 +107,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
 
             futures.forEach(future -> {
                 try {
-                    Tuple2<Boolean, List<InitCalculationAbstractParticipant>> tuple2 = future.get();
+                    Tuple2<Boolean, List<InitCalculationParticipant>> tuple2 = future.get();
                     if (tuple2._1()) {
                         if (res.get(SUCCESS) == null || res.get(SUCCESS).isEmpty()) {
                             res.put(SUCCESS, tuple2._2());
@@ -131,7 +131,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
     @Override
-    public Tuple2<Boolean, List<InitCalculationAbstractParticipant>> initLogic(IEntityClass entityClass, Collection<InitCalculationAbstractParticipant> participants) {
+    public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
         try {
             DataIterator<OriginalEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1);
             List<IEntity> failedList = new ArrayList<>();
@@ -176,20 +176,20 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
             batchEntity.remove(entityClass);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            return new Tuple2<>(false, (List<InitCalculationAbstractParticipant>) participants);
+            return new Tuple2<>(false, (List<InitCalculationParticipant>) participants);
         }
-        return new Tuple2<>(true, (List<InitCalculationAbstractParticipant>) participants);
+        return new Tuple2<>(true, (List<InitCalculationParticipant>) participants);
     }
 
 
-    private IEntity initEntity(IEntity entity, Collection<InitCalculationAbstractParticipant> participants) throws SQLException {
-        for (InitCalculationAbstractParticipant participant : participants) {
+    private IEntity initEntity(IEntity entity, Collection<InitCalculationParticipant> participants) throws SQLException {
+        for (InitCalculationParticipant participant : participants) {
             initIValue(entity, participant);
         }
         return entity;
     }
 
-    private IEntity initIValue(IEntity entity, InitCalculationAbstractParticipant participant) throws SQLException {
+    private IEntity initIValue(IEntity entity, InitCalculationParticipant participant) throws SQLException {
         InitIvalueLogic logic = initIvalueFactory.getLogic(participant.getField().calculationType());
         logic.init(entity, participant);
         if (participant.isChange(entity)) {
@@ -215,17 +215,17 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
 
-    class Runner implements Callable<Tuple2<Boolean, List<InitCalculationAbstractParticipant>>> {
+    class Runner implements Callable<Tuple2<Boolean, List<InitCalculationParticipant>>> {
         private final IEntityClass entityClass;
-        private final Collection<InitCalculationAbstractParticipant> participants;
+        private final Collection<InitCalculationParticipant> participants;
 
-        public Runner(IEntityClass entityClass, Collection<InitCalculationAbstractParticipant> participants) {
+        public Runner(IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
             this.entityClass = entityClass;
             this.participants = participants;
         }
 
         @Override
-        public Tuple2<Boolean, List<InitCalculationAbstractParticipant>> call() throws Exception {
+        public Tuple2<Boolean, List<InitCalculationParticipant>> call() throws Exception {
             return initLogic(this.entityClass, this.participants);
         }
     }

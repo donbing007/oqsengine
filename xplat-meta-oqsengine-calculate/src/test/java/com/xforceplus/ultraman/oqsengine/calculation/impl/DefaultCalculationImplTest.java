@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
@@ -178,18 +178,18 @@ public class DefaultCalculationImplTest {
         });
         Map<AbstractParticipant, AbstractParticipant> scope = new HashMap<>();
         scope.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build()
         );
         scope.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build()
         );
@@ -197,14 +197,14 @@ public class DefaultCalculationImplTest {
 
         Map<AbstractParticipant, long[]> entityIds = new HashMap<>();
         entityIds.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
             new long[] {entityB.id()}
         );
 
         entityIds.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
             new long[] {entityD.id()}
@@ -222,10 +222,10 @@ public class DefaultCalculationImplTest {
         });
         scope = new HashMap<>();
         scope.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_LOOKUP).build()
         );
@@ -233,7 +233,7 @@ public class DefaultCalculationImplTest {
 
         entityIds = new HashMap<>();
         entityIds.put(
-                CalculationAbstractParticipant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_LOOKUP).build(),
             new long[] {entityC.id()}

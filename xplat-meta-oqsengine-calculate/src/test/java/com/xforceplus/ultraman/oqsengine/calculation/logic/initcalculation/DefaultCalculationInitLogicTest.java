@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initi
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory.FormulaInitLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory.InitIvalueFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory.InitIvalueLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -71,7 +71,7 @@ class DefaultCalculationInitLogicTest {
     private static IEntityField B_FML;
     private static IEntityField B1;
 
-    private InitCalculationAbstractParticipant participant;
+    private InitCalculationParticipant participant;
 
 
     @BeforeEach
@@ -128,7 +128,7 @@ class DefaultCalculationInitLogicTest {
                 new LongValue(B1, 10)
         ))).build();
 
-        participant = InitCalculationAbstractParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
+        participant = InitCalculationParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
 
         originalEntity = new OriginalEntity();
 
@@ -152,20 +152,20 @@ class DefaultCalculationInitLogicTest {
 
     @Test
     public void testAccept() throws InterruptedException {
-        ArrayList<Map<IEntityClass, Collection<InitCalculationAbstractParticipant>>> run = new ArrayList<>();
-        Map<IEntityClass, Collection<InitCalculationAbstractParticipant>> map = new HashMap<>();
+        ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = new ArrayList<>();
+        Map<IEntityClass, Collection<InitCalculationParticipant>> map = new HashMap<>();
         IEntityClass c = EntityClass.Builder.anEntityClass().withId(B_CLASS.id()).build();
         map.put(B_CLASS, Stream.of(participant).collect(Collectors.toList()));
         map.put(c, Stream.of(participant).collect(Collectors.toList()));
         run.add(map);
 
-        Map<String, List<InitCalculationAbstractParticipant>> accept = defaultCalculationInitLogic.accept(run);
+        Map<String, List<InitCalculationParticipant>> accept = defaultCalculationInitLogic.accept(run);
         Assertions.assertFalse(accept.containsKey("false"));
     }
 
     @Test
     public void testInitLogic() {
-        Tuple2<Boolean, List<InitCalculationAbstractParticipant>> tuple2 = defaultCalculationInitLogic.initLogic(B_CLASS, Stream.of(participant).collect(Collectors.toList()));
+        Tuple2<Boolean, List<InitCalculationParticipant>> tuple2 = defaultCalculationInitLogic.initLogic(B_CLASS, Stream.of(participant).collect(Collectors.toList()));
         Assertions.assertTrue(tuple2._1());
     }
 

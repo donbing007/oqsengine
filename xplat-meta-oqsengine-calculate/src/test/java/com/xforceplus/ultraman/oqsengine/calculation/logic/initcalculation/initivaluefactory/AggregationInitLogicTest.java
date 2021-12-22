@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.initivaluefactory;
 
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationAbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -55,7 +55,7 @@ class AggregationInitLogicTest {
 
     private IEntity entity;
 
-    private InitCalculationAbstractParticipant participant;
+    private InitCalculationParticipant participant;
 
 
 
@@ -192,7 +192,7 @@ class AggregationInitLogicTest {
 
     @Test
     public void testInitMax() throws SQLException {
-        participant = InitCalculationAbstractParticipant.Builder.anParticipant().withField(b1).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(a1).collect(Collectors.toList())).build();
+        participant = InitCalculationParticipant.Builder.anParticipant().withField(b1).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(a1).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
         Long value = (Long) init.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
         Long value1 = (Long) entity.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
@@ -202,7 +202,7 @@ class AggregationInitLogicTest {
 
     @Test
     public void testInitCount() throws SQLException {
-        participant =  InitCalculationAbstractParticipant.Builder.anParticipant().withField(b2).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
+        participant =  InitCalculationParticipant.Builder.anParticipant().withField(b2).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
         Long value = (Long) init.entityValue().getValue(bClass.field(202).get().id()).get().getValue();
         Long value1 = (Long) entity.entityValue().getValue(bClass.field(202 ).get().id()).get().getValue();
