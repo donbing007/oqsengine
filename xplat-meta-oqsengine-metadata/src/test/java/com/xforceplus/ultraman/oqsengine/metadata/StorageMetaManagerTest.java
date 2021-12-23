@@ -320,6 +320,65 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         }
     }
 
+    @Test
+    public void multiReadTest() throws IllegalAccessException {
+        String appId = "testLoad";
+        int expectedVersion = 1;
+        long expectedId = 1 + 7200;
+
+        List<ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
+
+        EntityClassSyncResponse entityClassSyncResponse =
+            EntityClassSyncProtoBufMocker.Response
+                .entityClassSyncResponseGenerator(appId, expectedVersion, expectedEntityStorageList);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
+
+        Collection<IEntityClass> entityClasses =
+            MetaInitialization.getInstance().getMetaManager().appLoad(appId);
+
+        Assertions.assertEquals(9, entityClasses.size());
+
+        //  本层
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
+
+        // 父亲
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId)  &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
+
+        // 祖先
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId)  &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
+    }
+
     /**
      * test & check.
      */

@@ -12,18 +12,14 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
