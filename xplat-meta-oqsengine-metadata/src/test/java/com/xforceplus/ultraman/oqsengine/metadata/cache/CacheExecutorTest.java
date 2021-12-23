@@ -5,12 +5,19 @@ import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecu
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,10 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({RedisContainer.class})
 public class CacheExecutorTest {
 
-    private CacheExecutor cacheExecutor = MetaInitialization.getInstance().getCacheExecutor();
-
-    public CacheExecutorTest() throws IllegalAccessException {
-    }
+    private CacheExecutor cacheExecutor;
 
     @BeforeEach
     public void before() throws Exception {
@@ -48,6 +52,61 @@ public class CacheExecutorTest {
         InitializationHelper.clearAll();
         InitializationHelper.destroy();
     }
+
+    @Test
+    public void saveTestPayloadCheck() throws JsonProcessingException {
+
+        // 纯粹测试新增.
+        List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
+        EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+
+        entityClassStorageList.add(one);
+        EntityClassStorage two = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        entityClassStorageList.add(two);
+
+        MetaChangePayLoad metaChangePayLoad =
+            cacheExecutor.save("1", 1, entityClassStorageList);
+
+        checkMetaPayLoad(metaChangePayLoad, "1", 1, entityClassStorageList);
+
+
+        //  这里是预期需要修改的Field
+        List<EntityClassStorage> mixedUpdateDeletes = new ArrayList<>();
+        EntityClassStorage oldOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+
+        mixedUpdateDeletes.add(oldOne);
+        EntityClassStorage oldTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        mixedUpdateDeletes.add(oldTwo);
+
+        //  写入更新对象
+        entityClassStorageList.clear();
+        EntityClassStorage dOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        dOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        dOne.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        entityClassStorageList.add(dOne);
+
+        EntityClassStorage dTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        dTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        dTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        entityClassStorageList.add(dTwo);
+
+        metaChangePayLoad =
+            cacheExecutor.save("1", 3, entityClassStorageList);
+
+        checkMetaPayLoad(metaChangePayLoad, "1", 3, mixedUpdateDeletes);
+    }
+
 
     /**
      * 测试版本
@@ -376,5 +435,45 @@ public class CacheExecutorTest {
                 Arrays.asList(4L, 20L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(brother));
         expectedEntityStorageList.add(brother);
+    }
+
+
+    private void checkMetaPayLoad(MetaChangePayLoad metaChangePayLoad, String appId, int version, List<EntityClassStorage> entityClassStorageList)  {
+        Assertions.assertEquals(appId, metaChangePayLoad.getAppId());
+
+        Assertions.assertEquals(version, metaChangePayLoad.getVersion());
+
+        Assertions.assertEquals(entityClassStorageList.size(), metaChangePayLoad.getEntityChanges().size());
+
+        metaChangePayLoad.getEntityChanges().forEach(
+            entityChange -> {
+                EntityClassStorage entityClass = entityClassStorageList.stream().filter(k -> {
+                    return k.getId() == entityChange.getEntityClassId();
+                }).findFirst().orElse(null);
+
+                Assertions.assertNotNull(entityClass);
+
+                entityChange.getFieldChanges().forEach(
+                    fieldChange -> {
+                        EntityField entityField = null;
+                        if (null == fieldChange.getProfile()) {
+                            entityField =
+                                entityClass.getFields().stream().filter(s -> {
+                                    return s.id() == fieldChange.getFieldId();
+                                }).findFirst().orElse(null);
+                        } else {
+                            ProfileStorage profileStorage =
+                                entityClass.getProfileStorageMap().get(fieldChange.getProfile());
+                            Assertions.assertNotNull(profileStorage);
+                            entityField = profileStorage.getEntityFieldList().stream().filter(s -> {
+                                return s.id() == fieldChange.getFieldId();
+                            }).findFirst().orElse(null);
+                        }
+
+                        Assertions.assertNotNull(entityField);
+                    }
+                );
+            }
+        );
     }
 }

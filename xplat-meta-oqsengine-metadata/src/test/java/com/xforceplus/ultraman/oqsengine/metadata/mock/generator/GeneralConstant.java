@@ -24,10 +24,13 @@ public class GeneralConstant {
         FieldConfig.MetaFieldSense.NORMAL;
 
     public static final String MOCK_EXPRESSION = "return 1 + 1;";
+    public static final String MOCK_EXPRESSION_SUB = "return 1 + 2;";
     public static final int MOCK_LEVEL = 1;
 
     public static final String MOCK_PATTEN = "{0000}";
+    public static final String MOCK_PATTEN_SUB = "{0001}";
     public static final String MOCK_SENIOR_EXPRESSION = "getId(${0000}, ${A}${B})";
+    public static final String MOCK_SENIOR_EXPRESSION_SUB = "getId(${00000}, ${A}${B})";
     public static final int MOCK_DOMAIN_NOT_TYPE = AutoFill.DomainNoType.SENIOR.getType();
     public static final List<String> MOCK_SENIOR_ARGS = Arrays.asList("A", "B");
     public static final String MOCK_MODEL = "model";

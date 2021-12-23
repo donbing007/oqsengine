@@ -361,17 +361,23 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         MetaChangePayLoad appMetaChangePayLoad = new MetaChangePayLoad(appId, version);
 
-        Map<Long, EntityClassStorage> oldMetas =
-            CacheToStorageGenerator
-                .toEntityClassStorages(OBJECT_MAPPER, remoteMultiplyLoading(appEntityIdList(appId, version), version));
+        //  获取旧版本.
+        int oldVersion = version(appId);
+        Map<Long, EntityClassStorage> oldMetas = null;
+        //  当存在旧版本时，获取旧版本信息.
+        if (oldVersion > NOT_EXIST_VERSION) {
+            oldMetas = CacheToStorageGenerator
+                .toEntityClassStorages(OBJECT_MAPPER,
+                    remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
+        }
 
         //  set data
         for (EntityClassStorage newStorage : storageList) {
 
             //  存入到cache中，并获得entityClass的变更事件
+            EntityClassStorage old = null != oldMetas ? oldMetas.remove(newStorage.getId()) : null;
             MetaChangePayLoad.EntityChange entityChange =
-                saveToCache(toCacheSetKey(version, newStorage.getId()), oldMetas.remove(newStorage.getId()),
-                    newStorage);
+                saveToCache(toCacheSetKey(version, newStorage.getId()), old, newStorage);
 
             if (null != entityChange) {
                 appMetaChangePayLoad.getEntityChanges().add(entityChange);
@@ -379,14 +385,16 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         //  还剩余的oldMetas表明有删除的EntityClass,需要反查一次oldMeta确定删除事件
-        oldMetas.forEach(
-            (k, v) -> {
-                MetaChangePayLoad.EntityChange entityChange = new MetaChangePayLoad.EntityChange(k);
-                reverseEventCheck(v, null, null, entityChange);
+        if (null != oldMetas) {
+            oldMetas.forEach(
+                (k, v) -> {
+                    MetaChangePayLoad.EntityChange entityChange = new MetaChangePayLoad.EntityChange(k);
+                    reverseEventCheck(v, null, null, entityChange);
 
-                appMetaChangePayLoad.getEntityChanges().add(entityChange);
-            }
-        );
+                    appMetaChangePayLoad.getEntityChanges().add(entityChange);
+                }
+            );
+        }
 
         //  reset version
         if (!resetVersion(appId, version,
@@ -823,8 +831,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         } else if (null == newOne) {
             return new MetaChangePayLoad.FieldChange(oldOne.id(), OperationType.DELETE, profile);
         } else if (!oldOne.toString().equals(newOne.toString())) {
-            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
             //  entityField变更的标准为toString后两边不一致
+            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
         }
         return null;
     }
@@ -868,9 +876,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null != newStorage.getFields()) {
             for (IEntityField entityField : newStorage.getFields()) {
                 try {
-                    MetaChangePayLoad.FieldChange change =
-                        toFieldChange(null == oldStorage ? null : oldStorage.find(entityField.id(), null), entityField,
-                            null);
+                    IEntityField oldField = (null == oldStorage) ? null : oldStorage.find(entityField.id(), null);
+                    MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, null);
                     if (null != change) {
                         if (null == entityChange) {
                             entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
@@ -896,10 +903,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
                             syncCommands
                                 .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
 
-                            MetaChangePayLoad.FieldChange change =
-                                toFieldChange(
-                                    null == oldStorage ? null : oldStorage.find(entityField.id(), ps.getCode()),
-                                    entityField, ps.getCode());
+                            IEntityField oldField =
+                                (null == oldStorage) ? null : oldStorage.find(entityField.id(), ps.getCode());
+                            MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, ps.getCode());
+
                             if (null != change) {
                                 if (null == entityChange) {
                                     entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
@@ -967,15 +974,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private void findAndAddEvent(IEntityField origin, List<EntityField> newFields, String profile,
                                  MetaChangePayLoad.EntityChange entityChange) {
-        IEntityField findEntityField = origin;
+        IEntityField findEntityField = null;
+
         if (null != newFields) {
-            findEntityField = newFields.stream().filter(n -> n.id() != origin.id()).findFirst()
-                .orElse(null);
+            findEntityField = newFields.stream().filter(n -> n.id() == origin.id()).findFirst().orElse(null);
         }
 
-        if (null != findEntityField) {
+        if (null == findEntityField) {
             MetaChangePayLoad.FieldChange change =
-                toFieldChange(findEntityField, null, profile);
+                toFieldChange(origin, null, profile);
             entityChange.getFieldChanges().add(change);
         }
     }

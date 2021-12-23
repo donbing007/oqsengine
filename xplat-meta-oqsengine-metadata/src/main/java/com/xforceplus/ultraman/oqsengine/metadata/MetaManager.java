@@ -62,7 +62,7 @@ public interface MetaManager {
      * @param entityClassId 元信息标识.
      * @return 元信息的实例.
      */
-    Collection<IEntityClass> withProfilesLoad(long entityClassId, int version);
+    Collection<IEntityClass> withProfilesLoad(long entityClassId);
 
     /**
      * 表示需要关注此appId代表的应用的元信息.

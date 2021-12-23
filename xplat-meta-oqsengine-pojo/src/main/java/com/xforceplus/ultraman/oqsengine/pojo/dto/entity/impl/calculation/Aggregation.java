@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * 聚合字段属性.
@@ -105,6 +106,18 @@ public class Aggregation extends AbstractCalculation {
 
     public void setAggregationType(AggregationType aggregationType) {
         this.aggregationType = aggregationType;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", Aggregation.class.getSimpleName() + "[", "]")
+            .add("classId=" + classId)
+            .add("fieldId=" + fieldId)
+            .add("relationId=" + relationId)
+            .add("conditions=" + conditions)
+            .add("aggregationType=" + aggregationType)
+            .add("aggregationByFields=" + aggregationByFields)
+            .toString();
     }
 
     @Override

@@ -123,7 +123,7 @@ public class StorageMetaManager implements MetaManager {
 
             entityClassIds.forEach(
                 entityClassId -> {
-                    collection.addAll(withProfilesLoad(entityClassId, NOT_EXIST_VERSION));
+                    collection.addAll(withProfilesLoad(entityClassId, currentVersion));
                 }
             );
 
@@ -181,35 +181,8 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
-
-            if (version == NOT_EXIST_VERSION) {
-                version = cacheExecutor.version(entityClassId);
-            }
-            Optional<IEntityClass> entityClassOp =
-                load(entityClassId, version, null);
-
-            if (entityClassOp.isPresent()) {
-                entityClassList.add(entityClassOp.get());
-
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
-                if (!profiles.isEmpty()) {
-                    for (String profile : profiles) {
-                        Optional<IEntityClass> ecOp =
-                            load(entityClassId, version, profile);
-
-                        ecOp.ifPresent(entityClassList::add);
-                    }
-                }
-            }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
-        }
-        return new ArrayList<>();
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
+        return withProfilesLoad(entityClassId, NOT_EXIST_VERSION);
     }
 
     /**
@@ -373,6 +346,38 @@ public class StorageMetaManager implements MetaManager {
         return true;
     }
 
+    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
+        try {
+            List<IEntityClass> entityClassList = new ArrayList<>();
+
+            if (version == NOT_EXIST_VERSION) {
+                version = cacheExecutor.version(entityClassId);
+            }
+            Optional<IEntityClass> entityClassOp =
+                load(entityClassId, version, null);
+
+            if (entityClassOp.isPresent()) {
+                entityClassList.add(entityClassOp.get());
+
+                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+                if (!profiles.isEmpty()) {
+                    for (String profile : profiles) {
+                        Optional<IEntityClass> ecOp =
+                            load(entityClassId, version, profile);
+
+                        ecOp.ifPresent(entityClassList::add);
+                    }
+                }
+            }
+
+            return entityClassList;
+        } catch (Exception e) {
+            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
+        }
+        return new ArrayList<>();
+
+    }
+
     private void offLineInit(String path) {
         if (OffLineMetaHelper.isValidPath(path)) {
 
@@ -516,7 +521,7 @@ public class StorageMetaManager implements MetaManager {
 
     private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues,
                                      BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                     BiFunction<Long, Integer, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
+                                     Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
         JsonProcessingException {
 
         List<IEntityField> fields = new ArrayList<>();
@@ -573,7 +578,7 @@ public class StorageMetaManager implements MetaManager {
      */
     private List<Relationship> toQqsRelation(List<RelationStorage> relationStorageList,
                                              BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                             BiFunction<Long, Integer, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
+                                             Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
         List<Relationship> relationships = new ArrayList<>();
         if (null != relationStorageList) {
             relationStorageList.forEach(
