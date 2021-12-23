@@ -57,9 +57,6 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     // key为 entityId-fieldId的组合.
     private Map<String, ValueChange> valueChanges;
 
-    public DefaultCalculationContext() {
-        calculationLogicFactory = new CalculationLogicFactory();
-    }
 
     @Override
     public CalculationScenarios getScenariso() {
@@ -317,6 +314,7 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
         private ResourceLocker resourceLocker;
         private MultiResourceLocker multiResourceLocker;
         private ConditionsSelectStorage conditionsSelectStorage;
+        private CalculationLogicFactory calculationLogicFactory;
 
         private Builder() {
         }
@@ -365,6 +363,11 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
             return this;
         }
 
+        public Builder withCalculationLogicFactory(CalculationLogicFactory calculationLogicFactory) {
+            this.calculationLogicFactory = calculationLogicFactory;
+            return this;
+        }
+
         public Builder withEventBus(EventBus eventBus) {
             this.eventBus = eventBus;
             return this;
@@ -402,6 +405,7 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
             defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
             defaultCalculationContext.resourceLocker = this.resourceLocker;
             defaultCalculationContext.multiResourceLocker = this.multiResourceLocker;
+            defaultCalculationContext.calculationLogicFactory = this.calculationLogicFactory;
             return defaultCalculationContext;
         }
     }

@@ -4,12 +4,13 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -175,7 +176,7 @@ public class DefaultCalculationImplTest {
             CalculationScenarios.REPLACE,
             CalculationScenarios.DELETE
         });
-        Map<Participant, Participant> scope = new HashMap<>();
+        Map<AbstractParticipant, AbstractParticipant> scope = new HashMap<>();
         scope.put(
                 CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
@@ -194,7 +195,7 @@ public class DefaultCalculationImplTest {
         );
         aggregationLogic.setScope(scope);
 
-        Map<Participant, long[]> entityIds = new HashMap<>();
+        Map<AbstractParticipant, long[]> entityIds = new HashMap<>();
         entityIds.put(
                 CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
@@ -260,7 +261,7 @@ public class DefaultCalculationImplTest {
     public void testBuildNotChangeFieldButNeed() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.BUILD).build();
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory()).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
 
@@ -273,7 +274,7 @@ public class DefaultCalculationImplTest {
     public void testBuildCalculation() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.BUILD).build();
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory()).build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.focusEntity(entityC, C_CLASS);
         context.addValueChange(
@@ -288,7 +289,7 @@ public class DefaultCalculationImplTest {
     public void testReplaceCalculation() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.REPLACE).build();
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.focusEntity(entityC, C_CLASS);
         context.addValueChange(
@@ -297,6 +298,67 @@ public class DefaultCalculationImplTest {
         DefaultCalculationImpl calculation = new DefaultCalculationImpl();
         IEntity newEntity = calculation.calculate(context);
         Assertions.assertEquals(200L, newEntity.entityValue().getValue(C_LOOKUP.id()).get().valueToLong());
+    }
+
+    @Test
+    public void testReplaceMaintenance() throws Exception {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withMasterStorage(masterStorage)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+        context.getCalculationLogicFactory().get().register(lookupLogic);
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+
+        context.focusEntity(entityA, A_CLASS);
+        context.addValueChange(
+            ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
+        );
+
+        calculation.maintain(context);
+
+        long[] replaceIds = masterStorage.getReplaceEntities().stream().mapToLong(e -> e.id()).sorted().toArray();
+
+        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityA.id()) < 0,
+            String.format("The target instance (%s) was not expected to be found, but it was.", "entityA"));
+
+        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityB.id()) >= 0,
+            String.format("The target instance (%s) was expected to be found, but was not.", "entityB"));
+        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityD.id()) >= 0,
+            String.format("The target instance (%s) was expected to be found, but was not.", "entityD"));
+        Assertions.assertTrue(Arrays.binarySearch(replaceIds, entityC.id()) >= 0,
+            String.format("The target instance (%s) was expected to be found, but was not.", "entityC"));
+    }
+
+    /**
+     * 测试持久化部份错误情况.
+     * 执行批量持久化,发生错误会针对错误数据进行重试.
+     * 这里测试是否进行了重试,同时重试的次数是否有上限.
+     */
+    @Test
+    public void testPersistenceErrReplayMax() throws Exception {
+        // entityB实例持久化会一直错误.因为这里指定了判断其是否等于entityB,实际更新的是entityA.
+        masterStorage.setReplaceTest(e -> !(e.id() == entityB.id()));
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withMasterStorage(masterStorage)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+        context.getCalculationLogicFactory().get().register(lookupLogic);
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+
+        context.focusEntity(entityA, A_CLASS);
+        context.addValueChange(
+            ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
+        );
+
+        calculation.maintain(context);
+
+        // b 重试了多少次.
+        long size = masterStorage.getReplaceEntities().stream()
+            .filter(e -> e.id() == entityB.id())
+            .count();
+
+        Assertions.assertEquals(100, size);
     }
 
     static class MockMasterStorage implements MasterStorage {
@@ -389,9 +451,9 @@ public class DefaultCalculationImplTest {
         // 计算字段 key为请求计算的IValue实例, value为计算结果.
         private Map<IEntityField, IValue> valueChanage;
         // 指定一个参与者的影响实例id列表.
-        private Map<Participant, long[]> entityIds;
+        private Map<AbstractParticipant, long[]> entityIds;
         // 需要增加的影响范围,当迭代树碰到和key相等的参与者时需要为其增加value影响.
-        private Map<Participant, Participant> scope;
+        private Map<AbstractParticipant, AbstractParticipant> scope;
 
         public MockLogic(CalculationType type) {
             this.type = type;
@@ -408,12 +470,12 @@ public class DefaultCalculationImplTest {
         }
 
         public void setEntityIds(
-            Map<Participant, long[]> entityIds) {
+            Map<AbstractParticipant, long[]> entityIds) {
             this.entityIds = entityIds;
         }
 
         public void setScope(
-            Map<Participant, Participant> scope) {
+            Map<AbstractParticipant, AbstractParticipant> scope) {
             this.scope = scope;
         }
 
@@ -426,7 +488,7 @@ public class DefaultCalculationImplTest {
         public void scope(CalculationContext context, Infuence infuence) {
             infuence.scan((parentClassOp, participant, infuenceInner) -> {
 
-                Participant child = scope.get(participant);
+                AbstractParticipant child = scope.get(participant);
 
                 if (child != null) {
                     infuenceInner.impact(participant, child);
@@ -437,9 +499,9 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, Participant participant,
+        public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant,
                                         Collection<IEntity> triggerEntities) throws CalculationException {
-            long[] ids = entityIds.get(participant);
+            long[] ids = entityIds.get(abstractParticipant);
             if (ids == null) {
                 return new long[0];
             } else {

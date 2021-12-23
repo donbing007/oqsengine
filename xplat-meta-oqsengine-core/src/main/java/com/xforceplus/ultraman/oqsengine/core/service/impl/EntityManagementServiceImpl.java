@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -842,6 +843,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withConditionsSelectStorage(this.combinedSelectStorage)
             .withResourceLocker(this.resourceLocker)
             .withMultiResourceLocker(this.multiResourceLocker)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
             .build();
     }
 
