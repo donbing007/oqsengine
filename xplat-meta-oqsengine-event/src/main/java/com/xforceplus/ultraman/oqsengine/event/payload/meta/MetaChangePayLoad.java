@@ -1,19 +1,16 @@
-package com.xforceplus.ultraman.oqsengine.event.payload.calculator;
+package com.xforceplus.ultraman.oqsengine.event.payload.meta;
 
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by justin.xu on 12/2021.
  *
  * @since 1.8
  */
-public class AppMetaChangePayLoad implements Serializable {
+public class MetaChangePayLoad implements Serializable {
     /**
      * appId.
      */
@@ -25,11 +22,6 @@ public class AppMetaChangePayLoad implements Serializable {
     private int version;
 
     /**
-     * 当前app下的所有entityClassId列表.
-     */
-    private List<Long> appEntityClasses;
-
-    /**
      * 当前app下发生变化的entityClass集合.
      * 可以通过EntityChange->entityClassId 获取(metadata.Load) EntityClass.
      * 可以通过EntityChange->entityClassId 获取(metadata.ProfileLoads) ProfileEntityClass列表.
@@ -39,10 +31,9 @@ public class AppMetaChangePayLoad implements Serializable {
     /**
      * construct fx.
      */
-    public AppMetaChangePayLoad(String appId, int version) {
+    public MetaChangePayLoad(String appId, int version) {
         this.appId = appId;
         this.version = version;
-        this.appEntityClasses = new ArrayList<>();
         this.entityChanges = new ArrayList<>();
     }
 
@@ -52,10 +43,6 @@ public class AppMetaChangePayLoad implements Serializable {
 
     public String getAppId() {
         return appId;
-    }
-
-    public List<Long> getAppEntityClasses() {
-        return appEntityClasses;
     }
 
     public List<EntityChange> getEntityChanges() {
@@ -71,9 +58,9 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         private Long entityClassId;
         /**
-         * 变更的Field列表,已按照CalculationType分类.
+         * 变更的Field列表.
          */
-        private Map<CalculationType, List<FieldChange>> fieldChanges;
+        private List<FieldChange> fieldChanges;
         /**
          * 变更的Relation列表.
          */
@@ -84,7 +71,7 @@ public class AppMetaChangePayLoad implements Serializable {
          */
         public EntityChange(Long entityClassId) {
             this.entityClassId = entityClassId;
-            this.fieldChanges = new HashMap<>();
+            this.fieldChanges = new ArrayList<>();
             this.relationChanges = new ArrayList<>();
         }
 
@@ -92,7 +79,7 @@ public class AppMetaChangePayLoad implements Serializable {
             return entityClassId;
         }
 
-        public Map<CalculationType, List<FieldChange>> getFieldChanges() {
+        public List<FieldChange> getFieldChanges() {
             return fieldChanges;
         }
 
@@ -109,15 +96,15 @@ public class AppMetaChangePayLoad implements Serializable {
         /**
          * fieldId.
          */
-        protected Long fieldId;
+        private Long fieldId;
         /**
          * 操作类型, 新增/修改/删除.
          */
-        protected OperationType op;
+        private OperationType op;
         /**
          * 该field属于哪个profile.
          */
-        protected String profile;
+        private String profile;
 
         /**
          * construct fx.

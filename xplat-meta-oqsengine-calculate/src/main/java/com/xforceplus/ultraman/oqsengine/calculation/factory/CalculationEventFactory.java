@@ -33,9 +33,7 @@ public class CalculationEventFactory {
      * 构造事件处理工厂.
      */
     public CalculationEventFactory(SegmentStorage storage, MetaManager metaManager) {
-        /**
-         * 注入的初始化类.
-         */
+        //  注入的初始化类.
         resource = CalculationEventResource.Builder.anCalculationEventContext()
                             .withMeta(metaManager)
                             .withSegmentStorage(storage)
@@ -56,6 +54,7 @@ public class CalculationEventFactory {
 
     /**
      * 获取当前计算类型的执行器.
+     *
      * @param calculationType 计算类型.
      * @return 执行器.
      */
@@ -66,6 +65,7 @@ public class CalculationEventFactory {
 
     /**
      * 获取当前的计算资源.
+     *
      * @return 当前计算资源.
      */
     public CalculationEventResource resource() {

@@ -107,6 +107,35 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
+    public Collection<IEntityClass> appLoad(String appId) {
+        try {
+            Collection<IEntityClass> collection = new ArrayList<>();
+            int currentVersion = cacheExecutor.version(appId);
+            if (currentVersion == NOT_EXIST_VERSION) {
+                return collection;
+            }
+
+            Collection<Long> entityClassIds =
+                cacheExecutor.appEntityIdList(appId, currentVersion);
+            if (entityClassIds.isEmpty()) {
+                return collection;
+            }
+
+            entityClassIds.forEach(
+                entityClassId -> {
+                    collection.addAll(withProfilesLoad(entityClassId, NOT_EXIST_VERSION));
+                }
+            );
+
+            return collection;
+
+        } catch (Exception e) {
+            logger.warn("load meta by appId error, appId {}, message : {}", appId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public Optional<IEntityClass> load(long entityClassId, String profile) {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         return load(entityClassId, cacheExecutor.version(entityClassId), profile);
@@ -152,12 +181,13 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
         try {
             List<IEntityClass> entityClassList = new ArrayList<>();
 
-            int version = cacheExecutor.version(entityClassId);
-
+            if (version == NOT_EXIST_VERSION) {
+                version = cacheExecutor.version(entityClassId);
+            }
             Optional<IEntityClass> entityClassOp =
                 load(entityClassId, version, null);
 
@@ -486,7 +516,7 @@ public class StorageMetaManager implements MetaManager {
 
     private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues,
                                      BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                     Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
+                                     BiFunction<Long, Integer, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
         JsonProcessingException {
 
         List<IEntityField> fields = new ArrayList<>();
@@ -496,6 +526,7 @@ public class StorageMetaManager implements MetaManager {
 
         profile = (null == profile) ? OqsProfile.UN_DEFINE_PROFILE : profile;
 
+        boolean profileFound = false;
         //  entityFields & profile
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
@@ -504,18 +535,23 @@ public class StorageMetaManager implements MetaManager {
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
+                    profileFound = true;
                     fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {
                     String key = parseOneKeyFromProfileRelations(entry.getKey());
                     if (profile.equals(key)) {
+                        profileFound = true;
                         relationships.addAll(toQqsRelation(OBJECT_MAPPER.readValue(keyValues.get(entry.getKey()),
                             OBJECT_MAPPER.getTypeFactory().constructParametricType(
                                 List.class, RelationStorage.class)), rightEntityClassLoader, rightFamilyEntityClassLoader));
                     }
                 }
             }
+        }
+        if (profileFound) {
+            builder.withProfile(profile);
         }
 
         builder.withFields(fields);
@@ -537,7 +573,7 @@ public class StorageMetaManager implements MetaManager {
      */
     private List<Relationship> toQqsRelation(List<RelationStorage> relationStorageList,
                                              BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
-                                             Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
+                                             BiFunction<Long, Integer, Collection<IEntityClass>> rightFamilyEntityClassLoader) {
         List<Relationship> relationships = new ArrayList<>();
         if (null != relationStorageList) {
             relationStorageList.forEach(

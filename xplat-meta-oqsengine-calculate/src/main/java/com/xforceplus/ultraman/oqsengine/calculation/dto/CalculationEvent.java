@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.dto;
 
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,17 +14,15 @@ import java.util.Map;
 public class CalculationEvent {
     private String appId;
     private int version;
-    private List<Long> appClassIds;
-    private Map<Long, List<AppMetaChangePayLoad.FieldChange>> fieldChanges;
+    private Map<Long, List<CalculationField>> calculationFields;
 
     /**
      * construct fx.
      */
-    public CalculationEvent(String appId, int version, List<Long> appClassIds) {
+    public CalculationEvent(String appId, int version) {
         this.appId = appId;
         this.version = version;
-        this.appClassIds = appClassIds;
-        this.fieldChanges = new HashMap<>();
+        this.calculationFields = new HashMap<>();
     }
 
     public int getVersion() {
@@ -38,19 +37,63 @@ public class CalculationEvent {
         this.appId = appId;
     }
 
-    public void setAppClassIds(List<Long> appClassIds) {
-        this.appClassIds = appClassIds;
-    }
-
     public String getAppId() {
         return appId;
     }
 
-    public List<Long> getAppClassIds() {
-        return appClassIds;
+    public Map<Long, List<CalculationField>> getCalculationFields() {
+        return calculationFields;
     }
 
-    public Map<Long, List<AppMetaChangePayLoad.FieldChange>> getFieldChanges() {
-        return fieldChanges;
+    /**
+     * CalculationField.
+     */
+    public static class CalculationField {
+        /**
+         * 操作类型, 新增/修改/删除.
+         */
+        private OperationType op;
+        /**
+         * 该field属于哪个profile.
+         */
+        private String profile;
+        /**
+         * 当前改变后的entityField,当op为delete时,该字段为null.
+         */
+        private IEntityField entityField;
+
+        /**
+         * construct.
+         */
+        public CalculationField(OperationType op, String profile,
+                                IEntityField entityField) {
+            this.op = op;
+            this.profile = profile;
+            this.entityField = entityField;
+        }
+
+        public OperationType getOp() {
+            return op;
+        }
+
+        public void setOp(OperationType op) {
+            this.op = op;
+        }
+
+        public String getProfile() {
+            return profile;
+        }
+
+        public void setProfile(String profile) {
+            this.profile = profile;
+        }
+
+        public IEntityField getEntityField() {
+            return entityField;
+        }
+
+        public void setEntityField(IEntityField entityField) {
+            this.entityField = entityField;
+        }
     }
 }

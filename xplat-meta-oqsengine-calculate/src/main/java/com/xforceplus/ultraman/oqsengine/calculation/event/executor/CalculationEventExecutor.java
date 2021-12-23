@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by justin.xu on 12/2021.
@@ -19,7 +21,15 @@ public interface CalculationEventExecutor {
      * @param cachedEntityClass 该次计算的entityClass缓存.
      * @param resource 计算所依赖的资源,通常是系统启动时所注入的resource.
      * @return true、false.
-     * @throws SQLException
+     * @throws SQLException 异常.
      */
     boolean execute(CalculationEvent calculationEvent, CachedEntityClass cachedEntityClass, CalculationEventResource resource) throws SQLException;
+
+    /**
+     * 对于delete操作的统一处理.
+     *
+     * @param deletes 删除列表.
+     * @param resource 计算所依赖的资源,通常是系统启动时所注入的resource.
+     */
+    void deleteTypeExecute(Map<Long, List<Long>> deletes, CalculationEventResource resource);
 }

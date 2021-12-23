@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Collection;
@@ -26,7 +25,7 @@ public interface CacheExecutor {
      * @param storageList 需要保存的元信息.
      * @return true成功, false失败.
      */
-    AppMetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException;
 
     /**

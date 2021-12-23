@@ -121,7 +121,7 @@ public class Relationship {
     /*
      * "右"家族对象元信息定义的延迟加载方法.
      */
-    private Function<Long, Collection<IEntityClass>> familyEntityClassLoader;
+    private BiFunction<Long, Integer, Collection<IEntityClass>> familyEntityClassLoader;
 
     /*
      * 是否是伴生关系
@@ -150,7 +150,7 @@ public class Relationship {
      * @return entityClass 实例.
      */
     public Collection<IEntityClass> getRightFamilyEntityClasses() {
-        return familyEntityClassLoader.apply(rightEntityClassId);
+        return familyEntityClassLoader.apply(rightEntityClassId, -1);
     }
 
     public long getId() {
@@ -250,7 +250,7 @@ public class Relationship {
         private boolean belongToOwner = false;
         private boolean strong = false;
         private BiFunction<Long, String, Optional<IEntityClass>> entityClassLoader;
-        private Function<Long, Collection<IEntityClass>> familyEntityClassLoader;
+        private BiFunction<Long, Integer, Collection<IEntityClass>> familyEntityClassLoader;
         private boolean companion = false;
         private long companionRelation;
 
@@ -328,7 +328,7 @@ public class Relationship {
         }
 
         public Builder withRightFamilyEntityClassLoader(
-            Function<Long, Collection<IEntityClass>> familyEntityClassLoader) {
+            BiFunction<Long, Integer, Collection<IEntityClass>> familyEntityClassLoader) {
             this.familyEntityClassLoader = familyEntityClassLoader;
             return this;
         }

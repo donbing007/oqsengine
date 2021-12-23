@@ -220,7 +220,7 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public Collection<IEntityClass> withProfilesLoad(long id) {
+            public Collection<IEntityClass> withProfilesLoad(long id, int version) {
                 return Collections.singletonList(example.getEntityClassById(id));
             }
 

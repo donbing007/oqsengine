@@ -22,11 +22,13 @@ public class CalculationEventResource {
         return metaManager;
     }
 
+    /**
+     * builder.
+     */
     public static class Builder {
         private SegmentStorage segmentStorage;
 
         private MetaManager metaManager;
-
 
         private Builder() {
         }

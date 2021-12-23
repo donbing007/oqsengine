@@ -102,7 +102,7 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
-    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
         return null;
     }
 
