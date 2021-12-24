@@ -484,30 +484,50 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean isSilence) {
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue) {
 
         Map<Long, Integer> vs = new HashMap<>();
-        Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
-        if (null != versions && !versions.isEmpty()) {
+
+        //  获取所有entity->app mapping
+        Map<String, String> entityAppRelations = syncCommands.hgetall(appEntityMappingKey);
+        //  获取所有的app->version mapping
+        Map<String, String> appVersionRelations = syncCommands.hgetall(appVersionKeys);
+
+        String error = "";
+
+        if (null != appVersionRelations && !appVersionRelations.isEmpty() &&
+                    null != entityAppRelations && !entityAppRelations.isEmpty()) {
+
             for (Long entityClassId : entityClassIds) {
-                String version = versions.get(String.valueOf(entityClassId));
-                if (null != version) {
-                    vs.put(entityClassId, Integer.parseInt(version));
-                } else {
-                    String error = String.format("get versions failed, entityClassId : %s", entityClassId);
-                    logger.warn(error);
-                    //  存在未找到，抛出异常
-                    if (!isSilence) {
-                        throw new RuntimeException(error);
+                String appId = entityAppRelations.get(String.valueOf(entityClassId));
+
+                if (null != appId) {
+                    String version = appVersionRelations.get(appId);
+                    if (null != version) {
+                        vs.put(entityClassId, Integer.parseInt(version));
+                    } else {
+                        error = String.format("version not found, appId : %s failed, entityClassId : %s", appId, entityClassId);
                     }
+                } else {
+                    error = String.format("appId not found, entityClassId : %s", entityClassId);
                 }
+
+                if (!error.isEmpty()) {
+                    //  存在错误且继续标志为false
+                    if (!errorContinue) {
+                        break;
+                    }
+                    logger.warn(error);
+                    error = "";
+               }
             }
         } else {
-            String error = "get versions failed, target version in cache is empty.";
+            error = "query entityClassIds->versions failed, no mapping in cache.";
             logger.warn(error);
-            if (!isSilence) {
-                throw new RuntimeException(error);
-            }
+        }
+
+        if (!error.isEmpty() && !errorContinue) {
+            throw new RuntimeException(error);
         }
 
         return vs;

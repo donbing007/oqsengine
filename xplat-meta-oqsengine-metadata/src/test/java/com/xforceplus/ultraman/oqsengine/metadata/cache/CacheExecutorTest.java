@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisConta
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,6 +52,44 @@ public class CacheExecutorTest {
     public void after() throws Exception {
         InitializationHelper.clearAll();
         InitializationHelper.destroy();
+    }
+
+    @Test
+    public void batchVersionsTest() {
+        Map<Long, Integer> expectedVersions = new HashMap<>();
+        List<Long> testEntityClassId = new ArrayList<>();
+
+        String appId = "testAppId_1";
+        int version = 1;
+        long entityClassId = 10001;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        appId = "testAppId_2";
+        version = 2;
+        entityClassId = 10002;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        appId = "testAppId_3";
+        version = 3;
+        entityClassId = 10003;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        Map<Long, Integer> result = cacheExecutor.versions(testEntityClassId, false);
+
+        Assertions.assertEquals(expectedVersions.size(), result.size());
+
+        result.forEach(
+            (k, v) -> {
+                Integer vExpected = expectedVersions.get(k);
+                Assertions.assertEquals(vExpected, v);
+            }
+        );
     }
 
     @Test

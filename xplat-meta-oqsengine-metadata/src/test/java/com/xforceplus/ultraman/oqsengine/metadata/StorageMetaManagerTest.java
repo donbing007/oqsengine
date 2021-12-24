@@ -185,6 +185,19 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
+    public void resetTest() throws IllegalAccessException {
+        String appId = "testNeed";
+        String env = "test";
+        int expectedVersion = EXIST_MIN_VERSION + 1;
+        int version = MetaInitialization.getInstance().getMetaManager().need(appId, env);
+        Assertions.assertEquals(expectedVersion, version);
+
+        env = "fat";
+        version = MetaInitialization.getInstance().getMetaManager().reset(appId, env);
+        Assertions.assertEquals(expectedVersion, version);
+    }
+
+    @Test
     public void loadByEntityRefTest() throws IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;

@@ -311,7 +311,7 @@ public class StorageMetaManager implements MetaManager {
     public int reset(String appId, String env) {
         String cacheEnv = cacheExecutor.appEnvGet(appId);
         //  重置
-        if (null == env || env.isEmpty()) {
+        if (null == cacheEnv || cacheEnv.isEmpty()) {
             return need(appId, env);
         } else {
             int version = cacheExecutor.version(appId);
@@ -417,6 +417,12 @@ public class StorageMetaManager implements MetaManager {
         logger.warn("load path invalid, nothing would be load from offLine-model.");
     }
 
+    /**
+     * 等待SyncClient进行register并返回当前版本.
+     *
+     * @param appId 应用ID.
+     * @return 版本号.
+     */
     private int waitForMetaSync(String appId) {
         CompletableFuture<Integer> future = async(() -> {
             int ver;
@@ -438,21 +444,17 @@ public class StorageMetaManager implements MetaManager {
             return NOT_EXIST_VERSION;
         });
 
-        int version = NOT_EXIST_VERSION;
-
         try {
-            version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            int version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            if (version == NOT_EXIST_VERSION) {
+                throw new RuntimeException(
+                    String.format("get version of appId [%s] failed, reach max wait time", appId));
+            }
+            return version;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-
-        if (version == NOT_EXIST_VERSION) {
-            throw new RuntimeException(
-                String.format("get version of appId [%s] failed, reach max wait time", appId));
-        }
-
-        return version;
     }
 
     /**
