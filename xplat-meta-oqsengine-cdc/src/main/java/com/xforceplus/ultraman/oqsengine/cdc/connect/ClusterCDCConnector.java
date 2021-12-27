@@ -11,7 +11,12 @@ import com.alibaba.otter.canal.client.CanalConnectors;
  */
 public class ClusterCDCConnector extends AbstractCDCConnector {
 
-    public void init(String connectString, String destination, String userName, String password) {
+    public ClusterCDCConnector(String connectString, String destination, String userName, String password) {
+        super(connectString, destination, userName, password);
+    }
+
+    @Override
+    public void init() {
         canalConnector = CanalConnectors.newClusterConnector(connectString, destination, userName, password);
     }
 }
