@@ -37,6 +37,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -645,12 +646,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * convert hints to fails.
      */
-    private Map<String, String> hintsToFails(Collection<CalculationHint> calculationHintCollections) {
+    private Map<String, String> hintsToFails(Collection<Hint> calculationHintCollections) {
         Map<String, String> hintsMap = new HashMap<>();
         if (null != calculationHintCollections) {
             calculationHintCollections.forEach(
-                calculationHint -> {
-                    hintsMap.put(calculationHint.getField().name(), calculationHint.getHint());
+                hint -> {
+                    if (IEntityField.class.isInstance(hint.getTarget())) {
+                        hintsMap.put(((IEntityField) hint.getTarget()).name(), hint.getMsg());
+                    } else {
+                        hintsMap.put(hint.getTarget().toString(), hint.getMsg());
+                    }
                 }
             );
         }
