@@ -3,28 +3,44 @@ package com.xforceplus.ultraman.oqsengine.changelog.entity;
 import com.google.common.collect.Sets;
 import com.xforceplus.ultraman.oqsengine.changelog.command.AddChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.command.ChangelogCommand;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
-import com.xforceplus.ultraman.oqsengine.changelog.event.*;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityDomain;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ValueWrapper;
+import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.event.PersistentEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.event.PropagationChangelogEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.event.SnapshotEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.event.VersionEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO
@@ -427,23 +443,19 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     private void updateEntityDomainState(List<ChangeValue> changeValues) {
         changeValues.forEach(x -> {
             IEntityValue entityValue = entityDomain.getEntity().entityValue();
-            if(entityValue == null){
-                entityValue = new EntityValue();
-                entityDomain.getEntity().resetEntityValue(entityValue);
-            }
             Optional<IValue> value = entityValue.getValue(x.getFieldId());
             if (value.isPresent()) {
                 //has old value
                 //TODO copy value
-                IValue iValue = value.get().copy();
-                iValue.setStringValue(x.getRawValue());
-                entityValue.addValue(iValue);
+                IValue newValue = value.get().copy();
+                newValue.setStringValue(x.getRawValue());
+                entityValue.addValue(newValue);
             } else {
                 Optional<IEntityField> field = entityClass.field(x.getFieldId());
                 if (field.isPresent()) {
                     IEntityField targetField = field.get();
-                    Optional<IValue> iValue = targetField.type().toTypedValue(targetField, x.getRawValue());
-                    iValue.ifPresent(entityValue::addValue);
+                    Optional<IValue> typeValue = targetField.type().toTypedValue(targetField, x.getRawValue());
+                    typeValue.ifPresent(entityValue::addValue);
                 }
             }
         });

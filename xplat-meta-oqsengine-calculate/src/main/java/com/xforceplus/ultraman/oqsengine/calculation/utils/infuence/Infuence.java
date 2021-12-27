@@ -5,12 +5,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 一个影响树,表示目标源的改动造成的影响范围.
@@ -23,9 +24,25 @@ public class Infuence {
 
     private RootNode rootNode;
     private int size;
+    /*
+    KEY: 参与者
+    VALUE: 参与者绑定的结点.
+     */
+    private Map<Participant, Node> participantNodeSearchHelper;
 
+    /**
+     * 构造一个新的影响树.
+     *
+     * @param entity 起源对象实例.
+     * @param participant 参与者.
+     * @param change 值改变.
+     */
     public Infuence(IEntity entity, Participant participant, ValueChange change) {
         rootNode = new RootNode(entity, participant, change);
+
+        participantNodeSearchHelper = new HashMap<>();
+        participantNodeSearchHelper.put(participant, rootNode);
+
         size++;
     }
 
@@ -49,20 +66,20 @@ public class Infuence {
     /**
      * 增加影响.
      *
-     * @param parent      传递影响的参与者.
-     * @param participant 新的参与者.
+     * @param parentParticipant      传递影响的参与者.
+     * @param newParticipant 新的参与者.
      * @return true 成功,false失败.
      */
-    public boolean impact(Participant parent, Participant participant) {
-        if (rootNode.getParticipant().equals(parent)) {
-            insert(rootNode, participant);
+    public boolean impact(Participant parentParticipant, Participant newParticipant) {
+        if (rootNode.getParticipant().equals(parentParticipant)) {
+            insert(rootNode, newParticipant);
             return true;
         }
 
-        Optional<ChildNode> childOp = searchChild(parent);
+        Optional<Node> childOp = searchChild(parentParticipant);
         if (childOp.isPresent()) {
-            ChildNode childNode = childOp.get();
-            insert(childNode, participant);
+            ChildNode childNode = (ChildNode) childOp.get();
+            insert(childNode, newParticipant);
             return true;
         }
 
@@ -208,42 +225,27 @@ public class Infuence {
     }
 
     // 插入影响
-    private void insert(Node point, Participant participant) {
+    private void insert(Node point, Participant newParticipant) {
         for (Node n : point.getChildren()) {
             ChildNode c = (ChildNode) n;
-            if (c.getParticipant().equals(participant)) {
+            if (c.getParticipant().equals(newParticipant)) {
                 // 这里找到表示已经存在.
                 return;
             }
         }
 
-        point.addChild(new ChildNode(participant));
+        Node newChildNode = new ChildNode(newParticipant);
+        point.addChild(newChildNode);
+        participantNodeSearchHelper.put(newParticipant, newChildNode);
+
         size++;
     }
 
     // 搜索子类结点.
-    private Optional<ChildNode> searchChild(Participant participant) {
+    private Optional<Node> searchChild(Participant participant) {
 
-        AtomicReference<ChildNode> ref = new AtomicReference<>();
-        bfsIter((node, level) -> {
-            if (RootNode.class.isInstance(node)) {
-                return InfuenceConsumer.Action.CONTINUE;
-            } else {
-
-                ChildNode childNode = (ChildNode) node;
-                if (childNode.getParticipant().equals(participant)) {
-
-                    ref.set((ChildNode) node);
-
-                    return InfuenceConsumer.Action.OVER;
-
-                } else {
-                    return InfuenceConsumer.Action.CONTINUE;
-                }
-            }
-        });
-
-        return Optional.ofNullable(ref.get());
+        Node node = participantNodeSearchHelper.get(participant);
+        return Optional.ofNullable(node);
     }
 
     // 广度优先方式迭代.
@@ -337,8 +339,10 @@ public class Infuence {
     }
 
 
-    // 树的结点.
-    private static class Node {
+    /**
+     * 表示一个影响结点.
+     */
+    protected static class Node {
         private Participant participant;
         private Node parent;
         private List<Node> children;

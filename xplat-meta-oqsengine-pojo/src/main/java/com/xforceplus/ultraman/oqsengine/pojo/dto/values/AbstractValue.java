@@ -15,9 +15,11 @@ import java.util.Optional;
  */
 public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
+    private boolean dirty;
+    private String attachment;
     private IEntityField field;
     private V value;
-    private String attachment;
+
 
 
     /**
@@ -42,6 +44,7 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         this.field = field;
         this.value = value;
         this.attachment = attachment;
+        this.dirty = true;
     }
 
     @Override
@@ -72,6 +75,21 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     abstract V fromString(String value);
 
     @Override
+    public boolean isDirty() {
+        return this.dirty;
+    }
+
+    @Override
+    public void dirty() {
+        this.dirty = true;
+    }
+
+    @Override
+    public void neat() {
+        this.dirty = false;
+    }
+
+    @Override
     public String valueToString() {
         if (value != null) {
             return value.toString();
@@ -97,6 +115,7 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         sb.append(this.getClass().getSimpleName()).append("{");
         sb.append("field=").append(field);
         sb.append(", value=").append(value);
+        sb.append(", dirty=").append(dirty);
         if (attachment != null) {
             sb.append(", attachment=").append(attachment);
         }

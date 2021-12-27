@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -12,10 +11,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -144,17 +143,17 @@ public class DefaultCalculationImpl implements Calculation {
          */
         CalculationContext userContext;
         for (int i = 0; i < MAINTAINING_MAX_TRY_NUMBER; i++) {
-            try {
-                userContext = (CalculationContext) context.clone();
-            } catch (CloneNotSupportedException ex) {
-                throw new CalculationException(ex.getMessage(), ex);
-            }
+
+            userContext = context.copy();
+
             if (doMaintain(userContext)) {
 
                 // 复制提示信息.
-                for (CalculationHint h : userContext.getHints()) {
-                    context.hint(h.getField(), h.getHint());
+                for (Hint h : userContext.getHints()) {
+                    context.hint(h);
                 }
+
+
 
                 return;
             } else {
@@ -271,7 +270,7 @@ public class DefaultCalculationImpl implements Calculation {
                             context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
                             affectedEntitiy.entityValue().addValue(newValueOp.get());
-                            affectedEntitiy.dirty();
+
                         } else {
 
                             if (logger.isDebugEnabled()) {
@@ -299,10 +298,6 @@ public class DefaultCalculationImpl implements Calculation {
         }
 
         return persist(context, targetEntityId);
-    }
-
-    private String buildKey(long id) {
-        return String.format("calcultion.affected.%d", id);
     }
 
     // 比较值是否相等.

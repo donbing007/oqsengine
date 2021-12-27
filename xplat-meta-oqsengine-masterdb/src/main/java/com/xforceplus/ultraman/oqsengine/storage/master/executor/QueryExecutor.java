@@ -3,12 +3,11 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Optional;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<MasterStorageEntity>> {
+public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonAttributeMasterStorageEntity>> {
 
     private boolean noDetail;
 
@@ -30,7 +29,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
      * @param timeoutMs 超时毫秒.
      * @return 执行器实例.
      */
-    public static Executor<Long, Optional<MasterStorageEntity>> buildHaveAllDetail(
+    public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildHaveAllDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
@@ -42,7 +41,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
      * @param resource  事务资源.
      * @return 执行器实例.
      */
-    public static Executor<Long, Optional<MasterStorageEntity>> buildHaveDetail(
+    public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
@@ -54,7 +53,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
      * @param resource  事务资源.
      * @return 执行器实例.
      */
-    public static Executor<Long, Optional<MasterStorageEntity>> buildNoDetail(
+    public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildNoDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new QueryExecutor(tableName, resource, true, timeoutMs);
     }
@@ -81,7 +80,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
     }
 
     @Override
-    public Optional<MasterStorageEntity> execute(Long id) throws Exception {
+    public Optional<JsonAttributeMasterStorageEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
@@ -92,31 +91,30 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
 
             checkTimeout(st);
 
-            MasterStorageEntity entity = null;
+            JsonAttributeMasterStorageEntity storageEntity = null;
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(id)
-                        .withVersion(rs.getInt(FieldDefine.VERSION))
-                        .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
-                        .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
-                        .withOp(rs.getInt(FieldDefine.OP));
+                    storageEntity = new JsonAttributeMasterStorageEntity();
+                    storageEntity.setId(id);
+                    storageEntity.setVersion(rs.getInt(FieldDefine.VERSION));
+                    storageEntity.setCreateTime(rs.getLong(FieldDefine.CREATE_TIME));
+                    storageEntity.setUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME));
+                    storageEntity.setOp(rs.getInt(FieldDefine.OP));
+                    storageEntity.setProfile(rs.getString(FieldDefine.PROFILE));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
-                    storageEntityBuilder.withEntityClasses(entityClassIds);
-                    storageEntityBuilder.withProfile(rs.getString(FieldDefine.PROFILE));
+                    storageEntity.setEntityClasses(entityClassIds);
 
                     if (!noDetail) {
-                        storageEntityBuilder.withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                        storageEntity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                     }
-                    entity = storageEntityBuilder.build();
                 }
 
-                return Optional.ofNullable(entity);
+                return Optional.ofNullable(storageEntity);
             }
         }
     }

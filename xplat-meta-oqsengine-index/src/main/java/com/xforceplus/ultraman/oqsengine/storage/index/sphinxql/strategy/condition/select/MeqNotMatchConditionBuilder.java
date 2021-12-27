@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import java.util.Arrays;
 
 /**
- * in 不等于.
+ * in 非全文.
  *
  * @author dongbin
  * @version 0.1 2020/3/26 14:42

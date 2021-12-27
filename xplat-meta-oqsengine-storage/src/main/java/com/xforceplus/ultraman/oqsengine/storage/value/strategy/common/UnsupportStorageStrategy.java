@@ -37,6 +37,11 @@ public class UnsupportStorageStrategy implements StorageStrategy {
     }
 
     @Override
+    public StorageValue toEmptyStorageValue(IEntityField field) {
+        throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
+    }
+
+    @Override
     public boolean isMultipleStorageValue() {
         throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
     }

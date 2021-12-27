@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
@@ -54,6 +55,15 @@ public class MeqNotMatchConditionBuilderTest {
 
     private Collection<Case> buildCases() {
         return Arrays.asList(
+            new Case(
+                new Condition(
+                    new EntityField(9223372036854775807L, "test", FieldType.ENUM),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "0"),
+                    new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "1")
+                ),
+                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S IN ('0','1')"
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),

@@ -22,13 +22,41 @@ public class EntityClassHelper {
      * @return 元信息.
      */
     public static IEntityClass checkEntityClass(MetaManager metaManager, EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef);
-        if (!entityClassOptional.isPresent()) {
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
+        if (!entityClassOp.isPresent()) {
             throw new IllegalArgumentException(
                 String.format("Invalid meta information %d-%s.",
                     entityClassRef.getId(), entityClassRef.getCode()));
         }
 
-        return entityClassOptional.get();
+        return entityClassOp.get();
+    }
+
+    /**
+     * 获取并检查目标entityclass获取.
+     *
+     * @param metaManager 元信息.
+     * @param entityClassRefs 指针.
+     * @return 元信息列表.
+     */
+    public static IEntityClass[] checkEntityClasses(MetaManager metaManager, EntityClassRef[] entityClassRefs) {
+        IEntityClass[] entityClasses = new IEntityClass[entityClassRefs.length];
+        Optional<IEntityClass> entityClassOp;
+        EntityClassRef ref;
+        for (int i = 0; i < entityClassRefs.length; i++) {
+            ref = entityClassRefs[i];
+            entityClassOp = metaManager.load(ref);
+
+            if (!entityClassOp.isPresent()) {
+                throw new IllegalArgumentException(
+                    String.format("Invalid meta information %d-%s.",
+                        ref.getId(), ref.getCode()));
+            } else {
+
+                entityClasses[i] = entityClassOp.get();
+            }
+        }
+
+        return entityClasses;
     }
 }

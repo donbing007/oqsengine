@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.executor.jdbc;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import org.slf4j.Logger;
@@ -85,6 +86,26 @@ public abstract class AbstractJdbcTaskExecutor<R, T> implements Executor<R, T> {
     protected void checkTimeout(Statement statement) throws SQLException {
         if (getTimeoutMs() > 0) {
             statement.setQueryTimeout((int) (getTimeoutMs() / 1000));
+        }
+    }
+
+    protected boolean[] executedUpdate(Statement st, boolean batch) throws SQLException {
+        if (batch) {
+            int[] flags = st.executeBatch();
+            boolean[] results = new boolean[flags.length];
+            for (int i = 0; i < flags.length; i++) {
+                results[i] = flags[i] > 0 || flags[i] == Statement.SUCCESS_NO_INFO;
+            }
+            return results;
+        } else {
+            if (PreparedStatement.class.isInstance(st)) {
+                return new boolean[] {
+                    ((PreparedStatement) st).executeUpdate() > 0
+                };
+            } else {
+                throw new UnsupportedOperationException(
+                    "Single instance updates other than PreparedStatement are not supported.");
+            }
         }
     }
 }

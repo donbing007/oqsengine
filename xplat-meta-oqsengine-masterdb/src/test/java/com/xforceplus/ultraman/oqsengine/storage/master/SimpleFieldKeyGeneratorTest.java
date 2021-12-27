@@ -10,11 +10,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.BusinessKey;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -102,7 +100,7 @@ public class SimpleFieldKeyGeneratorTest {
         fields.add(f3);
         fields.add(f4);
         return Entity.Builder.anEntity().withId(baseId).withEntityClassRef(new EntityClassRef(baseId, "test"))
-            .withEntityValue(buildValue(fields)).build();
+            .withValues(buildValue(fields)).build();
     }
 
     private IEntityClass buildEntityClass(long baseId) {
@@ -139,14 +137,12 @@ public class SimpleFieldKeyGeneratorTest {
         return fields;
     }
 
-    private IEntityValue buildValue(List<IEntityField> fields) {
+    private Collection<IValue> buildValue(List<IEntityField> fields) {
         Collection<IValue> values = new ArrayList<>();
         values.add(new StringValue(fields.get(0), "f1Value"));
         values.add(new StringValue(fields.get(1), "f2Value"));
         values.add(new StringValue(fields.get(2), "f3Value"));
         values.add(new StringValue(fields.get(3), "f4Value"));
-        IEntityValue value = EntityValue.build();
-        value.addValues(values);
-        return value;
+        return values;
     }
 }

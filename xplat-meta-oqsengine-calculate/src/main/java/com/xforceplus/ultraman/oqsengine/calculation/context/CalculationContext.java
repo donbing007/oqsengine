@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
@@ -9,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -77,6 +77,13 @@ public interface CalculationContext {
     void stopMaintenance();
 
     /**
+     * 设置造成一切源头的实例.
+     *
+     * @param entity 源头实例.
+     */
+    void focusSourceEntity(IEntity entity);
+
+    /**
      * 设置当前的焦点实例,焦点实例类型.
      * 此焦点实例也会自动进入实例缓存池中.
      *
@@ -91,6 +98,13 @@ public interface CalculationContext {
      * @param field 焦点字段.
      */
     void focusField(IEntityField field);
+
+    /**
+     * 设置当前的焦点事务.
+     *
+     * @param tx 事务.
+     */
+    void focusTx(Transaction tx);
 
     /**
      * 增加一个实例的值改变.
@@ -244,9 +258,11 @@ public interface CalculationContext {
     Optional<MultiResourceLocker> getMultiResourceLocker();
 
     /**
-     * copy.
+     * copy一个新实例.
+     *
+     * @return 新实例.
      */
-    Object clone() throws CloneNotSupportedException;
+    CalculationContext copy();
 
     /**
      * 获取指定的资源.如果没有将抛出异常.
@@ -273,11 +289,18 @@ public interface CalculationContext {
     void hint(IEntityField field, String hint);
 
     /**
+     * 创建提示.
+     *
+     * @param hint 提示.
+     */
+    void hint(Hint hint);
+
+    /**
      * 读取当前已经存在的提示.
      *
      * @return 提示列表.
      */
-    Collection<CalculationHint> getHints();
+    Collection<Hint> getHints();
 
     /**
      * 判断是否有hint.
@@ -287,4 +310,11 @@ public interface CalculationContext {
     default boolean hasHint() {
         return !getHints().isEmpty();
     }
+
+    /**
+     * 持久化缓存的实例.
+     *
+     * @return true 成功,false 失败.
+     */
+    boolean persist();
 }

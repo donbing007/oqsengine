@@ -19,7 +19,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
      * 序号开始.
      */
     static final int FIRST_LOCATION = 0;
-
+    
     private StorageValue<V> next;
     private String logicName;
     private int location;

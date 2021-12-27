@@ -12,35 +12,36 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 public enum CalculationType {
 
     /*
-     * 未知.不参与
+     * 未知计算字段,表示错误.
      */
-    UNKNOWN((byte) 0),
+    UNKNOWN(0),
     /*
       普通静态字段.
      */
-    STATIC((byte) 1),
+    STATIC(1),
     /*
       公式字段.
      */
-    FORMULA((byte) 2, (byte) 2, true, true, false),
+    FORMULA(2, 2, true, true, false),
     /*
       自增字段.
      */
-    AUTO_FILL((byte) 3, (byte) 2, true, false, false),
+    AUTO_FILL(3, 2, true, false, false),
     /*
     lookup 字段.
      */
-    LOOKUP((byte) 4, (byte) 1, true, true, false),
+    LOOKUP(4, 1, true, true, false),
     /*
     聚合字段.
     */
-    AGGREGATION((byte) 5, (byte) 1, true, false, false);
+    AGGREGATION(5, 1, true, false, false);
 
-    private byte symbol;
+    private int symbol;
     /**
      * 优先级.
      */
-    private byte priority;
+    private int priority;
+
     /**
      * 是否在创建的时候即使没有改变也需要被计算.
      */
@@ -54,17 +55,17 @@ public enum CalculationType {
      */
     private boolean deleteNeedNotChange;
 
-    private CalculationType(byte symbol) {
-        this(symbol, (byte) 0, false, false, false);
+    private CalculationType(int symbol) {
+        this(symbol, 0, false, false, false);
     }
 
-    private CalculationType(byte symbol, byte priority) {
+    private CalculationType(int symbol, int priority) {
         this(symbol, priority, false, false, false);
     }
 
     private CalculationType(
-        byte symbol,
-        byte priority,
+        int symbol,
+        int priority,
         boolean buildNeedNotChange,
         boolean replaceNeedNotChange,
         boolean deleteNeedNotChange) {
@@ -76,11 +77,11 @@ public enum CalculationType {
         this.deleteNeedNotChange = deleteNeedNotChange;
     }
 
-    public byte getSymbol() {
+    public int getSymbol() {
         return symbol;
     }
 
-    public byte getPriority() {
+    public int getPriority() {
         return priority;
     }
 

@@ -4,13 +4,11 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
 
 /**
  * 删除执行器.
@@ -19,9 +17,9 @@ import java.util.Arrays;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], int[]> {
+public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEntity[], boolean[]> {
 
-    public static Executor<MasterStorageEntity[], int[]> build(
+    public static Executor<BaseMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new DeleteExecutor(tableName, resource, timeout);
     }
@@ -35,10 +33,12 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
     }
 
     @Override
-    public int[] execute(MasterStorageEntity[] masterStorageEntity) throws Exception {
-        final int onlyOne = 1;
-        if (masterStorageEntity.length == onlyOne) {
-            MasterStorageEntity entity = masterStorageEntity[0];
+    public boolean[] execute(BaseMasterStorageEntity[] masterStorageEntities) throws Exception {
+        // 判断是否为单个操作.
+        boolean single = masterStorageEntities.length == 1;
+
+        if (single) {
+            BaseMasterStorageEntity entity = masterStorageEntities[0];
 
             if (VersionHelp.isOmnipotence(entity.getVersion())) {
 
@@ -48,7 +48,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
 
                     setForceParam(entity, st);
 
-                    return new int[] {st.executeUpdate()};
+                    return executedUpdate(st, false);
                 }
             } else {
 
@@ -57,33 +57,24 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
                     checkTimeout(st);
 
                     setParam(entity, st);
-
-                    return new int[] {st.executeUpdate()};
+                    return executedUpdate(st, false);
                 }
             }
         } else {
             // 批量全部强制删除
             String sql = buildForceSQL();
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                for (MasterStorageEntity entity : masterStorageEntity) {
+                for (BaseMasterStorageEntity entity : masterStorageEntities) {
                     setForceParam(entity, st);
 
                     st.addBatch();
                 }
-
-                int[] flags = st.executeBatch();
-                return Arrays.stream(flags).map(f -> {
-                    if (f > 0 || f == Statement.SUCCESS_NO_INFO) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }).toArray();
+                return executedUpdate(st, true);
             }
         }
     }
 
-    private void setForceParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+    private void setForceParam(BaseMasterStorageEntity entity, PreparedStatement st) throws SQLException {
         st.setInt(1, VersionHelp.OMNIPOTENCE_VERSION);
         st.setBoolean(2, true);
         st.setLong(3, entity.getUpdateTime());
@@ -94,7 +85,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity
         st.setLong(8, entity.getId());
     }
 
-    private void setParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+    private void setParam(BaseMasterStorageEntity entity, PreparedStatement st) throws SQLException {
         st.setBoolean(1, true);
         st.setLong(2, entity.getUpdateTime());
         st.setLong(3, entity.getTx());

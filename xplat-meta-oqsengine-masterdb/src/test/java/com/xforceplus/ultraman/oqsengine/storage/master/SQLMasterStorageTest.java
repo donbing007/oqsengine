@@ -11,12 +11,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -167,16 +166,27 @@ public class SQLMasterStorageTest {
         IEntity newEntity = Entity.Builder.anEntity()
             .withId(100000)
             .withEntityClassRef(l1EntityClassRef)
-            .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+            .build();
+        newEntity.entityValue().addValues(
+            Arrays.asList(
                 new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100),
                 new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
                 new LongValue(l1EntityClass.field("l1-long").get(), 200),
                 new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
                 new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
-            )))
-            .build();
-        int size = storage.build(newEntity, l1EntityClass);
-        Assertions.assertEquals(1, size);
+            )
+        );
+        Assertions.assertTrue(newEntity.isDirty());
+        Assertions.assertFalse(newEntity.isDeleted());
+        // 所有值都应该为脏的.
+        Assertions.assertEquals(newEntity.entityValue().size(),
+            newEntity.entityValue().values().stream().filter(v -> v.isDirty()).count());
+        boolean result = storage.build(newEntity, l1EntityClass);
+        Assertions.assertTrue(result);
+        Assertions.assertFalse(newEntity.isDirty());
+        Assertions.assertFalse(newEntity.isDeleted());
+        // 所有值都应该为干净的.
+        Assertions.assertEquals(0, newEntity.entityValue().values().stream().filter(v -> v.isDirty()).count());
 
         Optional<IEntity> entityOptional = storage.selectOne(newEntity.id(), l1EntityClass);
         Assertions.assertTrue(entityOptional.isPresent());
@@ -209,6 +219,8 @@ public class SQLMasterStorageTest {
             IEntity targetEntity = entities.get(i);
 
             Collection<IValue> expectValues = expectedEntity.entityValue().values();
+            Assertions.assertFalse(targetEntity.isDirty());
+            Assertions.assertFalse(targetEntity.isDeleted());
             Assertions.assertEquals(expectValues.size(), targetEntity.entityValue().size());
 
             for (IValue expectedValue : expectValues) {
@@ -224,22 +236,28 @@ public class SQLMasterStorageTest {
         EntityPackage entityPackage = new EntityPackage();
         int expectedSize = 1000;
         for (int i = 0; i < expectedSize; i++) {
-            entityPackage.put(
-                Entity.Builder.anEntity()
-                    .withId(100000 + i)
-                    .withEntityClassRef(l1EntityClassRef)
-                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
-                        new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
-                        new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
-                        new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
-                        new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
-                        new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
-                    )))
-                    .build(), l1EntityClass);
+            IEntity entity = Entity.Builder.anEntity()
+                .withId(100000 + i)
+                .withEntityClassRef(l1EntityClassRef)
+                .build();
+            entity.entityValue().addValues(
+                Arrays.asList(
+                    new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
+                    new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
+                    new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
+                    new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                    new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
+                )
+            );
+            entityPackage.put(entity, l1EntityClass);
         }
 
-        int[] results = storage.build(entityPackage);
-        Assertions.assertEquals(expectedSize, Arrays.stream(results).sum());
+        Assertions.assertEquals(expectedSize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
+
+        storage.build(entityPackage);
+
+        Assertions.assertEquals(expectedSize,
+            entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
 
         long[] ids = IntStream.range(0, expectedSize).mapToLong(i -> 100000 + i).toArray();
         List<IEntity> entities = new ArrayList(storage.selectMultiple(ids));
@@ -295,12 +313,17 @@ public class SQLMasterStorageTest {
                 l1EntityClass.father().get().field("l0-long").get(), 1000000, "new-attachement")
         ).addValue(
             new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
+        ).addValue(
+            new EmptyTypedValue(l2StringField)
         );
+
+        Assertions.assertTrue(targetEntity.isDirty());
 
         int oldVersion = targetEntity.version();
 
-        int size = storage.replace(targetEntity, l2EntityClass);
-        Assertions.assertEquals(1, size);
+        boolean result = storage.replace(targetEntity, l2EntityClass);
+        Assertions.assertTrue(result);
+        Assertions.assertFalse(targetEntity.isDirty());
 
 
         Optional<IEntity> targetEntityOp = storage.selectOne(targetEntity.id(), l2EntityClass);
@@ -312,6 +335,7 @@ public class SQLMasterStorageTest {
             targetEntityOp.get().time());
         Assertions.assertEquals("new-attachement",
             targetEntityOp.get().entityValue().getValue("l0-long").get().getAttachment().get());
+        Assertions.assertFalse(targetEntityOp.get().entityValue().getValue("l2-string").isPresent());
     }
 
     @Test
@@ -319,22 +343,26 @@ public class SQLMasterStorageTest {
         EntityPackage entityPackage = new EntityPackage();
         int expectedSize = 1000;
         for (int i = 0; i < expectedSize; i++) {
-            entityPackage.put(
-                Entity.Builder.anEntity()
-                    .withId(100000 + i)
-                    .withEntityClassRef(l1EntityClassRef)
-                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
-                        new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
-                        new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
-                        new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
-                        new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
-                        new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
-                    )))
-                    .build(), l1EntityClass);
+            IEntity entity = Entity.Builder.anEntity()
+                .withId(100000 + i)
+                .withEntityClassRef(l1EntityClassRef)
+                .build();
+            entity.entityValue().addValues(
+                Arrays.asList(
+                    new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100 + i),
+                    new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
+                    new LongValue(l1EntityClass.field("l1-long").get(), 200 + i),
+                    new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                    new DateTimeValue(EntityField.UPDATE_TIME_FILED, LocalDateTime.now())
+                )
+            );
+            entityPackage.put(entity, l1EntityClass);
         }
 
-        int[] results = storage.build(entityPackage);
-        Assertions.assertEquals(expectedSize, Arrays.stream(results).sum());
+        Assertions.assertEquals(expectedSize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
+        storage.build(entityPackage);
+        Assertions.assertEquals(expectedSize,
+            entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
 
         EntityPackage updatePackage = new EntityPackage();
         entityPackage.stream().map(e -> {
@@ -345,8 +373,10 @@ public class SQLMasterStorageTest {
             updatePackage.put(e.getKey(), e.getValue());
         });
 
-        results = storage.replace(updatePackage);
-        Assertions.assertEquals(expectedSize, Arrays.stream(results).sum());
+        Assertions.assertEquals(expectedSize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
+        storage.replace(updatePackage);
+        Assertions.assertEquals(expectedSize,
+            entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
 
         long[] ids = updatePackage.stream().mapToLong(e -> e.getKey().id()).toArray();
         Collection<IEntity> entities = storage.selectMultiple(ids);
@@ -361,8 +391,8 @@ public class SQLMasterStorageTest {
             new StringValue(l2EntityClass.field("l2-string").get(),
                 "[{\n   \"c1\":\"c1-value\", \"c2\": 123},]"
             ));
-        int size = storage.replace(targetEntity, l2EntityClass);
-        Assertions.assertEquals(1, size);
+        boolean result = storage.replace(targetEntity, l2EntityClass);
+        Assertions.assertTrue(result);
 
         targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
         Assertions.assertEquals("[{\n   \"c1\":\"c1-value\", \"c2\": 123},]",
@@ -375,7 +405,9 @@ public class SQLMasterStorageTest {
         storage.replace(targetEntity, l2EntityClass);
         targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
 
-        Assertions.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
+        Assertions.assertTrue(storage.delete(targetEntity, l2EntityClass));
+        Assertions.assertTrue(targetEntity.isDeleted());
+        Assertions.assertFalse(targetEntity.isDirty());
 
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
 
@@ -389,8 +421,9 @@ public class SQLMasterStorageTest {
             entityPackage.put(e, l2EntityClass);
         });
 
-        int[] results = storage.delete(entityPackage);
-        Assertions.assertEquals(expectedEntitys.size(), Arrays.stream(results).sum());
+        storage.delete(entityPackage);
+        Assertions.assertEquals(expectedEntitys.size(),
+            expectedEntitys.stream().filter(e -> e.isDeleted()).count());
     }
 
     @Test
@@ -400,7 +433,7 @@ public class SQLMasterStorageTest {
         targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
         targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
 
-        Assertions.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
+        Assertions.assertTrue(storage.delete(targetEntity, l2EntityClass));
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
         Assertions.assertFalse(storage.exist(targetEntity.id()));
     }
@@ -448,20 +481,23 @@ public class SQLMasterStorageTest {
     }
 
     private IEntity buildEntity(long baseId) {
-        return Entity.Builder.anEntity()
+        IEntity entity = Entity.Builder.anEntity()
             .withId(baseId)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l2EntityClassRef)
-            .withEntityValue(buildEntityValue(baseId,
+            .build();
+        entity.entityValue().addValues(
+            buildValue(baseId,
                 Arrays.asList(
                     l0LongField, l0StringField, l0StringsField,
                     l1LongField, l1StringField,
-                    l2LongField, l2StringField)))
-            .build();
+                    l2LongField, l2StringField))
+        );
+        return entity;
     }
 
-    private IEntityValue buildEntityValue(long id, Collection<IEntityField> fields) {
-        Collection<IValue> values = fields.stream().map(f -> {
+    private Collection<IValue> buildValue(long id, Collection<IEntityField> fields) {
+        return fields.stream().map(f -> {
             switch (f.type()) {
                 case STRING: {
                     String randomString = buildRandomString(10);
@@ -479,8 +515,6 @@ public class SQLMasterStorageTest {
                 }
             }
         }).collect(Collectors.toList());
-
-        return EntityValue.build().addValues(values);
     }
 
     private String buildRandomString(int size) {

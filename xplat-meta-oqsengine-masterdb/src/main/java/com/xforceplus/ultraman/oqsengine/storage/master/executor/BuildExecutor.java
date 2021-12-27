@@ -4,35 +4,23 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * 创建数据执行器. 目标字段列表如下. id             bigint                not null comment '数据主键', entityclassl0  bigint  default 0 not
- * null comment '数据家族中在0层的entityclass标识', entityclassl1  bigint  default 0     not null comment
- * '数据家族中在1层的entityclass标识', entityclassl2  bigint  default 0     not null comment '数据家族中在2层的entityclass标识',
- * entityclassl3  bigint  default 0     not null comment '数据家族中在3层的entityclass标识', entityclassl4  bigint  default 0 not
- * null comment '数据家族中在4层的entityclass标识', entityclassver int     default 0     not null comment '产生数据的entityclass版本号.',
- * tx             bigint  default 0     not null comment '提交事务号', commitid       bigint  default 0     not null comment
- * '提交号', op             tinyint default 0     not null comment '最后操作类型,0(插入),1(更新),2(删除)', version        int
- * default 0     not null comment '当前数据版本.', createtime     bigint  default 0     not null comment '数据创建时间.', updatetime
- *     bigint  default 0     not null comment '数据操作最后时间.', deleted        boolean default false not null comment
- * '是否被删除.', attribute      json                  not null comment '当前 entity 的属性集合.', oqsmajor int     default 0
- * not null comment '产生数据的oqs主版本号',
+ * 创建数据执行器.
  *
  * @author dongbin
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[], int[]> {
+public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterStorageEntity[], boolean[]> {
 
-    public static Executor<MasterStorageEntity[], int[]> build(
+    public static Executor<JsonAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new BuildExecutor(tableName, resource, timeout);
     }
@@ -46,42 +34,35 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
     }
 
     @Override
-    public int[] execute(MasterStorageEntity[] masterStorageEntities) throws Exception {
+    public boolean[] execute(JsonAttributeMasterStorageEntity[] masterStorageEntities) throws Exception {
         int entityClassSize = masterStorageEntities[0].getEntityClasses().length;
 
         String sql = buildSQL(entityClassSize);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             checkTimeout(st);
 
-            final int onlyOne = 1;
-            if (masterStorageEntities.length == onlyOne) {
+            // 判断是否为单个操作.
+            boolean single = masterStorageEntities.length == 1;
+
+            if (single) {
 
                 setParam(masterStorageEntities[0], st);
 
-                return new int[] {st.executeUpdate()};
-
             } else {
 
-                for (MasterStorageEntity entity : masterStorageEntities) {
+                for (JsonAttributeMasterStorageEntity entity : masterStorageEntities) {
 
                     setParam(entity, st);
 
                     st.addBatch();
                 }
-
-                int[] flags = st.executeBatch();
-                return Arrays.stream(flags).map(f -> {
-                    if (f > 0 || f == Statement.SUCCESS_NO_INFO) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }).toArray();
             }
+
+            return executedUpdate(st, !single);
         }
     }
 
-    private void setParam(MasterStorageEntity entity, PreparedStatement st) throws SQLException {
+    private void setParam(JsonAttributeMasterStorageEntity entity, PreparedStatement st) throws SQLException {
         int pos = 1;
         st.setLong(pos++, entity.getId());
         st.setInt(pos++, entity.getEntityClassVersion());
@@ -98,7 +79,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<MasterStorageEntity[
         fullEntityClass(pos, st, entity);
     }
 
-    private int fullEntityClass(int startPos, PreparedStatement st, MasterStorageEntity masterStorageEntity)
+    private int fullEntityClass(int startPos, PreparedStatement st, JsonAttributeMasterStorageEntity masterStorageEntity)
         throws SQLException {
         int pos = startPos;
         for (int i = 0; i < masterStorageEntity.getEntityClasses().length; i++) {

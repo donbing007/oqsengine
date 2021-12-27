@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -238,21 +237,22 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
-                Arrays.asList(
-                    new LongValue(l2EntityClass.field("l0-long").get(), 138293),
-                    new StringValue(l2EntityClass.field("l0-string").get(), "hAG7O1uv1FS3"),
-                    new StringsValue(l2EntityClass.field("l0-strings").get(), "KRW"),
-                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Emerald"),
-                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("566017837.77")),
-                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
-                        LocalDateTime.of(2010, 6, 29, 9, 36, 36)),
-                    new LongValue(l2EntityClass.field("l1-long").get(), 072571712),
-                    new StringValue(l2EntityClass.field("l1-string").get(), "Logan_Uttridge6552@grannar.com"),
-                    new LongValue(l2EntityClass.field("l2-long").get(), 1448200874),
-                    new StringValue(l2EntityClass.field("l2-string").get(), "Benin")
-                )
-            )).build();
+            .build();
+        uncommitEntity.entityValue().addValues(
+            Arrays.asList(
+                new LongValue(l2EntityClass.field("l0-long").get(), 138293),
+                new StringValue(l2EntityClass.field("l0-string").get(), "hAG7O1uv1FS3"),
+                new StringsValue(l2EntityClass.field("l0-strings").get(), "KRW"),
+                new EnumValue(l2EntityClass.field("l0-enum").get(), "Emerald"),
+                new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("566017837.77")),
+                new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                    LocalDateTime.of(2010, 6, 29, 9, 36, 36)),
+                new LongValue(l2EntityClass.field("l1-long").get(), 072571712),
+                new StringValue(l2EntityClass.field("l1-string").get(), "Logan_Uttridge6552@grannar.com"),
+                new LongValue(l2EntityClass.field("l2-long").get(), 1448200874),
+                new StringValue(l2EntityClass.field("l2-string").get(), "Benin")
+            )
+        );
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         Assertions.assertEquals(1, storage.build(uncommitEntity, l2EntityClass));
@@ -984,7 +984,7 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
+            .withValues(
                 Arrays.asList(
                     new LongValue(l2EntityClass.field("l0-long").get(), 634274, "634274"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "TjguZT2nz9KT"),
@@ -1000,7 +1000,7 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524950L),
                     new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "甘肃省兰州市安宁区兰州航空职工大学北校区旧教学楼101号")
                 )
-            )).build());
+            ).build());
 
         entityes.add(Entity.Builder.anEntity() // 1001
             .withId(baseId++)
@@ -1011,7 +1011,7 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
+            .withValues(
                 Arrays.asList(
                     new LongValue(l2EntityClass.field("l0-long").get(), 381134, "381134"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "qqSDo69gZcGW"),
@@ -1029,7 +1029,7 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524949L),
                     new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "太原市尖草坪区学院路3号182幢6612室B区")
                 )
-            )).build());
+            ).build());
 
         entityes.add(Entity.Builder.anEntity() // 1002
             .withId(baseId++)
@@ -1040,7 +1040,7 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
+            .withValues(
                 Arrays.asList(
                     new LongValue(l2EntityClass.field("l0-long").get(), 129848, "129848"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "oLS90hto8tSn"),
@@ -1056,7 +1056,7 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524948L),
                     new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "北京市丰台区南四环西路188号9区2号楼7层")
                 )
-            )).build());
+            ).build());
 
         entityes.add(Entity.Builder.anEntity() // 1003
             .withId(baseId++)
@@ -1067,7 +1067,7 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
+            .withValues(
                 Arrays.asList(
                     new LongValue(l2EntityClass.field("l0-long").get(), 333326, "333326"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "Trm7n8Wd2ejj"),
@@ -1083,7 +1083,7 @@ public class SQLMasterStorageQueryTest {
                     new LongValue(l2EntityClass.field("l2-bigint").get(), 5088141692596524947L),
                     new StringValue(l2EntityClass.field("l2-string-segmentation").get(), "北京市东城区东中街29号南写字楼第四层D-E号")
                 )
-            )).build());
+            ).build());
 
         entityes.add(Entity.Builder.anEntity() // 1004
             .withId(baseId++)
@@ -1094,7 +1094,7 @@ public class SQLMasterStorageQueryTest {
                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
             .withVersion(0)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityValue(EntityValue.build().addValues(
+            .withValues(
                 Arrays.asList(
                     new LongValue(l2EntityClass.field("l0-long").get(), 138293, "138293"),
                     new StringValue(l2EntityClass.field("l0-string").get(), "H5qEkXkTvGWW"),
@@ -1111,6 +1111,6 @@ public class SQLMasterStorageQueryTest {
                     new StringValue(l2EntityClass.field("l2-string-segmentation").get(),
                         "昆山市开发区柏庐南路1001号博悦万品大厦2号楼1208室")
                 )
-            )).build());
+            ).build());
     }
 }

@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -8,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutorService;
  * @version 0.1 2021/09/17 15:18
  * @since 1.8
  */
-public class DefaultCalculationContext implements CalculationContext, Cloneable {
+public class DefaultCalculationContext implements CalculationContext {
 
     private IEntity sourceEntity;
     private boolean maintenance;
@@ -47,7 +47,7 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     private KeyValueStorage keyValueStorage;
     private TaskCoordinator taskCoordinator;
     private ExecutorService taskExecutorService;
-    private Collection<CalculationHint> hints;
+    private Collection<Hint> hints;
     private ResourceLocker resourceLocker;
     private MultiResourceLocker multiResourceLocker;
     private CalculationLogicFactory calculationLogicFactory;
@@ -132,10 +132,12 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     }
 
     @Override
+    public void focusSourceEntity(IEntity entity) {
+        this.sourceEntity = entity;
+    }
+
+    @Override
     public void focusEntity(IEntity entity, IEntityClass entityClass) {
-        if (this.focusEntity == null) {
-            this.sourceEntity = entity;
-        }
         this.focusEntity = entity;
         this.focusEntityClass = entityClass;
 
@@ -145,6 +147,11 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     @Override
     public void focusField(IEntityField field) {
         this.focusField = field;
+    }
+
+    @Override
+    public void focusTx(Transaction tx) {
+        this.transaction = tx;
     }
 
     @Override
@@ -256,11 +263,20 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
             this.hints = new LinkedList<>();
         }
 
-        this.hints.add(new CalculationHint(field, hint));
+        this.hints.add(new Hint(field, hint));
     }
 
     @Override
-    public Collection<CalculationHint> getHints() {
+    public void hint(Hint hint) {
+        if (this.hints == null) {
+            this.hints = new LinkedList<>();
+        }
+
+        this.hints.add(hint);
+    }
+
+    @Override
+    public Collection<Hint> getHints() {
         if (this.hints == null) {
             return Collections.emptyList();
         } else {
@@ -269,7 +285,7 @@ public class DefaultCalculationContext implements CalculationContext, Cloneable 
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
+    public CalculationContext copy() {
         DefaultCalculationContext newContext = new DefaultCalculationContext();
         if (this.valueChanges != null) {
             newContext.valueChanges = new HashMap<>(this.valueChanges);

@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -26,8 +25,8 @@ import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -42,6 +41,7 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
@@ -50,8 +50,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -171,9 +170,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     /**
-     * 未知版本号.
+     * 未设置的对象实体主键,将等于此值.
      */
-    private static final int UN_KNOW_VERSION = -1;
+    private static final long UNSET_PRIMARY_ID = 0;
     /**
      * 新创建时的初始版本号.
      */
@@ -294,18 +293,83 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "builds"})
     @Override
-    public OperationResult[] build(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
-        for (int i = 0; i < results.length; i++) {
+    public OperationResult build(IEntity[] entities) throws SQLException {
+        checkReady();
 
-            if (tx.isPresent()) {
-                transactionManager.bind(tx.get().id());
-            }
+        IEntityClass[] entityClasses = EntityClassHelper.checkEntityClasses(
+            metaManager,
+            Arrays.stream(entities).map(e -> e.entityClassRef()).toArray(EntityClassRef[]::new));
 
-            results[i] = build(entities[i]);
+        preview(entities, entityClasses, true);
+
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
+        OperationResult result;
+        try {
+            result = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
+
+                calculationContext.focusTx(tx);
+
+                Map.Entry<VerifierResult, IEntityField> verify = null;
+                IEntity currentEntity;
+                for (int i = 0; i < entities.length; i++) {
+
+                    // 计算字段处理.
+                    calculationContext.focusSourceEntity(entities[i]);
+                    calculationContext.focusEntity(entities[i], entityClasses[i]);
+                    currentEntity = calculation.calculate(calculationContext);
+                    setValueChange(calculationContext, Optional.of(currentEntity), Optional.empty(), entityClasses[i]);
+
+                    verify = verifyFields(entityClasses[i], currentEntity);
+                    if (VerifierResult.OK != verify.getKey()) {
+                        return transformVerifierResultToOperationResult(verify, currentEntity);
+                    }
+
+                    calculation.maintain(calculationContext);
+
+                    if (tx.getAccumulator().accumulateBuild(currentEntity)) {
+                        hint.setRollback(true);
+                        return OperationResult.unAccumulate();
+                    }
+                }
+
+                // 开始持久化
+                EntityPackage entityPackage = new EntityPackage();
+                int len = entities.length;
+                for (int i = 0; i < len; i++) {
+                    entityPackage.put(entities[i], entityClasses[i]);
+                }
+
+                masterStorage.build(entityPackage);
+
+                Map.Entry<IEntity, IEntityClass> entityEntry;
+
+                for (int i = 0; i < len; i++) {
+                    entityEntry = entityPackage.get(i).get();
+                    if (entityEntry.getKey().isDirty()) {
+                        hint.setRollback(true);
+                        return OperationResult.unCreated(
+                            String.format("The entity for %s could not be created successfully.",
+                                entityEntry.getValue().name()));
+                    }
+                }
+
+
+
+
+                return OperationResult.success();
+            });
+
+            return result;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            failCountTotal.increment(entities.length);
+
+            throw ex;
+        } finally {
+            inserCountTotal.increment(entities.length);
         }
-        return results;
+
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
@@ -313,73 +377,47 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
-        filter(entity);
-
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
-        preview(entity, entityClass);
-
-        markTime(entity);
-
-        if (entity.id() <= 0) {
-            long newId = longNoContinuousPartialOrderIdGenerator.next();
-            entity.resetId(newId);
+        OperationResult operationResult = preview(entity, entityClass, true);
+        if (!operationResult.isSuccess()) {
+            return operationResult;
         }
-        entity.resetVersion(0);
-        entity.restMaintainId(0);
 
-        OperationResult operationResult = null;
-        Collection<CalculationHint> hits = new ArrayList<>();
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD;
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
-                CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD, tx);
+                calculationContext.focusTx(tx);
+                calculationContext.focusSourceEntity(entity);
                 calculationContext.focusEntity(entity, entityClass);
                 IEntity currentEntity = calculation.calculate(calculationContext);
                 setValueChange(calculationContext, Optional.of(currentEntity), Optional.empty(), entityClass);
 
-                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, currentEntity);
-                if (VerifierResult.OK != verifyResult.getKey()) {
-                    // 表示有些校验不通过.
-                    return new OperationResult(0, currentEntity.id(), UN_KNOW_VERSION,
-                        EventType.ENTITY_BUILD.getValue(),
-                        transformVerifierResultToReusltStatus(verifyResult.getKey()),
-                        instantiateMessage(
-                            verifyResult.getKey(),
-                            verifyResult.getValue(),
-                            currentEntity.entityValue().getValue(verifyResult.getValue().id()).orElse(null)
-                        )
-                    );
-                }
-
-                // 修改未同步.
-                currentEntity.dirty();
-
-                if (masterStorage.build(currentEntity, entityClass) <= 0) {
-                    return new OperationResult(tx.id(), currentEntity.id(), UN_KNOW_VERSION,
-                        EventType.ENTITY_BUILD.getValue(),
-                        ResultStatus.UNCREATED);
-                }
-
-                if (!tx.getAccumulator().accumulateBuild(currentEntity)) {
-                    hint.setRollback(true);
-                    return new OperationResult(tx.id(), currentEntity.id(), UN_KNOW_VERSION,
-                        EventType.ENTITY_BUILD.getValue(),
-                        ResultStatus.UNACCUMULATE);
+                Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, currentEntity);
+                if (VerifierResult.OK != verify.getKey()) {
+                    return transformVerifierResultToOperationResult(verify, entity);
                 }
 
                 calculation.maintain(calculationContext);
 
+                if (!masterStorage.build(currentEntity, entityClass)) {
+                    return OperationResult.unCreated();
+                }
+
+                if (!tx.getAccumulator().accumulateBuild(currentEntity)) {
+                    hint.setRollback(true);
+                    return OperationResult.unAccumulate();
+                }
+
                 noticeEvent(tx, EventType.ENTITY_BUILD, currentEntity);
 
-                hits.addAll(calculationContext.getHints());
-
-                return new OperationResult(tx.id(), currentEntity.id(), BUILD_VERSION,
-                    EventType.ENTITY_BUILD.getValue(),
-                    ResultStatus.SUCCESS);
+                return OperationResult.success();
             });
 
-            operationResult.resetStatus(hits);
+            if (calculationContext.hasHint()) {
+                operationResult.addHints(calculationContext.getHints());
+            }
 
             return operationResult;
         } catch (Exception ex) {
@@ -396,8 +434,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replaces"})
     @Override
-    public OperationResult[] replace(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
+    public OperationResult replace(IEntity[] entities) throws SQLException {
+        OperationResult results = new OperationResult[entities.length];
         Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
 
@@ -415,17 +453,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
 
-        filter(entity);
-
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
-        preview(entity, entityClass);
+        OperationResult operationResult = preview(entity, entityClass, false);
+        if (!operationResult.isSuccess()) {
+            return operationResult;
+        }
 
-        markTime(entity);
-
-
-        OperationResult operationResult = null;
-        Collection<CalculationHint> hits = new ArrayList<>();
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
@@ -434,9 +469,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  */
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                        ResultStatus.NOT_FOUND);
+                    return OperationResult.notFound();
                 }
 
                 // 新实例.
@@ -447,9 +480,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 try {
                     oldEntity = (IEntity) newEntity.clone();
                 } catch (CloneNotSupportedException e) {
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                        ResultStatus.NOT_FOUND);
+                    return OperationResult.unknown();
                 }
 
                 // 操作时间
@@ -460,7 +491,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     newEntity.entityValue().addValue(newValue);
                 }
 
-                CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE, tx);
+                calculationContext.focusTx(tx);
+                calculationContext.focusSourceEntity(newEntity);
                 calculationContext.focusEntity(newEntity, entityClass);
                 newEntity = calculation.calculate(calculationContext);
                 setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity), entityClass);
@@ -468,25 +500,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, newEntity);
                 if (VerifierResult.OK != verifyResult.getKey()) {
                     hint.setRollback(true);
-                    // 表示有些校验不通过.
-                    return new OperationResult(0, newEntity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(),
-                        transformVerifierResultToReusltStatus(verifyResult.getKey()),
-                        instantiateMessage(
-                            verifyResult.getKey(),
-                            verifyResult.getValue(),
-                            newEntity.entityValue().getValue(verifyResult.getValue().id()).orElse(null)
-                        )
-                    );
+                    return transformVerifierResultToOperationResult(verifyResult, newEntity);
                 }
 
-                // 修改未同步.
-                newEntity.dirty();
+                // 维护改变造成的影响.
+                calculation.maintain(calculationContext);
 
-                if (isConflict(masterStorage.replace(newEntity, entityClass))) {
+                if (!masterStorage.replace(newEntity, entityClass)) {
                     hint.setRollback(true);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                        ResultStatus.CONFLICT);
+                    return OperationResult.conflict();
                 }
 
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
@@ -494,22 +516,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 if (!tx.getAccumulator().accumulateReplace(newEntity, oldEntity)) {
                     hint.setRollback(true);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(),
-                        ResultStatus.UNACCUMULATE);
+                    return OperationResult.unAccumulate();
                 }
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
-                calculation.maintain(calculationContext);
-
-                hits.addAll(calculationContext.getHints());
-
-                return new OperationResult(tx.id(), entity.id(), newEntity.version(),
-                    EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
+                return OperationResult.success();
             });
 
-            operationResult.resetStatus(hits);
+            if (calculationContext.hasHint()) {
+                operationResult.addHints(calculationContext.getHints());
+            }
 
             return operationResult;
         } catch (Exception ex) {
@@ -525,7 +542,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deletes"})
     @Override
-    public OperationResult[] delete(IEntity[] entities) throws SQLException {
+    public OperationResult delete(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
         Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
@@ -548,14 +565,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE);
         try {
             return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
-                        ResultStatus.NOT_FOUND);
+                    return OperationResult.notFound();
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
@@ -563,33 +579,28 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     targetEntity.resetVersion(entity.version());
                 }
 
-                if (isConflict(masterStorage.delete(targetEntity, entityClass))) {
+                if (!masterStorage.delete(targetEntity, entityClass)) {
                     hint.setRollback(true);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
-                        ResultStatus.CONFLICT);
+                    return OperationResult.conflict();
                 }
 
                 if (!tx.getAccumulator().accumulateDelete(targetEntity)) {
                     hint.setRollback(true);
-                    return new OperationResult(
-                        tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(),
-                        ResultStatus.UNACCUMULATE);
+                    return OperationResult.unAccumulate();
                 }
 
                 /*
                 删除时计算字段不需要计算,只需要进行维护.
                  */
-                CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE, tx);
+                calculationContext.focusTx(tx);
+                calculationContext.focusSourceEntity(targetEntity);
                 calculationContext.focusEntity(targetEntity, entityClass);
                 setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntity), entityClass);
                 calculation.maintain(calculationContext);
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, targetEntity);
 
-                return new OperationResult(
-                    tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_DELETE.getValue(),
-                    ResultStatus.SUCCESS);
+                return OperationResult.success();
             });
         } catch (Exception ex) {
 
@@ -597,6 +608,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             failCountTotal.increment();
             throw ex;
+
         } finally {
             deleteCountTotal.increment();
         }
@@ -607,7 +619,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         extraTags = {"initiator", "all", "action", "deleteforces"}
     )
     @Override
-    public OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
+    public OperationResult deleteForce(IEntity[] entities) throws SQLException {
         OperationResult[] results = new OperationResult[entities.length];
         Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
         for (int i = 0; i < results.length; i++) {
@@ -636,11 +648,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return delete(entity);
     }
 
-    // 判断是否操作冲突.
-    private boolean isConflict(int size) {
-        return size <= 0;
-    }
-
     // 检查当前是状态是否可写入.
     private void checkReady() throws SQLException {
         if (!ready) {
@@ -650,12 +657,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             } else {
                 throw new SQLException("Currently in read-only mode for unknown reasons.");
             }
-        }
-    }
-
-    private void markTime(IEntity entity) {
-        if (entity.time() <= 0) {
-            entity.markTime(System.currentTimeMillis());
         }
     }
 
@@ -731,32 +732,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    // 预检
-    private void preview(IEntity entity, IEntityClass entityClass) throws SQLException {
-        if (entity == null) {
-            throw new SQLException("Invalid object entity.");
-        }
-
-        if (entity.entityClassRef() == null
-            || entity.entityClassRef().getId() <= 0
-            || entity.entityClassRef().getCode() == null) {
-            throw new SQLException(String.format("Incomplete entity(%d) type information.", entity.id()));
-        }
-
-        if (entity.entityValue() == null || entity.entityValue().size() == 0) {
-            throw new SQLException(String.format("Entity(%d-%s) does not have any attributes.",
-                entity.id(), entity.entityClassRef().getCode()));
-        }
-
-        IEntityField field;
-        for (IValue value : entity.entityValue().values()) {
-            field = value.getField();
-            if (!entityClass.field(field.id()).isPresent()) {
-                throw new SQLException(String.format("Field '%s' does not exist.", field.name()));
-            }
-        }
-    }
-
     // 校验字段.
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
         VerifierResult result;
@@ -785,49 +760,61 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return new AbstractMap.SimpleEntry(VerifierResult.OK, null);
     }
 
-    private ResultStatus transformVerifierResultToReusltStatus(VerifierResult verifierResult) {
-        switch (verifierResult) {
-            case REQUIRED:
-                return ResultStatus.FIELD_MUST;
-            case TOO_LONG:
-                return ResultStatus.FIELD_TOO_LONG;
-            case HIGH_PRECISION:
-                return ResultStatus.FIELD_HIGH_PRECISION;
-            case NON_EXISTENT:
-                return ResultStatus.FIELD_NON_EXISTENT;
-            default:
-                return ResultStatus.UNKNOWN;
-        }
-    }
+    // 转换校验不通过后的响应.
+    private OperationResult transformVerifierResultToOperationResult(
+        Map.Entry<VerifierResult, IEntityField> verify, IEntity entity) {
 
-    private String instantiateMessage(VerifierResult verifierResult, IEntityField field, IValue value) {
+        IEntityField field = verify.getValue();
+        IValue value = entity.entityValue().getValue(verify.getValue().id()).orElse(null);
         if (logger.isDebugEnabled()) {
             logger.debug("Field {}({}) validation result {}, validation is based on {}.[%s]",
                 field.name(),
                 field.id(),
-                verifierResult.name(),
+                verify.getKey().name(),
                 field.config().toString(),
                 value != null ? value.getValue().toString() : "NULL");
         }
 
-        switch (verifierResult) {
-            case REQUIRED:
-                return String.format("The field %s is required.", field.name());
-            case TOO_LONG:
-                return String.format("The value of field %s is too long. The maximum acceptable length is %d.[%s]",
+        String msg;
+        switch (verify.getKey()) {
+            case REQUIRED: {
+                msg = String.format("The field %s is required.", field.name());
+                break;
+            }
+            case TOO_LONG: {
+                msg = String.format("The value of field %s is too long. The maximum acceptable length is %d.[%s]",
                     field.name(), field.config().getLen(), value != null ? value.getValue().toString() : "NULL");
-            case HIGH_PRECISION:
-                return String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.[%s]",
+                break;
+            }
+            case HIGH_PRECISION: {
+                msg = String.format("The accuracy of field %s is too high. The maximum accepted accuracy is %d.[%s]",
                     field.name(), field.config().getPrecision(), value != null ? value.getValue().toString() : "NULL");
-            case NON_EXISTENT:
-                return String.format("The %s field does not exist.", field.name());
+                break;
+            }
+            case NON_EXISTENT: {
+                msg = String.format("The %s field does not exist.", field.name());
+                break;
+            }
             default:
-                return "Unknown validation failed.";
+                msg = "Unknown validation failed.";
+        }
+
+        switch (verify.getKey()) {
+            case REQUIRED:
+                return OperationResult.fieldMust(msg);
+            case TOO_LONG:
+                return OperationResult.fieldToLong(msg);
+            case HIGH_PRECISION:
+                return OperationResult.fieldHighPrecision(msg);
+            case NON_EXISTENT:
+                return OperationResult.fieldNonExist(msg);
+            default:
+                return OperationResult.unknown();
         }
     }
 
     private CalculationContext buildCalculationContext(
-        CalculationScenarios scenarios, Transaction tx) {
+        CalculationScenarios scenarios) {
 
         return DefaultCalculationContext.Builder.anCalculationContext()
             .withScenarios(scenarios)
@@ -838,7 +825,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withEventBus(this.eventBus)
             .withTaskExecutorService(this.taskThreadPool)
             .withBizIDGenerator(this.bizIDGenerator)
-            .withTransaction(tx)
             .withConditionsSelectStorage(this.combinedSelectStorage)
             .withResourceLocker(this.resourceLocker)
             .withMultiResourceLocker(this.multiResourceLocker)
@@ -884,13 +870,65 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    // 只允许静态字段进入写事务.
-    private void filter(IEntity entity) {
+    // 批量预检.
+    private void preview(IEntity[] entities, IEntityClass[] entityClasses, boolean build) throws SQLException {
+        if (entities.length != entityClasses.length) {
+            throw new SQLException("Unexpected error, precheck failed.");
+        }
+
+        for (int i = 0; i < entities.length; i++) {
+            preview(entities[i], entityClasses[i], build);
+        }
+    }
+
+    // 预检
+    private OperationResult preview(IEntity entity, IEntityClass entityClass, boolean build) {
+        if (entity == null) {
+            return OperationResult.notFound();
+        }
+
+        // 不合式的实例.
+        if (entity.entityClassRef() == null
+            || entity.entityClassRef().getId() <= 0
+            || entity.entityClassRef().getCode() == null) {
+
+            return OperationResult.notFound("Unexpected object information.");
+        }
+
+        // 过滤不应该被改写的字段.
         if (entity.entityValue() != null) {
             entity.entityValue().filter(v ->
                 v.getField().calculationType() == CalculationType.STATIC
                     || v.getField().calculationType() == CalculationType.LOOKUP
             );
+        }
+
+        IEntityField field;
+        for (IValue value : entity.entityValue().values()) {
+            field = value.getField();
+            if (!entityClass.field(field.id()).isPresent()) {
+                return OperationResult.fieldNonExist(String.format("Field '%s' does not exist.", field.name()));
+            }
+        }
+
+        markTime(entity);
+
+        // 设置对象主键标识.
+        if (entity.id() <= UNSET_PRIMARY_ID) {
+            long newId = longNoContinuousPartialOrderIdGenerator.next();
+            entity.resetId(newId);
+        }
+
+        // 如果是创建,那么重置版本号和维护id.
+        if (build) {
+            entity.resetVersion(BUILD_VERSION);
+            entity.restMaintainId(0);
+        }
+    }
+
+    private void markTime(IEntity entity) {
+        if (entity.time() <= 0) {
+            entity.markTime(System.currentTimeMillis());
         }
     }
 

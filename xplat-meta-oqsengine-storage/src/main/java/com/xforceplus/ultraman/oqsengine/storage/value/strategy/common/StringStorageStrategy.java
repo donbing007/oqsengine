@@ -38,6 +38,11 @@ public class StringStorageStrategy implements StorageStrategy {
     }
 
     @Override
+    public StorageValue toEmptyStorageValue(IEntityField field) {
+        return new StringStorageValue(Long.toString(field.id()), "", true);
+    }
+
+    @Override
     public boolean isMultipleStorageValue() {
         return false;
     }

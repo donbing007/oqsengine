@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.sql.SQLException;
 
@@ -27,12 +28,18 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult[] build(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = build(entities[i]);
+    default OperationResult build(IEntity[] entities) throws SQLException {
+        OperationResult result = OperationResult.success();
+        for (IEntity entity : entities) {
+            result = build(entity);
+
+            if (ResultStatus.SUCCESS != result.getResultStatus()
+                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
+                return result;
+            }
         }
-        return results;
+
+        return result;
     }
 
     /**
@@ -49,12 +56,18 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult[] replace(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = replace(entities[i]);
+    default OperationResult replace(IEntity[] entities) throws SQLException {
+        OperationResult result = OperationResult.success();
+        for (IEntity entity : entities) {
+            result = replace(entity);
+
+            if (ResultStatus.SUCCESS != result.getResultStatus()
+                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
+                return result;
+            }
         }
-        return results;
+
+        return result;
     }
 
     /**
@@ -70,12 +83,18 @@ public interface EntityManagementService {
      * @param entities 目标 entity 列表.
      * @return 结果.
      */
-    default OperationResult[] delete(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = delete(entities[i]);
+    default OperationResult delete(IEntity[] entities) throws SQLException {
+        OperationResult result = OperationResult.success();
+        for (IEntity entity : entities) {
+            result = delete(entity);
+
+            if (ResultStatus.SUCCESS != result.getResultStatus()
+                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
+                return result;
+            }
         }
-        return results;
+
+        return result;
     }
 
     /**
@@ -95,11 +114,17 @@ public interface EntityManagementService {
      * @param entities 目标列表.
      * @return 操作结果.
      */
-    default OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = deleteForce(entities[i]);
+    default OperationResult deleteForce(IEntity[] entities) throws SQLException {
+        OperationResult result = OperationResult.success();
+        for (IEntity entity : entities) {
+            result = deleteForce(entity);
+
+            if (ResultStatus.SUCCESS != result.getResultStatus()
+                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
+                return result;
+            }
         }
-        return results;
+
+        return result;
     }
 }

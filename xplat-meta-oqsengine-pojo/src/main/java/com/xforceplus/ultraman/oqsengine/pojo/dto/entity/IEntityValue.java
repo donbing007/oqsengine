@@ -93,6 +93,13 @@ public interface IEntityValue extends Cloneable {
     }
 
     /**
+     * 判断是否为脏.
+     *
+     * @return 是否为脏.
+     */
+    public boolean isDirty();
+
+    /**
      * 克隆.
      */
     public Object clone() throws CloneNotSupportedException;

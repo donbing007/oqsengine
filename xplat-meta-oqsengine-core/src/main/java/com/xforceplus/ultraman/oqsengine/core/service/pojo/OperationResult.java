@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Objects;
 
 /**
@@ -11,102 +14,162 @@ import java.util.Objects;
  * @author xujia 2021/4/8
  * @since 1.8
  */
-public class OperationResult {
-    private final long txId;
-    private final long entityId;
-    private final int version;
-    private final int eventType;
+public class OperationResult implements Serializable {
     private ResultStatus resultStatus;
-    private Collection<CalculationHint> hints;
+    private Collection<Hint> hints = Collections.emptyList();
     private String message;
 
-    /**
-     * 实例化.
-     */
-    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus) {
-        this.txId = txId;
-        this.version = version;
-        this.resultStatus = resultStatus;
-        this.entityId = entityId;
-        this.eventType = eventType;
+    public static OperationResult unknown() {
+        return new OperationResult(ResultStatus.UNKNOWN, ResultStatus.UNKNOWN.name());
     }
 
-    /**
-     * 实例化.
-     */
-    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
-                           String message) {
-        this.txId = txId;
-        this.version = version;
+    public static OperationResult success() {
+        return success(ResultStatus.SUCCESS.name());
+    }
+
+    public static OperationResult success(String msg) {
+        return new OperationResult(ResultStatus.SUCCESS, msg);
+    }
+
+    public static OperationResult conflict() {
+        return conflict(ResultStatus.CONFLICT.name());
+    }
+
+    public static OperationResult conflict(String msg) {
+        return new OperationResult(ResultStatus.CONFLICT, msg);
+    }
+
+    public static OperationResult notFound() {
+        return notFound(ResultStatus.NOT_FOUND.name());
+    }
+
+    public static OperationResult notFound(String msg) {
+        return new OperationResult(ResultStatus.NOT_FOUND, msg);
+    }
+
+    public static OperationResult unCreated() {
+        return unCreated(ResultStatus.UNACCUMULATE.name());
+    }
+
+    public static OperationResult unCreated(String msg) {
+        return new OperationResult(ResultStatus.UNCREATED, msg);
+    }
+
+    public static OperationResult unAccumulate() {
+        return unAccumulate(ResultStatus.UNACCUMULATE.name());
+    }
+
+    public static OperationResult unAccumulate(String msg) {
+        return new OperationResult(ResultStatus.UNACCUMULATE, msg);
+    }
+
+    public static OperationResult elevatefailed() {
+        return elevatefailed(ResultStatus.ELEVATEFAILED.name());
+    }
+
+    public static OperationResult elevatefailed(String msg) {
+        return new OperationResult(ResultStatus.ELEVATEFAILED, msg);
+    }
+
+    public static OperationResult halfSuccess() {
+        return halfSuccess(ResultStatus.HALF_SUCCESS.name());
+    }
+
+    public static OperationResult halfSuccess(String msg) {
+        return new OperationResult(ResultStatus.HALF_SUCCESS, msg);
+    }
+
+    public static OperationResult fieldMust() {
+        return fieldMust(ResultStatus.FIELD_MUST.name());
+    }
+
+    public static OperationResult fieldMust(String msg) {
+        return new OperationResult(ResultStatus.FIELD_MUST, msg);
+    }
+
+    public static OperationResult fieldToLong() {
+        return fieldToLong(ResultStatus.FIELD_TOO_LONG.name());
+    }
+
+    public static OperationResult fieldToLong(String msg) {
+        return new OperationResult(ResultStatus.FIELD_TOO_LONG, msg);
+    }
+
+    public static OperationResult fieldHighPrecision() {
+        return fieldHighPrecision(ResultStatus.FIELD_HIGH_PRECISION.name());
+    }
+
+    public static OperationResult fieldHighPrecision(String msg) {
+        return new OperationResult(ResultStatus.FIELD_HIGH_PRECISION, msg);
+    }
+
+    public static OperationResult fieldNonExist() {
+        return fieldNonExist(ResultStatus.FIELD_NON_EXISTENT.name());
+    }
+
+    public static OperationResult fieldNonExist(String msg) {
+        return new OperationResult(ResultStatus.FIELD_NON_EXISTENT, msg);
+    }
+
+    private OperationResult(ResultStatus resultStatus, String message) {
         this.resultStatus = resultStatus;
-        this.entityId = entityId;
-        this.eventType = eventType;
         this.message = message;
     }
 
     /**
-     * 实例化.
+     * 增加一个提示.
+     *
+     * @param hint 提示.
+     * @return 当前实例.
      */
-    public OperationResult(long txId, long entityId, int version, int eventType, ResultStatus resultStatus,
-                           Collection<CalculationHint> hints, String message) {
-        this.txId = txId;
-        this.version = version;
-        this.resultStatus = resultStatus;
-        this.entityId = entityId;
-        this.eventType = eventType;
-        this.hints = hints;
-        this.message = message;
-    }
-
-    /**
-     * 半成功状态.
-     */
-    public void resetStatus(Collection<CalculationHint> hints) {
-        if (hints != null && !hints.isEmpty()) {
-            this.resultStatus = ResultStatus.HALF_SUCCESS;
-            this.hints = hints;
-            this.message = ResultStatus.HALF_SUCCESS.name();
+    public OperationResult addHint(Hint hint) {
+        if (Collections.EMPTY_LIST == hints) {
+            this.hints = new LinkedList();
         }
+
+        this.hints.add(hint);
+
+        if (ResultStatus.SUCCESS == this.resultStatus) {
+            this.resultStatus = ResultStatus.HALF_SUCCESS;
+        }
+
+        return this;
     }
 
-    public int getVersion() {
-        return version;
+    /**
+     * 增加多个提示.
+     *
+     * @param hints 提示列表.
+     * @return 当前实例.
+     */
+    public OperationResult addHints(Collection<Hint> hints) {
+        if (Collections.EMPTY_LIST == hints) {
+            this.hints = new LinkedList();
+        }
+
+        this.hints.addAll(hints);
+
+        if (ResultStatus.SUCCESS == this.resultStatus) {
+            this.resultStatus = ResultStatus.HALF_SUCCESS;
+        }
+
+        return this;
     }
 
-    public long getTxId() {
-        return txId;
+    public boolean isSuccess() {
+        return ResultStatus.SUCCESS == this.resultStatus || ResultStatus.HALF_SUCCESS == this.resultStatus;
     }
 
     public ResultStatus getResultStatus() {
         return resultStatus;
     }
 
-    public int getEventType() {
-        return eventType;
-    }
-
-    public long getEntityId() {
-        return entityId;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    public Collection<CalculationHint> getHints() {
+    public Collection<Hint> getHints() {
         return hints;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuffer sb = new StringBuffer("OperationResult{");
-        sb.append("txId=").append(txId);
-        sb.append(", entityId=").append(entityId);
-        sb.append(", version=").append(version);
-        sb.append(", eventType=").append(eventType);
-        sb.append(", resultStatus=").append(resultStatus);
-        sb.append('}');
-        return sb.toString();
     }
 
     @Override
@@ -114,70 +177,16 @@ public class OperationResult {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof OperationResult)) {
             return false;
         }
-        OperationResult that = (OperationResult) o;
-        return txId == that.txId && entityId == that.entityId && version == that.version
-            && eventType == that.eventType && resultStatus == that.resultStatus;
+        OperationResult result = (OperationResult) o;
+        return resultStatus == result.resultStatus && Objects.equals(hints, result.hints)
+            && Objects.equals(message, result.message);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(txId, entityId, version, eventType, resultStatus);
-    }
-
-
-    /**
-     * 工厂.
-     */
-    public static final class Builder {
-        private long txId;
-        private long entityId;
-        private int version;
-        private int eventType;
-        private ResultStatus resultStatus;
-        private String message;
-
-        private Builder() {
-        }
-
-        public static Builder anOperationResult() {
-            return new Builder();
-        }
-
-        public Builder withTxId(long txId) {
-            this.txId = txId;
-            return this;
-        }
-
-        public Builder withEntityId(long entityId) {
-            this.entityId = entityId;
-            return this;
-        }
-
-        public Builder withVersion(int version) {
-            this.version = version;
-            return this;
-        }
-
-        public Builder withEventType(int eventType) {
-            this.eventType = eventType;
-            return this;
-        }
-
-        public Builder withResultStatus(ResultStatus resultStatus) {
-            this.resultStatus = resultStatus;
-            return this;
-        }
-
-        public Builder withMessage(String message) {
-            this.message = message;
-            return this;
-        }
-
-        public OperationResult build() {
-            return new OperationResult(txId, entityId, version, eventType, resultStatus, message);
-        }
+        return Objects.hash(resultStatus, hints, message);
     }
 }

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+
 /**
  * Entity实体定义.
  *
@@ -28,13 +30,6 @@ public interface IEntity extends Cloneable {
      * @return 本对象的数据对象.
      */
     public IEntityValue entityValue();
-
-    /**
-     * 重置字段信息.
-     *
-     * @param enetityValue 新的字段信息.
-     */
-    public void resetEntityValue(IEntityValue enetityValue);
 
     /**
      * 重置 id.
@@ -103,19 +98,32 @@ public interface IEntity extends Cloneable {
     public void restMaintainId(long maintainId);
 
     /**
+     * 删除.
+     */
+    public void delete();
+
+    /**
+     * 判断实体是否已经被删除.
+     *
+     * @return 已经被删除.
+     */
+    public boolean isDeleted();
+
+    /**
      * 判断是否"脏",表示修改但未持久.
      *
      * @return true 脏, false 干净.
      */
-    public boolean isDirty();
+    public default boolean isDirty() {
+        return entityValue().isDirty();
+    }
 
     /**
-     * 设置为脏对象.表示修改没有持久化.
+     * 使当前对象是干净的.
      */
-    public void dirty();
-
-    /**
-     * 设置为非脏对象.表示修改已经持久化了.
-     */
-    public void neat();
+    public default void neat() {
+        for (IValue v : entityValue().values()) {
+            v.neat();
+        }
+    }
 }
