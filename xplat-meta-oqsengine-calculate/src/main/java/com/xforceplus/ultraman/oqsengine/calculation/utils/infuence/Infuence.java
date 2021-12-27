@@ -262,7 +262,7 @@ public class Infuence {
     }
 
     private void bfsIter(BfsIterNodeConsumer consumer) {
-        return bfsIter(consumer, this.rootNode);
+        bfsIter(consumer, this.rootNode);
     }
 
     private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer, Node startNode) {

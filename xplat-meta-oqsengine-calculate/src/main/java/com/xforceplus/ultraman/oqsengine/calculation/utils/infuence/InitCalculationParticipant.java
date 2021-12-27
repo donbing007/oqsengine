@@ -91,11 +91,85 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
             return false;
         }
         InitCalculationParticipant that = (InitCalculationParticipant) o;
-        return Objects.equals(getEntityClass(), that.getEntityClass()) && Objects.equals(field, that.field);
+        return Objects.equals(getEntityClass(), that.getEntityClass()) && Objects.equals(getField(), that.getField());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(getEntityClass(), getField());
+    }
+
+    /**
+     * 构造器.
+     */
+    public static final class Builder {
+        private IEntityClass entityClass;
+        private IEntityField field;
+        private Collection<IEntity> affectedEntities;
+        private Object attachment;
+        private IEntityClass sourceEntityClass;
+        private Collection<IEntityField> sourceFields;
+        private int age;
+        private IEntity process;
+
+        private Builder() {}
+
+        public static Builder anInitCalculationParticipant() {return new Builder();}
+
+        public Builder withEntityClass(IEntityClass entityClass) {
+            this.entityClass = entityClass;
+            return this;
+        }
+
+        public Builder withField(IEntityField field) {
+            this.field = field;
+            return this;
+        }
+
+        public Builder withAffectedEntities(Collection<IEntity> affectedEntities) {
+            this.affectedEntities = affectedEntities;
+            return this;
+        }
+
+        public Builder withAttachment(Object attachment) {
+            this.attachment = attachment;
+            return this;
+        }
+
+        public Builder withSourceEntityClass(IEntityClass sourceEntityClass) {
+            this.sourceEntityClass = sourceEntityClass;
+            return this;
+        }
+
+        public Builder withSourceFields(Collection<IEntityField> sourceFields) {
+            this.sourceFields = sourceFields;
+            return this;
+        }
+
+        public Builder withAge(int age) {
+            this.age = age;
+            return this;
+        }
+
+        public Builder withProcess(IEntity process) {
+            this.process = process;
+            return this;
+        }
+
+        /**
+         * 构造.
+         */
+        public InitCalculationParticipant build() {
+            InitCalculationParticipant initCalculationParticipant = new InitCalculationParticipant();
+            initCalculationParticipant.setEntityClass(entityClass);
+            initCalculationParticipant.setField(field);
+            initCalculationParticipant.setAffectedEntities(affectedEntities);
+            initCalculationParticipant.setAttachment(attachment);
+            initCalculationParticipant.setProcess(process);
+            initCalculationParticipant.sourceEntityClass = this.sourceEntityClass;
+            initCalculationParticipant.age = this.age;
+            initCalculationParticipant.sourceFields = this.sourceFields;
+            return initCalculationParticipant;
+        }
     }
 }
