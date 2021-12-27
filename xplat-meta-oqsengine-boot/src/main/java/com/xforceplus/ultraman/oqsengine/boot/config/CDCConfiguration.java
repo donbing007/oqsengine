@@ -55,10 +55,12 @@ public class CDCConfiguration {
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
 
-        ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
-        clusterCanalConnector.init(host, destination, userName, password);
+        ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector(host, destination, userName, password);
+        //  创建connector实例
+        clusterCanalConnector.init();
 
         initProperties(clusterCanalConnector, batchSize);
+
         return clusterCanalConnector;
     }
 
@@ -75,10 +77,12 @@ public class CDCConfiguration {
         @Value("${cdc.connect.password}") String password,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(host, port, destination, userName, password);
+        SingleCDCConnector singleCDCConnector = new SingleCDCConnector(host, destination, userName, password, port);
+        //  创建connector实例
+        singleCDCConnector.init();
 
         initProperties(singleCDCConnector, batchSize);
+
         return singleCDCConnector;
     }
 

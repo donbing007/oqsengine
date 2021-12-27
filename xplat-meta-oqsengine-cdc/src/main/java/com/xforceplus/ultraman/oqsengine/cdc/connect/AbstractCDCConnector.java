@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_RECONNECT_TIMES_PER_CONNECTIONS;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.Message;
@@ -24,6 +25,25 @@ public abstract class AbstractCDCConnector {
     protected CanalConnector canalConnector;
 
     private boolean isClosed = true;
+
+    //  canal的基本信息
+    protected String connectString;
+    protected String destination;
+    protected String userName;
+    protected String password;
+
+
+    public AbstractCDCConnector(String connectString, String destination, String userName, String password) {
+        this.connectString = connectString;
+        this.destination = destination;
+        this.userName = userName;
+        this.password = password;
+    }
+
+    public boolean canUseConnector(int times) {
+        return times < MAX_RECONNECT_TIMES_PER_CONNECTIONS;
+    }
+    public abstract void init();
 
     /**
      * 关闭.只有当连接合法时才会关闭链接.否则什么都不做.
