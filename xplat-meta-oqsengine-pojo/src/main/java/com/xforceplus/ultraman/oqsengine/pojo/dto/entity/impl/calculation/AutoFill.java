@@ -5,6 +5,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -147,6 +148,22 @@ public class AutoFill extends AbstractCalculation {
         autoFill.resetType = this.resetType;
 
         return autoFill;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", AutoFill.class.getSimpleName() + "[", "]")
+            .add("patten='" + patten + "'")
+            .add("model='" + model + "'")
+            .add("step=" + step)
+            .add("min='" + min + "'")
+            .add("max='" + max + "'")
+            .add("code='" + code + "'")
+            .add("expression='" + expression + "'")
+            .add("args=" + args)
+            .add("domainNoType=" + domainNoType)
+            .add("resetType=" + resetType)
+            .toString();
     }
 
     /**

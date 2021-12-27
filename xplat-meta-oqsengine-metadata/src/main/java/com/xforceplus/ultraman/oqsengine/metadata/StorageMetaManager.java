@@ -107,6 +107,35 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
+    public Collection<IEntityClass> appLoad(String appId) {
+        try {
+            Collection<IEntityClass> collection = new ArrayList<>();
+            int currentVersion = cacheExecutor.version(appId);
+            if (currentVersion == NOT_EXIST_VERSION) {
+                return collection;
+            }
+
+            Collection<Long> entityClassIds =
+                cacheExecutor.appEntityIdList(appId, currentVersion);
+            if (entityClassIds.isEmpty()) {
+                return collection;
+            }
+
+            entityClassIds.forEach(
+                entityClassId -> {
+                    collection.addAll(withProfilesLoad(entityClassId, currentVersion));
+                }
+            );
+
+            return collection;
+
+        } catch (Exception e) {
+            logger.warn("load meta by appId error, appId {}, message : {}", appId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
     public Optional<IEntityClass> load(long entityClassId, String profile) {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         return load(entityClassId, cacheExecutor.version(entityClassId), profile);
@@ -153,33 +182,7 @@ public class StorageMetaManager implements MetaManager {
 
     @Override
     public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
-
-            int version = cacheExecutor.version(entityClassId);
-
-            Optional<IEntityClass> entityClassOp =
-                load(entityClassId, version, null);
-
-            if (entityClassOp.isPresent()) {
-                entityClassList.add(entityClassOp.get());
-
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
-                if (!profiles.isEmpty()) {
-                    for (String profile : profiles) {
-                        Optional<IEntityClass> ecOp =
-                            load(entityClassId, version, profile);
-
-                        ecOp.ifPresent(entityClassList::add);
-                    }
-                }
-            }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
-        }
-        return new ArrayList<>();
+        return withProfilesLoad(entityClassId, NOT_EXIST_VERSION);
     }
 
     /**
@@ -308,7 +311,7 @@ public class StorageMetaManager implements MetaManager {
     public int reset(String appId, String env) {
         String cacheEnv = cacheExecutor.appEnvGet(appId);
         //  重置
-        if (null == env || env.isEmpty()) {
+        if (null == cacheEnv || cacheEnv.isEmpty()) {
             return need(appId, env);
         } else {
             int version = cacheExecutor.version(appId);
@@ -341,6 +344,38 @@ public class StorageMetaManager implements MetaManager {
         cacheExecutor.appEnvRemove(appId);
 
         return true;
+    }
+
+    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
+        try {
+            List<IEntityClass> entityClassList = new ArrayList<>();
+
+            if (version == NOT_EXIST_VERSION) {
+                version = cacheExecutor.version(entityClassId);
+            }
+            Optional<IEntityClass> entityClassOp =
+                load(entityClassId, version, null);
+
+            if (entityClassOp.isPresent()) {
+                entityClassList.add(entityClassOp.get());
+
+                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+                if (!profiles.isEmpty()) {
+                    for (String profile : profiles) {
+                        Optional<IEntityClass> ecOp =
+                            load(entityClassId, version, profile);
+
+                        ecOp.ifPresent(entityClassList::add);
+                    }
+                }
+            }
+
+            return entityClassList;
+        } catch (Exception e) {
+            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
+        }
+        return new ArrayList<>();
+
     }
 
     private void offLineInit(String path) {
@@ -382,6 +417,12 @@ public class StorageMetaManager implements MetaManager {
         logger.warn("load path invalid, nothing would be load from offLine-model.");
     }
 
+    /**
+     * 等待SyncClient进行register并返回当前版本.
+     *
+     * @param appId 应用ID.
+     * @return 版本号.
+     */
     private int waitForMetaSync(String appId) {
         CompletableFuture<Integer> future = async(() -> {
             int ver;
@@ -403,21 +444,17 @@ public class StorageMetaManager implements MetaManager {
             return NOT_EXIST_VERSION;
         });
 
-        int version = NOT_EXIST_VERSION;
-
         try {
-            version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            int version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            if (version == NOT_EXIST_VERSION) {
+                throw new RuntimeException(
+                    String.format("get version of appId [%s] failed, reach max wait time", appId));
+            }
+            return version;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-
-        if (version == NOT_EXIST_VERSION) {
-            throw new RuntimeException(
-                String.format("get version of appId [%s] failed, reach max wait time", appId));
-        }
-
-        return version;
     }
 
     /**
@@ -496,6 +533,7 @@ public class StorageMetaManager implements MetaManager {
 
         profile = (null == profile) ? OqsProfile.UN_DEFINE_PROFILE : profile;
 
+        boolean profileFound = false;
         //  entityFields & profile
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
@@ -504,18 +542,23 @@ public class StorageMetaManager implements MetaManager {
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
+                    profileFound = true;
                     fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {
                     String key = parseOneKeyFromProfileRelations(entry.getKey());
                     if (profile.equals(key)) {
+                        profileFound = true;
                         relationships.addAll(toQqsRelation(OBJECT_MAPPER.readValue(keyValues.get(entry.getKey()),
                             OBJECT_MAPPER.getTypeFactory().constructParametricType(
                                 List.class, RelationStorage.class)), rightEntityClassLoader, rightFamilyEntityClassLoader));
                     }
                 }
             }
+        }
+        if (profileFound) {
+            builder.withProfile(profile);
         }
 
         builder.withFields(fields);

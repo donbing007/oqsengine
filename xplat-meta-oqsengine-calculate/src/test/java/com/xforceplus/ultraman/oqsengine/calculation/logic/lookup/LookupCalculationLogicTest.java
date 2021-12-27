@@ -2,12 +2,13 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -188,7 +189,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(strongLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(strongLookupEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(strongLookupEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(strongLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(true)
@@ -199,7 +200,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(weakLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(weakLookupEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(weakLookupEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(weakLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(false)
@@ -223,7 +224,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(strongLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(true)
@@ -245,7 +246,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(weakLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(false)
@@ -289,17 +290,17 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
-        List<Participant> participants = new ArrayList<>();
+        List<AbstractParticipant> abstractParticipants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
-            participants.add(participant);
+            abstractParticipants.add(participant);
 
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(2, participants.size());
-        Assertions.assertEquals(targetClassId, participants.get(0).getEntityClass().id());
-        Assertions.assertEquals(weakLookupClassId, participants.get(1).getEntityClass().id());
+        Assertions.assertEquals(2, abstractParticipants.size());
+        Assertions.assertEquals(targetClassId, abstractParticipants.get(0).getEntityClass().id());
+        Assertions.assertEquals(weakLookupClassId, abstractParticipants.get(1).getEntityClass().id());
     }
 
     /**
@@ -315,7 +316,7 @@ public class LookupCalculationLogicTest {
             .withTransaction(tx)
             .withTaskExecutorService(TASK_POOL)
             .withTaskCoordinator(coordinator)
-            .build();
+            .withCalculationLogicFactory(new CalculationLogicFactory()).build();
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
@@ -343,7 +344,7 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
-        AtomicReference<Participant> p = new AtomicReference<>();
+        AtomicReference<AbstractParticipant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == targetClassId) {
@@ -355,8 +356,8 @@ public class LookupCalculationLogicTest {
         });
 
 
-        Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        AbstractParticipant abstractParticipant = p.get();
+        long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
         Assertions.assertEquals(0, ids.length);
 
         tx.commit();
@@ -427,7 +428,7 @@ public class LookupCalculationLogicTest {
 
         logic.scope(context, infuence);
 
-        AtomicReference<Participant> p = new AtomicReference<>();
+        AtomicReference<AbstractParticipant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (participant.getEntityClass().id() == strongLookupClassId) {
                 p.set(participant);
@@ -437,8 +438,8 @@ public class LookupCalculationLogicTest {
         });
 
 
-        Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        AbstractParticipant abstractParticipant = p.get();
+        long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
         Assertions.assertEquals(1000, ids.length);
 
         tx.commit();

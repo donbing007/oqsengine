@@ -22,6 +22,14 @@ public class CalculationLogicFactory {
 
     private Map<CalculationType, CalculationLogic> calculationLogics;
 
+    private static final class CalculationLogicFactoryHolder {
+        static final CalculationLogicFactory CALCULATION_LOGIC_FACTORY = new CalculationLogicFactory();
+    }
+
+    public static CalculationLogicFactory getInstance() {
+        return CalculationLogicFactoryHolder.CALCULATION_LOGIC_FACTORY;
+    }
+
     /**
      * 构造计算逻辑工厂.
      */

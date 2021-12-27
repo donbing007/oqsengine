@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.MD5Utils;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -84,6 +85,17 @@ public class Formula extends AbstractCalculation  {
         formula.expression = this.expression;
         formula.code = this.code;
         return formula;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", Formula.class.getSimpleName() + "[", "]")
+            .add("code='" + code + "'")
+            .add("expression='" + expression + "'")
+            .add("failedPolicy=" + failedPolicy)
+            .add("failedDefaultValue=" + failedDefaultValue)
+            .add("args=" + args)
+            .toString();
     }
 
     /**

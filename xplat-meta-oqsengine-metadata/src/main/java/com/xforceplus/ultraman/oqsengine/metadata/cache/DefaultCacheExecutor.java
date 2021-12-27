@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
@@ -356,24 +356,28 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public AppMetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    public MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException {
 
-        AppMetaChangePayLoad appMetaChangePayLoad = new AppMetaChangePayLoad(appId, version);
+        MetaChangePayLoad appMetaChangePayLoad = new MetaChangePayLoad(appId, version);
 
-        Map<Long, EntityClassStorage> oldMetas =
-            CacheToStorageGenerator
-                .toEntityClassStorages(OBJECT_MAPPER, remoteMultiplyLoading(appEntityIdList(appId, version), version));
+        //  获取旧版本.
+        int oldVersion = version(appId);
+        Map<Long, EntityClassStorage> oldMetas = null;
+        //  当存在旧版本时，获取旧版本信息.
+        if (oldVersion > NOT_EXIST_VERSION) {
+            oldMetas = CacheToStorageGenerator
+                .toEntityClassStorages(OBJECT_MAPPER,
+                    remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
+        }
 
         //  set data
         for (EntityClassStorage newStorage : storageList) {
-            //  设置App事件中的entityClassId
-            appMetaChangePayLoad.getAppEntityClasses().add(newStorage.getId());
 
             //  存入到cache中，并获得entityClass的变更事件
-            AppMetaChangePayLoad.EntityChange entityChange =
-                saveToCache(toCacheSetKey(version, newStorage.getId()), oldMetas.remove(newStorage.getId()),
-                    newStorage);
+            EntityClassStorage old = null != oldMetas ? oldMetas.remove(newStorage.getId()) : null;
+            MetaChangePayLoad.EntityChange entityChange =
+                saveToCache(toCacheSetKey(version, newStorage.getId()), old, newStorage);
 
             if (null != entityChange) {
                 appMetaChangePayLoad.getEntityChanges().add(entityChange);
@@ -381,14 +385,16 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         //  还剩余的oldMetas表明有删除的EntityClass,需要反查一次oldMeta确定删除事件
-        oldMetas.forEach(
-            (k, v) -> {
-                AppMetaChangePayLoad.EntityChange entityChange = new AppMetaChangePayLoad.EntityChange(k);
-                reverseEventCheck(v, null, null, entityChange);
+        if (null != oldMetas) {
+            oldMetas.forEach(
+                (k, v) -> {
+                    MetaChangePayLoad.EntityChange entityChange = new MetaChangePayLoad.EntityChange(k);
+                    reverseEventCheck(v, null, null, entityChange);
 
-                appMetaChangePayLoad.getEntityChanges().add(entityChange);
-            }
-        );
+                    appMetaChangePayLoad.getEntityChanges().add(entityChange);
+                }
+            );
+        }
 
         //  reset version
         if (!resetVersion(appId, version,
@@ -478,30 +484,50 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean isSilence) {
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue) {
 
         Map<Long, Integer> vs = new HashMap<>();
-        Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
-        if (null != versions && !versions.isEmpty()) {
+
+        //  获取所有entity->app mapping
+        Map<String, String> entityAppRelations = syncCommands.hgetall(appEntityMappingKey);
+        //  获取所有的app->version mapping
+        Map<String, String> appVersionRelations = syncCommands.hgetall(appVersionKeys);
+
+        String error = "";
+
+        if (null != appVersionRelations && !appVersionRelations.isEmpty() &&
+                    null != entityAppRelations && !entityAppRelations.isEmpty()) {
+
             for (Long entityClassId : entityClassIds) {
-                String version = versions.get(String.valueOf(entityClassId));
-                if (null != version) {
-                    vs.put(entityClassId, Integer.parseInt(version));
-                } else {
-                    String error = String.format("get versions failed, entityClassId : %s", entityClassId);
-                    logger.warn(error);
-                    //  存在未找到，抛出异常
-                    if (!isSilence) {
-                        throw new RuntimeException(error);
+                String appId = entityAppRelations.get(String.valueOf(entityClassId));
+
+                if (null != appId) {
+                    String version = appVersionRelations.get(appId);
+                    if (null != version) {
+                        vs.put(entityClassId, Integer.parseInt(version));
+                    } else {
+                        error = String.format("version not found, appId : %s failed, entityClassId : %s", appId, entityClassId);
                     }
+                } else {
+                    error = String.format("appId not found, entityClassId : %s", entityClassId);
                 }
+
+                if (!error.isEmpty()) {
+                    //  存在错误且继续标志为false
+                    if (!errorContinue) {
+                        break;
+                    }
+                    logger.warn(error);
+                    error = "";
+               }
             }
         } else {
-            String error = "get versions failed, target version in cache is empty.";
+            error = "query entityClassIds->versions failed, no mapping in cache.";
             logger.warn(error);
-            if (!isSilence) {
-                throw new RuntimeException(error);
-            }
+        }
+
+        if (!error.isEmpty() && !errorContinue) {
+            throw new RuntimeException(error);
         }
 
         return vs;
@@ -697,8 +723,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         List<String> profiles = profileCache.getIfPresent(key);
         if (null == profiles || profiles.isEmpty()) {
             try {
-                //  从remoteCache读取,并写入本地cache
-                profileCache.put(key, CacheUtils.parseProfileCodes(remoteRead(entityClassId, version)));
+                profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
+                if (!profiles.isEmpty()) {
+                    //  从remoteCache读取,并写入本地cache
+                    profileCache.put(key, profiles);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("entityId : %d, version : %d, read profiles failed, message : %s",
@@ -815,26 +844,26 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
     }
 
-    private AppMetaChangePayLoad.FieldChange appEventHandle(IEntityField oldOne, IEntityField newOne, String profile) {
+    private MetaChangePayLoad.FieldChange toFieldChange(IEntityField oldOne, IEntityField newOne, String profile) {
         if (null == oldOne && null == newOne) {
             throw new RuntimeException("add event could not handle IEntityField oldOne & newOne all empty.");
         }
 
         if (null == oldOne) {
-            return new AppMetaChangePayLoad.FieldChange(newOne.id(), OperationType.CREATE, profile);
+            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.CREATE, profile);
         } else if (null == newOne) {
-            return new AppMetaChangePayLoad.FieldChange(oldOne.id(), OperationType.DELETE, profile);
+            return new MetaChangePayLoad.FieldChange(oldOne.id(), OperationType.DELETE, profile);
         } else if (!oldOne.toString().equals(newOne.toString())) {
-            return new AppMetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
             //  entityField变更的标准为toString后两边不一致
+            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
         }
         return null;
     }
 
-    private AppMetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage,
+    private MetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage,
                                                           EntityClassStorage newStorage) {
 
-        AppMetaChangePayLoad.EntityChange entityChange = null;
+        MetaChangePayLoad.EntityChange entityChange = null;
 
         //  basic elements
         syncCommands.hset(key, ELEMENT_ID, Long.toString(newStorage.getId()));
@@ -870,14 +899,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null != newStorage.getFields()) {
             for (IEntityField entityField : newStorage.getFields()) {
                 try {
-                    AppMetaChangePayLoad.FieldChange change =
-                        appEventHandle(null == oldStorage ? null : oldStorage.find(entityField.id(), null), entityField,
-                            null);
+                    IEntityField oldField = (null == oldStorage) ? null : oldStorage.find(entityField.id(), null);
+                    MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, null);
                     if (null != change) {
                         if (null == entityChange) {
-                            entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
+                            entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
                         }
-                        entityChange.getFieldChanges().computeIfAbsent(entityField.calculationType(), (k) -> new ArrayList<>()).add(change);
+                        entityChange.getFieldChanges().add(change);
                     }
 
                     String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
@@ -898,15 +926,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
                             syncCommands
                                 .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
 
-                            AppMetaChangePayLoad.FieldChange change =
-                                appEventHandle(
-                                    null == oldStorage ? null : oldStorage.find(entityField.id(), ps.getCode()),
-                                    entityField, ps.getCode());
+                            IEntityField oldField =
+                                (null == oldStorage) ? null : oldStorage.find(entityField.id(), ps.getCode());
+                            MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, ps.getCode());
+
                             if (null != change) {
                                 if (null == entityChange) {
-                                    entityChange = new AppMetaChangePayLoad.EntityChange(newStorage.getId());
+                                    entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
                                 }
-                                entityChange.getFieldChanges().computeIfAbsent(entityField.calculationType(), (k) -> new ArrayList<>()).add(change);
+                                entityChange.getFieldChanges().add(change);
                             }
                         } catch (JsonProcessingException e) {
                             throw new MetaSyncClientException("parse profile-entityFields failed.", false);
@@ -927,6 +955,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         //  反向检查 DELETE事件
         if (null != oldStorage) {
+            if (null == entityChange) {
+                entityChange = new MetaChangePayLoad.EntityChange(oldStorage.getId());
+            }
             reverseEventCheck(oldStorage, newStorage.getFields(), newStorage.getProfileStorageMap(), entityChange);
         }
 
@@ -938,7 +969,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private void reverseEventCheck(EntityClassStorage oldStorage, List<EntityField> newFields,
                                    Map<String, ProfileStorage> newProfiles,
-                                   AppMetaChangePayLoad.EntityChange entityChange) {
+                                   MetaChangePayLoad.EntityChange entityChange) {
         //  普通field删除事件
         oldStorage.getFields().forEach(
             f -> {
@@ -965,17 +996,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 寻找并加入event.
      */
     private void findAndAddEvent(IEntityField origin, List<EntityField> newFields, String profile,
-                                 AppMetaChangePayLoad.EntityChange entityChange) {
-        IEntityField findEntityField = origin;
+                                 MetaChangePayLoad.EntityChange entityChange) {
+        IEntityField findEntityField = null;
+
         if (null != newFields) {
-            findEntityField = newFields.stream().filter(n -> n.id() != origin.id()).findFirst()
-                .orElse(null);
+            findEntityField = newFields.stream().filter(n -> n.id() == origin.id()).findFirst().orElse(null);
         }
 
-        if (null != findEntityField) {
-            AppMetaChangePayLoad.FieldChange change =
-                appEventHandle(findEntityField, null, profile);
-            entityChange.getFieldChanges().computeIfAbsent(findEntityField.calculationType(), (k) -> new ArrayList<>()).add(change);
+        if (null == findEntityField) {
+            MetaChangePayLoad.FieldChange change =
+                toFieldChange(origin, null, profile);
+            entityChange.getFieldChanges().add(change);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import java.util.StringJoiner;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -16,6 +17,12 @@ public class UnknownCalculation extends AbstractCalculation {
     @Override
     public AbstractCalculation clone() {
         return new UnknownCalculation();
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", UnknownCalculation.class.getSimpleName() + "[", "]")
+            .toString();
     }
 
     /**

@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -22,7 +23,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -133,14 +133,6 @@ public class SystemOpsService {
         return -1;
     }
 
-    /**
-     * 获得当前CDC中未同步的commitIds水位.
-     *
-     * @return 当前redis中 un-commits 的水位,
-     * 返回值为0代表redis中没有未处理的commit如果为空,
-     * 当第一个值>0时代表当前总数位count
-     * 从第二个值开始代表会显示当前的un-commitIds列表(un-commitIds按从小到大排列)
-     */
     /**
      * 获得当前CDC中未同步的commitIds水位.
      * 当前redis中 un-commits 的水位.
@@ -406,5 +398,21 @@ public class SystemOpsService {
             PrintErrorHelper.exceptionHandle(String.format("cancel task exception, [%s]", taskId), e);
         }
         return false;
+    }
+
+    /**
+     * 获取meta同步日志.
+     *
+     * @param type 需要查看的日志ALL/INFO/ERROR类型.
+     * @return 日志集合.
+     */
+    @DiscoverAction(describe = "获取meta同步日志", retClass = List.class, retInner = MetricsLog.class)
+    public Collection<MetricsLog> showMetaLogs(@MethodParam(name = "type", klass = String.class, required = false) String type) {
+        try {
+            return metaManager.metaLogs(MetricsLog.ShowType.getInstance(type));
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle("show metaLogs exception.", e);
+        }
+        return null;
     }
 }

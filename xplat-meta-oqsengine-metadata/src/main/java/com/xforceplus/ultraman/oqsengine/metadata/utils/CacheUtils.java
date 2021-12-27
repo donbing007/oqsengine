@@ -127,12 +127,11 @@ public class CacheUtils {
     public static List<String> parseProfileCodes(Map<String, String> keyValues) {
         Set<String> profiles = new HashSet<>();
         if (null != keyValues && !keyValues.isEmpty()) {
-            Iterator<Map.Entry<String, String>> iterator = keyValues.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, String> entry = iterator.next();
-                if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)
-                    || entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
+            for (Map.Entry<String, String> entry : keyValues.entrySet()) {
+                if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                     profiles.add(parseOneKeyFromProfileEntity(entry.getKey()));
+                } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
+                    profiles.add(parseOneKeyFromProfileRelations(entry.getKey()));
                 }
             }
         }

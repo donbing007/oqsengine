@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.event.executor;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 import java.sql.SQLException;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @since 1.8
  */
-public class DoNothingEventExecutor implements CalculationEventExecutor {
+public class DoNothingEventExecutor extends AbstractEventExecutor {
 
     /**
      * 这是一个什么都不做的操作.

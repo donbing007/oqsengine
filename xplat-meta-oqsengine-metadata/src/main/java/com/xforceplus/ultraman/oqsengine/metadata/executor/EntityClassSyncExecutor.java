@@ -9,7 +9,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityCla
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -81,7 +81,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
     @Override
     public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         int expiredVersion = -1;
-        AppMetaChangePayLoad appMetaChangePayLoad = null;
+        MetaChangePayLoad metaChangePayLoad = null;
 
         //  初始化SyncStep
         SyncStep step = SyncStep.failed(SyncStep.StepDefinition.UNKNOWN, "");
@@ -117,8 +117,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 throw new MetaSyncClientException(step.messageFormat(), false);
             }
 
-            appMetaChangePayLoad = (AppMetaChangePayLoad) step.getData();
-
+            metaChangePayLoad = (MetaChangePayLoad) step.getData();
         } finally {
             //  如果成功、执行publish
             if (step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
@@ -128,7 +127,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
                         new ExpireExecutor.Expired(appId, expiredVersion)));
                 }
-                eventPublish(appMetaChangePayLoad);
+                eventPublish(metaChangePayLoad);
             }
 
             if (openPrepare) {
@@ -160,11 +159,11 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         }
     }
 
-    private SyncStep<AppMetaChangePayLoad> save(String appId, int version, List<EntityClassStorage> entityClassStorages) {
+    private SyncStep<MetaChangePayLoad> save(String appId, int version, List<EntityClassStorage> entityClassStorages) {
         try {
-            AppMetaChangePayLoad appMetaChangePayLoad =
+            MetaChangePayLoad metaChangePayLoad =
                 cacheExecutor.save(appId, version, entityClassStorages);
-            return SyncStep.ok(appMetaChangePayLoad);
+            return SyncStep.ok(metaChangePayLoad);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, e.getMessage());
@@ -205,12 +204,12 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         }
     }
 
-    private void eventPublish(AppMetaChangePayLoad appMetaChangePayLoad) {
-        if (null != appMetaChangePayLoad) {
-            logger.info("ready for publish event on appEntityClasses:[{}]", appMetaChangePayLoad.getAppEntityClasses());
+    private void eventPublish(MetaChangePayLoad metaChangePayLoad) {
+        if (null != metaChangePayLoad) {
+            logger.info("ready for publish event on appId:[{}]", metaChangePayLoad.getAppId());
             //  publish event
-            if (!appMetaChangePayLoad.getEntityChanges().isEmpty()) {
-                eventBus.notify(new ActualEvent<>(EventType.META_DATA_CHANGE, appMetaChangePayLoad));
+            if (!metaChangePayLoad.getEntityChanges().isEmpty()) {
+                eventBus.notify(new ActualEvent<>(EventType.META_DATA_CHANGE, metaChangePayLoad));
                 logger.info("publish event ok.");
             } else {
                 logger.info("empty event change, nothing to publish.");

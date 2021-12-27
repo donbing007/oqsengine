@@ -2,10 +2,9 @@ package com.xforceplus.ultraman.oqsengine.calculation.event.executor;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
-import com.xforceplus.ultraman.oqsengine.calculation.event.dto.CalculationEvent;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationEvent;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -24,15 +23,15 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-public class AutoFillEventExecutor implements CalculationEventExecutor {
+public class AutoFillEventExecutor extends AbstractEventExecutor {
 
     private Logger log = LoggerFactory.getLogger(AutoFillEventExecutor.class);
 
     @Override
     public boolean execute(CalculationEvent calculationEvent, CachedEntityClass cachedEntityClass, CalculationEventResource resource)  throws SQLException {
         int version = Math.max(calculationEvent.getVersion(), NOT_EXIST_VERSION);
-        for (Map.Entry<Long, List<AppMetaChangePayLoad.FieldChange>> entry : calculationEvent.getFieldChanges().entrySet()) {
-            for (AppMetaChangePayLoad.FieldChange change : entry.getValue()) {
+        for (Map.Entry<Long, List<CalculationEvent.CalculationField>> entry : calculationEvent.getCalculationFields().entrySet()) {
+            for (CalculationEvent.CalculationField change : entry.getValue()) {
 
                 IEntityClass entityClass = cachedEntityClass.findEntityClassWithCache(
                     resource.getMetaManager(), entry.getKey(), change.getProfile(), version);
@@ -48,12 +47,12 @@ public class AutoFillEventExecutor implements CalculationEventExecutor {
     }
 
 
-    private void autoFillSchemaUpdate(IEntityClass entityClass, AppMetaChangePayLoad.FieldChange fieldChange, CalculationEventResource resource)
+    private void autoFillSchemaUpdate(IEntityClass entityClass, CalculationEvent.CalculationField fieldChange, CalculationEventResource resource)
         throws SQLException {
         SegmentStorage storage = resource.getSegmentStorage();
-        String bizType = String.valueOf(fieldChange.getFieldId());
+        String bizType = String.valueOf(fieldChange.getEntityField().id());
         Optional<SegmentInfo> segmentInfo = storage.query(bizType);
-        Optional<IEntityField> entityFieldOp = entityClass.field(fieldChange.getFieldId());
+        Optional<IEntityField> entityFieldOp = entityClass.field(fieldChange.getEntityField().id());
         if (entityFieldOp.isPresent()) {
             AutoFill calculator = (AutoFill) entityFieldOp.get().config().getCalculation();
             if (!segmentInfo.isPresent()) {

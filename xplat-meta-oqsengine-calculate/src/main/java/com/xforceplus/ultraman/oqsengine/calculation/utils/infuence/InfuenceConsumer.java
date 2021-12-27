@@ -16,11 +16,11 @@ public interface InfuenceConsumer {
      * 消费.
      *
      * @param parentParticipantOp 上层参与者.
-     * @param participant         参与者.
+     * @param abstractParticipant         参与者.
      * @param infuenceInner       当前的影响树.
      * @return true 继续,false中断.
      */
-    Action accept(Optional<Participant> parentParticipantOp, Participant participant, Infuence infuenceInner);
+    Action accept(Optional<AbstractParticipant> parentParticipantOp, AbstractParticipant abstractParticipant, Infuence infuenceInner);
 
     /**
      * 迭代影响力时用以控制之后迭代的动作表示.

@@ -591,4 +591,61 @@ public class InfuenceTest {
             "\n(a,createTime)······\n |- (d,createTime)····\n |- (b,createTime)····\n·· |- (c,createTime)··\n",
             infuence.toString());
     }
+
+
+    /**
+     * 测试nextParticipant是否符合预期.
+     * ...........A
+     * ...........|
+     * ........|-----|
+     * ........B     D
+     * ........|     |
+     * ........C     E
+     */
+    @Test
+    public void testGetNextParticipants() {
+        IEntity rootEntity = Entity.Builder.anEntity()
+                .withId(Long.MAX_VALUE)
+                .withEntityClassRef(A_CLASS.ref()).build();
+        CalculationParticipant a = CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build();
+        Infuence infuence = new Infuence(rootEntity, a,
+                new ValueChange(
+                        rootEntity.id(),
+                        new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                        new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+                ));
+        CalculationParticipant b = CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build();
+        infuence.impact(a, b);
+
+        CalculationParticipant c = CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build();
+        infuence.impact(b, c);
+
+        CalculationParticipant d = CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build();
+        infuence.impact(a, d);
+        CalculationParticipant e = CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(E_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build();
+        infuence.impact(d, e);
+
+        List<AbstractParticipant> nextAbstractParticipants = a.getNextParticipants();
+        Assertions.assertTrue(nextAbstractParticipants.contains(b));
+        Assertions.assertTrue(nextAbstractParticipants.contains(d));
+        List<AbstractParticipant> nextParticipants1 = b.getNextParticipants();
+        Assertions.assertTrue(nextParticipants1.contains(c));
+        List<AbstractParticipant> nextParticipants2 = d.getNextParticipants();
+        Assertions.assertTrue(nextParticipants2.contains(e));
+    }
 }

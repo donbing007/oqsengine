@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.InitCalculationManager;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -17,6 +18,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -40,7 +43,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,6 +57,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
+
+import io.vavr.control.Either;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,6 +123,9 @@ public class CalculationTest extends AbstractContainerExtends {
 
     @Resource(name = "taskThreadPool")
     private ExecutorService taskThreadPool;
+
+    @Resource
+    private InitCalculationManager initCalculationManager;
 
     private Faker faker = new Faker(Locale.CHINA);
 
@@ -721,6 +731,89 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(new BigDecimal("0.000000"),
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
+    }
+
+
+    @Test
+    public void testInitCalculation() throws Exception {
+        IEntityClass orderClass = MockEntityClassDefine.ORDER_CLASS;
+        IEntityClass orderItemClass = MockEntityClassDefine.ORDER_ITEM_CLASS;
+        MockEntityClassDefine.changeOrder(metaManager);
+        IEntity entity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
+                .withId(1)
+                .withEntityValue(
+                        EntityValue.build().addValue(
+                                new DateTimeValue(
+                                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                                )
+                        )
+                ).build();
+
+        int size = 200;
+        Collection<IEntity> entities = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            IEntity e = Entity.Builder.anEntity()
+                    .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
+                    .withEntityValue(
+                            EntityValue.build()
+                                    .addValue(
+                                            new StringValue(
+                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
+                                                    faker.food().fruit()
+                                            )
+                                    )
+                                    .addValue(
+                                            new DecimalValue(
+                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                                                    new BigDecimal(faker.number().randomDouble(3, 1, 1000))
+                                                            .setScale(6, BigDecimal.ROUND_HALF_UP)
+                                            )
+                                    )
+                                    .addValue(
+                                            new LongValue(
+                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                                                    faker.number().randomNumber()
+                                            )
+                                    )
+                                    .addValue(
+                                            new LongValue(
+                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                                                    entity.id()
+                                            )
+                                    )
+                                    .addValue(
+                                            new DateTimeValue(
+                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                                                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                                            )
+                                    )
+                    ).build();
+            entities.add(e);
+
+            OperationResult result = entityManagementService.build(e);
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        }
+
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        OperationResult build = entityManagementService.build(entity);
+
+        MockEntityClassDefine.initMetaManager(metaManager);
+
+        Either<String, List<IEntityField>> test = initCalculationManager.initAppCalculations("test");
+        Optional<IEntity> entity1;
+        while (true) {
+            entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
+            if (entity1.get().entityValue().size() >= 11) {
+                latch.countDown();
+                break;
+            }
+        }
+        latch.await();
+        Assertions.assertEquals(200, entity1.get().entityValue().getValue("订单项总数count").get().valueToLong());
     }
 
     // 构造用户.

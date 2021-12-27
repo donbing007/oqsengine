@@ -109,9 +109,22 @@ public class Infuence {
     /**
      * 以广度优先的方式遍历整个影响树.
      *
-     * @param consumer 对于每一个结点(不包含根结点)调用的消费实现.
+     * @param consumer 对于每一个结点调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
+        scan(consumer, rootNode.getParticipant());
+    }
+
+
+    /**
+     * 指定参与者所在节点开始遍历.
+     */
+    public void scan(InfuenceConsumer consumer, Participant participant) {
+        Optional<Node> startNodeOp = searchChild(participant);
+        if (!startNodeOp.isPresent()) {
+            return;
+        }
+
         bfsIter((node, level) -> {
             if (RootNode.class.isInstance(node)) {
                 RootNode rootNode = (RootNode) node;
@@ -129,7 +142,7 @@ public class Infuence {
                     this
                 );
             }
-        });
+        }, startNodeOp.get());
     }
 
     @Override
@@ -248,11 +261,14 @@ public class Infuence {
         return Optional.ofNullable(node);
     }
 
-    // 广度优先方式迭代.
-    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer) {
+    private void bfsIter(BfsIterNodeConsumer consumer) {
+        return bfsIter(consumer, this.rootNode);
+    }
+
+    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer, Node startNode) {
         Queue<Node> stack = new LinkedList<>();
         int level = 0;
-        stack.add(rootNode);
+        stack.add(startNode);
         stack.add(LevelNode.getInstance());
         Node node;
         InfuenceConsumer.Action action;
@@ -342,7 +358,7 @@ public class Infuence {
     /**
      * 表示一个影响结点.
      */
-    protected static class Node {
+    private static class Node {
         private Participant participant;
         private Node parent;
         private List<Node> children;

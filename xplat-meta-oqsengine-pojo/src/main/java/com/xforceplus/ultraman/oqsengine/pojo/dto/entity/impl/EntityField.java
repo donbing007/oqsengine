@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * 字段对象.
@@ -243,16 +244,16 @@ public class EntityField implements IEntityField, Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("EntityField{");
-        sb.append("id=").append(id);
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", cnName='").append(cnName).append('\'');
-        sb.append(", fieldType=").append(fieldType);
-        sb.append(", dictId='").append(dictId).append('\'');
-        sb.append(", defaultValue='").append(defaultValue).append('\'');
-        sb.append(", config=").append(config);
-        sb.append('}');
-        return sb.toString();
+        return new StringJoiner(", ", EntityField.class.getSimpleName() + "[", "]")
+            .add("id=" + id)
+            .add("name='" + name + "'")
+            .add("cnName='" + cnName + "'")
+            .add("fieldType=" + fieldType)
+            .add("dictId='" + dictId + "'")
+            .add("defaultValue='" + defaultValue + "'")
+            .add("config=" + config)
+            .add("calculationType=" + calculationType)
+            .toString();
     }
 
     /**

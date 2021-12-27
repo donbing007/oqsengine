@@ -264,7 +264,7 @@ public class EntityClassSyncProtoBufMocker {
 
         long father = GeneralEntityUtils.EntityClassHelper.fatherId(id);
         long anc = GeneralEntityUtils.EntityClassHelper.ancId(id);
-        long agg = GeneralEntityUtils.EntityClassHelper.ancId(id);
+//        long agg = GeneralEntityUtils.EntityClassHelper.ancId(id);
 
         //  add self
         expectedEntityStorages.add(
@@ -278,10 +278,10 @@ public class EntityClassSyncProtoBufMocker {
         //  add anc
         expectedEntityStorages
             .add(new ExpectedEntityStorage(anc, 0L, null, Collections.singletonList(anc)));
-
-        // add agg
-        expectedEntityStorages
-                .add(new ExpectedEntityStorage(agg, 0L, null, Collections.singletonList(anc)));
+//
+//        // add agg
+//        expectedEntityStorages
+//                .add(new ExpectedEntityStorage(agg, 0L, null, Collections.singletonList(anc)));
 
         return expectedEntityStorages;
     }

@@ -30,7 +30,6 @@ import java.util.Map;
  */
 public class GeneralEntityClassStorageBuilder {
 
-
     /**
      * 生成.
      */

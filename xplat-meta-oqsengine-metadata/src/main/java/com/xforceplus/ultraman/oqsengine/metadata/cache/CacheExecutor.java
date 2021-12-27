@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AppMetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Collection;
@@ -26,7 +25,7 @@ public interface CacheExecutor {
      * @param storageList 需要保存的元信息.
      * @return true成功, false失败.
      */
-    AppMetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException;
 
     /**
@@ -97,13 +96,13 @@ public interface CacheExecutor {
     int version(Long entityClassId);
 
     /**
-     * 获取entityClassIds列表的版本号对应的版本信息.
-     * 小于0表示没有相应的元信息.
+     * 批量获取entityClassId集合所对应的版本信息.
      *
      * @param entityClassIds 元信息版本号标识.
-     * @return 版本号.
+     * @param errorContinue 是否抛出异常，当为false时表示继续获取，忽略当前空值异常.
+     * @return entityClassId -> version pair.
      */
-    Map<Long, Integer> versions(List<Long> entityClassIds, boolean isSilence);
+    Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue);
 
     /**
      * 重置appId对应的版本信息.

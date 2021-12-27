@@ -20,6 +20,16 @@ public interface MetaManager {
     /**
      * 加载指定的IEntityClass实例.
      *
+     * @param appId 当前应用ID.
+     * @return 元信息的实例集合.
+     */
+    default Collection<IEntityClass> appLoad(String appId) {
+        return new ArrayList<>();
+    }
+
+    /**
+     * 加载指定的IEntityClass实例.
+     *
      * @param entityClassId 元信息标识.
      * @param profile       个性化定制标识.
      * @return 元信息的实例.

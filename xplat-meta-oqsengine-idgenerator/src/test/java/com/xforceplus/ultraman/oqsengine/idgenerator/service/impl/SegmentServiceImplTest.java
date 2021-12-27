@@ -59,14 +59,14 @@ public class SegmentServiceImplTest {
     @Resource(name = "numberPattenParser")
     private PatternParser numberPattenParser;
 
-    SegmentInfo info = SegmentInfo.builder().withBeginId(1l).withBizType("testBiz")
+    SegmentInfo info = SegmentInfo.builder().withBeginId(1L).withBizType("testBiz")
         .withCreateTime(new Timestamp(System.currentTimeMillis()))
-        .withMaxId(0l)
+        .withMaxId(0L)
         .withPatten("{yyyy}-{MM}-{dd}-{000}")
         .withMode(2)
         .withStep(1000)
         .withUpdateTime(new Timestamp(System.currentTimeMillis()))
-        .withVersion(1l)
+        .withVersion(1L)
         .withResetable(0)
         .withPatternKey("")
         .build();
