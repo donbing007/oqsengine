@@ -83,6 +83,17 @@ public class SQLMasterStorage implements MasterStorage {
 
     private final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
+    private static final JsonAttributeMasterStorageEntity EMPTY_JSON_STORAGE_ENTITY;
+    private static final MapAttributeMasterStorageEntity EMPTY_MAP_STORAGE_ENTITY;
+
+    static {
+        EMPTY_JSON_STORAGE_ENTITY = new JsonAttributeMasterStorageEntity();
+        EMPTY_JSON_STORAGE_ENTITY.setId(-1);
+
+        EMPTY_MAP_STORAGE_ENTITY = new MapAttributeMasterStorageEntity();
+        EMPTY_MAP_STORAGE_ENTITY.setId(-1);
+    }
+
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
@@ -299,21 +310,46 @@ public class SQLMasterStorage implements MasterStorage {
     public void build(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
+        JsonAttributeMasterStorageEntity[] masterStorageEntities =
+            new JsonAttributeMasterStorageEntity[entityPackage.size()];
+
         boolean[] results = (boolean[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                JsonAttributeMasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .filter(e -> e.getKey().isDirty())
-                    .map(e -> buildNewMasterStorageEntity(e.getKey(), e.getValue(), resource))
-                    .toArray(JsonAttributeMasterStorageEntity[]::new);
+                Map.Entry<IEntity, IEntityClass> entry;
+                IEntity entity;
+                IEntityClass entityClass;
+                int size = entityPackage.size();
+                for (int i = 0; i < size; i++) {
+                    entry = entityPackage.getNotSafe(i);
+                    entity = entry.getKey();
 
-                return BuildExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+                    if (entity.isDirty()) {
+
+                        entityClass = entry.getValue();
+
+                        masterStorageEntities[i] = buildNewMasterStorageEntity(entity, entityClass, resource);
+
+                    } else {
+
+                        masterStorageEntities[i] = EMPTY_JSON_STORAGE_ENTITY;
+
+                    }
+                }
+
+                return BuildExecutor.build(tableName, resource, queryTimeout).execute(
+                    Arrays.stream(masterStorageEntities)
+                        .filter(se -> EMPTY_JSON_STORAGE_ENTITY != se).toArray(JsonAttributeMasterStorageEntity[]::new)
+                );
             }
         );
 
-        for (int i = 0; i < results.length; i++) {
-            if (results[i]) {
-                entityPackage.get(i).get().getKey().neat();
+        int resultsCursor = 0;
+        for (int i = 0; i < masterStorageEntities.length; i++) {
+            if (EMPTY_JSON_STORAGE_ENTITY != masterStorageEntities[i]) {
+                if (results[resultsCursor++]) {
+                    entityPackage.getNotSafe(i).getKey().neat();
+                }
             }
         }
     }
@@ -325,6 +361,10 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
+
+        if (!entity.isDirty()) {
+            return true;
+        }
 
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
@@ -354,18 +394,45 @@ public class SQLMasterStorage implements MasterStorage {
     public void replace(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
+        MapAttributeMasterStorageEntity[] masterStorageEntities =
+            new MapAttributeMasterStorageEntity[entityPackage.size()];
+
         boolean[] results = (boolean[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
-                MapAttributeMasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .map(e -> buildReplaceMasterStorageEntity(e.getKey(), e.getValue(), resource))
-                    .toArray(MapAttributeMasterStorageEntity[]::new);
 
-                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+                Map.Entry<IEntity, IEntityClass> entry;
+                IEntity entity;
+                IEntityClass entityClass;
+                int size = entityPackage.size();
+                for (int i = 0; i < size; i++) {
+                    entry = entityPackage.getNotSafe(i);
+                    entity = entry.getKey();
+
+                    if (entity.isDirty()) {
+
+                        entityClass = entry.getValue();
+
+                        masterStorageEntities[i] = buildReplaceMasterStorageEntity(entity, entityClass, resource);
+
+                    } else {
+
+                        masterStorageEntities[i] = EMPTY_MAP_STORAGE_ENTITY;
+
+                    }
+                }
+
+                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(
+                    Arrays.stream(masterStorageEntities)
+                        .filter(se -> EMPTY_MAP_STORAGE_ENTITY != se).toArray(MapAttributeMasterStorageEntity[]::new)
+                );
             });
 
-        for (int i = 0; i < results.length; i++) {
-            if (results[i]) {
-                entityPackage.get(i).get().getKey().neat();
+        int resultsCursor = 0;
+        for (int i = 0; i < masterStorageEntities.length; i++) {
+            if (EMPTY_MAP_STORAGE_ENTITY != masterStorageEntities[i]) {
+                if (results[resultsCursor++]) {
+                    entityPackage.getNotSafe(i).getKey().neat();
+                }
             }
         }
     }
@@ -554,8 +621,10 @@ public class SQLMasterStorage implements MasterStorage {
                 storageValue = storageStrategy.toStorageValue(logicValue);
 
                 while (true) {
-                    values.put(String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
+                    values.put(
+                        String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
                         storageValue.value());
+
                     if (storageValue.next() != null) {
                         storageValue = storageValue.next();
                     } else {

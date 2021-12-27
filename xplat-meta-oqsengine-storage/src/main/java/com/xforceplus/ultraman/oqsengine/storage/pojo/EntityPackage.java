@@ -123,6 +123,25 @@ public class EntityPackage implements Serializable {
     }
 
     /**
+     * 不安全的方式查询结果.
+     * 有可能返回null.
+     *
+     * @param index 从0开始的序号.
+     * @return 实例.
+     */
+    public Map.Entry<IEntity, IEntityClass> getNotSafe(int index) {
+        if (index < 0) {
+            return null;
+        }
+
+        if (index > this.entities.size() - 1) {
+            return null;
+        }
+
+        return this.entities.get(index);
+    }
+
+    /**
      * 以流的方式读取包裹中的IEntity实例.
      *
      * @return 实例流.

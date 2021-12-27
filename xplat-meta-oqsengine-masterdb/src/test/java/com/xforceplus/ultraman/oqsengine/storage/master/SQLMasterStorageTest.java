@@ -341,8 +341,8 @@ public class SQLMasterStorageTest {
     @Test
     public void testReplaceEntities() throws Exception {
         EntityPackage entityPackage = new EntityPackage();
-        int expectedSize = 1000;
-        for (int i = 0; i < expectedSize; i++) {
+        int expectedDirtySize = 1000;
+        for (int i = 0; i < expectedDirtySize; i++) {
             IEntity entity = Entity.Builder.anEntity()
                 .withId(100000 + i)
                 .withEntityClassRef(l1EntityClassRef)
@@ -359,9 +359,9 @@ public class SQLMasterStorageTest {
             entityPackage.put(entity, l1EntityClass);
         }
 
-        Assertions.assertEquals(expectedSize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
+        Assertions.assertEquals(expectedDirtySize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
         storage.build(entityPackage);
-        Assertions.assertEquals(expectedSize,
+        Assertions.assertEquals(expectedDirtySize,
             entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
 
         EntityPackage updatePackage = new EntityPackage();
@@ -373,29 +373,57 @@ public class SQLMasterStorageTest {
             updatePackage.put(e.getKey(), e.getValue());
         });
 
-        Assertions.assertEquals(expectedSize, entityPackage.stream().filter(en -> en.getKey().isDirty()).count());
-        storage.replace(updatePackage);
-        Assertions.assertEquals(expectedSize,
-            entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
+        // 加入10条干净,不应该被更新.
+        int expectedCleanSize = 10;
+        for (int i = 0; i < expectedCleanSize; i++) {
+            updatePackage.put(this.expectedEntitys.get(i), l2EntityClass);
+        }
 
-        long[] ids = updatePackage.stream().mapToLong(e -> e.getKey().id()).toArray();
+        Assertions.assertEquals(expectedDirtySize, updatePackage.stream().filter(en -> en.getKey().isDirty()).count());
+        storage.replace(updatePackage);
+        Assertions.assertEquals(expectedDirtySize + expectedCleanSize,
+            updatePackage.stream().filter(en -> !en.getKey().isDirty()).count());
+
+        // 得到应该被更新的实例id列表
+        long[] ids = entityPackage.stream().mapToLong(e -> e.getKey().id()).toArray();
         Collection<IEntity> entities = storage.selectMultiple(ids);
-        Assertions.assertEquals(expectedSize,
-            entities.stream().filter(e -> e.entityValue().getValue("l0-long").get().valueToLong() == -100).count());
+        Assertions.assertEquals(expectedDirtySize,
+            entities.stream()
+                .filter(e -> e.entityValue().getValue("l0-long").get().valueToLong() == -100).count());
     }
 
     @Test
-    public void testJson() throws Exception {
+    public void testReplaceJson() throws Exception {
         IEntity targetEntity = expectedEntitys.get(1);
         targetEntity.entityValue().addValue(
             new StringValue(l2EntityClass.field("l2-string").get(),
-                "[{\n   \"c1\":\"c1-value\", \"c2\": 123},]"
+                "[{\n   \"c1\":\"c1-value\", \"c2\": 123, \"c3\": \"test'value\"},]"
             ));
         boolean result = storage.replace(targetEntity, l2EntityClass);
         Assertions.assertTrue(result);
 
         targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
-        Assertions.assertEquals("[{\n   \"c1\":\"c1-value\", \"c2\": 123},]",
+        Assertions.assertEquals("[{\n   \"c1\":\"c1-value\", \"c2\": 123, \"c3\": \"test'value\"},]",
+            targetEntity.entityValue().getValue("l2-string").get().valueToString());
+    }
+
+    @Test
+    public void testBuildJson() throws Exception {
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withId(1000000)
+            .withEntityClassRef(l2EntityClassRef).build();
+        targetEntity.entityValue()
+            .addValue(
+                new StringValue(l2EntityClass.field("l2-string").get(),
+                    "[{\n   \"c1\":\"c1-value\", \"c2\": 123, \"c3\": \"test'value\"},]"
+                )
+            );
+
+        boolean result = storage.build(targetEntity, l2EntityClass);
+        Assertions.assertTrue(result);
+
+        targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
+        Assertions.assertEquals("[{\n   \"c1\":\"c1-value\", \"c2\": 123, \"c3\": \"test'value\"},]",
             targetEntity.entityValue().getValue("l2-string").get().valueToString());
     }
 

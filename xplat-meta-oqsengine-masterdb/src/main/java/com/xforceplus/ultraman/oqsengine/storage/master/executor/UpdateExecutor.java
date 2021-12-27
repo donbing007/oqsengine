@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
@@ -18,8 +19,6 @@ import java.util.Map;
  * @since 1.8
  */
 public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
-
-    private static final String PLACE_HOLDER = "placeholder";
 
     public static Executor<MapAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeoutMs) {
@@ -92,13 +91,16 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterS
             buff.insert(0, String.join("", "JSON_REMOVE(", FieldDefine.ATTRIBUTE, ", "));
             // 删除尾部多余的逗号
             buff.deleteCharAt(buff.length() - 1);
+
+            buff.append(')');
+
+            return buff.toString();
+
         } else {
-            buff.append("JSON_REMOVE(").append(FieldDefine.ATTRIBUTE).append(", \"$.").append(PLACE_HOLDER).append("\"");
+
+            return "";
+
         }
-
-        buff.append(")");
-
-        return buff.toString();
     }
 
     private String buildReplaceFunction(Map<String, Object> attributes) {
@@ -117,7 +119,7 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterS
 
             if (String.class.isInstance(value)) {
                 buff.append("\"")
-                    .append(value)
+                    .append(StringUtils.encodeEscapeCharacters(value.toString()))
                     .append("\"");
             } else {
                 buff.append(value);
@@ -129,20 +131,19 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterS
             buff.insert(0, String.join("", "JSON_SET(", FieldDefine.ATTRIBUTE, ", "));
             // 删除尾部多余的逗号
             buff.deleteCharAt(buff.length() - 1);
+
+            buff.append(')');
+            return buff.toString();
         } else {
-            buff.append("JSON_REPLACE(").append(FieldDefine.ATTRIBUTE)
-                .append(", \"$.").append(PLACE_HOLDER)
-                .append("\", \"").append(PLACE_HOLDER).append("\"");
+
+            return "";
         }
-
-        buff.append(")");
-
-        return buff.toString();
     }
 
-    private String buildSQL(MapAttributeMasterStorageEntity entity, String replaceFragment, String removeFragment) {
+    private String buildSQL(MapAttributeMasterStorageEntity entity, String replaceSegment, String removeSegment) {
         //"update %s set version = version + 1, updatetime = ?, tx = ?,
         // commitid = ?, op = ?, attribute = ?, attribute = ? where id = ? and version = ?";
+
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
@@ -152,10 +153,16 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterS
             .append(FieldDefine.COMMITID).append("=").append(entity.getCommitid()).append(", ")
             .append(FieldDefine.OP).append("=").append(entity.getOp()).append(", ")
             .append(FieldDefine.OQS_MAJOR).append("=").append(entity.getOqsMajor()).append(", ")
-            .append(FieldDefine.ENTITYCLASS_VERSION).append("=").append(entity.getEntityClassVersion()).append(", ")
-            .append(FieldDefine.ATTRIBUTE).append("=").append(replaceFragment).append(", ")// relpace
-            .append(FieldDefine.ATTRIBUTE).append("=").append(removeFragment)// remove
-            .append(" WHERE ")
+            .append(FieldDefine.ENTITYCLASS_VERSION).append("=").append(entity.getEntityClassVersion());
+        if (!replaceSegment.isEmpty()) {
+            sql.append(", ");
+            sql.append(FieldDefine.ATTRIBUTE).append("=").append(replaceSegment);
+        }
+        if (!removeSegment.isEmpty()) {
+            sql.append(", ");
+            sql.append(FieldDefine.ATTRIBUTE).append("=").append(removeSegment);
+        }
+        sql.append(" WHERE ")
             .append(FieldDefine.ID).append("=").append(entity.getId())
             .append(" AND ")
             .append(FieldDefine.VERSION).append("=").append(entity.getVersion());
