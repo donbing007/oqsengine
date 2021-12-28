@@ -70,7 +70,7 @@ public class DataOpsService {
      * @return 返回结果
      */
     @DiscoverAction(describe = "条件查询", retClass = Collection.class)
-    public DevOpsQueryResponse conditionQuery(
+    public DevOpsQueryResponse conditionQuery (
             @MethodParam(name = "config", klass = DevOpsQueryConfig.class) DevOpsQueryConfig config
     ) {
         try {
