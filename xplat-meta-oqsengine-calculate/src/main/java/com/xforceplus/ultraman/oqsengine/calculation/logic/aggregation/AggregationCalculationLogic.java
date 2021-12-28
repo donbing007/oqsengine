@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractPart
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -256,7 +257,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant, Collection<IEntity> entities)
+    public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant, Collection<IEntity> entities)
         throws CalculationException {
         IEntityField entityField = abstractParticipant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();

@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -497,7 +498,7 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant,
+        public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant,
                                         Collection<IEntity> triggerEntities) throws CalculationException {
             long[] ids = entityIds.get(abstractParticipant);
             if (ids == null) {

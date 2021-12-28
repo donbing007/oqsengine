@@ -766,7 +766,7 @@ public class AggregationCalculationLogicTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant,
+        public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant,
                                         Collection<IEntity> triggerEntities) throws CalculationException {
             long[] ids = entityIds.get(abstractParticipant);
             if (ids == null) {
