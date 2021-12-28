@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 一个影响树,表示目标源的改动造成的影响范围.
@@ -85,6 +88,75 @@ public class Infuence {
 
         return false;
     }
+
+
+    /**
+     * 获取前一个参与者.
+     * @param participant 当前参与者.
+     */
+    public Optional<Participant> getPre(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        if (node.isPresent()) {
+            if (node.get().getParent().isPresent()) {
+                return Optional.of(node.get().getParent().get().getParticipant());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 获取影响的参与者结果集.
+     * @param participant 当前参与者.
+     */
+    public Optional<Collection<Participant>> getNextParticipants(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        if (node.isPresent()) {
+            List<Node> children = node.get().getChildren();
+            if (!children.isEmpty()) {
+                List<Participant> participants = children.stream().map(Node::getParticipant).collect(Collectors.toList());
+                return Optional.of(participants);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public int getLevel(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        return node.map(Node::getLevel).orElse(-1);
+    }
+
+    /**
+     * 剪枝、删除参与者影响列表中指定参与者.
+     */
+    public boolean pruning(Participant parent, Participant participant) {
+        if (parent.equals(rootNode.getParticipant())) {
+            pruning(rootNode, participant);
+            return true;
+        }
+        Optional<Node> childOp = searchChild(parent);
+        if (childOp.isPresent()) {
+            Node childNode = childOp.get();
+            pruning(childNode, participant);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 剪枝、指定节点删除指定孩子参与者.
+     */
+    private void pruning(Node point, Participant participant) {
+        for (Node n : point.getChildren()) {
+            ChildNode c = (ChildNode) n;
+            if (c.getParticipant().equals(participant)) {
+                // 这里找到表示已经存在.
+                point.getChildren().remove(c);
+                this.size--;
+                return;
+            }
+        }
+    }
+
 
     /**
      * 获取影响的大小. 这个大小包含了最初的触发者,所以最小数量一定为1.
@@ -248,10 +320,16 @@ public class Infuence {
         }
 
         Node newChildNode = new ChildNode(newParticipant);
+        newChildNode.setParent(point);
         point.addChild(newChildNode);
+        newChildNode.setLevel(point.getLevel() + 1);
         participantNodeSearchHelper.put(newParticipant, newChildNode);
 
         size++;
+    }
+
+    public boolean contains(Participant participant) {
+        return searchChild(participant).isPresent() || rootNode.getParticipant().equals(participant);
     }
 
     // 搜索子类结点.
@@ -267,7 +345,7 @@ public class Infuence {
 
     private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer, Node startNode) {
         Queue<Node> stack = new LinkedList<>();
-        int level = 0;
+        int level = startNode.getLevel();
         stack.add(startNode);
         stack.add(LevelNode.getInstance());
         Node node;
@@ -362,6 +440,7 @@ public class Infuence {
         private Participant participant;
         private Node parent;
         private List<Node> children;
+        private int level;
 
         public Node(Participant participant) {
             this.participant = participant;
@@ -394,6 +473,14 @@ public class Infuence {
 
             child.setParent(this);
             this.children.add(child);
+        }
+
+        public int getLevel() {
+            return level;
+        }
+
+        public void setLevel(int level) {
+            this.level = level;
         }
     }
 

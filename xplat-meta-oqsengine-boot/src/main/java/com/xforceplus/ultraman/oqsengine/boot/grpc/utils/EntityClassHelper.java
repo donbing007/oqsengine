@@ -30,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.API;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -88,7 +89,7 @@ public class EntityClassHelper {
         return Entity.Builder.anEntity()
             .withId(in.getObjId())
             .withEntityClassRef(entityClassRef)
-            .withEntityValue(toEntityValue(entityClass, in))
+            .withValues(toEntityValue(entityClass, in).values())
             .build();
     }
 
@@ -100,7 +101,7 @@ public class EntityClassHelper {
             return Entity.Builder.anEntity()
                 .withId(value.getObjId())
                 .withEntityClassRef(entityClassRef)
-                .withEntityValue(toEntityValue(entityClass, value.getValuesList()))
+                .withValues(toEntityValue(entityClass, value.getValuesList()).values())
                 .build();
         }).collect(Collectors.toList());
     }

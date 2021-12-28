@@ -71,11 +71,11 @@ class FormulaInitLogicTest {
                .withFields(Arrays.asList(B1, B_FML, EntityField.ID_ENTITY_FIELD))
                .build();
 
-       entity = Entity.Builder.anEntity().withId(10000).withEntityValue(EntityValue.build().addValues(Arrays.asList(
+       entity = Entity.Builder.anEntity().withId(10000).withValues(Arrays.asList(
                new LongValue(B1, 10)
-       ))).build();
+       )).build();
 
-       participant = InitCalculationParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
+       participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceFields(Stream.of(B1).collect(Collectors.toList())).build();
    }
     @Test
     public void testInit() {

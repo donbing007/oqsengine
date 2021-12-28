@@ -164,8 +164,8 @@ public class UserCaseTest {
         IEntity[] targetEntities = IntStream.range(0, 10).mapToObj(i ->
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValue(
+                .withValues(
+                   Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
                     )
                 ).build()
@@ -218,11 +218,10 @@ public class UserCaseTest {
 
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -252,11 +251,10 @@ public class UserCaseTest {
     public void testUpdateAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -288,11 +286,10 @@ public class UserCaseTest {
     public void testDeleteAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -323,11 +320,10 @@ public class UserCaseTest {
     public void testUpdateFatherSearchChild() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
         IEntity fatherEntity =
@@ -360,11 +356,10 @@ public class UserCaseTest {
     public void testUpdateAfterNotEqCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -409,11 +404,10 @@ public class UserCaseTest {
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValues(Arrays.asList(
+                .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), i),
                         new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                    ))
+                    )
                 ).build();
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
             IEntity selectEntity =
@@ -436,11 +430,10 @@ public class UserCaseTest {
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValues(Arrays.asList(
+                .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                         new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                    ))
+                    )
                 ).build();
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
             Assertions
@@ -471,11 +464,10 @@ public class UserCaseTest {
     public void testUpdateAfterRead() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -521,8 +513,7 @@ public class UserCaseTest {
         for (int i = 0; i < fistFieldValues.length; i++) {
             expectedEntities.add(Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValue(
+                .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
                             fistFieldValues[i])
                     )
@@ -609,14 +600,11 @@ public class UserCaseTest {
         for (int i = 0; i < fistFieldValues.length; i++) {
             expectedEntities.add(Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValue(
+                .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
-                            fistFieldValues[i])
-                    ).addValue(
+                            fistFieldValues[i]),
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(),
-                            secondFieldValues[i])
-                    ).addValue(
+                            secondFieldValues[i]),
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-long").get(),
                             thridFieldValues[i])
                     )
@@ -665,25 +653,23 @@ public class UserCaseTest {
     public void testSortTwoDec() throws Exception {
         IEntity e0 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
                         new BigDecimal("123.17")),
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec2").get(),
                         new BigDecimal("123.15"))
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
                         new BigDecimal("123.17")),
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec2").get(),
                         new BigDecimal("122"))
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
@@ -710,30 +696,27 @@ public class UserCaseTest {
     public void testSortButNoValue() throws Exception {
         IEntity e0 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e0).getResultStatus());
 
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 200L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e1).getResultStatus());
 
         IEntity e2 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
@@ -765,11 +748,10 @@ public class UserCaseTest {
     public void testUpdateAfterCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
@@ -800,11 +782,10 @@ public class UserCaseTest {
     public void testDeleteAfterCount() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                ))
+                )
             ).build();
 
 
@@ -837,11 +818,10 @@ public class UserCaseTest {
     public void testDecimal() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
                         new BigDecimal("123.789"))
-                ))
+                )
             ).build();
 
         // 新创建
@@ -881,11 +861,10 @@ public class UserCaseTest {
     public void testStrings() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new StringsValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(),
                         "BLUE", "RED", "YELLOW", "PURPLE", "GOLDEN")
-                ))
+                )
             ).build();
 
         // 新创建
@@ -920,11 +899,10 @@ public class UserCaseTest {
     public void testLikeWithSegmentation() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValues(Arrays.asList(
+            .withValues(Arrays.asList(
                     new StringValue(
                         MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海票易通股份有限公司分词查询")
-                ))
+                )
             ).build();
 
         entityManagementService.build(entity);
@@ -985,8 +963,7 @@ public class UserCaseTest {
     public void testlookupString() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(Arrays.asList(
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
                 )
             ).build();
@@ -999,12 +976,10 @@ public class UserCaseTest {
         for (int i = 0; i < lookupSize; i++) {
             IEntity lookupEntity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValue(
+                .withValues(Arrays.asList(
                         new LookupValue(
                             MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-string").get(),
-                            targetEntity.id())
-                    ).addValue(
+                            targetEntity.id()),
                         new LongValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("l2-lookup.id").get(),
                             targetEntity.id())
                     )
@@ -1038,8 +1013,7 @@ public class UserCaseTest {
         IEntity newTargetEntity = Entity.Builder.anEntity()
             .withId(targetEntity.id())
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(Arrays.asList(
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
                 )
             ).build();
@@ -1095,8 +1069,7 @@ public class UserCaseTest {
     public void testLookupDec() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(Arrays.asList(
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
                         BigDecimal.valueOf(12.3333D))
                 )
@@ -1110,12 +1083,10 @@ public class UserCaseTest {
         for (int i = 0; i < lookupSize; i++) {
             IEntity lookupEntity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref())
-                .withEntityValue(
-                    EntityValue.build().addValue(
+                .withValues(Arrays.asList(
                         new LookupValue(
                             MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("lookup-l2-dec").get(),
-                            targetEntity.id())
-                    ).addValue(
+                            targetEntity.id()),
                         new LongValue(MockEntityClassDefine.LOOKUP_ENTITY_CLASS.field("l2-lookup.id").get(),
                             targetEntity.id())
                     )
@@ -1139,8 +1110,7 @@ public class UserCaseTest {
         IEntity newTargetEntity = Entity.Builder.anEntity()
             .withId(targetEntity.id())
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(Arrays.asList(
                     new DecimalValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
                         BigDecimal.valueOf(13.3333D))
                 )
@@ -1197,8 +1167,7 @@ public class UserCaseTest {
     public void testSegmentation() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(Arrays.asList(
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "上海云砺有限公司")
                 )
             ).build();

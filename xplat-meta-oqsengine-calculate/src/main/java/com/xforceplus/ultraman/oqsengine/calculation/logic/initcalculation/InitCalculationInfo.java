@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +37,7 @@ public class InitCalculationInfo {
     /**
      * 当前应用全量计算字段参与者.
      */
-    private Collection<AbstractParticipant> all;
+    private Collection<Participant> all;
 
     /**
      * 当前应用计算字段引用树.
@@ -47,40 +47,40 @@ public class InitCalculationInfo {
     /**
      * 当前应用未被初始化的计算字段参与者.
      */
-    private Collection<AbstractParticipant> need;
+    private Collection<Participant> need;
 
     /**
      * 当前应用无需初始化的计算字段参与者.
      */
-    private Collection<AbstractParticipant> skip;
+    private Collection<Participant> skip;
 
 
     /**
      * 当前应用本次初始化的计算字段参与者.
      */
-    private Collection<AbstractParticipant> run;
+    private Collection<Participant> run;
 
     /**
      * 当前应用已经完成初始化的计算字段参与者.
      */
-    private Collection<AbstractParticipant> done;
+    private Collection<Participant> done;
 
     /**
      * 当前应用初始化失败的计算字段参与者.
      */
-    private Collection<AbstractParticipant> failed;
+    private Collection<Participant> failed;
 
     /**
      * 当前应用计算字段参与者初始化候选人.
      */
-    private Map<IEntityClass, HashSet<AbstractParticipant>> candidate;
+    private Map<IEntityClass, HashSet<Participant>> candidate;
 
 
-    public Collection<AbstractParticipant> getDone() {
+    public Collection<Participant> getDone() {
         return done;
     }
 
-    public void setDone(Collection<AbstractParticipant> done) {
+    public void setDone(Collection<Participant> done) {
         this.done = done;
     }
 
@@ -97,7 +97,7 @@ public class InitCalculationInfo {
         this.code = code;
     }
 
-    public void setAll(Collection<AbstractParticipant> all) {
+    public void setAll(Collection<Participant> all) {
         this.all = all;
     }
 
@@ -105,33 +105,33 @@ public class InitCalculationInfo {
         this.infuences = infuences;
     }
 
-    public void setNeed(Collection<AbstractParticipant> need) {
+    public void setNeed(Collection<Participant> need) {
         this.need = need;
     }
 
-    public void setCandidate(Map<IEntityClass, HashSet<AbstractParticipant>> candidate) {
+    public void setCandidate(Map<IEntityClass, HashSet<Participant>> candidate) {
         this.candidate = candidate;
     }
 
     /**
      * 获取run.
      */
-    public Collection<AbstractParticipant> getRun() {
+    public Collection<Participant> getRun() {
         if (run == null) {
             run = new ArrayList<>();
         }
         return run;
     }
 
-    public Collection<AbstractParticipant> getFailed() {
+    public Collection<Participant> getFailed() {
         return failed;
     }
 
-    public void setFailed(Collection<AbstractParticipant> failed) {
+    public void setFailed(Collection<Participant> failed) {
         this.failed = failed;
     }
 
-    public void setRun(Collection<AbstractParticipant> run) {
+    public void setRun(Collection<Participant> run) {
         this.run = run;
     }
 
@@ -143,7 +143,7 @@ public class InitCalculationInfo {
         return initFlag;
     }
 
-    public Collection<AbstractParticipant> getSkip() {
+    public Collection<Participant> getSkip() {
         return skip;
     }
 
@@ -154,7 +154,7 @@ public class InitCalculationInfo {
     /**
      * get all.
      */
-    public Collection<AbstractParticipant> getAll() {
+    public Collection<Participant> getAll() {
         if (all == null) {
             all = Collections.emptyList();
         }
@@ -174,7 +174,7 @@ public class InitCalculationInfo {
     /**
      * 当前需要初始化的计算字段参与者集合.
      */
-    public Collection<AbstractParticipant> getNeed() {
+    public Collection<Participant> getNeed() {
         if (need == null) {
             need = Collections.emptyList();
         }
@@ -184,7 +184,7 @@ public class InitCalculationInfo {
     /**
      * 获取候选人.
      */
-    public Map<IEntityClass, HashSet<AbstractParticipant>> getCandidate() {
+    public Map<IEntityClass, HashSet<Participant>> getCandidate() {
         if (candidate == null) {
             candidate = new HashMap<>();
         }
@@ -196,19 +196,19 @@ public class InitCalculationInfo {
      */
     public static class Builder {
         private String code;
-        private Collection<AbstractParticipant> all;
+        private Collection<Participant> all;
         private Collection<Infuence> infuences;
-        private Collection<AbstractParticipant> need;
-        private Map<IEntityClass, HashSet<AbstractParticipant>> candidate;
-        private Collection<AbstractParticipant> done;
-        private Collection<AbstractParticipant> run;
+        private Collection<Participant> need;
+        private Map<IEntityClass, HashSet<Participant>> candidate;
+        private Collection<Participant> done;
+        private Collection<Participant> run;
 
         public Builder withCode(String code) {
             this.code = code;
             return this;
         }
 
-        public Builder withAll(Collection<AbstractParticipant> all) {
+        public Builder withAll(Collection<Participant> all) {
             this.all = all;
             return this;
         }
@@ -218,22 +218,22 @@ public class InitCalculationInfo {
             return this;
         }
 
-        public Builder withNeed(Collection<AbstractParticipant> need) {
+        public Builder withNeed(Collection<Participant> need) {
             this.need = need;
             return this;
         }
 
-        public Builder withRun(Collection<AbstractParticipant> run) {
+        public Builder withRun(Collection<Participant> run) {
             this.run = run;
             return this;
         }
 
-        public Builder withDone(Collection<AbstractParticipant> done) {
+        public Builder withDone(Collection<Participant> done) {
             this.done = done;
             return this;
         }
 
-        public Builder withCandidate(Map<IEntityClass, HashSet<AbstractParticipant>> candidate) {
+        public Builder withCandidate(Map<IEntityClass, HashSet<Participant>> candidate) {
             this.candidate = candidate;
             return this;
         }

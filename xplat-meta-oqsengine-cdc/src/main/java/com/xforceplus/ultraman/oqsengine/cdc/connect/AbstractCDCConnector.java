@@ -43,6 +43,7 @@ public abstract class AbstractCDCConnector {
     public boolean canUseConnector(int times) {
         return times < MAX_RECONNECT_TIMES_PER_CONNECTIONS;
     }
+
     public abstract void init();
 
     /**
@@ -78,7 +79,7 @@ public abstract class AbstractCDCConnector {
     public void close() {
         if (null != canalConnector && !isClosed) {
             try {
-                logger.error("[cdc-connector] close canal connector...");
+                logger.info("[cdc-connector] close canal connector...");
                 //  关闭连接CanalServer
                 canalConnector.disconnect();
             } catch (Exception e) {

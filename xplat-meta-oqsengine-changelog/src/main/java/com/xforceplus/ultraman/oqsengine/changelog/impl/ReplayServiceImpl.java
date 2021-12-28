@@ -316,14 +316,13 @@ public class ReplayServiceImpl implements ReplayService {
      */
     private EntityDomain replaySingleDomainWithSnapshot(IEntityClass entityClass, long id, ChangeSnapshot changeSnapshot, List<Changelog> changelogs) {
 
-        IEntityValue entityValue = EntityValue.build();
         IEntity entity = Entity.Builder.anEntity()
                 .withId(id)
                 .withEntityClassRef(EntityClassRef.Builder
                         .anEntityClassRef()
                         .withEntityClassId(entityClass.id())
                         .build())
-                .withEntityValue(entityValue).build();
+                .build();
 
         Map<Relationship, List<Long>> referenceMap = new HashMap<>();
 
