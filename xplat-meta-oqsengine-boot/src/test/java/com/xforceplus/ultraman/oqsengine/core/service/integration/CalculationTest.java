@@ -44,6 +44,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -637,13 +638,13 @@ public class CalculationTest extends AbstractContainerExtends {
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
             .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new DecimalValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                        new BigDecimal("100.0")
+            .withValues(
+                    Arrays.asList(
+                            new DecimalValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                                    new BigDecimal("100.0")
+                            )
                     )
-                )
             ).build();
 
         operationResult = entityManagementService.replace(orderItem);
@@ -653,16 +654,12 @@ public class CalculationTest extends AbstractContainerExtends {
         order = Entity.Builder.anEntity()
             .withId(order.id())
             .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(
+                    Arrays.asList(
                     new StringValue(
                         MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
                         ""
-                    )
-                )
-            ).withEntityValue(
-                // 此值是为了防止空对象更新检查被触发.
-                EntityValue.build().addValue(
+                    ),
                     new DateTimeValue(
                         MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
                         faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
@@ -742,8 +739,8 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity entity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
                 .withId(1)
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new DateTimeValue(
                                         MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
                                         faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
@@ -756,34 +753,25 @@ public class CalculationTest extends AbstractContainerExtends {
         for (int i = 0; i < size; i++) {
             IEntity e = Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-                    .withEntityValue(
-                            EntityValue.build()
-                                    .addValue(
+                    .withValues(
+                            Arrays.asList(
                                             new StringValue(
                                                     MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
                                                     faker.food().fruit()
-                                            )
-                                    )
-                                    .addValue(
+                                            ),
                                             new DecimalValue(
                                                     MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
                                                     new BigDecimal(faker.number().randomDouble(3, 1, 1000))
                                                             .setScale(6, BigDecimal.ROUND_HALF_UP)
-                                            )
-                                    )
-                                    .addValue(
+                                            ),
                                             new LongValue(
                                                     MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
                                                     faker.number().randomNumber()
-                                            )
-                                    )
-                                    .addValue(
+                                            ),
                                             new LongValue(
                                                     MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
                                                     entity.id()
-                                            )
-                                    )
-                                    .addValue(
+                                            ),
                                             new DateTimeValue(
                                                     MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
                                                     faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
@@ -820,13 +808,11 @@ public class CalculationTest extends AbstractContainerExtends {
     private IEntity buildUserEntity() {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.USER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
+            .withValues(
+                    Arrays.asList(
                         new StringValue(
                             MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
-                            "U" + idGenerator.next())
-                    ).addValue(
+                            "U" + idGenerator.next()),
                         new StringValue(
                             MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
                             faker.name().name())
@@ -838,27 +824,20 @@ public class CalculationTest extends AbstractContainerExtends {
     private IEntity buildOrderEntity(IEntity user) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
+            .withValues(
+                    Arrays.asList(
                         new StringValue(
                             MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
                             "O" + idGenerator.next()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new DateTimeValue(
                             MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
                             faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LookupValue(
                             MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
                             user.id()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LongValue(
                             MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
                             user.id()
@@ -871,46 +850,33 @@ public class CalculationTest extends AbstractContainerExtends {
     private IEntity buildOrderItem(IEntity order) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
+            .withValues(
+                    Arrays.asList(
                         new StringValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
                             faker.food().fruit()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new DecimalValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
                             new BigDecimal(faker.number().randomDouble(3, 1, 1000))
                                 .setScale(6, BigDecimal.ROUND_HALF_UP)
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LookupValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号lookup").get(),
                             order.id()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LongValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
                             order.id()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LongValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
                             faker.number().randomNumber()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new LongValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
                             order.id()
-                        )
-                    )
-                    .addValue(
+                        ),
                         new DateTimeValue(
                             MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
                             faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()

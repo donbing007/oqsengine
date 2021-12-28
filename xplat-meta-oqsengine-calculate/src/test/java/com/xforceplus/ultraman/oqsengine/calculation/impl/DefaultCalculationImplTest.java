@@ -119,17 +119,15 @@ public class DefaultCalculationImplTest {
     private IEntity entityA = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE)
         .withEntityClassRef(A_CLASS.ref())
-        .withEntityValue(
-            EntityValue.build().addValue(
-                new LongValue(A_LONG, 100L)
-            )
+        .withValues(
+            Arrays.asList(new LongValue(A_LONG, 100L))
         ).build();
 
     private IEntity entityB = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 1)
         .withEntityClassRef(B_CLASS.ref())
-        .withEntityValue(
-            EntityValue.build().addValue(
+        .withValues(
+           Arrays.asList(
                 new LongValue(B_SUM, 100L)
             )
         ).build();
@@ -137,8 +135,8 @@ public class DefaultCalculationImplTest {
     private IEntity entityD = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 2)
         .withEntityClassRef(D_CLASS.ref())
-        .withEntityValue(
-            EntityValue.build().addValue(
+        .withValues(
+                Arrays.asList(
                 new LongValue(D_SUM, 100L)
             )
         ).build();
@@ -146,8 +144,8 @@ public class DefaultCalculationImplTest {
     private IEntity entityC = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 3)
         .withEntityClassRef(C_CLASS.ref())
-        .withEntityValue(
-            EntityValue.build().addValue(
+        .withValues(
+                Arrays.asList(
                 new LongValue(C_LOOKUP, 100L)
             )
         ).build();
@@ -374,13 +372,13 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public int[] replace(EntityPackage entityPackage) throws SQLException {
+        public void replace(EntityPackage entityPackage) throws SQLException {
             try {
                 if (replaceTest == null) {
-                    return IntStream.range(0, entityPackage.size()).map(i -> 1).toArray();
+                    return;
                 } else {
                     IEntity[] entities = entityPackage.stream().map(e -> e.getKey()).toArray(IEntity[]::new);
-                    return Arrays.stream(entities).mapToInt(e -> replaceTest.test(e) ? 1 : 0).toArray();
+                    return;
                 }
             } finally {
                 entityPackage.stream().forEach(e -> replaceEntities.add(e.getKey()));

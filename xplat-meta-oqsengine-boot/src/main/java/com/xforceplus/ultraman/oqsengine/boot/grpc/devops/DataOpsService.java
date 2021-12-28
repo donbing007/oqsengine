@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,10 +202,10 @@ public class DataOpsService {
             .withEntityClassId(entityClassId)
             .withEntityClassCode(entityClassOptl.get().code())
             .build();
-        IEntityValue entityValue = EntityValue.build();
+        List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("create_time".equals(field.name())) {
-                entityValue.addValue(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                entityValue.add(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
             }
         });
         data.keySet().stream().forEach(fieldCode -> {
@@ -214,16 +215,16 @@ public class DataOpsService {
                 Optional<IValue> valueOptl = entityFieldOptl.get().type()
                     .toTypedValue(entityFieldOptl.get(), String.valueOf(data.get(fieldCode)));
                 if (valueOptl.isPresent()) {
-                    entityValue.addValue(valueOptl.get());
+                    entityValue.add(valueOptl.get());
                 } else {
-                    entityValue.addValue(new EmptyTypedValue(entityFieldOptl.get()));
+                    entityValue.add(new EmptyTypedValue(entityFieldOptl.get()));
                 }
             }
         });
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(entityClassRef)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(entityValue).build();
+            .withValues(entityValue).build();
 
         try {
             return toDevOpsDataResponse(
@@ -259,10 +260,10 @@ public class DataOpsService {
             .withEntityClassId(entityClassId)
             .withEntityClassCode(entityClassOptl.get().code())
             .build();
-        IEntityValue entityValue = EntityValue.build();
+        List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("update_time".equals(field.name())) {
-                entityValue.addValue(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                entityValue.add(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
             }
         });
         data.keySet().forEach(fieldCode -> {
@@ -270,14 +271,14 @@ public class DataOpsService {
                 .stream().filter(field -> fieldCode.equals(field.name())).findAny();
             if (entityFieldOptl.isPresent()) {
                 IValue value = IValueUtils.toIValue(entityFieldOptl.get(), DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), data.get(fieldCode)));
-                entityValue.addValue(value);
+                entityValue.add(value);
             }
         });
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(entityClassRef)
             .withId(entityValueId)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(entityValue).build();
+            .withValues(entityValue).build();
 
         try {
             return toDevOpsDataResponse(

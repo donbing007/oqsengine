@@ -53,6 +53,7 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
         this.process = process;
     }
 
+
     /**
      * entity实例是否变化.
      */

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.serializable.HessianSerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
@@ -333,20 +334,21 @@ class InitCalculationManagerTest {
 
     @Test
     public void getParticipant() {
-        Collection<AbstractParticipant> abstractParticipant = manager.getParticipant(mockMetaManager.getClasses());
+        Collection<Participant> abstractParticipant = manager.getParticipant(mockMetaManager.getClasses());
         Assertions.assertEquals(abstractParticipant.size(), 18);
     }
 
     @Test
     public void generateInfluence() {
-        Collection<AbstractParticipant> abstractParticipant = manager.getParticipant(mockMetaManager.getClasses());
+        Collection<Participant> abstractParticipant = manager.getParticipant(mockMetaManager.getClasses());
         List<Infuence> infuences = manager.generateInfluence(abstractParticipant);
         Assertions.assertEquals(infuences.size(), 4);
     }
 
     @Test
     public void getNeedInitParticipant() {
-        Collection<AbstractParticipant> all = manager.getParticipant(mockMetaManager.getClasses());
+        Collection<Participant> all = manager.getParticipant(mockMetaManager.getClasses());
+        List<Infuence> infuences = manager.generateInfluence(all);
         kv.save(INIT_FLAG + 4, serializeStrategy.serialize(CalculationInitStatus.UN_INIT));
         kv.save(INIT_FLAG + A3_FIELD.id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
         kv.save(INIT_FLAG + B2_FIELD.id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
@@ -355,12 +357,12 @@ class InitCalculationManagerTest {
         kv.save(INIT_FLAG + G1_FIELD.id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
         kv.save(INIT_FLAG + F2_FIELD.id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
         kv.save(INIT_FLAG + H1_FIELD.id(), serializeStrategy.serialize(CalculationInitStatus.INIT_DONE));
-        Set<AbstractParticipant> needInitAbstractParticipant = manager.getNeedInitParticipant(all);
+        Set<Participant> needInitAbstractParticipant = manager.getNeedInitParticipant(all, infuences);
         InitCalculationInfo info = InitCalculationInfo.Builder.anEmptyBuilder().withAll(all).withNeed(needInitAbstractParticipant).withInfuences(manager.generateInfluence(all)).build();
         Assertions.assertEquals(needInitAbstractParticipant.size(), 11);
         while (!manager.isComplete(info)) {
-            Map<IEntityClass, HashSet<AbstractParticipant>> candidate = manager.voteCandidate(info);
-            Collection<AbstractParticipant> abstractParticipants = manager.voteRun(info);
+            Map<IEntityClass, HashSet<Participant>> candidate = manager.voteCandidate(info);
+            Collection<Participant> abstractParticipants = manager.voteRun(info);
             ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
         Assertions.assertTrue(info.getNeed().isEmpty());
@@ -368,12 +370,12 @@ class InitCalculationManagerTest {
 
     @Test
     public void generateAppInfo() {
-        Collection<AbstractParticipant> all = manager.getParticipant(mockMetaManager.getClasses());
+        Collection<Participant> all = manager.getParticipant(mockMetaManager.getClasses());
         InitCalculationInfo info = InitCalculationInfo.Builder.anEmptyBuilder().withAll(all).withNeed(new ArrayList<>(all)).withInfuences(manager.generateInfluence(all)).build();
 
         while (!manager.isComplete(info)) {
-            Map<IEntityClass, HashSet<AbstractParticipant>> candidate = manager.voteCandidate(info);
-            Collection<AbstractParticipant> abstractParticipants = manager.voteRun(info);
+            Map<IEntityClass, HashSet<Participant>> candidate = manager.voteCandidate(info);
+            Collection<Participant> abstractParticipants = manager.voteRun(info);
             ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
 

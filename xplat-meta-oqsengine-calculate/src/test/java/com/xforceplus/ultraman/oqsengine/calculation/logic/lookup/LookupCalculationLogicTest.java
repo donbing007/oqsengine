@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractPart
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -267,8 +268,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(
+                Arrays.asList(
                     new LongValue(targetLongField, 100)
                 )
             ).build();
@@ -290,7 +291,7 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
-        List<AbstractParticipant> abstractParticipants = new ArrayList<>();
+        List<Participant> abstractParticipants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
             abstractParticipants.add(participant);
@@ -321,8 +322,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(
+                    Arrays.asList(
                     new LongValue(targetLongField, 100)
                 )
             ).build();
@@ -344,7 +345,7 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
-        AtomicReference<AbstractParticipant> p = new AtomicReference<>();
+        AtomicReference<Participant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == targetClassId) {
@@ -356,7 +357,7 @@ public class LookupCalculationLogicTest {
         });
 
 
-        AbstractParticipant abstractParticipant = p.get();
+        Participant abstractParticipant = p.get();
         long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
         Assertions.assertEquals(0, ids.length);
 
@@ -390,8 +391,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
+            .withValues(
+                    Arrays.asList(
                     new StringValue(targetStringField, "v1")
                 )
             ).build();
@@ -428,7 +429,7 @@ public class LookupCalculationLogicTest {
 
         logic.scope(context, infuence);
 
-        AtomicReference<AbstractParticipant> p = new AtomicReference<>();
+        AtomicReference<Participant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (participant.getEntityClass().id() == strongLookupClassId) {
                 p.set(participant);
@@ -438,7 +439,7 @@ public class LookupCalculationLogicTest {
         });
 
 
-        AbstractParticipant abstractParticipant = p.get();
+        Participant abstractParticipant = p.get();
         long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
         Assertions.assertEquals(1000, ids.length);
 

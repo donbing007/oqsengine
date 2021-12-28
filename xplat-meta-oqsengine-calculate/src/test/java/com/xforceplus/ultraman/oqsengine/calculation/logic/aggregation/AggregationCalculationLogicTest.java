@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -339,8 +340,8 @@ public class AggregationCalculationLogicTest {
         entityA = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE)
                 .withEntityClassRef(A_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new LongValue(A_LONG, 100L)
                         )
                 ).build();
@@ -348,8 +349,8 @@ public class AggregationCalculationLogicTest {
         entityB = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE - 1)
                 .withEntityClassRef(B_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new LongValue(B_SUM, 100L)
                         )
                 ).build();
@@ -357,8 +358,8 @@ public class AggregationCalculationLogicTest {
         entityD = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE - 2)
                 .withEntityClassRef(D_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new LongValue(D_SUM, 100L)
                         )
                 ).build();
@@ -366,8 +367,8 @@ public class AggregationCalculationLogicTest {
         entityC = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE - 3)
                 .withEntityClassRef(C_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new LongValue(C_COUNT, 100L)
                         )
                 ).build();
@@ -509,8 +510,8 @@ public class AggregationCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE)
                 .withEntityClassRef(A_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
+                .withValues(
+                        Arrays.asList(
                                 new LongValue(A_LONG, 100)
                         )
                 ).build();
@@ -530,7 +531,7 @@ public class AggregationCalculationLogicTest {
         context.focusField(A_LONG);
 
         aggregationCalculationLogic.scope(context, infuence);
-        List<AbstractParticipant> abstractParticipants = new ArrayList<>();
+        List<Participant> abstractParticipants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
             abstractParticipants.add(participant);
@@ -570,7 +571,7 @@ public class AggregationCalculationLogicTest {
         );
 
         aggregationCalculationLogic.scope(context, infuenceCount);
-        List<AbstractParticipant> participantsCount = new ArrayList<>();
+        List<Participant> participantsCount = new ArrayList<>();
         infuenceCount.scan((parentParticipant, participant, infuenceInner) -> {
 
             participantsCount.add(participant);
@@ -598,10 +599,9 @@ public class AggregationCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
                 .withId(Long.MAX_VALUE)
                 .withEntityClassRef(A_CLASS.ref())
-                .withEntityValue(
-                        EntityValue.build().addValue(
-                                new LongValue(A_LONG, 100)
-                        ).addValue(
+                .withValues(
+                        Arrays.asList(
+                                new LongValue(A_LONG, 100),
                                 new LongValue(relationship.getEntityField(), 1000)
                         )
                 ).build();
@@ -622,7 +622,7 @@ public class AggregationCalculationLogicTest {
         context.focusField(A_LONG);
 
         aggregationCalculationLogic.scope(context, infuence);
-        AtomicReference<AbstractParticipant> p = new AtomicReference<>();
+        AtomicReference<Participant> p = new AtomicReference<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
             if (parentParticipant.isPresent()) {
                 if (parentParticipant.get().getEntityClass().id() == A_CLASS.id()) {
@@ -633,7 +633,7 @@ public class AggregationCalculationLogicTest {
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        AbstractParticipant abstractParticipant = p.get();
+        Participant abstractParticipant = p.get();
         long[] ids = aggregationCalculationLogic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
         Assertions.assertEquals(1, ids.length);
     }

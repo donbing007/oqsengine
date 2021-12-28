@@ -297,8 +297,8 @@ public class LookupMaintainingTaskRunnerTest {
             .withEntityClassRef(targetEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withVersion(0)
-            .withEntityValue(
-                EntityValue.build().addValue(targetValue0).addValue(targetValue1)
+            .withValues(
+                Arrays.asList(targetValue0, targetValue1)
             ).build();
 
         targetEntityId = targetEntity.id();
@@ -312,10 +312,9 @@ public class LookupMaintainingTaskRunnerTest {
                 .withEntityClassRef(lookupEntityClass.ref())
                 .withTime(System.currentTimeMillis())
                 .withVersion(0)
-                .withEntityValue(
-                    EntityValue.build().addValue(targetValue0.copy(lookupField0, Long.toString(targetEntity.id())))
-                        .addValue(targetValue1.copy(lookupField1, Long.toString(targetEntity.id())))
-                ).build();
+                .withValues(
+                    Arrays.asList(targetValue0.copy(lookupField0, Long.toString(targetEntity.id())), (targetValue1.copy(lookupField1, Long.toString(targetEntity.id())))
+                )).build();
 
             lookupEntityIds[i] = lookupEntity.id();
             masterStorage.build(lookupEntity, lookupEntityClass);
