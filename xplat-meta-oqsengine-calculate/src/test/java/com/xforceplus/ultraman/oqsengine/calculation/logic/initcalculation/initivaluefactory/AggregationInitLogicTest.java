@@ -139,9 +139,9 @@ class AggregationInitLogicTest {
                                         2021, Month.FEBRUARY, 27, 12, 32, 20)
                                 .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
                 .withVersion(0)
-                .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                .withValues(Arrays.asList(
                         new LongValue(b3, 0)
-                )))
+                ))
                 .withMajor(OqsVersion.MAJOR)
                 .build();
 
@@ -155,9 +155,9 @@ class AggregationInitLogicTest {
                                             2021, Month.FEBRUARY, 27, 12, 32, 20)
                                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
                     .withVersion(0)
-                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                    .withValues(Arrays.asList(
                             new LongValue(a1, i)
-                    )))
+                    ))
                     .withMajor(OqsVersion.MAJOR)
                     .build());
         }
@@ -171,9 +171,9 @@ class AggregationInitLogicTest {
                                             2021, Month.FEBRUARY, 27, 12, 32, 20)
                                     .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
                     .withVersion(0)
-                    .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                    .withValues(Arrays.asList(
                             new LongValue(a1, i)
-                    )))
+                    ))
                     .withMajor(OqsVersion.MAJOR)
                     .build());
         }
@@ -192,7 +192,7 @@ class AggregationInitLogicTest {
 
     @Test
     public void testInitMax() throws SQLException {
-        participant = InitCalculationParticipant.Builder.anParticipant().withField(b1).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(a1).collect(Collectors.toList())).build();
+        participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b1).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceFields(Stream.of(a1).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
         Long value = (Long) init.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
         Long value1 = (Long) entity.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
@@ -202,7 +202,7 @@ class AggregationInitLogicTest {
 
     @Test
     public void testInitCount() throws SQLException {
-        participant =  InitCalculationParticipant.Builder.anParticipant().withField(b2).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceField(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
+        participant =  InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b2).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceFields(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
         Long value = (Long) init.entityValue().getValue(bClass.field(202).get().id()).get().getValue();
         Long value1 = (Long) entity.entityValue().getValue(bClass.field(202 ).get().id()).get().getValue();

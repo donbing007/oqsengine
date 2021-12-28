@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -640,12 +641,12 @@ public class InfuenceTest {
                 .build();
         infuence.impact(d, e);
 
-        List<AbstractParticipant> nextAbstractParticipants = a.getNextParticipants();
+        Collection<Participant> nextAbstractParticipants = infuence.getNextParticipants(a).get();
         Assertions.assertTrue(nextAbstractParticipants.contains(b));
         Assertions.assertTrue(nextAbstractParticipants.contains(d));
-        List<AbstractParticipant> nextParticipants1 = b.getNextParticipants();
+        Collection<Participant> nextParticipants1 = infuence.getNextParticipants(b).get();
         Assertions.assertTrue(nextParticipants1.contains(c));
-        List<AbstractParticipant> nextParticipants2 = d.getNextParticipants();
+        Collection<Participant> nextParticipants2 = infuence.getNextParticipants(c).get();
         Assertions.assertTrue(nextParticipants2.contains(e));
     }
 }

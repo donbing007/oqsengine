@@ -36,12 +36,12 @@ public class ConditionsTest {
 
         Entity entity = Entity.Builder
             .anEntity()
-            .withEntityValue(EntityValue.build().addValue(iValue))
+            .withValues(Arrays.asList(iValue))
             .build();
 
         Entity entity2 = Entity.Builder
             .anEntity()
-            .withEntityValue(EntityValue.build().addValue(iValue2))
+            .withValues(Arrays.asList(iValue2))
             .build();
 
         System.out.println(MemQuery.query(Arrays.asList(entity, entity2), conditions));

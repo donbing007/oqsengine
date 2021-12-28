@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractPart
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -34,7 +35,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Resource;
@@ -98,15 +98,13 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public Collection<AbstractParticipant> getParticipant(Collection<IEntityClass> entityClasses) {
-        Set<AbstractParticipant> abstractParticipants = new HashSet<>();
+    public Collection<Participant> getParticipant(Collection<IEntityClass> entityClasses) {
+        Set<Participant> abstractParticipants = new HashSet<>();
         entityClasses.forEach(entityClass -> {
             entityClass.fields().forEach(entityField -> {
                 if (participantTypes.contains(entityField.calculationType())) {
                     AbstractParticipant build = build(entityClass, entityField, entityField.calculationType());
-                    if (build != null) {
-                        abstractParticipants.add(build);
-                    }
+                    abstractParticipants.add(build);
                 }
             });
         });
@@ -114,13 +112,14 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public List<Infuence> generateInfluence(Collection<AbstractParticipant> abstractParticipants) {
+    public List<Infuence> generateInfluence(Collection<Participant> abstractParticipants) {
         List<Infuence> infuences = new ArrayList<>();
 
         // 获取根节点
         abstractParticipants.forEach(participant -> {
             if (isRootNode(participant)) {
-                infuences.add(new Infuence(null, participant, null));
+                Infuence infuence = new Infuence(null, participant, null);
+                infuences.add(infuence);
             }
         });
 
@@ -130,14 +129,17 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
 
                     abstractParticipants.forEach(p -> {
                         InitCalculationParticipant pt = (InitCalculationParticipant) p;
-                        if (pt.getSourceField().contains(participant.getField()) && canImpact(pt, participant)) {
+                        if (pt.getSourceFields().contains(participant.getField()) && canImpact(pt, participant)) {
                             boolean needImpact = true;
                             for (Infuence in : infuences) {
                                 // 去除别的树中重复的参与者，根据当前层数大小决定
                                 if (in.contains(pt)) {
-                                    if (pt.getLevel() - ((InitCalculationParticipant) participant).getLevel() <= 1) {
+                                    if (in.getLevel(pt) - infuenceInner.getLevel(participant) <= 1) {
                                         needImpact = false;
-                                        in.remove(pt.getPre(), pt);
+                                        // 剪枝
+                                        if (in.getPre(pt).isPresent()) {
+                                            in.pruning(in.getPre(pt).get(), pt);
+                                        }
                                         infuenceInner.impact(participant, pt);
                                         break;
                                     }
@@ -156,18 +158,28 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public Set<AbstractParticipant> getNeedInitParticipant(Collection<AbstractParticipant> abstractParticipants) {
-        Set<AbstractParticipant> needs = new HashSet<>();
+    public Set<Participant> getNeedInitParticipant(Collection<Participant> abstractParticipants, Collection<Infuence> infuences) {
+        Set<Participant> needs = new HashSet<>();
         Map<String, byte[]> needsInitMap = new HashMap<>();
         abstractParticipants.forEach(participant -> {
             if (needInit(participant.getField().id())) {
-                Queue<AbstractParticipant> queue = new LinkedList<>();
+                Queue<Participant> queue = new LinkedList<>();
                 queue.add(participant);
                 while (!queue.isEmpty()) {
-                    AbstractParticipant poll = queue.poll();
+                    Participant poll = queue.poll();
                     needs.add(poll);
                     needsInitMap.put(INIT_FLAG + poll.getField().id(), serializeStrategy.serialize(CalculationInitStatus.UN_INIT));
-                    queue.addAll(poll.getNextParticipants());
+                    Optional<Collection<Participant>> nextParticipants = null;
+                    for (Infuence infuence : infuences) {
+                        if (infuence.contains(poll)) {
+                            nextParticipants = infuence.getNextParticipants(poll);
+                            break;
+                        }
+                    }
+                    if (nextParticipants.isPresent()) {
+                        queue.addAll(nextParticipants.get());
+                    }
+
                 }
             }
         });
@@ -185,9 +197,9 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
         if (load.isPresent()) {
             entityClasses.add(load.get());
         }
-        Collection<AbstractParticipant> all = getParticipant(entityClasses);
+        Collection<Participant> all = getParticipant(entityClasses);
         List<Infuence> infuences = generateInfluence(all);
-        Set<AbstractParticipant> need = getNeedInitParticipant(all);
+        Set<Participant> need = getNeedInitParticipant(all, infuences);
         return InitCalculationInfo.Builder.anEmptyBuilder()
                 .withCode(code)
                 .withAll(all)
@@ -206,15 +218,15 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public Map<IEntityClass, HashSet<AbstractParticipant>> voteCandidate(InitCalculationInfo initCalculationInfo) {
-        Map<IEntityClass, HashSet<AbstractParticipant>> candidate = initCalculationInfo.getCandidate();
+    public Map<IEntityClass, HashSet<Participant>> voteCandidate(InitCalculationInfo initCalculationInfo) {
+        Map<IEntityClass, HashSet<Participant>> candidate = initCalculationInfo.getCandidate();
         if (initCalculationInfo.isInitFlag()) {
             initCalculationInfo.getInfuences().forEach(infuence ->
                     infuence.scan((parentParticipant, participant, infuenceInner) -> {
                         if (candidate.containsKey(participant.getEntityClass())) {
                             candidate.get(participant.getEntityClass()).add(participant);
                         } else {
-                            candidate.put(participant.getEntityClass(), (HashSet<AbstractParticipant>) Stream.of(participant).collect(Collectors.toSet()));
+                            candidate.put(participant.getEntityClass(), (HashSet<Participant>) Stream.of(participant).collect(Collectors.toSet()));
                         }
                         initCalculationInfo.getNeed().remove(participant);
                         return InfuenceConsumer.Action.OVER;
@@ -228,11 +240,27 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
             }
 
             // 候选池中计算字段参与者
-            Collection<AbstractParticipant> historyAbstractParticipant = candidate.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            Collection<Participant> historyAbstractParticipant = candidate.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
             // 新增候选人
             historyAbstractParticipant.forEach(participant -> {
-                participant.getNextParticipants().forEach(participant1 -> {
+                for (Infuence infuence : initCalculationInfo.getInfuences()) {
+                    if (infuence.contains(participant)) {
+                        Optional<Collection<Participant>> nextParticipants = infuence.getNextParticipants(participant);
+                        if (nextParticipants.isPresent()) {
+                            nextParticipants.get().forEach(participant1 -> {
+                                if (candidate.containsKey(participant1.getEntityClass())) {
+                                    candidate.get(participant1.getEntityClass()).add(participant1);
+
+                                } else {
+                                    candidate.put(participant1.getEntityClass(), (HashSet<Participant>) Stream.of(participant1).collect(Collectors.toSet()));
+                                }
+                                initCalculationInfo.getNeed().remove(participant1);
+                            });
+                        }
+                    }
+                }
+                /*participant.getNextParticipants().forEach(participant1 -> {
                     if (candidate.containsKey(participant1.getEntityClass())) {
                         candidate.get(participant1.getEntityClass()).add(participant1);
 
@@ -240,17 +268,14 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                         candidate.put(participant1.getEntityClass(), (HashSet<AbstractParticipant>) Stream.of(participant1).collect(Collectors.toSet()));
                     }
                     initCalculationInfo.getNeed().remove(participant1);
-                });
+                });*/
 
             });
             // 移除上次run池中初始化完成的计算字段参与者
-            initCalculationInfo.getRun().forEach(new Consumer<AbstractParticipant>() {
-                @Override
-                public void accept(AbstractParticipant abstractParticipant) {
-                    candidate.get(abstractParticipant.getEntityClass()).remove(abstractParticipant);
-                    if (candidate.get(abstractParticipant.getEntityClass()).isEmpty()) {
-                        candidate.remove(abstractParticipant.getEntityClass());
-                    }
+            initCalculationInfo.getRun().forEach(participant -> {
+                candidate.get(participant.getEntityClass()).remove(participant);
+                if (candidate.get(participant.getEntityClass()).isEmpty()) {
+                    candidate.remove(participant.getEntityClass());
                 }
             });
             initCalculationInfo.getRun().clear();
@@ -259,7 +284,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public Collection<AbstractParticipant> voteRun(InitCalculationInfo initCalculationInfo) {
+    public Collection<Participant> voteRun(InitCalculationInfo initCalculationInfo) {
         if (initCalculationInfo.getCandidate() == null || initCalculationInfo.getCandidate().isEmpty()) {
             return Collections.emptyList();
         }
@@ -274,7 +299,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
+    public ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
         if (abstractParticipants.isEmpty()) {
             return new ArrayList<>();
         }
@@ -319,7 +344,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                 return Either.left(String.format("curent app %s is initing now, please wait", appCode));
             } else {
                 List<IEntityField> entityFields = generateAppInfo(appCode).getNeed().stream()
-                        .map(AbstractParticipant::getField).collect(Collectors.toList());
+                        .map(Participant::getField).collect(Collectors.toList());
                 worker.submit(new Runner(appCode));
                 kv.save(appCode + INITING, serializeStrategy.serialize(1));
                 return Either.right(entityFields);
@@ -404,13 +429,13 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     // 判断是否可以加入到叶子节点中.
-    private boolean canImpact(AbstractParticipant child, AbstractParticipant father) {
+    private boolean canImpact(AbstractParticipant child, Participant father) {
         if (!child.getField().calculationType().equals(CalculationType.FORMULA)
                 && !child.getField().calculationType().equals(CalculationType.AUTO_FILL)) {
             return true;
         } else {
             InitCalculationParticipant initCalculationParticipant = (InitCalculationParticipant) child;
-            HashSet<IEntityField> fields = new HashSet<>(initCalculationParticipant.getSourceField());
+            HashSet<IEntityField> fields = new HashSet<>(initCalculationParticipant.getSourceFields());
             fields.remove(father.getField());
             if (child.getField().calculationType().equals(CalculationType.FORMULA) || child.getField().calculationType().equals(CalculationType.AUTO_FILL)) {
                 return !transitiveDependency(child.getEntityClass(), fields, father.getField());
@@ -429,8 +454,8 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     private boolean canVoteRun(IEntityClass entityClass, InitCalculationInfo initCalculationInfo) {
         Set<IEntityClass> set = transitiveEntityClass(entityClass, initCalculationInfo);
 
-        for (AbstractParticipant abstractParticipant : initCalculationInfo.getNeed()) {
-            if (set.contains(abstractParticipant.getEntityClass())) {
+        for (Participant participant : initCalculationInfo.getNeed()) {
+            if (set.contains(participant.getEntityClass())) {
                 return false;
             }
         }
@@ -442,11 +467,16 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
      */
     private Set<IEntityClass> transitiveEntityClass(IEntityClass entityClass, InitCalculationInfo initCalculationInfo) {
         Set<IEntityClass> set = new HashSet<>();
-        for (AbstractParticipant abstractParticipant : initCalculationInfo.getCandidate().get(entityClass)) {
-            AbstractParticipant pre = abstractParticipant;
+        for (Participant participant : initCalculationInfo.getCandidate().get(entityClass)) {
+            Participant pre = participant;
             while (pre != null) {
                 set.add(pre.getEntityClass());
-                pre = pre.getPre();
+                for (Infuence infuence : initCalculationInfo.getInfuences()) {
+                    if (infuence.contains(pre)) {
+                        Optional<Participant> p = infuence.getPre(pre);
+                        pre = p.orElse(null);
+                    }
+                }
             }
         }
         return set;
@@ -514,7 +544,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     /**
      * 根节点判定.
      */
-    private boolean isRootNode(AbstractParticipant abstractParticipant) {
+    private boolean isRootNode(Participant abstractParticipant) {
         InitCalculationParticipant initCalculationParticipant = (InitCalculationParticipant) abstractParticipant;
         AbstractCalculation calculation = initCalculationParticipant.getField().config().getCalculation();
 
@@ -576,7 +606,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
      * 构建参与者.
      */
     private AbstractParticipant build(IEntityClass entityClass, IEntityField entityField, CalculationType calculationType) {
-        InitCalculationParticipant.Builder builder = InitCalculationParticipant.Builder.anParticipant().withEntityClass(entityClass).withField(entityField);
+        InitCalculationParticipant.Builder builder = InitCalculationParticipant.Builder.anInitCalculationParticipant().withEntityClass(entityClass).withField(entityField);
         switch (calculationType) {
             case FORMULA:
                 Formula formula = (Formula) entityField.config().getCalculation();
@@ -589,7 +619,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                         sourceFields.add(entityClass.field(s).get());
                     }
                 });
-                return builder.withSourceField(sourceFields).withSourceEntityClass(entityClass).build();
+                return builder.withSourceFields(sourceFields).withSourceEntityClass(entityClass).build();
             case AGGREGATION:
                 Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
                 Optional<IEntityClass> entityClassOptional = metaManager.load(aggregation.getClassId(), null);
@@ -597,7 +627,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                     if (entityClassOptional.get().field(aggregation.getFieldId()).isPresent()) {
                         ArrayList<IEntityField> fields = new ArrayList<>();
                         fields.add(entityClassOptional.get().field(aggregation.getFieldId()).get());
-                        return builder.withSourceEntityClass(entityClassOptional.get()).withSourceField(fields).build();
+                        return builder.withSourceEntityClass(entityClassOptional.get()).withSourceFields(fields).build();
                     } else if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                         return builder.withSourceEntityClass(entityClassOptional.get()).build();
                     } else {
@@ -621,7 +651,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                         fields.add(entityClass.field(s).get());
                     }
                 });
-                return builder.withSourceField(fields).withSourceEntityClass(entityClass).build();
+                return builder.withSourceFields(fields).withSourceEntityClass(entityClass).build();
             default:
                 throw new CalculationException(String.format(
                         "init calculation error: not support calculationType %s , can not transfer to InitCalculationParticipant", calculationType.name()));
@@ -670,9 +700,9 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                     // 选举候选计算参与者.
                     voteCandidate(initCalculationInfo);
                     // 选举本次可执行初始化计算字段参与者.
-                    Collection<AbstractParticipant> abstractParticipants = voteRun(initCalculationInfo);
+                    Collection<Participant> participants = voteRun(initCalculationInfo);
                     // 可执行计算字段参与者分类.
-                    ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = sortRun(abstractParticipants, initCalculationInfo);
+                    ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = sortRun(participants, initCalculationInfo);
 
                     if (!run.isEmpty()) {
                         // 执行初始化
@@ -716,11 +746,11 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
                     // 处理因异常未被执行的计算字段参与者
-                    for (AbstractParticipant abstractParticipant : initCalculationInfo.getNeed()) {
-                        if (initResultInfo.getFailedInfo().containsKey(abstractParticipant.getEntityClass().id())) {
-                            initResultInfo.getFailedInfo().get(abstractParticipant.getEntityClass().id()).add(abstractParticipant.getField().id());
+                    for (Participant participant : initCalculationInfo.getNeed()) {
+                        if (initResultInfo.getFailedInfo().containsKey(participant.getEntityClass().id())) {
+                            initResultInfo.getFailedInfo().get(participant.getEntityClass().id()).add(participant.getField().id());
                         } else {
-                            initResultInfo.getFailedInfo().put(abstractParticipant.getEntityClass().id(), Stream.of(abstractParticipant.getField().id()).collect(Collectors.toList()));
+                            initResultInfo.getFailedInfo().put(participant.getEntityClass().id(), Stream.of(participant.getField().id()).collect(Collectors.toList()));
                         }
                     }
                     // 失败后停止初始化，防止引用链路中引用错误数据.

@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractPart
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -137,7 +138,7 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 所以只会处于影响树的第二层,第一层为触发源.
      */
     @Override
-    public long[] getMaintainTarget(CalculationContext context, AbstractParticipant abstractParticipant,
+    public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant,
                                     Collection<IEntity> triggerEntities)
         throws CalculationException {
 

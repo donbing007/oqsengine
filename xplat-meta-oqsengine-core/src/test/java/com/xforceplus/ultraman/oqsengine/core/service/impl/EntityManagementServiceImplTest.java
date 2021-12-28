@@ -21,7 +21,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +68,7 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()).build();
+            .build();
 
         try {
             impl.build(targetEntity);
@@ -116,14 +120,10 @@ public class EntityManagementServiceImplTest {
                     new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
                 .withId(i + 1)
                 .withTime(System.currentTimeMillis())
-                .withEntityValue(EntityValue.build()
-                    .addValue(
-                        new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), i))
-                    .addValue(
-                        new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                    .addValue(
-                        new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                    )
+                .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), i),
+                                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E"))
+                        .collect(Collectors.toList())
                 )
                 .build();
 
@@ -149,14 +149,9 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                            new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                            new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
         when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
@@ -175,14 +170,9 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
         when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
@@ -199,8 +189,7 @@ public class EntityManagementServiceImplTest {
             .withEntityClassRef(EntityClassDefine.l2EntityClass.ref())
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 1000L)
                 )
             )
@@ -214,8 +203,7 @@ public class EntityManagementServiceImplTest {
             .withEntityClassRef(EntityClassDefine.mustEntityClass.ref())
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new StringValue(EntityClassDefine.mustEntityClass.field("not-must-field").get(), "test")
                 )
             )
@@ -237,16 +225,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
     }
@@ -260,14 +242,9 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
@@ -278,8 +255,7 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
@@ -288,16 +264,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
@@ -313,16 +283,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
 
         // 这是请求的.
@@ -331,8 +295,7 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
@@ -341,16 +304,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
@@ -367,14 +324,9 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
 
@@ -396,16 +348,10 @@ public class EntityManagementServiceImplTest {
             .withId(1)
             .withVersion(200)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
@@ -418,16 +364,10 @@ public class EntityManagementServiceImplTest {
             .withId(1)
             .withVersion(200)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
         Assertions.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
@@ -444,16 +384,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
@@ -472,16 +406,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
     }

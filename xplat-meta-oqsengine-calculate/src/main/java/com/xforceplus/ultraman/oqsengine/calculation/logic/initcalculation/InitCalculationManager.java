@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InitCalculationParticipant;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.vavr.control.Either;
@@ -24,19 +25,19 @@ public interface InitCalculationManager {
     /**
      * 将符合条件的entityClass转换成参与者.
      */
-    public Collection<AbstractParticipant> getParticipant(Collection<IEntityClass> entityClasses);
+    public Collection<Participant> getParticipant(Collection<IEntityClass> entityClasses);
 
 
     /**
      * 参与者构建出依赖树.
      */
-    public List<Infuence> generateInfluence(Collection<AbstractParticipant> abstractParticipants);
+    public List<Infuence> generateInfluence(Collection<Participant> abstractParticipants);
 
 
     /**
      * 筛选本次需要初始化的参与者.
      */
-    public Set<AbstractParticipant> getNeedInitParticipant(Collection<AbstractParticipant> abstractParticipants);
+    public Set<Participant> getNeedInitParticipant(Collection<Participant> abstractParticipants, Collection<Infuence> infuences);
 
     /**
      * 通过appid-version生成Init信息.
@@ -51,12 +52,12 @@ public interface InitCalculationManager {
     /**
      * 选举候选初始化节点.
      */
-    public Map<IEntityClass, HashSet<AbstractParticipant>> voteCandidate(InitCalculationInfo initCalculationInfo);
+    public Map<IEntityClass, HashSet<Participant>> voteCandidate(InitCalculationInfo initCalculationInfo);
 
     /**
      * 生成此次初始化节点.
      */
-    public Collection<AbstractParticipant> voteRun(InitCalculationInfo initCalculationInfo);
+    public Collection<Participant> voteRun(InitCalculationInfo initCalculationInfo);
 
     /**
      * 将run池中所有参与者转换成entityClass组.
@@ -64,7 +65,7 @@ public interface InitCalculationManager {
      * [A,B], [C]
      * 同组内并发初始化，不同组需等前组完成.
      */
-    public  ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<AbstractParticipant> abstractParticipants, InitCalculationInfo initCalculationInfo);
+    public  ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo);
 
     /**
      * 如果当前app已经在队列中，无需加入.否则返回一个需要初始化的字段列表.

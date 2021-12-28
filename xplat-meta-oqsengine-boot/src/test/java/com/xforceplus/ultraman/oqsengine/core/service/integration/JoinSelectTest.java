@@ -246,19 +246,17 @@ public class JoinSelectTest extends AbstractContainerExtends {
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref())
                 .withMajor(OqsVersion.MAJOR)
-                .withEntityValue(EntityValue.build().addValues(
-                    Arrays.asList(
+                .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 1L)
                     )
-                )).build(),
+                ).build(),
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref())
                 .withMajor(OqsVersion.MAJOR)
-                .withEntityValue(EntityValue.build().addValues(
-                    Arrays.asList(
+                .withValues( Arrays.asList(
                         new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 2L)
                     )
-                )).build()
+                ).build()
         ));
 
         // 1001个上驱动上限.
@@ -267,11 +265,11 @@ public class JoinSelectTest extends AbstractContainerExtends {
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.DRIVER_ENTITY_CLASS.ref())
                     .withMajor(OqsVersion.MAJOR)
-                    .withEntityValue(EntityValue.build().addValues(
+                    .withValues(
                         Arrays.asList(
                             new LongValue(MockEntityClassDefine.DRIVER_ENTITY_CLASS.field("driver-long").get(), 100L)
                         )
-                    )).build()
+                    ).build()
             );
         }
 
@@ -284,15 +282,10 @@ public class JoinSelectTest extends AbstractContainerExtends {
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withMajor(OqsVersion.MAJOR)
-                .withEntityValue(
-                    EntityValue.build()
-                        .addValue(
-                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v0")
-                        )
-                        .addValue(
-                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 1000L)
-                        )
-                        .addValue(
+                .withValues(
+                    Arrays.asList(
+                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v0"),
+                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 1000L),
                             new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-driver.id").get(),
                                 driverEntities.get(0).id())
                         )
@@ -300,15 +293,10 @@ public class JoinSelectTest extends AbstractContainerExtends {
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withMajor(OqsVersion.MAJOR)
-                .withEntityValue(
-                    EntityValue.build()
-                        .addValue(
-                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
-                        )
-                        .addValue(
-                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 2000L)
-                        )
-                        .addValue(
+                .withValues(
+                    Arrays.asList(
+                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1"),
+                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 2000L),
                             new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-driver.id").get(),
                                 driverEntities.get(1).id())
                         )
@@ -322,15 +310,10 @@ public class JoinSelectTest extends AbstractContainerExtends {
             Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withMajor(OqsVersion.MAJOR)
-                .withEntityValue(
-                    EntityValue.build()
-                        .addValue(
-                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v3")
-                        )
-                        .addValue(
-                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 3000L)
-                        )
-                        .addValue(
+                .withValues(
+                   Arrays.asList(
+                            new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v3"),
+                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l1-long").get(), 3000L),
                             new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-driver.id").get(),
                                 driverEntities.get(3).id())
                         )

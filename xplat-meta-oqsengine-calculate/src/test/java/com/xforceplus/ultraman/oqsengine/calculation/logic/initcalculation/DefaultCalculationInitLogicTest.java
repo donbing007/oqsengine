@@ -124,11 +124,11 @@ class DefaultCalculationInitLogicTest {
                 .withFields(Arrays.asList(B1, B_FML, EntityField.ID_ENTITY_FIELD))
                 .build();
 
-        entity = Entity.Builder.anEntity().withId(10000).withEntityClassRef(B_CLASS.ref()).withEntityValue(EntityValue.build().addValues(Arrays.asList(
+        entity = Entity.Builder.anEntity().withId(10000).withEntityClassRef(B_CLASS.ref()).withValues(Arrays.asList(
                 new LongValue(B1, 10)
-        ))).build();
+        )).build();
 
-        participant = InitCalculationParticipant.Builder.anParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceField(Stream.of(B1).collect(Collectors.toList())).build();
+        participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceFields(Stream.of(B1).collect(Collectors.toList())).build();
 
         originalEntity = new OriginalEntity();
 
@@ -142,7 +142,7 @@ class DefaultCalculationInitLogicTest {
 
         Mockito.when(masterStorage.selectOne(Mockito.anyLong(), Mockito.any(IEntityClass.class))).thenReturn(Optional.of(entity));
 
-        Mockito.when(masterStorage.replace(Mockito.any(EntityPackage.class))).thenReturn(new int[] {1}, new int[] {0});
+//        Mockito.when(masterStorage.replace(Mockito.any(EntityPackage.class))).thenReturn(new int[] {1}, new int[] {0});
 
         Mockito.when(masterStorage.selectMultiple(Mockito.any())).thenReturn(Stream.of(entity).collect(Collectors.toList()));
 
