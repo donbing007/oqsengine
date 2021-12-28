@@ -127,6 +127,7 @@ public class ConsumerRunner extends Thread {
 
     private void connectAndReset(int currentConnectTimes) throws SQLException {
         if (connector.canUseConnector(currentConnectTimes)) {
+            //  打开链接
             connector.open();
 
             //  首先将上次记录完整的信息(batchID)确认到Canal中
@@ -135,7 +136,7 @@ public class ConsumerRunner extends Thread {
             //  这个步骤是当出现了10次重连都失败的情况，会放弃当前的链接，重新创建一个新的链接。
             //  该做法是为了解决当canal-server重启后当前链接失效的情况下还在继续链接.
 
-            //  保险起见、再次释放当前链接
+            //  再次确认当前链接已释放
             connector.close();
 
             //  重新创建链接
