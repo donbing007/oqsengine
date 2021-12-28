@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -215,8 +216,33 @@ public class Entity implements IEntity, Serializable {
             return this;
         }
 
+        /**
+         * 构造时指定字段值.
+         *
+         * @param values 值列表.
+         * @return 构造器.
+         */
         public Builder withValues(Collection<IValue> values) {
-            this.values = values;
+            if (this.values == null) {
+                this.values = new ArrayList<>();
+            }
+
+            this.values.addAll(values);
+            return this;
+        }
+
+        /**
+         * 构造时指定字段值.
+         *
+         * @param value 单个字段值.
+         * @return 构造器.
+         */
+        public Builder withValue(IValue value) {
+            if (this.values == null) {
+                this.values = new ArrayList<>();
+            }
+
+            this.values.add(value);
             return this;
         }
 

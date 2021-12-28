@@ -21,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -37,6 +36,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import io.vavr.control.Either;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -57,8 +57,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-
-import io.vavr.control.Either;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -637,12 +635,10 @@ public class CalculationTest extends AbstractContainerExtends {
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
             .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new DecimalValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                        new BigDecimal("100.0")
-                    )
+            .withValue(
+                new DecimalValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                    new BigDecimal("100.0")
                 )
             ).build();
 
@@ -653,22 +649,19 @@ public class CalculationTest extends AbstractContainerExtends {
         order = Entity.Builder.anEntity()
             .withId(order.id())
             .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new StringValue(
-                        MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
-                        ""
-                    )
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
+                    ""
                 )
-            ).withEntityValue(
-                // 此值是为了防止空对象更新检查被触发.
-                EntityValue.build().addValue(
-                    new DateTimeValue(
-                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
-                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                    )
+            )
+            .withValue(
+                new DateTimeValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
                 )
-            ).build();
+            )
+            .build();
 
         operationResult = entityManagementService.replace(order);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
@@ -740,56 +733,53 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntityClass orderItemClass = MockEntityClassDefine.ORDER_ITEM_CLASS;
         MockEntityClassDefine.changeOrder(metaManager);
         IEntity entity = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
-                .withId(1)
-                .withEntityValue(
-                        EntityValue.build().addValue(
-                                new DateTimeValue(
-                                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
-                                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                                )
-                        )
-                ).build();
+            .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
+            .withId(1)
+            .withValue(
+                new DateTimeValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )
+            )
+            .build();
 
         int size = 200;
         Collection<IEntity> entities = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             IEntity e = Entity.Builder.anEntity()
-                    .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-                    .withEntityValue(
-                            EntityValue.build()
-                                    .addValue(
-                                            new StringValue(
-                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
-                                                    faker.food().fruit()
-                                            )
-                                    )
-                                    .addValue(
-                                            new DecimalValue(
-                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                                                    new BigDecimal(faker.number().randomDouble(3, 1, 1000))
-                                                            .setScale(6, BigDecimal.ROUND_HALF_UP)
-                                            )
-                                    )
-                                    .addValue(
-                                            new LongValue(
-                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
-                                                    faker.number().randomNumber()
-                                            )
-                                    )
-                                    .addValue(
-                                            new LongValue(
-                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                                                    entity.id()
-                                            )
-                                    )
-                                    .addValue(
-                                            new DateTimeValue(
-                                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
-                                                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                                            )
-                                    )
-                    ).build();
+                .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
+                .withValue(
+                    new StringValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
+                        faker.food().fruit()
+                    )
+                )
+                .withValue(
+                    new DecimalValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                        new BigDecimal(faker.number().randomDouble(3, 1, 1000))
+                            .setScale(6, BigDecimal.ROUND_HALF_UP)
+                    )
+                )
+                .withValue(
+                    new LongValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                        faker.number().randomNumber()
+                    )
+                )
+                .withValue(
+                    new LongValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                        entity.id()
+                    )
+                )
+                .withValue(
+                    new DateTimeValue(
+                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    )
+                )
+                .build();
             entities.add(e);
 
             OperationResult result = entityManagementService.build(e);
@@ -820,102 +810,97 @@ public class CalculationTest extends AbstractContainerExtends {
     private IEntity buildUserEntity() {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.USER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
-                        new StringValue(
-                            MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
-                            "U" + idGenerator.next())
-                    ).addValue(
-                        new StringValue(
-                            MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
-                            faker.name().name())
-                    )
-            ).build();
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
+                    "U" + idGenerator.next())
+            )
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
+                    faker.name().name())
+            )
+            .build();
     }
 
     // 构造指定用户下的订单.
     private IEntity buildOrderEntity(IEntity user) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
-                        new StringValue(
-                            MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
-                            "O" + idGenerator.next()
-                        )
-                    )
-                    .addValue(
-                        new DateTimeValue(
-                            MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
-                            faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                        )
-                    )
-                    .addValue(
-                        new LookupValue(
-                            MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
-                            user.id()
-                        )
-                    )
-                    .addValue(
-                        new LongValue(
-                            MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
-                            user.id()
-                        )
-                    )
-            ).build();
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
+                    "O" + idGenerator.next()
+                )
+            )
+            .withValue(
+                new DateTimeValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )
+            )
+            .withValue(
+                new LookupValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                    user.id()
+                )
+            )
+            .withValue(
+                new LongValue(
+                    MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
+                    user.id()
+                )
+            )
+            .build();
     }
 
     // 构造指定订单下的订单项.
     private IEntity buildOrderItem(IEntity order) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(
-                        new StringValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
-                            faker.food().fruit()
-                        )
-                    )
-                    .addValue(
-                        new DecimalValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                            new BigDecimal(faker.number().randomDouble(3, 1, 1000))
-                                .setScale(6, BigDecimal.ROUND_HALF_UP)
-                        )
-                    )
-                    .addValue(
-                        new LookupValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号lookup").get(),
-                            order.id()
-                        )
-                    )
-                    .addValue(
-                        new LongValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                            order.id()
-                        )
-                    )
-                    .addValue(
-                        new LongValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
-                            faker.number().randomNumber()
-                        )
-                    )
-                    .addValue(
-                        new LongValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                            order.id()
-                        )
-                    )
-                    .addValue(
-                        new DateTimeValue(
-                            MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
-                            faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                        )
-                    )
-            ).build();
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
+                    faker.food().fruit()
+                )
+            )
+            .withValue(
+                new DecimalValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                    new BigDecimal(faker.number().randomDouble(3, 1, 1000))
+                        .setScale(6, BigDecimal.ROUND_HALF_UP)
+                )
+            )
+            .withValue(
+                new LookupValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号lookup").get(),
+                    order.id()
+                )
+            )
+            .withValue(
+                new LongValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                    order.id()
+                )
+            )
+            .withValue(
+                new LongValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                    faker.number().randomNumber()
+                )
+            )
+            .withValue(
+                new LongValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                    order.id()
+                )
+            )
+            .withValue(
+                new DateTimeValue(
+                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )
+            )
+            .build();
     }
 }

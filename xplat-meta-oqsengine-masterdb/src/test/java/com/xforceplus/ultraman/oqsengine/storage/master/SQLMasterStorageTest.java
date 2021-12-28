@@ -366,8 +366,9 @@ public class SQLMasterStorageTest {
 
         EntityPackage updatePackage = new EntityPackage();
         entityPackage.stream().map(e -> {
-            e.getKey().entityValue().addValue(
-                new LongValue(l1EntityClass.father().get().field("l0-long").get(), -100));
+            e.getKey().entityValue()
+                .addValue(new LongValue(l1EntityClass.father().get().field("l0-long").get(), -100))
+                .addValue(new EmptyTypedValue(l1EntityClass.field("l1-string").get()));
             return e;
         }).forEach(e -> {
             updatePackage.put(e.getKey(), e.getValue());
@@ -390,6 +391,10 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(expectedDirtySize,
             entities.stream()
                 .filter(e -> e.entityValue().getValue("l0-long").get().valueToLong() == -100).count());
+
+        Assertions.assertEquals(0,
+            entities.stream()
+                .filter(e -> e.entityValue().getValue("l1-string").isPresent()).count());
     }
 
     @Test

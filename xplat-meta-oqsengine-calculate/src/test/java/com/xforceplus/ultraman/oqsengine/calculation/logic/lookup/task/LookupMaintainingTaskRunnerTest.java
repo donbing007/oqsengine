@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -297,9 +296,9 @@ public class LookupMaintainingTaskRunnerTest {
             .withEntityClassRef(targetEntityClass.ref())
             .withTime(System.currentTimeMillis())
             .withVersion(0)
-            .withEntityValue(
-                EntityValue.build().addValue(targetValue0).addValue(targetValue1)
-            ).build();
+            .withValue(targetValue0)
+            .withValue(targetValue1)
+            .build();
 
         targetEntityId = targetEntity.id();
         masterStorage.build(targetEntity, targetEntityClass);
@@ -312,10 +311,9 @@ public class LookupMaintainingTaskRunnerTest {
                 .withEntityClassRef(lookupEntityClass.ref())
                 .withTime(System.currentTimeMillis())
                 .withVersion(0)
-                .withEntityValue(
-                    EntityValue.build().addValue(targetValue0.copy(lookupField0, Long.toString(targetEntity.id())))
-                        .addValue(targetValue1.copy(lookupField1, Long.toString(targetEntity.id())))
-                ).build();
+                .withValue(targetValue0.copy(lookupField0, Long.toString(targetEntity.id())))
+                .withValue(targetValue1.copy(lookupField1, Long.toString(targetEntity.id())))
+                .build();
 
             lookupEntityIds[i] = lookupEntity.id();
             masterStorage.build(lookupEntity, lookupEntityClass);
@@ -340,24 +338,24 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public int build(IEntity entity, IEntityClass entityClass) throws SQLException {
+        public boolean build(IEntity entity, IEntityClass entityClass) throws SQLException {
             data.put(entity.id(), entity);
-            return 1;
+            return true;
         }
 
         @Override
-        public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
+        public boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
             entity.resetVersion(entity.version() + 1);
             data.put(entity.id(), entity);
-            return 1;
+            return true;
         }
 
         @Override
-        public int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
+        public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
             if (data.remove(entity.id()) != null) {
-                return 1;
+                return true;
             } else {
-                return 0;
+                return false;
             }
         }
 

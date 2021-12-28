@@ -6,13 +6,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.query.MemQuery;
 import java.util.Arrays;
 import org.junit.Test;
 
+/**
+ * 条件测试.
+ */
 public class ConditionsTest {
 
     @Test
@@ -31,17 +33,15 @@ public class ConditionsTest {
             .addAnd(new Condition(name, ConditionOperator.EQUALS, new StringValue(name, "abc2")))
             .addOr(innerConditions, true);
 
-        IValue iValue = new StringValue(name, "abc");
-        IValue iValue2 = new StringValue(name, "abc2");
+        IValue value1 = new StringValue(name, "abc");
+        IValue value2 = new StringValue(name, "abc2");
 
-        Entity entity = Entity.Builder
-            .anEntity()
-            .withEntityValue(EntityValue.build().addValue(iValue))
+        Entity entity = Entity.Builder.anEntity()
+            .withValue(value1)
             .build();
 
-        Entity entity2 = Entity.Builder
-            .anEntity()
-            .withEntityValue(EntityValue.build().addValue(iValue2))
+        Entity entity2 = Entity.Builder.anEntity()
+            .withValue(value2)
             .build();
 
         System.out.println(MemQuery.query(Arrays.asList(entity, entity2), conditions));
