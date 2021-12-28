@@ -104,7 +104,7 @@ public class RedisResourceLocker implements MultiResourceLocker {
      */
     private RLock buildRedissonMultiLock(String... keys) {
         RLock[] locks =
-            Arrays.stream(keys).distinct().sorted().map(k -> redissonClient.getLock(k)).toArray(RLock[]::new);
+            Arrays.stream(keys).parallel().distinct().sorted().map(k -> redissonClient.getLock(k)).toArray(RLock[]::new);
         return redissonClient.getMultiLock(locks);
     }
 }

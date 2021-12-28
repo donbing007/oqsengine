@@ -44,4 +44,9 @@ public class RedisResourceLockerTest extends AbstractResourceLockerTest {
     public ResourceLocker getLocker() {
         return locker;
     }
+
+    @Override
+    public MultiResourceLocker getMultiLocker() {
+        return this.locker;
+    }
 }

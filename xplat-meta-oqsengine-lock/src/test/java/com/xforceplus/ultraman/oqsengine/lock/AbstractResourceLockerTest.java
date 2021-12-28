@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -170,6 +171,29 @@ public abstract class AbstractResourceLockerTest {
         }
     }
 
+    @Test
+    public void test() throws Exception {
+        String[] keys = IntStream.range(0, 10000).mapToObj(i -> "locker.key" + i).toArray(String[]::new);
+        long lockStart;
+        long lockEnd;
+        long unlockStart;
+        long unlockEnd;
+        for (int i = 0; i < 10000; i++) {
+
+            try {
+                lockStart = System.currentTimeMillis();
+                getMultiLocker().locks(keys);
+                lockEnd = System.currentTimeMillis();
+            } finally {
+                unlockStart = System.currentTimeMillis();
+                getMultiLocker().unlocks(keys);
+                unlockEnd = System.currentTimeMillis();
+            }
+
+            System.out.printf("lock ms: %d, unlock ms: %d\n", lockEnd - lockStart, unlockEnd - unlockStart);
+        }
+    }
+
     static class IntegerHolder {
         int value;
 
@@ -192,4 +216,6 @@ public abstract class AbstractResourceLockerTest {
     }
 
     public abstract ResourceLocker getLocker();
+
+    public abstract MultiResourceLocker getMultiLocker();
 }

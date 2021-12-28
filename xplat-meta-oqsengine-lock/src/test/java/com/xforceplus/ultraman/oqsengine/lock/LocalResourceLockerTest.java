@@ -28,4 +28,9 @@ public class LocalResourceLockerTest extends AbstractResourceLockerTest {
     public ResourceLocker getLocker() {
         return this.locker;
     }
+
+    @Override
+    public MultiResourceLocker getMultiLocker() {
+        return this.locker;
+    }
 }
