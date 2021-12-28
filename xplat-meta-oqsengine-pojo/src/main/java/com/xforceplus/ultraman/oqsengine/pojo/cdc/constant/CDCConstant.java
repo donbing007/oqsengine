@@ -36,6 +36,9 @@ public class CDCConstant {
     //  一次获得的binlog最大量
     public static final int DEFAULT_BATCH_SIZE = 2048;
 
+    //  一个链接的容错次数
+    public static final int MAX_RECONNECT_TIMES_PER_CONNECTIONS = 10;
+
     //  当前CDC 中freeMessage需要上报指标的阈值 (默认5S)
     public static final int DEFAULT_FREE_MESSAGE_MAX_REPORT_THRESHOLD = 5;
 
