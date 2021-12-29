@@ -320,7 +320,6 @@ public class Infuence {
         }
 
         Node newChildNode = new ChildNode(newParticipant);
-        newChildNode.setParent(point);
         point.addChild(newChildNode);
         newChildNode.setLevel(point.getLevel() + 1);
         participantNodeSearchHelper.put(newParticipant, newChildNode);

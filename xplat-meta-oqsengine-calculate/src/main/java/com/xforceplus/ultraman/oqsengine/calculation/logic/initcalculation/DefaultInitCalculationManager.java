@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import io.vavr.control.Either;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -169,16 +170,14 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                     Participant poll = queue.poll();
                     needs.add(poll);
                     needsInitMap.put(INIT_FLAG + poll.getField().id(), serializeStrategy.serialize(CalculationInitStatus.UN_INIT));
-                    Optional<Collection<Participant>> nextParticipants = null;
+                    Optional<Collection<Participant>> nextParticipants = Optional.empty();
                     for (Infuence infuence : infuences) {
                         if (infuence.contains(poll)) {
                             nextParticipants = infuence.getNextParticipants(poll);
                             break;
                         }
                     }
-                    if (nextParticipants.isPresent()) {
-                        queue.addAll(nextParticipants.get());
-                    }
+                    nextParticipants.ifPresent(queue::addAll);
 
                 }
             }
@@ -197,6 +196,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
         if (load.isPresent()) {
             entityClasses.add(load.get());
         }
+        entityClasses = (ArrayList) metaManager.appLoad(code);
         Collection<Participant> all = getParticipant(entityClasses);
         List<Infuence> infuences = generateInfluence(all);
         Set<Participant> need = getNeedInitParticipant(all, infuences);
