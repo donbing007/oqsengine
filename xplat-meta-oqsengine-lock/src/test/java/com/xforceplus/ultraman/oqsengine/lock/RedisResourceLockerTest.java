@@ -1,12 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.lock;
 
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import io.lettuce.core.RedisClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.redisson.Redisson;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 
 /**
  * 基于redisson的资源锁封装测试.
@@ -18,7 +18,7 @@ import org.redisson.config.Config;
 @ExtendWith({RedisContainer.class})
 public class RedisResourceLockerTest extends AbstractResourceLockerTest {
 
-    private RedissonClient redissonClient;
+    private RedisClient redisClient;
     private RedisResourceLocker locker;
 
     /**
@@ -26,18 +26,22 @@ public class RedisResourceLockerTest extends AbstractResourceLockerTest {
      */
     @BeforeEach
     public void before() throws Exception {
-        Config config = new Config();
-        String redisIp = System.getProperty("REDIS_HOST");
-        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
-        config.useSingleServer().setAddress(String.format("redis://%s:%s", redisIp, redisPort));
-        redissonClient = Redisson.create(config);
 
-        locker = new RedisResourceLocker(redissonClient);
+        redisClient = CommonInitialization.getInstance().getRedisClient();
+
+        locker = new RedisResourceLocker(redisClient);
+        locker.init();
     }
 
+    /**
+     * 清理.
+     */
     @AfterEach
     public void after() throws Exception {
-        redissonClient.shutdown();
+        locker.destroy();
+
+        InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Override
