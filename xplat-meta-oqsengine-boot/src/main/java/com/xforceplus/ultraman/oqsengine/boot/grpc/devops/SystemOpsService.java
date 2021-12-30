@@ -146,17 +146,9 @@ public class SystemOpsService {
     public List<Long> getUnReadyCommits() {
         List<Long> ids = new ArrayList<>();
         try {
-            long size = commitIdStatusService.size();
-            if (size > 0) {
-                //  将数量作为ids[0]输出
-                Optional<Long> min = commitIdStatusService.getMin();
-                min.ifPresent(ids::add);
-
-                Optional<Long> max = commitIdStatusService.getMax();
-                max.ifPresent(ids::add);
-            } else {
-                ids.add(0L);
-            }
+            //  将数量作为ids[0]输出
+            ids.add(commitIdStatusService.getMin().orElse(0L));
+            ids.add(commitIdStatusService.getMax().orElse(0L));
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("get un-ready commits exception", e);
         }
