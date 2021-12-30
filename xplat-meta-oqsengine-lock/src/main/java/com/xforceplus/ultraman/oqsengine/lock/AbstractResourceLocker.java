@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.lock;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -23,6 +20,8 @@ import java.util.concurrent.locks.LockSupport;
  */
 public abstract class AbstractResourceLocker implements MultiResourceLocker {
 
+    private static final String LOCK_KEY_PREIFX = "locker.";
+
     /*
      * 重试的默认间隔,{@value}毫秒.
      */
@@ -30,7 +29,7 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
     /*
      * 为每个操作的线程记录一个唯一ID号
      */
-    private final ThreadLocal<Map<String, String>> threadInfo = new ThreadLocal();
+    private final ThreadLocal<Locker> threadInfo = new ThreadLocal();
     /*
      * 等待的重试时间
      */
@@ -55,57 +54,35 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
     }
 
     @Override
-    public boolean isLocking(String key) {
-        String storeKey = buildStoreResourceKey(key);
-        Optional<LockInfo> lockInfoOp = this.getLockInfo(storeKey);
-        return lockInfoOp.isPresent();
+    public boolean isLocking(String resource) {
+        String key = buildLockKey(resource);
+        return doIsLocking(key);
     }
 
     /**
      * 锁定资源,如果不能获得资源的锁那么调用线程将一直阻塞到获取锁为止.
      *
-     * @param key 资源的键.
+     * @param resource 资源的键.
      */
     @Override
-    public void lock(String key) {
-        boolean ok = false;
-        String storeKey = buildStoreResourceKey(key);
-        String lockingId = makeThreadId(key);
-        long delay = getRetryDelay();
-        while (!ok) {
-            ok = doLock(storeKey, new LockInfo(lockingId));
-
-            if (!ok) {
-                await(delay);
-            }
-        }
+    public void lock(String resource) {
+        doTryLocks(Long.MAX_VALUE, resource);
     }
 
     @Override
-    public void locks(String... keys) {
-        int successfulSize = 0;
-        String[] userKeys = Arrays.stream(keys).distinct().sorted().toArray(String[]::new);
-        try {
-            for (String k : userKeys) {
-                lock(k);
-                successfulSize++;
-            }
-        } finally {
-            if (successfulSize > 0 && successfulSize < keys.length) {
-                unlocks(keys);
-            }
-        }
+    public void locks(String... resources) {
+        doTryLocks(Long.MAX_VALUE, resources);
     }
 
     /**
      * 尝试获取资源的锁,获取成功返回true,否则返回false.
      *
-     * @param key 资源的键
+     * @param resource 资源的键
      * @return true表示成功获取锁, false表示没有获取到锁.
      */
     @Override
-    public boolean tryLock(String key) {
-        return doTryLock(-1, key, true);
+    public boolean tryLock(String resource) {
+        return doTryLocks(-1, resource);
     }
 
     /**
@@ -114,94 +91,111 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
      * 如果设置的等待数值为小于等于0,那么将退化成没有等待时间.
      *
      * @param waitTimeoutMs 最大等待时间.(毫秒)
-     * @param key           资源的键.
+     * @param resoruce      资源的键.
      * @return true表示成功获取锁, false表示没有获取到锁.
      */
     @Override
-    public boolean tryLock(long waitTimeoutMs, String key) {
-        return doTryLock(waitTimeoutMs, key, true);
+    public boolean tryLock(long waitTimeoutMs, String resoruce) {
+        return doTryLocks(waitTimeoutMs, resoruce);
     }
 
     @Override
-    public boolean tryLocks(String... keys) {
-        return tryLocks(-1, keys);
+    public boolean tryLocks(String... resources) {
+        return doTryLocks(-1, resources);
     }
 
     @Override
-    public boolean tryLocks(long waitTimeoutMs, String... keys) {
-        String[] userKeys = Arrays.stream(keys).distinct().sorted().toArray(String[]::new);
-        boolean fail = false;
-        try {
-            for (String k : userKeys) {
-                if (!doTryLock(waitTimeoutMs, k, false)) {
-                    fail = true;
-                    return false;
-                }
-            }
-        } finally {
-            if (fail) {
-                unlocks(keys);
-            }
-        }
-
-        return true;
+    public boolean tryLocks(long waitTimeoutMs, String... resources) {
+        return doTryLocks(waitTimeoutMs, resources);
     }
 
     /**
      * 解除对于资源的锁占用.如果本身资源并没有锁,那么将无条件的返回true.
      *
-     * @param key 资源的键.
+     * @param resource 资源的键.
      * @return true解锁成功, false解锁失败(不是加锁者但试图进行解锁).
      */
     @Override
-    public boolean unlock(String key) {
-        String storeKey = buildStoreResourceKey(key);
-
-        String unLockingId = getThreadId(key);
-
-        Optional<LockInfo> lockInfoOp = this.getLockInfo(storeKey);
-
-        if (lockInfoOp.isPresent()) {
-
-            LockInfo lockInfo = lockInfoOp.get();
-            if (lockInfo.getLockingId().equals(unLockingId)) {
-
-                int result = doUnLock(storeKey);
-
-                if (result == 0) {
-                    removeThreadId(key);
-                }
-                if (result < 0) {
-                    return false;
-                } else {
-                    return true;
-                }
-
-            } else {
-                //不是加锁者
-                return false;
-
-            }
-        } else {
-            //资源没有锁定
-            return true;
-        }
+    public boolean unlock(String resource) {
+        return unlocks(resource);
     }
 
     @Override
-    public void unlocks(String... keys) {
-        Arrays.stream(keys).distinct().sorted().forEachOrdered(k -> unlock(k));
-    }
+    public boolean unlocks(String... resources) {
+        boolean single = resources.length == 1;
+        String key = null;
+        String[] keys = null;
+        if (single) {
+            key = buildLockKey(resources[0]);
+        } else {
+            keys = Arrays.stream(resources).distinct().sorted().map(r -> buildLockKey(r)).toArray(String[]::new);
+        }
+        Locker locker = getLocker();
 
-    private boolean doTryLock(long waitTimeoutMs, String key, boolean clear) {
         boolean ok = false;
         try {
+            if (single) {
+                ok = doUnLock(locker, key);
+
+                if (ok) {
+                    locker.decrSuccess();
+                }
+
+            } else {
+                ok = doUnLocks(locker, keys);
+
+                if (ok) {
+                    locker.decrSuccess(keys.length);
+                }
+            }
+        } finally {
+            if (ok) {
+                cleanLockerIfCan();
+            }
+        }
+
+        return ok;
+    }
+
+    /**
+     * 尝试加锁的实际实现.
+     *
+     * @param waitTimeoutMs 加锁失败后的等待解锁时间,-1表示不等待.
+     * @param resources     需要加锁的资源.
+     */
+    private boolean doTryLocks(long waitTimeoutMs, String... resources) {
+        // 判断是否只有一个资源.
+        boolean single = resources.length == 1;
+        String[] keys = null;
+        String key = null;
+        if (single) {
+            key = buildLockKey(resources[0]);
+        } else {
+            keys = Arrays.stream(resources).distinct().sorted().map(r -> buildLockKey(r)).toArray(String[]::new);
+        }
+
+        boolean ok = false;
+        Locker locker = getLocker();
+        long delay = getRetryDelay();
+
+        try {
             long timePass = 0;
-            String storeKey = buildStoreResourceKey(key);
-            String lockingId = makeThreadId(key);
-            long delay = getRetryDelay();
             while (!ok) {
-                ok = doLock(storeKey, new LockInfo(lockingId));
+                if (single) {
+
+                    ok = doLock(locker, key);
+
+                    if (ok) {
+                        locker.incrSuccess();
+                    }
+
+                } else {
+                    ok = doLocks(locker, keys);
+
+                    if (ok) {
+                        locker.incrSuccess(keys.length);
+                    }
+                }
 
                 // 无需等待
                 if (waitTimeoutMs <= 0) {
@@ -219,12 +213,8 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
                 }
             }
         } finally {
-            if (!ok) {
-                //没有加锁成功,去除本次准备的lockingId
-                if (clear) {
-                    removeThreadId(key);
-                }
-            }
+            // 如果加锁失败,那么尝试清除当前的加锁者信息.
+            cleanLockerIfCan();
         }
 
         return ok;
@@ -240,36 +230,9 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(time));
     }
 
-    /**
-     * 构造同步的标记key.
-     *
-     * @param key 原始资源key.
-     * @return 新的key.
-     */
-    private String buildStoreResourceKey(String key) {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("Invalid resource lock.");
-        }
-        StringBuilder keyBuff = new StringBuilder();
-        keyBuff.append("lock.mark#");
-        keyBuff.append(key);
-        return keyBuff.toString();
-    }
-
-    private String makeThreadId(String key) {
-        Map<String, String> idMap = threadInfo.get();
-        if (idMap == null) {
-            idMap = new HashMap();
-            threadInfo.set(idMap);
-        }
-
-        String id = idMap.get(key);
-        if (id == null) {
-            id = UUID.randomUUID().toString();
-            idMap.put(key, id);
-        }
-
-        return id;
+    // 构造资源的锁定key.
+    private String buildLockKey(String resource) {
+        return LOCK_KEY_PREIFX.concat(resource);
     }
 
     /**
@@ -277,57 +240,93 @@ public abstract class AbstractResourceLocker implements MultiResourceLocker {
      *
      * @return 当前线程的标识.
      */
-    private String getThreadId(String key) {
-        Map<String, String> idMap = threadInfo.get();
-        if (idMap == null) {
-            //如果没有找到锁定线程id容器,返回一个新的,这会造成无法解锁
-            return UUID.randomUUID().toString();
+    private Locker getLocker() {
+        Locker locker = threadInfo.get();
+        if (locker == null) {
+            locker = new Locker();
+            threadInfo.set(locker);
         }
 
-        return idMap.get(key);
+        return locker;
     }
 
-    private void removeThreadId(String key) {
-        Map<String, String> idMap = threadInfo.get();
-        if (idMap != null) {
-            idMap.remove(key);
-            if (idMap.isEmpty()) {
+    private void cleanLockerIfCan() {
+        Locker locker = threadInfo.get();
+        if (locker != null) {
+            if (locker.getSuccessLockNumber() <= 0) {
                 threadInfo.remove();
             }
         }
     }
 
     /**
-     * 返回当前的线程本地变量.
-     *
-     * @return 线程本地变量.
+     * 加锁者.
      */
-    protected ThreadLocal getThreadLocal() {
-        return threadInfo;
+    protected static class Locker {
+        // 加锁者名称.
+        private String name;
+        // 当前剩余加锁数量.
+        private int successLockNumber;
+
+        public Locker() {
+            name = UUID.randomUUID().toString();
+            successLockNumber = 0;
+        }
+
+        public void incrSuccess() {
+            this.incrSuccess(1);
+        }
+
+        public void incrSuccess(int size) {
+            successLockNumber += size;
+        }
+
+        public void decrSuccess() {
+            successLockNumber -= 1;
+        }
+
+        public void decrSuccess(int size) {
+            successLockNumber -= size;
+            if (successLockNumber < 0) {
+                successLockNumber = 0;
+            }
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getSuccessLockNumber() {
+            return successLockNumber;
+        }
     }
 
     /**
      * 子类需要实现的锁定方法.
-     *
-     * @param key  资源的key.
-     * @param info 锁信息.
-     * @return true锁定成功，false锁定失败。
      */
-    protected abstract boolean doLock(String key, LockInfo info);
+    protected abstract boolean doLock(Locker locker, String key);
+
+    /**
+     * 子类需要实现的批量锁定方法.
+     * 子类需要保证如果加锁失败不会产生额外的副作用.
+     * 比如部份加锁成功,具体看子类的实现来决定是否允许这个副作用.
+     */
+    protected abstract boolean doLocks(Locker locker, String... keys);
 
     /**
      * 子类需要实现的解锁方法.
-     *
-     * @param key 资源的key.
-     * @return 还剩余的锁定次数.
      */
-    protected abstract int doUnLock(String key);
+    protected abstract boolean doUnLock(Locker locker, String key);
 
     /**
-     * 判断当前此资源是否锁定中，如果锁定返回加锁者的标识，否则返回null.
-     *
-     * @param key 资源的键。
-     * @return 加锁者的标识，没有锁定返回null.
+     * 子类需要实现的批量解锁方法.
+     * 子类需要保证如果加锁失败不会产生额外的副作用.
+     * 比如部份解锁成功,具体看子类的实现来决定是否允许这个副作用.
      */
-    protected abstract Optional<LockInfo> getLockInfo(String key);
+    protected abstract boolean doUnLocks(Locker locker, String... keys);
+
+    /**
+     * 判断是否锁定中.
+     */
+    protected abstract boolean doIsLocking(String key);
 }

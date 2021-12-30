@@ -78,31 +78,32 @@ public abstract class AbstractResourceLockerTest {
      */
     @Test
     public void testMultiLockerNoGc() throws Exception {
+        MultiResourceLocker mlocker = getMultiLocker();
+        if (mlocker == null) {
+            return;
+        }
+
         String[] keys = new String[2];
         for (int i = 0; i < keys.length; i++) {
             keys[i] = "test.new.key." + (Long.MAX_VALUE - i);
         }
 
-        ResourceLocker locker = getLocker();
-        if (MultiResourceLocker.class.isInstance(locker)) {
-            MultiResourceLocker mlocker = (MultiResourceLocker) locker;
+        // 先将某个锁加锁,此锁应该会造成后续的连锁加锁失败.
+        CountDownLatch latch = new CountDownLatch(1);
+        CompletableFuture.runAsync(() -> {
+            mlocker.locks(keys[0]);
+            latch.countDown();
+        });
+        latch.await();
 
-            // 先将某个锁加锁,此锁应该会造成后续的连锁加锁失败.
-            CountDownLatch latch = new CountDownLatch(1);
-            CompletableFuture.runAsync(() -> {
-                mlocker.locks(keys[0]);
-                latch.countDown();
-            });
-            latch.await();
-
-            Assertions.assertFalse(mlocker.tryLocks(keys));
-            // 确认加锁状态,应该只有第一个key处于锁定状态.
-            Assertions.assertFalse(mlocker.tryLocks(keys[0]));
-            for (int i = 1; i < keys.length; i++) {
-                Assertions.assertTrue(locker.tryLock(keys[i]));
-            }
-            Assertions.assertTrue(locker.isLocking(keys[0]));
+        Assertions.assertFalse(mlocker.tryLocks(keys));
+        // 确认加锁状态,应该只有第一个key处于锁定状态.
+        Assertions.assertFalse(mlocker.tryLocks(keys[0]));
+        for (int i = 1; i < keys.length; i++) {
+            Assertions.assertTrue(mlocker.tryLock(keys[i]));
         }
+        Assertions.assertTrue(mlocker.isLocking(keys[0]));
+
     }
 
     /**
@@ -110,65 +111,64 @@ public abstract class AbstractResourceLockerTest {
      */
     @Test
     public void testMultiLockerConcurrent() throws Exception {
-        ResourceLocker locker = getLocker();
-        if (MultiResourceLocker.class.isInstance(locker)) {
-            MultiResourceLocker mlocker = (MultiResourceLocker) locker;
-
-            String[] keys = new String[100];
-            for (int i = 0; i < keys.length; i++) {
-                keys[i] = "test.new.key." + (Long.MAX_VALUE - i);
-            }
-
-            int size = 30;
-            CountDownLatch startLatch = new CountDownLatch(1);
-            CountDownLatch finishLatch = new CountDownLatch(size);
-            /*
-             * expectedNumber用以确认是否最终加锁成功,所以此计算器不能为线程安全的.
-             */
-            IntegerHolder expectedNumber = new IntegerHolder();
-            AtomicInteger unlockNumber = new AtomicInteger(size);
-            for (int i = 0; i < size; i++) {
-                int finalI = i;
-                CompletableFuture.runAsync(() -> {
-
-                    String[] currentKeys = Arrays.stream(keys).toArray(String[]::new);
-                    shuffle(currentKeys);
-
-                    try {
-                        startLatch.await();
-                    } catch (InterruptedException e) {
-                        logger.error(e.getMessage(), e);
-                        return;
-                    }
-
-                    mlocker.locks(currentKeys);
-                    logger.info("Task {} lock successful!", finalI);
-
-                    try {
-                        expectedNumber.value++;
-                    } finally {
-
-                        logger.info("Task {} unlock successful!", finalI);
-
-                        mlocker.unlocks(currentKeys);
-
-                        unlockNumber.decrementAndGet();
-
-                        finishLatch.countDown();
-
-                    }
-
-                });
-            }
-
-            startLatch.countDown();
-            finishLatch.await(50, TimeUnit.SECONDS);
-
-
-            Assertions.assertEquals(size, expectedNumber.value);
-            Assertions.assertEquals(0, unlockNumber.longValue());
-
+        MultiResourceLocker mlocker = getMultiLocker();
+        if (mlocker == null) {
+            return;
         }
+
+        String[] keys = new String[100];
+        for (int i = 0; i < keys.length; i++) {
+            keys[i] = "test.new.key." + (Long.MAX_VALUE - i);
+        }
+
+        int size = 30;
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(size);
+        /*
+         * expectedNumber用以确认是否最终加锁成功,所以此计算器不能为线程安全的.
+         */
+        IntegerHolder expectedNumber = new IntegerHolder();
+        AtomicInteger unlockNumber = new AtomicInteger(size);
+        for (int i = 0; i < size; i++) {
+            int finalI = i;
+            CompletableFuture.runAsync(() -> {
+
+                String[] currentKeys = Arrays.stream(keys).toArray(String[]::new);
+                shuffle(currentKeys);
+
+                try {
+                    startLatch.await();
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage(), e);
+                    return;
+                }
+
+                mlocker.locks(currentKeys);
+                logger.info("Task {} lock successful!", finalI);
+
+                try {
+                    expectedNumber.value++;
+                } finally {
+
+                    logger.info("Task {} unlock successful!", finalI);
+
+                    mlocker.unlocks(currentKeys);
+
+                    unlockNumber.decrementAndGet();
+
+                    finishLatch.countDown();
+
+                }
+
+            });
+        }
+
+        startLatch.countDown();
+        finishLatch.await(50, TimeUnit.SECONDS);
+
+
+        Assertions.assertEquals(size, expectedNumber.value);
+        Assertions.assertEquals(0, unlockNumber.longValue());
     }
 
     @Test
