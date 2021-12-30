@@ -147,9 +147,9 @@ public class SyncRequestHandler implements IRequestHandler {
                     false, false, RequestStatus.REGISTER, e.getValue())) {
 
                     String error = String.format("reRegister failed, env : %s", e.getValue().getEnv());
-                    requestWatcher.observer().onError(new Throwable(error));
-
                     metricsRecorder.error(e.getValue().getAppId(), SyncCode.REGISTER_ERROR.name(), error);
+
+                    requestWatcher.observer().onError(new Throwable(error));
                     return false;
                 }
 
