@@ -7,10 +7,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -25,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
@@ -45,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,36 +118,26 @@ public class DefaultCalculationImplTest {
     private IEntity entityA = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE)
         .withEntityClassRef(A_CLASS.ref())
-        .withValues(
-            Arrays.asList(new LongValue(A_LONG, 100L))
-        ).build();
+        .withValue(new LongValue(A_LONG, 100L))
+        .build();
 
     private IEntity entityB = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 1)
         .withEntityClassRef(B_CLASS.ref())
-        .withValues(
-           Arrays.asList(
-                new LongValue(B_SUM, 100L)
-            )
-        ).build();
+        .withValue(new LongValue(B_SUM, 100L))
+        .build();
 
     private IEntity entityD = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 2)
         .withEntityClassRef(D_CLASS.ref())
-        .withValues(
-                Arrays.asList(
-                new LongValue(D_SUM, 100L)
-            )
-        ).build();
+        .withValue(new LongValue(D_SUM, 100L))
+        .build();
 
     private IEntity entityC = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 3)
         .withEntityClassRef(C_CLASS.ref())
-        .withValues(
-                Arrays.asList(
-                new LongValue(C_LOOKUP, 100L)
-            )
-        ).build();
+        .withValue(new LongValue(C_LOOKUP, 100L))
+        .build();
 
     private MockLogic aggregationLogic;
     private MockLogic lookupLogic;
@@ -177,18 +165,18 @@ public class DefaultCalculationImplTest {
         });
         Map<AbstractParticipant, AbstractParticipant> scope = new HashMap<>();
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build()
         );
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build()
         );
@@ -196,14 +184,14 @@ public class DefaultCalculationImplTest {
 
         Map<AbstractParticipant, long[]> entityIds = new HashMap<>();
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
             new long[] {entityB.id()}
         );
 
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
             new long[] {entityD.id()}
@@ -221,10 +209,10 @@ public class DefaultCalculationImplTest {
         });
         scope = new HashMap<>();
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_LOOKUP).build()
         );
@@ -232,7 +220,7 @@ public class DefaultCalculationImplTest {
 
         entityIds = new HashMap<>();
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_LOOKUP).build(),
             new long[] {entityC.id()}
@@ -260,7 +248,8 @@ public class DefaultCalculationImplTest {
     public void testBuildNotChangeFieldButNeed() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
 
@@ -273,7 +262,8 @@ public class DefaultCalculationImplTest {
     public void testBuildCalculation() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.focusEntity(entityC, C_CLASS);
         context.addValueChange(
@@ -288,7 +278,8 @@ public class DefaultCalculationImplTest {
     public void testReplaceCalculation() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.focusEntity(entityC, C_CLASS);
         context.addValueChange(
@@ -304,7 +295,8 @@ public class DefaultCalculationImplTest {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
             .withMasterStorage(masterStorage)
-            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.getCalculationLogicFactory().get().register(aggregationLogic);
 
@@ -341,7 +333,8 @@ public class DefaultCalculationImplTest {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
             .withMasterStorage(masterStorage)
-            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory()).build();
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.getCalculationLogicFactory().get().register(aggregationLogic);
 
@@ -374,15 +367,18 @@ public class DefaultCalculationImplTest {
 
         @Override
         public void replace(EntityPackage entityPackage) throws SQLException {
-            try {
-                if (replaceTest == null) {
-                    return;
-                } else {
-                    IEntity[] entities = entityPackage.stream().map(e -> e.getKey()).toArray(IEntity[]::new);
-                    return;
-                }
-            } finally {
-                entityPackage.stream().forEach(e -> replaceEntities.add(e.getKey()));
+            if (replaceTest == null) {
+                entityPackage.stream().forEach(e -> {
+                    replaceEntities.add(e.getKey());
+                    e.getKey().neat();
+                });
+            } else {
+                entityPackage.stream().forEach(e -> {
+                    replaceEntities.add(e.getKey());
+                    if (replaceTest.test(e.getKey())) {
+                        e.getKey().neat();
+                    }
+                });
             }
         }
 
@@ -498,9 +494,9 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant,
+        public long[] getMaintainTarget(CalculationContext context, Participant participant,
                                         Collection<IEntity> triggerEntities) throws CalculationException {
-            long[] ids = entityIds.get(abstractParticipant);
+            long[] ids = entityIds.get(participant);
             if (ids == null) {
                 return new long[0];
             } else {

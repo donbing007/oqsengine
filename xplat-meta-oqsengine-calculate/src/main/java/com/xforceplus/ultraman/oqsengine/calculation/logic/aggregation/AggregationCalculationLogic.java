@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MinFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.SumFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
@@ -257,9 +256,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant, Collection<IEntity> entities)
+    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
         throws CalculationException {
-        IEntityField entityField = abstractParticipant.getField();
+        IEntityField entityField = participant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
         if (entities.isEmpty()) {
             return new long[ZERO];

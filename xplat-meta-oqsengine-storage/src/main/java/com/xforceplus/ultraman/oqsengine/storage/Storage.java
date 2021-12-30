@@ -32,7 +32,6 @@ public interface Storage {
      * 只有脏实体才会被创建.
      *
      * @param entityPackage entity package.
-     * @return create results.
      * @throws SQLException Storage error.
      */
     default void build(EntityPackage entityPackage) throws SQLException {
@@ -57,7 +56,6 @@ public interface Storage {
      * Batch replace.
      *
      * @param entityPackage entity package.
-     * @return replace results.
      * @throws SQLException Storage error.
      */
     default void replace(EntityPackage entityPackage) throws SQLException {
@@ -82,7 +80,6 @@ public interface Storage {
      * Batch delete.
      *
      * @param entityPackage entity package.
-     * @return delete results.
      * @throws SQLException Storage error.
      */
     default void delete(EntityPackage entityPackage) throws SQLException {

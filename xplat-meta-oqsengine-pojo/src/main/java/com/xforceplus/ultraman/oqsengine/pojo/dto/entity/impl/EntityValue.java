@@ -27,8 +27,6 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
      */
     private Map<Long, IValue> values;
 
-    private boolean dirty = true;
-
     public EntityValue(IEntity entity) {
         this.entity = entity;
     }

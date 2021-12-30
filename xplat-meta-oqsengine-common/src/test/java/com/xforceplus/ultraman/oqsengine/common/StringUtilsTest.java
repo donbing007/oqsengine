@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common;
 
 
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,49 @@ import org.junit.jupiter.api.Test;
  * @since 1.8
  */
 public class StringUtilsTest {
+
+    @Test
+    public void testencodeEscapeCharacters() throws Exception {
+        buildDyeCases().forEach(c -> {
+
+            String result = StringUtils.encodeEscapeCharacters(c.target);
+
+            Assertions.assertEquals(c.expected, result);
+        });
+    }
+
+    private Collection<DyeCase> buildDyeCases() {
+        return Arrays.asList(
+            new DyeCase(
+                "\'",
+                "\\'"
+            ),
+            new DyeCase(
+                "12'3",
+                "12\\'3"
+            ),
+            new DyeCase(
+                "\"",
+                "\\\""
+            ),
+            new DyeCase(
+                "\r",
+                "\\r"
+            ),
+            new DyeCase(
+                "\0",
+                "\\0"
+            ),
+            new DyeCase(
+                "\n",
+                "\\n"
+            ),
+            new DyeCase(
+                "/n",
+                "/n"
+            )
+        );
+    }
 
     @Test
     public void testFilter() {
@@ -30,6 +75,16 @@ public class StringUtilsTest {
         Assertions.assertEquals(null, StringUtils.filterCanSeeChar(null));
         Assertions.assertEquals("", StringUtils.filterCanSeeChar(""));
         Assertions.assertEquals("abcdef", StringUtils.filterCanSeeChar("abcdef"));
+    }
+
+    static class DyeCase {
+        public String target;
+        public String expected;
+
+        public DyeCase(String target, String expected) {
+            this.target = target;
+            this.expected = expected;
+        }
     }
 
 }

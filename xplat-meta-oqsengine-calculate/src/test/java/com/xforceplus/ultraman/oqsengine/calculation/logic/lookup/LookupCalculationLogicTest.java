@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationC
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
@@ -21,7 +20,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -268,10 +266,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withValues(
-                Arrays.asList(
-                    new LongValue(targetLongField, 100)
-                )
+            .withValue(
+                new LongValue(targetLongField, 100)
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
@@ -322,10 +318,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withValues(
-                    Arrays.asList(
-                    new LongValue(targetLongField, 100)
-                )
+            .withValue(
+                new LongValue(targetLongField, 100)
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
@@ -357,8 +351,8 @@ public class LookupCalculationLogicTest {
         });
 
 
-        Participant abstractParticipant = p.get();
-        long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
+        Participant participant = p.get();
+        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
         Assertions.assertEquals(0, ids.length);
 
         tx.commit();
@@ -391,10 +385,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withValues(
-                    Arrays.asList(
-                    new StringValue(targetStringField, "v1")
-                )
+            .withValue(
+                new StringValue(targetStringField, "v1")
             ).build();
 
         // 准备超出事务内可处理的极限数量的实例.
@@ -439,8 +431,8 @@ public class LookupCalculationLogicTest {
         });
 
 
-        Participant abstractParticipant = p.get();
-        long[] ids = logic.getMaintainTarget(context, abstractParticipant, Arrays.asList(targetEntity));
+        Participant participant = p.get();
+        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
         Assertions.assertEquals(1000, ids.length);
 
         tx.commit();
