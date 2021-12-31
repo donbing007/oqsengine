@@ -67,13 +67,13 @@ public class BinLogParseUtils {
         throws SQLException {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
 
-        return convertStringToBoolean(booleanValue);
+        return stringToBoolean(booleanValue);
     }
 
     /**
      * 转换字符串为布尔.
      */
-    public static boolean convertStringToBoolean(String str) {
+    public static boolean stringToBoolean(String str) {
         try {
             return str.equalsIgnoreCase("true")
                 || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);

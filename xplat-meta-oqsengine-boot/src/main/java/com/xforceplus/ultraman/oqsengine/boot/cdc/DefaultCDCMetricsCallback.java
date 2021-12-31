@@ -26,7 +26,7 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     private CommitIdStatusService commitIdStatusService;
 
     @Override
-    public void cdcAck(CDCAckMetrics ackMetrics) {
+    public void ack(CDCAckMetrics ackMetrics) {
         try {
             long[] ids = ackMetrics.getCommitList().stream().mapToLong(id -> id).toArray();
             commitIdStatusService.obsolete(ids);
@@ -48,7 +48,7 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     }
 
     @Override
-    public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
+    public void saveLastUnCommit(CDCMetrics cdcMetrics) {
         cdcStatusService.saveUnCommit(cdcMetrics);
     }
 
@@ -59,12 +59,12 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     }
 
     @Override
-    public boolean isReadyCommit(long commitId) {
+    public boolean isReady(long commitId) {
         return commitIdStatusService.isReady(commitId);
     }
 
     @Override
-    public List<Long> isNotReadyCommits(List<Long> commitIds) {
+    public List<Long> notReady(List<Long> commitIds) {
         long[] checks = new long[commitIds.size()];
         for (int i = 0; i < commitIds.size(); i++) {
             checks[i] = commitIds.get(i);

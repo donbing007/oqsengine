@@ -41,7 +41,7 @@ public class ConnectorTest extends AbstractCDCTestHelper {
     @Test
     public void testStartFromDisConnected() throws Exception {
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
-        mockRedisCallbackService.cdcSaveLastUnCommit(cdcMetricsService.getCdcMetrics());
+        mockRedisCallbackService.saveLastUnCommit(cdcMetricsService.getCdcMetrics());
 
         cdcDaemonService.init();
 

@@ -57,7 +57,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     }
 
     @Override
-    public void cdcAck(CDCAckMetrics ackMetrics) {
+    public void ack(CDCAckMetrics ackMetrics) {
         this.ackMetrics = ackMetrics;
 
         if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED) {
@@ -87,7 +87,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     }
 
     @Override
-    public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
+    public void saveLastUnCommit(CDCMetrics cdcMetrics) {
         this.cdcMetrics = cdcMetrics;
     }
 
@@ -97,12 +97,12 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     }
 
     @Override
-    public boolean isReadyCommit(long commitId) {
+    public boolean isReady(long commitId) {
         return true;
     }
 
     @Override
-    public List<Long> isNotReadyCommits(List<Long> commitIds) {
+    public List<Long> notReady(List<Long> commitIds) {
         return new ArrayList<>();
     }
 
