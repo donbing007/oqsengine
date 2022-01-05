@@ -175,7 +175,7 @@ public class DataOpsService {
             response.setSummary(summary);
             return response;
         } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("selectByConditions exception, [%s]", config.getEntityClassId()), e);
+            PrintErrorHelper.exceptionHandle(String.format("selectByConditions exception,BoId-%s", config.getEntityClassId()), e);
         }
         return null;
     }
@@ -230,7 +230,7 @@ public class DataOpsService {
                     entityManagementService.build(targetEntity)
             );
         } catch (SQLException e) {
-            PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, [%s]", entityClassId), e);
+            PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, BoId-%s", entityClassId), e);
         }
 
         return null;
@@ -284,7 +284,7 @@ public class DataOpsService {
                     entityManagementService.replace(targetEntity)
             );
         } catch (SQLException e) {
-            PrintErrorHelper.exceptionHandle(String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
+            PrintErrorHelper.exceptionHandle(String.format("devops om singleModify exception,BoId-%s,Id-%s", entityClassId, entityValueId), e);
         }
 
         return null;
@@ -321,10 +321,10 @@ public class DataOpsService {
 
         try {
             return toDevOpsDataResponse(
-                    entityManagementService.build(targetEntity)
+                    entityManagementService.delete(targetEntity)
             );
         } catch (SQLException e) {
-            PrintErrorHelper.exceptionHandle(String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
+            PrintErrorHelper.exceptionHandle(String.format("devops om singleDelete exception,BoId-%s,Id-%s", entityClassId, entityValueId), e);
         }
 
         return null;
