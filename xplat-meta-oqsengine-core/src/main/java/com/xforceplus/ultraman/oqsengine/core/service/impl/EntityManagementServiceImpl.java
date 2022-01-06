@@ -20,13 +20,11 @@ import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
-import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -50,7 +48,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import java.sql.SQLException;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -124,9 +121,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private ResourceLocker resourceLocker;
-
-    @Resource
-    private MultiResourceLocker multiResourceLocker;
 
     /**
      * 字段校验器工厂.
@@ -296,14 +290,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OperationResult build(IEntity[] entities) throws SQLException {
         checkReady();
 
-        IEntityClass[] entityClasses = EntityClassHelper.checkEntityClasses(
-            metaManager,
-            Arrays.stream(entities).map(e -> e.entityClassRef()).toArray(EntityClassRef[]::new));
+        IEntityClass[] entityClasses = EntityClassHelper.checkEntityClasses(metaManager, entities);
 
-        preview(entities, entityClasses, true);
+        OperationResult result = preview(entities, entityClasses, true);
+        if (!result.isSuccess()) {
+            return result;
+        }
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
-        OperationResult result;
         try {
             result = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
@@ -311,6 +305,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 Map.Entry<VerifierResult, IEntityField> verify = null;
                 IEntity currentEntity;
+                /*
+                循环处理当前新创建的实体其本身的计算字段或者其字段造成的其他实例改变的影响.
+                注意: CalculationContext.maintain 会对所影响的实例增加独占锁,最后定需要调用
+                CalculationContext.destroy 进行清理.
+                 */
                 for (int i = 0; i < entities.length; i++) {
 
                     // 计算字段处理.
@@ -326,10 +325,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     calculation.maintain(calculationContext);
 
-                    if (tx.getAccumulator().accumulateBuild(currentEntity)) {
-                        hint.setRollback(true);
-                        return OperationResult.unAccumulate();
-                    }
                 }
 
                 // 开始持久化
@@ -350,10 +345,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OperationResult.unCreated(
                             String.format("The entity for %s could not be created successfully.",
                                 entityEntry.getValue().name()));
+                    } else {
+
+                        if (tx.getAccumulator().accumulateBuild(entityEntry.getKey())) {
+                            hint.setRollback(true);
+                            return OperationResult.unAccumulate();
+                        }
                     }
                 }
 
-
+                if (!calculationContext.persist()) {
+                    hint.setRollback(true);
+                    return OperationResult.unAccumulate();
+                }
 
 
                 return OperationResult.success();
@@ -367,6 +371,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             throw ex;
         } finally {
+
+            // 保证必须清理
+            if (calculationContext != null) {
+                calculationContext.destroy();
+            }
+
             inserCountTotal.increment(entities.length);
         }
 
@@ -384,7 +394,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return operationResult;
         }
 
-        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD;
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
         try {
             operationResult = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
@@ -403,6 +413,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 if (!masterStorage.build(currentEntity, entityClass)) {
                     return OperationResult.unCreated();
+                }
+
+                if (!calculationContext.persist()) {
+                    hint.setRollback(true);
+                    return OperationResult.unAccumulate();
                 }
 
                 if (!tx.getAccumulator().accumulateBuild(currentEntity)) {
@@ -428,6 +443,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw ex;
 
         } finally {
+
+            // 保证必须清理
+            if (calculationContext != null) {
+                calculationContext.destroy();
+            }
+
             inserCountTotal.increment();
         }
     }
@@ -435,17 +456,31 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replaces"})
     @Override
     public OperationResult replace(IEntity[] entities) throws SQLException {
-        OperationResult results = new OperationResult[entities.length];
-        Optional<Transaction> tx = transactionManager != null ? transactionManager.getCurrent() : Optional.empty();
-        for (int i = 0; i < results.length; i++) {
+        checkReady();
 
-            if (tx.isPresent()) {
-                transactionManager.bind(tx.get().id());
-            }
+        IEntityClass[] entityClasses = EntityClassHelper.checkEntityClasses(metaManager, entities);
 
-            results[i] = replace(entities[i]);
+        OperationResult result = preview(entities, entityClasses, true);
+        if (!result.isSuccess()) {
+            return result;
         }
-        return results;
+
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
+        try {
+            result = (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
+
+                calculationContext.focusTx(tx);
+
+                for (IEntity entity : entities) {
+
+                }
+
+            });
+
+        } finally {
+            replaceCountTotal.increment();
+        }
+
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
@@ -503,10 +538,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return transformVerifierResultToOperationResult(verifyResult, newEntity);
                 }
 
-                // 维护改变造成的影响.
                 calculation.maintain(calculationContext);
 
                 if (!masterStorage.replace(newEntity, entityClass)) {
+                    hint.setRollback(true);
+                    return OperationResult.conflict();
+                }
+
+                if (!calculationContext.persist()) {
                     hint.setRollback(true);
                     return OperationResult.conflict();
                 }
@@ -536,6 +575,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             failCountTotal.increment();
             throw ex;
         } finally {
+
+            // 保证必须清理
+            if (calculationContext != null) {
+                calculationContext.destroy();
+            }
+
             replaceCountTotal.increment();
         }
     }
@@ -827,7 +872,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .withBizIDGenerator(this.bizIDGenerator)
             .withConditionsSelectStorage(this.combinedSelectStorage)
             .withResourceLocker(this.resourceLocker)
-            .withMultiResourceLocker(this.multiResourceLocker)
             .build();
     }
 
@@ -871,14 +915,21 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     // 批量预检.
-    private void preview(IEntity[] entities, IEntityClass[] entityClasses, boolean build) throws SQLException {
+    private OperationResult preview(IEntity[] entities, IEntityClass[] entityClasses, boolean build) throws SQLException {
         if (entities.length != entityClasses.length) {
-            throw new SQLException("Unexpected error, precheck failed.");
+            return OperationResult.notExistMeta();
         }
 
+        OperationResult result = OperationResult.success();
         for (int i = 0; i < entities.length; i++) {
-            preview(entities[i], entityClasses[i], build);
+            result = preview(entities[i], entityClasses[i], build);
+
+            if (!result.isSuccess()) {
+                return result;
+            }
         }
+
+        return result;
     }
 
     // 预检
@@ -892,7 +943,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             || entity.entityClassRef().getId() <= 0
             || entity.entityClassRef().getCode() == null) {
 
-            return OperationResult.notFound("Unexpected object information.");
+            return OperationResult.notExistMeta();
         }
 
         // 过滤不应该被改写的字段.
@@ -924,6 +975,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             entity.resetVersion(BUILD_VERSION);
             entity.restMaintainId(0);
         }
+
+        return OperationResult.success();
     }
 
     private void markTime(IEntity entity) {

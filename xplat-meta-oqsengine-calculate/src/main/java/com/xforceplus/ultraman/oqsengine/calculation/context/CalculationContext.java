@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
-import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
@@ -251,13 +250,6 @@ public interface CalculationContext {
     Optional<ResourceLocker> getResourceLocker();
 
     /**
-     * 获取资源锁连锁版本.
-     *
-     * @return 资源锁.
-     */
-    Optional<MultiResourceLocker> getMultiResourceLocker();
-
-    /**
      * copy一个新实例.
      *
      * @return 新实例.
@@ -312,9 +304,22 @@ public interface CalculationContext {
     }
 
     /**
-     * 持久化缓存的实例.
+     * 持久化缓存的实例.并解除实例的独占锁.
      *
      * @return true 成功,false 失败.
      */
     boolean persist();
+
+    /**
+     * 锁定目标实例.
+     *
+     * @param waitTimeoutMs 最大等待时间.
+     * @param entityIds 目标实例列表.
+     */
+    boolean tryLocksEntity(long waitTimeoutMs, long ...entityIds);
+
+    /**
+     * 清理.
+     */
+    void destroy();
 }

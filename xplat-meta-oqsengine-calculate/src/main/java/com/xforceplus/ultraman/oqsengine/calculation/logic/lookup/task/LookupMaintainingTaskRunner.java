@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,7 +174,9 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         updateLookupEntityesValue(lookupEntities, lookupField, targetValueOp, targetEntityId);
 
-        long[] notSuccessIds = persist(transaction, lookupEntities, lookupEntityClass);
+        persist(transaction, lookupEntities, lookupEntityClass);
+
+        long[] notSuccessIds = lookupEntities.stream().filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
 
         List<IEntity> needReplayEntities = null;
         // 发生错误,进入重试.
@@ -195,7 +196,10 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
             if (!needReplayEntities.isEmpty()) {
                 updateLookupEntityesValue(needReplayEntities, lookupField, replayTargetValueOp, targetEntityId);
-                notSuccessIds = persist(transaction, needReplayEntities, lookupEntityClass);
+
+                persist(transaction, needReplayEntities, lookupEntityClass);
+
+                notSuccessIds = needReplayEntities.stream().filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
             }
         }
     }
@@ -224,17 +228,16 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         return entity.entityValue().getValue(lookupMaintainingTask.getTargetFieldId());
     }
 
-    private long[] persist(Transaction transaction, List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
+    private void persist(Transaction transaction, List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
         EntityPackage entityPackage = new EntityPackage();
         for (IEntity lookupEntity : lookupEntities) {
             entityPackage.put(lookupEntity, lookupEntityClass);
         }
 
-        int[] results;
         try {
-            results = masterStorage.replace(entityPackage);
+            masterStorage.replace(entityPackage);
         } catch (SQLException e) {
-            return lookupEntities.stream().mapToLong(le -> le.id()).toArray();
+            logger.error(e.getMessage(), e);
         }
 
         if (transaction != null) {
@@ -243,11 +246,6 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
                 transaction.focusNotReadOnly();
             }
         }
-
-        return IntStream.range(0, results.length)
-            .filter(i -> results[i] < 0)
-            .mapToLong(i -> results[i])
-            .toArray();
     }
 
     private void updateLookupEntityesValue(

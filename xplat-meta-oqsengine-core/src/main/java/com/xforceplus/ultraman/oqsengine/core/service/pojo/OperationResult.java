@@ -19,12 +19,14 @@ public class OperationResult implements Serializable {
     private Collection<Hint> hints = Collections.emptyList();
     private String message;
 
+    private static final OperationResult SUCCESS = success();
+
     public static OperationResult unknown() {
         return new OperationResult(ResultStatus.UNKNOWN, ResultStatus.UNKNOWN.name());
     }
 
     public static OperationResult success() {
-        return success(ResultStatus.SUCCESS.name());
+        return SUCCESS;
     }
 
     public static OperationResult success(String msg) {
@@ -32,7 +34,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult conflict() {
-        return conflict(ResultStatus.CONFLICT.name());
+        return conflict(null);
     }
 
     public static OperationResult conflict(String msg) {
@@ -40,7 +42,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult notFound() {
-        return notFound(ResultStatus.NOT_FOUND.name());
+        return notFound(null);
     }
 
     public static OperationResult notFound(String msg) {
@@ -48,7 +50,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult unCreated() {
-        return unCreated(ResultStatus.UNACCUMULATE.name());
+        return unCreated(null);
     }
 
     public static OperationResult unCreated(String msg) {
@@ -56,7 +58,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult unAccumulate() {
-        return unAccumulate(ResultStatus.UNACCUMULATE.name());
+        return unAccumulate(null);
     }
 
     public static OperationResult unAccumulate(String msg) {
@@ -64,7 +66,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult elevatefailed() {
-        return elevatefailed(ResultStatus.ELEVATEFAILED.name());
+        return elevatefailed(null);
     }
 
     public static OperationResult elevatefailed(String msg) {
@@ -72,7 +74,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult halfSuccess() {
-        return halfSuccess(ResultStatus.HALF_SUCCESS.name());
+        return halfSuccess(null);
     }
 
     public static OperationResult halfSuccess(String msg) {
@@ -80,7 +82,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult fieldMust() {
-        return fieldMust(ResultStatus.FIELD_MUST.name());
+        return fieldMust(null);
     }
 
     public static OperationResult fieldMust(String msg) {
@@ -88,7 +90,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult fieldToLong() {
-        return fieldToLong(ResultStatus.FIELD_TOO_LONG.name());
+        return fieldToLong(null);
     }
 
     public static OperationResult fieldToLong(String msg) {
@@ -96,7 +98,7 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult fieldHighPrecision() {
-        return fieldHighPrecision(ResultStatus.FIELD_HIGH_PRECISION.name());
+        return fieldHighPrecision(null);
     }
 
     public static OperationResult fieldHighPrecision(String msg) {
@@ -104,11 +106,19 @@ public class OperationResult implements Serializable {
     }
 
     public static OperationResult fieldNonExist() {
-        return fieldNonExist(ResultStatus.FIELD_NON_EXISTENT.name());
+        return fieldNonExist(null);
     }
 
     public static OperationResult fieldNonExist(String msg) {
         return new OperationResult(ResultStatus.FIELD_NON_EXISTENT, msg);
+    }
+
+    public static OperationResult notExistMeta() {
+        return notExistMeta(null);
+    }
+
+    public static OperationResult notExistMeta(String msg) {
+        return new OperationResult(ResultStatus.NOT_EXIST_META, msg);
     }
 
     private OperationResult(ResultStatus resultStatus, String message) {

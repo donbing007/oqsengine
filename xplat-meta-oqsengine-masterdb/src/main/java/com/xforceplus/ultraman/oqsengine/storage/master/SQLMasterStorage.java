@@ -601,6 +601,9 @@ public class SQLMasterStorage implements MasterStorage {
         StorageValue attachmentSv = null;
         for (IValue logicValue : value.values()) {
 
+            /*
+            只有状态为"脏"的字段才会需要处理.
+             */
             if (!logicValue.isDirty()) {
                 continue;
             }

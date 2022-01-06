@@ -1,28 +1,39 @@
 package com.xforceplus.ultraman.oqsengine.calculation.context;
 
+import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
-import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 /**
  * 字段计算器上下文.
@@ -49,14 +60,13 @@ public class DefaultCalculationContext implements CalculationContext {
     private ExecutorService taskExecutorService;
     private Collection<Hint> hints;
     private ResourceLocker resourceLocker;
-    private MultiResourceLocker multiResourceLocker;
     private CalculationLogicFactory calculationLogicFactory;
     private ConditionsSelectStorage conditionsSelectStorage;
     // key为entityId.
     private Map<Long, IEntity> entityCache;
     // key为 entityId-fieldId的组合.
     private Map<String, ValueChange> valueChanges;
-
+    private Set<Long> lockedEnittyIds;
 
     @Override
     public CalculationScenarios getScenariso() {
@@ -250,11 +260,6 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public Optional<MultiResourceLocker> getMultiResourceLocker() {
-        return Optional.ofNullable(multiResourceLocker);
-    }
-
-    @Override
     public void hint(IEntityField field, String hint) {
         if (this.hints == null) {
             this.hints = new LinkedList<>();
@@ -282,6 +287,133 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
+    public boolean persist() {
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+        try {
+
+            List<IEntity> entities = this.getEntitiesFormCache()
+                .stream().filter(e -> e.isDirty()).collect(Collectors.toList());
+
+            if (entities.isEmpty()) {
+                return true;
+            }
+
+            MetaManager metaManager = getResourceWithEx(() -> getMetaManager());
+
+            EntityPackage entityPackage = null;
+            IEntity[] unsuccessfulEntities;
+            for (int i = 0; i < entities.size(); i++) {
+
+                if (entityPackage == null) {
+                    entityPackage = new EntityPackage();
+                }
+
+                Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
+                if (!entityClassOp.isPresent()) {
+                    throw new CalculationException(
+                        String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
+                }
+                entityPackage.put(entities.get(i), entityClassOp.get());
+
+                if (entityPackage.isFull()) {
+                    try {
+                        unsuccessfulEntities = doPersist(entityPackage);
+                    } catch (SQLException ex) {
+                        throw new CalculationException(ex.getMessage(), ex);
+                    }
+
+                    // 没有成功,产生了冲突.有其他事务更新了目标.
+                    if (unsuccessfulEntities.length > 0) {
+                        return false;
+                    }
+                }
+            }
+
+            // 剩余的.
+            if (entityPackage != null && !entityPackage.isEmpty()) {
+                try {
+                    unsuccessfulEntities = doPersist(entityPackage);
+                } catch (SQLException ex) {
+                    throw new CalculationException(ex.getMessage(), ex);
+                }
+
+                if (unsuccessfulEntities.length > 0) {
+                    return false;
+                }
+            }
+
+        } finally {
+
+
+            sample.stop(Timer.builder(MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "logic", "all",
+                    "action", "persist",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(null)
+                .register(Metrics.globalRegistry));
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean tryLocksEntity(long waitTimeoutMs, long... entityIds) {
+        if (this.lockedEnittyIds == null) {
+            this.lockedEnittyIds = new HashSet<>();
+        }
+
+        // 只保留没有加过锁的.
+        String[] keys = Arrays.stream(entityIds)
+            .filter(id -> !this.lockedEnittyIds.contains(id))
+            .mapToObj(id -> IEntitys.resource(id)).toArray(String[]::new);
+
+        if (keys.length > 0) {
+            boolean result = false;
+            try {
+                result = this.resourceLocker.tryLocks(waitTimeoutMs, keys);
+            } catch (InterruptedException e) {
+                // donothing
+            }
+
+            if (result) {
+                for (long id : entityIds) {
+                    this.lockedEnittyIds.add(id);
+                }
+            }
+
+            return result;
+        } else {
+
+            return true;
+
+        }
+    }
+
+    @Override
+    public void destroy() {
+        if (lockedEnittyIds != null && !lockedEnittyIds.isEmpty()) {
+
+            String[] keys = lockedEnittyIds.stream().map(id -> IEntitys.resource(id)).toArray(String[]::new);
+
+            this.resourceLocker.unlocks(keys);
+        }
+    }
+
+    /**
+     * TODO: 没有处理事务累加器,被动修改的对象现在不会出现在事务累加器中. by dongbin 2021/11/18
+     * 返回未成功的实例.
+     */
+    private IEntity[] doPersist(EntityPackage entityPackage) throws SQLException {
+        MasterStorage masterStorage = getResourceWithEx(() -> getMasterStorage());
+
+        masterStorage.replace(entityPackage);
+        return entityPackage.stream().filter(e -> e.getKey().isDirty()).map(e -> e.getKey()).toArray(IEntity[]::new);
+    }
+
+    @Override
     public CalculationContext copy() {
         DefaultCalculationContext newContext = new DefaultCalculationContext();
         if (this.valueChanges != null) {
@@ -305,7 +437,6 @@ public class DefaultCalculationContext implements CalculationContext {
         newContext.taskCoordinator = this.taskCoordinator;
         newContext.taskExecutorService = this.taskExecutorService;
         newContext.resourceLocker = this.resourceLocker;
-        newContext.multiResourceLocker = this.multiResourceLocker;
         newContext.conditionsSelectStorage = this.conditionsSelectStorage;
         return newContext;
     }
@@ -328,7 +459,6 @@ public class DefaultCalculationContext implements CalculationContext {
         private TaskCoordinator taskCoordinator;
         private ExecutorService taskExecutorService;
         private ResourceLocker resourceLocker;
-        private MultiResourceLocker multiResourceLocker;
         private ConditionsSelectStorage conditionsSelectStorage;
         private CalculationLogicFactory calculationLogicFactory;
 
@@ -399,11 +529,6 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
-        public Builder withMultiResourceLocker(MultiResourceLocker multiResourceLocker) {
-            this.multiResourceLocker = multiResourceLocker;
-            return this;
-        }
-
         /**
          * 构造.
          */
@@ -420,7 +545,6 @@ public class DefaultCalculationContext implements CalculationContext {
             defaultCalculationContext.transaction = this.transaction;
             defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
             defaultCalculationContext.resourceLocker = this.resourceLocker;
-            defaultCalculationContext.multiResourceLocker = this.multiResourceLocker;
             defaultCalculationContext.calculationLogicFactory = this.calculationLogicFactory;
             return defaultCalculationContext;
         }

@@ -346,7 +346,12 @@ public class SqlKeyValueStorage implements KeyValueStorage {
     public long incr(String key, long step) {
         String useKey = String.format("%s-%s", NUMBER_KEY_PREIFIX, key);
 
-        locker.lock(useKey);
+        try {
+            locker.lock(useKey);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
         try {
             return (long) transactionExecutor.execute(new ResourceTask() {
                 @Override

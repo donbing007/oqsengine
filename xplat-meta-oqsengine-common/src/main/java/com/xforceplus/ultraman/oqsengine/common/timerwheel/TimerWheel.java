@@ -168,6 +168,7 @@ public class TimerWheel<T> implements ITimerWheel<T> {
      * @param target     目标实例.
      * @param expireDate 到期时间.
      */
+    @Override
     public void add(T target, Date expireDate) {
         add(target, expireDate.getTime() - System.currentTimeMillis());
     }
@@ -178,6 +179,7 @@ public class TimerWheel<T> implements ITimerWheel<T> {
      * @param target 要检查的目标对象.
      * @return true存在, false不存在.
      */
+    @Override
     public boolean exist(T target) {
         return removeHelp.containsKey(target);
     }
@@ -210,6 +212,7 @@ public class TimerWheel<T> implements ITimerWheel<T> {
      *
      * @return 总共还有多少未过期目标.
      */
+    @Override
     public int size() {
         return removeHelp.size();
     }

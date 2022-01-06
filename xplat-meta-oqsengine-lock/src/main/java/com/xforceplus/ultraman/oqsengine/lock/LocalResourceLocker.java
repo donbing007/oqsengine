@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.lock;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.xforceplus.ultraman.oqsengine.lock.utils.Locker;
+import com.xforceplus.ultraman.oqsengine.lock.utils.StateKeys;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -12,23 +14,16 @@ import java.util.concurrent.ConcurrentMap;
  * @version 0.1 2020/11/26 11:10
  * @since 1.5
  */
-public class LocalResourceLocker extends AbstractResourceLocker {
+public class LocalResourceLocker extends AbstractRetryResourceLocker {
 
     private final ConcurrentMap<String, LockInfo> lockPool = new ConcurrentHashMap();
 
     @Override
-    protected boolean doLock(Locker locker, String key) {
-        return doLocks(locker, key);
-    }
-
-    @Override
-    protected boolean doLocks(Locker locker, String... keys) {
-
-        List<String> hasLockedKeys = new ArrayList<>(keys.length);
+    protected void doLocks(Locker locker, StateKeys stateKeys) {
 
         String key;
+        String[] keys = stateKeys.getNoCompleteKeys();
         LockInfo newLockInfo;
-        boolean ok = true;
         for (int i = 0; i < keys.length; i++) {
             key = keys[i];
             newLockInfo = new LockInfo(locker);
@@ -36,55 +31,42 @@ public class LocalResourceLocker extends AbstractResourceLocker {
             LockInfo oldLockInfo = lockPool.putIfAbsent(key, newLockInfo);
             if (oldLockInfo != null) {
 
-                // 这里保证同一个LockInfo不会被两个线程共享.
                 if (!oldLockInfo.getLocker().equals(locker.getName())) {
 
-                    ok = false;
-                    break;
+                    // 已经加锁,但是不是当前加锁者加锁,不能重入.
+                    return;
 
                 } else {
 
+                    // 重入
                     oldLockInfo.incr();
+                    stateKeys.move();
 
                 }
+            } else {
+                // 新建的锁
+                stateKeys.move();
             }
-
-            hasLockedKeys.add(key);
         }
-
-        if (!ok) {
-            doUnLocks(locker, hasLockedKeys.toArray(new String[0]));
-        }
-
-        return ok;
     }
 
     @Override
-    protected boolean doUnLock(Locker locker, String key) {
-        return doUnLocks(locker, key);
-    }
-
-    @Override
-    protected boolean doUnLocks(Locker locker, String... keys) {
-        for (String key : keys) {
-            LockInfo lockInfo = lockPool.get(key);
+    protected int[] doUnLocks(Locker locker, StateKeys stateKeys) {
+        String[] keys = stateKeys.getNoCompleteKeys();
+        IntList failKeyIndex = new IntArrayList();
+        for (int i = 0; i < keys.length; i++) {
+            LockInfo lockInfo = lockPool.get(keys[i]);
             if (lockInfo != null) {
-                if (!lockInfo.getLocker().equals(locker.getName())) {
-                    return false;
+                if (lockInfo.getLocker().equals(locker.getName())) {
+                    if (lockInfo.decr() == 0) {
+                        lockPool.remove(keys[i]);
+                    }
+                } else {
+                    failKeyIndex.add(i);
                 }
             }
         }
-
-        for (String key : keys) {
-            LockInfo lockInfo = lockPool.get(key);
-            if (lockInfo != null) {
-                if (lockInfo.decr() == 0) {
-                    lockPool.remove(key);
-                }
-            }
-        }
-
-        return true;
+        return failKeyIndex.toIntArray();
     }
 
     @Override

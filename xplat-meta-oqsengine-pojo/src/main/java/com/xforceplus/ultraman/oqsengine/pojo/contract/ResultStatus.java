@@ -60,7 +60,13 @@ public enum ResultStatus {
     /**
      * 字段不存在.
      */
-    FIELD_NON_EXISTENT((byte) 11);
+    FIELD_NON_EXISTENT((byte) 11),
+
+    //============================元信息=====================
+    /**
+     * 不存在的元数据.
+     */
+    NOT_EXIST_META((byte) 12);
 
     private byte symbol;
 

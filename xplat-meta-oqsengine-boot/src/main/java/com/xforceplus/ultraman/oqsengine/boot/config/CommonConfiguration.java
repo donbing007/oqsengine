@@ -8,8 +8,10 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.SocketOptions;
 import java.io.IOException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -75,7 +77,11 @@ public class CommonConfiguration {
                 .requestQueueSize(configuration.getRequestQueueSize())
                 .pingBeforeActivateConnection(configuration.isPingBeforeActivateConnection())
                 .suspendReconnectOnProtocolFailure(configuration.isSuspendReconnectOnProtocolFailure())
-                .build());
+                .socketOptions(SocketOptions.builder()
+                    .keepAlive(true)
+                    .connectTimeout(Duration.ofSeconds(30))
+                    .build()
+                ).build());
             return redisClient;
         }
     }

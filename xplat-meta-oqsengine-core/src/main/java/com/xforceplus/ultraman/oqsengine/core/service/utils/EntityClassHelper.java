@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.utils;
 
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Optional;
 
@@ -58,5 +59,20 @@ public class EntityClassHelper {
         }
 
         return entityClasses;
+    }
+
+    /**
+     * 检查并返回目标实例的元信息.
+     *
+     * @param metaManager 元信息管理器.
+     * @param entities 目标实体.
+     * @return 元信息列表.
+     */
+    public static IEntityClass[] checkEntityClasses(MetaManager metaManager, IEntity[] entities) {
+        EntityClassRef[] entityClassRefs = new EntityClassRef[entities.length];
+        for (int i = 0; i < entities.length; i++) {
+            entityClassRefs[i] = entities[i].entityClassRef();
+        }
+        return checkEntityClasses(metaManager, entityClassRefs);
     }
 }

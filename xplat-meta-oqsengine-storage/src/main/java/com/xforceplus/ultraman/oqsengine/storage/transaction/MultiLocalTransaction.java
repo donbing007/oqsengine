@@ -462,7 +462,7 @@ public class MultiLocalTransaction implements Transaction {
                             commitId, checkCommitIdSyncMs);
                     }
 
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+                    LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
                 }
             }
 
