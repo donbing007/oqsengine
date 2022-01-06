@@ -25,7 +25,7 @@ public interface CalculationInitLogic extends Lifecycle {
      * @param run 本次初始化的计算字段参与者集合.
      * @return 失败列表、成功列表.
      */
-    public Map<String, List<InitCalculationParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException;
+    public Map<String, List<InitCalculationParticipant>> accept(List<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException;
 
 
     /**
