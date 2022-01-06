@@ -17,7 +17,7 @@ public interface CDCMetricsCallback {
      *
      * @param ackMetrics 确认指标.
      */
-    void cdcAck(CDCAckMetrics ackMetrics);
+    void ack(CDCAckMetrics ackMetrics);
 
     /**
      * 心跳.
@@ -34,7 +34,7 @@ public interface CDCMetricsCallback {
      *
      * @param cdcMetrics 指标.
      */
-    void cdcSaveLastUnCommit(CDCMetrics cdcMetrics);
+    void saveLastUnCommit(CDCMetrics cdcMetrics);
 
     /**
      * 需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性.
@@ -49,7 +49,7 @@ public interface CDCMetricsCallback {
      *
      * @param commitId 提交号.
      */
-    boolean isReadyCommit(long commitId);
+    boolean isReady(long commitId);
 
 
     /**
@@ -57,7 +57,7 @@ public interface CDCMetricsCallback {
      *
      * @param commitIds 提交号.
      */
-    List<Long> isNotReadyCommits(List<Long> commitIds);
+    List<Long> notReady(List<Long> commitIds);
 }
 
 

@@ -363,7 +363,7 @@ class InitCalculationManagerTest {
         while (!manager.isComplete(info)) {
             Map<IEntityClass, HashSet<Participant>> candidate = manager.voteCandidate(info);
             Collection<Participant> abstractParticipants = manager.voteRun(info);
-            ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
+            List<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
         Assertions.assertTrue(info.getNeed().isEmpty());
     }
@@ -376,7 +376,7 @@ class InitCalculationManagerTest {
         while (!manager.isComplete(info)) {
             Map<IEntityClass, HashSet<Participant>> candidate = manager.voteCandidate(info);
             Collection<Participant> abstractParticipants = manager.voteRun(info);
-            ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
+            List<Map<IEntityClass, Collection<InitCalculationParticipant>>> map = manager.sortRun(abstractParticipants, info);
         }
 
         Assertions.assertEquals(info.getAll(), all);

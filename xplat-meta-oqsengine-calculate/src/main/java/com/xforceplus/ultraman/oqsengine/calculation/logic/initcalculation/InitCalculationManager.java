@@ -65,7 +65,7 @@ public interface InitCalculationManager {
      * [A,B], [C]
      * 同组内并发初始化，不同组需等前组完成.
      */
-    public  ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo);
+    public  List<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo);
 
     /**
      * 如果当前app已经在队列中，无需加入.否则返回一个需要初始化的字段列表.

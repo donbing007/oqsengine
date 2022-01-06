@@ -115,7 +115,7 @@ public class CDCMetricsService {
      */
     public void backup(CDCMetrics cdcMetrics) {
         try {
-            cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
+            cdcMetricsCallback.saveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
             logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batch : {}, unCommitMetrics : {}",
                 cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics));
@@ -148,8 +148,8 @@ public class CDCMetricsService {
                 logger.debug("[cdc-metrics] attempt check ready to commitIds , commitIds : {}", commitIds);
             }
             while (true) {
-                //  获取一个批次中没有ready的commitIds
-                commitIds = cdcMetricsCallback.isNotReadyCommits(commitIds);
+                //  传入commitId列表、返回列表中notReady的部分.
+                commitIds = cdcMetricsCallback.notReady(commitIds);
                 if (commitIds.isEmpty()) {
                     break;
                 }
@@ -217,7 +217,7 @@ public class CDCMetricsService {
 
         //  执行回调
         try {
-            cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
+            cdcMetricsCallback.ack(cdcMetrics.getCdcAckMetrics());
         } catch (Exception e) {
             try {
                 logger.error("[cdc-metrics] callback error, metrics : {}, message : {}",

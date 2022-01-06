@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.convertStringToBoolean;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.stringToBoolean;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,18 +16,18 @@ import org.junit.jupiter.api.Test;
 public class BooleanStringConvertTest {
     @Test
     public void testBooleanStringConvert() {
-        Assertions.assertTrue(convertStringToBoolean("true"));
+        Assertions.assertTrue(stringToBoolean("true"));
 
-        Assertions.assertFalse(convertStringToBoolean("false"));
+        Assertions.assertFalse(stringToBoolean("false"));
 
-        Assertions.assertTrue(convertStringToBoolean("1"));
+        Assertions.assertTrue(stringToBoolean("1"));
 
-        Assertions.assertFalse(convertStringToBoolean("0"));
+        Assertions.assertFalse(stringToBoolean("0"));
 
-        Assertions.assertFalse(convertStringToBoolean("-1"));
+        Assertions.assertFalse(stringToBoolean("-1"));
 
-        Assertions.assertTrue(convertStringToBoolean("2"));
+        Assertions.assertTrue(stringToBoolean("2"));
 
-        Assertions.assertFalse(convertStringToBoolean("-1asa424412xxa"));
+        Assertions.assertFalse(stringToBoolean("-1asa424412xxa"));
     }
 }

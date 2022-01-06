@@ -299,9 +299,9 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
+    public List<Map<IEntityClass, Collection<InitCalculationParticipant>>> sortRun(Collection<Participant> abstractParticipants, InitCalculationInfo initCalculationInfo) {
         if (abstractParticipants.isEmpty()) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         Map<IEntityClass, Collection<InitCalculationParticipant>> map = new HashMap<>();
         // 相同entityClass的计算字段按照年龄降序排序.
@@ -315,12 +315,12 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
             }
         });
 
-        ArrayList<HashSet<IEntityClass>> hashSets = individualClasses(null, map, new ArrayList<>());
-        ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = new ArrayList<>(hashSets.size());
+        List<Set<IEntityClass>> sets = individualClasses(null, map, new ArrayList<>());
+        ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = new ArrayList<>(sets.size());
         // 转换成kv，participant按照entityClass分类，按照年龄排序.
-        for (HashSet<IEntityClass> hashSet : hashSets) {
+        for (Set<IEntityClass> set : sets) {
             Map<IEntityClass, Collection<InitCalculationParticipant>> hashMap = new HashMap<>();
-            hashSet.forEach(entityClass -> {
+            set.forEach(entityClass -> {
                 List<InitCalculationParticipant> collect = map.get(entityClass).stream().filter(initCalculationParticipant ->
                         !initCalculationInfo.getSkip().contains(initCalculationParticipant)).collect(Collectors.toList());
                 if (collect.size() > 0) {
@@ -358,11 +358,11 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     /**
      * 解析entityClass依赖顺序.
      */
-    private ArrayList<HashSet<IEntityClass>> individualClasses(Collection<IEntityClass> up,
+    private List<Set<IEntityClass>> individualClasses(Collection<IEntityClass> up,
                                                                Map<IEntityClass, Collection<InitCalculationParticipant>> map,
-                                                               ArrayList<HashSet<IEntityClass>> individuals) {
+                                                               List<Set<IEntityClass>> individuals) {
         if (map == null || map.isEmpty()) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         Set<IEntityClass> all = map.keySet();
@@ -408,7 +408,8 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                  * entityClass执行组为[A,B],[C,D],[D,E]去重后为[A,B],[C],[D,E]，同组可并发执行
                  */
                 if (individuals.size() >= 2) {
-                    ArrayList<HashSet<IEntityClass>> clone = (ArrayList<HashSet<IEntityClass>>) individuals.clone();
+//                    List<Set<IEntityClass>> clone = (List<Set<IEntityClass>>) individuals.clone();
+                    List<Set<IEntityClass>> clone = new ArrayList<>(individuals);
                     for (int size = individuals.size() - 2; size > 0; size--) {
                         for (int j = individuals.size() - 1; j < size; j--) {
                             clone.get(size).removeAll(clone.get(j));
@@ -702,7 +703,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                     // 选举本次可执行初始化计算字段参与者.
                     Collection<Participant> participants = voteRun(initCalculationInfo);
                     // 可执行计算字段参与者分类.
-                    ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = sortRun(participants, initCalculationInfo);
+                    List<Map<IEntityClass, Collection<InitCalculationParticipant>>> run = sortRun(participants, initCalculationInfo);
 
                     if (!run.isEmpty()) {
                         // 执行初始化

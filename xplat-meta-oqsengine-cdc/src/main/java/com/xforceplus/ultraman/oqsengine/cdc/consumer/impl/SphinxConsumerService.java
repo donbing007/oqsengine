@@ -77,9 +77,7 @@ public class SphinxConsumerService implements ConsumerService {
         return cdcMetricsRecorder.startRecord(cdcUnCommitMetrics, batchId);
     }
 
-    /*
-        数据清洗、同步
-    * */
+    //  数据清洗、同步
     private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics,
                                     CDCMetricsService cdcMetricsService) throws SQLException {
         int syncCount = ZERO;
@@ -121,6 +119,7 @@ public class SphinxConsumerService implements ConsumerService {
         return syncCount;
     }
 
+    //  记录指标、打印指标
     private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
             if (logger.isDebugEnabled()) {
@@ -141,6 +140,7 @@ public class SphinxConsumerService implements ConsumerService {
         }
     }
 
+    //  清除未提交的ids
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
             if (logger.isWarnEnabled()) {
@@ -161,6 +161,7 @@ public class SphinxConsumerService implements ConsumerService {
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
+    //  处理数据同步
     private void internalDataSync(CanalEntry.Entry entry,
                                   CDCMetrics cdcMetrics,
                                   List<Long> commitIDs, Map<Long, RawEntry> rawEntries) throws SQLException {
@@ -187,7 +188,7 @@ public class SphinxConsumerService implements ConsumerService {
                 //  check need sync
                 //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
                 //  只需同步commit_id小于Long.MAX_VALUE的row
-                if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
+                if (columns.size() == EMPTY_COLUMN_SIZE) {
                     throw new SQLException(
                         String.format("batch : %d, columns must not be null", cdcMetrics.getBatchId()));
                 }
@@ -242,11 +243,7 @@ public class SphinxConsumerService implements ConsumerService {
         }
     }
 
-
-
-    /*
-        由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作
-     */
+    //  由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT)
             || eventType.equals(CanalEntry.EventType.UPDATE);
