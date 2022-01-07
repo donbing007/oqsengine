@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.lock;
 
 /**
  * 资源锁定义.
- *
  * 如果是联锁必须保证如下语义.
  * <p></p>
  * locker.locks("k1","k2");      //线程1成功

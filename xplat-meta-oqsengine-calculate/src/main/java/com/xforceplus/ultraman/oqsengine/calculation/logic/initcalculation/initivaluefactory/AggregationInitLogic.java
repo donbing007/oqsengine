@@ -30,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -126,7 +127,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
             // 得到所有聚合明细
             Collection<IEntity> entities = masterStorage.selectMultiple(combinedIds);
 
-            IEntityField sourceField = participant.getSourceField().size() > 0 ? participant.getSourceField().get(0) : EntityField.Builder.anEntityField().build();
+            IEntityField sourceField = participant.getSourceFields().size() > 0 ? ((ArrayList<IEntityField>) participant.getSourceFields()).get(0) : EntityField.Builder.anEntityField().build();
             //获取符合条件的所有明细值
             List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(sourceField.id())).collect(Collectors.toList());
 

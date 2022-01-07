@@ -33,6 +33,9 @@ public class Locker {
         successLockNumber -= 1;
     }
 
+    /**
+     * size.
+     */
     public void decrSuccess(int size) {
         successLockNumber -= size;
         if (successLockNumber < 0) {

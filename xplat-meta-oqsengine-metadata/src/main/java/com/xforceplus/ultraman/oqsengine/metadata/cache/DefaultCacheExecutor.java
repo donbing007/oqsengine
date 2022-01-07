@@ -495,8 +495,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         String error = "";
 
-        if (null != appVersionRelations && !appVersionRelations.isEmpty() &&
-                    null != entityAppRelations && !entityAppRelations.isEmpty()) {
+        if (null != appVersionRelations && !appVersionRelations.isEmpty()
+                && null != entityAppRelations && !entityAppRelations.isEmpty()) {
 
             for (Long entityClassId : entityClassIds) {
                 String appId = entityAppRelations.get(String.valueOf(entityClassId));
@@ -519,7 +519,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     }
                     logger.warn(error);
                     error = "";
-               }
+                }
             }
         } else {
             error = "query entityClassIds->versions failed, no mapping in cache.";

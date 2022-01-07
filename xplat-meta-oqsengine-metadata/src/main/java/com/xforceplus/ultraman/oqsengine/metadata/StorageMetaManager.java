@@ -180,6 +180,38 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
+    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
+        try {
+            List<IEntityClass> entityClassList = new ArrayList<>();
+
+            if (version == NOT_EXIST_VERSION) {
+                version = cacheExecutor.version(entityClassId);
+            }
+            Optional<IEntityClass> entityClassOp =
+                    load(entityClassId, version, null);
+
+            if (entityClassOp.isPresent()) {
+                entityClassList.add(entityClassOp.get());
+
+                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+                if (!profiles.isEmpty()) {
+                    for (String profile : profiles) {
+                        Optional<IEntityClass> ecOp =
+                                load(entityClassId, version, profile);
+
+                        ecOp.ifPresent(entityClassList::add);
+                    }
+                }
+            }
+
+            return entityClassList;
+        } catch (Exception e) {
+            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
+        }
+        return new ArrayList<>();
+
+    }
+
     @Override
     public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
         return withProfilesLoad(entityClassId, NOT_EXIST_VERSION);
@@ -344,38 +376,6 @@ public class StorageMetaManager implements MetaManager {
         cacheExecutor.appEnvRemove(appId);
 
         return true;
-    }
-
-    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
-
-            if (version == NOT_EXIST_VERSION) {
-                version = cacheExecutor.version(entityClassId);
-            }
-            Optional<IEntityClass> entityClassOp =
-                load(entityClassId, version, null);
-
-            if (entityClassOp.isPresent()) {
-                entityClassList.add(entityClassOp.get());
-
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
-                if (!profiles.isEmpty()) {
-                    for (String profile : profiles) {
-                        Optional<IEntityClass> ecOp =
-                            load(entityClassId, version, profile);
-
-                        ecOp.ifPresent(entityClassList::add);
-                    }
-                }
-            }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
-        }
-        return new ArrayList<>();
-
     }
 
     private void offLineInit(String path) {
