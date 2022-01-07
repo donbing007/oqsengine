@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.lock;
 
 import com.xforceplus.ultraman.oqsengine.lock.utils.Locker;
 import com.xforceplus.ultraman.oqsengine.lock.utils.StateKeys;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -53,7 +53,7 @@ public class LocalResourceLocker extends AbstractRetryResourceLocker {
     @Override
     protected int[] doUnLocks(Locker locker, StateKeys stateKeys) {
         String[] keys = stateKeys.getNoCompleteKeys();
-        IntList failKeyIndex = new IntArrayList();
+        List<Integer> failKeyIndex = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
             LockInfo lockInfo = lockPool.get(keys[i]);
             if (lockInfo != null) {
@@ -66,7 +66,7 @@ public class LocalResourceLocker extends AbstractRetryResourceLocker {
                 }
             }
         }
-        return failKeyIndex.toIntArray();
+        return failKeyIndex.stream().mapToInt(i -> i).toArray();
     }
 
     @Override
