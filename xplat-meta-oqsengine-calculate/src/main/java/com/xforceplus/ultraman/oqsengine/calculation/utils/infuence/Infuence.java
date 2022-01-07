@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -92,6 +91,7 @@ public class Infuence {
 
     /**
      * 获取前一个参与者.
+     *
      * @param participant 当前参与者.
      */
     public Optional<Participant> getPre(Participant participant) {
@@ -106,6 +106,7 @@ public class Infuence {
 
     /**
      * 获取影响的参与者结果集.
+     *
      * @param participant 当前参与者.
      */
     public Optional<Collection<Participant>> getNextParticipants(Participant participant) {

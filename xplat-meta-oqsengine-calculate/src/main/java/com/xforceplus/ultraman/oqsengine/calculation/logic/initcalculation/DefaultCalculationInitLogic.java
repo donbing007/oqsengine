@@ -87,7 +87,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
     @Override
-    public Map<String, List<InitCalculationParticipant>> accept(ArrayList<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException {
+    public Map<String, List<InitCalculationParticipant>> accept(List<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException {
         Map<String, List<InitCalculationParticipant>> res = new HashMap<>();
         List<Future<Tuple2<Boolean, List<InitCalculationParticipant>>>> futures = new ArrayList<>();
         for (Map<IEntityClass, Collection<InitCalculationParticipant>> classCollectionMap : run) {
@@ -163,11 +163,16 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
                 if (batchEntity.containsKey(entityClass)) {
                     if (batchEntity.get(entityClass).size() >= BATCH_LIMIT || !iterator.hasNext()) {
                         // 批量更新
-                        int[] ints = batchSave(entityClass);
-                        for (int i = 0; i < ints.length; i++) {
-                            if (ints[i] == 0) {
-                                failedList.add(batchEntity.get(entityClass).get(i));
-                            }
+                        Collection<IEntity> entities = batchEntity.get(entityClass);
+                        if (entities.size() > 0) {
+                            EntityPackage entityPackage = new EntityPackage();
+                            entities.forEach(e -> entityPackage.put(e, entityClass));
+                            masterStorage.replace(entityPackage);
+                            entities.forEach(e -> {
+                                if (e.isDirty()) {
+                                    failedList.add(e);
+                                }
+                            });
                         }
                         batchEntity.get(entityClass).clear();
                     }
@@ -202,16 +207,6 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
             }
         }
         return entity;
-    }
-
-    private int[] batchSave(IEntityClass entityClass) throws SQLException {
-        Collection<IEntity> entities = batchEntity.get(entityClass);
-        if (entities.size() > 0) {
-            EntityPackage entityPackage = new EntityPackage();
-            entities.forEach(e -> entityPackage.put(e, entityClass));
-            return masterStorage.replace(entityPackage);
-        }
-        return new int[]{1};
     }
 
 

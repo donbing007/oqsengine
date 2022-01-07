@@ -339,7 +339,16 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     @Override
     public Either<String, List<IEntityField>> initAppCalculations(String appCode) {
         try {
-            locker.lock(appCode);
+            boolean b = false;
+            try {
+                b = locker.tryLock(Long.MAX_VALUE - 1, appCode);
+            } catch (InterruptedException e) {
+                if (!b) {
+                    throw new RuntimeException(String.format("try lock failed when get source %s", appCode));
+                }
+                // ignore
+
+            }
             if (kv.exist(appCode + INITING)) {
                 return Either.left(String.format("curent app %s is initing now, please wait", appCode));
             } else {
@@ -408,7 +417,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
                  * entityClass执行组为[A,B],[C,D],[D,E]去重后为[A,B],[C],[D,E]，同组可并发执行
                  */
                 if (individuals.size() >= 2) {
-//                    List<Set<IEntityClass>> clone = (List<Set<IEntityClass>>) individuals.clone();
+                    //List<Set<IEntityClass>> clone = (List<Set<IEntityClass>>) individuals.clone();
                     List<Set<IEntityClass>> clone = new ArrayList<>(individuals);
                     for (int size = individuals.size() - 2; size > 0; size--) {
                         for (int j = individuals.size() - 1; j < size; j--) {

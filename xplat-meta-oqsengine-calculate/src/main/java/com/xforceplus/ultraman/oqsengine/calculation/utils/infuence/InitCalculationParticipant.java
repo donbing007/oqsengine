@@ -115,7 +115,9 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
 
         private Builder() {}
 
-        public static Builder anInitCalculationParticipant() {return new Builder();}
+        public static Builder anInitCalculationParticipant() {
+            return new Builder();
+        }
 
         public Builder withEntityClass(IEntityClass entityClass) {
             this.entityClass = entityClass;

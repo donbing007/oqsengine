@@ -33,6 +33,9 @@ public abstract class AbstractCDCConnector {
     protected String password;
 
 
+    /**
+     * 构造器.
+     */
     public AbstractCDCConnector(String connectString, String destination, String userName, String password) {
         this.connectString = connectString;
         this.destination = destination;

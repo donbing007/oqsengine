@@ -48,22 +48,6 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     }
 
     @Override
-    public void saveLastUnCommit(CDCMetrics cdcMetrics) {
-        cdcStatusService.saveUnCommit(cdcMetrics);
-    }
-
-    @Override
-    public CDCMetrics queryLastUnCommit() {
-        Optional<CDCMetrics> cdcMetricsOp = cdcStatusService.getUnCommit();
-        return cdcMetricsOp.orElse(null);
-    }
-
-    @Override
-    public boolean isReady(long commitId) {
-        return commitIdStatusService.isReady(commitId);
-    }
-
-    @Override
     public List<Long> notReady(List<Long> commitIds) {
         long[] checks = new long[commitIds.size()];
         for (int i = 0; i < commitIds.size(); i++) {
@@ -80,4 +64,22 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
 
         return notReadyIds;
     }
+
+    @Override
+    public void saveLastUnCommit(CDCMetrics cdcMetrics) {
+        cdcStatusService.saveUnCommit(cdcMetrics);
+    }
+
+    @Override
+    public CDCMetrics queryLastUnCommit() {
+        Optional<CDCMetrics> cdcMetricsOp = cdcStatusService.getUnCommit();
+        return cdcMetricsOp.orElse(null);
+    }
+
+    @Override
+    public boolean isReady(long commitId) {
+        return commitIdStatusService.isReady(commitId);
+    }
+
+
 }

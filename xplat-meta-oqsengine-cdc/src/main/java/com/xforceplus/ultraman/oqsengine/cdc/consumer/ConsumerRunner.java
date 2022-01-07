@@ -97,7 +97,7 @@ public class ConsumerRunner extends Thread {
                 //  连接CanalServer，如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
                 connectAndReset(currentConnectTimes);
             } catch (Exception e) {
-                currentConnectTimes ++;
+                currentConnectTimes++;
                 closeToNextReconnect(CDCStatus.DIS_CONNECTED,
                     String.format("[cdc-runner] canal-server connection error, %s", e.getMessage()));
                 continue;
