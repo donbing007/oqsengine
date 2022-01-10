@@ -90,6 +90,7 @@ public class MetaInitialization implements BeanInitialization {
 
     @Override
     public void clear() throws Exception {
+        //  实现了clear接口、但是只清除本地缓存.
         if (null != metaManager) {
             metaManager.invalidateLocal();
         }

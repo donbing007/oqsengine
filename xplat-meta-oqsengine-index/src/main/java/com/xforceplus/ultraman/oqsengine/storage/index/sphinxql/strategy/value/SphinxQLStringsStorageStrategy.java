@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value;
 
-import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringsStorageStrategy;
 
 /**
@@ -15,59 +14,16 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringsSt
  */
 public class SphinxQLStringsStorageStrategy extends StringsStorageStrategy {
 
-    static final char START = '[';
-    static final char END = ']';
-
     /**
      * 预期为一个"[RMB][JPY][USD]"表示的字符串.
      *
      * @param storageName  物理储存名称.
      * @param storageValue 物理储存值.
+     * @param longStrFormat 在这个实现类中没有作用.
      * @return 物理储存实例.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
-        String value = (String) storageValue;
-
-        String logicName = AnyStorageValue.getInstance(storageName).logicName();
-
-        if (attachment) {
-            return new StringStorageValue(logicName, value, true);
-        }
-
-        StringBuilder buff = new StringBuilder();
-        StorageValue head = null;
-        int location = 0;
-        boolean watch = false;
-        for (int i = 0; i < value.length(); i++) {
-            char point = value.charAt(i);
-            if (START == point) {
-                watch = true;
-                continue;
-            }
-
-            if (END == point) {
-                watch = false;
-
-                StorageValue newStorageValue = new StringStorageValue(logicName, buff.toString(), true);
-                newStorageValue.locate(location++);
-
-                if (head == null) {
-                    head = newStorageValue;
-                } else {
-                    head.stick(newStorageValue);
-                }
-
-                buff.delete(0, buff.length());
-                continue;
-            }
-
-            if (watch) {
-                buff.append(point);
-            }
-        }
-
-        return head;
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean longStrFormat) {
+        return SphinxQLHelper.stringsStorageConvert(storageName, (String) storageValue, attachment);
     }
-
 }

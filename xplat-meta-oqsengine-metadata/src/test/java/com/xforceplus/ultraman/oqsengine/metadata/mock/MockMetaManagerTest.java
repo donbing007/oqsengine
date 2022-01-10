@@ -39,7 +39,8 @@ public class MockMetaManagerTest {
                 .build()
         );
 
-        IEntityClass targetEntityClass = metaManager.load(1).get();
+        IEntityClass targetEntityClass = metaManager.load(1).orElse(null);
+        Assertions.assertNotNull(targetEntityClass);
         Assertions.assertEquals(1, targetEntityClass.id());
         Assertions.assertEquals(6, targetEntityClass.version());
     }

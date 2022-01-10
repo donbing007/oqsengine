@@ -397,7 +397,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         .convertIndexStorageValue(
                             AnyStorageValue.compatibleStorageName(attr.getKey()),
                             attr.getValue(),
-                            false);
+                            false, false);
 
                 while (storageValue != null) {
 
@@ -448,7 +448,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 StorageValue storageValue =
                     storageStrategyFactory.getStrategy(field.type())
                         .convertIndexStorageValue(
-                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false);
+                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false, true);
 
                 if (StorageType.UNKNOWN == anyStorageValue.type()) {
                     if (fieldOp.isPresent()) {
@@ -469,7 +469,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 // 附件
                 StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
                     .convertIndexStorageValue(
-                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true);
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true, true);
 
                 buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
             }
