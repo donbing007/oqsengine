@@ -253,6 +253,9 @@ public class SphinxQLManticoreIndexStorageTest {
         Assertions.assertEquals(Long.MAX_VALUE - 600, refs.stream().findFirst().get().getId());
     }
 
+    /**
+     * 测试一个超长的String(>29字节).
+     */
     @Test
     public void longStringValue() throws Exception {
         String value = UUID.randomUUID().toString();

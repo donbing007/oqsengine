@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
@@ -86,5 +87,45 @@ public class SphinxQLHelperTest {
     public void testBuildWirdcardQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
         Assertions.assertEquals("1y2p0ijtestw32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
+    }
+
+    /**
+     * 测试转换一个超长的String condition.
+     */
+    @Test
+    public void testStringConditionFormat() {
+        String longOverString = "aaaabbbbccccddddeeeeffffggggEAAAABBBBCCCCDDDDEEEEFFFFGGGGECDMA";
+        ShortStorageName shortStorageName = new ShortStorageName("123p", "s456S");
+        String format =
+            SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, false);
+
+        Assertions.assertEquals("123paaaabbbbccccddddeeeeffffggggEs456S >> 123pAAAABBBBCCCCDDDDEEEEFFFFGGGGEs456S >> 123pCDMAs456S", format);
+    }
+
+    /**
+     * 测试转换一个超长的String value.
+     * 将按照strings的逻辑进行转换.
+     */
+    @Test
+    public void testStringValueFormat() {
+        String longOverString = "aaaabbbbccccddddeeeeffffggggEAAAABBBBCCCCDDDDEEEEFFFFGGGGECDMA";
+        String format =
+            SphinxQLHelper.stringValueFormat(longOverString);
+        Assertions.assertEquals("[aaaabbbbccccddddeeeeffffggggE][AAAABBBBCCCCDDDDEEEEFFFFGGGGE][CDMA]", format);
+
+        StorageValue storageValue =
+            SphinxQLHelper.stringsStorageConvert("123ps456S", format, false);
+
+        StorageValue one = storageValue;
+        StorageValue two = one.next();
+        StorageValue three = two.next();
+
+        Assertions.assertEquals("aaaabbbbccccddddeeeeffffggggE", one.value());
+        Assertions.assertEquals("AAAABBBBCCCCDDDDEEEEFFFFGGGGE", two.value());
+        Assertions.assertEquals("CDMA", three.value());
+
+        Assertions.assertEquals(0, one.location());
+        Assertions.assertEquals(1, two.location());
+        Assertions.assertEquals(2, three.location());
     }
 } 
