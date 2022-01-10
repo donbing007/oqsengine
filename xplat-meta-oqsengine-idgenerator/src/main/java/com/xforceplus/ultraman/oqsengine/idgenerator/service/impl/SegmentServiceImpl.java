@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SqlSegmentStorage;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -39,21 +40,21 @@ public class SegmentServiceImpl implements SegmentService {
 
     private static final Long MAX_SIZE = 10000L;
 
-    protected LoadingCache<String, IDModel> cache = CacheBuilder.newBuilder().maximumSize(MAX_SIZE)
+    protected LoadingCache<String, SegmentInfo> cache = CacheBuilder.newBuilder().maximumSize(MAX_SIZE)
         .expireAfterWrite(MAX_CACHE_TIME_IN_SECONDS, TimeUnit.SECONDS)
-        .build(new CacheLoader<String, IDModel>() {
+        .build(new CacheLoader<String, SegmentInfo>() {
             @Override
-            public IDModel load(String key) throws SQLException {
-                return innerGetIDModel(key);
+            public SegmentInfo load(String key) throws SQLException {
+                return innerGetSegmentInfo(key);
             }
         });
+
 
     @Override
     public SegmentId getNextSegmentId(String bizType) throws SQLException {
         // 获取nextTinyId的时候，有可能存在version冲突，需要重试
         for (int i = 0; i < Constants.RETRY; i++) {
-            Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
-            SegmentInfo segmentInfo = targetSegmentInfo.get();
+            SegmentInfo segmentInfo = innerGetSegmentInfo(bizType);
             Long newMaxId = segmentInfo.getMaxId() + segmentInfo.getStep();
             int row = sqlSegmentStorage.udpate(segmentInfo);
             if (row == 1) {
@@ -74,19 +75,34 @@ public class SegmentServiceImpl implements SegmentService {
 
     @Override
     public boolean resetSegment(String bizType, String patternKey) throws SQLException {
-        Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
-        SegmentInfo segmentInfo = targetSegmentInfo.get();
+        SegmentInfo segmentInfo = innerGetSegmentInfo(bizType);
         segmentInfo.setPatternKey(patternKey);
         int row = sqlSegmentStorage.reset(segmentInfo);
         return row > 0;
     }
 
-    private Optional<SegmentInfo> getSegment(String bizType) throws SQLException {
-        Optional<SegmentInfo> targetSegmentInfo = sqlSegmentStorage.query(bizType);
-        if (!targetSegmentInfo.isPresent()) {
-            throw new IDGeneratorException("can not find biztype:" + bizType);
+    private SegmentInfo innerGetSegmentInfo(String bizType) {
+        Optional<SegmentInfo> targetSegmentInfo = null;
+        try {
+            targetSegmentInfo = sqlSegmentStorage.query(bizType);
+        } catch (SQLException e) {
+            throw new IDGeneratorException("query bizType failed!", e);
         }
-        return targetSegmentInfo;
+        if (!targetSegmentInfo.isPresent()) {
+            throw new IDGeneratorException("Can not find bizType:" + bizType);
+        }
+        return targetSegmentInfo.get();
+    }
+
+    @Override
+    public SegmentInfo getSegmentInfo(String bizType) {
+        try {
+            return cache.get(bizType);
+        } catch (ExecutionException e) {
+            String errorMsg = String.format("Get segment : %s failed!", bizType);
+            LOGGER.error(errorMsg, e);
+            throw new IDGeneratorException(errorMsg);
+        }
     }
 
 
@@ -94,7 +110,8 @@ public class SegmentServiceImpl implements SegmentService {
     public IDModel getIDModel(String bizType) {
         IDModel model = null;
         try {
-            model = cache.get(bizType);
+            SegmentInfo segmentInfo = cache.get(bizType);
+            model = getIDModel(segmentInfo);
         } catch (CacheLoader.InvalidCacheLoadException e) {
             LOGGER.warn(String.format("Get invalidCache : %s", bizType));
         } catch (Exception e) {
@@ -106,9 +123,7 @@ public class SegmentServiceImpl implements SegmentService {
     }
 
 
-    private IDModel innerGetIDModel(String bizType) throws SQLException {
-        Optional<SegmentInfo> targetSegmentInfo = getSegment(bizType);
-        SegmentInfo segmentInfo = targetSegmentInfo.get();
+    private IDModel getIDModel(SegmentInfo segmentInfo) {
         return IDModel.fromValue(segmentInfo.getMode());
     }
 

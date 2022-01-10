@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.common.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 
 /**
@@ -13,9 +14,13 @@ public class PatternValue implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -8015203769645869019L;
 
-    public PatternValue(long id, String value) {
+    public PatternValue(@JsonProperty("id") long id, @JsonProperty("value") String value) {
         this.id = id;
         this.value = value;
+    }
+
+    public PatternValue() {
+
     }
 
     @Override

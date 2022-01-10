@@ -2,9 +2,11 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl;
 
 import static com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.Constants.DATE_PATTEN_PARSER;
 
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.TimeDelay;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.Pattern;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 项目名称: 票易通
@@ -21,6 +23,33 @@ public class DatePatternParser implements PatternParser {
 
     public LocalDateTime getLocalDate() {
         return LocalDateTime.now();
+    }
+
+    /**
+     * 获取最大过期时间.
+     *
+     * @param pattern the pattern of counter.
+     * @return TimeDelay.
+     */
+    public static TimeDelay getMaxExpireDate(String pattern) {
+        if (pattern.contains(Pattern.HOUR)) {
+            return new TimeDelay(1, TimeUnit.HOURS);
+        }
+        if (pattern.contains(Pattern.DAY)
+            && !pattern.contains(Pattern.HOUR)) {
+            return new TimeDelay(1, TimeUnit.DAYS);
+        }
+        if (pattern.contains(Pattern.MONTH)
+            && !pattern.contains(Pattern.DAY)
+            && !pattern.contains(Pattern.HOUR)) {
+            return new TimeDelay(31, TimeUnit.DAYS);
+        }
+        if (pattern.contains(Pattern.YEAR)
+            && !pattern.contains(Pattern.MONTH)
+            && !pattern.contains(Pattern.DAY) && !pattern.contains(Pattern.HOUR)) {
+            return new TimeDelay(366, TimeUnit.DAYS);
+        }
+        return null;
     }
 
     @Override

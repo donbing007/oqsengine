@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.idgenerator.service;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentId;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import java.sql.SQLException;
 
 /**
@@ -26,6 +27,15 @@ public interface SegmentService {
      * @return IDModel
      */
     IDModel getIDModel(String bizType);
+
+
+    /**
+     * 根据BizType获取配置信息.
+     *
+     * @param bizType 业务类型标签
+     * @return Segment 配置.
+     */
+    SegmentInfo getSegmentInfo(String bizType);
 
 
     /**
