@@ -12,7 +12,7 @@ public interface TokenizerFactoryAble {
     /**
      * 设置分词器工厂.
      *
-     * @param tokenizerFacotry 分词器工厂.
+     * @param tokenizerFactory 分词器工厂.
      */
-    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry);
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFactory);
 }

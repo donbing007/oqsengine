@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_GEN;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
@@ -225,13 +225,13 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
         Optional<IEntityField> fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true));
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true));
         Assertions.assertTrue(fieldOp.isPresent());
 
         //  不包含替身2
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
 
@@ -241,13 +241,13 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
         fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true)
         );
         Assertions.assertTrue(fieldOp.isPresent());
         //  不包含替身1
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
 
@@ -256,12 +256,12 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         Assertions.assertTrue(entityClassOp.isPresent());
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
     }

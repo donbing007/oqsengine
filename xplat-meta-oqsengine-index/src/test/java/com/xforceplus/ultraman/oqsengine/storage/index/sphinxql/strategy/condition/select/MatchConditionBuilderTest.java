@@ -78,6 +78,20 @@ public class MatchConditionBuilderTest {
                     Assertions.assertEquals("1y2p0ijtest32e8e7S", r);
                 }
             ),
+            /**
+             * 这个测试为了测试超长的string分割后的结果是否正确.
+             */
+            new Case(
+                new Condition(
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                    ConditionOperator.EQUALS,
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                        "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
+                ),
+                r -> {
+                    Assertions.assertEquals("1y2p0ij1234567890123456789012345678932e8e7S >> 1y2p0ijabcdefghijkMlmnMopqMrstuvwxyz32e8e7S", r);
+                }
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.LONG),
