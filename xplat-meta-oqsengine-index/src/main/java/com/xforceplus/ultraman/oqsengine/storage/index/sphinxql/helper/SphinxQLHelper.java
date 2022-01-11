@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
@@ -12,10 +13,12 @@ import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import io.vavr.Tuple2;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,6 +64,16 @@ public class SphinxQLHelper {
     };
 
     protected static final Map<Character, String> REPLACE_SYMBOLS;
+
+
+    /**
+     * 多值字段起始标记
+     */
+    private static final char START = '[';
+    /**
+     * 多值字段结束标记
+     */
+    private static final char END = ']';
 
     static {
         Arrays.sort(IGNORE_SYMBOLS);
@@ -168,9 +181,10 @@ public class SphinxQLHelper {
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
      * @param value 目标字段.
+     * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
-    public static String buildPreciseQuery(StorageValue value, boolean useGroupName) {
+    public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, boolean useGroupName) {
 //        StringBuilder buff = new StringBuilder();
 //        ShortStorageName shortStorageName = value.shortStorageName();
 //        buff.append(shortStorageName.getPrefix())
@@ -305,8 +319,7 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
-    private static final char START = '[';
-    private static final char END = ']';
+
 
     /**
      * strings value通用的转换(StorageValue)逻辑.
@@ -360,20 +373,25 @@ public class SphinxQLHelper {
 
     /**
      *
-     * @param word
-     * @param shortStorageName
-     * @param useGroupName
-     * @return
+     * @param word raw word.
+     * @param shortStorageName name.
+     * @param useGroupName 是否userGroupName.
+     * @return 转换值, 是否分割为多值.
      */
-    public static String stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
         String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
 
         StringBuilder stringBuilder = new StringBuilder();
         boolean isFirst = true;
+        if (values.length > 1) {
+            stringBuilder.append("(");
+        }
+
         for (String v : values) {
             if (!isFirst) {
-                stringBuilder.append(" >> ");
+                stringBuilder.append(" << ");
             }
+
             stringBuilder.append(shortStorageName.getPrefix())
                 .append(filterSymbols(v));
 
@@ -388,14 +406,15 @@ public class SphinxQLHelper {
 
             isFirst = false;
         }
-        return stringBuilder.toString();
+
+        if (values.length > 1) {
+            stringBuilder.append(")");
+        }
+        return new Tuple2<>(stringBuilder.toString(), values.length > 1);
     }
 
     /**
      * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
-     *
-     * @param word
-     * @return
      */
     public static String stringValueFormat(String word) {
         String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);

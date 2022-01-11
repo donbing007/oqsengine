@@ -500,6 +500,96 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
             new Case(
+                "l2-string-longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-string").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(l2EntityClass.field("l2-string").get(), "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[] {
+                    Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "l2-string-longString-not-eq",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-string").get(),
+                            ConditionOperator.NOT_EQUALS,
+                            new StringValue(l2EntityClass.field("l2-string").get(), "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[] {
+                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+                    Long.MAX_VALUE - 9
+                }
+            ),
+            new Case(
+                "strings eq longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "strings in longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "strings not eq longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+                    Long.MAX_VALUE - 9
+                }
+            ),
+            new Case(
                 "is not null",
                 Conditions.buildEmtpyConditions()
                     .addAnd(

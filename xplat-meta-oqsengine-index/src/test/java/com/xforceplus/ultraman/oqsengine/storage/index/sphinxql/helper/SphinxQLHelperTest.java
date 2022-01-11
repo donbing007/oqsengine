@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
+import io.vavr.Tuple2;
 import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -61,12 +62,12 @@ public class SphinxQLHelperTest {
     @Test
     public void testBuildPreciseQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false)._1);
+        Assertions.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true)._1);
 
         storageValue = new LongStorageValue("9223372036854775807", 100, true);
-        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false));
-        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true));
+        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false)._1);
+        Assertions.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true)._1);
     }
 
     @Test
@@ -96,10 +97,12 @@ public class SphinxQLHelperTest {
     public void testStringConditionFormat() {
         String longOverString = "aaaabbbbccccddddeeeeffffggggEAAAABBBBCCCCDDDDEEEEFFFFGGGGECDMA";
         ShortStorageName shortStorageName = new ShortStorageName("123p", "s456S");
-        String format =
+
+        //  测试ConditionOperator.EQUALS
+        Tuple2<String, Boolean> format =
             SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, false);
 
-        Assertions.assertEquals("123paaaabbbbccccddddeeeeffffggggEs456S >> 123pAAAABBBBCCCCDDDDEEEEFFFFGGGGEs456S >> 123pCDMAs456S", format);
+        Assertions.assertEquals("(123paaaabbbbccccddddeeeeffffggggEs456S << 123pAAAABBBBCCCCDDDDEEEEFFFFGGGGEs456S << 123pCDMAs456S)", format._1);
     }
 
     /**
@@ -128,4 +131,6 @@ public class SphinxQLHelperTest {
         Assertions.assertEquals(1, two.location());
         Assertions.assertEquals(2, three.location());
     }
+
+
 } 
