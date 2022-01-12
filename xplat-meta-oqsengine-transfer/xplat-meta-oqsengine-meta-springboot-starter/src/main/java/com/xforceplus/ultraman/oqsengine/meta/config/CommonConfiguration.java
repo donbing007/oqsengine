@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.CachedMetricsRecorder;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -64,5 +66,11 @@ public class CommonConfiguration {
     @Bean
     public ShutDownExecutor shutDownExecutor() {
         return new ShutDownExecutor();
+    }
+
+
+    @Bean
+    public MetricsRecorder cachedMetricsRecorder() {
+        return new CachedMetricsRecorder();
     }
 }
