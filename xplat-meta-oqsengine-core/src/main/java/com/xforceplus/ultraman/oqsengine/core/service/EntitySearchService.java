@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -11,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * entity 搜索服务.
@@ -29,7 +29,7 @@ public interface EntitySearchService {
      * @param entityClassRef 目标 entity 类型指针.
      * @return 目标 entity 实体.
      */
-    Optional<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException;
+    OperationResult<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException;
 
     /**
      * 根据业务主键搜索一个entity实例.
@@ -38,7 +38,7 @@ public interface EntitySearchService {
      * @param entityClassRef ref.
      * @return 目标 entity 实体.
      */
-    Optional<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
+    OperationResult<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef) throws SQLException;
 
 
     /**
@@ -48,7 +48,7 @@ public interface EntitySearchService {
      * @param entityClassRef 目标 entity 类型.
      * @return 实体列表.
      */
-    Collection<IEntity> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException;
+    OperationResult<Collection<IEntity>> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException;
 
     /**
      * 条件分页搜索 entity 列表.使用默认排序.
@@ -59,7 +59,7 @@ public interface EntitySearchService {
      * @return 目标 entity 列表.
      * @deprecated 请使用带有searchconfig的方法.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
+    OperationResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException;
 
     /**
@@ -73,7 +73,7 @@ public interface EntitySearchService {
      * @deprecated 请使用带有searchconfig的方法.
      */
     @Deprecated
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
+    OperationResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
         throws SQLException;
 
     /**
@@ -84,7 +84,7 @@ public interface EntitySearchService {
      * @param config         查询配置.
      * @return 查询结果列表.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+    OperationResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
                                            ServiceSelectConfig config)
         throws SQLException;
 
@@ -94,5 +94,5 @@ public interface EntitySearchService {
      * @param config 搜索配置.
      * @return 搜索结果.
      */
-    Collection<IEntity> search(ServiceSearchConfig config) throws SQLException;
+    OperationResult<Collection<IEntity>> search(ServiceSearchConfig config) throws SQLException;
 }

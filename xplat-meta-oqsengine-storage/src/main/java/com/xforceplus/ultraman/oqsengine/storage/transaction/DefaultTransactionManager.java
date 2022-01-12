@@ -18,7 +18,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     private LongIdGenerator txIdGenerator;
     private LongIdGenerator commitIdGenerator;
     private CommitIdStatusService commitIdStatusService;
-    private CacheEventHandler cacheEventHandler;
     private boolean waitCommitSync;
     private EventBus eventBus;
 
@@ -34,7 +33,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             .withId(txId)
             .withCommitIdStatusService(commitIdStatusService)
             .withLongIdGenerator(commitIdGenerator)
-            .withCacheEventHandler(cacheEventHandler)
             .withEventBus(eventBus)
             .withMsg(msg);
 
@@ -114,7 +112,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             defaultTransactionManager.commitIdStatusService = this.commitIdStatusService;
             defaultTransactionManager.txIdGenerator = this.txIdGenerator;
             defaultTransactionManager.commitIdGenerator = this.commitIdGenerator;
-            defaultTransactionManager.cacheEventHandler = this.cacheEventHandler;
 
             if (!txIdGenerator.isPartialOrder()) {
                 throw new IllegalArgumentException(

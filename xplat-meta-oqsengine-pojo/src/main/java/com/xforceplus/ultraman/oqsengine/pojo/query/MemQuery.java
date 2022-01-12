@@ -7,12 +7,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.LinkConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ParentheseConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Stack;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,11 +30,11 @@ public class MemQuery {
      * @param conditions 條件
      * @return 過濾完的數據
      */
-    public static Collection<Entity> query(Collection<Entity> entities, Conditions conditions) {
+    public static Collection<IEntity> query(Collection<IEntity> entities, Conditions conditions) {
         PredicateHolder holder = new PredicateHolder();
         conditions.scan(holder::accept, holder::accept, holder::accept);
 
-        Predicate<Entity> predicate = holder.getPredicate();
+        Predicate<IEntity> predicate = holder.getPredicate();
 
         return Optional.ofNullable(entities)
             .orElseGet(Collections::emptyList)
@@ -45,7 +47,7 @@ public class MemQuery {
      */
     static class PredicateHolder {
 
-        private Stack<Object> stack = new Stack<>();
+        private Deque<Object> stack = new LinkedList<>();
 
         void accept(LinkConditionNode linkConditionNode) {
             stack.push(linkConditionNode.getLink());
@@ -53,7 +55,7 @@ public class MemQuery {
 
         void accept(ValueConditionNode valueConditionNode) {
             Predicate<Entity> next = toPredicate(valueConditionNode);
-            if (!stack.empty()) {
+            if (!stack.isEmpty()) {
                 Object peek = stack.peek();
                 if (peek != null) {
                     if (peek instanceof ConditionLink) {
@@ -109,7 +111,7 @@ public class MemQuery {
          *
          * @return 生成出来的Predicate
          */
-        public Predicate<Entity> getPredicate() {
+        public Predicate<IEntity> getPredicate() {
             while (stack.size() > 1) {
                 Object expectedPredicate = stack.pop();
 
@@ -117,7 +119,7 @@ public class MemQuery {
                 if (expectedPredicate instanceof Predicate) {
 
                     if (stack.isEmpty()) {
-                        return (Predicate<Entity>) expectedPredicate;
+                        return (Predicate<IEntity>) expectedPredicate;
                     }
 
                     Object expectedLinkOrNull = stack.peek();
@@ -149,7 +151,7 @@ public class MemQuery {
                 }
             }
 
-            return (Predicate<Entity>) stack.pop();
+            return (Predicate<IEntity>) stack.pop();
         }
     }
 

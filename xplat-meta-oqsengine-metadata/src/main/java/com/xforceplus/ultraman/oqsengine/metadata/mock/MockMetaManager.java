@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.Collection;
 import java.util.Map;
@@ -49,28 +49,18 @@ public class MockMetaManager implements MetaManager {
         }
     }
 
+    /**
+     * 加载元信息.
+     *
+     * @param id 元信息id.
+     * @return 元信息.
+     */
     public Optional<IEntityClass> load(long id) {
         /*
          * 找出所有版本中版本最大的.
          */
-        return Optional.ofNullable(entityClassPool.entrySet().stream().filter(e -> e.getValue().id() == id)
-            .max((e0, e1) -> {
-                if (e0.getValue().version() < e1.getValue().version()) {
-                    return -1;
-                } else if (e0.getValue().version() > e1.getValue().version()) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }).get().getValue());
-    }
-
-    @Override
-    public Optional<IEntityClass> load(long id, String profile) {
-        if (profile == null || profile.isEmpty()) {
-            return load(id);
-        } else {
-            return Optional.ofNullable(profileEntityClassPool.entrySet().stream().filter(e -> e.getValue().id() == id)
+        Optional<Map.Entry<String, IEntityClass>> op =
+            entityClassPool.entrySet().stream().filter(e -> e.getValue().id() == id)
                 .max((e0, e1) -> {
                     if (e0.getValue().version() < e1.getValue().version()) {
                         return -1;
@@ -79,7 +69,35 @@ public class MockMetaManager implements MetaManager {
                     } else {
                         return 0;
                     }
-                }).get().getValue());
+                });
+        if (op.isPresent()) {
+            return Optional.ofNullable(op.get().getValue());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<IEntityClass> load(long id, String profile) {
+        if (profile == null || profile.isEmpty()) {
+            return load(id);
+        } else {
+            Optional<Map.Entry<String, IEntityClass>> op =
+                profileEntityClassPool.entrySet().stream().filter(e -> e.getValue().id() == id)
+                    .max((e0, e1) -> {
+                        if (e0.getValue().version() < e1.getValue().version()) {
+                            return -1;
+                        } else if (e0.getValue().version() > e1.getValue().version()) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    });
+            if (op.isPresent()) {
+                return Optional.ofNullable(op.get().getValue());
+            } else {
+                return Optional.empty();
+            }
         }
     }
 
@@ -88,16 +106,22 @@ public class MockMetaManager implements MetaManager {
         if (profile == null || profile.isEmpty()) {
             return load(entityClassId, version, profile);
         } else {
-            return Optional.ofNullable(profileEntityClassPool.entrySet().stream().filter(e -> e.getValue().id() == entityClassId)
-                .max((e0, e1) -> {
-                    if (e0.getValue().version() < e1.getValue().version()) {
-                        return -1;
-                    } else if (e0.getValue().version() > e1.getValue().version()) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }).get().getValue());
+            Optional<Map.Entry<String, IEntityClass>> op =
+                profileEntityClassPool.entrySet().stream().filter(e -> e.getValue().id() == entityClassId)
+                    .max((e0, e1) -> {
+                        if (e0.getValue().version() < e1.getValue().version()) {
+                            return -1;
+                        } else if (e0.getValue().version() > e1.getValue().version()) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    });
+            if (op.isPresent()) {
+                return Optional.ofNullable(op.get().getValue());
+            } else {
+                return Optional.empty();
+            }
         }
     }
 

@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.event.payload.transaction.RollbackPaylo
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
@@ -70,7 +69,6 @@ public class MultiLocalTransaction implements Transaction {
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
     private CommitIdStatusService commitIdStatusService;
-    private CacheEventHandler cacheEventHandler;
     private long maxWaitCommitIdSyncMs;
     private TransactionAccumulator accumulator;
     private String msg;
@@ -92,7 +90,7 @@ public class MultiLocalTransaction implements Transaction {
     private void init() {
         startMs = System.currentTimeMillis();
         transactionResourceHolder = new LinkedList<>();
-        this.accumulator = new DefaultTransactionAccumulator(id, cacheEventHandler);
+        this.accumulator = new DefaultTransactionAccumulator(id);
 
         if (eventBus == null) {
             eventBus = DoNothingEventBus.getInstance();
@@ -203,8 +201,6 @@ public class MultiLocalTransaction implements Transaction {
                         new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
 
             }
-
-            cacheEventHandler.commit(id, this.getAccumulator().operationNumber());
         } finally {
             doEnd(true);
         }
@@ -238,7 +234,6 @@ public class MultiLocalTransaction implements Transaction {
                 new ActualEvent(EventType.TX_ROLLBACKED,
                     new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
 
-            cacheEventHandler.rollback(id);
         } finally {
             doEnd(false);
         }
@@ -508,7 +503,6 @@ public class MultiLocalTransaction implements Transaction {
         private boolean rollback = false;
         private LongIdGenerator longIdGenerator;
         private CommitIdStatusService commitIdStatusService;
-        private CacheEventHandler cacheEventHandler;
         private long maxWaitCommitIdSyncMs;
         private String msg;
         private EventBus eventBus = DoNothingEventBus.getInstance();
@@ -560,11 +554,6 @@ public class MultiLocalTransaction implements Transaction {
             return this;
         }
 
-        public Builder withCacheEventHandler(CacheEventHandler cacheEventHandler) {
-            this.cacheEventHandler = cacheEventHandler;
-            return this;
-        }
-
         /**
          * 构造实例.
          *
@@ -580,7 +569,6 @@ public class MultiLocalTransaction implements Transaction {
             multiLocalTransaction.commitIdStatusService = this.commitIdStatusService;
             multiLocalTransaction.eventBus = this.eventBus;
             multiLocalTransaction.maxWaitCommitIdSyncMs = this.maxWaitCommitIdSyncMs;
-            multiLocalTransaction.cacheEventHandler = this.cacheEventHandler;
             multiLocalTransaction.init();
             return multiLocalTransaction;
         }

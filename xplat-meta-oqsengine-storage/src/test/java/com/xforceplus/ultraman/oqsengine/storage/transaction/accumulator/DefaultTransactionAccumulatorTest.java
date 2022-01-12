@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.jupiter.api.Assertions;
@@ -22,7 +21,7 @@ public class DefaultTransactionAccumulatorTest {
     @Test
     public void testAccumulate() throws Exception {
         DefaultTransactionAccumulator accumulator =
-            new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
+            new DefaultTransactionAccumulator(1);
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(1).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(2).build());
         accumulator.accumulateBuild(Entity.Builder.anEntity().withId(3).build());
@@ -42,7 +41,7 @@ public class DefaultTransactionAccumulatorTest {
      */
     @Test
     public void testRepeat() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1);
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
             Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(10).build());
@@ -56,7 +55,7 @@ public class DefaultTransactionAccumulatorTest {
 
     @Test
     public void testNoBuild() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1);
         acc.accumulateBuild(Entity.Builder.anEntity().withId(100).build());
         Assertions.assertEquals(0, acc.getUpdateIds().size());
 
@@ -65,7 +64,7 @@ public class DefaultTransactionAccumulatorTest {
 
     @Test
     public void testReset() throws Exception {
-        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1, new DoNothingCacheEventHandler());
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1);
         acc.reset();
         acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
             Entity.Builder.anEntity().withId(10).build());

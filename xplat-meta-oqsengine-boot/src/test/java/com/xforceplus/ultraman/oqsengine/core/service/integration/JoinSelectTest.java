@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -146,9 +147,9 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = new Page(1, 100);
-        Collection<IEntity> results =
+        OperationResult<Collection<IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(), page);
-        Assertions.assertEquals(0, results.size());
+        Assertions.assertEquals(0, results.getValue().get().size());
         Assertions.assertEquals(0, page.getTotalCount());
     }
 
@@ -173,10 +174,10 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = Page.newSinglePage(100);
-        Collection<IEntity> results =
+        OperationResult<Collection<IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
-        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(1, results.getValue().get().size());
         Assertions.assertEquals(1, page.getTotalCount());
 
         conditions = Conditions.buildEmtpyConditions()
@@ -200,7 +201,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
         page = Page.newSinglePage(100);
         results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(), page);
-        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(1, results.getValue().get().size());
         Assertions.assertEquals(1, page.getTotalCount());
     }
 

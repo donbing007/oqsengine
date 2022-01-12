@@ -664,8 +664,13 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public boolean exist(long id) throws SQLException {
-            return entities.containsKey(id);
+        public int exist(long id) throws SQLException {
+            IEntity entity = entities.get(id);
+            if (entity == null) {
+                return -1;
+            } else {
+                return entity.version();
+            }
         }
     }
 

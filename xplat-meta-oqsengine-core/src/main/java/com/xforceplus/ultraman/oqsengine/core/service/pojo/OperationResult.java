@@ -1,12 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.core.service.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 表示操作结果.
@@ -14,23 +17,30 @@ import java.util.Objects;
  * @author xujia 2021/4/8
  * @since 1.8
  */
-public class OperationResult implements Serializable {
+public class OperationResult<V> implements Serializable {
     private ResultStatus resultStatus;
-    private Collection<Hint> hints = Collections.emptyList();
+    private V value;
+    private Collection<Hint> hints;
     private String message;
-
-    private static final OperationResult SUCCESS = success();
 
     public static OperationResult unknown() {
         return new OperationResult(ResultStatus.UNKNOWN, ResultStatus.UNKNOWN.name());
     }
 
     public static OperationResult success() {
-        return SUCCESS;
+        return success("");
     }
 
     public static OperationResult success(String msg) {
         return new OperationResult(ResultStatus.SUCCESS, msg);
+    }
+
+    public static OperationResult<IEntity> success(IEntity entity) {
+        return new OperationResult(ResultStatus.SUCCESS, entity, null);
+    }
+
+    public static OperationResult<Collection<IEntity>> success(Collection<IEntity> entities) {
+        return new OperationResult<Collection<IEntity>>(ResultStatus.SUCCESS, entities, null);
     }
 
     public static OperationResult conflict() {
@@ -41,6 +51,10 @@ public class OperationResult implements Serializable {
         return new OperationResult(ResultStatus.CONFLICT, msg);
     }
 
+    public static OperationResult conflict(long entityId) {
+        return notFound(String.format("A conflict occurred for entity %d..", entityId));
+    }
+
     public static OperationResult notFound() {
         return notFound(null);
     }
@@ -49,12 +63,12 @@ public class OperationResult implements Serializable {
         return new OperationResult(ResultStatus.NOT_FOUND, msg);
     }
 
-    public static OperationResult unCreated() {
-        return unCreated(null);
+    public static OperationResult notFound(long entityId) {
+        return notFound(String.format("Entity %d was not found.", entityId));
     }
 
-    public static OperationResult unCreated(String msg) {
-        return new OperationResult(ResultStatus.UNCREATED, msg);
+    public static OperationResult unCreated() {
+        return new OperationResult(ResultStatus.UNCREATED, "The entity was not created successfully.");
     }
 
     public static OperationResult unAccumulate() {
@@ -81,49 +95,64 @@ public class OperationResult implements Serializable {
         return new OperationResult(ResultStatus.HALF_SUCCESS, msg);
     }
 
-    public static OperationResult fieldMust() {
-        return fieldMust(null);
+    /**
+     * 缺少必须字段.
+     */
+    public static OperationResult fieldMust(IEntityField field) {
+        return new OperationResult(ResultStatus.FIELD_MUST, String.format("The field %s is required.", field.name()));
     }
 
-    public static OperationResult fieldMust(String msg) {
-        return new OperationResult(ResultStatus.FIELD_MUST, msg);
+    /**
+     * 字段过长.
+     */
+    public static OperationResult fieldTooLong(IEntityField field) {
+        return new OperationResult(ResultStatus.FIELD_TOO_LONG,
+            String.format("Field %s is too long. The maximum allowed length is %d.",
+                field.name(), field.config().getLen()));
     }
 
-    public static OperationResult fieldToLong() {
-        return fieldToLong(null);
+    /**
+     * 精度过高.
+     */
+    public static OperationResult fieldHighPrecision(IEntityField field) {
+        return new OperationResult(ResultStatus.FIELD_HIGH_PRECISION,
+            String.format("Field %s is too precise. The maximum accuracy allowed is %d.",
+                field.name(), field.config().getPrecision()));
     }
 
-    public static OperationResult fieldToLong(String msg) {
-        return new OperationResult(ResultStatus.FIELD_TOO_LONG, msg);
-    }
-
-    public static OperationResult fieldHighPrecision() {
-        return fieldHighPrecision(null);
-    }
-
-    public static OperationResult fieldHighPrecision(String msg) {
-        return new OperationResult(ResultStatus.FIELD_HIGH_PRECISION, msg);
-    }
-
-    public static OperationResult fieldNonExist() {
-        return fieldNonExist(null);
-    }
-
-    public static OperationResult fieldNonExist(String msg) {
-        return new OperationResult(ResultStatus.FIELD_NON_EXISTENT, msg);
+    /**
+     * 字段不存在.
+     */
+    public static OperationResult fieldNonExist(IEntityField field) {
+        return new OperationResult(ResultStatus.FIELD_NON_EXISTENT,
+            String.format("The field %s does not exist.", field.name()));
     }
 
     public static OperationResult notExistMeta() {
-        return notExistMeta(null);
+        return new OperationResult(ResultStatus.NOT_EXIST_META, "Unexpected meta information.");
     }
 
-    public static OperationResult notExistMeta(String msg) {
-        return new OperationResult(ResultStatus.NOT_EXIST_META, msg);
+    /**
+     * 元信息不存在.
+     */
+    public static OperationResult notExistMeta(EntityClassRef ref) {
+        if (ref.getProfile() != null) {
+            return new OperationResult(ResultStatus.NOT_EXIST_META,
+                String.format("Meta message %s-%s does not exist.", ref.getCode(), ref.getProfile()));
+        } else {
+            return new OperationResult(ResultStatus.NOT_EXIST_META,
+                String.format("Meta message %s does not exist.", ref.getCode()));
+        }
     }
 
     private OperationResult(ResultStatus resultStatus, String message) {
+        this(resultStatus, null, message);
+    }
+
+    private OperationResult(ResultStatus resultStatus, V value, String message) {
         this.resultStatus = resultStatus;
         this.message = message;
+        this.value = value;
     }
 
     /**
@@ -133,7 +162,7 @@ public class OperationResult implements Serializable {
      * @return 当前实例.
      */
     public OperationResult addHint(Hint hint) {
-        if (Collections.EMPTY_LIST == hints) {
+        if (this.hints == null) {
             this.hints = new LinkedList();
         }
 
@@ -153,7 +182,7 @@ public class OperationResult implements Serializable {
      * @return 当前实例.
      */
     public OperationResult addHints(Collection<Hint> hints) {
-        if (Collections.EMPTY_LIST == hints) {
+        if (this.hints == null) {
             this.hints = new LinkedList();
         }
 
@@ -182,6 +211,10 @@ public class OperationResult implements Serializable {
         return hints;
     }
 
+    public Optional<V> getValue() {
+        return Optional.ofNullable(value);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -190,13 +223,26 @@ public class OperationResult implements Serializable {
         if (!(o instanceof OperationResult)) {
             return false;
         }
-        OperationResult result = (OperationResult) o;
-        return resultStatus == result.resultStatus && Objects.equals(hints, result.hints)
-            && Objects.equals(message, result.message);
+        OperationResult<?> result = (OperationResult<?>) o;
+        return getResultStatus() == result.getResultStatus() && Objects.equals(getValue(), result.getValue())
+            && Objects.equals(getHints(), result.getHints()) && Objects.equals(getMessage(),
+            result.getMessage());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(resultStatus, hints, message);
+        return Objects.hash(getResultStatus(), getValue(), getHints(), getMessage());
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("OperationResult{");
+        sb.append("hints=").append(hints);
+        sb.append(", message='").append(message).append('\'');
+        sb.append(", resultStatus=").append(resultStatus);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
+    }
+
 }

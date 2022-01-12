@@ -143,6 +143,7 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void delete() {
         this.deleted = true;
+        this.neat();
     }
 
     @Override

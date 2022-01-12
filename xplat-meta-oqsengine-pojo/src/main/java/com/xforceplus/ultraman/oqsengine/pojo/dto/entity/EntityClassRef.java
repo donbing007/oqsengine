@@ -11,7 +11,7 @@ import java.util.Objects;
  * @version 0.1 2021/2/20 14:20
  * @since 1.8
  */
-public class EntityClassRef implements Serializable {
+public class EntityClassRef implements Serializable, Comparable<EntityClassRef> {
 
     private long id;
     private String code;
@@ -78,13 +78,18 @@ public class EntityClassRef implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("id=").append(id);
-        sb.append(", profile=").append(profile);
+        final StringBuilder sb = new StringBuilder("EntityClassRef{");
+        sb.append("code='").append(code).append('\'');
+        sb.append(", id=").append(id);
+        sb.append(", profile='").append(profile).append('\'');
         sb.append('}');
         return sb.toString();
     }
 
+    @Override
+    public int compareTo(EntityClassRef o) {
+        return Long.compare(id, o.id);
+    }
 
     /**
      * builder.

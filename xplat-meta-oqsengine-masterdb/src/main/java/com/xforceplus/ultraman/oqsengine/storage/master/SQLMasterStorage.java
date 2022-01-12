@@ -169,8 +169,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "exist"})
     @Override
-    public boolean exist(long id) throws SQLException {
-        return (boolean) transactionExecutor.execute(((tx, resource, hint) ->
+    public int exist(long id) throws SQLException {
+        return (int) transactionExecutor.execute(((tx, resource, hint) ->
             ExistExecutor.build(tableName, resource, queryTimeout).execute(id)));
     }
 

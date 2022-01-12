@@ -313,10 +313,9 @@ public interface CalculationContext {
     /**
      * 锁定目标实例.
      *
-     * @param waitTimeoutMs 最大等待时间.
      * @param entityIds 目标实例列表.
      */
-    boolean tryLocksEntity(long waitTimeoutMs, long ...entityIds);
+    boolean tryLocksEntity(long ...entityIds);
 
     /**
      * 清理.

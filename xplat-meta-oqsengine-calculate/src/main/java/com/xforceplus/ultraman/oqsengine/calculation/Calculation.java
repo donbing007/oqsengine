@@ -23,6 +23,8 @@ public interface Calculation {
      * CalculationContext 还提供了一个实例池,用以缓存当前处理相关的实例(包含自己).
      * 所有被焦点的实例都应该可以在实例缓存池中找到.
      *
+     * 注意: 当前焦点实例中的
+     *
      * @param context 计算的上下文.
      * @return 计算后的结果.
      * @throws CalculationException 计算异常.
