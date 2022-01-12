@@ -399,8 +399,13 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public boolean exist(long id) throws SQLException {
-            return data.containsKey(id);
+        public int exist(long id) throws SQLException {
+            IEntity entity = data.get(id);
+            if (entity == null) {
+                return -1;
+            } else {
+                return entity.version();
+            }
         }
     }
 

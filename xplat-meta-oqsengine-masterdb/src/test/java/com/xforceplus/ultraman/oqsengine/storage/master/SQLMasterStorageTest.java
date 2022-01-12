@@ -444,7 +444,7 @@ public class SQLMasterStorageTest {
 
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
 
-        Assertions.assertFalse(storage.exist(targetEntity.id()));
+        Assertions.assertFalse(storage.exist(targetEntity.id()) >= 0);
     }
 
     @Test
@@ -468,15 +468,16 @@ public class SQLMasterStorageTest {
 
         Assertions.assertTrue(storage.delete(targetEntity, l2EntityClass));
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
-        Assertions.assertFalse(storage.exist(targetEntity.id()));
+        Assertions.assertFalse(storage.exist(targetEntity.id()) >= 0);
     }
 
     @Test
     public void testExist() throws Exception {
         IEntity targetEntity = expectedEntitys.get(2);
-        Assertions.assertTrue(storage.exist(targetEntity.id()));
 
-        Assertions.assertFalse(storage.exist(-1));
+        Assertions.assertEquals(0, storage.exist(targetEntity.id()));
+
+        Assertions.assertFalse(storage.exist(-1) >= 0);
     }
 
     // 初始化数据
@@ -518,6 +519,7 @@ public class SQLMasterStorageTest {
             .withId(baseId)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l2EntityClassRef)
+            .withVersion(1)
             .build();
         entity.entityValue().addValues(
             buildValue(baseId,

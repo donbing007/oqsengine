@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -53,11 +52,6 @@ public class DefaultCalculationImpl implements Calculation {
      * 每一个字段修改维护构造影响树的最大迭代次数.
      */
     private static int MAX_BUILD_INFUENCE_NUMBER = 1000;
-
-    /*
-    独占锁的等待时间.
-     */
-    private long lockTimeoutMs = 30000;
 
     private final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
@@ -141,8 +135,6 @@ public class DefaultCalculationImpl implements Calculation {
      * @param context 上下文.
      */
     private boolean doMaintain(CalculationContext context) throws CalculationException {
-        // 保留当前引起维护的目标实例标识.
-        long targetEntityId = context.getFocusEntity().id();
         /*
             根据所有影响树得到目标更新实例集合.
             entityClass 表示当前影响树被影响的实例元信息.
@@ -167,8 +159,6 @@ public class DefaultCalculationImpl implements Calculation {
 
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
-
-        ResourceLocker locker = context.getResourceWithEx(() -> context.getResourceLocker());
 
         for (Infuence infuence : infuences) {
 
@@ -204,7 +194,7 @@ public class DefaultCalculationImpl implements Calculation {
 
                 // 影响实例增加独占锁.
                 if (affectedEntityIds.length > 0) {
-                    if (!context.tryLocksEntity(lockTimeoutMs, affectedEntityIds)) {
+                    if (!context.tryLocksEntity(affectedEntityIds)) {
                         throw new CalculationException(
                             "Conflicts are calculated and the attempt limit is reached. To give up!");
                     }

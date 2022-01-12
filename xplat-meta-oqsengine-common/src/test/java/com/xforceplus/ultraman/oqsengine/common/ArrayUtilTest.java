@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -236,5 +238,37 @@ public class ArrayUtilTest {
         });
 
         Assertions.assertArrayEquals(expected, results);
+    }
+
+    @Test
+    public void testBinarySearch() throws Exception {
+        Bean[] beans = IntStream.range(0, 100).mapToObj(i -> new Bean(i, Integer.toString(i))).toArray(Bean[]::new);
+
+        int index = ArrayUtil.binarySearch(beans, 32, (b) -> b.attr0, Integer::compare);
+        Assertions.assertTrue(index >= 0);
+
+        Bean bean = beans[index];
+        Assertions.assertEquals(32, bean.attr0);
+        Assertions.assertEquals("32", bean.attr1);
+
+        index = ArrayUtil.binarySearch(beans, "33", (b) -> b.attr1, Comparator.comparingInt(Integer::parseInt));
+        Assertions.assertTrue(index >= 0);
+        bean = beans[index];
+
+        Assertions.assertEquals(33, bean.attr0);
+        Assertions.assertEquals("33", bean.attr1);
+
+        index = ArrayUtil.binarySearch(beans, "330", (b) -> b.attr1, Comparator.comparingInt(Integer::parseInt));
+        Assertions.assertTrue(index < 0);
+    }
+
+    private static class Bean {
+        private int attr0;
+        private String attr1;
+
+        public Bean(int attr0, String attr1) {
+            this.attr0 = attr0;
+            this.attr1 = attr1;
+        }
     }
 }

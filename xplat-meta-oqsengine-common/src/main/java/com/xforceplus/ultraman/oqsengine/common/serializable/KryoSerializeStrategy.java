@@ -16,10 +16,25 @@ import java.io.Serializable;
  */
 public class KryoSerializeStrategy implements SerializeStrategy {
 
-    private Kryo kryo = new Kryo();
+    private Kryo kryo;
 
     public KryoSerializeStrategy() {
+        kryo = new Kryo();
         kryo.setRegistrationRequired(false);
+    }
+
+    /**
+     * 注册一个类型.
+     *
+     * @param clazz 需要注册的类型.
+     * @param id    表示的数字.不可以小于1.
+     */
+    public void registerClass(Class clazz, int id) {
+        if (id < 1) {
+            throw new IllegalArgumentException("It has to be greater than 0.");
+        }
+
+        kryo.register(clazz, id);
     }
 
     @Override

@@ -48,7 +48,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -208,7 +207,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
 
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
     }
 
@@ -225,7 +224,7 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity order = buildOrderEntity(user0);
         entityManagementService.build(order);
 
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertEquals(
             user0.entityValue().getValue("用户编号").get().getValue(),
             order.entityValue().getValue("用户编号lookup").get().getValue()
@@ -246,7 +245,7 @@ public class CalculationTest extends AbstractContainerExtends {
             );
 
         entityManagementService.replace(order);
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertEquals(
             user1.entityValue().getValue("用户编号").get().getValue(),
             order.entityValue().getValue("用户编号lookup").get().getValue()
@@ -281,7 +280,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
 
         logger.info("Query {} orders.", orderSize);
-        Collection<IEntity> orders = entitySearchService.selectByConditions(
+        OperationResult<Collection<IEntity>> orders = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.ORDER_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(orderSize)).build()
@@ -290,7 +289,7 @@ public class CalculationTest extends AbstractContainerExtends {
         String userNumber = user.entityValue().getValue("用户编号").get().valueToString();
         logger.info("Verify that the value of the \"用户编号lookup\" field in {} orders is equal to {}.",
             orderSize, userNumber);
-        for (IEntity order : orders) {
+        for (IEntity order : orders.getValue().get()) {
             Assertions.assertEquals(Long.toString(user.id()),
                 order.entityValue().getValue("用户编号lookup").get().getAttachment().get());
             Assertions.assertEquals(userNumber,
@@ -299,7 +298,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
         String newUseNumber = "U" + idGenerator.next();
         logger.info("The user id is changed from {} to {}.", userNumber, newUseNumber);
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         user.entityValue().addValue(
             new StringValue(
                 MockEntityClassDefine.USER_CLASS.field("用户编号").get(), newUseNumber)
@@ -317,7 +316,7 @@ public class CalculationTest extends AbstractContainerExtends {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(3000)).build()
         );
         // 事务内
-        long syncedOrderCount = orders.stream().filter(e ->
+        long syncedOrderCount = orders.getValue().get().stream().filter(e ->
             Objects.equals(
                 e.entityValue().getValue("用户编号lookup").get().getValue(),
                 newUseNumber
@@ -340,7 +339,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
         boolean fail = true;
         for (int i = 0; i < 10000; i++) {
-            syncedOrderCount = orders.stream().filter(e ->
+            syncedOrderCount = orders.getValue().get().stream().filter(e ->
                 Objects.equals(
                     e.entityValue().getValue("用户编号lookup").get().getValue(),
                     newUseNumber
@@ -393,9 +392,9 @@ public class CalculationTest extends AbstractContainerExtends {
                     startLatch.await();
                     entityManagementService.build(buildOrderEntity(user));
 
-                    Optional<IEntity> currentUserOp = entitySearchService.selectOne(
+                    OperationResult<IEntity> currentUserOp = entitySearchService.selectOne(
                         userId, MockEntityClassDefine.USER_CLASS.ref());
-                    queue.add(currentUserOp.get());
+                    queue.add(currentUserOp.getValue().get());
 
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
@@ -410,7 +409,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Assertions.assertEquals(size, queue.size());
 
-        IEntity currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).get();
+        IEntity currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).getValue().get();
         long max = currentUser.entityValue().getValue("订单总数count").get().valueToLong();
         Assertions.assertEquals(size, max);
 
@@ -478,8 +477,8 @@ public class CalculationTest extends AbstractContainerExtends {
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertEquals(
             0,
             order.entityValue().getValue("最小数量min").get().valueToLong()
@@ -508,8 +507,8 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         Assertions.assertTrue(orderItem.id() > 0,
             "The identity of the user entity was expected to be set, but was not.");
         Assertions.assertEquals(
@@ -545,15 +544,15 @@ public class CalculationTest extends AbstractContainerExtends {
         operationResult = entityManagementService.build(order1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
-        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         IEntity orderItem1 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
 
-        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
         Assertions.assertNotEquals(
             new BigDecimal("0.0"),
@@ -580,8 +579,8 @@ public class CalculationTest extends AbstractContainerExtends {
 
         IEntity orderItem2 = buildOrderItem(order1);
         operationResult = entityManagementService.build(orderItem2);
-        order1 = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        order1 = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         Assertions.assertNotEquals(
             new BigDecimal("0.0"),
             user.entityValue().getValue("平均消费金额avg").get().getValue()
@@ -630,7 +629,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
         orderItem = Entity.Builder.anEntity()
             .withId(orderItem.id())
@@ -665,13 +664,13 @@ public class CalculationTest extends AbstractContainerExtends {
 
         operationResult = entityManagementService.replace(order);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
 
         Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent()
             && !((String) order.entityValue().getValue("订单号").get().getValue()).isEmpty()
         );
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("总金额sum").get().getValue());
@@ -702,14 +701,14 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
             operationResult.getMessage());
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
 
         operationResult = entityManagementService.delete(orderItem);
         Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
 
-        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).get();
-        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).get();
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
 
         Assertions.assertEquals(new BigDecimal("0.000000"),
             order.entityValue().getValue("总金额sum").get().getValue());
@@ -794,16 +793,17 @@ public class CalculationTest extends AbstractContainerExtends {
         MockEntityClassDefine.initMetaManager(metaManager);
 
         Either<String, List<IEntityField>> test = initCalculationManager.initAppCalculations("test");
-        Optional<IEntity> entity1;
+        OperationResult<IEntity> entity1;
         while (true) {
             entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
-            if (entity1.get().entityValue().size() >= 11) {
+            if (entity1.getValue().get().entityValue().size() >= 11) {
                 latch.countDown();
                 break;
             }
         }
         latch.await();
-        Assertions.assertEquals(200, entity1.get().entityValue().getValue("订单项总数count").get().valueToLong());
+        Assertions.assertEquals(200,
+            entity1.getValue().get().entityValue().getValue("订单项总数count").get().valueToLong());
     }
 
     // 构造用户.

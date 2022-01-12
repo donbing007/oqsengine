@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  */
 public class DefaultCalculationContext implements CalculationContext {
 
+    private long lockTimeoutMs;
     private IEntity sourceEntity;
     private boolean maintenance;
     private IEntity focusEntity;
@@ -360,7 +361,7 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public boolean tryLocksEntity(long waitTimeoutMs, long... entityIds) {
+    public boolean tryLocksEntity(long... entityIds) {
         if (this.lockedEnittyIds == null) {
             this.lockedEnittyIds = new HashSet<>();
         }
@@ -373,7 +374,7 @@ public class DefaultCalculationContext implements CalculationContext {
         if (keys.length > 0) {
             boolean result = false;
             try {
-                result = this.resourceLocker.tryLocks(waitTimeoutMs, keys);
+                result = this.resourceLocker.tryLocks(lockTimeoutMs, keys);
             } catch (InterruptedException e) {
                 // donothing
             }
@@ -449,6 +450,7 @@ public class DefaultCalculationContext implements CalculationContext {
      * 构造器.
      */
     public static final class Builder {
+        private long lockTimeoutMs = 30000;
         private EventBus eventBus;
         private Transaction transaction;
         private CalculationScenarios scenarios;
@@ -529,6 +531,11 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
+        public Builder withLockTimeroutMs(long lockTimeoutMs) {
+            this.lockTimeoutMs = lockTimeoutMs;
+            return this;
+        }
+
         /**
          * 构造.
          */
@@ -546,6 +553,7 @@ public class DefaultCalculationContext implements CalculationContext {
             defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
             defaultCalculationContext.resourceLocker = this.resourceLocker;
             defaultCalculationContext.calculationLogicFactory = this.calculationLogicFactory;
+            defaultCalculationContext.lockTimeoutMs = this.lockTimeoutMs;
             return defaultCalculationContext;
         }
     }

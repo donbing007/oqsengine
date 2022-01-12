@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.core.service.impl;
+package com.xforceplus.ultraman.oqsengine.core.service.impl.help;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.calculator.mock.MockIDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -33,7 +34,6 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import io.lettuce.core.RedisClient;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -172,7 +172,6 @@ public class TestInitTools {
                 return storageTask.run(
                     MultiLocalTransaction.Builder.anMultiLocalTransaction()
                         .withId(1)
-                        .withCacheEventHandler(new DoNothingCacheEventHandler())
                         .withEventBus(
                             new EventBus() {
                                 @Override

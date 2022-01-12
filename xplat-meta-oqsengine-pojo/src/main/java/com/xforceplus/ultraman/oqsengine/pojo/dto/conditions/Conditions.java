@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.query.MemQuery;
 import java.io.Serializable;
 import java.util.ArrayDeque;
@@ -115,7 +115,7 @@ public class Conditions implements Serializable {
      * @param entities 输入数据对象列表
      * @return 返回过滤的数据对象列表
      */
-    public Collection<Entity> query(Collection<Entity> entities) {
+    public Collection<IEntity> match(Collection<IEntity> entities) {
         return MemQuery.query(entities, this);
     }
 

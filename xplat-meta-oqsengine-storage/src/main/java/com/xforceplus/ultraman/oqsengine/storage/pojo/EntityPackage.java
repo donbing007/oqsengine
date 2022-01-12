@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -186,5 +187,22 @@ public class EntityPackage implements Serializable {
         if (entities == null) {
             entities = new ArrayList<>(MAX_SIZE);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EntityPackage)) {
+            return false;
+        }
+        EntityPackage that = (EntityPackage) o;
+        return Objects.equals(entities, that.entities);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entities);
     }
 }
