@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
+import io.vavr.Tuple2;
 
 /**
  * 用于 match 函数中的匹配条件构造器.
@@ -52,7 +53,10 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
                 throw new IllegalStateException(String.format("Unsupported operator.[%s]", operator().getSymbol()));
         }
 
-        int conditonSize = 0;
+
+        boolean multiCondition = storageValue.haveNext();
+
+        int conditionSize = 0;
         while (storageValue != null) {
 
             String query = "";
@@ -67,28 +71,38 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
                     break;
                 }
                 default: {
-                    query = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+                    Tuple2<String, Boolean> res =
+                        SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+                    //  第一个值为转换的结果
+                    query = res._1;
+
+                    if (!multiCondition) {
+                        multiCondition = res._2;
+                    }
                 }
             }
 
             if (buff.length() > 0) {
                 buff.append(' ');
             }
-
+            conditionSize ++;
             buff.append(query);
-
-            conditonSize++;
 
             storageValue = storageValue.next();
         }
 
-        final int onlyOneValue = 1;
-        if (conditonSize > onlyOneValue) {
-            buff.insert(0, "(").insert(0, symbol);
-            buff.append(")");
+        int onlyOneCondition = 1;
+        if (multiCondition) {
+            //  只有存在多个条件的情况、才前后增加括号()
+            if (conditionSize > onlyOneCondition) {
+                buff.insert(0, "(");
+                buff.append(")");
+            }
+            buff.insert(0, symbol);
         } else {
             buff.insert(0, symbol);
         }
+
 
         return buff.toString();
     }

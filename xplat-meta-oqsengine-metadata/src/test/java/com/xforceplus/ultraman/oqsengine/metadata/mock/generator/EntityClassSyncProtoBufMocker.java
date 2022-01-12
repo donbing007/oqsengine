@@ -28,22 +28,22 @@ import java.util.Optional;
  * @since 1.8
  */
 public class EntityClassSyncProtoBufMocker {
-    public static List<GeneralConstant.FourTa<Integer, String, CalculationType, Boolean>>
+    public static List<GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean>>
         EXPECTED_ENTITY_INFO_LIST =
         Arrays.asList(
-            new GeneralConstant.FourTa<>(1, FieldType.LONG.name(),
+            new GeneralConstant.FourGeneric<>(1, FieldType.LONG.name(),
                 CalculationType.STATIC, false),
-            new GeneralConstant.FourTa<>(2, FieldType.STRING.name(),
+            new GeneralConstant.FourGeneric<>(2, FieldType.STRING.name(),
                 CalculationType.STATIC, false),
-            new GeneralConstant.FourTa<>(3, FieldType.LONG.name(),
+            new GeneralConstant.FourGeneric<>(3, FieldType.LONG.name(),
                 CalculationType.FORMULA, false),
-            new GeneralConstant.FourTa<>(4, FieldType.STRING.name(),
+            new GeneralConstant.FourGeneric<>(4, FieldType.STRING.name(),
                 CalculationType.AUTO_FILL, false)
         );
 
-    public static GeneralConstant.FourTa<Integer, String, CalculationType, Boolean>
-        EXPECTED_PROFILE_FOUR_TA =
-        new GeneralConstant.FourTa<>(10, FieldType.LONG.name(),
+    public static GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean>
+        EXPECTED_PROFILE_FOUR_GEN =
+        new GeneralConstant.FourGeneric<>(10, FieldType.LONG.name(),
             CalculationType.FORMULA, true);
 
     public static class Response {
@@ -114,22 +114,25 @@ public class EntityClassSyncProtoBufMocker {
             .addAllEntityFields(entityFieldInfos)
             .addAllRelations(relationInfos)
             .addProfiles(
-                profileInfo(GeneralConstant.PROFILE_CODE_1.getValue() * id, GeneralConstant.PROFILE_CODE_1.getKey(), EXPECTED_PROFILE_FOUR_TA)
+                profileInfo(GeneralConstant.PROFILE_CODE_1.getValue() * id,
+                    GeneralConstant.PROFILE_CODE_1.getKey(), EXPECTED_PROFILE_FOUR_GEN)
             )
             .addProfiles(
-                profileInfo(GeneralConstant.PROFILE_CODE_2.getValue() * id, GeneralConstant.PROFILE_CODE_2.getKey(), EXPECTED_PROFILE_FOUR_TA))
+                profileInfo(GeneralConstant.PROFILE_CODE_2.getValue() * id,
+                    GeneralConstant.PROFILE_CODE_2.getKey(), EXPECTED_PROFILE_FOUR_GEN))
             .build();
     }
 
     /**
      * 生成profileInfo.
      */
-    public static ProfileInfo profileInfo(long id, String code, GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
+    public static ProfileInfo profileInfo(long id, String code,
+                                          GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean> fourGeneric) {
         return ProfileInfo.newBuilder().setCode(code)
             .addRelationInfo(relationInfo(id, id + GeneralConstant.MOCK_PROFILE_R_DISTANCE, id,
                 GeneralConstant.DEFAULT_RELATION_TYPE, id))
             .addEntityFieldInfo(
-                entityFieldInfo(id, fourTa)
+                entityFieldInfo(id, fourGeneric)
             ).build();
     }
 
@@ -186,7 +189,7 @@ public class EntityClassSyncProtoBufMocker {
      * 生成entityFieldInfo.
      */
     public static EntityFieldInfo entityFieldInfo(long id,
-                                                  GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
+                                                  GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean> fourTa) {
         EntityFieldInfo.FieldType protoType = toFieldType(fourTa.getB());
         FieldType fieldType = FieldType.fromRawType(protoType.name());
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()

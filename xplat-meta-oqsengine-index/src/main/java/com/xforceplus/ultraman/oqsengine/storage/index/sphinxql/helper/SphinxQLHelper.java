@@ -1,20 +1,29 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import io.vavr.Tuple2;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +34,12 @@ import java.util.Map;
  * @since 1.8
  */
 public class SphinxQLHelper {
+
+    /**
+     * select的单个关键字最大长度.
+     */
+    public static final int MAX_WORLD_SPLIT_LENGTH = 29;
+
     /**
      * 标记这是一个支持模糊搜索的拆分词.
      */
@@ -49,6 +64,16 @@ public class SphinxQLHelper {
     };
 
     protected static final Map<Character, String> REPLACE_SYMBOLS;
+
+
+    /**
+     * 多值字段起始标记
+     */
+    private static final char START = '[';
+    /**
+     * 多值字段结束标记
+     */
+    private static final char END = ']';
 
     static {
         Arrays.sort(IGNORE_SYMBOLS);
@@ -156,24 +181,27 @@ public class SphinxQLHelper {
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
      * @param value 目标字段.
+     * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
-    public static String buildPreciseQuery(StorageValue value, boolean useGroupName) {
-        StringBuilder buff = new StringBuilder();
-        ShortStorageName shortStorageName = value.shortStorageName();
+    public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, boolean useGroupName) {
+//        StringBuilder buff = new StringBuilder();
+//        ShortStorageName shortStorageName = value.shortStorageName();
+//        buff.append(shortStorageName.getPrefix())
+//            .append(filterSymbols(value.value().toString()));
+//
+//        /*
+//         * 如果使用组名的话,忽略尾部定位序号.
+//         */
+//        if (useGroupName) {
+//            buff.append(shortStorageName.getNoLocationSuffix());
+//        } else {
+//            buff.append(shortStorageName.getSuffix());
+//        }
+//
+//        return buff.toString();
 
-        buff.append(shortStorageName.getPrefix())
-            .append(filterSymbols(value.value().toString()));
-        /*
-         * 如果使用组名的话,忽略尾部定位序号.
-         */
-        if (useGroupName) {
-            buff.append(shortStorageName.getNoLocationSuffix());
-        } else {
-            buff.append(shortStorageName.getSuffix());
-        }
-
-        return buff.toString();
+        return stringConditionFormat(value.value().toString(), value.shortStorageName(), useGroupName);
     }
 
     /**
@@ -290,4 +318,152 @@ public class SphinxQLHelper {
 
         return buff.toString();
     }
+
+
+
+    /**
+     * strings value通用的转换(StorageValue)逻辑.
+     * @param storageName 字段存储名称.
+     * @param originValue 字段存储值（origin）.
+     * @param attachment 是否附件.
+     * @return 存储结构.
+     */
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment) {
+
+        String logicName = AnyStorageValue.getInstance(storageName).logicName();
+
+        if (attachment) {
+            return new StringStorageValue(logicName, originValue, true);
+        }
+
+        StringBuilder buff = new StringBuilder();
+        StorageValue head = null;
+        int location = 0;
+        boolean watch = false;
+        for (int i = 0; i < originValue.length(); i++) {
+            char point = originValue.charAt(i);
+            if (START == point) {
+                watch = true;
+                continue;
+            }
+
+            if (END == point) {
+                watch = false;
+
+                StorageValue newStorageValue = new StringStorageValue(logicName, buff.toString(), true);
+                newStorageValue.locate(location++);
+
+                if (head == null) {
+                    head = newStorageValue;
+                } else {
+                    head.stick(newStorageValue);
+                }
+
+                buff.delete(0, buff.length());
+                continue;
+            }
+
+            if (watch) {
+                buff.append(point);
+            }
+        }
+
+        return head;
+    }
+
+    /**
+     *
+     * @param word raw word.
+     * @param shortStorageName name.
+     * @param useGroupName 是否userGroupName.
+     * @return 转换值, 是否分割为多值.
+     */
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
+        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        boolean isFirst = true;
+        if (values.length > 1) {
+            stringBuilder.append("(");
+        }
+
+        for (String v : values) {
+            if (!isFirst) {
+                stringBuilder.append(" << ");
+            }
+
+            stringBuilder.append(shortStorageName.getPrefix())
+                .append(filterSymbols(v));
+
+            /*
+             * 如果使用组名的话,忽略尾部定位序号.
+             */
+            if (useGroupName) {
+                stringBuilder.append(shortStorageName.getNoLocationSuffix());
+            } else {
+                stringBuilder.append(shortStorageName.getSuffix());
+            }
+
+            isFirst = false;
+        }
+
+        if (values.length > 1) {
+            stringBuilder.append(")");
+        }
+        return new Tuple2<>(stringBuilder.toString(), values.length > 1);
+    }
+
+    /**
+     * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
+     */
+    public static String stringValueFormat(String word) {
+        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String v : values) {
+            stringBuilder.append(START)
+                .append(v)
+                .append(END);
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     * 切割一个长字符串, 按照传入的长度.
+     *
+     * @param word 字符串.
+     * @param length 字符串最大允许长度.
+     * @return 切割后的字符串数组.
+     */
+    private static String[] longStringWrap(String word, int length) {
+        int fullSize = word.length() / length;
+        if (0 != word.length() % length) {
+            fullSize += 1;
+        }
+
+        String[] res = new String[fullSize];
+        for (int index = 0; index < fullSize; index++) {
+            res[index] = substring(word, index * length, (index + 1) * length);
+        }
+
+        return res;
+    }
+
+    /**
+     * 分割字符串
+     * @param str 字符串.
+     * @param f 起始位置.
+     * @param t 长度.
+     * @return 切割后的字符串.
+     */
+    private static String substring(String str, int f, int t) {
+        if (f > str.length())
+            return null;
+        if (t > str.length()) {
+            return str.substring(f, str.length());
+        } else {
+            return str.substring(f, t);
+        }
+    }
+
 }

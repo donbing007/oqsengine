@@ -38,15 +38,15 @@ public class GeneralConstant {
     public static final int MOCK_STEP = 1;
 
 
+    //  relation
     public static final String R = "_R";
+    //  entityField
     public static final String E = "_E";
-    public static final String GENERAL_SUFFIX = "_GeneralSuffix";
 
     public static final String DICT_ID_SUFFIX = "_dictIdSuffix";
     public static final String CNAME_SUFFIX = "_cnameSuffix";
     public static final String NAME_SUFFIX = "_nameSuffix";
     public static final String CODE_SUFFIX = "_codeSuffix";
-    public static final Integer DEFAULT_RIGHT_ID_DISTANCE = 1000;
 
 
     public static final Long DEFAULT_LONG_VALUE = 0L;
@@ -64,31 +64,31 @@ public class GeneralConstant {
      * @param <C>
      * @param <D>
      */
-    public static class FourTa<A, B, C, D> {
-        private final Object[] fourTa;
+    public static class FourGeneric<A, B, C, D> {
+        private final Object[] fourGeneric;
 
-        public FourTa(A a, B b, C c, D d) {
-            this.fourTa = new Object[4];
-            this.fourTa[0] = a;
-            this.fourTa[1] = b;
-            this.fourTa[2] = c;
-            this.fourTa[3] = d;
+        public FourGeneric(A a, B b, C c, D d) {
+            this.fourGeneric = new Object[4];
+            this.fourGeneric[0] = a;
+            this.fourGeneric[1] = b;
+            this.fourGeneric[2] = c;
+            this.fourGeneric[3] = d;
         }
 
         public A getA() {
-            return (A) this.fourTa[0];
+            return (A) this.fourGeneric[0];
         }
 
         public B getB() {
-            return (B) this.fourTa[1];
+            return (B) this.fourGeneric[1];
         }
 
         public C getC() {
-            return (C) this.fourTa[2];
+            return (C) this.fourGeneric[2];
         }
 
         public D getD() {
-            return (D) this.fourTa[3];
+            return (D) this.fourGeneric[3];
         }
     }
 

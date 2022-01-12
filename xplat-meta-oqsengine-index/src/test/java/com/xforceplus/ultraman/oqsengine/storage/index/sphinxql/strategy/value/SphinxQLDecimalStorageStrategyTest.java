@@ -76,7 +76,7 @@ public class SphinxQLDecimalStorageStrategyTest {
     public void testConvert() throws Exception {
         SphinxQLDecimalStorageStrategy storageStrategy = new SphinxQLDecimalStorageStrategy();
         StorageValue storageValue = storageStrategy.convertIndexStorageValue(
-            "123456S", "789.123", false);
+            "123456S", "789.123", false, false);
         StorageValue intStorageValue = storageValue;
         StorageValue decStorageValue = storageValue.next();
         Assertions.assertNotNull(intStorageValue);

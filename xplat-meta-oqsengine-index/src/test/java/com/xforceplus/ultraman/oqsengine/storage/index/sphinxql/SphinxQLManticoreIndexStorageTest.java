@@ -44,12 +44,14 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -249,6 +251,46 @@ public class SphinxQLManticoreIndexStorageTest {
 
         Assertions.assertEquals(1, refs.size());
         Assertions.assertEquals(Long.MAX_VALUE - 600, refs.stream().findFirst().get().getId());
+    }
+
+    /**
+     * 测试一个超长的String(>29字节).
+     */
+    @Test
+    public void longStringValue() throws Exception {
+        String value = UUID.randomUUID().toString();
+
+        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 300)
+            .withAttribute(l2StringField.id() + "S", value)
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(
+            Collections.singletonList(target));
+
+        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l2-string").get(), value)
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build()
+        );
+
+        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(Long.MAX_VALUE - 300, refs.stream().findFirst().get().getId());
     }
 
     /**

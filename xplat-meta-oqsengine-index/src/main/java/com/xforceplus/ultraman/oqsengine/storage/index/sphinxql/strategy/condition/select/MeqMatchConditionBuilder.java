@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import io.vavr.Tuple2;
 
 /**
  * in 查询的全文方式.
@@ -28,18 +29,18 @@ public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
         StringBuilder buff = new StringBuilder("(");
         int emptyLen = buff.length();
 
-        String query;
+        Tuple2<String, Boolean> res;
         for (IValue v : values) {
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
-            query = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+            res = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");
             }
 
-            buff.append(query);
+            buff.append(res._1);
         }
         buff.append(")");
 
