@@ -50,14 +50,14 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
     }
 
     @Override
-    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity) {
+    public boolean accumulateReplace(IEntity entity) {
         replaceNumbers.incrementAndGet();
         opNumber.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(newEntity.id());
+        getProcessIdsIdsSet(true).add(entity.id());
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: replace number +1.[{}]", newEntity.id());
+            logger.debug("Transaction Accumulator: replace number +1.[{}]", entity.id());
         }
 
         return true;

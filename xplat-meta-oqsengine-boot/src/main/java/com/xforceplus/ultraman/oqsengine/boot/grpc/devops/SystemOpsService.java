@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -199,22 +200,22 @@ public class SystemOpsService {
                             && task.getEntity() > CDCConstant.UN_KNOW_ID
                             && task.getId() > CDCConstant.UN_KNOW_ID) {
 
-                        Optional<IEntity> entityOp =
+                        OqsResult<IEntity> result =
                                 entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
 
-                        com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = null;
-                        if (entityOp.isPresent()) {
-                            IEntity entity = entityOp.get();
-                            operationResult = entityManagementService.replace(entity);
+                        OqsResult oqsResult = null;
+                        if (result.getValue().isPresent()) {
+                            IEntity entity = result.getValue().get();
+                            oqsResult = entityManagementService.replace(entity);
                         } else {
-                            operationResult =
+                            oqsResult =
                                     entityManagementService.delete(Entity.Builder.anEntity()
                                             .withId(task.getId())
                                             .withVersion(task.getVersion())
                                             .build());
                         }
 
-                        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
+                        if (oqsResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
                             fixedStatus = FixedStatus.FIXED;
                         }
                     }

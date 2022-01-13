@@ -442,6 +442,10 @@ public class SQLMasterStorage implements MasterStorage {
     public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
+        if (entity.isDeleted()) {
+            return true;
+        }
+
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
@@ -455,7 +459,6 @@ public class SQLMasterStorage implements MasterStorage {
             });
 
         if (result) {
-            entity.neat();
             entity.delete();
         }
 
@@ -484,7 +487,6 @@ public class SQLMasterStorage implements MasterStorage {
         for (int i = 0; i < results.length; i++) {
             if (results[i]) {
                 entity = entityPackage.get(i).get().getKey();
-                entity.neat();
                 entity.delete();
             }
         }

@@ -17,96 +17,96 @@ import java.util.Optional;
  * @author xujia 2021/4/8
  * @since 1.8
  */
-public class OperationResult<V> implements Serializable {
+public class OqsResult<V> implements Serializable {
     private ResultStatus resultStatus;
     private V value;
     private Collection<Hint> hints;
     private String message;
 
-    public static OperationResult unknown() {
-        return new OperationResult(ResultStatus.UNKNOWN, ResultStatus.UNKNOWN.name());
+    public static OqsResult unknown() {
+        return new OqsResult(ResultStatus.UNKNOWN, ResultStatus.UNKNOWN.name());
     }
 
-    public static OperationResult success() {
+    public static OqsResult success() {
         return success("");
     }
 
-    public static OperationResult success(String msg) {
-        return new OperationResult(ResultStatus.SUCCESS, msg);
+    public static OqsResult success(String msg) {
+        return new OqsResult(ResultStatus.SUCCESS, msg);
     }
 
-    public static OperationResult<IEntity> success(IEntity entity) {
-        return new OperationResult(ResultStatus.SUCCESS, entity, null);
+    public static OqsResult<IEntity> success(IEntity entity) {
+        return new OqsResult(ResultStatus.SUCCESS, entity, null);
     }
 
-    public static OperationResult<Collection<IEntity>> success(Collection<IEntity> entities) {
-        return new OperationResult<Collection<IEntity>>(ResultStatus.SUCCESS, entities, null);
+    public static OqsResult<Collection<IEntity>> success(Collection<IEntity> entities) {
+        return new OqsResult<Collection<IEntity>>(ResultStatus.SUCCESS, entities, null);
     }
 
-    public static OperationResult conflict() {
+    public static OqsResult conflict() {
         return conflict(null);
     }
 
-    public static OperationResult conflict(String msg) {
-        return new OperationResult(ResultStatus.CONFLICT, msg);
+    public static OqsResult conflict(String msg) {
+        return new OqsResult(ResultStatus.CONFLICT, msg);
     }
 
-    public static OperationResult conflict(long entityId) {
+    public static OqsResult conflict(long entityId) {
         return notFound(String.format("A conflict occurred for entity %d..", entityId));
     }
 
-    public static OperationResult notFound() {
+    public static OqsResult notFound() {
         return notFound(null);
     }
 
-    public static OperationResult notFound(String msg) {
-        return new OperationResult(ResultStatus.NOT_FOUND, msg);
+    public static OqsResult notFound(String msg) {
+        return new OqsResult(ResultStatus.NOT_FOUND, msg);
     }
 
-    public static OperationResult notFound(long entityId) {
+    public static OqsResult notFound(long entityId) {
         return notFound(String.format("Entity %d was not found.", entityId));
     }
 
-    public static OperationResult unCreated() {
-        return new OperationResult(ResultStatus.UNCREATED, "The entity was not created successfully.");
+    public static OqsResult unCreated() {
+        return new OqsResult(ResultStatus.UNCREATED, "The entity was not created successfully.");
     }
 
-    public static OperationResult unAccumulate() {
+    public static OqsResult unAccumulate() {
         return unAccumulate(null);
     }
 
-    public static OperationResult unAccumulate(String msg) {
-        return new OperationResult(ResultStatus.UNACCUMULATE, msg);
+    public static OqsResult unAccumulate(String msg) {
+        return new OqsResult(ResultStatus.UNACCUMULATE, msg);
     }
 
-    public static OperationResult elevatefailed() {
+    public static OqsResult elevatefailed() {
         return elevatefailed(null);
     }
 
-    public static OperationResult elevatefailed(String msg) {
-        return new OperationResult(ResultStatus.ELEVATEFAILED, msg);
+    public static OqsResult elevatefailed(String msg) {
+        return new OqsResult(ResultStatus.ELEVATEFAILED, msg);
     }
 
-    public static OperationResult halfSuccess() {
+    public static OqsResult halfSuccess() {
         return halfSuccess(null);
     }
 
-    public static OperationResult halfSuccess(String msg) {
-        return new OperationResult(ResultStatus.HALF_SUCCESS, msg);
+    public static OqsResult halfSuccess(String msg) {
+        return new OqsResult(ResultStatus.HALF_SUCCESS, msg);
     }
 
     /**
      * 缺少必须字段.
      */
-    public static OperationResult fieldMust(IEntityField field) {
-        return new OperationResult(ResultStatus.FIELD_MUST, String.format("The field %s is required.", field.name()));
+    public static OqsResult fieldMust(IEntityField field) {
+        return new OqsResult(ResultStatus.FIELD_MUST, String.format("The field %s is required.", field.name()));
     }
 
     /**
      * 字段过长.
      */
-    public static OperationResult fieldTooLong(IEntityField field) {
-        return new OperationResult(ResultStatus.FIELD_TOO_LONG,
+    public static OqsResult fieldTooLong(IEntityField field) {
+        return new OqsResult(ResultStatus.FIELD_TOO_LONG,
             String.format("Field %s is too long. The maximum allowed length is %d.",
                 field.name(), field.config().getLen()));
     }
@@ -114,8 +114,8 @@ public class OperationResult<V> implements Serializable {
     /**
      * 精度过高.
      */
-    public static OperationResult fieldHighPrecision(IEntityField field) {
-        return new OperationResult(ResultStatus.FIELD_HIGH_PRECISION,
+    public static OqsResult fieldHighPrecision(IEntityField field) {
+        return new OqsResult(ResultStatus.FIELD_HIGH_PRECISION,
             String.format("Field %s is too precise. The maximum accuracy allowed is %d.",
                 field.name(), field.config().getPrecision()));
     }
@@ -123,33 +123,33 @@ public class OperationResult<V> implements Serializable {
     /**
      * 字段不存在.
      */
-    public static OperationResult fieldNonExist(IEntityField field) {
-        return new OperationResult(ResultStatus.FIELD_NON_EXISTENT,
+    public static OqsResult fieldNonExist(IEntityField field) {
+        return new OqsResult(ResultStatus.FIELD_NON_EXISTENT,
             String.format("The field %s does not exist.", field.name()));
     }
 
-    public static OperationResult notExistMeta() {
-        return new OperationResult(ResultStatus.NOT_EXIST_META, "Unexpected meta information.");
+    public static OqsResult notExistMeta() {
+        return new OqsResult(ResultStatus.NOT_EXIST_META, "Unexpected meta information.");
     }
 
     /**
      * 元信息不存在.
      */
-    public static OperationResult notExistMeta(EntityClassRef ref) {
+    public static OqsResult notExistMeta(EntityClassRef ref) {
         if (ref.getProfile() != null) {
-            return new OperationResult(ResultStatus.NOT_EXIST_META,
+            return new OqsResult(ResultStatus.NOT_EXIST_META,
                 String.format("Meta message %s-%s does not exist.", ref.getCode(), ref.getProfile()));
         } else {
-            return new OperationResult(ResultStatus.NOT_EXIST_META,
+            return new OqsResult(ResultStatus.NOT_EXIST_META,
                 String.format("Meta message %s does not exist.", ref.getCode()));
         }
     }
 
-    private OperationResult(ResultStatus resultStatus, String message) {
+    private OqsResult(ResultStatus resultStatus, String message) {
         this(resultStatus, null, message);
     }
 
-    private OperationResult(ResultStatus resultStatus, V value, String message) {
+    private OqsResult(ResultStatus resultStatus, V value, String message) {
         this.resultStatus = resultStatus;
         this.message = message;
         this.value = value;
@@ -161,7 +161,7 @@ public class OperationResult<V> implements Serializable {
      * @param hint 提示.
      * @return 当前实例.
      */
-    public OperationResult addHint(Hint hint) {
+    public OqsResult addHint(Hint hint) {
         if (this.hints == null) {
             this.hints = new LinkedList();
         }
@@ -181,7 +181,7 @@ public class OperationResult<V> implements Serializable {
      * @param hints 提示列表.
      * @return 当前实例.
      */
-    public OperationResult addHints(Collection<Hint> hints) {
+    public OqsResult addHints(Collection<Hint> hints) {
         if (this.hints == null) {
             this.hints = new LinkedList();
         }
@@ -220,10 +220,10 @@ public class OperationResult<V> implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof OperationResult)) {
+        if (!(o instanceof OqsResult)) {
             return false;
         }
-        OperationResult<?> result = (OperationResult<?>) o;
+        OqsResult<?> result = (OqsResult<?>) o;
         return getResultStatus() == result.getResultStatus() && Objects.equals(getValue(), result.getValue())
             && Objects.equals(getHints(), result.getHints()) && Objects.equals(getMessage(),
             result.getMessage());

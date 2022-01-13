@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 
 /**
  * 初始化参与者.
@@ -81,23 +80,6 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
             // 降序.
             return participant.age - this.age;
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        InitCalculationParticipant that = (InitCalculationParticipant) o;
-        return Objects.equals(getEntityClass(), that.getEntityClass()) && Objects.equals(getField(), that.getField());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getEntityClass(), getField());
     }
 
     /**

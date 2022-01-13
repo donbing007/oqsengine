@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -51,8 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -69,13 +69,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
     CanalContainer.class,
     SpringExtension.class
 })
+@ActiveProfiles("integration")
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class UserCaseTest {
 
     final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
-
-    private ApplicationContext applicationContext;
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -136,7 +135,7 @@ public class UserCaseTest {
     public void after() throws Exception {
         while (commitIdStatusService.size() > 0) {
             logger.info("Wait for CDC synchronization to complete.");
-            TimeUnit.MILLISECONDS.sleep(10);
+            TimeUnit.MILLISECONDS.sleep(100);
         }
 
         try (Connection conn = masterDataSource.getConnection()) {
@@ -174,7 +173,7 @@ public class UserCaseTest {
         // 事务内统计.
         Page page = Page.emptyPage();
         transactionManager.bind(tx.id());
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -224,7 +223,7 @@ public class UserCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -267,7 +266,7 @@ public class UserCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
-        OperationResult<Collection<IEntity>> result =
+        OqsResult<Collection<IEntity>> result =
             entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
@@ -302,7 +301,7 @@ public class UserCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
 
         transactionManager.bind(tx.id());
-        OperationResult<Collection<IEntity>> result =
+        OqsResult<Collection<IEntity>> result =
             entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
@@ -335,7 +334,7 @@ public class UserCaseTest {
 
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(fatherEntity).getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
@@ -443,7 +442,7 @@ public class UserCaseTest {
                 .assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.newSinglePage(100);
-            OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+            OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
                         MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
@@ -481,12 +480,12 @@ public class UserCaseTest {
                 new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), Long.toString(i))
             );
 
-            OperationResult opResult = entityManagementService.replace(entity);
+            OqsResult opResult = entityManagementService.replace(entity);
             ResultStatus status = opResult.getResultStatus();
             Assertions.assertTrue(ResultStatus.SUCCESS == status);
 
             Page page = Page.newSinglePage(100);
-            OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+            OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
                         MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
@@ -523,10 +522,10 @@ public class UserCaseTest {
                     )
                 ).build());
         }
-        OperationResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
+        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
         Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -611,10 +610,10 @@ public class UserCaseTest {
                     )
                 ).build());
         }
-        OperationResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
+        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
         Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -674,7 +673,7 @@ public class UserCaseTest {
         entityManagementService.replace(e0);
         entityManagementService.replace(e1);
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -718,7 +717,7 @@ public class UserCaseTest {
             ).build();
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(e2).getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
@@ -812,6 +811,7 @@ public class UserCaseTest {
 
             Assertions.assertEquals(0, page.getTotalCount());
         }
+
     }
 
     /**
@@ -839,7 +839,7 @@ public class UserCaseTest {
         // 更新保证进入索引中.
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-dec").get(),
@@ -884,7 +884,7 @@ public class UserCaseTest {
         // 更新保证进入索引中.
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions().addAnd(
                 new Condition(
                     MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-strings").get(),
@@ -912,7 +912,7 @@ public class UserCaseTest {
 
         entityManagementService.build(entity);
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -972,7 +972,7 @@ public class UserCaseTest {
                     new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
                 )
             ).build();
-        OperationResult result = entityManagementService.build(targetEntity);
+        OqsResult result = entityManagementService.build(targetEntity);
         Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
 
         // 创建200个lookup实例.
@@ -996,7 +996,7 @@ public class UserCaseTest {
         }
 
 
-        OperationResult<Collection<IEntity>> queryLookupEntities = entitySearchService.selectMultiple(
+        OqsResult<Collection<IEntity>> queryLookupEntities = entitySearchService.selectMultiple(
             lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
         Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.getValue().get().size());
         // 验证是否成功lookup.
@@ -1050,7 +1050,7 @@ public class UserCaseTest {
         Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
             lookupSize, successSize));
 
-        OperationResult<Collection<IEntity>> conditionQueryEntities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> conditionQueryEntities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -1079,7 +1079,7 @@ public class UserCaseTest {
                         BigDecimal.valueOf(12.3333D))
                 )
             ).build();
-        OperationResult result = entityManagementService.build(targetEntity);
+        OqsResult result = entityManagementService.build(targetEntity);
         Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
 
         // 创建200个lookup实例.
@@ -1102,7 +1102,7 @@ public class UserCaseTest {
             Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
         }
 
-        OperationResult<Collection<IEntity>> queryLookupEntities = entitySearchService.selectMultiple(
+        OqsResult<Collection<IEntity>> queryLookupEntities = entitySearchService.selectMultiple(
             lookupEntities.stream().mapToLong(e -> e.id()).toArray(), MockEntityClassDefine.LOOKUP_ENTITY_CLASS.ref());
         Assertions.assertEquals(lookupEntities.size(), queryLookupEntities.getValue().get().size());
         // 验证是否成功lookup.
@@ -1148,7 +1148,7 @@ public class UserCaseTest {
         Assertions.assertTrue(success, String.format("The expected number of lookups is %d, but it is %d.",
             lookupSize, successSize));
 
-        OperationResult<Collection<IEntity>> conditionQueryEntities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> conditionQueryEntities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -1179,7 +1179,7 @@ public class UserCaseTest {
 
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntity).getResultStatus());
 
-        OperationResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(

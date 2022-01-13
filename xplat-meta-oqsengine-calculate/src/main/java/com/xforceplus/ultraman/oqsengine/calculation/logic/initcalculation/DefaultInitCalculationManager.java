@@ -21,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import io.vavr.control.Either;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +66,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     @Resource
     private ResourceLocker locker;
 
+    @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
     private final List<CalculationType> participantTypes;

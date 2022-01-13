@@ -315,7 +315,7 @@ public class Infuence {
         for (Node n : point.getChildren()) {
             ChildNode c = (ChildNode) n;
             if (c.getParticipant().equals(newParticipant)) {
-                // 这里找到表示已经存在.
+                // 这里找到表示已经存在,同层不允许增加相同的参与者.
                 return;
             }
         }

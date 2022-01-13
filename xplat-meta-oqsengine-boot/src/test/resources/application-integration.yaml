@@ -14,8 +14,7 @@ logging:
     root: info
     io:
       lettuce: info
-  pattern:
-    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
+    com.xforceplus.ultraman.oqsengine.changelog: debug
 
 transaction:
   timeoutMs: 300000
@@ -23,26 +22,20 @@ transaction:
 threadPool:
   io:
     # 服务响应线程池.
-    worker: 3
+    worker: 10
     queue: 1000
   task:
     # 后端任务,或者IO线程池中放入的任务执行线程池.
-    worker: 32
+    worker: 10
     queue: 1000
 
+maxVisibleNumber: 10000
+
+ignoreCDCStatusCheck: false
+
 sync:
-  ignoreCDCStatusCheck: false
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
-
-query:
-  # 查询的最大匹配数量.
-  maxVisibleTotalCount: 10000
-  join:
-    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
-    maxJoinEntityNumber: 1000
-    # join查询时的主表+驱动表的数量最大上限.
-    maxJoinDriverLineNumber: 2
 
 storage:
   tokenizer:
@@ -65,6 +58,7 @@ storage:
   index:
     search:
       name: "oqsindex"
+      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:
@@ -82,8 +76,6 @@ storage:
           size: 2000
       execution:
         timeout: 300000
-      update:
-        frequency: 100
       cache:
         expire: 30
         maxsize: 500
@@ -150,6 +142,7 @@ redis:
         - "redis://127.0.0.1:7000"
       scanInterval: 1000
 
+
 management:
   health:
     redis:
@@ -191,3 +184,14 @@ meta:
     type: mock
   load:
     path: "-"
+
+discover:
+  sdk:
+    enable: false
+
+changelog:
+  enabled: false
+  queue: local
+
+metadata:
+  enhanced: false

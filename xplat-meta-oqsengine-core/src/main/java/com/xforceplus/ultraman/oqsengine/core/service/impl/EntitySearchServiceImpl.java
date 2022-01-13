@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.toList;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSearchConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -172,13 +172,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
     @Override
-    public OperationResult<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException {
+    public OqsResult<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException {
 
         Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
-            return OperationResult.notExistMeta(entityClassRef);
+            return OqsResult.notExistMeta(entityClassRef);
 
         } else {
             entityClass = entityClassOp.get();
@@ -194,7 +194,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            return OperationResult.success(entityOptional.orElse(null));
+            return OqsResult.success(entityOptional.orElse(null));
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -206,7 +206,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     @Override
-    public OperationResult<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef)
+    public OqsResult<IEntity> selectOneByKey(List<BusinessKey> key, EntityClassRef entityClassRef)
         throws SQLException {
         //        Optional<IEntityClass> entityClass = metaManager.load(entityClassRef.getId());
         //        if (!entityClass.isPresent()) {
@@ -223,14 +223,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
     @Override
-    public OperationResult<Collection<IEntity>> selectMultiple(long[] ids, EntityClassRef entityClassRef)
+    public OqsResult<Collection<IEntity>> selectMultiple(long[] ids, EntityClassRef entityClassRef)
         throws SQLException {
 
         Optional<IEntityClass> entityClassOp = metaManager.load(entityClassRef);
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
-            return OperationResult.notExistMeta(entityClassRef);
+            return OqsResult.notExistMeta(entityClassRef);
 
         } else {
             entityClass = entityClassOp.get();
@@ -245,7 +245,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 });
             }
 
-            return OperationResult.success(entities);
+            return OqsResult.success(entities);
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -257,8 +257,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public OperationResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                                   Page page)
+    public OqsResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                                             Page page)
         throws SQLException {
         return selectByConditions(conditions, entityClassRef,
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
@@ -266,7 +266,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public OperationResult<Collection<IEntity>> selectByConditions(
+    public OqsResult<Collection<IEntity>> selectByConditions(
         Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page) throws SQLException {
         return selectByConditions(conditions, entityClassRef,
             ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
@@ -274,8 +274,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public OperationResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
-                                                                   ServiceSelectConfig config)
+    public OqsResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                                             ServiceSelectConfig config)
         throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
@@ -303,7 +303,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
-            return OperationResult.notExistMeta(entityClassRef);
+            return OqsResult.notExistMeta(entityClassRef);
 
         } else {
             entityClass = entityClassOp.get();
@@ -316,7 +316,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 Optional<IEntityClass> ecOp = metaManager.load(c.getEntityClassRef().get());
                 if (!ecOp.isPresent()) {
 
-                    return OperationResult.notExistMeta(c.getEntityClassRef().get());
+                    return OqsResult.notExistMeta(c.getEntityClassRef().get());
                 }
 
                 checkResult = checkCanSearch(c, ecOp.get());
@@ -328,7 +328,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     Page page = config.getPage().get();
                     page.setTotalCount(0);
                 }
-                return OperationResult.success(Collections.emptyList());
+                return OqsResult.success(Collections.emptyList());
             }
         }
 
@@ -337,9 +337,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             long id = onlyCondition.getFirstValue().valueToLong();
             Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
-                return OperationResult.success(Arrays.asList(entityOptional.get()));
+                return OqsResult.success(Arrays.asList(entityOptional.get()));
             } else {
-                return OperationResult.success(Collections.emptyList());
+                return OqsResult.success(Collections.emptyList());
             }
         }
 
@@ -410,7 +410,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     if (config.getPage().isPresent()) {
                         config.getPage().get().setTotalCount(0);
                     }
-                    return OperationResult.success(Collections.emptyList());
+                    return OqsResult.success(Collections.emptyList());
                 }
             }
 
@@ -472,7 +472,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            return OperationResult.success(entities);
+            return OqsResult.success(entities);
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -482,7 +482,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     @Override
-    public OperationResult<Collection<IEntity>> search(ServiceSearchConfig config) throws SQLException {
+    public OqsResult<Collection<IEntity>> search(ServiceSearchConfig config) throws SQLException {
         SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
             .withCode(config.getCode())
             .withValue(config.getValue())
@@ -494,13 +494,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         for (int i = 0; i < entityClasses.length; i++) {
             Optional<IEntityClass> ecOp = metaManager.load(entityClassRefs[i]);
             if (!ecOp.isPresent()) {
-                return OperationResult.notExistMeta(entityClassRefs[i]);
+                return OqsResult.notExistMeta(entityClassRefs[i]);
             } else {
                 entityClasses[i] = ecOp.get();
             }
         }
 
-        return OperationResult.success(
+        return OqsResult.success(
             buildEntitiesFromRefs(indexStorage.search(searchConfig, entityClasses), null)
         );
     }

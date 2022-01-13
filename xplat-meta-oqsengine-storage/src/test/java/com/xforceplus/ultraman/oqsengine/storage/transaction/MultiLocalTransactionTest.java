@@ -115,8 +115,7 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1).withVersion(1)
-                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build(),
+        tx.getAccumulator().accumulateReplace(
             Entity.Builder.anEntity().withId(1).withVersion(0)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
         // 没有真实的操作,这里手动填入一个提交号.
@@ -257,15 +256,11 @@ public class MultiLocalTransactionTest {
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(10)
-                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build(),
-            Entity.Builder.anEntity().withId(10)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(10L).build()).build());
         Assertions.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
         tx.getAccumulator().accumulateReplace(Entity.Builder.anEntity().withId(1)
-                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build(),
-            Entity.Builder.anEntity().withId(1)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(1L).build()).build());
 
         tx.getAccumulator().accumulateBuild(Entity.Builder.anEntity().withId(2)

@@ -69,10 +69,8 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
     @Override
     public Optional<JsonAttributeMasterStorageEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
-        try (PreparedStatement st = getResource().value().prepareStatement(
-            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
-            st.setFetchSize(Integer.MIN_VALUE);
             st.setLong(1, id);
             st.setBoolean(2, false);
 
