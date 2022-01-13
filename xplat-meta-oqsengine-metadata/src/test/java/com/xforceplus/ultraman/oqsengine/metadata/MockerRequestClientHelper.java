@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.CachedMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MetaSyncGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
@@ -85,6 +86,7 @@ public class MockerRequestClientHelper extends AbstractMetaTestHelper {
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
         ReflectionTestUtils.setField(requestHandler, "grpcParams", grpcParams);
         ReflectionTestUtils.setField(requestHandler, "executorService", executorService);
+        ReflectionTestUtils.setField(requestHandler, "metricsRecorder", new CachedMetricsRecorder());
 
         return requestHandler;
     }
