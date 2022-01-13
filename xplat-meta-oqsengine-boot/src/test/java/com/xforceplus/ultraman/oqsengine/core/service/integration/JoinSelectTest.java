@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -61,6 +62,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
     CanalContainer.class,
     SpringExtension.class
 })
+@ActiveProfiles("integration")
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class JoinSelectTest extends AbstractContainerExtends {
@@ -147,7 +149,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = new Page(1, 100);
-        OperationResult<Collection<IEntity>> results =
+        OqsResult<Collection<IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(), page);
         Assertions.assertEquals(0, results.getValue().get().size());
         Assertions.assertEquals(0, page.getTotalCount());
@@ -174,7 +176,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = Page.newSinglePage(100);
-        OperationResult<Collection<IEntity>> results =
+        OqsResult<Collection<IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
         Assertions.assertEquals(1, results.getValue().get().size());

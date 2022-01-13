@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -82,6 +83,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
     CanalContainer.class,
     SpringExtension.class
 })
+@ActiveProfiles("integration")
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CalculationTest extends AbstractContainerExtends {
@@ -198,14 +200,14 @@ public class CalculationTest extends AbstractContainerExtends {
     public void testLookupEmptyValue() throws Exception {
         IEntity user = buildUserEntity();
         user.entityValue().remove(MockEntityClassDefine.USER_CLASS.field("用户编号").get());
-        OperationResult operationResult = entityManagementService.build(user);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        OqsResult oqsResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
         IEntity order = buildOrderEntity(user);
-        operationResult = entityManagementService.build(order);
+        oqsResult = entityManagementService.build(order);
         // 由于公式计算触发了除0异常,所以这里是半成功.
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
@@ -280,7 +282,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
 
         logger.info("Query {} orders.", orderSize);
-        OperationResult<Collection<IEntity>> orders = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> orders = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.ORDER_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(orderSize)).build()
@@ -392,7 +394,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     startLatch.await();
                     entityManagementService.build(buildOrderEntity(user));
 
-                    OperationResult<IEntity> currentUserOp = entitySearchService.selectOne(
+                    OqsResult<IEntity> currentUserOp = entitySearchService.selectOne(
                         userId, MockEntityClassDefine.USER_CLASS.ref());
                     queue.add(currentUserOp.getValue().get());
 
@@ -429,9 +431,9 @@ public class CalculationTest extends AbstractContainerExtends {
         用户被创建,其订单总数,总消费金额,平均消费金额应该为0.
          */
         IEntity user = buildUserEntity();
-        OperationResult operationResult = entityManagementService.build(user);
+        OqsResult oqsResult = entityManagementService.build(user);
 
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
         Assertions.assertTrue(user.id() > 0, "The identity of the user entity was expected to be set, but was not.");
 
         Assertions.assertEquals(0,
@@ -458,9 +460,9 @@ public class CalculationTest extends AbstractContainerExtends {
         用户应该被修改, 订单总数=1.
          */
         IEntity order = buildOrderEntity(user);
-        operationResult = entityManagementService.build(order);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
         Assertions.assertTrue(order.id() > 0, "The identity of the user entity was expected to be set, but was not.");
         Assertions.assertEquals(0,
             order.entityValue().getValue("订单项总数count").get().valueToLong());
@@ -503,10 +505,10 @@ public class CalculationTest extends AbstractContainerExtends {
             user.entityValue().getValue("订单总数count").get().valueToLong());
 
         IEntity orderItem = buildOrderItem(order);
-        operationResult = entityManagementService.build(orderItem);
+        oqsResult = entityManagementService.build(orderItem);
 
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         Assertions.assertTrue(orderItem.id() > 0,
@@ -541,15 +543,15 @@ public class CalculationTest extends AbstractContainerExtends {
         );
 
         IEntity order1 = buildOrderEntity(user);
-        operationResult = entityManagementService.build(order1);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(order1);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         IEntity orderItem1 = buildOrderItem(order1);
-        operationResult = entityManagementService.build(orderItem1);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(orderItem1);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
 
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
@@ -578,7 +580,7 @@ public class CalculationTest extends AbstractContainerExtends {
         );
 
         IEntity orderItem2 = buildOrderItem(order1);
-        operationResult = entityManagementService.build(orderItem2);
+        oqsResult = entityManagementService.build(orderItem2);
         order1 = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         Assertions.assertNotEquals(
@@ -618,16 +620,16 @@ public class CalculationTest extends AbstractContainerExtends {
     @Test
     public void testReplaceCalculation() throws Exception {
         IEntity user = buildUserEntity();
-        OperationResult operationResult = entityManagementService.build(user);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        OqsResult oqsResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
         IEntity order = buildOrderEntity(user);
-        operationResult = entityManagementService.build(order);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
         IEntity orderItem = buildOrderItem(order);
-        operationResult = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(orderItem);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
@@ -641,8 +643,8 @@ public class CalculationTest extends AbstractContainerExtends {
                 )
             ).build();
 
-        operationResult = entityManagementService.replace(orderItem);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        oqsResult = entityManagementService.replace(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
         //  这里设置AUTO_FILL为空，判断是否重置了autoFill字段，期望是不会改变
         order = Entity.Builder.anEntity()
@@ -662,8 +664,8 @@ public class CalculationTest extends AbstractContainerExtends {
             )
             .build();
 
-        operationResult = entityManagementService.replace(order);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        oqsResult = entityManagementService.replace(order);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
 
         Assertions.assertTrue(order.entityValue().getValue("订单号").isPresent()
@@ -690,22 +692,22 @@ public class CalculationTest extends AbstractContainerExtends {
     @Test
     public void testDeleteCalculation() throws Exception {
         IEntity user = buildUserEntity();
-        OperationResult operationResult = entityManagementService.build(user);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        OqsResult oqsResult = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
         IEntity order = buildOrderEntity(user);
-        operationResult = entityManagementService.build(order);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
         IEntity orderItem = buildOrderItem(order);
-        operationResult = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, operationResult.getResultStatus(),
-            operationResult.getMessage());
+        oqsResult = entityManagementService.build(orderItem);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+            oqsResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
 
-        operationResult = entityManagementService.delete(orderItem);
-        Assertions.assertEquals(ResultStatus.SUCCESS, operationResult.getResultStatus(), operationResult.getMessage());
+        oqsResult = entityManagementService.delete(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
@@ -781,19 +783,19 @@ public class CalculationTest extends AbstractContainerExtends {
                 .build();
             entities.add(e);
 
-            OperationResult result = entityManagementService.build(e);
+            OqsResult result = entityManagementService.build(e);
             Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
         }
 
 
         CountDownLatch latch = new CountDownLatch(1);
 
-        OperationResult build = entityManagementService.build(entity);
+        OqsResult build = entityManagementService.build(entity);
 
         MockEntityClassDefine.initMetaManager(metaManager);
 
         Either<String, List<IEntityField>> test = initCalculationManager.initAppCalculations("test");
-        OperationResult<IEntity> entity1;
+        OqsResult<IEntity> entity1;
         while (true) {
             entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
             if (entity1.getValue().get().entityValue().size() >= 11) {
