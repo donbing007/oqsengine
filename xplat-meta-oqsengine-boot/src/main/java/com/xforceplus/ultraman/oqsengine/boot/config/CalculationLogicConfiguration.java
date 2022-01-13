@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.MetaAggregationParse;
@@ -17,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,6 +32,11 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class CalculationLogicConfiguration {
+
+    @Bean
+    public CalculationLogicFactory calculationLogicFactory() {
+        return new CalculationLogicFactory();
+    }
 
     @Bean
     public Calculation calculation() {
@@ -74,9 +79,7 @@ public class CalculationLogicConfiguration {
      */
     @Bean
     public CalculationInitLogic calculationInitLogic() {
-        DefaultCalculationInitLogic defaultCalculationInitLogic = new DefaultCalculationInitLogic();
-        defaultCalculationInitLogic.setWorker(Executors.newFixedThreadPool(5));
-        return defaultCalculationInitLogic;
+        return new DefaultCalculationInitLogic();
     }
 
     /**
@@ -84,9 +87,7 @@ public class CalculationLogicConfiguration {
      */
     @Bean
     public InitCalculationManager initCalculationManager() {
-        DefaultInitCalculationManager defaultInitCalculationManager = new DefaultInitCalculationManager();
-        defaultInitCalculationManager.setWorker(Executors.newFixedThreadPool(5));
-        return defaultInitCalculationManager;
+        return new DefaultInitCalculationManager();
     }
 
 }

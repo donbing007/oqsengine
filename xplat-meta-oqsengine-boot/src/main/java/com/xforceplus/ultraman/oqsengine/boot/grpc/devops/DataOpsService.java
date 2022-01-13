@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsDataResponse;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryConfig;
@@ -20,9 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
@@ -36,7 +34,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,18 +122,21 @@ public class DataOpsService {
                             if (operations.length == 2) {
                                 ConditionOperator operation0 = DevOpsOmDataUtils.convertOperation(operations[0]);
                                 ConditionOperator operation1 = DevOpsOmDataUtils.convertOperation(operations[1]);
-                                if (operation0 != null && operation1 != null && c.getValue() != null && c.getValue().length == 2) {
-                                    IValue minValue = IValueUtils.toIValue(entityFieldOptl.get(), DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), c.getValue()[0]));
+                                if (operation0 != null && operation1 != null && c.getValue() != null
+                                    && c.getValue().length == 2) {
+                                    IValue minValue = IValueUtils.toIValue(entityFieldOptl.get(),
+                                        DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), c.getValue()[0]));
                                     conditions.addAnd(new Condition(
                                         entityFieldOptl.get(),
                                         operation0,
-                                        new IValue[]{minValue}
+                                        new IValue[] {minValue}
                                     ));
-                                    IValue maxValue = IValueUtils.toIValue(entityFieldOptl.get(), DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), c.getValue()[1]));
+                                    IValue maxValue = IValueUtils.toIValue(entityFieldOptl.get(),
+                                        DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), c.getValue()[1]));
                                     conditions.addAnd(new Condition(
                                         entityFieldOptl.get(),
                                         operation1,
-                                        new IValue[]{maxValue}
+                                        new IValue[] {maxValue}
                                     ));
                                 }
                             }
@@ -144,22 +144,25 @@ public class DataOpsService {
                     } else {
                         List<IValue> values =
                             Arrays.asList(c.getValue())
-                                .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(), DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
+                                .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(),
+                                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
                                 .collect(Collectors.toList());
                         Condition condition = new Condition(
                             entityFieldOptl.get(),
                             operation,
-                            values.toArray(new IValue[]{})
+                            values.toArray(new IValue[] {})
                         );
                         conditions.addAnd(condition);
                     }
                 }
             });
 
-            Collection<IEntity> entities = entitySearchService.selectByConditions(conditions, new EntityClassRef(config.getEntityClassId(), ""), serviceSelectConfig);
+            OqsResult<Collection<IEntity>> entities =
+                entitySearchService.selectByConditions(conditions, new EntityClassRef(config.getEntityClassId(), ""),
+                    serviceSelectConfig);
 
             DevOpsQueryResponse response = new DevOpsQueryResponse();
-            response.setRows(entities.stream().map(entity -> {
+            response.setRows(entities.getValue().get().stream().map(entity -> {
                 Map map = new HashMap();
                 map.put("id", String.valueOf(entity.id()));
                 entity.entityValue().values().forEach(value -> {
@@ -176,7 +179,8 @@ public class DataOpsService {
             response.setSummary(summary);
             return response;
         } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("selectByConditions exception, [%s]", config.getEntityClassId()), e);
+            PrintErrorHelper.exceptionHandle(
+                String.format("selectByConditions exception, [%s]", config.getEntityClassId()), e);
         }
         return null;
     }
@@ -185,7 +189,7 @@ public class DataOpsService {
      * 统一数据运维-新增.
      *
      * @param entityClassId 实体ID
-     * @param data 请求参数
+     * @param data          请求参数
      * @return 返回结果
      */
     @DiscoverAction(describe = "新增", retClass = Collection.class)
@@ -205,7 +209,8 @@ public class DataOpsService {
         List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("create_time".equals(field.name())) {
-                entityValue.add(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                entityValue.add(
+                    new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
             }
         });
         data.keySet().stream().forEach(fieldCode -> {
@@ -242,7 +247,7 @@ public class DataOpsService {
      *
      * @param entityClassId 实体ID
      * @param entityValueId 实体数据ID
-     * @param data 请求参数
+     * @param data          请求参数
      * @return 返回结果
      */
     @DiscoverAction(describe = "修改", retClass = Collection.class)
@@ -263,14 +268,16 @@ public class DataOpsService {
         List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("update_time".equals(field.name())) {
-                entityValue.add(new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                entityValue.add(
+                    new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
             }
         });
         data.keySet().forEach(fieldCode -> {
             Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
                 .stream().filter(field -> fieldCode.equals(field.name())).findAny();
             if (entityFieldOptl.isPresent()) {
-                IValue value = IValueUtils.toIValue(entityFieldOptl.get(), DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), data.get(fieldCode)));
+                IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
+                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), data.get(fieldCode)));
                 entityValue.add(value);
             }
         });
@@ -285,7 +292,8 @@ public class DataOpsService {
                 entityManagementService.replace(targetEntity)
             );
         } catch (SQLException e) {
-            PrintErrorHelper.exceptionHandle(String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
+            PrintErrorHelper.exceptionHandle(
+                String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
         }
 
         return null;
@@ -325,19 +333,15 @@ public class DataOpsService {
                 entityManagementService.build(targetEntity)
             );
         } catch (SQLException e) {
-            PrintErrorHelper.exceptionHandle(String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
+            PrintErrorHelper.exceptionHandle(
+                String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
         }
 
         return null;
     }
 
-    private DevOpsDataResponse toDevOpsDataResponse(OperationResult operationResult) {
-        return new DevOpsDataResponse(
-            operationResult.getTxId(),
-            operationResult.getEntityId(),
-            operationResult.getVersion(),
-            operationResult.getEventType(),
-            operationResult.getMessage());
+    private DevOpsDataResponse toDevOpsDataResponse(OqsResult oqsResult) {
+        return new DevOpsDataResponse(oqsResult.getMessage());
     }
 
 }
